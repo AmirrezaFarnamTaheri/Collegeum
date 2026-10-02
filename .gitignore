@@ -1,0 +1,47 @@
+# The SQLite database is a derived cache, rebuilt from data/listings.ndjson
+# by state.restore_if_needed(). Committing it defeats the point of the
+# journal design (see state.py's module docstring): binary SQLite pages do
+# not delta in git, so a daily commit adds roughly a gigabyte a year, and two
+# overlapping runs produce merge conflicts nobody can resolve.
+data/predocs.db
+data/predocs.db-wal
+data/predocs.db-shm
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Never commit real X/Twitter credentials. TWSCRAPE_ACCOUNTS is read from the
+# environment (see ingest/collectors.py); nothing account-shaped belongs here.
+data/accounts.txt
+*.accounts.txt
+
+# Local-only operational artefacts.
+dlq-failures.json
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Test and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+
+# Never commit the auto-generated single-file materializer's scratch output.
+/build/

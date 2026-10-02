@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # Runs first and separately: this is the suite that needs nothing
+      # installed at all, so a break here means the core itself regressed
+      # rather than some dependency's API changing underneath it.
+      - name: Core tests (stdlib only, no dependencies installed)
+        run: PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
+
+      - name: Install
+        run: pip install -e ".[dev,portals]"
+
+      - name: Gate eval (precision/recall against golden fixtures)
+        run: PYTHONPATH=src python3 -m predoc_pipeline.cli eval
+
+      - name: Offline smoke check
+        run: PYTHONPATH=src python3 -m predoc_pipeline.cli smoke
+
+      - name: Full test suite with coverage
+        run: |
+          PYTHONPATH=src python3 -m pytest tests/ \
+            --cov=predoc_pipeline --cov-report=xml --cov-report=term-missing -v
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Type check
+        run: mypy src
+        continue-on-error: true  # advisory until the codebase is fully annotated
+
+      - name: Enforce stdlib-only core (belt and suspenders)
+        run: PYTHONPATH=src python3 -m pytest tests/core/test_no_third_party.py -v

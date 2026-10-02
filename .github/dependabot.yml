@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # The extraction backend probe (extract/gemini.py) is written to survive
+    # the provider's endpoint churn without a dependency bump, but pydantic,
+    # httpx and typer major versions are worth reviewing by hand.
+    labels: ["dependencies"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

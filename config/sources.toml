@@ -1,0 +1,407 @@
+# Source registry for predoc-pipeline.
+#
+# Three kinds of source:
+#
+#   [[board]]  -> job boards and university career sites, read by the `boards`
+#                 collector (ported from predoc-bot). These are the sources that
+#                 actually find econ/business predocs today, so they are ON by
+#                 default. Types: predoc_org | rss | link_scan | varbi | workday | linkedin
+#                 link_scan keeps every link whose URL matches `link_pattern` and reads
+#                 the card around it. Set `enabled = false` to switch one off.
+#   [[feed]]   -> RSS/Atom feeds, read by the `feeds` collector (feedparser).
+#   [[portal]] -> HTML pages carrying Schema.org JobPosting metadata, read by the
+#                 `portals` collector.
+#
+# Run `predoc-pipeline sources verify` after editing this file.
+#
+# J-PAL and IPA were removed on purpose: they are US-based organisations and the
+# owner of this bot does not want their positions (see config/preferences.toml,
+# `excluded_employers`, which blocks J-PAL whatever source it arrives from).
+
+# ===========================================================================
+# Job boards (ON)
+# ===========================================================================
+
+# --- aggregator ------------------------------------------------------------
+
+[[board]]
+name = "predoc_org"
+type = "predoc_org"
+group = "aggregator"
+url = "https://predoc.org/opportunities"
+note = "Mostly US; also lists psychology/medicine posts -> region and field are checked per post."
+
+[[board]]
+name = "inomics"
+type = "rss"
+group = "aggregator"
+url = "https://inomics.com/rss"
+include_url_contains = ["/job/"]
+field_implied = true
+
+[[board]]
+name = "economic_misfit"
+type = "rss"
+group = "aggregator"
+urls = ["https://theeconomicmisfit.com/category/pre-docs/feed/", "https://theeconomicmisfit.com/feed/"]
+title_format = "role_at_institution"
+categories_exclude = ["post-doc", "workshop", "scholarship", "conference", "summer school", "seminar"]
+
+[[board]]
+name = "applied_econ_jobs"
+type = "rss"
+enabled = false
+group = "aggregator"
+url = "https://appliedeconjobs.substack.com/feed"
+title_format = "role_at_institution"
+field_implied = true
+note = "OFF: Substack blocks GitHub servers (HTTP 403)."
+
+[[board]]
+name = "econjobmarket"
+type = "link_scan"
+group = "aggregator"
+urls = ["https://econjobmarket.org/market", "https://econjobmarket.org/positions"]
+link_pattern = 'econjobmarket\.org/positions/\d+$'
+institution_from_context = true
+field_implied = true
+
+[[board]]
+name = "european_job_market"
+type = "link_scan"
+group = "aggregator"
+urls = ["https://www.europeanjobmarketofeconomists.org/job-listings", "https://www.europeanjobmarketofeconomists.org/job-listings?page=1", "https://www.europeanjobmarketofeconomists.org/job-listings?page=2"]
+link_pattern = 'europeanjobmarketofeconomists\.org/job-listing/'
+institution_from_context = true
+field_implied = true
+
+[[board]]
+name = "somma"
+type = "link_scan"
+group = "aggregator"
+url = "https://somma.es/jobs/"
+link_pattern = 'somma\.es/job/[^/]+/?$'
+institution_from_context = true
+country = "Spain"
+note = "Spanish centres of excellence (CEMFI, BSE, CREI...) - all sciences, so fields are checked."
+
+[[board]]
+name = "jobs_ac_uk"
+type = "link_scan"
+group = "aggregator"
+urls = ["https://www.jobs.ac.uk/search/?keywords=predoctoral&pageSize=100", "https://www.jobs.ac.uk/search/?keywords=pre-doctoral&pageSize=100", "https://www.jobs.ac.uk/search/?keywords=research+assistant+economics&pageSize=100", "https://www.jobs.ac.uk/search/?keywords=research+assistant+finance&pageSize=100", "https://www.jobs.ac.uk/search/?keywords=research+officer+economics&pageSize=50", "https://www.jobs.ac.uk/search/?keywords=predoc&pageSize=50", "https://www.jobs.ac.uk/search/?keywords=research+assistant+business+school&pageSize=50", "https://www.jobs.ac.uk/search/?keywords=research+assistant+political+science&pageSize=50"]
+link_pattern = 'jobs\.ac\.uk/job/[A-Z0-9]+/'
+institution_from_context = true
+
+[[board]]
+name = "euraxess"
+type = "link_scan"
+group = "aggregator"
+urls = ["https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Apredoctoral", "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Apre-doctoral", "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aresearch%20assistant%20economics", "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=job_country%3A788&f%5B1%5D=keywords%3Abarcelona%20school%20of%20economics"]
+link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
+institution_from_context = true
+
+[[board]]
+name = "academictransfer"
+type = "link_scan"
+enabled = false
+group = "aggregator"
+urls = ["https://www.academictransfer.com/en/jobs/?q=research+assistant+economics", "https://www.academictransfer.com/en/jobs/?q=predoc"]
+link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
+institution_from_context = true
+country = "Netherlands"
+note = "OFF: page is built by JavaScript (always 0 jobs); Dutch jobs arrive via EURAXESS."
+
+[[board]]
+name = "jobbnorge"
+type = "link_scan"
+enabled = false
+group = "aggregator"
+urls = ["https://www.jobbnorge.no/en/available-jobs?search=research+assistant+economics"]
+link_pattern = 'jobbnorge\.no/(en/)?available-jobs/job/\d+'
+institution_from_context = true
+country = "Norway"
+note = "OFF: search address no longer exists (HTTP 404); Norwegian jobs arrive via EURAXESS."
+
+[[board]]
+name = "academic_positions"
+type = "link_scan"
+enabled = false
+group = "aggregator"
+urls = ["https://academicpositions.com/find-jobs?positions[0]=research-assistant&fields[0]=economics", "https://academicpositions.com/find-jobs?positions[0]=research-assistant&fields[0]=finance"]
+render = true
+link_pattern = 'academicpositions\.com/ad/'
+institution_from_context = true
+note = "OFF: JavaScript-rendered; needs Playwright."
+
+
+# --- university ------------------------------------------------------------
+
+[[board]]
+name = "cambridge"
+type = "link_scan"
+enabled = false
+group = "university"
+urls = ["https://www.cam.ac.uk/jobs/term/research?combine=economics", "https://www.cam.ac.uk/jobs/term/research?combine=research+assistant", "https://www.cam.ac.uk/jobs/term/research?combine=finance"]
+link_pattern = 'cam\.ac\.uk/jobs/[a-z0-9-]+-[a-z]{2}\d{4,6}$'
+institution = "University of Cambridge"
+country = "United Kingdom"
+note = "OFF: cam.ac.uk blocks GitHub servers (HTTP 403); Cambridge posts on jobs.ac.uk."
+
+[[board]]
+name = "oxford"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://my.corehr.com/pls/uoxrecruit/erq_search_version_4.start_search_with_params?p_company=10&p_internal_external=E&p_display_in_irish=N&p_competition_type=RE&p_force_type=E"
+link_pattern = 'p_id=\d+'
+institution = "University of Oxford"
+country = "United Kingdom"
+note = "OFF: job links are JavaScript buttons (0 jobs); Oxford posts on jobs.ac.uk."
+
+[[board]]
+name = "lse"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://jobs.lse.ac.uk/Vacancies.aspx"
+link_pattern = 'jobs\.lse\.ac\.uk/Vacancies/W/\d+/'
+institution = "London School of Economics and Political Science"
+country = "United Kingdom"
+note = "OFF: job links are JavaScript buttons (0 jobs); LSE posts on jobs.ac.uk."
+
+[[board]]
+name = "stockholm_university"
+type = "varbi"
+group = "university"
+url = "https://su.varbi.com/en/"
+institution = "Stockholm University"
+country = "Sweden"
+
+[[board]]
+name = "stockholm_school_of_economics"
+type = "varbi"
+group = "university"
+urls = ["https://jobs.hhs.se/", "https://hhs.varbi.com/en/"]
+institution = "Stockholm School of Economics"
+country = "Sweden"
+
+[[board]]
+name = "uppsala"
+type = "varbi"
+group = "university"
+url = "https://uu.varbi.com/en/"
+institution = "Uppsala University"
+country = "Sweden"
+
+[[board]]
+name = "lund"
+type = "varbi"
+group = "university"
+url = "https://lu.varbi.com/en/"
+institution = "Lund University"
+country = "Sweden"
+
+[[board]]
+name = "copenhagen"
+type = "link_scan"
+group = "university"
+url = "https://employment.ku.dk/all-vacancies/"
+link_pattern = 'all-vacancies/?\?show=\d+'
+bare_date_is_deadline = true
+institution = "University of Copenhagen"
+country = "Denmark"
+
+[[board]]
+name = "uzh"
+type = "link_scan"
+group = "university"
+url = "https://jobs.uzh.ch/"
+link_pattern = 'jobs\.uzh\.ch/job-vacancies/'
+institution = "University of Zurich"
+country = "Switzerland"
+note = "University of Zurich (large economics pre-doc programme)."
+
+[[board]]
+name = "bocconi_leap"
+type = "link_scan"
+group = "university"
+url = "https://leap.unibocconi.eu/vacancies/recruitment"
+may_be_empty = true
+link_pattern = '(sharepoint\.com|\.pdf($|\?)|forms\.)'
+heading_titles = true
+institution = "Bocconi University (LEAP)"
+country = "Italy"
+field_implied = true
+note = "Bocconi LEAP/CLEAN predoc and RA openings (job descriptions are documents)."
+
+[[board]]
+name = "tse"
+type = "link_scan"
+group = "university"
+url = "https://www.tse-fr.eu/recruitment"
+may_be_empty = true
+link_pattern = "^https?://"
+institution = "Toulouse School of Economics"
+country = "France"
+field_implied = true
+
+[[board]]
+name = "pse"
+type = "link_scan"
+group = "university"
+url = "https://www.parisschoolofeconomics.eu/en/job-opportunities/"
+may_be_empty = true
+link_pattern = 'parisschoolofeconomics\.eu/en/job-opportunities/[^/]+/?$'
+institution = "Paris School of Economics"
+country = "France"
+field_implied = true
+
+[[board]]
+name = "mannheim_econ"
+type = "link_scan"
+group = "university"
+url = "https://www.vwl.uni-mannheim.de/en/about/about-the-department/job-vacancies/"
+may_be_empty = true
+link_pattern = 'myjob\.uni-mannheim\.de/job/\d+'
+institution = "University of Mannheim, Department of Economics"
+country = "Germany"
+field_implied = true
+
+[[board]]
+name = "bonn_econ"
+type = "link_scan"
+group = "university"
+url = "https://www.econ.uni-bonn.de/en/department/jobs-1/jobs"
+may_be_empty = true
+link_pattern = "stellenanzeigen/.+"
+institution = "University of Bonn, Department of Economics"
+country = "Germany"
+field_implied = true
+
+[[board]]
+name = "cemfi"
+type = "link_scan"
+group = "university"
+url = "https://www.cemfi.es/all_news.asp"
+may_be_empty = true
+link_pattern = "^https?://"
+institution = "CEMFI"
+country = "Spain"
+field_implied = true
+note = "CEMFI announces RA (pre-doc) calls as news items."
+
+[[board]]
+name = "iese"
+type = "link_scan"
+group = "university"
+url = "https://jobs.iese.edu/jobs"
+link_pattern = 'jobs\.iese\.edu/jobs/\d+-'
+institution = "IESE Business School"
+country = "Spain"
+note = "IESE Business School careers portal."
+
+[[board]]
+name = "crei"
+type = "link_scan"
+group = "university"
+url = "https://crei.cat/work-with-us/"
+may_be_empty = true
+link_pattern = '(job|position|vacanc|offer|predoc|research-assistant|call|\.pdf$)'
+title_min_len = 12
+institution = "CREI"
+country = "Spain"
+
+[[board]]
+name = "uab_ufae"
+type = "link_scan"
+group = "university"
+url = "https://www.uabufae.eu/work"
+may_be_empty = true
+link_pattern = '(job|position|vacanc|offer|predoc|research-assistant|call|\.pdf$)'
+title_min_len = 12
+institution = "UAB - Department of Applied Economics / Economics"
+country = "Spain"
+
+[[board]]
+name = "ubc"
+type = "workday"
+group = "university"
+url = "https://ubc.wd10.myworkdayjobs.com/ubcstaffjobs"
+search_terms = ["predoctoral", "research assistant economics", "research assistant finance", "economics"]
+max_pages = 2
+institution = "University of British Columbia"
+country = "Canada"
+
+[[board]]
+name = "mcgill"
+type = "workday"
+group = "university"
+url = "https://mcgill.wd3.myworkdayjobs.com/McGill_Careers"
+search_terms = ["predoctoral", "research assistant economics", "research assistant finance", "economics"]
+max_pages = 2
+institution = "McGill University"
+country = "Canada"
+
+[[board]]
+name = "toronto"
+type = "link_scan"
+group = "university"
+urls = ["https://jobs.utoronto.ca/search/?q=research+assistant+economics&sortColumn=referencedate&sortDirection=desc", "https://jobs.utoronto.ca/search/?q=predoctoral&sortColumn=referencedate&sortDirection=desc", "https://jobs.utoronto.ca/search/?q=economics&sortColumn=referencedate&sortDirection=desc"]
+link_pattern = 'jobs\.utoronto\.ca/job/[^/]+/\d+/?$'
+institution = "University of Toronto"
+country = "Canada"
+
+
+# --- social ------------------------------------------------------------
+
+[[board]]
+name = "linkedin"
+type = "linkedin"
+group = "social"
+min_interval = 4
+employer_required = true
+keywords = ["predoc economics", "pre-doctoral economics", "predoctoral", "pre-doctoral fellow", "research assistant economics university", "research assistant business school"]
+locations = ["European Union", "United Kingdom", "Canada", "Switzerland", "Norway"]
+f_TPR = "r604800"
+max_pages = 1
+backend = "guest"
+note = "LinkedIn always names the employer, so it must be academic (employer_required)."
+
+# ===========================================================================
+# Feeds (templates, OFF)
+# ===========================================================================
+
+[[feed]]
+name = "nber-jobs"
+url = "https://www.nber.org/RePEc/CGI-Bin/AutoRSS/entries.rss"
+country = "International"
+enabled = false
+verified = false
+note = "Placeholder. NBER's job-market RSS moves between paths across site redesigns; confirm the current feed path before enabling."
+tags = ["economics"]
+
+[[feed]]
+name = "example-university-jobs"
+url = "https://jobs.example.ac.uk/rss/rss.aspx?cat=607"
+country = "United Kingdom"
+enabled = false
+verified = false
+note = "Template for the common per-institution RSS pattern: /rss/rss.aspx?cat=<category-id>. Replace with a real institution and category id, then verify."
+tags = ["template"]
+
+# ===========================================================================
+# Portals (templates, OFF). INOMICS, EconJobMarket and EURAXESS are read by
+# the [[board]] entries above instead.
+# ===========================================================================
+
+[[portal]]
+name = "example-econ-department"
+url = "https://econ.example.org/jobs/"
+country = "International"
+enabled = false
+verified = false
+follow_links = true
+link_pattern = "/jobs/[0-9]+/?$"
+note = "Template portal entry. Point at a real department listings page, set link_pattern to match that site's detail-page URLs, then run predoc-pipeline sources verify."
+tags = ["template"]

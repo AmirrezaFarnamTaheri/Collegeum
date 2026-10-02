@@ -1,0 +1,31 @@
+Now I'll rewrite the gate's reject logic so it only looks at the subject of a post (title + opening lines), not passing mentions like "work with PhD students".Now the main pipeline rewrite.Porting my tested scraper/filter/heuristic tests into the friend's project (imports rewritten, Twitter/DB-specific ones dropped).
+Now updating the project status doc so future sessions know about this version.I've finished an updated version of your friend's bot, but as he sent it, it doesn't work: it would run every day and never send you a single position.
+I couldn't run it against the real job websites from here, because my workspace blocks them. All 245 automated tests pass using saved copies of real job pages and a pretend Telegram, including a second-day run that correctly sends nothing twice. A separate review pass found 11 bugs in my own merged code, and they are all fixed.
+What was wrong with your friend's version:
+- Nothing would ever run. The folder with the automatic GitHub jobs was missing from his zip.
+- No websites were switched on. Every source in his list was an example entry, turned off.
+- It needs Gemini, Google's AI. Without a Gemini key it rejects every position, and Gemini isn't available from Iran.
+- Its filter threw out real predocs. Any ad that merely mentions "PhD students", "PhD program", "Assistant Professor" or a "Chair" was rejected, and so was a title like "Pre-doctoral Fellowship". That was 4 of the 5 realistic ads I tested.
+- J-PAL was listed as a top source, and nothing checked country, employer type or field. US jobs, bank jobs and psychology jobs would have come through.
+- Nothing checked whether a position was already filled.
+- Some apply links would break, because it rewrote the web addresses.
+What I kept from his version: its better overall design, including catching the same job posted on two websites and an optional web dashboard.
+What I added from your bot:
+- All 27 working job websites (PREDOC.org, EJM, jobs.ac.uk, EURAXESS, CEMFI, Zurich, the Swedish universities, UBC, McGill, LinkedIn and the rest).
+- Your rules: UK, Europe and Canada only; economics and business fields; universities and institutes only; no banks, no J-PAL. They're in one file, config/preferences.toml, and they apply even if you add a Gemini key later.
+- A way to read the ads without Gemini, so no key is needed.
+- The filled-position checks before sending, plus a re-check every 3 days.
+- /positions, /applied, /valid, /hidden and the ✅ ❌ 📝 buttons.
+- Real apply links instead of bit.ly, the "year not stated" warning on deadlines, and a daily run at 07:30 Tehran time.
+What you need to do (the full steps are in SETUP_GUIDE.md):
+1. Switch off the old bot first. In your predoc-bot repository, open Actions and disable both workflows. Otherwise the two bots fight over your Telegram messages and you get every position twice.
+2. Create a new private repository called predoc-pipeline and upload the unzipped files.
+3. Create the two automatic jobs by hand (Add file → Create new file). Name them .github/workflows/pipeline.yml and .github/workflows/telegram.yml, and paste in the contents of the two files I sent.
+4. Allow the jobs to save their data: Settings → Actions → General → "Read and write permissions".
+5. Add two secrets: TELEGRAM_BOT_TOKEN (same token as before) and TELEGRAM_PUBLIC_CHANNEL_ID. The second one is your chat id, the same number you used as TELEGRAM_CHAT_ID. Note the new name.
+6. Run it once from Actions. The first run sends every position that's open right now, in numbered lists of 6. After that you only get new ones.
+Files are in /mnt/user-data/outputs/:
+- predoc-pipeline.zip
+- SETUP_GUIDE.md
+- pipeline.yml
+- telegram.yml
