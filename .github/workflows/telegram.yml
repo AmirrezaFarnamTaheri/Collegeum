@@ -30,7 +30,7 @@ jobs:
       # ref: the branch, not the commit that triggered the run. A run that
       # waited in the queue behind the other workflow must start from the
       # newest data, not from the state before that run.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
