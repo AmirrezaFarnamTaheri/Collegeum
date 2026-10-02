@@ -1,0 +1,560 @@
+"""Ingestion collectors and the gather orchestrator.
+
+Every collector returns ``(items, SourceStats)`` and never raises into the
+caller: one dead portal must not take the run down, but it must also be
+*visible*, which is what the per-source stats are for. The reviewed
+implementation swallowed exceptions into a log line and returned a flat list,
+so a source that silently returned zero items for a month looked identical to a
+quiet week.
+
+Collector inventory, in order of how much they can be trusted:
+
+``boards``   Job boards and university career sites (PREDOC.org, EJM, EJME,
+             jobs.ac.uk, EURAXESS, Workday/Varbi portals, department pages,
+             LinkedIn), via the scrapers in ``predoc_pipeline.boards``.
+             Default on: these are where econ/business predocs are posted.
+``feeds``    RSS/Atom that publishers deliberately syndicate. Default on.
+``portals``  Schema.org ``JobPosting`` metadata embedded in career pages --
+             published precisely so machines can read it. Default on.
+``jobspy``   Commercial job boards. Default **off**; see COMPLIANCE.md.
+``twitter``  Authenticated social search. Default **off**; see COMPLIANCE.md.
+
+Optional collectors import their dependency inside the function, so the base
+install stays small and a missing extra degrades to "source skipped" rather
+than ``ImportError`` at startup.
+"""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from typing import Any
+
+from ..core.textproc import html_to_text, squish, truncate
+from ..core.urls import canonicalize_url
+from ..models import RawItem
+from .http import PoliteClient
+from .sources import Source
+
+__all__ = ["SourceStats", "gather", "collect_feeds", "collect_portals", "COLLECTORS"]
+
+
+@dataclass(slots=True)
+class SourceStats:
+    name: str
+    items: int = 0
+    fetched: int = 0
+    unchanged: int = 0
+    errors: int = 0
+    messages: list[str] = field(default_factory=list)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "items": self.items,
+            "fetched": self.fetched,
+            "unchanged": self.unchanged,
+            "errors": self.errors,
+            "messages": self.messages[:5],
+        }
+
+
+# --------------------------------------------------------------------------
+# Feeds
+# --------------------------------------------------------------------------
+
+def _feed_entry_text(entry: Any) -> tuple[str, str | None]:
+    """Richest available body for an entry, plus the original HTML."""
+    html = ""
+    contents = getattr(entry, "content", None) or []
+    if contents:
+        html = max((c.get("value", "") for c in contents), key=len, default="")
+    if not html:
+        html = entry.get("summary") or entry.get("description") or ""
+    return html_to_text(html), (html or None)
+
+
+def collect_feeds(
+    sources: list[Source], client: PoliteClient, *, max_items: int
+) -> tuple[list[RawItem], list[SourceStats]]:
+    """RSS/Atom ingestion via feedparser, fed from the polite client."""
+    try:
+        import feedparser
+    except ImportError:  # pragma: no cover - feedparser is a base dependency
+        return [], [SourceStats("feeds", errors=1, messages=["feedparser not installed"])]
+
+    items: list[RawItem] = []
+    stats: list[SourceStats] = []
+
+    for source in sources:
+        stat = SourceStats(source.name)
+        result = client.get(source.url)
+        stat.fetched = 1
+        if result.skipped:
+            stat.unchanged = 1
+            stats.append(stat)
+            continue
+        if not result.ok:
+            stat.errors = 1
+            stat.messages.append(result.error or f"HTTP {result.status}")
+            stats.append(stat)
+            continue
+
+        parsed = feedparser.parse(result.content or result.text.encode("utf-8"))
+        if getattr(parsed, "bozo", 0) and not parsed.entries:
+            stat.errors = 1
+            stat.messages.append(f"unparseable feed: {getattr(parsed, 'bozo_exception', '')}")
+            stats.append(stat)
+            continue
+
+        cap = source.max_items or max_items
+        for entry in parsed.entries[:cap]:
+            link = entry.get("link") or entry.get("id") or ""
+            title = squish(entry.get("title", ""))
+            if not link or not title:
+                continue
+            text, html = _feed_entry_text(entry)
+            body = f"{title}\n\n{text}".strip()
+            items.append(
+                RawItem(
+                    source=f"feed:{source.name}",
+                    source_url=canonicalize_url(link),
+                    title=title,
+                    text=body,
+                    html=html,
+                )
+            )
+            stat.items += 1
+        stats.append(stat)
+
+    return items, stats
+
+
+# --------------------------------------------------------------------------
+# Portals (Schema.org JobPosting)
+# --------------------------------------------------------------------------
+
+_JSONLD_BLOCK = re.compile(
+    r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _iter_jobpostings(payload: Any):
+    """Walk arbitrarily nested JSON-LD looking for JobPosting nodes."""
+    if isinstance(payload, dict):
+        types = payload.get("@type")
+        types = [types] if isinstance(types, str) else (types or [])
+        if any(str(t).lower() == "jobposting" for t in types):
+            yield payload
+        for value in payload.values():
+            yield from _iter_jobpostings(value)
+    elif isinstance(payload, list):
+        for value in payload:
+            yield from _iter_jobpostings(value)
+
+
+def _jobposting_items(html: str, page_url: str, source_name: str) -> list[RawItem]:
+    """Extract JobPosting nodes, preferring extruct and falling back to stdlib.
+
+    extruct also reads Microdata and RDFa, which is worth having, but it is an
+    optional extra: a JSON-LD-only fallback with the standard library covers
+    the large majority of modern applicant-tracking systems and keeps the base
+    install lean.
+    """
+    postings: list[dict[str, Any]] = []
+    try:
+        import extruct
+        from w3lib.html import get_base_url
+
+        data = extruct.extract(
+            html,
+            base_url=get_base_url(html, page_url),
+            syntaxes=["json-ld", "microdata"],
+            uniform=True,
+        )
+        for syntax in ("json-ld", "microdata"):
+            postings.extend(_iter_jobpostings(data.get(syntax, [])))
+    except ImportError:
+        import json
+
+        for block in _JSONLD_BLOCK.findall(html or ""):
+            try:
+                postings.extend(_iter_jobpostings(json.loads(block)))
+            except (ValueError, TypeError):
+                continue
+    except Exception:
+        return []
+
+    items: list[RawItem] = []
+    for posting in postings:
+        title = squish(str(posting.get("title") or ""))
+        if not title:
+            continue
+        org = posting.get("hiringOrganization") or {}
+        org_name = org.get("name") if isinstance(org, dict) else str(org)
+        description = html_to_text(str(posting.get("description") or ""))
+        location = posting.get("jobLocation") or {}
+        place = ""
+        if isinstance(location, dict):
+            address = location.get("address") or {}
+            if isinstance(address, dict):
+                place = " ".join(
+                    str(address.get(k, ""))
+                    for k in ("addressLocality", "addressRegion", "addressCountry")
+                ).strip()
+        deadline = posting.get("validThrough") or ""
+        url = canonicalize_url(str(posting.get("url") or page_url))
+        body = "\n".join(
+            part
+            for part in (
+                title,
+                str(org_name or ""),
+                place,
+                f"Closing date: {deadline}" if deadline else "",
+                "",
+                description,
+            )
+            if part
+        )
+        items.append(
+            RawItem(
+                source=f"portal:{source_name}",
+                source_url=url,
+                title=title,
+                text=body,
+                apply_url_hint=url,
+            )
+        )
+    return items
+
+
+def _detail_links(html: str, page_url: str, pattern: str, limit: int) -> list[str]:
+    """Candidate detail-page links from an index page."""
+    from urllib.parse import urljoin
+
+    if not pattern:
+        return []
+    matcher = re.compile(pattern, re.IGNORECASE)
+    hrefs = re.findall(r'href=["\']([^"\']+)["\']', html or "", re.IGNORECASE)
+    seen: set[str] = set()
+    out: list[str] = []
+    for href in hrefs:
+        absolute = urljoin(page_url, href)
+        if matcher.search(absolute) and absolute not in seen:
+            seen.add(absolute)
+            out.append(absolute)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def collect_portals(
+    sources: list[Source], client: PoliteClient, *, max_items: int
+) -> tuple[list[RawItem], list[SourceStats]]:
+    """Read embedded JobPosting metadata from institutional career pages.
+
+    Index pages rarely embed JobPosting themselves -- the detail pages do -- so
+    a source may declare ``follow_links`` with a ``link_pattern`` and the
+    collector will fetch a bounded number of detail pages behind it. The
+    reviewed implementation pointed extruct at seven landing pages and would
+    have found almost nothing.
+    """
+    items: list[RawItem] = []
+    stats: list[SourceStats] = []
+
+    for source in sources:
+        stat = SourceStats(source.name)
+        cap = source.max_items or max_items
+        result = client.get(source.url)
+        stat.fetched = 1
+        if result.skipped:
+            stat.unchanged = 1
+            stats.append(stat)
+            continue
+        if not result.ok:
+            stat.errors = 1
+            stat.messages.append(result.error or f"HTTP {result.status}")
+            stats.append(stat)
+            continue
+
+        found = _jobposting_items(result.text, result.url, source.name)
+
+        if source.follow_links and len(found) < cap:
+            for link in _detail_links(
+                result.text, result.url, source.link_pattern, limit=cap - len(found)
+            ):
+                detail = client.get(link)
+                stat.fetched += 1
+                if detail.skipped:
+                    stat.unchanged += 1
+                    continue
+                if not detail.ok:
+                    stat.errors += 1
+                    continue
+                found.extend(_jobposting_items(detail.text, detail.url, source.name))
+                if len(found) >= cap:
+                    break
+
+        found = found[:cap]
+        items.extend(found)
+        stat.items = len(found)
+        if stat.items == 0 and stat.errors == 0:
+            stat.messages.append("no JobPosting metadata found")
+        stats.append(stat)
+
+    return items, stats
+
+
+# --------------------------------------------------------------------------
+# Optional, terms-of-service sensitive collectors
+# --------------------------------------------------------------------------
+
+def collect_jobspy(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
+    """Commercial job boards via python-jobspy. Opt-in; see COMPLIANCE.md."""
+    stat = SourceStats("jobspy")
+    try:
+        from jobspy import scrape_jobs
+    except ImportError:
+        stat.messages.append("python-jobspy not installed (extra: boards)")
+        return [], [stat]
+
+    queries = (
+        ("linkedin", "predoctoral research fellow", "Europe", None),
+        ("linkedin", "pre-doctoral research assistant economics", "Europe", None),
+        ("indeed", "predoctoral research assistant", "United Kingdom", "uk"),
+        ("indeed", "research assistant economics", "Germany", "germany"),
+    )
+    per_query = max(5, settings.max_items_per_source // len(queries))
+    items: list[RawItem] = []
+
+    for site, term, location, country in queries:
+        kwargs: dict[str, Any] = {
+            "site_name": [site],
+            "search_term": term,
+            "location": location,
+            "results_wanted": per_query,
+            "hours_old": 72,
+        }
+        if country:
+            kwargs["country_indeed"] = country
+        if site == "linkedin":
+            kwargs["linkedin_fetch_description"] = True
+        try:
+            frame = scrape_jobs(**kwargs)
+        except Exception as exc:
+            stat.errors += 1
+            stat.messages.append(f"{site}/{term}: {exc}")
+            continue
+        stat.fetched += 1
+        try:
+            records = frame.to_dict("records")
+        except AttributeError:  # pragma: no cover - shape change upstream
+            records = list(frame or [])
+        for record in records:
+            url = record.get("job_url") or ""
+            title = squish(str(record.get("title") or ""))
+            if not url or not title:
+                continue
+            body = "\n".join(
+                p
+                for p in (
+                    title,
+                    squish(str(record.get("company") or "")),
+                    squish(str(record.get("location") or "")),
+                    "",
+                    html_to_text(str(record.get("description") or "")),
+                )
+                if p
+            )
+            items.append(
+                RawItem(
+                    source=f"jobspy:{site}",
+                    source_url=canonicalize_url(url),
+                    title=title,
+                    text=body,
+                )
+            )
+            stat.items += 1
+    return items, [stat]
+
+
+def collect_twitter(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
+    """Authenticated social search via twscrape. Opt-in; see COMPLIANCE.md.
+
+    Credentials are read from the ``TWSCRAPE_ACCOUNTS`` environment variable and
+    written to a gitignored temporary file. The reviewed implementation read
+    ``data/accounts.txt`` from inside the repository, with plaintext passwords,
+    and did not gitignore it.
+    """
+    import asyncio
+    import os
+    import tempfile
+    from pathlib import Path
+
+    stat = SourceStats("twitter")
+    blob = os.environ.get("TWSCRAPE_ACCOUNTS", "").strip()
+    if not blob:
+        stat.messages.append("TWSCRAPE_ACCOUNTS not set; source skipped")
+        return [], [stat]
+    try:
+        from twscrape import API
+        from twscrape import gather as tw_gather
+    except ImportError:
+        stat.messages.append("twscrape not installed (extra: social)")
+        return [], [stat]
+
+    queries = (
+        '"predoctoral" (hiring OR vacancy OR "we are recruiting") -filter:replies',
+        '"pre-doc" (economics OR finance) (hiring OR apply) -filter:replies',
+        '"research assistant" economics (hiring OR "now accepting") -filter:replies',
+    )
+    per_query = max(5, settings.max_items_per_source // len(queries))
+
+    async def run() -> list[RawItem]:
+        # twscrape uses aiosqlite; connections bind to the creating event loop,
+        # so every await must happen inside this single asyncio.run().
+        out: list[RawItem] = []
+        with tempfile.TemporaryDirectory() as tmp:
+            session_db = str(Path(tmp) / "twscrape.db")
+            api = API(session_db)
+            for line in blob.splitlines():
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split(":", 4)
+                if len(parts) < 5:
+                    stat.messages.append("malformed account line skipped")
+                    continue
+                try:
+                    await api.pool.add_account(*parts[:4], cookies=parts[4])
+                except Exception as exc:
+                    stat.messages.append(f"add_account failed: {exc}")
+            try:
+                await api.pool.login_all()
+            except Exception as exc:
+                stat.messages.append(f"login: {exc}")
+            for query in queries:
+                try:
+                    tweets = await tw_gather(api.search(query, limit=per_query))
+                except Exception as exc:
+                    stat.errors += 1
+                    stat.messages.append(f"search failed: {exc}")
+                    continue
+                stat.fetched += 1
+                for tweet in tweets:
+                    text = getattr(tweet, "rawContent", "") or ""
+                    if not text:
+                        continue
+                    username = getattr(getattr(tweet, "user", None), "username", "i")
+                    out.append(
+                        RawItem(
+                            source="twitter",
+                            source_url=f"https://x.com/{username}/status/{tweet.id}",
+                            title=truncate(squish(text), 100),
+                            text=text,
+                        )
+                    )
+                    stat.items += 1
+        return out
+
+    try:
+        items = asyncio.run(run())
+    except Exception as exc:
+        stat.errors += 1
+        stat.messages.append(f"twscrape: {exc}")
+        return [], [stat]
+    return items, [stat]
+
+
+COLLECTORS: dict[str, str] = {
+    "boards": "job boards and university career sites (see [[board]] in sources.toml)",
+    "feeds": "syndicated RSS/Atom feeds",
+    "portals": "Schema.org JobPosting metadata on career pages",
+    "jobspy": "commercial job boards (opt-in)",
+    "twitter": "authenticated social search (opt-in)",
+}
+
+
+def gather(
+    settings: Any,
+    sources: list[Source],
+    client: PoliteClient,
+    *,
+    only: set[str] | None = None,
+    on_progress: Callable[[str, SourceStats], None] | None = None,
+    prefs: Any | None = None,
+    known: Callable[[str], bool] | None = None,
+    board_transport: Any | None = None,
+) -> tuple[list[RawItem], dict[str, Any]]:
+    """Run every enabled collector. Returns items and per-source statistics.
+
+    ``only`` names collectors ("boards", "feeds"...) or individual board
+    sources ("cemfi", "linkedin"...). ``known(url)`` tells the boards collector
+    which postings were already judged, so their pages are not re-read.
+    """
+    items: list[RawItem] = []
+    stats: dict[str, Any] = {}
+
+    def wanted(name: str) -> bool:
+        return (only is None or name in only) and getattr(settings, f"enable_{name}", False)
+
+    board_names = set(only or ()) - set(COLLECTORS)
+    if getattr(settings, "enable_boards", False) and (only is None or "boards" in only
+                                                      or board_names):
+        from ..boards.collector import collect_boards
+        from ..boards.config import load_preferences
+
+        try:
+            run = collect_boards(
+                settings.sources_config,
+                prefs or load_preferences(settings.preferences_config),
+                known=known or (lambda _url: False),
+                only=board_names or None,
+                transport=board_transport,
+            )
+        except Exception as exc:  # pragma: no cover - collector-level guard
+            stats["boards"] = {"items": 0, "errors": 1, "messages": [str(exc)[:200]]}
+        else:
+            items.extend(run.items)
+            stats.update({f"board:{name}": data for name, data in run.stats.items()})
+            stats["_boards"] = {"kind": "summary", "known": run.known,
+                                "deferred": run.deferred, "rejected": run.rejected}
+
+    if wanted("feeds"):
+        feed_sources = [s for s in sources if s.kind == "feed" and s.enabled]
+        got, per_source = collect_feeds(
+            feed_sources, client, max_items=settings.max_items_per_source
+        )
+        items.extend(got)
+        for stat in per_source:
+            stats[f"feed:{stat.name}"] = stat.as_dict()
+            if on_progress:
+                on_progress("feeds", stat)
+
+    if wanted("portals"):
+        portal_sources = [s for s in sources if s.kind == "portal" and s.enabled]
+        got, per_source = collect_portals(
+            portal_sources, client, max_items=settings.max_items_per_source
+        )
+        items.extend(got)
+        for stat in per_source:
+            stats[f"portal:{stat.name}"] = stat.as_dict()
+            if on_progress:
+                on_progress("portals", stat)
+
+    for name, collector in (("jobspy", collect_jobspy), ("twitter", collect_twitter)):
+        if not wanted(name):
+            continue
+        try:
+            got, per_source = collector(settings)
+        except Exception as exc:  # pragma: no cover - collector-level guard
+            stats[name] = {"items": 0, "errors": 1, "messages": [str(exc)[:200]]}
+            continue
+        items.extend(got)
+        for stat in per_source:
+            stats[stat.name] = stat.as_dict()
+            if on_progress:
+                on_progress(name, stat)
+
+    return items, stats

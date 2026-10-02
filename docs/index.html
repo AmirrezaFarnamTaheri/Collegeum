@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Predoc Listings — non-US research assistantships</title>
+<meta name="description" content="Predoctoral research assistantships in economics, finance and public policy, outside the United States." />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink: #16202B;
+    --ink-soft: #445164;
+    --paper: #F7F8FA;
+    --paper-raised: #FFFFFF;
+    --rule: #DCE1E8;
+    --rule-strong: #B7C0CC;
+    --civic-blue: #1E4C8A;
+    --civic-blue-soft: #E7EEF7;
+    --amber: #B8730A;
+    --amber-soft: #FBF0DD;
+    --red: #A32B22;
+    --red-soft: #FBE9E7;
+    --green: #2B6B3F;
+    --green-soft: #E7F3EA;
+    --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  }
+
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --ink: #E7EBF1;
+      --ink-soft: #A7B2C2;
+      --paper: #12161C;
+      --paper-raised: #191F27;
+      --rule: #2A323D;
+      --rule-strong: #3B4552;
+      --civic-blue: #7FA8DD;
+      --civic-blue-soft: #1B2734;
+      --amber: #E0A24D;
+      --amber-soft: #2C2416;
+      --red: #E08A80;
+      --red-soft: #2E1A18;
+      --green: #7FBF93;
+      --green-soft: #17251B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #E7EBF1; --ink-soft: #A7B2C2; --paper: #12161C; --paper-raised: #191F27;
+    --rule: #2A323D; --rule-strong: #3B4552; --civic-blue: #7FA8DD; --civic-blue-soft: #1B2734;
+    --amber: #E0A24D; --amber-soft: #2C2416; --red: #E08A80; --red-soft: #2E1A18;
+    --green: #7FBF93; --green-soft: #17251B;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--civic-blue); }
+
+  header.masthead {
+    border-bottom: 3px solid var(--ink);
+    padding: 28px clamp(16px, 4vw, 48px) 18px;
+  }
+  header.masthead .rule-thin { border-top: 1px solid var(--rule-strong); margin-top: 10px; padding-top: 10px; }
+  header.masthead h1 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(24px, 3.2vw, 34px);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  header.masthead .dek {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 0;
+  }
+  header .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 4vw, 48px) 64px;
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    padding: 14px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .toolbar input[type="search"] {
+    flex: 1 1 220px;
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 8px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  select {
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  .toolbar .count {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  button.reset {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    background: none;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 7px 10px;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  button.reset:hover { border-color: var(--civic-blue); color: var(--civic-blue); }
+
+  table.ledger {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+  }
+  table.ledger thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+    padding: 10px 10px;
+    white-space: nowrap;
+  }
+  table.ledger tbody tr { border-bottom: 1px solid var(--rule); cursor: pointer; }
+  table.ledger tbody tr:hover { background: var(--paper-raised); }
+  table.ledger td { padding: 12px 10px; vertical-align: top; }
+
+  td.deadline-cell { width: 128px; }
+  .deadline-gutter {
+    display: inline-block;
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 12.5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .dl-urgent { background: var(--red-soft); color: var(--red); }
+  .dl-soon   { background: var(--amber-soft); color: var(--amber); }
+  .dl-open   { background: var(--green-soft); color: var(--green); }
+  .dl-none   { background: transparent; color: var(--ink-soft); border: 1px dashed var(--rule-strong); }
+
+  td.title-cell .title {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 16px;
+    display: block;
+    margin-bottom: 2px;
+  }
+  td.title-cell .institution { color: var(--ink-soft); font-size: 13px; }
+  td.title-cell .tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--civic-blue-soft);
+    color: var(--civic-blue);
+    white-space: nowrap;
+  }
+  .tag.visa-explicit { background: var(--green-soft); color: var(--green); }
+  .tag.visa-inferred { background: var(--amber-soft); color: var(--amber); }
+  .tag.visa-none { background: var(--red-soft); color: var(--red); }
+
+  td.loc-cell { color: var(--ink-soft); font-size: 13px; width: 160px; }
+
+  .empty-state, .loading-state, .error-state {
+    padding: 64px 12px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+  }
+
+  dialog.detail {
+    max-width: 640px;
+    width: 92vw;
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  dialog.detail::backdrop { background: rgba(10, 14, 20, 0.55); }
+  dialog.detail .panel { padding: 26px 28px 22px; }
+  dialog.detail h2 { font-family: var(--serif); font-size: 22px; margin: 0 0 4px; }
+  dialog.detail .institution { color: var(--ink-soft); margin-bottom: 14px; }
+  dialog.detail dl { display: grid; grid-template-columns: 120px 1fr; gap: 7px 12px; font-size: 13.5px; margin: 14px 0; }
+  dialog.detail dt { color: var(--ink-soft); font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; padding-top: 2px; }
+  dialog.detail .summary { font-family: var(--serif); font-size: 15px; line-height: 1.6; border-top: 1px solid var(--rule); padding-top: 14px; margin-top: 14px; }
+  dialog.detail .actions { display: flex; gap: 10px; margin-top: 20px; }
+  dialog.detail .actions a {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 13.5px;
+    text-decoration: none;
+    padding: 9px 16px;
+    border-radius: 3px;
+    background: var(--civic-blue);
+    color: #fff;
+  }
+  dialog.detail .actions a.secondary { background: transparent; color: var(--civic-blue); border: 1px solid var(--civic-blue); }
+  dialog.detail button.close {
+    position: absolute; top: 14px; right: 14px;
+    background: none; border: none; font-size: 20px; color: var(--ink-soft); cursor: pointer;
+  }
+  dialog.detail { position: relative; }
+
+  footer.colophon {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 20px clamp(16px, 4vw, 48px) 48px;
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    border-top: 1px solid var(--rule);
+  }
+  footer.colophon a { color: var(--ink-soft); }
+  footer.colophon .health-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); margin-right: 5px; vertical-align: middle;
+  }
+  footer.colophon .health-dot.stale { background: var(--amber); }
+  footer.colophon .health-dot.dead { background: var(--red); }
+
+  @media (max-width: 720px) {
+    table.ledger thead { display: none; }
+    table.ledger, table.ledger tbody, table.ledger tr, table.ledger td { display: block; width: 100%; }
+    table.ledger tbody tr { padding: 14px 4px; }
+    td.deadline-cell { width: auto; margin-bottom: 8px; }
+    td.loc-cell { width: auto; margin-top: 6px; }
+    dialog.detail dl { grid-template-columns: 100px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <h1>Predoc Listings</h1>
+  <p class="dek">Pre-doctoral research assistantships in economics, finance and public policy — outside the United States.</p>
+  <div class="rule-thin meta-row">
+    <span id="meta-count">— listings</span>
+    <span id="meta-updated">—</span>
+    <span><a href="feed.xml">RSS feed</a></span>
+    <span><a href="https://github.com/" id="repo-link" target="_blank" rel="noopener">Source</a></span>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Search title, institution, supervisor…" aria-label="Search listings" />
+    <select id="filter-discipline" aria-label="Filter by discipline"><option value="">All disciplines</option></select>
+    <select id="filter-country" aria-label="Filter by country"><option value="">All countries</option></select>
+    <select id="filter-deadline" aria-label="Filter by deadline">
+      <option value="">Any deadline</option>
+      <option value="7">Closing within 7 days</option>
+      <option value="30">Closing within 30 days</option>
+      <option value="rolling">Rolling / unstated</option>
+    </select>
+    <select id="sort-by" aria-label="Sort">
+      <option value="deadline">Sort: deadline soonest</option>
+      <option value="newest">Sort: newest first</option>
+      <option value="institution">Sort: institution A–Z</option>
+    </select>
+    <button class="reset" id="reset-filters" type="button">Reset</button>
+    <span class="count" id="visible-count"></span>
+  </div>
+
+  <div id="state-region"></div>
+
+  <table class="ledger" id="ledger" hidden>
+    <thead>
+      <tr>
+        <th>Deadline</th>
+        <th>Position</th>
+        <th>Location</th>
+      </tr>
+    </thead>
+    <tbody id="ledger-body"></tbody>
+  </table>
+</div>
+
+<dialog class="detail" id="detail-dialog">
+  <div class="panel">
+    <button class="close" id="detail-close" aria-label="Close">&times;</button>
+    <h2 id="detail-title"></h2>
+    <div class="institution" id="detail-institution"></div>
+    <dl id="detail-fields"></dl>
+    <div class="summary" id="detail-summary"></div>
+    <div class="actions" id="detail-actions"></div>
+  </div>
+</dialog>
+
+<footer class="colophon">
+  <span id="health-indicator"><span class="health-dot"></span>checking pipeline health…</span>
+  &middot; Built with a small, config-driven scraper and a free-tier LLM gate. Not affiliated with any listed institution.
+  &middot; See a stale or incorrect listing? Its source link is in the detail view.
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  const state = {
+    listings: [],
+    filtered: [],
+  };
+
+  const els = {
+    search: document.getElementById('search'),
+    discipline: document.getElementById('filter-discipline'),
+    country: document.getElementById('filter-country'),
+    deadline: document.getElementById('filter-deadline'),
+    sortBy: document.getElementById('sort-by'),
+    reset: document.getElementById('reset-filters'),
+    ledger: document.getElementById('ledger'),
+    body: document.getElementById('ledger-body'),
+    stateRegion: document.getElementById('state-region'),
+    visibleCount: document.getElementById('visible-count'),
+    metaCount: document.getElementById('meta-count'),
+    metaUpdated: document.getElementById('meta-updated'),
+    dialog: document.getElementById('detail-dialog'),
+    detailTitle: document.getElementById('detail-title'),
+    detailInstitution: document.getElementById('detail-institution'),
+    detailFields: document.getElementById('detail-fields'),
+    detailSummary: document.getElementById('detail-summary'),
+    detailActions: document.getElementById('detail-actions'),
+    detailClose: document.getElementById('detail-close'),
+    healthIndicator: document.getElementById('health-indicator'),
+  };
+
+  function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+  }
+
+  function deadlineBadge(listing) {
+    if (!listing.deadline || listing.days_left == null) {
+      return { cls: 'dl-none', label: 'Rolling' };
+    }
+    const days = listing.days_left;
+    if (days < 0) return { cls: 'dl-none', label: 'Closed' };
+    if (days <= 7) return { cls: 'dl-urgent', label: days === 0 ? 'Today' : `${days}d left` };
+    if (days <= 30) return { cls: 'dl-soon', label: formatDate(listing.deadline) };
+    return { cls: 'dl-open', label: formatDate(listing.deadline) };
+  }
+
+  function formatDate(iso) {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch { return iso; }
+  }
+
+  function populateFilterOptions() {
+    const disciplines = new Set();
+    const countries = new Set();
+    for (const l of state.listings) {
+      (l.disciplines || []).forEach((d) => disciplines.add(d));
+      if (l.country) countries.add(l.country);
+    }
+    fillSelect(els.discipline, disciplines, 'All disciplines');
+    fillSelect(els.country, countries, 'All countries');
+  }
+
+  function fillSelect(select, values, placeholder) {
+    const current = select.value;
+    select.innerHTML = '';
+    const opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = placeholder;
+    select.appendChild(opt0);
+    Array.from(values).sort().forEach((v) => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      select.appendChild(opt);
+    });
+    select.value = current;
+  }
+
+  function applyFilters() {
+    const q = els.search.value.trim().toLowerCase();
+    const discipline = els.discipline.value;
+    const country = els.country.value;
+    const deadlineFilter = els.deadline.value;
+
+    let rows = state.listings.filter((l) => {
+      if (q) {
+        const hay = [l.title, l.institution, l.principal_investigator, l.summary]
+          .filter(Boolean).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (discipline && !(l.disciplines || []).includes(discipline)) return false;
+      if (country && l.country !== country) return false;
+      if (deadlineFilter === 'rolling' && l.deadline) return false;
+      if (deadlineFilter === '7' && !(l.days_left != null && l.days_left <= 7 && l.days_left >= 0)) return false;
+      if (deadlineFilter === '30' && !(l.days_left != null && l.days_left <= 30 && l.days_left >= 0)) return false;
+      return true;
+    });
+
+    const sortBy = els.sortBy.value;
+    rows = rows.slice().sort((a, b) => {
+      if (sortBy === 'institution') return (a.institution || '').localeCompare(b.institution || '');
+      if (sortBy === 'newest') return (b.first_seen_at || '').localeCompare(a.first_seen_at || '');
+      // deadline soonest: nulls (rolling) sort last
+      const ad = a.days_left == null ? Infinity : a.days_left;
+      const bd = b.days_left == null ? Infinity : b.days_left;
+      return ad - bd;
+    });
+
+    state.filtered = rows;
+    render();
+    syncQueryString();
+  }
+
+  function render() {
+    els.body.innerHTML = '';
+    els.visibleCount.textContent = `${state.filtered.length} shown of ${state.listings.length}`;
+
+    if (state.listings.length === 0) {
+      els.ledger.hidden = true;
+      els.stateRegion.innerHTML = '<div class="empty-state">No active listings right now. Check back tomorrow.</div>';
+      return;
+    }
+    if (state.filtered.length === 0) {
+      els.ledger.hidden = true;
+      els.stateRegion.innerHTML = '<div class="empty-state">No listings match these filters.</div>';
+      return;
+    }
+
+    els.stateRegion.innerHTML = '';
+    els.ledger.hidden = false;
+
+    const frag = document.createDocumentFragment();
+    for (const listing of state.filtered) {
+      const tr = document.createElement('tr');
+      tr.tabIndex = 0;
+      tr.addEventListener('click', () => openDetail(listing));
+      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') openDetail(listing); });
+
+      const badge = deadlineBadge(listing);
+      const tdDeadline = document.createElement('td');
+      tdDeadline.className = 'deadline-cell';
+      tdDeadline.innerHTML = `<span class="deadline-gutter ${badge.cls}">${escapeHtml(badge.label)}</span>`;
+
+      const tdTitle = document.createElement('td');
+      tdTitle.className = 'title-cell';
+      const tags = (listing.disciplines || []).slice(0, 2).map((d) => `<span class="tag">${escapeHtml(d)}</span>`).join('');
+      const visaClass = listing.visa === 'explicit' ? 'visa-explicit' : (listing.visa === 'inferred' ? 'visa-inferred' : (listing.visa === 'not_offered' ? 'visa-none' : ''));
+      const visaLabel = listing.visa === 'explicit' ? 'Visa: stated' : (listing.visa === 'inferred' ? 'Visa: likely' : (listing.visa === 'not_offered' ? 'Visa: not offered' : 'Visa: unknown'));
+      tdTitle.innerHTML = `
+        <span class="title">${escapeHtml(listing.title)}</span>
+        <span class="institution">${escapeHtml(listing.institution)}${listing.principal_investigator ? ' &middot; ' + escapeHtml(listing.principal_investigator) : ''}</span>
+        <span class="tags">${tags}<span class="tag ${visaClass}">${visaLabel}</span></span>
+      `;
+
+      const tdLoc = document.createElement('td');
+      tdLoc.className = 'loc-cell';
+      const place = [listing.city, listing.country].filter(Boolean).join(', ') || '\u2014';
+      tdLoc.textContent = place + (listing.is_remote ? ' \u00b7 remote' : '');
+
+      tr.append(tdDeadline, tdTitle, tdLoc);
+      frag.appendChild(tr);
+    }
+    els.body.appendChild(frag);
+  }
+
+  function openDetail(listing) {
+    els.detailTitle.textContent = listing.title;
+    els.detailInstitution.textContent = listing.institution +
+      (listing.principal_investigator ? ` — ${listing.principal_investigator}` : '');
+
+    const badge = deadlineBadge(listing);
+    const fields = [
+      ['Location', [listing.city, listing.country].filter(Boolean).join(', ') || 'Not stated'],
+      ['Remote', listing.is_remote ? 'Yes' : 'No'],
+      ['Duration', listing.duration_years ? `${listing.duration_years} year(s)` : 'Not stated'],
+      ['Deadline', badge.label + (listing.deadline ? ` (${formatDate(listing.deadline)})` : '')],
+      ['Disciplines', (listing.disciplines || []).join(', ') || 'Not classified'],
+      ['Visa sponsorship', listing.visa === 'explicit' ? 'Stated in advert' : (listing.visa === 'inferred' ? 'Likely (institutional policy)' : (listing.visa === 'not_offered' ? 'Not offered / citizens first' + (listing.visa_note ? ' — ' + listing.visa_note : '') : 'Unknown'))],
+      ['First seen', listing.first_seen_at ? formatDate(listing.first_seen_at) : '\u2014'],
+    ];
+    els.detailFields.innerHTML = fields.map(([k, v]) =>
+      `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join('');
+    els.detailSummary.textContent = listing.summary || '';
+
+    const showApply = listing.apply_url && listing.apply_url !== listing.source_url;
+    els.detailActions.innerHTML = `
+      <a href="${escapeHtml(listing.apply_url)}" target="_blank" rel="noopener">${showApply ? 'Apply' : 'Open listing'}</a>
+      ${showApply ? `<a class="secondary" href="${escapeHtml(listing.source_url)}" target="_blank" rel="noopener">Source</a>` : ''}
+    `;
+
+    if (typeof els.dialog.showModal === 'function') {
+      els.dialog.showModal();
+    }
+  }
+
+  els.detailClose.addEventListener('click', () => els.dialog.close());
+  els.dialog.addEventListener('click', (e) => { if (e.target === els.dialog) els.dialog.close(); });
+
+  function syncQueryString() {
+    const params = new URLSearchParams();
+    if (els.search.value) params.set('q', els.search.value);
+    if (els.discipline.value) params.set('discipline', els.discipline.value);
+    if (els.country.value) params.set('country', els.country.value);
+    if (els.deadline.value) params.set('deadline', els.deadline.value);
+    if (els.sortBy.value !== 'deadline') params.set('sort', els.sortBy.value);
+    const qs = params.toString();
+    const url = qs ? `${location.pathname}?${qs}` : location.pathname;
+    history.replaceState(null, '', url);
+  }
+
+  function loadFromQueryString() {
+    const params = new URLSearchParams(location.search);
+    if (params.has('q')) els.search.value = params.get('q');
+    if (params.has('discipline')) els.discipline.value = params.get('discipline');
+    if (params.has('country')) els.country.value = params.get('country');
+    if (params.has('deadline')) els.deadline.value = params.get('deadline');
+    if (params.has('sort')) els.sortBy.value = params.get('sort');
+  }
+
+  [els.search, els.discipline, els.country, els.deadline, els.sortBy].forEach((el) => {
+    el.addEventListener('input', applyFilters);
+    el.addEventListener('change', applyFilters);
+  });
+  els.reset.addEventListener('click', () => {
+    els.search.value = '';
+    els.discipline.value = '';
+    els.country.value = '';
+    els.deadline.value = '';
+    els.sortBy.value = 'deadline';
+    applyFilters();
+  });
+
+  async function loadData() {
+    els.stateRegion.innerHTML = '<div class="loading-state">Loading listings…</div>';
+    try {
+      const res = await fetch('data/listings.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+      state.listings = payload.listings || [];
+      els.metaCount.textContent = `${state.listings.length} active listing${state.listings.length === 1 ? '' : 's'}`;
+      els.metaUpdated.textContent = payload.generated_at ? `updated ${formatDate(payload.generated_at)}` : '';
+      populateFilterOptions();
+      loadFromQueryString();
+      applyFilters();
+    } catch (err) {
+      els.stateRegion.innerHTML = `<div class="error-state">Could not load listings (${escapeHtml(err.message)}). Try refreshing.</div>`;
+    }
+  }
+
+  async function loadHealth() {
+    try {
+      const res = await fetch('data/health.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('no health data');
+      const payload = await res.json();
+      const runs = payload.runs || [];
+      const lastOk = runs.find((r) => r.finished_at);
+      let cls = 'stale', label = 'No recent runs recorded';
+      if (lastOk) {
+        const hoursSince = (Date.now() - new Date(lastOk.finished_at).getTime()) / 36e5;
+        if (hoursSince < 30) { cls = ''; label = `Last run: ${formatDate(lastOk.finished_at)}, ${lastOk.published} published`; }
+        else if (hoursSince < 72) { cls = 'stale'; label = `Last run ${Math.round(hoursSince)}h ago — may be delayed`; }
+        else { cls = 'dead'; label = `No successful run in ${Math.round(hoursSince / 24)} days`; }
+      }
+      els.healthIndicator.innerHTML = `<span class="health-dot ${cls}"></span>${escapeHtml(label)}`;
+    } catch {
+      els.healthIndicator.innerHTML = '<span class="health-dot stale"></span>Pipeline health unavailable';
+    }
+  }
+
+  loadData();
+  loadHealth();
+})();
+</script>
+</body>
+</html>

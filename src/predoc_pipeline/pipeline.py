@@ -1,0 +1,893 @@
+"""The ETL orchestrator.
+
+Lifecycle of one candidate, in the order the stages actually run:
+
+    seen? -> gate -> budget -> extract -> coerce -> threshold -> preferences
+          -> dedupe -> INSERT(pending) -> still open? -> broadcast -> mark published
+
+and, once per run, for listings already sent: re-check the preferences, and
+re-visit a few links every day so filled positions drop off /positions and the
+dashboard.
+
+Two orderings here differ from the reviewed implementation and both are
+correctness fixes, not preferences.
+
+**The seen-check runs before extraction, not after.** The reviewed pipeline
+sent every ingested item to the model and only then checked whether it was a
+duplicate. Feeds re-serve the same entries every day, so that design pays a
+model request per listing per day, forever. With a daily request quota as the
+binding constraint, it exhausts the budget on re-reading yesterday's postings
+and never reaches today's. Checking ``seen_items`` first makes spend
+proportional to genuinely new items.
+
+**The row is inserted before the broadcast, not after.** The reviewed code
+broadcast first and inserted second, so a crash in between left a message in
+the channel with no record of it -- and the next run would send it again. Here
+the row goes in as ``pending``, the broadcast happens, and success flips it to
+``published``. A crash leaves a recoverable pending row, which
+``_republish_pending`` picks up on the next run. Duplicate delivery becomes
+impossible rather than merely unlikely.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import uuid
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any
+
+from . import state
+from .boards.config import Preferences, load_preferences
+from .core import gating
+from .core.db import Database
+from .core.db import init as init_db
+from .core.dedupe import Deduplicator
+from .core.ratelimit import QuotaExceeded
+from .core.textproc import escape_telegram_html, truncate
+from .core.timeparse import format_ts, parse_datetime
+from .core.urls import content_hash, url_hash
+from .extract import ExtractionError, RateLimited, build_extractor
+from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor
+from .ingest.collectors import gather
+from .ingest.http import PoliteClient
+from .ingest.sources import load_sources
+from .logging_setup import get_logger
+from .models import CoercionError, ExtractionResult, PredocListing, RawItem, coerce
+from .policy import Policy
+from .publish.feedback import FeedbackStore
+from .publish.telegram import (
+    TelegramClient,
+    TelegramError,
+    render_card,
+    render_digest_pages,
+    render_keyboard,
+)
+from .settings import Settings
+
+log = get_logger(__name__)
+
+__all__ = ["RunStats", "run", "EXIT_OK", "EXIT_PARTIAL", "EXIT_FATAL"]
+
+EXIT_OK = 0
+EXIT_PARTIAL = 1   # completed, but some items landed in the dead-letter queue
+EXIT_FATAL = 2     # could not complete
+
+
+@dataclass
+class RunStats:
+    run_id: str = ""
+    ingested: int = 0
+    already_seen: int = 0
+    gated: int = 0
+    extracted: int = 0
+    low_confidence: int = 0
+    duplicates: int = 0
+    published: int = 0
+    errors: int = 0
+    llm_calls: int = 0
+    quota_stopped: bool = False
+    expired: int = 0
+    not_wanted: int = 0          # failed config/preferences.toml (region, field, employer...)
+    closed_before_send: int = 0  # link dead / "position filled" when checked just before sending
+    closed_found: int = 0        # sent earlier, found filled/closed on a later re-check
+    refiltered: int = 0          # sent earlier, no longer matches the (edited) preferences
+    outcome: str = "ok"
+    gate_reasons: dict[str, int] = field(default_factory=dict)
+
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def _run_id() -> str:
+    return os.environ.get("GITHUB_RUN_ID") or uuid.uuid4().hex[:12]
+
+
+def _listing_row(
+    listing: PredocListing,
+    *,
+    source: str,
+    signature: bytes | None,
+    hints: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    hints = hints or {}
+    return {
+        "url_hash": url_hash(listing.apply_url),
+        "apply_url": listing.apply_url,
+        "source_url": listing.source_url,
+        "source": source,
+        "title": listing.title,
+        "institution": listing.institution,
+        "principal_investigator": listing.principal_investigator,
+        "country": listing.location.country,
+        "city": listing.location.city,
+        "is_remote": int(listing.location.is_remote),
+        "duration_years": listing.duration_years,
+        "deadline": format_ts(listing.deadline) if listing.deadline else None,
+        "disciplines": json.dumps([d.value for d in listing.disciplines]),
+        "visa_sponsorship_status": listing.visa_sponsorship_status.value,
+        "summary": listing.summary,
+        "language": listing.language,
+        "model_confidence": listing.model_confidence,
+        "rule_score": listing.rule_score,
+        "confidence": listing.confidence,
+        "signature": signature,
+        "first_seen_at": None,
+        "last_seen_at": None,
+        "status": "pending",
+        "deadline_note": listing.deadline_note,
+        "visa_note": listing.visa_note,
+        # What the job board said about department / research fields: kept so
+        # the daily preference re-check sees what the first check saw.
+        "department": hints.get("department"),
+        "fields": hints.get("fields"),
+    }
+
+
+def _listing_from_row(row: Any) -> PredocListing:
+    """Rebuild a domain object from a stored row, for republishing."""
+    from .core.timeparse import parse_datetime
+    from .models import Discipline, Location, VisaStatus
+
+    disciplines = [Discipline(d) for d in json.loads(row["disciplines"] or "[]")] or [
+        Discipline.OTHER
+    ]
+    return PredocListing(
+        title=row["title"],
+        institution=row["institution"],
+        principal_investigator=row["principal_investigator"],
+        location=Location(
+            country=row["country"] or "",
+            city=row["city"],
+            is_remote=bool(row["is_remote"]),
+        ),
+        duration_years=row["duration_years"],
+        deadline=parse_datetime(row["deadline"]),
+        disciplines=disciplines,
+        visa_sponsorship_status=VisaStatus(row["visa_sponsorship_status"]),
+        summary=row["summary"] or "",
+        language=row["language"] or "en",
+        apply_url=row["apply_url"],
+        source_url=row["source_url"],
+        model_confidence=row["model_confidence"] or 0.0,
+        rule_score=row["rule_score"] or 0.0,
+        confidence=row["confidence"] or 0.0,
+        deadline_note=row["deadline_note"],
+        visa_note=row["visa_note"],
+    )
+
+
+def _merge_hints(result: ExtractionResult, hints: dict[str, Any]) -> ExtractionResult:
+    """Fill what a model missed with what the job-board scraper already knew."""
+    if not hints.get("board"):
+        return result
+    update: dict[str, Any] = {}
+    if not result.institution and hints.get("institution"):
+        update["institution"] = hints["institution"]
+    if not result.country and hints.get("country") not in (None, "Europe", "Other"):
+        update["country"] = hints["country"]
+    if not result.deadline and hints.get("deadline"):
+        update["deadline"] = f"{hints['deadline']}T23:59:59Z"
+    if not result.principal_investigator and hints.get("pi"):
+        update["principal_investigator"] = hints["pi"]
+    if not result.application_url and hints.get("final_url"):
+        update["application_url"] = hints["final_url"]
+    if not result.visa_note and hints.get("visa_note"):
+        update["visa_note"] = hints["visa_note"]
+    return result.model_copy(update=update) if update else result
+
+
+def _really_same(db: Database, other_id: int, listing: PredocListing, item: RawItem) -> bool:
+    """Veto a near-duplicate match that is really two different jobs.
+
+    Cross-posting happens *between* boards. Two postings on the same board
+    with different addresses are two jobs (Stockholm University often has
+    several "Research assistant in economics" posts at once), and two named
+    supervisors who differ mean two jobs too.
+    """
+    other = db.listing(other_id)
+    if other is None:
+        return True
+    if item.hints.get("board") and other["source"] == item.source:
+        from .core.urls import canonicalize_url
+
+        if canonicalize_url(other["source_url"]) != canonicalize_url(item.source_url):
+            return False
+    mine, theirs = _surnames(listing.principal_investigator), _surnames(
+        other["principal_investigator"])
+    # "Jane Doe" vs "J. Doe", or "A. Smith, J. Doe" vs "Jane Doe": same people.
+    return not (mine and theirs and not mine & theirs)
+
+
+def _surnames(names: str | None) -> set[str]:
+    parts = re.split(r",|;|&|\band\b", names or "", flags=re.IGNORECASE)
+    return {p.split()[-1].strip(".").lower() for p in parts if p.split()}
+
+
+def _dedupe_institution(listing: PredocListing, item: RawItem) -> str:
+    """Two unrelated "Research Assistant" posts with no named employer are not duplicates."""
+    if listing.institution == UNKNOWN_INSTITUTION:
+        return f"unknown-{url_hash(item.source_url)[:12]}"
+    return listing.institution
+
+
+def _process(
+    item: RawItem,
+    *,
+    db: Database,
+    extractor: Any,
+    deduper: Deduplicator,
+    settings: Settings,
+    stats: RunStats,
+    policy: Policy | None = None,
+) -> PredocListing | None:
+    """Run one candidate through the funnel. Returns a listing to broadcast."""
+    source_key = url_hash(item.source_url)
+    digest = content_hash(item.text)
+    board = bool(item.hints.get("board"))
+
+    seen = db.seen(source_key)
+    # A board posting is judged once per URL: its page text changes with every
+    # "posted 3 days ago", which must not trigger a fresh verdict.
+    if seen is not None and (seen["content_hash"] == digest or board):
+        # Same URL, same body: we already decided about this one.
+        stats.already_seen += 1
+        if seen["listing_id"]:
+            db.touch_listing(int(seen["listing_id"]))
+        return None
+
+    if item.hints.get("reject"):
+        # The board collector already read the job page and found a reason
+        # (filled, wrong field, US, PhD required...). Record it; no extraction.
+        reason = f"board:{item.hints['reject']}"
+        stats.not_wanted += 1
+        stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
+        db.mark_seen(source_key, source=item.source, decision="rejected", reason=reason,
+                     content_hash=digest)
+        return None
+
+    gate = gating.evaluate(item.text, title=item.title, url=item.source_url,
+                           known_vacancy=board)
+    if not gate.passed:
+        stats.gated += 1
+        stats.gate_reasons[gate.reason] = stats.gate_reasons.get(gate.reason, 0) + 1
+        db.mark_seen(
+            source_key,
+            source=item.source,
+            decision="rejected",
+            reason=gate.reason,
+            content_hash=digest,
+        )
+        return None
+
+    try:
+        result = extractor.extract(
+            text=item.text, source_url=item.source_url, title=item.title, hints=item.hints
+        )
+    except RateLimited:
+        raise
+    except QuotaExceeded:
+        raise
+    except ExtractionError as exc:
+        stats.errors += 1
+        db.log_dlq(
+            run_id=stats.run_id,
+            stage="extract",
+            source=item.source,
+            source_url=item.source_url,
+            payload=truncate(item.text, 2000),
+            error=str(exc),
+        )
+        # Not marked seen: a transient provider failure should be retried
+        # tomorrow, not silently written off forever.
+        return None
+
+    stats.extracted += 1
+    result = _merge_hints(result, item.hints)
+
+    try:
+        listing = coerce(
+            result,
+            source_url=item.source_url,
+            rule_score=gate.score,
+            language=gate.language,
+            fallback_summary=item.text,
+            confidence=gating.blend_confidence(
+                result.confidence, gate.score, weight=settings.model_confidence_weight
+            ),
+        )
+    except CoercionError as exc:
+        stats.gated += 1
+        reason = f"model:{result.rejection_reason or 'rejected'}"
+        stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
+        db.mark_seen(
+            source_key,
+            source=item.source,
+            decision="rejected",
+            reason=str(exc)[:200],
+            content_hash=digest,
+        )
+        return None
+
+    if listing.confidence < settings.confidence_threshold:
+        stats.low_confidence += 1
+        db.mark_seen(
+            source_key,
+            source=item.source,
+            decision="rejected",
+            reason=f"low-confidence:{listing.confidence:.2f}",
+            content_hash=digest,
+        )
+        return None
+
+    if policy is not None:
+        why = policy.check(listing, item)
+        if why:
+            stats.not_wanted += 1
+            reason = f"preferences:{why}"
+            stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
+            db.mark_seen(source_key, source=item.source, decision="rejected", reason=reason,
+                         content_hash=digest)
+            return None
+
+    # Tier 1: exact canonical application URL.
+    apply_key = url_hash(listing.apply_url)
+    existing = db.listing_by_url_hash(apply_key)
+    if existing is not None:
+        stats.duplicates += 1
+        db.add_alternate_source(int(existing["id"]), listing.source_url)
+        db.mark_seen(
+            source_key,
+            source=item.source,
+            decision="duplicate",
+            reason="url",
+            content_hash=digest,
+            listing_id=int(existing["id"]),
+        )
+        return None
+
+    # Tiers 2 and 3.
+    dedupe_text = f"{listing.title}. {listing.summary or item.text}"
+    dedupe_inst = _dedupe_institution(listing, item)
+    signature = Deduplicator.signature(dedupe_text, deduper.num_perm)
+    duplicate = deduper.find(
+        text=dedupe_text,
+        institution=dedupe_inst,
+        title=listing.title,
+        principal_investigator=listing.principal_investigator,
+        deadline=listing.deadline,
+        signature=signature,
+    )
+    if duplicate is not None and not _really_same(db, duplicate.listing_id, listing, item):
+        duplicate = None
+    if duplicate is not None:
+        stats.duplicates += 1
+        db.add_alternate_source(duplicate.listing_id, listing.source_url)
+        db.mark_seen(
+            source_key,
+            source=item.source,
+            decision="duplicate",
+            reason=duplicate.tier,
+            content_hash=digest,
+            listing_id=duplicate.listing_id,
+        )
+        log.info(
+            "duplicate",
+            tier=duplicate.tier,
+            score=round(duplicate.score, 3),
+            against=duplicate.listing_id,
+        )
+        return None
+
+    listing_id = db.insert_listing(
+        _listing_row(
+            listing,
+            source=item.source,
+            signature=signature.to_bytes() if signature else None,
+            hints=item.hints,
+        )
+    )
+    deduper.add(
+        listing_id,
+        text=dedupe_text,
+        institution=dedupe_inst,
+        title=listing.title,
+        principal_investigator=listing.principal_investigator,
+        deadline=listing.deadline,
+        signature=signature,
+    )
+    db.mark_seen(
+        source_key,
+        source=item.source,
+        decision="accepted",
+        content_hash=digest,
+        listing_id=listing_id,
+    )
+    listing.__dict__["_listing_id"] = listing_id  # carried to the broadcast step
+    listing.__dict__["_page_read"] = bool(item.hints.get("enriched"))
+    return listing
+
+
+def _broadcast(
+    listings: list[tuple[int, PredocListing]],
+    telegram: TelegramClient | None,
+    settings: Settings,
+    db: Database,
+    stats: RunStats,
+    *,
+    feedback: FeedbackStore | None = None,
+    digest_page_size: int = 6,
+    sleep: Any = None,
+) -> None:
+    """Deliver accepted listings, as cards or as a few numbered digest messages.
+
+    With a personal chat configured (see ``Settings.owner_ids``) every card and
+    digest carries ✅ ❌ 📝 buttons; ``telegram-sync`` records the taps.
+    """
+    if not listings:
+        return
+    if telegram is None:
+        for listing_id, _ in listings:
+            db.mark_status(listing_id, "unpublished")
+        log.warning("telegram_not_configured", held=len(listings))
+        return
+
+    buttons = bool(settings.owner_ids)
+    digest_page_size = max(1, digest_page_size)
+    hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
+    status_of = feedback.status if feedback is not None else (lambda _h: None)
+    send_kw: dict[str, Any] = {"sleep": sleep} if sleep else {}
+
+    if len(listings) > settings.telegram_digest_threshold:
+        # A backfill should not fire forty separate notifications.
+        pages = render_digest_pages(
+            [(hashes[lid], listing) for lid, listing in listings],
+            site_url=settings.site_url,
+            page_size=digest_page_size,
+            feedback=buttons,
+            status_of=status_of,
+        )
+        for index, (html, keyboard) in enumerate(pages):
+            chunk = listings[index * digest_page_size:(index + 1) * digest_page_size]
+            try:
+                message_id = telegram.send_message(
+                    chat_id=settings.telegram_public_channel_id, html=html, keyboard=keyboard,
+                    **send_kw,
+                )
+            except TelegramError as exc:
+                stats.errors += 1
+                db.log_dlq(
+                    run_id=stats.run_id, stage="digest", source="telegram",
+                    source_url="", payload=f"{len(chunk)} listings", error=str(exc),
+                )
+                if _chat_level(exc):
+                    _telegram_setup_problem(settings, exc)
+                    return
+                continue  # these stay pending and are retried next run
+            for listing_id, _ in chunk:
+                db.mark_published(listing_id, message_id)
+            stats.published += len(chunk)
+        return
+
+    for listing_id, listing in listings:
+        keyboard = render_keyboard(
+            listing,
+            url_hash=hashes[listing_id] if buttons else None,
+            status=status_of(hashes[listing_id]),
+        )
+        try:
+            try:
+                message_id = telegram.send_message(
+                    chat_id=settings.telegram_public_channel_id,
+                    html=render_card(listing), keyboard=keyboard, **send_kw,
+                )
+            except TelegramError as exc:
+                if exc.status != 400 or not keyboard:
+                    raise
+                # Telegram refuses the whole message when one button URL is
+                # malformed; the link is also in the text, so send it without.
+                link = escape_telegram_html(listing.apply_url)
+                feedback_rows = keyboard["inline_keyboard"][1:]
+                message_id = telegram.send_message(
+                    chat_id=settings.telegram_public_channel_id,
+                    html=render_card(listing) + f'\n\n<a href="{link}">Open the advert</a>',
+                    keyboard={"inline_keyboard": feedback_rows} if feedback_rows else None,
+                    **send_kw,
+                )
+        except TelegramError as exc:
+            stats.errors += 1
+            db.log_dlq(
+                run_id=stats.run_id,
+                stage="publish",
+                source=listing.source_url,
+                source_url=listing.source_url,
+                payload=truncate(listing.title, 300),
+                error=str(exc),
+            )
+            if _chat_level(exc):
+                # Bad token, bot blocked, "chat not found": no message can get
+                # through. Keep everything pending for the next run.
+                _telegram_setup_problem(settings, exc)
+                return
+            if exc.permanent:
+                db.mark_status(listing_id, "undeliverable")
+            continue
+        db.mark_published(listing_id, message_id)
+        stats.published += 1
+        log.info(
+            "published",
+            listing_id=listing_id,
+            institution=truncate(listing.institution, 60),
+            confidence=round(listing.confidence, 2),
+        )
+
+
+def _chat_level(exc: TelegramError) -> bool:
+    """Errors about the chat or the bot, not about one message."""
+    text = str(exc).lower()
+    return exc.status in (401, 403, 404) or "chat not found" in text or "bot was blocked" in text
+
+
+def _telegram_setup_problem(settings: Settings, exc: TelegramError) -> None:
+    log.error("telegram_setup_problem", error=str(exc))
+    print(  # visible in the Actions log
+        f"Telegram refused the message ({exc}). Check TELEGRAM_BOT_TOKEN and "
+        "TELEGRAM_PUBLIC_CHANNEL_ID, and press Start in your chat with the bot. "
+        "Nothing was lost: the positions will be sent on the next run."
+    )
+
+
+def _verify_before_sending(
+    candidates: list[tuple[int, PredocListing]],
+    prefs: Preferences,
+    db: Database,
+    stats: RunStats,
+    transport: Any = None,
+) -> list[tuple[int, PredocListing]]:
+    """Open the link of every listing whose page this run did not read.
+
+    Feed items, and pending rows from earlier runs, may point at an advert
+    that has since been filled (a bit.ly link that now answers 410, a page
+    reading "this position has been filled"). Those are dropped here.
+    """
+    if not prefs.enrich.fetch_details:
+        return candidates
+    from .boards.collector import check_links
+
+    todo = {lid: (listing.title, listing.apply_url,
+                  listing.deadline.date() if listing.deadline else None)
+            for lid, listing in candidates if not listing.__dict__.get("_page_read")}
+    verdicts = check_links(todo, prefs.http, concurrency=prefs.enrich.detail_concurrency,
+                           transport=transport)
+    kept = []
+    for lid, listing in candidates:
+        reason = verdicts.get(lid)
+        if reason:
+            db.mark_closed(lid, reason)
+            stats.closed_before_send += 1
+            log.info("closed_before_send", listing_id=lid, reason=reason)
+            continue
+        if lid in todo:
+            db.mark_checked(lid)
+        kept.append((lid, listing))
+    return kept
+
+
+def _recheck_published(
+    db: Database, prefs: Preferences, stats: RunStats, transport: Any = None
+) -> None:
+    """Re-visit a few sent listings a day; mark the filled ones closed."""
+    cfg = prefs.enrich
+    if not (cfg.fetch_details and cfg.recheck_open_jobs):
+        return
+    from .boards.collector import check_links
+
+    rows = db.due_for_recheck(cfg.recheck_every_days, cfg.recheck_max_per_run)
+    todo = {}
+    for r in rows:
+        when = parse_datetime(r["deadline"])
+        todo[int(r["id"])] = (r["title"], r["apply_url"], when.date() if when else None)
+    for lid, reason in check_links(todo, prefs.http, concurrency=cfg.detail_concurrency,
+                                   transport=transport).items():
+        if reason:
+            db.mark_closed(lid, reason)
+            stats.closed_found += 1
+            log.info("closed_on_recheck", listing_id=lid, reason=reason)
+        else:
+            db.mark_checked(lid)
+
+
+def _refilter_published(
+    db: Database,
+    policy: Policy,
+    feedback: FeedbackStore,
+    stats: RunStats,
+    skip: set[int] | None = None,
+) -> None:
+    """Apply today's preferences to listings sent by earlier runs."""
+    skip = skip or set()
+    for row in db.active_listings():
+        if int(row["id"]) in skip:
+            continue  # judged a minute ago with the same rules and more context
+        if feedback.status(row["url_hash"]) in ("valid", "applied"):
+            continue  # you confirmed it yourself: don't second-guess
+        why = policy.check_stored(row)
+        if why:
+            db.mark_closed(int(row["id"]), f"no longer matches your preferences ({why})")
+            stats.refiltered += 1
+
+
+def run(
+    settings: Settings | None = None,
+    *,
+    only_sources: set[str] | None = None,
+    dry_run: bool = False,
+    limit: int | None = None,
+    board_transport: Any = None,
+    telegram_client: Any = None,
+    sync_telegram: bool = True,
+) -> RunStats:
+    """Execute one full cycle. Never raises for per-item failures.
+
+    ``board_transport`` / ``telegram_client`` let tests replace the network.
+    """
+    settings = settings or Settings()
+    stats = RunStats(run_id=_run_id())
+    log.info("run_start", run_id=stats.run_id, dry_run=dry_run)
+
+    # Answer /positions and save button taps first, so today's run already
+    # knows which positions you hid.
+    if sync_telegram and not dry_run and settings.telegram_bot_token and settings.owner_ids:
+        try:
+            from .publish.bot import telegram_sync
+
+            telegram_sync(settings, http_client=telegram_client)
+        except Exception as exc:  # never let the chat side stop the run
+            log.warning("telegram_sync_failed", error=str(exc))
+
+    init_db(settings.db_path)
+    db = Database(settings.db_path)
+    run_row = db.start_run(stats.run_id)
+    source_stats: dict[str, Any] = {}
+    state_ready = False  # never overwrite the committed journal from an unrestored DB
+
+    try:
+        restored = state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
+        if restored:
+            log.info("state_restored", listings=restored)
+        state.restore_runs(db, settings.health_json)
+        state_ready = True
+
+        prefs = load_preferences(settings.preferences_config)
+        feedback = FeedbackStore(settings.feedback_path)
+        sources = load_sources(settings.sources_config)
+        unverified = [s.name for s in sources if s.enabled and not s.verified]
+        if unverified:
+            log.warning("unverified_sources", names=unverified[:10])
+
+        with PoliteClient(
+            user_agent=settings.http_user_agent,
+            timeout=settings.http_timeout_seconds,
+            per_host_delay=settings.per_host_delay_seconds,
+            respect_robots=settings.respect_robots_txt,
+            store=db,
+        ) as client:
+            items, source_stats = gather(
+                settings, sources, client, only=only_sources, prefs=prefs,
+                known=lambda url: db.knows_url(url_hash(url)),
+                board_transport=board_transport,
+            )
+
+        stats.ingested = len(items)
+        log.info("ingest_complete", items=len(items), sources=len(source_stats))
+
+        if limit:
+            items = items[:limit]
+        if dry_run:
+            stats.outcome = "dry-run"
+            for item in items[:25]:
+                gate = gating.evaluate(item.text, title=item.title, url=item.source_url,
+                                       known_vacancy=bool(item.hints.get("board")))
+                log.info(
+                    "dry_run_item",
+                    source=item.source,
+                    url=item.source_url,
+                    passes_gate=gate.passed and not item.hints.get("reject"),
+                    reason=item.hints.get("reject") or gate.reason,
+                    score=gate.score,
+                )
+            return stats
+
+        telegram = (
+            TelegramClient(bot_token=settings.telegram_bot_token, client=telegram_client)
+            if settings.telegram_configured
+            else None
+        )
+
+        try:
+            deduper = Deduplicator(
+                jaccard_threshold=settings.dedupe_jaccard_threshold,
+                fuzzy_threshold=settings.dedupe_fuzzy_threshold,
+                deadline_window_days=settings.dedupe_deadline_window_days,
+            )
+            deduper.seed(db.recent_listings(settings.dedupe_lookback_days))
+            log.info("dedupe_seeded", records=len(deduper), banding=deduper.banding)
+
+            accepted: list[tuple[int, PredocListing]] = []
+            sent_now: set[int] = set()
+            with build_extractor(settings, store=db, prefs=prefs) as extractor:
+                policy = Policy(prefs,
+                                trust_model_fields=not isinstance(extractor, HeuristicExtractor))
+                for item in items:
+                    try:
+                        listing = _process(
+                            item,
+                            db=db,
+                            extractor=extractor,
+                            deduper=deduper,
+                            settings=settings,
+                            stats=stats,
+                            policy=policy,
+                        )
+                    except (QuotaExceeded, RateLimited) as exc:
+                        # Stop cleanly and publish what we have. The remaining
+                        # items are not marked seen, so tomorrow resumes here.
+                        stats.quota_stopped = True
+                        stats.outcome = "quota-stopped"
+                        log.warning("quota_stopped", error=str(exc))
+                        break
+                    except Exception as exc:  # per-item guard
+                        stats.errors += 1
+                        log.exception("item_failed", source=item.source)
+                        db.log_dlq(
+                            run_id=stats.run_id,
+                            stage="process",
+                            source=item.source,
+                            source_url=item.source_url,
+                            payload=truncate(item.text, 1500),
+                            error=repr(exc),
+                        )
+                        continue
+                    if listing is not None:
+                        accepted.append((listing.__dict__["_listing_id"], listing))
+                stats.llm_calls = getattr(extractor, "calls", 0)
+
+            # Rows inserted by an earlier run that never reached Telegram
+            # (a crash, or Telegram not configured yet) go out with today's.
+            new_ids = {lid for lid, _ in accepted}
+            for row in db.pending_listings():
+                if int(row["id"]) not in new_ids:
+                    accepted.append((int(row["id"]), _listing_from_row(row)))
+            hidden = feedback.hidden
+            accepted = [(lid, lst) for lid, lst in accepted
+                        if url_hash(lst.apply_url) not in hidden]
+            accepted = _verify_before_sending(accepted, prefs, db, stats, board_transport)
+            sent_now = {lid for lid, _ in accepted}
+            _broadcast(accepted, telegram, settings, db, stats, feedback=feedback,
+                       digest_page_size=prefs.telegram.digest_page_size)
+        finally:
+            if telegram is not None:
+                telegram.close()
+
+        _refilter_published(db, policy, feedback, stats, skip=sent_now)
+        _recheck_published(db, prefs, stats, board_transport)
+        stats.expired = db.expire_past_deadline(grace_days=settings.expiry_grace_days)
+        db.prune()
+
+        dlq_rows = [dict(row) for row in db.dlq_for_run(stats.run_id)]
+        Path(settings.dlq_path).write_text(
+            json.dumps(dlq_rows, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+
+        if stats.errors and stats.outcome == "ok":
+            stats.outcome = "partial"
+
+        journal = state.write_journal(db, settings.state_path)
+        dashboard = state.export_dashboard(db, settings.dashboard_json, hidden=hidden)
+        state.export_feed(db, settings.feed_path, site_url=settings.site_url, hidden=hidden)
+
+        log.info(
+            "run_complete",
+            **{k: v for k, v in stats.as_dict().items() if k != "gate_reasons"},
+            journal=journal,
+            dashboard=dashboard,
+        )
+        _maybe_alert(db, settings, stats, source_stats, prefs)
+        return stats
+
+    except Exception:
+        stats.outcome = "fatal"
+        log.exception("run_failed", run_id=stats.run_id)
+        raise
+    finally:
+        db.finish_run(run_row, {**stats.as_dict(), "outcome": stats.outcome}, source_stats)
+        if state_ready and stats.outcome != "dry-run":
+            # Also after a crash: whatever was sent must be in the committed
+            # journal, or the next run (fresh database) would send it again.
+            try:
+                state.write_journal(db, settings.state_path)
+                state.write_seen(db, settings.seen_state_path)
+            except Exception:  # pragma: no cover
+                log.exception("journal_write_failed")
+        if stats.outcome != "dry-run":
+            # After finish_run, so the run history includes this run.
+            try:
+                state.export_health(db, settings.health_json, stats=stats.as_dict())
+            except Exception:  # pragma: no cover - never mask the real outcome
+                log.exception("health_export_failed")
+        db.close()
+
+
+def _maybe_alert(
+    db: Database,
+    settings: Settings,
+    stats: RunStats,
+    source_stats: dict[str, Any],
+    prefs: Preferences | None = None,
+) -> None:
+    """Notify the maintainer about silence and about sources that keep failing.
+
+    Silent failure is the characteristic way an unattended scraper dies: the
+    workflow stays green while every source returns nothing. Two triggers here
+    catch that -- a run of zero-publish days, and a source that has failed (or
+    returned nothing although it normally has postings) N runs in a row. Small
+    department pages marked ``may_be_empty`` are allowed to be empty.
+    """
+    from .alerts import notify_admin
+    from .core.db import _source_failed
+
+    messages: list[str] = []
+    empty_runs = db.consecutive_empty_runs() + (0 if stats.published else 1)
+    over = empty_runs - settings.empty_run_alert_threshold
+    if over >= 0 and over % 7 == 0 and not stats.published:
+        messages.append(
+            f"{empty_runs} consecutive runs published nothing. "
+            f"Last run ingested {stats.ingested} items, "
+            f"{stats.gated} gated, {stats.errors} errors."
+        )
+
+    threshold = prefs.telegram.alert_on_source_failures if prefs else 3
+    if threshold:
+        previous = db.source_failure_streaks()
+        failing = []
+        for name, data in source_stats.items():
+            if not isinstance(data, dict) or name.startswith("_"):
+                continue
+            streak = previous.get(name, 0) + 1 if _source_failed(data) else 0
+            # Alert when the streak reaches the threshold, then weekly while it lasts.
+            if streak >= threshold and (streak - threshold) % 7 == 0:
+                note = (data.get("messages") or [""])[0] or "returned 0 postings"
+                failing.append(f"{name} ({str(note)[:80]})")
+        if failing:
+            messages.append(
+                f"{len(failing)} source(s) failing for {threshold}+ runs in a row: "
+                + "; ".join(failing[:10])
+            )
+
+    if stats.quota_stopped:
+        messages.append("Stopped early: model request budget exhausted.")
+
+    for message in messages:
+        notify_admin(settings, message)

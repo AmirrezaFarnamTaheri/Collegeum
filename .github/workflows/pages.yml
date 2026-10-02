@@ -1,0 +1,52 @@
+name: deploy-dashboard
+
+# Optional web dashboard (docs/index.html) on GitHub Pages.
+#
+# Off by default: on the Free plan, Pages only works for PUBLIC repositories.
+# To turn it on: make the repository public (or use a paid plan), enable
+# Settings -> Pages -> Source: "GitHub Actions", then add the repository
+# variable ENABLE_PAGES = true (Settings -> Secrets and variables -> Actions ->
+# Variables).
+#
+# Triggered after each pipeline / telegram-sync run. A `push` trigger alone
+# never fires for the bot's own commits: pushes made with GITHUB_TOKEN do not
+# start other workflows.
+on:
+  workflow_run:
+    workflows: ["predoc-pipeline", "telegram-sync"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: vars.ENABLE_PAGES == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

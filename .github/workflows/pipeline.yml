@@ -1,0 +1,131 @@
+name: predoc-pipeline
+
+# Runs once a day. 04:00 UTC = 07:30 in Tehran (07:00 / 08:00 in London).
+# GitHub may start scheduled runs 5-30 minutes late; that is normal.
+#
+# Minutes: private repositories on the Free plan get 2,000 minutes a month.
+# A run takes ~5-12 minutes (it reads each new job page), i.e. ~250 a month.
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Ingest and gate only; send nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Shared with telegram.yml: the two jobs both commit to data/, so they must
+# never run at the same time. A run in progress is never cancelled.
+concurrency:
+  group: predoc-bot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # ref: the branch, not the commit that triggered the run. A run that
+      # waited in the queue behind the other workflow must start from the
+      # newest data, not from the state before that run.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[portals]"
+
+      # Restores the SQLite cache from data/listings.ndjson + data/seen.ndjson
+      # (the committed state) when it is absent, so a fresh runner never
+      # re-sends old positions or re-reads pages it has already judged.
+      # With no GEMINI_API_KEY the rule-based (heuristic) extractor is used.
+      - name: Run pipeline
+        id: pipeline
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_PUBLIC_CHANNEL_ID: ${{ secrets.TELEGRAM_PUBLIC_CHANNEL_ID }}
+          TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openrouter/free' }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          MEMO_API_KEY: ${{ secrets.MEMO_API_KEY }}
+          CUSTOM_LLM_API_KEY: ${{ secrets.CUSTOM_LLM_API_KEY }}
+          CUSTOM_LLM_BASE_URL: ${{ vars.CUSTOM_LLM_BASE_URL || secrets.CUSTOM_LLM_BASE_URL }}
+          EXTRACTION_BACKEND: ${{ vars.EXTRACTION_BACKEND || 'auto' }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          ENABLE_JOBSPY: ${{ vars.ENABLE_JOBSPY || 'false' }}
+          ENABLE_TWITTER: ${{ vars.ENABLE_TWITTER || 'false' }}
+          TWSCRAPE_ACCOUNTS: ${{ secrets.TWSCRAPE_ACCOUNTS }}
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -o pipefail
+          FLAG=""
+          if [ "$DRY_RUN_INPUT" = "true" ]; then FLAG="--dry-run"; fi
+          PYTHONPATH=src python3 -m predoc_pipeline.cli run $FLAG 2>&1 | tee run.log
+        continue-on-error: true
+
+      # continue-on-error above means a pipeline failure would otherwise leave
+      # this job green. This step makes the job's real outcome authoritative,
+      # while still letting the commit step below save a partial success.
+      - name: Evaluate outcome
+        env:
+          PIPELINE_OUTCOME: ${{ steps.pipeline.outcome }}
+        run: |
+          if [ "$PIPELINE_OUTCOME" = "failure" ] && ! grep -q "outcome=partial" run.log; then
+            echo "Pipeline failed fatally; see log above."
+            exit 1
+          fi
+
+      # data/predocs.db is gitignored (see state.py): only text state is
+      # committed. `git pull --rebase` first, in case you edited a file on
+      # GitHub while the run was going.
+      - name: Commit updated state
+        if: always()
+        run: |
+          git config user.name "predoc-pipeline-bot"
+          git config user.email "actions@users.noreply.github.com"
+          # One file at a time: `git add a b` stages nothing if one is missing
+          # (feedback.json only exists once you have tapped a button).
+          for f in data/listings.ndjson data/seen.ndjson data/feedback.json \
+                   data/telegram_state.json docs/data/listings.json docs/data/health.json \
+                   docs/feed.xml; do
+            if [ -e "$f" ]; then git add "$f"; fi
+          done
+          if git diff --cached --quiet; then
+            echo "no state changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: update listings [skip ci]"
+          for attempt in 1 2 3; do
+            if git pull --rebase --autostash && git push; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep 5
+          done
+          echo "could not push the updated state"
+          exit 1
+
+      - name: Upload dead-letter queue
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dlq-${{ github.run_id }}
+          path: |
+            dlq-failures.json
+            run.log
+          retention-days: 14
+          if-no-files-found: ignore

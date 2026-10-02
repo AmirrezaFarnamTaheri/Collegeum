@@ -1,0 +1,128 @@
+# What the bot should send you. Edit in the GitHub web editor; the next run uses it.
+#
+# Terms are case-insensitive; "-" and " " are interchangeable ("pre-doc" == "pre doc"
+# == "predoc"); a trailing * is a prefix match ("econom*" -> economics, economist...);
+# a leading * also allows letters before it ("*econom*" -> macroeconomics).
+#
+# These rules run on EVERY position, whichever source found it and whether or not a
+# Gemini key is set, so the model can never send you something these rules forbid.
+
+[filters]
+# Unmistakable predoc wording (big score boost, overrides title exclusions).
+strong_terms = [
+  "pre-doc*", "pre-phd*", "research professional", "staff associate",
+]
+
+# RA-type roles (these also need an economics/business field word somewhere).
+role_terms = [
+  "research assistant*", "research associate*", "research analyst*", "research economist*", "research officer*", "research specialist*",
+  "research trainee*", "research intern*", "junior researcher*", "junior economist*", "assistant researcher*", "graduate researcher*",
+]
+
+# WANTED fields: economics, business, political/social science, law.
+field_terms = [
+  "*econom*", "political economy", "public policy", "fiscal", "monetary", "labour",
+  "labor market*", "tax*", "inequality", "poverty", "financ*", "banking",
+  "accounting", "marketing", "entrepreneurship", "organizational behavior", "organisational behaviour", "operations management",
+  "consumer behavio*", "political science", "international relations", "public administration", "social science*", "quantitative social",
+  "sociology", "demography",
+]
+
+# Everyday words: count as a field in a title/department, but on a full job page they
+# only count together with one of the core words above.
+field_terms_weak = [
+  "business", "management", "strategy", "policy", "trade", "politics",
+  "government", "law", "legal",
+]
+
+# UNWANTED fields: rejected unless a wanted field is also named.
+field_exclude_terms = [
+  "medicine", "medical", "clinical", "biomedical", "*biolog*", "bioinformatic*",
+  "biostatistic*", "neuroscience*", "neurology", "neuroimaging", "genetic*", "genomic*",
+  "molecular", "cell", "cancer", "oncology", "immunology", "pharmac*",
+  "chemistry", "chemical", "physics", "engineering", "computer science", "robotics",
+  "materials science", "psychology", "psychiatry", "psychiatric", "nursing", "epidemiology",
+  "health sciences", "dentistry", "veterinary", "ecology", "zoology", "botany",
+  "agronomy", "laboratory", "wet lab", "protein*", "astronomy", "geology",
+  "radiology", "surgery", "cardiology", "pediatric*", "paediatric*", "arts",
+  "art history", "humanities", "philosophy", "history", "literature", "linguistics",
+  "music", "theatre", "theater", "film", "journalism", "editorial",
+  "architecture",
+]
+
+# Rejected when found in the TITLE (unless a strong predoc term is there too).
+exclude_terms = [
+  "postdoc*", "post-doc*", "professor*", "lecturer*", "tenure*", "faculty position*",
+  "faculty member*", "reader in", "senior research fellow*", "senior researcher*", "senior lecturer*", "senior economist*",
+  "head of", "director of", "chair in", "dean", "group leader", "clinical",
+  "nurse", "lab technician", "laboratory technician", "scholarship*", "summer school", "conference",
+  "call for papers", "workshop", "seminar", "phd program*", "master's", "masters",
+  "msc", "equity research", "credit research", "investment research", "event driven", "sell side",
+  "buy side", "private equity", "hedge fund", "trading", "trader", "sales",
+  "real estate", "consultant*", "consulting", "market research", "semiconductor*", "wealth management",
+  "portfolio", "underwriting", "actuar*",
+]
+
+# Drop "PhD student / doctoral candidate" jobs (set false to include them).
+exclude_phd_positions = true
+
+# Who the employer may be: universities, business/economics schools, research institutes.
+# Regexes matched in the employer name (case-insensitive):
+employer_allow_patterns = [
+  "univ", "college", "school", "institut", "hochschule", "[ée]cole",
+  "escuela", "scuola", "politecnico", "academy", "akademie", "faculty",
+  "department", "graduate", 'centre\b', 'center\b', "research (unit|group|lab|laboratory|foundation|council|department|programme|program)", '\blab\b',
+  "laborator", "observatory", "max planck", "leibniz", "fraunhofer", "cnrs",
+  "csic", "sorbonne",
+]
+
+# Well-known academic employers whose names contain none of the words above:
+employer_allow_names = [
+  "CEMFI", "CREI", "EUI", "INSEAD", "IESE", "ESADE", "HEC", "ESSEC",
+  "EDHEC", "LBS", "LSE", "UCL", "ETH", "EPFL", "Bocconi", "Sciences Po",
+  "CEPR", "IZA", "ZEW", "DIW", "ifo", "IWH", "RWI", "briq",
+  "WZB", "IIES", "IFAU", "VATT", "ETLA", "CPB", "ESRI", "NIESR",
+  "IFS", "Bruegel", "CERGE-EI", "CERGE", "WIFO", "IHS", "Tinbergen", "Collegio Carlo Alberto",
+  "EIEF", "Nuffield", "CREST", "TSE", "PSE", "UPF", "UAB", "UC3M",
+  "KU Leuven", "NHH", "SSE", "IIASA", "Resolution Foundation", "Rockwool Foundation", "Kiel", "CEBI",
+  "CAGE", "STICERD", "CEP", "IGIER", "LEAP", "Frisch",
+]
+
+# Companies and banks (used when the allow-list doesn't match):
+employer_block_patterns = [
+  "bank|banco|banque|bundesbank|sparkasse", "securities", "capital", "investment", "asset management", "wealth",
+  "hedge", "trading", "advisors?", "advisory", "consult", "partners",
+  "holdings?", 'group\b', '\b(inc|ltd|llc|plc|corp|corporation|gmbh|ag|sa|spa|bv|ab|as)\b\.?', "& co", "insurance", "real estate",
+  "pharma", "energy", "technologies", "solutions", "analytics",
+]
+
+# Never send these, whatever the source (matched in employer, title and link):
+excluded_employers = [
+  "J-PAL", "JPAL", "Poverty Action Lab", "povertyactionlab.org",
+]
+
+regions_include = ["UK", "Europe", "Canada"]
+keep_unknown_region = true   # keep jobs whose location couldn't be detected
+drop_expired = true
+max_age_days = 120           # ignore postings older than this (when a post date is known)
+
+[enrich]
+fetch_details = true         # read every new posting's page (field, region, filled?) before sending
+max_details_per_run = 150    # the rest wait for the next run
+detail_concurrency = 6
+recheck_open_jobs = true     # revisit sent jobs so filled ones drop off /positions and the dashboard
+recheck_every_days = 3
+recheck_max_per_run = 40
+
+[http]
+timeout = 30
+max_retries = 3
+default_min_interval = 1.5   # polite delay between requests to the same site (seconds)
+max_concurrent_sources = 6
+source_timeout = 300         # give up on a source that hangs longer than this (seconds)
+
+[telegram]
+list_page_size = 5           # positions per message for /positions, /applied...
+list_max = 60                # most positions one command shows
+digest_page_size = 6         # positions per message when many are new at once
+alert_on_source_failures = 3 # warn when a source failed 3 runs in a row (0 = off)

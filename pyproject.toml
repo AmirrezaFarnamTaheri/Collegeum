@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "predoc-pipeline"
+version = "1.0.0"
+description = "Zero-budget discovery and broadcast of non-US predoctoral research positions"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Amirreza Farnam Taheri", email = "taheri.farnam@gmail.com" }
+]
+
+# Lean by design: everything here is either load-bearing for the daily run
+# (httpx, feedparser, pydantic, tenacity, typer) or small enough that its
+# absence is not worth an extra (rapidfuzz has no transitive dependencies;
+# structlog is pure Python). rapidfuzz is technically optional -- core/fuzzy.py
+# has a complete stdlib fallback -- but the wheel is small and the speedup is
+# real, so it is a base dependency rather than an extra.
+dependencies = [
+    # beautifulsoup4 + lxml: the job-board scrapers (src/predoc_pipeline/boards).
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "httpx>=0.27",
+    "feedparser>=6.0",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "rapidfuzz>=3.9",
+    "structlog>=24.1",
+    "tenacity>=8.3",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+# Schema.org microdata/RDFa in addition to the stdlib JSON-LD fallback.
+portals = ["extruct>=0.18", "w3lib>=2.1"]
+# Commercial job boards. See COMPLIANCE.md before enabling ENABLE_JOBSPY.
+boards = ["python-jobspy>=1.1"]
+# Authenticated social search. See COMPLIANCE.md before enabling ENABLE_TWITTER.
+social = ["twscrape>=0.15"]
+# Alternative extraction backend for teams already standardised on instructor.
+llm-instructor = ["instructor>=1.3", "google-genai>=0.5"]
+dev = [
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "respx>=0.21",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "types-requests",
+]
+# Everything, for a full local checkout.
+all = ["predoc-pipeline[portals,boards,social,llm-instructor,dev]"]
+
+[project.scripts]
+predoc-pipeline = "predoc_pipeline.cli:main"
+
+[project.urls]
+Homepage = "https://amirrezafarnamtaheri.github.io/predoc-not-org"
+Repository = "https://github.com/AmirrezaFarnamTaheri/predoc-not-org"
+Issues = "https://github.com/AmirrezaFarnamTaheri/predoc-not-org/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/predoc_pipeline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# try/except/pass is clearer than contextlib.suppress for best-effort cleanup.
+ignore = ["SIM105"]
+
+[tool.ruff.lint.per-file-ignores]
+# Ported from predoc-bot (120-column style, long regexes); kept as-is so the
+# two projects stay easy to compare.
+"src/predoc_pipeline/boards/**" = ["E501", "SIM102", "SIM108", "SIM401", "B905", "UP038"]
+"tests/boards/**" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+exclude = ["tests/"]
