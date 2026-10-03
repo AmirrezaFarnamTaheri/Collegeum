@@ -297,6 +297,44 @@ class TestExtractorBackendProbing(unittest.TestCase):
         ext = build_extractor(s_heuristic)
         self.assertEqual(ext.__class__.__name__, "HeuristicExtractor")
 
+    def test_key_rotator_cooldown_and_wait(self):
+        from predoc_pipeline.extract.gemini import KeyRotator
+
+        rotator = KeyRotator(["key1", "key2"])
+        self.assertEqual(rotator.get_key(), "key1")
+        self.assertEqual(rotator.get_key(), "key2")
+        rotator.mark_rate_limited("key1", retry_after=0.05)
+        rotator.mark_rate_limited("key2", retry_after=0.05)
+        # Should pick earliest without deadlock
+        k = rotator.get_key()
+        self.assertIn(k, ("key1", "key2"))
+
+    @respx_mock
+    def test_schema_failure_fallback_sets_heuristic_flag(self):
+        respx.post("https://api.openai.com/v1/chat/completions").mock(
+            return_value=httpx.Response(
+                200,
+                json={"choices": [{"message": {"content": "not json at all"}}]},
+            )
+        )
+        limiter = RateLimiter(requests_per_minute=600, requests_per_day=1000)
+        from predoc_pipeline.extract.heuristic import HeuristicExtractor
+
+        fallback = HeuristicExtractor()
+        extractor = Extractor(
+            api_key="sk-test",
+            model="gpt-4o-mini",
+            base_url="https://api.openai.com",
+            limiter=limiter,
+            backend="openai",
+            fallback_extractor=fallback,
+        )
+        result = extractor.extract(
+            text="Predoctoral Research Assistant in Economics at LSE. Apply now.",
+            source_url="https://example.org/job",
+        )
+        self.assertTrue(getattr(result, "is_heuristic_fallback", False))
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main(verbosity=2)

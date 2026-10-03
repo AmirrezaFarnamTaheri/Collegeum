@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from collections.abc import Iterator, Sequence
 from contextlib import closing, contextmanager
 from pathlib import Path
@@ -171,7 +172,7 @@ def connect(db_path: str | Path) -> sqlite3.Connection:
     """Open a connection in true autocommit mode with sane pragmas."""
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(path), timeout=30.0, isolation_level=None)
+    conn = sqlite3.connect(str(path), timeout=30.0, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
@@ -236,6 +237,7 @@ class Database:
     def __init__(self, db_path: str | Path) -> None:
         self.path = str(db_path)
         self.conn = connect(db_path)
+        self._lock = threading.RLock()
 
     def __enter__(self) -> Database:
         return self
@@ -493,13 +495,14 @@ class Database:
 
     # -- LLM quota --------------------------------------------------------
     def llm_usage(self, day: str) -> tuple[int, int]:
-        row = self.conn.execute(
-            "SELECT requests, tokens FROM llm_usage WHERE day=?", (day,)
-        ).fetchone()
-        return (int(row["requests"]), int(row["tokens"])) if row else (0, 0)
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT requests, tokens FROM llm_usage WHERE day=?", (day,)
+            ).fetchone()
+            return (int(row["requests"]), int(row["tokens"])) if row else (0, 0)
 
     def record_llm_call(self, day: str, *, tokens: int = 0, error: bool = False) -> int:
-        with transaction(self.conn):
+        with self._lock, transaction(self.conn):
             self.conn.execute(
                 "INSERT INTO llm_usage(day, requests, tokens, errors) VALUES(?,?,?,?) "
                 "ON CONFLICT(day) DO UPDATE SET "

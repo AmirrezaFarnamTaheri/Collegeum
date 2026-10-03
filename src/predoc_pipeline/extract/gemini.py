@@ -114,9 +114,10 @@ class KeyRotator:
             # All keys in cooldown: return the one that becomes free earliest
             earliest = min(self._states, key=lambda s: s.cooldown_until)
             wait = max(0.0, earliest.cooldown_until - now)
-            if 0.0 < wait <= 2.0:
-                time.sleep(wait)
-            return earliest.key
+            key = earliest.key
+        if 0.0 < wait <= 2.0:
+            time.sleep(wait)
+        return key
 
     def mark_rate_limited(self, key: str, retry_after: float = 30.0) -> None:
         """Mark a specific key as rate-limited / on cooldown."""
@@ -565,9 +566,13 @@ class Extractor:
                             error=str(exc),
                             raw=raw[:200],
                         )
-                        return self.fallback_extractor.extract(
-                            text=text, source_url=source_url, title=title, hints=hints
+                        fallback_hints = dict(hints or {})
+                        fallback_hints["is_heuristic_fallback"] = True
+                        res = self.fallback_extractor.extract(
+                            text=text, source_url=source_url, title=title, hints=fallback_hints
                         )
+                        res.is_heuristic_fallback = True
+                        return res
                     if isinstance(exc, json.JSONDecodeError):
                         raise ExtractionError(f"model returned non-JSON: {exc}") from exc
                     raise ExtractionError(f"schema validation failed: {exc}") from exc

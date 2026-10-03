@@ -161,3 +161,25 @@ def test_clean_url_keeps_links_clickable():
     assert clean_url("mailto:hr@x.org") == ""
     # identity is still the canonical form
     assert url_hash(varbi) == url_hash(canonicalize_url(varbi))
+
+
+def test_policy_heuristic_fallback_overrides_trust_model_fields():
+    from predoc_pipeline.models import Discipline
+
+    policy = Policy(PREFS, trust_model_fields=True)
+    listing = PredocListing(
+        title="Research Assistant",
+        institution="University of Oxford",
+        location=Location(country="United Kingdom", city="Oxford"),
+        apply_url="https://example.org/ra",
+        source_url="https://example.org/ra",
+        disciplines=[Discipline.APPLIED_MICRO],
+        model_confidence=0.99,
+        confidence=0.99,
+    )
+    item = feed_item(listing.title, "Research Assistant to help organize general administrative research tasks in London UK.")
+    # With trust_model_fields=True, model discipline is trusted and policy passes
+    assert policy.check(listing, item, trust_model_fields=True) is None
+    # With trust_model_fields=False (e.g. from heuristic fallback), model discipline is not trusted
+    assert policy.check(listing, item, trust_model_fields=False) == "no-field"
+

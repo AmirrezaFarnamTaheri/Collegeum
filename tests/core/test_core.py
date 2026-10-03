@@ -447,6 +447,27 @@ class TestRateLimiter(unittest.TestCase):
         limiter.acquire(sleep=slept.append)
         self.assertTrue(any(s > 0 for s in slept))
 
+    def test_concurrent_waiters_reserve_slots(self):
+        limiter = RateLimiter(requests_per_minute=60, requests_per_day=1000)
+        # Drain allowance
+        limiter._allowance = 0.0
+        slept: list[float] = []
+        limiter.acquire(sleep=slept.append)
+        limiter.acquire(sleep=slept.append)
+        limiter.acquire(sleep=slept.append)
+        # Each consecutive waiter reserves another slot and sleeps proportionally longer
+        self.assertEqual(len(slept), 3)
+        self.assertAlmostEqual(slept[0], 1.0, places=1)
+        self.assertAlmostEqual(slept[1], 2.0, places=1)
+        self.assertAlmostEqual(slept[2], 3.0, places=1)
+
+    def test_penalise_preserves_future_wait(self):
+        limiter = RateLimiter(requests_per_minute=60, requests_per_day=1000)
+        limiter.penalise(3.0)
+        slept: list[float] = []
+        limiter.acquire(sleep=slept.append)
+        self.assertTrue(len(slept) == 1 and slept[0] >= 3.0)
+
     def test_quota_day_uses_pacific_reset(self):
         # 03:00 UTC on 2 June is still 1 June in Los Angeles.
         moment = datetime(2027, 6, 2, 3, 0, tzinfo=UTC)
@@ -604,6 +625,21 @@ class TestDatabase(unittest.TestCase):
             )
             raise ValueError("boom")
         self.assertIsNone(self.db.get_meta("x"))
+
+    def test_multithreaded_database_access(self):
+        from concurrent.futures import ThreadPoolExecutor
+
+        def worker(i: int):
+            self.db.record_llm_call("2026-10-03", tokens=10 * i)
+            return self.db.llm_usage("2026-10-03")
+
+        with ThreadPoolExecutor(max_workers=5) as pool:
+            results = list(pool.map(worker, range(10)))
+
+        self.assertEqual(len(results), 10)
+        reqs, tokens = self.db.llm_usage("2026-10-03")
+        self.assertEqual(reqs, 10)
+        self.assertEqual(tokens, 450)
 
 
 if __name__ == "__main__":  # pragma: no cover

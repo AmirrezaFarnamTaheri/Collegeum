@@ -89,7 +89,6 @@ link_pattern = 'academics\.de/jobs/'
 pagination_param = "page"
 max_pages = 3
 institution_from_context = true
-country = "Germany"
 note = "Academics.de - DACH clearinghouse for academic positions (Germany, Austria, Switzerland)."
 
 [[board]]
@@ -101,7 +100,6 @@ link_pattern = 'academics\.com/jobs/'
 pagination_param = "page"
 max_pages = 3
 institution_from_context = true
-country = "Germany"
 note = "Academics.com - English portal for DACH predoctoral and research assistant positions."
 
 [[board]]
@@ -473,12 +471,23 @@ note = "WZB quantitative political economy and economics of change."
 name = "carlo_alberto"
 type = "link_scan"
 group = "research_institute"
-urls = ["https://www.carloalberto.org/about-us/jobs-and-fellowships/", "https://www.eief.it/"]
-link_pattern = '(carloalberto\.org/|eief\.it/)'
-institution = "Collegio Carlo Alberto & EIEF"
+url = "https://www.carloalberto.org/about-us/jobs-and-fellowships/"
+link_pattern = 'carloalberto\.org/.*job'
+institution = "Collegio Carlo Alberto"
 country = "Italy"
 field_implied = true
 note = "Centralized research assistantships supporting faculty in macro, finance, applied micro."
+
+[[board]]
+name = "eief"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.eief.it/"
+link_pattern = 'eief\.it/'
+institution = "Einaudi Institute for Economics and Finance"
+country = "Italy"
+field_implied = true
+note = "EIEF research assistantships and predoctoral appointments in Rome."
 
 [[board]]
 name = "eth_lawecon"
@@ -635,6 +644,171 @@ institution = "Brown University"
 country = "United States"
 field_implied = true
 note = "Brown University economics and social sciences research assistants."
+
+[[board]]
+name = "ny_fed"
+type = "link_scan"
+group = "central_bank"
+url = "https://www.newyorkfed.org/research/careers/research_analysts"
+link_pattern = 'myworkdayjobs\.com/FRS|newyorkfed\.org/research/careers'
+institution = "Federal Reserve Bank of New York"
+country = "United States"
+field_implied = true
+note = "NY Fed Research Analyst program for predoctoral economic research."
+
+[[board]]
+name = "bde_spain"
+type = "link_scan"
+group = "central_bank"
+url = "https://www.bde.es/wbe/es/sobre-el-banco/trabajar-en-el-banco/becas-trabajos-de-investigacion-y-ayudas/"
+link_pattern = 'bde\.es/'
+institution = "Banco de España"
+country = "Spain"
+field_implied = true
+note = "Banco de España research grants, predoctoral fellowships, and assistantships."
+
+[[board]]
+name = "opportunity_insights"
+type = "link_scan"
+group = "research_institute"
+url = "https://opportunityinsights.org/careers/"
+link_pattern = 'opportunityinsights\.org/'
+institution = "Opportunity Insights (Harvard University)"
+country = "United States"
+field_implied = true
+note = "Harvard Opportunity Insights predoctoral research fellowship program."
+
+[[board]]
+name = "stanford_siepr"
+type = "link_scan"
+group = "research_institute"
+url = "https://siepr.stanford.edu/predoctoral-research-fellows-program"
+link_pattern = 'siepr\.stanford\.edu/|careersearch\.stanford\.edu/'
+institution = "Stanford Institute for Economic Policy Research (SIEPR)"
+country = "United States"
+field_implied = true
+note = "SIEPR Predoctoral Research Fellows Program in economic policy."
+
+[[board]]
+name = "mit_blueprint"
+type = "link_scan"
+group = "research_institute"
+url = "https://blueprintlabs.mit.edu/careers/"
+link_pattern = 'blueprintlabs\.mit\.edu/'
+institution = "Blueprint Labs (MIT)"
+country = "United States"
+field_implied = true
+note = "MIT Blueprint Labs predoctoral research fellow and analyst positions."
+
+[[board]]
+name = "piie"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.piie.com/careers"
+link_pattern = 'piie\.com/'
+institution = "Peterson Institute for International Economics"
+country = "United States"
+field_implied = true
+note = "PIIE Research Analysts and Eranda Rothschild Junior Fellows."
+
+[[board]]
+name = "iies_stockholm"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.iies.su.se/about-us/work-with-us"
+link_pattern = 'iies\.su\.se/|su\.se/.*job'
+institution = "Institute for International Economic Studies (IIES)"
+country = "Sweden"
+field_implied = true
+note = "IIES Stockholm University research assistants and predocs in quantitative economics."
+
+[[board]]
+name = "nber_ras"
+type = "link_scan"
+group = "aggregator"
+url = "https://www.nber.org/career-resources/research-assistant-positions-not-nber"
+link_pattern = 'apply\.interfolio\.com|myworkday|smartrecruiters|chicagobooth\.edu|princeton\.edu|harvard\.edu|stanford\.edu|mit\.edu|northwestern\.edu|berkeley\.edu|wharton|yale\.edu|nber\.org/sites/default/files'
+card_title = true
+institution_from_context = true
+field_implied = true
+note = "NBER-affiliated faculty predoctoral and research assistant positions across top research universities."
+
+[[board]]
+name = "predoc_org"
+type = "link_scan"
+group = "aggregator"
+url = "https://www.predoc.org/opportunities"
+link_pattern = 'bit\.ly/|[a-zA-Z0-9.-]+\.(?:edu|org|com|gov)'
+card_title = true
+institution_from_context = true
+field_implied = true
+note = "PREDOC consortium full-time predoctoral opportunities across economics and quantitative social sciences."
+
+[[board]]
+name = "tobin_yale"
+type = "link_scan"
+group = "university"
+url = "https://tobin.yale.edu/programs/pre-doctoral-fellows-program"
+link_pattern = 'tobin\.yale\.edu/|apply\.interfolio\.com'
+institution = "Yale University (Tobin Center for Economic Policy)"
+country = "United States"
+field_implied = true
+note = "Yale Tobin Center for Economic Policy Pre-Doctoral Fellows Program."
+
+[[board]]
+name = "pse_paris"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.parisschoolofeconomics.eu/en/about-pse/recruitment/job-offers/"
+link_pattern = 'parisschoolofeconomics\.eu/.*job'
+institution = "Paris School of Economics"
+country = "France"
+field_implied = true
+note = "Paris School of Economics predocs, research assistants, and project vacancies."
+
+[[board]]
+name = "cemfi_madrid"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.cemfi.es/news/"
+link_pattern = 'cemfi\.es/'
+institution = "CEMFI"
+country = "Spain"
+field_implied = true
+note = "Centro de Estudios Monetarios y Financieros (CEMFI) research assistants and predocs."
+
+[[board]]
+name = "bocconi_igier"
+type = "link_scan"
+group = "research_institute"
+url = "https://igier.unibocconi.it/"
+link_pattern = 'igier\.unibocconi\.it/|unibocconi\.eu/'
+institution = "Bocconi University (IGIER)"
+country = "Italy"
+field_implied = true
+note = "Innocenzo Gasparini Institute for Economic Research (IGIER) at Bocconi University."
+
+[[board]]
+name = "fed_board"
+type = "link_scan"
+group = "central_bank"
+url = "https://www.federalreserve.gov/careers-research-assistant.htm"
+link_pattern = 'federalreserve\.gov/|taleo\.net'
+institution = "Federal Reserve Board of Governors"
+country = "United States"
+field_implied = true
+note = "Federal Reserve Board of Governors Research Assistant Program."
+
+[[board]]
+name = "poverty_action"
+type = "link_scan"
+group = "research_institute"
+url = "https://poverty-action.org/careers"
+link_pattern = 'poverty-action\.org/|job-boards\.greenhouse\.io/innovationsforpovertyaction'
+institution = "Innovations for Poverty Action (IPA)"
+country = "United States"
+field_implied = true
+note = "IPA research associate and field research assistant positions in empirical economics."
 
 
 # --- social ------------------------------------------------------------

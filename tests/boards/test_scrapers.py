@@ -114,3 +114,35 @@ def test_link_scan_pagination_url_formatting():
     assert s._format_page_url("https://example.com/jobs?cat=econ", "page", 3) == "https://example.com/jobs?cat=econ&page=3"
     assert s._format_page_url("https://example.com/jobs/p/{page}/", "page", 2) == "https://example.com/jobs/p/2/"
 
+
+def test_link_scan_fetch_all_pages_fail_raises():
+    from unittest.mock import AsyncMock
+
+    import pytest
+
+    s = make(LinkScanScraper, url="https://example.com/jobs", pagination_param="page", max_pages=2)
+    s.http.get_text = AsyncMock(side_effect=RuntimeError("connection refused"))
+    with pytest.raises(RuntimeError, match="connection refused"):
+        import asyncio
+        asyncio.run(s.fetch_raw_postings())
+
+
+def test_link_scan_card_title_and_institution_prefix():
+    html = """
+    <div>
+        <p>Predoctoral Research Associate<br>
+        Institution: New York University, Stern School of Business<br>
+        Field(s) of Research: Real Estate, AI<br>
+        <a href="https://apply.interfolio.com/12345">Link for Job Posting</a>
+        </p>
+    </div>
+    """
+    s = make(LinkScanScraper, url="https://example.com/ras", link_pattern="interfolio",
+             card_title=True, institution_from_context=True)
+    posts = s.parse_postings([("https://example.com/ras", html)])
+    assert len(posts) == 1
+    assert posts[0].title == "Predoctoral Research Associate"
+    assert posts[0].institution == "New York University, Stern School of Business"
+    assert posts[0].url == "https://apply.interfolio.com/12345"
+
+

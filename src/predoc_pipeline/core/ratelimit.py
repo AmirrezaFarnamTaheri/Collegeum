@@ -104,19 +104,17 @@ class RateLimiter:
             self.check_budget(day)
             rate = max(1, self.requests_per_minute)
             now = time.monotonic()
-            self._allowance += (now - self._last_check) * (rate / 60.0)
-            self._last_check = now
-            if self._allowance > rate:
-                self._allowance = float(rate)
-            if self._allowance < 1.0:
-                to_sleep = (1.0 - self._allowance) * (60.0 / rate)
-                self._allowance = 0.0
-            else:
-                self._allowance -= 1.0
+            penalty = max(0.0, self._last_check - now)
+            refill = max(0.0, now - self._last_check) * (rate / 60.0)
+            self._allowance = min(float(rate), self._allowance + refill)
+            self._last_check = max(now, self._last_check)
+            self._allowance -= 1.0
+            if self._allowance < 0.0:
+                to_sleep = -self._allowance * (60.0 / rate)
+            if penalty > 0.0:
+                to_sleep += penalty
         if to_sleep > 0.0:
             sleep(to_sleep)
-            with self._lock:
-                self._last_check = time.monotonic()
 
     def record(self, *, tokens: int = 0, error: bool = False, day: str | None = None) -> None:
         key = day or quota_day()

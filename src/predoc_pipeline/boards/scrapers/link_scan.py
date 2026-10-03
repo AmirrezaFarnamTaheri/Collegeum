@@ -35,6 +35,8 @@ GENERIC_ANCHORS = {
     "read more", "more", "apply", "apply now", "details", "view", "view job", "view details",
     "more info", "more information", "learn more", "here", "click here", "link", "see more",
     "job details", "show more", "next", "previous", "login", "sign in", "share",
+    "link for job posting", "link to job posting", "link for job", "link to job",
+    "apply here", "apply online", "view posting", "job posting", "full posting",
 }
 _CARD_CLASS = re.compile(r"card|job|result|vacanc|listing|item|teaser|views-row|posting|position|opening",
                          re.IGNORECASE)
@@ -78,6 +80,9 @@ def guess_institution(lines: list[str], title: str) -> str | None:
         low = ln.lower()
         if low == tnorm or len(ln) > 140 or len(ln) < 3:
             continue
+        m_inst = re.match(r"^(?:sponsoring\s+)?institution\s*:\s*(.*)$", ln, re.IGNORECASE)
+        if m_inst:
+            return m_inst.group(1).strip(" -|•·")
         if _INSTITUTION_RX.search(ln) and not re.match(r"^(closes?|deadline|salary|location)", low):
             return ln.strip(" -|•·")
     return None
@@ -112,6 +117,7 @@ class LinkScanScraper(BaseScraper):
             return await self.fetch_each(get)
 
         out: list[tuple[str, str]] = []
+        errors: list[str] = []
         pattern = re.compile(self.opt("link_pattern", r".+"), re.IGNORECASE)
         for base_url in self.urls():
             for page in range(1, max_pages + 1):
@@ -123,6 +129,7 @@ class LinkScanScraper(BaseScraper):
                         else await self.http.get_text(page_url)
                     )
                 except Exception as exc:  # noqa: BLE001
+                    errors.append(f"{page_url}: {exc}")
                     log.warning("%s: page %d (%s) failed: %s", self.name, page, page_url, exc)
                     break
                 out.append((page_url, html))
@@ -134,6 +141,8 @@ class LinkScanScraper(BaseScraper):
                 ]
                 if not matching:
                     break
+        if errors and not out:
+            raise RuntimeError("; ".join(errors)[:500])
         return out
 
     def _format_page_url(self, base_url: str, param: str | None, page: int) -> str:
@@ -175,6 +184,13 @@ class LinkScanScraper(BaseScraper):
                 title = clean_ws(a.get("title") or a.get("aria-label") or "")
             if (title.lower() in GENERIC_ANCHORS or len(title) < min_len) and self.opt("heading_titles"):
                 title = previous_heading(a)  # "Details" link under an <h3>Job title</h3>
+            if (title.lower() in GENERIC_ANCHORS or len(title) < min_len) and self.opt("card_title"):
+                card = find_card(a)
+                c_lines = card_lines(card)
+                for ln in c_lines:
+                    if len(ln) >= min_len and ln.lower() not in GENERIC_ANCHORS and not _PEOPLE_NAV.match(ln):
+                        title = ln
+                        break
             if not title or title.lower() in GENERIC_ANCHORS or len(title) < min_len or _PEOPLE_NAV.match(title):
                 continue
             seen.add(href)

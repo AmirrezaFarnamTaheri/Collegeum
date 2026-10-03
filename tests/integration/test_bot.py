@@ -185,3 +185,80 @@ def test_rebuild_keeps_link_rows():
     assert out["inline_keyboard"][0] == [{"text": "Apply", "url": "https://x"}]
     assert out["inline_keyboard"][1][2]["text"] == "• 📝 4"
     assert parse_callback(out["inline_keyboard"][1][0]["callback_data"]) == ("v", "a" * 16)
+
+
+def test_broadcast_deduplicates_before_digest(settings):
+    from unittest.mock import MagicMock
+
+    from predoc_pipeline.models import Location, PredocListing
+    from predoc_pipeline.pipeline import RunStats, _broadcast
+
+    init(settings.db_path)
+    with Database(settings.db_path) as db:
+        # Pre-seed one published listing
+        base_listing = {
+            "source": "t",
+            "country": "UK",
+            "is_remote": 0,
+            "disciplines": "[]",
+            "summary": "",
+            "visa_sponsorship_status": "unknown",
+            "language": "en",
+            "model_confidence": 0.9,
+            "rule_score": 0.5,
+            "confidence": 0.9,
+        }
+        lid1 = db.insert_listing({
+            **base_listing,
+            "url_hash": url_hash("https://example.org/dup"),
+            "apply_url": "https://example.org/dup",
+            "source_url": "https://example.org/dup",
+            "title": "Existing",
+            "institution": "U1",
+        })
+        db.mark_published(lid1, 999)
+
+        # New listings containing duplicate apply_url and an internal duplicate
+        new_lid1 = db.insert_listing({
+            **base_listing,
+            "url_hash": url_hash("https://example.org/dup?utm=1"),
+            "apply_url": "https://example.org/dup?utm=1",
+            "source_url": "https://example.org/dup",
+            "title": "Dup 1",
+            "institution": "U1",
+        })
+        new_lid2 = db.insert_listing({
+            **base_listing,
+            "url_hash": url_hash("https://example.org/unique1"),
+            "apply_url": "https://example.org/unique1",
+            "source_url": "https://example.org/unique1",
+            "title": "Unique 1",
+            "institution": "U2",
+        })
+
+        l1 = PredocListing(
+            title="Dup 1",
+            institution="U1",
+            apply_url="https://example.org/dup?utm=1",
+            source_url="https://example.org/dup",
+            location=Location(country="UK"),
+        )
+        l2 = PredocListing(
+            title="Unique 1",
+            institution="U2",
+            apply_url="https://example.org/unique1",
+            source_url="https://example.org/unique1",
+            location=Location(country="UK"),
+        )
+
+        fake_telegram = MagicMock()
+        fake_telegram.send_message.return_value = 1001
+        stats = RunStats()
+
+        _broadcast([(new_lid1, l1), (new_lid2, l2)], fake_telegram, settings, db, stats)
+        # Duplicate should have been marked published without sending to telegram
+        assert db.listing(new_lid1)["status"] == "published"
+        # Only unique listing sent
+        assert fake_telegram.send_message.call_count == 1
+        assert stats.published == 1
+

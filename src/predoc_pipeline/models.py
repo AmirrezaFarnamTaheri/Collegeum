@@ -259,6 +259,7 @@ class ExtractionResult(BaseModel):
     # Filled by the heuristic backend only (not part of the model's JSON schema).
     deadline_note: str | None = None
     visa_note: str | None = None
+    is_heuristic_fallback: bool = False
 
     @field_validator("confidence", mode="before")
     @classmethod
