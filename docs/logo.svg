@@ -1,29 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" fill="none">
-  <defs>
-    <linearGradient id="logo-c-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0F172A"/>
-      <stop offset="100%" stop-color="#020617"/>
-    </linearGradient>
-    <linearGradient id="logo-gold-grad" x1="16" y1="12" x2="48" y2="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#F59E0B"/>
-      <stop offset="50%" stop-color="#D97706"/>
-      <stop offset="100%" stop-color="#B45309"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Emblem -->
-  <g transform="translate(0, 0)">
-    <rect width="64" height="64" rx="14" fill="url(#logo-c-grad)"/>
-    <rect x="2" y="2" width="60" height="60" rx="12" stroke="#1E293B" stroke-width="1.5"/>
-    <path d="M16 48V28C16 19.163 23.163 12 32 12C40.837 12 48 19.163 48 28V48" stroke="url(#logo-gold-grad)" stroke-width="2.5" stroke-linecap="round"/>
-    <path d="M21 48V29C21 22.925 25.925 18 32 18C38.075 18 43 22.925 43 29V48" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="12" y1="48" x2="52" y2="48" stroke="url(#logo-gold-grad)" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="10" y1="52" x2="54" y2="52" stroke="#475569" stroke-width="2" stroke-linecap="round"/>
-    <path d="M32 24L34 29.5L39.5 31.5L34 33.5L32 39L30 33.5L24.5 31.5L30 29.5Z" fill="#F8FAFC"/>
-    <circle cx="32" cy="31.5" r="1.5" fill="#D97706"/>
+  <!-- Brand Emblem -->
+  <g transform="translate(4, 8)">
+    <rect width="48" height="48" rx="11" fill="#151412"/>
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 40V24a14 14 0 0 1 28 0v16" stroke="#F6F2EA" stroke-width="4"/>
+      <path d="M18 40V25a6 6 0 0 1 12 0v15" stroke="#B0401B" stroke-width="3.5"/>
+      <path d="M6 40h36" stroke="#A29C8E" stroke-width="2"/>
+    </g>
   </g>
 
-  <!-- Wordmark -->
-  <text x="80" y="34" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="24" font-weight="700" letter-spacing="0.12em" fill="#0F172A" class="brand-text">COLLEGEUM</text>
-  <text x="80.5" y="49" font-family="'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" font-weight="600" letter-spacing="0.18em" fill="#64748B" class="brand-sub">RESEARCH POSITIONS DIRECTORY</text>
+  <!-- Typographic Wordmark -->
+  <text x="68" y="35" font-family="'Newsreader', Georgia, 'Times New Roman', serif" font-size="25" font-weight="600" letter-spacing="0.08em" fill="#1A1916">COLLEGEUM</text>
+  <text x="68.5" y="49" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" font-weight="600" letter-spacing="0.18em" fill="#625D52">RESEARCH POSITIONS DIRECTORY</text>
 </svg>
