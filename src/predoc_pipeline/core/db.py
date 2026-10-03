@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS listings (
   signature                 BLOB,
   alternate_sources         TEXT    NOT NULL DEFAULT '[]',
   telegram_message_id       INTEGER,
+  x_post_id                 TEXT,
   status                    TEXT    NOT NULL DEFAULT 'pending',
   first_seen_at             TEXT    NOT NULL,
   last_seen_at              TEXT    NOT NULL,
@@ -203,6 +204,7 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("listings", "last_checked_at", "TEXT"),
     ("listings", "department", "TEXT"),
     ("listings", "fields", "TEXT"),
+    ("listings", "x_post_id", "TEXT"),
 )
 
 
@@ -379,12 +381,31 @@ class Database:
             )
             return int(cur.lastrowid)
 
-    def mark_published(self, listing_id: int, message_id: int | None) -> None:
+    def mark_published(
+        self,
+        listing_id: int,
+        message_id: int | None,
+        x_post_id: str | None = None,
+    ) -> None:
+        with transaction(self.conn):
+            if x_post_id:
+                self.conn.execute(
+                    "UPDATE listings SET status='published', telegram_message_id=?, "
+                    "x_post_id=?, published_at=? WHERE id=?",
+                    (message_id, str(x_post_id), now(), listing_id),
+                )
+            else:
+                self.conn.execute(
+                    "UPDATE listings SET status='published', telegram_message_id=?, "
+                    "published_at=? WHERE id=?",
+                    (message_id, now(), listing_id),
+                )
+
+    def mark_x_published(self, listing_id: int, x_post_id: str | None) -> None:
         with transaction(self.conn):
             self.conn.execute(
-                "UPDATE listings SET status='published', telegram_message_id=?, "
-                "published_at=? WHERE id=?",
-                (message_id, now(), listing_id),
+                "UPDATE listings SET x_post_id=? WHERE id=?",
+                (str(x_post_id) if x_post_id else None, listing_id),
             )
 
     def mark_status(self, listing_id: int, status: str) -> None:

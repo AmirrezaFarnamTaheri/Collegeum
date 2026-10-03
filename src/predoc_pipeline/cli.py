@@ -303,6 +303,83 @@ def test_telegram() -> None:
     typer.echo("sent")
 
 
+@app.command("test-x")
+def test_x() -> None:
+    """Send one test tweet to your configured X/Twitter account."""
+    from .publish.x import XClient, XError
+
+    settings = _settings()
+    if not settings.x_broadcast_configured:
+        typer.secho(
+            "X credentials not configured. Please set X_CONSUMER_KEY, X_CONSUMER_SECRET, "
+            "X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET in your environment or .env.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(1)
+
+    client = XClient.from_settings(settings)
+    test_text = (
+        "🎓 Predoc Pipeline connected.\n\n"
+        "Automated monitoring for predoctoral and research assistant positions in economics.\n\n"
+        "#EconTwitter #Predoc"
+    )
+    try:
+        tweet_id = client.post_tweet(test_text)
+        typer.secho(f"Successfully posted test tweet! ID: {tweet_id}", fg=typer.colors.GREEN)
+        typer.echo(f"View at: https://x.com/i/status/{tweet_id}")
+    except XError as exc:
+        typer.secho(f"X API error: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(1) from exc
+
+
+@app.command("search-x")
+def search_x(
+    query: str = typer.Argument(
+        'from:econ_RA OR "predoc" OR "pre-doc"',
+        help="Search query or account filter.",
+    ),
+    limit: int = typer.Option(10, help="Maximum number of results to display."),
+) -> None:
+    """Live search X/Twitter for predoc postings using X API v2 or Xquik."""
+    import os
+
+    from .ingest.collectors import collect_x_api, collect_xquik
+
+    settings = _settings()
+    settings.twitter_search_queries = [query]
+    settings.max_items_per_source = limit
+
+    if settings.x_bearer_token or os.environ.get("X_BEARER_TOKEN"):
+        typer.echo(f"Querying Official X API v2 with query: {query}")
+        items, stats = collect_x_api(settings)
+    elif settings.xquik_api_key or os.environ.get("XQUIK_API_KEY"):
+        typer.echo(f"Querying Xquik Platform API with query: {query}")
+        items, stats = collect_xquik(settings)
+    else:
+        typer.secho(
+            "No X search credentials configured. Set X_BEARER_TOKEN (for official X API v2) "
+            "or XQUIK_API_KEY (for Xquik) in your environment or .env file.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(1)
+
+    for stat in stats:
+        if stat.errors:
+            typer.secho(f"Errors: {', '.join(stat.messages)}", fg=typer.colors.RED)
+    if not items:
+        typer.echo("No matching tweets found.")
+        return
+
+    typer.secho(f"Found {len(items)} tweets:\n", fg=typer.colors.GREEN)
+    for i, it in enumerate(items, 1):
+        typer.echo(f"[{i}] {it.source}")
+        typer.echo(f"    URL: {it.source_url}")
+        typer.echo(f"    Text: {it.title}")
+        if it.hints.get("urls"):
+            typer.echo(f"    Extracted links: {', '.join(it.hints['urls'])}")
+        typer.echo("-" * 60)
+
+
 @sources_app.command("list")
 def sources_list(config: str = typer.Option("config/sources.toml")) -> None:
     """Show every source and whether it is switched on."""

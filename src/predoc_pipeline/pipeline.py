@@ -500,6 +500,35 @@ def _process(
     )
 
 
+def _publish_to_x(
+    x_client: Any,
+    listing_id: int,
+    listing: PredocListing,
+    db: Database,
+    stats: RunStats,
+) -> str | None:
+    row = db.listing(listing_id)
+    if row is not None and row["x_post_id"]:
+        return str(row["x_post_id"])
+    try:
+        tweet_id = x_client.post_listing(listing)
+        db.mark_x_published(listing_id, tweet_id)
+        log.info("x_published", listing_id=listing_id, tweet_id=tweet_id)
+        return tweet_id
+    except Exception as exc:
+        stats.errors += 1
+        db.log_dlq(
+            run_id=stats.run_id,
+            stage="publish_x",
+            source=listing.source_url,
+            source_url=listing.source_url,
+            payload=truncate(listing.title, 300),
+            error=str(exc),
+        )
+        log.warning("x_publish_failed", listing_id=listing_id, error=str(exc))
+        return None
+
+
 def _broadcast(
     listings: list[tuple[int, PredocListing]],
     telegram: TelegramClient | None,
@@ -507,6 +536,7 @@ def _broadcast(
     db: Database,
     stats: RunStats,
     *,
+    x_client: Any | None = None,
     feedback: FeedbackStore | None = None,
     digest_page_size: int = 6,
     sleep: Any = None,
@@ -515,13 +545,14 @@ def _broadcast(
 
     With a personal chat configured (see ``Settings.owner_ids``) every card and
     digest carries ✅ ❌ 📝 buttons; ``telegram-sync`` records the taps.
+    Also broadcasts to X/Twitter if configured.
     """
     if not listings:
         return
-    if telegram is None:
+    if telegram is None and x_client is None:
         for listing_id, _ in listings:
             db.mark_status(listing_id, "unpublished")
-        log.warning("telegram_not_configured", held=len(listings))
+        log.warning("broadcast_channels_not_configured", held=len(listings))
         return
 
     include_feedback = settings.telegram_feedback_buttons
@@ -583,6 +614,19 @@ def _broadcast(
     if not listings:
         return
 
+    x_post_ids: dict[int, str | None] = {}
+    if x_client is not None:
+        for listing_id, listing in listings:
+            x_post_ids[listing_id] = _publish_to_x(x_client, listing_id, listing, db, stats)
+
+    if telegram is None:
+        if x_client is not None:
+            for listing_id, _ in listings:
+                if x_post_ids.get(listing_id):
+                    db.mark_published(listing_id, None, x_post_id=x_post_ids[listing_id])
+                    stats.published += 1
+        return
+
     hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
 
     if len(listings) > settings.telegram_digest_threshold:
@@ -612,7 +656,7 @@ def _broadcast(
                     return
                 continue  # these stay pending and are retried next run
             for listing_id, _ in chunk:
-                db.mark_published(listing_id, message_id)
+                db.mark_published(listing_id, message_id, x_post_id=x_post_ids.get(listing_id))
             stats.published += len(chunk)
         return
 
@@ -659,7 +703,7 @@ def _broadcast(
                 db.mark_status(listing_id, "undeliverable")
             continue
 
-        db.mark_published(listing_id, message_id)
+        db.mark_published(listing_id, message_id, x_post_id=x_post_ids.get(listing_id))
         stats.published += 1
         log.info(
             "published",
@@ -772,6 +816,7 @@ def run(
     limit: int | None = None,
     board_transport: Any = None,
     telegram_client: Any = None,
+    x_client: Any = None,
     sync_telegram: bool = True,
 ) -> RunStats:
     """Execute one full cycle. Never raises for per-item failures.
@@ -857,6 +902,14 @@ def run(
             if settings.telegram_configured
             else None
         )
+        if x_client is None and settings.x_broadcast_configured:
+            try:
+                from .publish.x import XClient
+
+                x_client = XClient.from_settings(settings)
+            except Exception as exc:
+                log.warning("x_client_init_failed", error=str(exc))
+                x_client = None
 
         try:
             deduper = Deduplicator(
@@ -1014,11 +1067,21 @@ def run(
                         if url_hash(lst.apply_url) not in hidden]
             accepted = _verify_before_sending(accepted, prefs, db, stats, board_transport)
             sent_now = {lid for lid, _ in accepted}
-            _broadcast(accepted, telegram, settings, db, stats, feedback=feedback,
-                       digest_page_size=prefs.telegram.digest_page_size)
+            _broadcast(
+                accepted,
+                telegram,
+                settings,
+                db,
+                stats,
+                x_client=x_client,
+                feedback=feedback,
+                digest_page_size=prefs.telegram.digest_page_size,
+            )
         finally:
             if telegram is not None:
                 telegram.close()
+            if x_client is not None and hasattr(x_client, "close"):
+                x_client.close()
 
         _refilter_published(db, policy, feedback, stats, skip=sent_now)
         _recheck_published(db, prefs, stats, board_transport)

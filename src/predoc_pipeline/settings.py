@@ -151,6 +151,29 @@ class Settings(BaseSettings):
     enable_jobspy: bool = False
     enable_twitter: bool = False
 
+    # -- X (Twitter) Integration ------------------------------------------
+    x_bearer_token: str = ""
+    xquik_api_key: str = ""
+    x_consumer_key: str = ""
+    x_consumer_secret: str = ""
+    x_access_token: str = ""
+    x_access_token_secret: str = ""
+    twitter_search_accounts: list[str] = Field(
+        default_factory=lambda: ["econ_RA", "predoc_org"]
+    )
+    twitter_search_queries: list[str] = Field(
+        default_factory=lambda: [
+            (
+                '(from:econ_RA OR "predoc" OR "pre-doc" OR "predoctoral") '
+                "(economics OR finance) -is:retweet -is:reply"
+            ),
+            (
+                '"research assistant" (economics OR finance) '
+                '("hiring" OR "now accepting" OR "apply") -is:retweet -is:reply'
+            ),
+        ]
+    )
+
     # -- Operations -------------------------------------------------------
     empty_run_alert_threshold: int = Field(
         3, description="Consecutive zero-publish runs before alerting the maintainer."
@@ -188,6 +211,19 @@ class Settings(BaseSettings):
     @property
     def telegram_configured(self) -> bool:
         return bool(self.telegram_bot_token and self.telegram_public_channel_id)
+
+    @property
+    def x_broadcast_configured(self) -> bool:
+        return bool(
+            self.x_consumer_key
+            and self.x_consumer_secret
+            and self.x_access_token
+            and self.x_access_token_secret
+        )
+
+    @property
+    def x_search_configured(self) -> bool:
+        return bool(self.x_bearer_token or self.xquik_api_key)
 
     @staticmethod
     def _is_private_chat(chat_id: str) -> bool:
