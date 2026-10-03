@@ -73,8 +73,8 @@ log = get_logger(__name__)
 __all__ = ["RunStats", "run", "EXIT_OK", "EXIT_PARTIAL", "EXIT_FATAL"]
 
 EXIT_OK = 0
-EXIT_PARTIAL = 1   # completed, but some items landed in the dead-letter queue
-EXIT_FATAL = 2     # could not complete
+EXIT_PARTIAL = 1  # completed, but some items landed in the dead-letter queue
+EXIT_FATAL = 2  # could not complete
 
 
 @dataclass
@@ -91,10 +91,10 @@ class RunStats:
     llm_calls: int = 0
     quota_stopped: bool = False
     expired: int = 0
-    not_wanted: int = 0          # failed config/preferences.toml (region, field, employer...)
+    not_wanted: int = 0  # failed config/preferences.toml (region, field, employer...)
     closed_before_send: int = 0  # link dead / "position filled" when checked just before sending
-    closed_found: int = 0        # sent earlier, found filled/closed on a later re-check
-    refiltered: int = 0          # sent earlier, no longer matches the (edited) preferences
+    closed_found: int = 0  # sent earlier, found filled/closed on a later re-check
+    refiltered: int = 0  # sent earlier, no longer matches the (edited) preferences
     outcome: str = "ok"
     gate_reasons: dict[str, int] = field(default_factory=dict)
 
@@ -144,6 +144,17 @@ def _listing_row(
         # the daily preference re-check sees what the first check saw.
         "department": hints.get("department"),
         "fields": hints.get("fields"),
+        "salary_min": listing.salary_min,
+        "salary_max": listing.salary_max,
+        "salary_currency": listing.salary_currency,
+        "salary_period": listing.salary_period,
+        "salary_raw": listing.salary_raw,
+        "tools_required": json.dumps(listing.tools_required),
+        "tools_preferred": json.dumps(listing.tools_preferred),
+        "min_degree": listing.min_degree,
+        "degree_note": listing.degree_note,
+        "start_term": listing.start_term,
+        "start_date": listing.start_date,
     }
 
 
@@ -155,6 +166,25 @@ def _listing_from_row(row: Any) -> PredocListing:
     disciplines = [Discipline(d) for d in json.loads(row["disciplines"] or "[]")] or [
         Discipline.OTHER
     ]
+
+    def _get(key: str) -> Any:
+        try:
+            return row[key]
+        except (KeyError, IndexError):
+            return None
+
+    tools_req: list[str] = []
+    try:
+        tools_req = json.loads(_get("tools_required") or "[]")
+    except (ValueError, TypeError):
+        pass
+
+    tools_pref: list[str] = []
+    try:
+        tools_pref = json.loads(_get("tools_preferred") or "[]")
+    except (ValueError, TypeError):
+        pass
+
     return PredocListing(
         title=row["title"],
         institution=row["institution"],
@@ -175,8 +205,19 @@ def _listing_from_row(row: Any) -> PredocListing:
         model_confidence=row["model_confidence"] or 0.0,
         rule_score=row["rule_score"] or 0.0,
         confidence=row["confidence"] or 0.0,
-        deadline_note=row["deadline_note"],
-        visa_note=row["visa_note"],
+        deadline_note=_get("deadline_note"),
+        visa_note=_get("visa_note"),
+        salary_min=_get("salary_min"),
+        salary_max=_get("salary_max"),
+        salary_currency=_get("salary_currency"),
+        salary_period=_get("salary_period"),
+        salary_raw=_get("salary_raw"),
+        tools_required=tools_req,
+        tools_preferred=tools_pref,
+        min_degree=_get("min_degree"),
+        degree_note=_get("degree_note"),
+        start_term=_get("start_term"),
+        start_date=_get("start_date"),
     )
 
 
@@ -216,8 +257,10 @@ def _really_same(db: Database, other_id: int, listing: PredocListing, item: RawI
 
         if canonicalize_url(other["source_url"]) != canonicalize_url(item.source_url):
             return False
-    mine, theirs = _surnames(listing.principal_investigator), _surnames(
-        other["principal_investigator"])
+    mine, theirs = (
+        _surnames(listing.principal_investigator),
+        _surnames(other["principal_investigator"]),
+    )
     # "Jane Doe" vs "J. Doe", or "A. Smith, J. Doe" vs "Jane Doe": same people.
     return not (mine and theirs and not mine & theirs)
 
@@ -595,8 +638,10 @@ def _broadcast(
             existing = db.listing_by_url(lst.apply_url)
         if existing is None and lst.source_url:
             existing = db.listing_by_url(lst.source_url)
-        if existing is not None and int(existing["id"]) != lid and (
-            existing["status"] == "published" or existing["telegram_message_id"]
+        if (
+            existing is not None
+            and int(existing["id"]) != lid
+            and (existing["status"] == "published" or existing["telegram_message_id"])
         ):
             log.info(
                 "skip_duplicate_post_existing_db",
@@ -656,17 +701,23 @@ def _broadcast(
             status_of=status_of,
         )
         for index, (html, keyboard) in enumerate(pages):
-            chunk = listings[index * digest_page_size:(index + 1) * digest_page_size]
+            chunk = listings[index * digest_page_size : (index + 1) * digest_page_size]
             try:
                 message_id = telegram.send_message(
-                    chat_id=settings.telegram_public_channel_id, html=html, keyboard=keyboard,
+                    chat_id=settings.telegram_public_channel_id,
+                    html=html,
+                    keyboard=keyboard,
                     **send_kw,
                 )
             except TelegramError as exc:
                 stats.errors += 1
                 db.log_dlq(
-                    run_id=stats.run_id, stage="digest", source="telegram",
-                    source_url="", payload=f"{len(chunk)} listings", error=str(exc),
+                    run_id=stats.run_id,
+                    stage="digest",
+                    source="telegram",
+                    source_url="",
+                    payload=f"{len(chunk)} listings",
+                    error=str(exc),
                 )
                 if _chat_level(exc):
                     _telegram_setup_problem(settings, exc)
@@ -687,7 +738,9 @@ def _broadcast(
             try:
                 message_id = telegram.send_message(
                     chat_id=settings.telegram_public_channel_id,
-                    html=render_card(listing), keyboard=keyboard, **send_kw,
+                    html=render_card(listing),
+                    keyboard=keyboard,
+                    **send_kw,
                 )
             except TelegramError as exc:
                 if exc.status != 400 or not keyboard:
@@ -766,11 +819,18 @@ def _verify_before_sending(
         return candidates
     from .boards.collector import check_links
 
-    todo = {lid: (listing.title, listing.apply_url,
-                  listing.deadline.date() if listing.deadline else None)
-            for lid, listing in candidates if not listing.__dict__.get("_page_read")}
-    verdicts = check_links(todo, prefs.http, concurrency=prefs.enrich.detail_concurrency,
-                           transport=transport)
+    todo = {
+        lid: (
+            listing.title,
+            listing.apply_url,
+            listing.deadline.date() if listing.deadline else None,
+        )
+        for lid, listing in candidates
+        if not listing.__dict__.get("_page_read")
+    }
+    verdicts = check_links(
+        todo, prefs.http, concurrency=prefs.enrich.detail_concurrency, transport=transport
+    )
     kept = []
     for lid, listing in candidates:
         reason = verdicts.get(lid)
@@ -799,8 +859,9 @@ def _recheck_published(
     for r in rows:
         when = parse_datetime(r["deadline"])
         todo[int(r["id"])] = (r["title"], r["apply_url"], when.date() if when else None)
-    for lid, reason in check_links(todo, prefs.http, concurrency=cfg.detail_concurrency,
-                                   transport=transport).items():
+    for lid, reason in check_links(
+        todo, prefs.http, concurrency=cfg.detail_concurrency, transport=transport
+    ).items():
         if reason:
             db.mark_closed(lid, reason)
             stats.closed_found += 1
@@ -886,7 +947,11 @@ def run(
             store=db,
         ) as client:
             items, source_stats = gather(
-                settings, sources, client, only=only_sources, prefs=prefs,
+                settings,
+                sources,
+                client,
+                only=only_sources,
+                prefs=prefs,
                 known=lambda url: db.knows_url(url_hash(url)),
                 board_transport=board_transport,
             )
@@ -1086,8 +1151,9 @@ def run(
                 if int(row["id"]) not in new_ids:
                     accepted.append((int(row["id"]), _listing_from_row(row)))
             hidden = feedback.hidden
-            accepted = [(lid, lst) for lid, lst in accepted
-                        if url_hash(lst.apply_url) not in hidden]
+            accepted = [
+                (lid, lst) for lid, lst in accepted if url_hash(lst.apply_url) not in hidden
+            ]
             accepted = _verify_before_sending(accepted, prefs, db, stats, board_transport)
             sent_now = {lid for lid, _ in accepted}
             router = Router(prefs)
@@ -1126,8 +1192,9 @@ def run(
         dashboard = state.export_dashboard(
             db, settings.dashboard_json, hidden=hidden, router=router
         )
-        state.export_feed(db, settings.feed_path, site_url=settings.site_url,
-                          hidden=hidden, router=router)
+        state.export_feed(
+            db, settings.feed_path, site_url=settings.site_url, hidden=hidden, router=router
+        )
 
         log.info(
             "run_complete",

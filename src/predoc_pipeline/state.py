@@ -41,6 +41,7 @@ __all__ = [
 # Journal
 # --------------------------------------------------------------------------
 
+
 def write_journal(db: Any, path: str | Path) -> int:
     """Rewrite the journal from the database. Returns the record count.
 
@@ -133,6 +134,7 @@ def restore_runs(db: Any, health_path: str | Path) -> int:
 # Dashboard payloads
 # --------------------------------------------------------------------------
 
+
 def _row_value(row: Any, key: str) -> Any:
     try:
         return row[key]
@@ -145,6 +147,19 @@ def _public_record(row: Any) -> dict[str, Any]:
     deadline = get("deadline")
     parsed = parse_datetime(deadline)
     days_left = (parsed - utcnow()).days if parsed else None
+
+    tools_req: list[str] = []
+    try:
+        tools_req = json.loads(_row_value(row, "tools_required") or "[]")
+    except (ValueError, TypeError):
+        pass
+
+    tools_pref: list[str] = []
+    try:
+        tools_pref = json.loads(_row_value(row, "tools_preferred") or "[]")
+    except (ValueError, TypeError):
+        pass
+
     return {
         "id": int(get("id")),
         "title": get("title"),
@@ -167,6 +182,17 @@ def _public_record(row: Any) -> dict[str, Any]:
         "deadline_note": _row_value(row, "deadline_note"),
         "visa_note": _row_value(row, "visa_note"),
         "alternate_sources": json.loads(get("alternate_sources") or "[]"),
+        "salary_min": _row_value(row, "salary_min"),
+        "salary_max": _row_value(row, "salary_max"),
+        "salary_currency": _row_value(row, "salary_currency"),
+        "salary_period": _row_value(row, "salary_period"),
+        "salary_raw": _row_value(row, "salary_raw"),
+        "tools_required": tools_req,
+        "tools_preferred": tools_pref,
+        "min_degree": _row_value(row, "min_degree"),
+        "degree_note": _row_value(row, "degree_note"),
+        "start_term": _row_value(row, "start_term"),
+        "start_date": _row_value(row, "start_date"),
     }
 
 
@@ -202,9 +228,7 @@ def export_dashboard(
     }
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8"
-    )
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     return len(records)
 
 
@@ -302,21 +326,18 @@ def export_feed(
         record = _public_record(row)
         deadline = record["deadline"] or "rolling"
         description = (
-            f"{record['institution']} \u2014 "
-            f"{record['city'] or ''} {record['country']}".strip()
+            f"{record['institution']} \u2014 {record['city'] or ''} {record['country']}".strip()
             + f". Deadline: {deadline}. "
             + record["summary"]
         )
         published = parse_datetime(record["first_seen_at"])
-        pub_date = (
-            published.strftime("%a, %d %b %Y %H:%M:%S +0000") if published else now
-        )
+        pub_date = published.strftime("%a, %d %b %Y %H:%M:%S +0000") if published else now
         parts += [
             "<item>",
             f"<title>{_xml_escape(record['title'])} \u2014 "
             f"{_xml_escape(record['institution'])}</title>",
             f"<link>{_xml_escape(record['apply_url'])}</link>",
-            f"<guid isPermaLink=\"false\">{_xml_escape(record['source_url'])}</guid>",
+            f'<guid isPermaLink="false">{_xml_escape(record["source_url"])}</guid>',
             f"<pubDate>{pub_date}</pubDate>",
             f"<description>{_xml_escape(description)}</description>",
         ]

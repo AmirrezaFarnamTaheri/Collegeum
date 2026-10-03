@@ -48,7 +48,7 @@ __all__ = [
     "Database",
 ]
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -92,7 +92,18 @@ CREATE TABLE IF NOT EXISTS listings (
   closed_at                 TEXT,
   last_checked_at           TEXT,
   department                TEXT,
-  fields                    TEXT
+  fields                    TEXT,
+  salary_min                REAL,
+  salary_max                REAL,
+  salary_currency           TEXT,
+  salary_period             TEXT,
+  salary_raw                TEXT,
+  tools_required            TEXT    NOT NULL DEFAULT '[]',
+  tools_preferred           TEXT    NOT NULL DEFAULT '[]',
+  min_degree                TEXT,
+  degree_note               TEXT,
+  start_term                TEXT,
+  start_date                TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_listings_status     ON listings(status);
 CREATE INDEX IF NOT EXISTS ix_listings_deadline   ON listings(deadline);
@@ -220,6 +231,17 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("listings", "department", "TEXT"),
     ("listings", "fields", "TEXT"),
     ("listings", "x_post_id", "TEXT"),
+    ("listings", "salary_min", "REAL"),
+    ("listings", "salary_max", "REAL"),
+    ("listings", "salary_currency", "TEXT"),
+    ("listings", "salary_period", "TEXT"),
+    ("listings", "salary_raw", "TEXT"),
+    ("listings", "tools_required", "TEXT DEFAULT '[]'"),
+    ("listings", "tools_preferred", "TEXT DEFAULT '[]'"),
+    ("listings", "min_degree", "TEXT"),
+    ("listings", "degree_note", "TEXT"),
+    ("listings", "start_term", "TEXT"),
+    ("listings", "start_date", "TEXT"),
 )
 
 
@@ -347,9 +369,7 @@ class Database:
 
     # -- listings ---------------------------------------------------------
     def listing_by_url_hash(self, url_hash: str) -> sqlite3.Row | None:
-        return self.conn.execute(
-            "SELECT * FROM listings WHERE url_hash=?", (url_hash,)
-        ).fetchone()
+        return self.conn.execute("SELECT * FROM listings WHERE url_hash=?", (url_hash,)).fetchone()
 
     def listing_by_url(self, url: str) -> sqlite3.Row | None:
         """Find a listing by exact URL hash, apply_url, source_url, or alternate_sources."""
@@ -394,17 +414,51 @@ class Database:
         message in the channel.
         """
         columns = (
-            "url_hash", "apply_url", "source_url", "source", "title", "institution",
-            "principal_investigator", "country", "city", "is_remote", "duration_years",
-            "deadline", "disciplines", "visa_sponsorship_status", "summary", "language",
-            "model_confidence", "rule_score", "confidence", "signature",
-            "first_seen_at", "last_seen_at", "status", "deadline_note", "visa_note",
-            "department", "fields",
+            "url_hash",
+            "apply_url",
+            "source_url",
+            "source",
+            "title",
+            "institution",
+            "principal_investigator",
+            "country",
+            "city",
+            "is_remote",
+            "duration_years",
+            "deadline",
+            "disciplines",
+            "visa_sponsorship_status",
+            "summary",
+            "language",
+            "model_confidence",
+            "rule_score",
+            "confidence",
+            "signature",
+            "first_seen_at",
+            "last_seen_at",
+            "status",
+            "deadline_note",
+            "visa_note",
+            "department",
+            "fields",
+            "salary_min",
+            "salary_max",
+            "salary_currency",
+            "salary_period",
+            "salary_raw",
+            "tools_required",
+            "tools_preferred",
+            "min_degree",
+            "degree_note",
+            "start_term",
+            "start_date",
         )
         payload = {c: values.get(c) for c in columns}
         payload["first_seen_at"] = payload["first_seen_at"] or now()
         payload["last_seen_at"] = payload["last_seen_at"] or payload["first_seen_at"]
         payload["status"] = payload["status"] or "pending"
+        payload["tools_required"] = payload["tools_required"] or "[]"
+        payload["tools_preferred"] = payload["tools_preferred"] or "[]"
         placeholders = ",".join("?" for _ in columns)
         with self.transaction():
             cur = self.conn.execute(
@@ -446,9 +500,7 @@ class Database:
 
     def touch_listing(self, listing_id: int) -> None:
         with self.transaction():
-            self.conn.execute(
-                "UPDATE listings SET last_seen_at=? WHERE id=?", (now(), listing_id)
-            )
+            self.conn.execute("UPDATE listings SET last_seen_at=? WHERE id=?", (now(), listing_id))
 
     def add_alternate_source(self, listing_id: int, source_url: str) -> None:
         with self.transaction():
@@ -587,9 +639,7 @@ class Database:
                 "  errors   = llm_usage.errors + excluded.errors",
                 (day, 1, tokens, 1 if error else 0),
             )
-            row = self.conn.execute(
-                "SELECT requests FROM llm_usage WHERE day=?", (day,)
-            ).fetchone()
+            row = self.conn.execute("SELECT requests FROM llm_usage WHERE day=?", (day,)).fetchone()
             return int(row["requests"])
 
     # -- HTTP cache -------------------------------------------------------
@@ -716,9 +766,7 @@ class Database:
             "published": int(
                 q("SELECT COUNT(*) FROM listings WHERE status='published'").fetchone()[0]
             ),
-            "pending": int(
-                q("SELECT COUNT(*) FROM listings WHERE status='pending'").fetchone()[0]
-            ),
+            "pending": int(q("SELECT COUNT(*) FROM listings WHERE status='pending'").fetchone()[0]),
             "expired": int(
                 q("SELECT COUNT(*) FROM listings WHERE expired_at IS NOT NULL").fetchone()[0]
             ),
@@ -785,9 +833,15 @@ class Database:
                 cur = self.conn.execute(
                     "INSERT OR IGNORE INTO seen_items(url_hash, source, decision, reason, "
                     "content_hash, first_seen_at, last_seen_at) VALUES(?,?,?,?,?,?,?)",
-                    (record["url_hash"], record.get("source") or "", record["decision"],
-                     (record.get("reason") or "")[:200], record.get("content_hash") or "",
-                     first, first),
+                    (
+                        record["url_hash"],
+                        record.get("source") or "",
+                        record["decision"],
+                        (record.get("reason") or "")[:200],
+                        record.get("content_hash") or "",
+                        first,
+                        first,
+                    ),
                 )
                 inserted += cur.rowcount or 0
         return inserted
@@ -807,11 +861,20 @@ class Database:
                     "INSERT INTO run_log(run_id, started_at, finished_at, ingested, gated, "
                     "extracted, duplicates, published, errors, llm_calls, outcome, source_stats) "
                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (run["run_id"], run["started_at"], run.get("finished_at"),
-                     run.get("ingested", 0), run.get("gated", 0), run.get("extracted", 0),
-                     run.get("duplicates", 0), run.get("published", 0), run.get("errors", 0),
-                     run.get("llm_calls", 0), run.get("outcome", "ok"),
-                     json.dumps(run.get("source_stats") or {}, sort_keys=True)),
+                    (
+                        run["run_id"],
+                        run["started_at"],
+                        run.get("finished_at"),
+                        run.get("ingested", 0),
+                        run.get("gated", 0),
+                        run.get("extracted", 0),
+                        run.get("duplicates", 0),
+                        run.get("published", 0),
+                        run.get("errors", 0),
+                        run.get("llm_calls", 0),
+                        run.get("outcome", "ok"),
+                        json.dumps(run.get("source_stats") or {}, sort_keys=True),
+                    ),
                 )
                 inserted += 1
         return inserted

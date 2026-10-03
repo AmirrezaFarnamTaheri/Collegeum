@@ -19,7 +19,8 @@ parse failures.
 
 from __future__ import annotations
 
-from datetime import datetime
+import re
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -37,6 +38,11 @@ __all__ = [
     "ExtractionResult",
     "RawItem",
     "EXTRACTION_JSON_SCHEMA",
+    "CANONICAL_TOOLS",
+    "parse_salary",
+    "normalize_tools",
+    "normalize_degree",
+    "normalize_start_date",
     "coerce",
     "CoercionError",
 ]
@@ -102,6 +108,19 @@ class PredocListing(BaseModel):
     deadline_note: str | None = None
     visa_note: str | None = None
 
+    # Candidate-facing attributes
+    salary_min: float | None = None
+    salary_max: float | None = None
+    salary_currency: str | None = None
+    salary_period: str | None = None
+    salary_raw: str | None = None
+    tools_required: list[str] = Field(default_factory=list)
+    tools_preferred: list[str] = Field(default_factory=list)
+    min_degree: str | None = None
+    degree_note: str | None = None
+    start_term: str | None = None
+    start_date: str | None = None
+
     @field_validator("title", "institution")
     @classmethod
     def _non_empty(cls, value: str) -> str:
@@ -117,6 +136,13 @@ class PredocListing(BaseModel):
         if value is None:
             return None
         return value if 0 < value <= 10 else None
+
+    @field_validator("salary_min", "salary_max")
+    @classmethod
+    def _sane_salary(cls, value: float | None) -> float | None:
+        if value is None:
+            return None
+        return value if 0 <= value <= 2_000_000 else None
 
 
 class RawItem(BaseModel):
@@ -160,9 +186,17 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
         "rejection_reason": {
             "type": ["string", "null"],
             "enum": [
-                "celebration", "admissions", "paper_or_discourse", "postdoc",
-                "phd_studentship", "faculty", "student_job", "unrelated_field",
-                "not_a_vacancy", "already_closed", None,
+                "celebration",
+                "admissions",
+                "paper_or_discourse",
+                "postdoc",
+                "phd_studentship",
+                "faculty",
+                "student_job",
+                "unrelated_field",
+                "not_a_vacancy",
+                "already_closed",
+                None,
             ],
             "description": "Why this is not a predoctoral vacancy. Null if it is one.",
         },
@@ -224,6 +258,33 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
                 "suits. No marketing language, no invented detail."
             ),
         },
+        "salary_raw": {
+            "type": ["string", "null"],
+            "description": (
+                "Compensation, salary or stipend if stated in the advert "
+                "(e.g. '£35,000 p.a.' or '$60,000/yr'). Null if unstated."
+            ),
+        },
+        "tools": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": (
+                "Programming languages, software or tools mentioned "
+                "(e.g. Python, Stata, R, SQL, Julia). Empty if none stated."
+            ),
+        },
+        "min_degree": {
+            "type": ["string", "null"],
+            "enum": ["bachelors", "masters", "phd", "unstated", None],
+            "description": "Minimum required degree. Null or 'unstated' if not specified.",
+        },
+        "start_date": {
+            "type": ["string", "null"],
+            "description": (
+                "Anticipated start date or season (e.g. 'Summer 2027', 'July 2027', "
+                "'Immediate'). Null if unstated."
+            ),
+        },
         "confidence": {
             "type": "number",
             "minimum": 0,
@@ -261,6 +322,22 @@ class ExtractionResult(BaseModel):
     visa_note: str | None = None
     is_heuristic_fallback: bool = False
 
+    # Candidate-facing additions (from LLM or heuristic)
+    salary_raw: str | None = None
+    tools: list[str] = Field(default_factory=list)
+    min_degree: str | None = None
+    start_date: str | None = None
+
+    # Pre-parsed bounds if provided by heuristic backend
+    salary_min: float | None = None
+    salary_max: float | None = None
+    salary_currency: str | None = None
+    salary_period: str | None = None
+    tools_required: list[str] = Field(default_factory=list)
+    tools_preferred: list[str] = Field(default_factory=list)
+    degree_note: str | None = None
+    start_term: str | None = None
+
     @field_validator("confidence", mode="before")
     @classmethod
     def _clamp(cls, value: Any) -> float:
@@ -269,7 +346,7 @@ class ExtractionResult(BaseModel):
         except (TypeError, ValueError):
             return 0.0
 
-    @field_validator("disciplines", mode="before")
+    @field_validator("disciplines", "tools", mode="before")
     @classmethod
     def _listify(cls, value: Any) -> list[str]:
         if value is None:
@@ -313,6 +390,218 @@ def _disciplines(values: list[str]) -> list[Discipline]:
     return out[:3] or [Discipline.OTHER]
 
 
+CANONICAL_TOOLS: tuple[str, ...] = (
+    "Python",
+    "R",
+    "Stata",
+    "Julia",
+    "MATLAB",
+    "SQL",
+    "C++",
+    "Git",
+    "LaTeX",
+)
+
+_TOOL_ALIASES: dict[str, str] = {
+    "python": "Python",
+    "r": "R",
+    "r programming": "R",
+    "rstudio": "R",
+    "stata": "Stata",
+    "julia": "Julia",
+    "matlab": "MATLAB",
+    "sql": "SQL",
+    "c++": "C++",
+    "cpp": "C++",
+    "c/c++": "C++",
+    "git": "Git",
+    "github": "Git",
+    "latex": "LaTeX",
+}
+
+_DEGREE_ALIASES: dict[str, str] = {
+    "bachelor": "bachelors",
+    "bachelors": "bachelors",
+    "bachelor's": "bachelors",
+    "undergraduate": "bachelors",
+    "ba": "bachelors",
+    "bs": "bachelors",
+    "bsc": "bachelors",
+    "master": "masters",
+    "masters": "masters",
+    "master's": "masters",
+    "msc": "masters",
+    "ma": "masters",
+    "mphil": "masters",
+    "phd": "phd",
+    "ph.d": "phd",
+    "ph.d.": "phd",
+    "doctoral": "phd",
+    "doctorate": "phd",
+}
+
+
+def parse_salary(
+    raw: str | None,
+) -> tuple[float | None, float | None, str | None, str | None]:
+    """Parse raw compensation text into (min, max, currency, period).
+
+    Returns (None, None, None, None) if no recognizable amounts are present.
+    """
+    if not raw:
+        return (None, None, None, None)
+    text = raw.replace(",", "").strip()
+
+    # Currency detection
+    currency = None
+    if "£" in text or re.search(r"\bGBP\b", text, re.IGNORECASE):
+        currency = "GBP"
+    elif "€" in text or re.search(r"\bEUR\b", text, re.IGNORECASE):
+        currency = "EUR"
+    elif "$" in text or re.search(r"\bUSD\b", text, re.IGNORECASE):
+        currency = "USD"
+    elif re.search(r"\bCHF\b", text, re.IGNORECASE):
+        currency = "CHF"
+    elif re.search(r"\b(CAD|C\$)\b", text, re.IGNORECASE):
+        currency = "CAD"
+    elif re.search(r"\b(AUD|A\$)\b", text, re.IGNORECASE):
+        currency = "AUD"
+    elif re.search(r"\bSEK\b", text, re.IGNORECASE):
+        currency = "SEK"
+    elif re.search(r"\bNOK\b", text, re.IGNORECASE):
+        currency = "NOK"
+    elif re.search(r"\bDKK\b", text, re.IGNORECASE):
+        currency = "DKK"
+
+    # Period detection
+    period = None
+    if re.search(r"\b(hour|hourly|hr|p/h)\b", text, re.IGNORECASE):
+        period = "hour"
+    elif re.search(r"\b(month|monthly|mo|p\.m\.|pcm)\b", text, re.IGNORECASE):
+        period = "month"
+    elif re.search(
+        r"\b(year|yearly|annum|annual|annually|p\.a\.|per annum|pa)\b", text, re.IGNORECASE
+    ):
+        period = "year"
+
+    # Numbers detection, handling 'k' (e.g. 35k -> 35000)
+    matches = re.findall(r"\b(\d+(?:\.\d+)?)\s*(k|kilo)?\b", text, re.IGNORECASE)
+    nums: list[float] = []
+    for val, k in matches:
+        try:
+            n = float(val)
+            if k:
+                n *= 1000.0
+            if n > 0:
+                nums.append(n)
+        except ValueError:
+            continue
+
+    if not nums:
+        return (None, None, currency, period)
+
+    # Filter out potential years like 2024, 2025, 2026, 2027 if they look like calendar years
+    valid_nums = [n for n in nums if not (1990 <= n <= 2040 and not currency)]
+    if not valid_nums:
+        valid_nums = nums
+
+    s_min: float | None = min(valid_nums)
+    s_max: float | None = max(valid_nums) if len(valid_nums) > 1 else s_min
+
+    # Default period heuristic if unstated:
+    if not period and s_min is not None:
+        if s_min >= 15000:
+            period = "year"
+        elif 1000 <= s_min < 15000:
+            period = "month"
+        elif 10 <= s_min < 200:
+            period = "hour"
+
+    # Clamp sane limits
+    if s_min is not None and s_min > 2_000_000:
+        s_min = None
+    if s_max is not None and s_max > 2_000_000:
+        s_max = None
+
+    return (s_min, s_max, currency, period)
+
+
+def normalize_tools(
+    tools: list[str] | None,
+    text_context: str = "",
+) -> tuple[list[str], list[str]]:
+    """Normalize tool mentions into (required_tools, preferred_tools)."""
+    req: list[str] = []
+    pref: list[str] = []
+
+    def _add(canonical: str, is_preferred: bool) -> None:
+        if is_preferred:
+            if canonical not in pref and canonical not in req:
+                pref.append(canonical)
+        else:
+            if canonical not in req:
+                req.append(canonical)
+            if canonical in pref:
+                pref.remove(canonical)
+
+    if tools:
+        for t in tools:
+            clean = squish(str(t)).lower()
+            if not clean:
+                continue
+            is_pref = bool(re.search(r"\b(prefer|plus|desir|bonus|option|nice)\b", clean))
+            for k, canonical in _TOOL_ALIASES.items():
+                if re.search(rf"\b{re.escape(k)}\b", clean):
+                    _add(canonical, is_pref)
+
+    # Contextual regex sweep if text context is provided
+    if text_context:
+        lower_ctx = text_context.lower()
+        for k, canonical in _TOOL_ALIASES.items():
+            if re.search(rf"\b{re.escape(k)}\b", lower_ctx) and (
+                canonical not in req and canonical not in pref
+            ):
+                match = re.search(
+                    rf"(?:prefer|plus|desirable|advantage)[\w\s,]{{0,30}}\b{re.escape(k)}\b",
+                    lower_ctx,
+                )
+                _add(canonical, bool(match))
+
+    return req, pref
+
+
+def normalize_degree(raw: str | None) -> tuple[str, str | None]:
+    """Map raw degree mention to (min_degree, degree_note)."""
+    if not raw:
+        return ("unstated", None)
+    clean = squish(raw)
+    lower = clean.lower()
+    lower_normalized = re.sub(r"\.(?!\d)", "", lower)
+    for k, canonical in _DEGREE_ALIASES.items():
+        if re.search(rf"\b{re.escape(k)}\b", lower) or re.search(
+            rf"\b{re.escape(k)}\b", lower_normalized
+        ):
+            return (canonical, clean if clean.lower() != canonical else None)
+    return ("unstated", clean)
+
+
+def normalize_start_date(raw: str | None) -> tuple[str | None, str | None]:
+    """Return (start_term, start_date_iso) from a raw start date string."""
+    if not raw:
+        return (None, None)
+    clean = squish(raw)
+    dt = parse_datetime(clean)
+    if not dt:
+        for fmt in ("%B %Y", "%b %Y"):
+            try:
+                dt = datetime.strptime(clean, fmt).replace(tzinfo=UTC)
+                break
+            except ValueError:
+                pass
+    iso_date = dt.strftime("%Y-%m-%d") if dt else None
+    return (clean, iso_date)
+
+
 def coerce(
     result: ExtractionResult,
     *,
@@ -350,6 +639,41 @@ def coerce(
 
     summary = squish(result.summary) or squish(fallback_summary)
 
+    # Salary normalization
+    s_raw = squish(result.salary_raw or "") or None
+    s_min = result.salary_min
+    s_max = result.salary_max
+    s_curr = result.salary_currency
+    s_per = result.salary_period
+    if s_raw and (s_min is None or s_max is None or s_curr is None):
+        p_min, p_max, p_curr, p_per = parse_salary(s_raw)
+        s_min = s_min if s_min is not None else p_min
+        s_max = s_max if s_max is not None else p_max
+        s_curr = s_curr or p_curr
+        s_per = s_per or p_per
+
+    # Tools normalization
+    req_tools = list(result.tools_required)
+    pref_tools = list(result.tools_preferred)
+    if result.tools or not (req_tools or pref_tools):
+        t_req, t_pref = normalize_tools(result.tools, text_context=f"{title} {summary}")
+        for t in t_req:
+            if t not in req_tools:
+                req_tools.append(t)
+        for t in t_pref:
+            if t not in pref_tools and t not in req_tools:
+                pref_tools.append(t)
+
+    # Degree normalization
+    m_deg, deg_note = normalize_degree(result.min_degree)
+    if result.degree_note:
+        deg_note = result.degree_note
+
+    # Start date normalization
+    s_term, s_date = normalize_start_date(result.start_date)
+    if result.start_term:
+        s_term = result.start_term
+
     return PredocListing(
         title=title,
         institution=institution,
@@ -372,4 +696,15 @@ def coerce(
         confidence=result.confidence if confidence is None else confidence,
         deadline_note=squish(result.deadline_note or "") or None,
         visa_note=squish(result.visa_note or "") or None,
+        salary_min=s_min,
+        salary_max=s_max,
+        salary_currency=s_curr,
+        salary_period=s_per,
+        salary_raw=s_raw,
+        tools_required=req_tools,
+        tools_preferred=pref_tools,
+        min_degree=m_deg,
+        degree_note=deg_note,
+        start_term=s_term,
+        start_date=s_date,
     )
