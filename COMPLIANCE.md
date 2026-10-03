@@ -106,10 +106,12 @@ reasonable next step.
 
 | Source | Default | Robots.txt honored | Conditional GET | Primary risk |
 |---|---|---|---|---|
-| Academic Job Boards | **On** | Paced per host | No | Low — parses public job announcements |
+| Academic Job Boards | **On** | No | No | Low — parses public job announcements |
 | RSS/Atom feeds | **On** | Yes | Yes | None — public syndication protocol |
 | Schema.org portals | **On** | Yes | Yes | Low-medium — relies on public structured data |
 | Official X API v2 | **On** (with token) | N/A (REST API) | N/A | None — compliant with X Developer Policy |
 | Xquik Platform API | **On** (with key) | N/A (REST API) | N/A | Low — managed proxy service |
 | `jobspy` (job boards) | **Off** | N/A (library-internal) | No | High — ToS violation risk, IP/account blocking |
 | `twscrape` (social) | **Off** | N/A | No | High — ToS violation, account suspension |
+
+*Note on Academic Job Boards*: Direct job-board and ATS scrapers do not dynamically query `robots.txt` files, but requests are strictly paced per host with politeness delays and concurrency limits to prevent server impact.

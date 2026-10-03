@@ -275,8 +275,8 @@ def telegram_sync_cmd() -> None:
     try:
         summary = telegram_sync(settings)
     except TelegramError as exc:
-        typer.secho(f"Telegram sync skipped due to error: {exc}", fg=typer.colors.YELLOW)
-        return
+        typer.secho(f"Telegram sync failed due to error: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(1) from exc
     typer.echo(
         f"answered {summary['commands']} command(s), saved {summary['taps']} button tap(s), "
         f"ignored {summary['ignored']} message(s) from other people"

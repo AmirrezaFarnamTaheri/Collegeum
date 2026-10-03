@@ -117,7 +117,7 @@ Run `predoc-pipeline test-x` or `predoc-pipeline search-x` locally to diagnose:
 
 - **`HTTP 401 Unauthorized`**: Invalid or expired OAuth credentials. Verify `X_CONSUMER_KEY`, `X_CONSUMER_SECRET`, `X_ACCESS_TOKEN`, and `X_ACCESS_TOKEN_SECRET` in `.env` or repository secrets.
 - **`HTTP 403 Forbidden` ("duplicate content")**: X rejects identical status text posted within a short interval. The pipeline logs this and continues without dropping listings.
-- **`HTTP 429 Too Many Requests`**: X API v2 rate limit exceeded (e.g., search or posting limits on Free/Basic tiers). Ingestion will retry on the next scheduled run. When `X_BEARER_TOKEN` reaches monthly search caps, set `XQUIK_API_KEY` to route searches through the Xquik proxy.
+- **`HTTP 429 Too Many Requests`**: X API v2 rate limit exceeded (e.g., search or posting limits on Free/Basic tiers). Ingestion will retry on the next scheduled run. When `X_BEARER_TOKEN` reaches monthly search caps, clear it from the active settings and process environment before setting `XQUIK_API_KEY`, as the official API takes precedence whenever `X_BEARER_TOKEN` is configured.
 
 ### Querying and verifying listings locally
 

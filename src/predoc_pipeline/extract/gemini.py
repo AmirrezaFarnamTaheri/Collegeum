@@ -116,6 +116,10 @@ class KeyRotator:
             earliest = min(self._states, key=lambda s: s.cooldown_until)
             wait = max(0.0, earliest.cooldown_until - now)
             key = earliest.key
+        if wait > 60.0:
+            raise RateLimited(
+                f"all API keys cooling; next available in {wait:.1f}s", retry_after=wait
+            )
         if wait > 0.0:
             time.sleep(wait)
         return key

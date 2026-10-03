@@ -112,6 +112,6 @@ times a day at most, with a 1.5 s pause between requests to the same site.
 
 ## Tests
 
-* `pytest`: **281 passing tests** (core standard library utilities, job-board scrapers, preference filters, detail heuristics, Telegram bot conversation flows, X API v2 and Xquik ingestion, X broadcasting, SQLite schema v5 migrations, and end-to-end mocked pipeline runs).
+* `pytest`: **295 passing tests** (core standard library utilities, job-board scrapers, preference filters, detail heuristics, Telegram bot conversation flows, X API v2 and Xquik ingestion, X broadcasting, SQLite schema v6 migrations, candidate variables extraction, and end-to-end mocked pipeline runs).
 * `predoc-pipeline eval`: precision 1.000, recall 1.000 on 30 labelled golden examples.
 * `ruff check`: 0 lint errors across `src` and `tests`.
