@@ -20,7 +20,20 @@ DEFAULT_UAS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
 ]
 
-RETRY_STATUS = {429, 500, 502, 503, 504, 520, 522, 524}
+DEFAULT_BROWSER_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8,de;q=0.7,fr;q=0.6,es;q=0.5",
+    "Sec-Ch-Ua": '"Not;A=Brand";v="24", "Chromium";v="128", "Google Chrome";v="128"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+}
+
+RETRY_STATUS = {403, 429, 500, 502, 503, 504, 520, 522, 524}
 
 
 class FetchError(RuntimeError):
@@ -42,7 +55,7 @@ class HttpClient:
         self._host_lock: dict[str, asyncio.Lock] = {}
         self._client = httpx.AsyncClient(
             timeout=timeout, follow_redirects=True, transport=transport,
-            headers={"Accept-Language": "en-GB,en;q=0.9", "Accept-Encoding": "gzip, deflate"},
+            headers={"Accept-Encoding": "gzip, deflate"},
         )
 
     async def __aenter__(self) -> HttpClient:
@@ -68,8 +81,15 @@ class HttpClient:
             self._host_last[host] = time.monotonic()
 
     async def request(self, method: str, url: str, **kw: Any) -> httpx.Response:
-        host = urlsplit(url).netloc.lower()
-        headers = {"User-Agent": random.choice(self.user_agents), **kw.pop("headers", {})}
+        parsed = urlsplit(url)
+        host = parsed.netloc.lower()
+        ua = random.choice(self.user_agents)
+        base_headers = {
+            "User-Agent": ua,
+            "Referer": f"{parsed.scheme}://{parsed.netloc}/",
+            **DEFAULT_BROWSER_HEADERS,
+        }
+        headers = {**base_headers, **kw.pop("headers", {})}
         last_exc: Exception | None = None
         for attempt in range(self.max_retries + 1):
             await self._polite_wait(host)
@@ -84,6 +104,14 @@ class HttpClient:
                         raise FetchError(f"HTTP {resp.status_code} for {url}", status=resp.status_code)
                     return resp
                 last_exc = FetchError(f"HTTP {resp.status_code} for {url}", status=resp.status_code)
+                if resp.status_code == 403 and attempt < self.max_retries:
+                    # Cloudflare or anti-bot: rotate headers, switch referer, and back off
+                    headers["Referer"] = "https://www.google.com/"
+                    headers["Sec-Fetch-Site"] = "cross-site"
+                    headers["User-Agent"] = random.choice(self.user_agents)
+                    delay = self.backoff_base ** (attempt + 1) + random.uniform(0.5, 1.5)
+                    await asyncio.sleep(delay)
+                    continue
                 retry_after = resp.headers.get("Retry-After", "")
                 if retry_after.isdigit():
                     await asyncio.sleep(min(int(retry_after), 120))

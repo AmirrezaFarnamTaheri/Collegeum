@@ -105,3 +105,12 @@ def test_rss_inomics_filters_non_jobs_and_odd_dates():
     assert len(posts) == 2
     assert posts[1].deadline == date(2026, 10, 31)
     assert posts[1].date_posted == date(2026, 9, 24)
+
+
+def test_link_scan_pagination_url_formatting():
+    s = make(LinkScanScraper, url="https://example.com/jobs", pagination_param="page", max_pages=3)
+    assert s._format_page_url("https://example.com/jobs", "page", 1) == "https://example.com/jobs"
+    assert s._format_page_url("https://example.com/jobs", "page", 2) == "https://example.com/jobs?page=2"
+    assert s._format_page_url("https://example.com/jobs?cat=econ", "page", 3) == "https://example.com/jobs?cat=econ&page=3"
+    assert s._format_page_url("https://example.com/jobs/p/{page}/", "page", 2) == "https://example.com/jobs/p/2/"
+

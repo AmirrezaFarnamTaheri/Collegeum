@@ -97,7 +97,7 @@ class Settings(BaseSettings):
         le=32,
         description="Parallel workers for LLM candidate digestion and key rotation.",
     )
-    llm_requests_per_minute: int = 60
+    llm_requests_per_minute: int = 100
     llm_requests_per_day: int = 2000
     llm_daily_safety_margin: float = Field(0.9, ge=0.1, le=1.0)
     llm_max_input_chars: int = 12_000

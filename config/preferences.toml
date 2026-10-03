@@ -11,15 +11,20 @@
 # Unmistakable predoc wording (big score boost, overrides title exclusions).
 strong_terms = [
   "pre-doc*", "pre-phd*", "research professional", "staff associate",
-  "wissenschaftliche* mitarbeiter*", "wissenschaftliche hilfskraft*",
-  "personal investigador predoctoral*", "assistant* de recherche*",
+  "wissenschaftliche* mitarbeiter*", "wissenschaftliche* hilfskraft*",
+  "promotionsstelle*", "doktorandenstelle*",
+  "personal investigador predoctoral*", "personal investigador en formacion", "personal investigador en formación",
+  "assistant* de recherche*", "allocataire* de recherche predoctoral*", "chercheur* predoctoral*",
+  "assegnista* di ricerca*", "borsista* di ricerca*",
 ]
 
 # RA-type roles (these also need an economics/business field word somewhere).
 role_terms = [
   "research assistant*", "research associate*", "research analyst*", "research economist*", "research officer*", "research specialist*",
   "research trainee*", "research intern*", "junior researcher*", "junior economist*", "assistant researcher*", "graduate researcher*",
-  "shk", "whk", "promotionsstelle*",
+  "shk", "whk", "wimi", "studentische* hilfskraft*",
+  "ayudante* de investigacion*", "ayudante* de investigación*", "asistente* de investigacion*", "asistente* de investigación*",
+  "chargé* d'études économiques", "charge* d'etudes economiques", "assistente* di ricerca",
 ]
 
 # WANTED fields: economics, business, political/social science, law.
@@ -29,6 +34,10 @@ field_terms = [
   "accounting", "marketing", "entrepreneurship", "organizational behavior", "organisational behaviour", "operations management",
   "consumer behavio*", "political science", "international relations", "public administration", "social science*", "quantitative social",
   "sociology", "demography",
+  "wirtschaftswissenschaft*", "volkswirtschaft*", "betriebswirtschaft*", "vwl", "bwl", "ökonomie", "oekonomie",
+  "sciences economiques", "sciences économiques", "economie", "économie", "économétrie", "econometrie",
+  "ciencias economicas", "ciencias económicas", "economia", "economía", "econometría", "econometria",
+  "sozialwissenschaft*",
 ]
 
 # Everyday words: count as a field in a title/department, but on a full job page they
@@ -112,17 +121,17 @@ max_age_days = 120           # ignore postings older than this (when a post date
 [enrich]
 fetch_details = true         # read every new posting's page (field, region, filled?) before sending
 max_details_per_run = 500    # the rest wait for the next run
-detail_concurrency = 6
+detail_concurrency = 12
 recheck_open_jobs = true     # revisit sent jobs so filled ones drop off /positions and the dashboard
 recheck_every_days = 3
-recheck_max_per_run = 40
+recheck_max_per_run = 80
 
 [http]
 timeout = 30
 max_retries = 3
 default_min_interval = 1.5   # polite delay between requests to the same site (seconds)
 max_concurrent_sources = 6
-source_timeout = 300         # give up on a source that hangs longer than this (seconds)
+source_timeout = 420         # give up on a source that hangs longer than this (seconds)
 
 [telegram]
 list_page_size = 5           # positions per message for /positions, /applied...

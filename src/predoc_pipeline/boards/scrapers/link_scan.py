@@ -16,8 +16,10 @@ Options:
 """
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup, Tag
 
@@ -26,6 +28,8 @@ from ..utils.dates import extract_deadline, find_dates, parse_posted
 from ..utils.geo import detect_location
 from ..utils.text import absolutize, clean_ws, truncate
 from .base import BaseScraper, register
+
+log = logging.getLogger(__name__)
 
 GENERIC_ANCHORS = {
     "read more", "more", "apply", "apply now", "details", "view", "view job", "view details",
@@ -99,9 +103,49 @@ class LinkScanScraper(BaseScraper):
     type_name = "link_scan"
 
     async def fetch_raw_postings(self) -> list[Any]:
-        async def get(u: str) -> tuple[str, str]:
-            return u, (await self._render(u) if self.opt("render") else await self.http.get_text(u))
-        return await self.fetch_each(get)
+        param = self.opt("pagination_param")
+        max_pages = int(self.opt("max_pages", 1))
+
+        if not param and max_pages <= 1:
+            async def get(u: str) -> tuple[str, str]:
+                return u, (await self._render(u) if self.opt("render") else await self.http.get_text(u))
+            return await self.fetch_each(get)
+
+        out: list[tuple[str, str]] = []
+        pattern = re.compile(self.opt("link_pattern", r".+"), re.IGNORECASE)
+        for base_url in self.urls():
+            for page in range(1, max_pages + 1):
+                page_url = self._format_page_url(base_url, param, page)
+                try:
+                    html = (
+                        await self._render(page_url)
+                        if self.opt("render")
+                        else await self.http.get_text(page_url)
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("%s: page %d (%s) failed: %s", self.name, page, page_url, exc)
+                    break
+                out.append((page_url, html))
+                soup = BeautifulSoup(html, "lxml")
+                matching = [
+                    a["href"]
+                    for a in soup.find_all("a", href=True)
+                    if pattern.search(absolutize(page_url, a["href"]))
+                ]
+                if not matching:
+                    break
+        return out
+
+    def _format_page_url(self, base_url: str, param: str | None, page: int) -> str:
+        if "{page}" in base_url:
+            return base_url.format(page=page)
+        if not param or page == 1:
+            return base_url
+        parts = urlsplit(base_url)
+        qs = parse_qs(parts.query, keep_blank_values=True)
+        qs[param] = [str(page)]
+        new_query = urlencode(qs, doseq=True)
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, new_query, parts.fragment))
 
     async def _render(self, url: str) -> str:
         from .university_ats import render_page  # lazy: playwright is optional

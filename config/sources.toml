@@ -70,10 +70,39 @@ field_implied = true
 name = "european_job_market"
 type = "link_scan"
 group = "aggregator"
-urls = ["https://www.europeanjobmarketofeconomists.org/job-listings", "https://www.europeanjobmarketofeconomists.org/job-listings?page=1", "https://www.europeanjobmarketofeconomists.org/job-listings?page=2"]
+url = "https://www.europeanjobmarketofeconomists.org/job-listings"
 link_pattern = 'europeanjobmarketofeconomists\.org/job-listing/'
+pagination_param = "page"
+max_pages = 5
 institution_from_context = true
 field_implied = true
+
+[[board]]
+name = "academics_de"
+type = "link_scan"
+group = "aggregator"
+urls = [
+  "https://www.academics.de/stellenanzeigen/branche-wirtschaft-management-verwaltung/Nw==",
+  "https://www.academics.de/stellenanzeigen/position-wissenschaftlicher-mitarbeiter/VQ==",
+]
+link_pattern = 'academics\.de/jobs/'
+pagination_param = "page"
+max_pages = 3
+institution_from_context = true
+country = "Germany"
+note = "Academics.de - DACH clearinghouse for academic positions (Germany, Austria, Switzerland)."
+
+[[board]]
+name = "academics_com"
+type = "link_scan"
+group = "aggregator"
+url = "https://www.academics.com/jobsearch/field-subject-economics-management-business-administration/Nw=="
+link_pattern = 'academics\.com/jobs/'
+pagination_param = "page"
+max_pages = 3
+institution_from_context = true
+country = "Germany"
+note = "Academics.com - English portal for DACH predoctoral and research assistant positions."
 
 [[board]]
 name = "somma"
