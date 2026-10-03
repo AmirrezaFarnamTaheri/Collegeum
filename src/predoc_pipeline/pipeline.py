@@ -163,7 +163,17 @@ def _listing_from_row(row: Any) -> PredocListing:
     from .core.timeparse import parse_datetime
     from .models import Discipline, Location, VisaStatus
 
-    disciplines = [Discipline(d) for d in json.loads(row["disciplines"] or "[]")] or [
+    raw_disc = row.get("disciplines") if isinstance(row, dict) else row["disciplines"]
+    if isinstance(raw_disc, list):
+        disc_names = raw_disc
+    elif isinstance(raw_disc, str):
+        try:
+            disc_names = json.loads(raw_disc or "[]")
+        except (ValueError, TypeError):
+            disc_names = []
+    else:
+        disc_names = []
+    disciplines = [Discipline(d) for d in disc_names if d in Discipline._value2member_map_] or [
         Discipline.OTHER
     ]
 
@@ -173,17 +183,27 @@ def _listing_from_row(row: Any) -> PredocListing:
         except (KeyError, IndexError):
             return None
 
-    tools_req: list[str] = []
-    try:
-        tools_req = json.loads(_get("tools_required") or "[]")
-    except (ValueError, TypeError):
-        pass
+    raw_req = _get("tools_required")
+    if isinstance(raw_req, list):
+        tools_req = raw_req
+    elif isinstance(raw_req, str):
+        try:
+            tools_req = json.loads(raw_req or "[]")
+        except (ValueError, TypeError):
+            tools_req = []
+    else:
+        tools_req = []
 
-    tools_pref: list[str] = []
-    try:
-        tools_pref = json.loads(_get("tools_preferred") or "[]")
-    except (ValueError, TypeError):
-        pass
+    raw_pref = _get("tools_preferred")
+    if isinstance(raw_pref, list):
+        tools_pref = raw_pref
+    elif isinstance(raw_pref, str):
+        try:
+            tools_pref = json.loads(raw_pref or "[]")
+        except (ValueError, TypeError):
+            tools_pref = []
+    else:
+        tools_pref = []
 
     return PredocListing(
         title=row["title"],
@@ -382,6 +402,34 @@ def _post_extract(
             content_hash=digest,
         )
         return None
+
+    if (listing.apply_url and gating._EXCLUDED_URL_RX.search(listing.apply_url)) or (
+        listing.source_url and gating._EXCLUDED_URL_RX.search(listing.source_url)
+    ):
+        stats.gated += 1
+        stats.gate_reasons["not-a-vacancy"] = stats.gate_reasons.get("not-a-vacancy", 0) + 1
+        db.mark_seen(
+            source_key,
+            source=item.source,
+            decision="rejected",
+            reason="not-a-vacancy",
+            content_hash=digest,
+        )
+        return None
+
+    for pattern, label in gating._TITLE_RE:
+        if pattern.search(listing.title):
+            stats.gated += 1
+            reason = f"title:{label}"
+            stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
+            db.mark_seen(
+                source_key,
+                source=item.source,
+                decision="rejected",
+                reason=reason,
+                content_hash=digest,
+            )
+            return None
 
     if listing.confidence < settings.confidence_threshold:
         stats.low_confidence += 1
@@ -691,7 +739,10 @@ def _broadcast(
     hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
     x_post_ids: dict[int, str | None] = {}
 
-    if len(listings) > settings.telegram_digest_threshold:
+    if (
+        settings.telegram_digest_threshold > 0
+        and len(listings) > settings.telegram_digest_threshold
+    ):
         # A backfill should not fire forty separate notifications.
         pages = render_digest_pages(
             [(hashes[lid], listing) for lid, listing in listings],

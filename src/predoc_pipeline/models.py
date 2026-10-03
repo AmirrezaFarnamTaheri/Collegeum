@@ -200,9 +200,12 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
             ],
             "description": "Why this is not a predoctoral vacancy. Null if it is one.",
         },
-        "title": {"type": "string", "description": "Position title, in English."},
+        "title": {
+            "type": ["string", "null"],
+            "description": "Position title, in English. Null if not a vacancy.",
+        },
         "institution": {
-            "type": "string",
+            "type": ["string", "null"],
             "description": (
                 "Hiring university, institute, central bank or research centre. "
                 "Copy it from the text; never infer one."
@@ -230,13 +233,13 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
             ),
         },
         "disciplines": {
-            "type": "array",
+            "type": ["array", "null"],
             "items": {"type": "string", "enum": _DISCIPLINE_VALUES},
             "description": "One to three fields. Use 'Other' when unclear.",
         },
         "visa_sponsorship_status": {
-            "type": "string",
-            "enum": ["explicit", "inferred", "unknown", "not_offered"],
+            "type": ["string", "null"],
+            "enum": ["explicit", "inferred", "unknown", "not_offered", None],
             "description": (
                 "'explicit' if the text states sponsorship or eligibility; "
                 "'inferred' if standard institutional policy clearly applies; "
@@ -252,7 +255,7 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
             ),
         },
         "summary": {
-            "type": "string",
+            "type": ["string", "null"],
             "description": (
                 "Two neutral sentences in English: what the role is and who it "
                 "suits. No marketing language, no invented detail."
@@ -266,7 +269,7 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
             ),
         },
         "tools": {
-            "type": "array",
+            "type": ["array", "null"],
             "items": {"type": "string"},
             "description": (
                 "Programming languages, software or tools mentioned "
@@ -292,7 +295,7 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
             "description": "Calibrated probability that is_vacancy is correct.",
         },
     },
-    "required": ["is_vacancy", "title", "institution", "disciplines", "confidence"],
+    "required": ["is_vacancy", "confidence"],
     "additionalProperties": False,
 }
 
@@ -345,6 +348,32 @@ class ExtractionResult(BaseModel):
             return min(max(float(value), 0.0), 1.0)
         except (TypeError, ValueError):
             return 0.0
+
+    @field_validator("title", "summary", "institution", mode="before")
+    @classmethod
+    def _coerce_str(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value).strip()
+
+    @field_validator("visa_sponsorship_status", mode="before")
+    @classmethod
+    def _coerce_visa(cls, value: Any) -> str:
+        if not value or not isinstance(value, str):
+            return "unknown"
+        val = value.strip().lower()
+        if val in ("explicit", "inferred", "unknown", "not_offered"):
+            return val
+        return "unknown"
+
+    @field_validator("is_remote", mode="before")
+    @classmethod
+    def _coerce_bool(cls, value: Any) -> bool:
+        if value is None:
+            return False
+        if isinstance(value, str):
+            return value.strip().lower() in ("true", "1", "yes")
+        return bool(value)
 
     @field_validator("disciplines", "tools", mode="before")
     @classmethod

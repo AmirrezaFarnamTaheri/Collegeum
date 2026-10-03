@@ -157,6 +157,17 @@ TITLE_REJECT: tuple[tuple[str, str], ...] = (
     (_PHD_JOB + r"|(?<!pre-)(?<!pre )\bph\.?d\s+students?\b", "phd-studentship"),
     (r"\b(undergraduate|work[- ]study|part[- ]time student|summer intern(ship)?|"
      r"student assistant|studentische)\b", "student-job"),
+    (
+        r"^(?:(?:our\s+|current\s+|former\s+|meet\s+(?:our|the)\s+|external\s+|academic\s+)?"
+        r"(?:faculty|staff|people|team|alumni|directors|board)|"
+        r"was\s+wir\s+bieten|studierende|diversit[äa]t|stellenangebote|"
+        r"why\s+do\s+a\s+pre-?doc\??|ra\s+award\s+program|before\s+applying|"
+        r"benefits|our\s+culture|work\s+with\s+us|join\s+us|contact\s+us|"
+        r"postdocs?|faq|privacy\s+policy|asynchronous\s+courses|pre-?docs?\s+in\s+industry|"
+        r".*pre-?doctoral\s+research\s+in\s+economics\s+\(pre\)\s+workshop.*|"
+        r".*students\s+achieve\s+outstanding\s+placements.*)$",
+        "not-a-vacancy",
+    ),
 )
 # Only when the title names no predoc/RA role of its own.
 TITLE_FACULTY = (r"\b(tenure[- ]track|(assistant|associate|full)\s+professor|professor(ship)?|"
@@ -240,11 +251,25 @@ class GateResult:
         return not self.passed
 
 
+_EXCLUDED_URL_RX = re.compile(
+    r"/people/(?:faculty/|staff/|index|$|\?)|"
+    r"/faculty/(?:index|pages/profile|personal|$|\?)|"
+    r"/staff/(?:index|directory|$|\?)|"
+    r"/alumni/|/experts?/|"
+    r"/news/stories/|"
+    r"/was-wir-bieten|/diversitaet|/studierende|/stellenangebote|"
+    r"/ra-matching|/learn-more|/before-applying|/courses|/private-firms|/pre-workshop|"
+    r"facid=|facId=",
+    re.IGNORECASE,
+)
+
+
 def _reject_reason(
     title: str,
     text: str,
     body: str,
     *,
+    url: str = "",
     title_only: bool = False,
     allow_phd: bool = False,
     allow_postdoc: bool = False,
@@ -255,6 +280,8 @@ def _reject_reason(
     opening may be site navigation ("PhD positions | Postdocs | Jobs"), and the
     board scraper has already applied the PhD-required rule to it.
     """
+    if url and _EXCLUDED_URL_RX.search(url):
+        return "not-a-vacancy"
     if not title_only and (len(body) <= CHATTER_MAX_CHARS or not title):
         for pattern, label in _CHATTER_RE:
             if pattern.search(body):
@@ -312,6 +339,7 @@ def evaluate(
         squish(title),
         text,
         body,
+        url=url,
         title_only=known_vacancy,
         allow_phd=allow_phd,
         allow_postdoc=allow_postdoc,

@@ -110,13 +110,72 @@ def _deadline_line(listing: PredocListing) -> str:
     return deadline_label(listing.deadline, listing.deadline_note)
 
 
+def _detect_situation(listing: PredocListing) -> str:
+    if listing.location.is_remote:
+        return "Remote"
+    blob = (
+        f"{listing.title} {listing.summary} "
+        f"{listing.location.city} {listing.location.country}"
+    ).lower()
+    if "hybrid" in blob:
+        return "Hybrid"
+    if listing.location.city or listing.location.country:
+        return "On-site"
+    return "not stated"
+
+
+def _format_requirements(listing: PredocListing) -> str | None:
+    parts = []
+    tools: list[str] = []
+    if getattr(listing, "tools_required", None):
+        tools.extend(listing.tools_required)
+    elif getattr(listing, "tools", None):
+        tools.extend(listing.tools)
+    if getattr(listing, "tools_preferred", None):
+        pref = [t for t in listing.tools_preferred if t not in tools]
+        if pref:
+            tools.extend(f"{p} (preferred)" for p in pref)
+    if tools:
+        parts.append(", ".join(tools))
+    deg = getattr(listing, "min_degree", None)
+    if deg and deg.lower() not in ("unstated", "none"):
+        deg_map = {"bachelors": "Bachelor's", "masters": "Master's", "phd": "PhD"}
+        deg_label = deg_map.get(deg.lower(), deg.title())
+        parts.append(f"{deg_label} degree")
+    return "; ".join(parts) if parts else None
+
+
+def _format_other(listing: PredocListing) -> str | None:
+    notes: list[str] = []
+    if listing.visa_note:
+        notes.append(listing.visa_note)
+    deg_note = getattr(listing, "degree_note", None)
+    min_deg = getattr(listing, "min_degree", None)
+    if deg_note and deg_note != min_deg and deg_note not in notes:
+        notes.append(deg_note)
+    summary_lower = (listing.summary or "").lower()
+    for pattern, label in (
+        (r"\bwomen\s+only\b|\bonly\s+women\b", "Woman Only"),
+        (
+            r"\b(?:women|female)\s+candidates?\s+(?:are\s+)?(?:strongly\s+)?encouraged\b",
+            "Women encouraged",
+        ),
+        (
+            r"\b(?:underrepresented|minority)\s+candidates?\s+(?:are\s+)?(?:strongly\s+)?encouraged\b",
+            "Diversity initiative",
+        ),
+        (r"\bcitizens?\s+only\b|\bnationals?\s+only\b", "Citizens/Residents only"),
+    ):
+        if re.search(pattern, summary_lower) and label not in notes:
+            notes.append(label)
+    return "; ".join(notes) if notes else None
+
+
 def render_card(listing: PredocListing) -> str:
-    """One vacancy as a Telegram HTML card, guaranteed under the length limit."""
+    """One vacancy as an enriched Telegram HTML card, guaranteed under the length limit."""
     esc = escape_telegram_html
     location_bits = [b for b in (listing.location.city, listing.location.country) if b]
     location = ", ".join(location_bits) or "not stated"
-    if listing.location.is_remote:
-        location += " \u00b7 remote"
 
     duration = (
         f"{listing.duration_years:g} year{'s' if listing.duration_years != 1 else ''}"
@@ -124,20 +183,35 @@ def render_card(listing: PredocListing) -> str:
         else "not stated"
     )
 
+    situation = _detect_situation(listing)
+    requirements = _format_requirements(listing)
+    other = _format_other(listing)
+
     lines = [
-        f"\U0001f393 <b>{esc(truncate(listing.title, 140))}</b>",
+        f"🎓 <b>{esc(truncate(listing.title, 140))}</b>",
         f"<i>{esc(truncate(listing.institution, 120))}</i>",
-        "",
-        f"\U0001f4cd {esc(location)}",
-        f"\U0001f52c {esc(', '.join(d.value for d in listing.disciplines))}",
-        f"\u23f3 {esc(duration)}",
-        f"\U0001f4c5 <b>{esc(_deadline_line(listing))}</b>",
-        f"\U0001f6c2 visa: {_visa_badge(listing.visa_sponsorship_status.value)}",
     ]
-    if listing.visa_note:
-        lines.append(f"<i>{esc(truncate(listing.visa_note, 160))}</i>")
     if listing.principal_investigator:
-        lines.insert(3, f"\U0001f464 {esc(truncate(listing.principal_investigator, 80))}")
+        lines.append(f"👤 {esc(truncate(listing.principal_investigator, 80))}")
+    lines.append("")
+    lines.extend([
+        f"📍 {esc(location)}",
+        f"🔬 {esc(', '.join(d.value for d in listing.disciplines))}",
+        f"⏳ {esc(duration)}",
+        f"📅 <b>{esc(_deadline_line(listing))}</b>",
+        f"🛂 visa: {_visa_badge(listing.visa_sponsorship_status.value)}",
+        f"Situation: {esc(situation)}",
+    ])
+    if requirements:
+        lines.append(f"Requirements: {esc(requirements)}")
+    salary = getattr(listing, "salary_raw", None)
+    if salary:
+        lines.append(f"💰 Compensation: {esc(salary)}")
+    start = getattr(listing, "start_term", None) or getattr(listing, "start_date", None)
+    if start:
+        lines.append(f"🗓 Start: {esc(start)}")
+    if other:
+        lines.append(f"Other: {esc(truncate(other, 140))}")
 
     tags = [
         hashtag(listing.disciplines[0].value) if listing.disciplines else "",

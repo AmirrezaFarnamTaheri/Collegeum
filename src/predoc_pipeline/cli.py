@@ -69,7 +69,7 @@ def run(
         f"duplicates={stats.duplicates} published={stats.published} errors={stats.errors} "
         f"llm_calls={stats.llm_calls} outcome={stats.outcome}"
     )
-    raise typer.Exit(EXIT_OK if stats.outcome in ("ok", "dry-run") else 1)
+    raise typer.Exit(EXIT_OK if stats.outcome in ("ok", "dry-run", "partial") else 1)
 
 
 @app.command()
