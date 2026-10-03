@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Collegeum — Economics &amp; Policy Research Positions</title>
-  <meta name="description" content="Predoctoral fellowships, postdoctoral appointments, and economic research roles across US universities, central banks, multilateral bodies, and private research institutes.">
+  <title>Collegeum — Economics Research Positions</title>
+  <meta name="description" content="Research positions in economics, finance, and public policy from 75 university portals, central banks, and research institutes, updated daily.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="alternate" type="application/rss+xml" title="Collegeum RSS Feed" href="feed.xml">
 
@@ -325,143 +325,6 @@
       margin: 0 0 28px;
       font-size: 15px;
     }
-
-    /* Routing Lanes & Interactive Checker */
-    .lanes {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin-bottom: 20px;
-    }
-    .lane {
-      background: var(--card);
-      border: 1px solid var(--rule);
-      border-radius: 16px;
-      padding: 24px;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-    }
-    .lane h3 { font: 600 20px var(--serif); margin: 0 0 4px; }
-    .lane small { color: var(--soft); font-size: 13px; }
-    .lane ul {
-      margin: 14px 0 0;
-      padding: 0;
-      list-style: none;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .lane li {
-      font-size: 12.5px;
-      padding: 3px 11px;
-      border-radius: 999px;
-      background: var(--acc2);
-      color: var(--ink);
-    }
-    .lane.hit {
-      border-color: var(--acc);
-      box-shadow: 0 14px 34px -20px var(--acc);
-      transform: translateY(-2px);
-    }
-
-    .tg-card {
-      margin-top: 18px;
-      border-radius: 12px;
-      background: var(--bg);
-      border: 1px solid var(--rule);
-      padding: 14px 16px;
-      font-size: 13px;
-      line-height: 1.55;
-    }
-    .tg-card b { display: block; font-size: 14px; margin-bottom: 2px; }
-    .tg-card i { color: var(--soft); display: block; font-style: normal; }
-    .tg-card .bt { display: flex; gap: 6px; margin-top: 10px; }
-    .tg-card .bt span {
-      flex: 1;
-      text-align: center;
-      border: 1px solid var(--rule);
-      border-radius: 6px;
-      padding: 4px;
-      font-size: 11.5px;
-      background: var(--card);
-    }
-
-    /* Router Simulator Widget */
-    .router {
-      background: var(--card);
-      border: 1px solid var(--rule);
-      border-radius: 16px;
-      padding: 24px;
-      display: grid;
-      grid-template-columns: 1.25fr 1fr;
-      gap: 28px;
-    }
-    .router h3 { margin: 0 0 2px; font: 600 19px var(--serif); }
-    .grp { margin-top: 14px; }
-    .grp > div:first-child {
-      font: 600 11px var(--mono);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--soft);
-      margin-bottom: 6px;
-    }
-    .seg { display: flex; flex-wrap: wrap; gap: 6px; }
-    .seg button {
-      font: 500 13px var(--sans);
-      padding: 6px 13px;
-      border-radius: 999px;
-      border: 1px solid var(--rule);
-      background: none;
-      color: var(--ink);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .seg button:hover { border-color: var(--acc); }
-    .seg button[aria-pressed="true"] {
-      background: var(--ink);
-      color: var(--bg);
-      border-color: var(--ink);
-    }
-
-    .verdict {
-      border-radius: 12px;
-      padding: 20px;
-      background: var(--bg);
-      border: 1px dashed var(--rule-strong);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 12px;
-    }
-    .dests { display: flex; gap: 12px; }
-    .dest {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-      color: var(--soft);
-      padding: 8px 4px;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      transition: all 0.25s ease;
-    }
-    .dest svg { width: 44px; height: 44px; display: block; margin: 0 auto 6px; }
-    .dest path {
-      fill: none;
-      stroke: var(--rule-strong);
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: all 0.25s ease;
-    }
-    .dest.on {
-      color: var(--ink);
-      background: var(--card);
-      border-color: var(--rule);
-      box-shadow: var(--shadow-sm);
-    }
-    .dest.on path { stroke: var(--acc); }
-    .dest.on .f { fill: var(--acc2); }
-    .verdict b { font: 600 22px var(--serif); letter-spacing: -0.01em; }
-    .verdict p { margin: 0; font-size: 13.5px; color: var(--soft); line-height: 1.5; }
 
     /* Steps Section */
     .steps {
@@ -1066,7 +929,7 @@
 
     /* Responsive */
     @media (max-width: 780px) {
-      .hero, .lanes, .router, .sup { grid-template-columns: 1fr; }
+      .hero, .sup { grid-template-columns: 1fr; }
       .arcade { justify-self: start; max-width: 240px; order: -1; }
       .steps { grid-template-columns: 1fr 1fr; }
       .row-main { grid-template-columns: 1fr 28px 14px; }
@@ -1074,7 +937,8 @@
       .row-main .tag { grid-row: 2; justify-self: start; }
       .more-inner { padding-left: 18px; }
       .modal-grid { grid-template-columns: 1fr; }
-      nav a:not(:last-of-type) { display: none; }
+      nav { gap: 2px; }
+      nav a { padding: 4px 8px; font-size: 13px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -1099,9 +963,8 @@
       </a>
 
       <nav>
-        <a href="#routing">Routing</a>
         <a href="#board">Board</a>
-        <a href="#pipeline">Pipeline</a>
+        <a href="#pipeline">About</a>
         <a href="#support">Support</a>
         <button class="nav-btn" id="nav-saved-btn" title="View saved positions">
           <span>★</span>
@@ -1110,7 +973,7 @@
       </nav>
 
       <button id="theme" aria-label="Toggle theme">◐</button>
-      <i id="bar"></i>
+      <span id="bar" aria-hidden="true"></span>
     </div>
   </header>
 
@@ -1118,15 +981,18 @@
     <!-- Hero Section -->
     <div class="hero">
       <div>
-        <div class="eyebrow">Economics &amp; Policy Research Jobs</div>
-        <h1>Predocs to Telegram. <em>Everything else here.</em></h1>
+        <div class="eyebrow">Economics · Finance · Public Policy</div>
+        <h1>The economics <em>research board.</em></h1>
         <p class="lede">
-          Collegeum reads institutional career boards and university pages daily, opens each advert, and routes what it finds. Non-US predoctoral roles are delivered to Telegram. US-based positions, PhDs, postdocs, and roles at central banks and multilateral bodies are catalogued below.
+          75 institutional career pages and university portals, checked each morning. Predoctoral, postdoctoral, and doctoral positions — plus roles at central banks, multilateral bodies, and research consultancies.
         </p>
         <div class="cta">
-          <a class="btn" href="#board">View the board</a>
-          <a class="btn alt" href="#routing">How routing works</a>
+          <a class="btn" href="#board">Browse positions</a>
+          <a class="btn alt" href="#pipeline">About the project</a>
         </div>
+        <p style="font-size:13px; color:var(--soft); margin-top:14px;">
+          More predoc positions on Telegram: <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener" style="color:var(--acc);">@PredocCollegeum</a>
+        </p>
       </div>
 
       <!-- Collegiate Colonnade Arcade -->
@@ -1145,138 +1011,12 @@
       <span>Open source, MIT</span>
     </div>
 
-    <!-- Routing Section -->
-    <section id="routing">
-      <h2 class="rv">Where each posting goes</h2>
-      <p class="sub rv">
-        A single rule determines the destination. Non-US university predocs go straight to Telegram; everything else is published on the board.
-      </p>
-
-      <div class="lanes rv">
-        <div class="lane" id="L-tg">
-          <h3>Telegram</h3>
-          <small>Non-US predoc and RA roles at universities and institutes</small>
-          <ul>
-            <li>Any country except the US</li><li>Universities</li><li>Research institutes</li>
-          </ul>
-          <div class="tg-card">
-            <b>Research Assistant (Predoctoral)</b>
-            <i>University of Warwick · Economics</i>
-            <i>United Kingdom · closes 15 Oct 2026 · visa: likely</i>
-            <div class="bt">
-              <span>Interested</span>
-              <span>Not for me</span>
-              <span>Applied</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="lane" id="L-web">
-          <h3>This board</h3>
-          <small>All other positions</small>
-          <ul>
-            <li>United States (all predocs)</li>
-            <li>PhD candidates</li>
-            <li>Postdoctoral fellows</li>
-            <li>Central banks</li>
-            <li>International organisations</li>
-            <li>Private sector and consultancies</li>
-          </ul>
-          <p style="font-size:13.5px; color:var(--soft); margin-top:16px;">
-            Searchable and filterable with deadline countdowns. <a href="#board" style="color:var(--acc); text-decoration:underline;">Browse the board &darr;</a>
-          </p>
-        </div>
-      </div>
-
-      <!-- Interactive Trait Tester -->
-      <div class="router rv" aria-live="polite">
-        <div>
-          <h3>Check a posting</h3>
-          <small style="color:var(--soft)">Select traits to see where the pipeline sends it.</small>
-          
-          <div class="grp">
-            <div>Stage</div>
-            <div class="seg" data-k="stage">
-              <button data-v="predoc" aria-pressed="true">Predoc / RA</button>
-              <button data-v="phd" aria-pressed="false">PhD</button>
-              <button data-v="postdoc" aria-pressed="false">Postdoc</button>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div>Location</div>
-            <div class="seg" data-k="where">
-              <button data-v="eu" aria-pressed="true">Outside the US</button>
-              <button data-v="us" aria-pressed="false">United States</button>
-            </div>
-          </div>
-
-          <div class="grp">
-            <div>Employer</div>
-            <div class="seg" data-k="emp">
-              <button data-v="acad" aria-pressed="true">University / institute</button>
-              <button data-v="cb" aria-pressed="false">Central bank</button>
-              <button data-v="bank" aria-pressed="false">Commercial bank</button>
-              <button data-v="intl" aria-pressed="false">International org</button>
-              <button data-v="priv" aria-pressed="false">Private sector</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="verdict">
-          <div class="dests">
-            <div class="dest on" id="D-tg">
-              <svg viewBox="0 0 48 48">
-                <path class="f" d="M10 40V24a14 14 0 0 1 28 0v16Z"/>
-              </svg>
-              Telegram
-            </div>
-            <div class="dest" id="D-web">
-              <svg viewBox="0 0 48 48">
-                <path class="f" d="M10 40V24a14 14 0 0 1 28 0v16Z"/>
-              </svg>
-              This board
-            </div>
-          </div>
-          <div>
-            <b id="vb">Telegram</b>
-            <p id="vp">A non-US predoc at a university or institute is sent to Telegram.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Pipeline Workflow Section -->
-    <section id="pipeline">
-      <h2 class="rv">Each morning</h2>
-      <p class="sub rv">
-        A scheduled batch pipeline. No persistent server, deterministic gating, and zero recurring cost.
-      </p>
-      <div class="steps rv">
-        <div>
-          <b>Collect</b>
-          <span>Ingests university boards, institutional applicant portals, and RSS feeds.</span>
-        </div>
-        <div>
-          <b>Read</b>
-          <span>Extracts each posting's deadline, supervisor, visa terms, and open status.</span>
-        </div>
-        <div>
-          <b>Sort</b>
-          <span>Applies routing rules: non-US predocs to Telegram, the rest to the board.</span>
-        </div>
-        <div>
-          <b>Deliver</b>
-          <span>Dispatches Telegram cards, publishes to X, and updates this registry.</span>
-        </div>
-      </div>
-    </section>
 
     <!-- Directory Board Section -->
     <section id="board">
       <h2 class="rv">The board</h2>
       <p class="sub rv">
-        US positions, doctoral and postdoctoral appointments, central banks, multilateral bodies, and private economic groups.
+        Predoctoral, doctoral, and postdoctoral positions across universities, central banks, multilateral bodies, and private research institutes.
       </p>
 
       <div class="board-controls rv">
@@ -1354,6 +1094,32 @@
       <div class="grid-wrap" id="grid-wrap" style="display:none;"></div>
 
       <p class="note" id="src" style="font-size:12.5px; color:var(--soft); margin-top:8px;"></p>
+    </section>
+
+    <!-- Pipeline Workflow Section -->
+    <section id="pipeline">
+      <h2 class="rv">How the board is updated</h2>
+      <p class="sub rv">
+        A scheduled pipeline runs daily at 04:00 UTC. Open source, stateless, and published directly to GitHub Pages.
+      </p>
+      <div class="steps rv">
+        <div>
+          <b>Collect</b>
+          <span>Scrapes university career pages, central banks, research institutes, and RSS feeds.</span>
+        </div>
+        <div>
+          <b>Extract</b>
+          <span>Parses deadlines, advisors, fields, and stated visa sponsorship details.</span>
+        </div>
+        <div>
+          <b>Classify</b>
+          <span>Categorises each post by career stage, sector, discipline, and location.</span>
+        </div>
+        <div>
+          <b>Publish</b>
+          <span>Refreshes the live board, dispatches new predocs to Telegram (<a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener" style="color:var(--acc);">@PredocCollegeum</a>), and updates the RSS feed.</span>
+        </div>
+      </div>
     </section>
 
     <!-- Support Section -->
@@ -1491,47 +1257,6 @@
       });
       navLinks.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + cur));
     }, { passive: true });
-
-    // Interactive Routing Rule Engine
-    const routeRule = ({ stage, where, emp }) => {
-      if (stage !== 'predoc') {
-        return { tg: 0, why: `${stage === 'phd' ? 'PhD' : 'Postdoctoral'} appointments are published on the board.` };
-      }
-      if (where === 'us') {
-        return { tg: 0, why: 'All US predoctoral positions are published on the board.' };
-      }
-      if (emp === 'acad') {
-        return { tg: 1, why: 'Non-US predoctoral roles at universities and research institutes are delivered to Telegram.' };
-      }
-      const labels = {
-        cb: 'Central bank positions',
-        bank: 'Commercial bank positions',
-        intl: 'International organisation positions',
-        priv: 'Private sector research positions'
-      };
-      return { tg: 0, why: `${labels[emp] || 'Institutional roles'} are published on the board.` };
-    };
-
-    const routerState = { stage: 'predoc', where: 'eu', emp: 'acad' };
-    function updateRouter() {
-      $$('.seg').forEach(g => {
-        g.querySelectorAll('button').forEach(b => {
-          b.setAttribute('aria-pressed', routerState[g.dataset.k] === b.dataset.v);
-        });
-      });
-      const r = routeRule(routerState);
-      $('#vb').textContent = r.tg ? 'Telegram' : 'This board';
-      $('#vp').textContent = r.why;
-      $('#L-tg').classList.toggle('hit', !!r.tg);
-      $('#L-web').classList.toggle('hit', !r.tg);
-      $('#D-tg').classList.toggle('on', !!r.tg);
-      $('#D-web').classList.toggle('on', !r.tg);
-    }
-    $$('.seg button').forEach(b => b.onclick = () => {
-      routerState[b.parentNode.dataset.k] = b.dataset.v;
-      updateRouter();
-    });
-    updateRouter();
 
     // Data State & Enrichment
     let listings = [];
@@ -1727,7 +1452,7 @@
             </div>
             <div class="more">
               <div class="more-inner">
-                <p style="margin-bottom:8px;">${esc(r.summary || 'Empirical research role. View the official posting for full terms and application details.')}</p>
+                <p style="margin-bottom:8px;">${esc(r.summary || 'See the official posting for full requirements, stipend details, and application materials.')}</p>
                 <div class="more-actions">
                   <button class="more-btn" data-open="${r.id}">Full details &amp; apply &rarr;</button>
                   ${r.apply_url ? `<a class="more-btn alt" href="${esc(r.apply_url)}" target="_blank" rel="noopener">Direct link ↗</a>` : ''}
@@ -1779,14 +1504,14 @@
             </div>
             <h3 class="card-title">${esc(r.title)}</h3>
             <div style="font-size:13px; color:var(--soft); margin-bottom:10px;">
-              ${r.principal_investigator ? `Lead: Prof. ${esc(r.principal_investigator)} &middot; ` : ''}
+              ${r.principal_investigator ? `Prof. ${esc(r.principal_investigator)} &middot; ` : ''}
               <span>${esc(place)}</span>
             </div>
             <div style="display:flex; gap:6px; margin-bottom:10px;">
               <span class="dl ${b.cls}">${esc(b.label)}</span>
               <span class="tag">${esc(kindLabel)}</span>
             </div>
-            <p class="card-summary">${esc(r.summary || 'Empirical research role. View the official posting for full terms and application details.')}</p>
+            <p class="card-summary">${esc(r.summary || 'See the official posting for full requirements, stipend details, and application materials.')}</p>
             <div class="card-footer">
               <span style="font-size:12px; color:var(--soft); font-family:var(--mono);">${r.deadline ? 'Closes ' + formatDate(r.deadline) : 'Rolling review'}</span>
               <span style="font-weight:600; color:var(--acc);">Details &rarr;</span>
@@ -1876,7 +1601,7 @@
         </div>
       `).join('');
 
-      $('#modal-summary').textContent = item.summary || 'Full details are available on the official institution page.';
+      $('#modal-summary').textContent = item.summary || 'Full requirements, responsibilities, and application details are available directly on the official institution page.';
 
       const applyUrl = item.apply_url || item.source_url;
       $('#modal-apply-link').href = applyUrl;
@@ -1959,20 +1684,24 @@
     $('#reset-btn').onclick = resetAll;
 
     // View toggles
-    $('#view-ledger-btn').onclick = () => {
-      viewMode = 'ledger';
-      localStorage.setItem('collegeum-view', 'ledger');
-      $('#view-ledger-btn').classList.add('active');
-      $('#view-grid-btn').classList.remove('active');
+    function setViewMode(mode) {
+      viewMode = mode === 'grid' ? 'grid' : 'ledger';
+      try { localStorage.setItem('collegeum-view', viewMode); } catch (_) {}
+      const isGrid = viewMode === 'grid';
+      $('#view-grid-btn').classList.toggle('active', isGrid);
+      $('#view-grid-btn').setAttribute('aria-pressed', isGrid ? 'true' : 'false');
+      $('#view-ledger-btn').classList.toggle('active', !isGrid);
+      $('#view-ledger-btn').setAttribute('aria-pressed', !isGrid ? 'true' : 'false');
       draw();
-    };
-    $('#view-grid-btn').onclick = () => {
-      viewMode = 'grid';
-      localStorage.setItem('collegeum-view', 'grid');
+    }
+    $('#view-ledger-btn').onclick = () => setViewMode('ledger');
+    $('#view-grid-btn').onclick = () => setViewMode('grid');
+    if (viewMode === 'grid') {
       $('#view-grid-btn').classList.add('active');
+      $('#view-grid-btn').setAttribute('aria-pressed', 'true');
       $('#view-ledger-btn').classList.remove('active');
-      draw();
-    };
+      $('#view-ledger-btn').setAttribute('aria-pressed', 'false');
+    }
 
     // Nav Saved button
     $('#nav-saved-btn').onclick = () => {
