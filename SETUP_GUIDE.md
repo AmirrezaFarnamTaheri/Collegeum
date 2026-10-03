@@ -68,6 +68,18 @@ Type the names exactly as shown (capital letters, underscores). You do **not**
 need `GEMINI_API_KEY`: without it the bot uses its own rules, which is also the
 only option that works from Iran.
 
+### Optional: X/Twitter credentials
+
+If you want to broadcast new listings to X/Twitter or ingest postings from X:
+
+| Name | Purpose |
+|---|---|
+| `X_BROADCAST_ENABLED` | Set to `true` to enable automatic X posting |
+| `X_CONSUMER_KEY`, `X_CONSUMER_SECRET` | OAuth app keys from X Developer Portal |
+| `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` | User access tokens for the target X account |
+| `X_BEARER_TOKEN` | Official X API v2 search token |
+| `XQUIK_API_KEY` | Xquik proxy search key (alternative to X API v2) |
+
 ## Step 7 — First run
 
 1. **Actions** tab → **predoc-pipeline** (left) → **Run workflow** → green
@@ -78,8 +90,8 @@ only option that works from Iran.
    first run that can be many, so they arrive as numbered lists of 6 with
    buttons under each list.
 
-After this, it runs by itself every morning at 07:30 Tehran time and only
-sends positions it has not sent before.
+After this, it runs by itself every morning at 04:00 UTC (07:30 Tehran time)
+and only sends positions it has not sent before.
 
 ## Step 8 — Use the buttons and commands
 
@@ -102,13 +114,12 @@ away: **Actions** → **telegram-sync** → **Run workflow**.
 ## Changing what the bot sends
 
 Open `config/preferences.toml` on GitHub and click the pencil icon ✏️ to edit.
-For example, to never see a particular employer again, add its name to
-`excluded_employers`:
+For example, to exclude an employer or keyword, add it to `excluded_employers`:
 
 ```toml
 excluded_employers = [
-  "J-PAL", "JPAL", "Poverty Action Lab", "povertyactionlab.org",
-  "Some Institute",
+  "Some Unwanted Institute",
+  "commercial-bank.com",
 ]
 ```
 

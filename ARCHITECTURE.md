@@ -3,16 +3,15 @@
 ## 1. Goal and constraints
 
 Discover, deduplicate, and broadcast full-time **pre-doctoral** research
-assistantships (economics, finance, public policy, quantitative social
-science) located outside the United States, to a Telegram channel, on a
+assistantships, fellowships, and research positions (economics, finance,
+public policy, quantitative social science) across the UK, Europe, Canada,
+the US, and international institutions, to Telegram and X/Twitter on a
 daily schedule, at **zero recurring dollar cost**.
 
-The zero-cost constraint is the design's real spine. Every choice below is
-downstream of it: no paid compute, no paid API tier, no paid storage. That
-rules out a lot of otherwise-obvious architectures (a managed database, a
-paid LLM tier with real rate-limit guarantees, a always-on server) and forces
-the design toward *serverless-by-necessity*: a scheduled batch job with
-everything it needs checked into version control.
+The zero-cost constraint governs every architectural decision: no paid compute,
+no paid database tier, and zero-dependency fallbacks for every network service.
+The pipeline operates as a scheduled batch job with committed state in version
+control, executing cleanly on standard GitHub Actions runners.
 
 ## 2. System overview
 
@@ -22,39 +21,45 @@ GitHub Actions (cron, daily)
         v
   +-----------+     +--------------+     +-------------+     +-----------+
   | Ingestion |---->| Deterministic|---->| Extraction   |---->| Dedup     |
-  | (feeds,   |     | gate (rules, |     | (Gemini,     |     | (URL ->   |
-  |  portals, |     |  multi-lang) |     |  2 backends) |     |  MinHash  |
-  |  opt-in   |     +--------------+     +-------------+     |  -> fuzzy)|
-  |  boards/  |                                              +-----+-----+
-  |  social)  |                                                    |
-  +-----------+                                                    v
-        ^                                                   +-------------+
-        |                                                   | SQLite      |
+  | (boards,  |     | gate (rules, |     | (Heuristic/ |     | (URL ->   |
+  |  feeds,   |     |  multi-lang) |     |  Gemini)    |     |  MinHash  |
+  |  portals, |     +--------------+     +-------------+     |  -> fuzzy)|
+  |  X/Tw)    |                                              +-----+-----+
+  +-----------+                                                    |
+        ^                                                          v
+        |                                                   +-------------+
+        |                                                   | SQLite (v5) |
         |                                                   | (pending -> |
         |                                                   |  published) |
         |                                                   +------+------+
         |                                                          |
   config/sources.toml                                              v
         |                                                   +-------------+
-        |                                                   | Telegram    |
-        +---------------------------------------------------|  broadcast  |
-                                                              +------+------+
-                                                                     |
-                                                                     v
-                                                        data/listings.ndjson
-                                                       (committed journal) +
-                                                        docs/data/*.json
-                                                        (GitHub Pages)
+        |                                                   | Broadcast   |
+        +---------------------------------------------------| (Telegram & |
+                                                            |  X/Twitter) |
+                                                            +------+------+
+                                                                   |
+                                                                   v
+                                                      data/listings.ndjson
+                                                     (committed journal) +
+                                                      docs/data/*.json
+                                                      (GitHub Pages)
 ```
 
-One run does, strictly in this order: restore state from the journal if the
-database is empty → load sources → fetch (politely, with caching) → for each
-item: check if already seen → run the deterministic gate → extract via LLM
-(budget permitting) → coerce to the domain model → apply the confidence
-threshold → deduplicate (three tiers) → insert as `pending` → broadcast →
-mark `published` → expire past-deadline listings → prune old rows → write the
-journal and dashboard exports → alert the maintainer if something looks
-broken.
+One run executes sequentially:
+1. Rebuild SQLite cache from `data/listings.ndjson` and `data/seen.ndjson` if empty.
+2. Ingest postings from enabled job boards, feeds, ATS portals, and X/Twitter.
+3. Gate each item: check seen cache, evaluate deterministic regex rules.
+4. Extract structured metadata: run heuristic extractor (or Gemini if key is provided).
+5. Coerce to strict `PredocListing` domain model and evaluate confidence score.
+6. Deduplicate across three tiers (URL hash, MinHash/LSH, fuzzy composite key).
+7. Insert new listings as `pending` in SQLite.
+8. Broadcast pending listings to Telegram channels and X/Twitter accounts.
+9. Mark listings as `published` (or `undeliverable` on fatal errors).
+10. Check filled/closed status for existing listings and expire past-deadline items.
+11. Prune expired seen/DLQ entries and commit updated NDJSON journals.
+12. Export JSON datasets and RSS feed for GitHub Pages dashboard.
 
 ## 3. Tier-by-tier trade-off analysis
 
@@ -62,10 +67,13 @@ broken.
 
 | Option | Cost | Reliability | ToS risk | Verdict |
 |---|---|---|---|---|
-| RSS/Atom feeds | Free | High — feeds are meant to be machine-read | None — this is exactly what syndication is for | **Default on.** `ingest/collectors.py::collect_feeds`. |
-| Schema.org `JobPosting` on career pages | Free | Medium — depends on whether the ATS emits structured data, and whether it's on the index or detail page | Low — this markup exists specifically so machines (mostly search engines) can read it | **Default on.** `collect_portals`, with `follow_links` for the common case where JSON-LD lives on detail pages, not index pages. |
-| Commercial job boards (LinkedIn, Indeed) via `python-jobspy` | Free (library), but scrapes sites with restrictive ToS | Medium — breaks whenever the target site changes its markup | **High** — see `COMPLIANCE.md` | **Default off.** Opt-in via `ENABLE_JOBSPY=true`. |
-| Authenticated social search (X) via `twscrape` | Free (library), but requires real account credentials and violates X's ToS on automated access | Low — account-based scraping is adversarially rate-limited and accounts get suspended | **High** — see `COMPLIANCE.md` | **Default off.** Opt-in via `ENABLE_TWITTER=true`. |
+| Academic Job Boards (`boards/`) | Free | High — specialized scrapers for PREDOC, EconJobMarket, EURAXESS, SOMMA, academics.de, and university portals | Low — respects pacing and fetches public job listings | **Default on.** Core ingestion source. |
+| RSS/Atom feeds | Free | High — feeds are structured for syndication | None — explicit public syndication channel | **Default on.** `ingest/collectors.py::collect_feeds`. |
+| Schema.org `JobPosting` on career pages | Free | Medium — requires ATS structured microdata/JSON-LD | Low — machine-readable search engine markup | **Default on.** `collect_portals` with detail page link following. |
+| Official X API v2 Search (`ingest/x.py`) | Free (Basic tier) | High — official authenticated REST endpoint | None — uses official API credentials | **Default on** when `X_BEARER_TOKEN` is configured. |
+| Xquik Platform API (`ingest/xquik.py`) | Free/Freemium | High — managed scraping proxy endpoint | Low — offloads network proxying | **Default on** when `XQUIK_API_KEY` is configured. |
+| Commercial job boards (LinkedIn, Indeed) via `python-jobspy` | Free (library) | Medium — breaks on markup changes | **High** — restrictive terms of service | **Default off.** Opt-in via `ENABLE_JOBSPY=true`. |
+| Authenticated social scraping via `twscrape` | Free (library) | Low — aggressive rate-limits and account suspensions | **High** — automated browser session simulation | **Default off.** Opt-in via `ENABLE_TWITTER=true`. |
 
 Feeds and portals are the ingestion backbone precisely because they carry the
 least legal and reliability risk — they're either explicitly published for
@@ -161,19 +169,24 @@ are similar.
 | SQLite, committed as a binary file | Free | Full SQL | **Poor** — see below |
 | SQLite as a rebuildable cache + NDJSON journal committed | Free | Full SQL (cache), diffable history (journal) | Good |
 
-**Chosen: SQLite as an ephemeral, gitignored cache; `data/listings.ndjson`
+**Chosen: SQLite (Schema v5) as an ephemeral, gitignored cache; `data/listings.ndjson`
 as the committed source of truth.** This is the most consequential design
 change from the reviewed architecture (see `REVIEW.md` A1). Git stores a
 whole new compressed blob for each version of a binary file — it cannot
 delta SQLite b-tree pages, which move on nearly every write. Committing a
-multi-megabyte database daily adds roughly a gigabyte of repository growth a
-year and produces unresolvable binary merge conflicts the moment two
-workflow runs overlap. An append-then-sorted-rewrite NDJSON file, by
-contrast, diffs cleanly, compresses well, and is trivially mergeable (union
-of lines) even in the rare case of a real conflict. `state.py::restore_if_needed`
-rebuilds the SQLite cache from the journal whenever the database is empty —
-a fresh clone, a cleared runner, and a corrupted `.db` file all recover the
-same way.
+multi-megabyte database daily adds repository bloat and produces binary merge
+conflicts when workflow runs overlap. An append-then-sorted-rewrite NDJSON file,
+by contrast, diffs cleanly, compresses well, and merges safely.
+
+`state.py::restore_if_needed` rebuilds the SQLite cache from the journal whenever
+the database is empty — on fresh clones, cleared runners, or corrupted databases.
+
+**Schema v5 Optimizations**:
+- **Partial covering index (`ix_listings_active`)**: Indexes `(status, first_seen_at DESC) WHERE status = 'active'` so dashboard generation and public queries scan only live records without reading closed or expired rows.
+- **Pending recovery index (`ix_listings_pending`)**: Indexes `(status, first_seen_at ASC) WHERE status = 'pending'` to accelerate pending item recovery after workflow interruptions.
+- **Identity expression index (`ix_listings_identity`)**: Indexes `(lower(institution), lower(title))` for O(1) candidate matching in fuzzy deduplication.
+- **Decision index (`ix_seen_items_decision`)**: Indexes `(decision, item_hash)` to accelerate repeated gating lookups.
+- **High-performance PRAGMAs**: Connection initialization configures `PRAGMA mmap_size = 268435456` (256 MB memory-mapped I/O), `PRAGMA cache_size = -65536` (64 MB page cache), `PRAGMA busy_timeout = 10000` (10s lock timeout), and `PRAGMA temp_store = MEMORY`.
 
 ### 3.5 Orchestration
 
@@ -188,6 +201,15 @@ exist for the source registry and the dashboard; Actions is free compute
 that reads and writes that same repository, with secrets management built
 in. The real daily constraint is the model's request quota, not runner
 minutes — see `REVIEW.md` F4.
+
+### 3.6 Broadcasting and Publishing
+
+| Channel | Format | Capabilities | Error Handling |
+|---|---|---|---|
+| Telegram Channel | HTML message cards & paged digests | Formatted title, institution, deadline, visa rules, and application link. Inline buttons (✅ Interested, ❌ Dismiss, 📝 Applied). | Set-up errors keep listings `pending` for retry. Transient errors do not drop listings. |
+| X/Twitter Feed | 280-char structured tweets | Formatted title, institution, application URL, and targeted hashtags (`#EconTwitter #Predoc`). | OAuth 1.0a / OAuth 2.0 user context. Duplicate or rate-limited tweets fail gracefully without halting the pipeline. |
+| GitHub Pages | Static JSON & interactive HTML | Client-side search, filtering by region, status, and deadline. | Regenerated locally or via Actions workflow. |
+| RSS Syndication | Atom / RSS 2.0 XML | Standard syndication feed for RSS readers. | Exported directly from active listings. |
 
 ## 4. What runs where — data flow for one item
 
@@ -225,16 +247,16 @@ insert_listing(status=pending) + mark_seen(accepted, listing_id)
 [after all items processed]
    |
    v
-Telegram broadcast (card or digest) --- success? ---> mark_published
-                                    --- permanent failure? ---> mark_undeliverable
-                                    --- transient failure? ---> stays pending,
-                                                                  retried next run
+Broadcast (Telegram & X) --- success? ---> mark_published
+                         --- permanent failure? ---> mark_undeliverable
+                         --- transient failure? ---> stays pending, retried next run
 ```
 
 ## 5. Scaling beyond zero-cost
 
-If this ever needs to grow past the free tier, in rough order of
-cost-effectiveness:
+The pipeline currently runs with scale caps configured for high-volume collection:
+2,500 detail enrichments, 12 concurrent source workers, 25 detail workers, and a
+10,000 daily LLM request quota. If higher volume is needed in the future:
 
 1. **Raise the LLM daily budget** (paid Gemini tier). Immediate, linear
    improvement in throughput, no architecture change — `RateLimiter` and the

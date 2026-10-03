@@ -3,36 +3,36 @@
 [![CI](https://github.com/AmirrezaFarnamTaheri/predoc-not-org/actions/workflows/ci.yml/badge.svg)](https://github.com/AmirrezaFarnamTaheri/predoc-not-org/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/AmirrezaFarnamTaheri/predoc-not-org/actions/workflows/pages.yml/badge.svg)](https://amirrezafarnamtaheri.github.io/predoc-not-org/)
 [![Dashboard](https://img.shields.io/badge/Live_Dashboard-GitHub_Pages-blue)](https://amirrezafarnamtaheri.github.io/predoc-not-org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 
-A zero-budget pipeline that discovers, deduplicates, and broadcasts
-full-time **pre-doctoral** research assistantship openings — economics,
-business, public policy, and quantitative social science — in the **UK,
-Europe and Canada** — to Telegram, once a day, for free.
+An automated pipeline that discovers, deduplicates, and broadcasts
+**pre-doctoral** research assistantships, fellowships, and academic research
+openings in economics, finance, public policy, and quantitative social
+science across the UK, Europe, Canada, the US, and international research
+institutions — to Telegram and X/Twitter daily, at zero dollar cost.
 
 🌐 **Live Web Dashboard:** [https://amirrezafarnamtaheri.github.io/predoc-not-org](https://amirrezafarnamtaheri.github.io/predoc-not-org)
 
-It reads the job boards and university career sites where these roles are
-posted (PREDOC.org, EconJobMarket, the European Job Market, jobs.ac.uk,
-EURAXESS, university Workday/Varbi portals, department pages, LinkedIn) plus
-optional RSS feeds and career-page metadata. It filters out the large
-false-positive classes specific to this domain (PhD studentships, postdocs,
-faculty postings, industry and bank jobs, US positions, medicine/psychology,
-"I just finished my predoc" posts), reads each new advert's page (deadline,
-supervisor, visa rules, filled or not), deduplicates cross-posted listings,
-and posts each new one to Telegram — with ✅ ❌ 📝 buttons and a `/positions`
-command — plus an interactive dashboard and RSS feed on GitHub Pages.
+The pipeline monitors academic job boards (PREDOC.org, EconJobMarket, European
+Job Market, jobs.ac.uk, EURAXESS, SOMMA, academics.de), university applicant
+tracking systems (Workday, Varbi), department career pages, RSS/Atom feeds,
+and X/Twitter accounts (via official X API v2 and Xquik). It filters out
+unrelated vacancies through a deterministic gate, extracts structured metadata
+(deadlines, supervisors, visa sponsorship, application links, and filled
+status), deduplicates cross-posted listings across three tiers (URL hash,
+MinHash/LSH, fuzzy composite keys), and broadcasts new positions to Telegram
+channels and X/Twitter feeds. It also updates an interactive GitHub Pages
+dashboard and RSS syndication feed.
 
-No API key is needed: without `GEMINI_API_KEY` a rule-based extractor is
-used. With a key, Gemini does the extraction and the same preference rules
-still apply.
+No paid API keys are required: without `GEMINI_API_KEY`, a built-in heuristic
+extractor parses vacancy pages. When configured, Gemini provides structured LLM
+extraction subject to the same policy rules.
 
-**New here? Read `SETUP_GUIDE.md`** (step by step, GitHub website only).
-**What changed from the first version:** `CHANGES.md`.
-
-See `REVIEW.md` for the defect register this rebuild fixed, `ARCHITECTURE.md`
-for the design and trade-off rationale, `COMPLIANCE.md` before enabling any
-optional source, and `OPERATIONS.md` for the runbook once it's live.
+**Getting Started:** Read `SETUP_GUIDE.md` for deployment instructions.
+**Recent Updates:** See `CHANGES.md` for release history and architecture changes.
+**Technical Details:** Consult `ARCHITECTURE.md` for design trade-offs,
+`COMPLIANCE.md` before enabling external scrapers, `REVIEW.md` for the defect
+register, and `OPERATIONS.md` for production runbooks.
 
 ## Quickstart
 
@@ -45,14 +45,20 @@ pip install -e ".[portals]"
 cp .env.example .env
 # edit .env: TELEGRAM_BOT_TOKEN, TELEGRAM_PUBLIC_CHANNEL_ID (GEMINI_API_KEY optional)
 
-predoc-pipeline init             # creates the local database
-predoc-pipeline smoke            # offline sanity check, no network needed
-predoc-pipeline sources verify   # IMPORTANT — see "About the source list" below
-predoc-pipeline run --dry-run    # ingest and gate, send nothing
-predoc-pipeline run --only cemfi,predoc_org   # just some job boards
-predoc-pipeline run              # the real thing
-predoc-pipeline telegram-sync    # answer /positions and save ✅ ❌ 📝 taps
-predoc-pipeline dashboard        # regenerate docs/data/*.json without a full run
+predoc-pipeline init             # initialize local database and directories
+predoc-pipeline smoke            # offline sanity check (tests gating & models)
+predoc-pipeline sources verify   # verify reachability of enabled sources
+predoc-pipeline run --dry-run    # ingest and gate without calling models or broadcasting
+predoc-pipeline run --only cemfi,predoc_org   # run specific job boards
+predoc-pipeline run              # execute full cycle: ingest, gate, extract, dedupe, broadcast
+predoc-pipeline telegram-sync    # answer bot commands and persist button taps
+predoc-pipeline dashboard        # export docs/data/*.json and RSS feed without a full run
+predoc-pipeline search "macro"   # query cached active listings by keyword or institution
+predoc-pipeline search-x "from:econ_RA"  # query X/Twitter postings (API v2 / Xquik)
+predoc-pipeline test-telegram    # send a test message to your configured Telegram channel
+predoc-pipeline test-x           # post a test update to your configured X/Twitter account
+predoc-pipeline stats            # display database counts and recent run outcomes
+predoc-pipeline vacuum           # prune dead-letter/seen rows and compact the database
 ```
 
 For a scheduled, hosted setup add `TELEGRAM_BOT_TOKEN` and
@@ -64,10 +70,11 @@ plan and the repository variable `ENABLE_PAGES=true`.
 
 ### What you get, and how to change it
 
-`config/preferences.toml` decides what is sent: regions, wanted and unwanted
-fields, allowed employer types, banned employers (J-PAL), PhD-position and
-expiry rules. `config/sources.toml` lists the sources; the `[[board]]`
-entries are on by default, the `[[feed]]`/`[[portal]]` entries are templates.
+`config/preferences.toml` defines filtering criteria: included regions (UK,
+Europe, Canada, US, Other), academic and research fields, employer classification
+patterns, position types (predoc, PhD, postdoc), and deadline expiry rules.
+`config/sources.toml` lists the sources: `[[board]]` entries are active by
+default, while `[[feed]]` and `[[portal]]` entries serve as configured templates.
 
 ### About the feed and portal templates
 
@@ -87,61 +94,45 @@ discover <url>` to find a site's real feed URL from its homepage.
 ```
 src/predoc_pipeline/
   core/            Stdlib-only: URLs, text, MinHash+LSH, fuzzy matching,
-                   time parsing, SQLite storage, rate limiting, the
-                   deterministic gate. Unit-testable with zero dependencies
-                   installed — see tests/core/.
-  ingest/          Polite HTTP (conditional GET, robots.txt, pacing), the
-                   source registry, feed autodiscovery, and the collectors
-                   (feeds, portals, optional jobspy/twitter).
-  extract/         The classification prompt and two Gemini REST backends
-                   with automatic fallback, plus an optional instructor
-                   backend.
-  boards/          Job-board scrapers (ported from predoc-bot), preference
-                   rules, detail-page heuristics and filled-position checks.
-  publish/         Telegram Bot API client, message rendering, the
-                   /positions bot and the ✅ ❌ 📝 feedback store.
+                   time parsing, SQLite storage (Schema v5), rate limiting,
+                   and deterministic gating. Fully unit-testable with zero
+                   third-party packages.
+  ingest/          HTTP client (conditional GET, robots.txt, pacing),
+                   source registry, feed autodiscovery, and collectors
+                   (job boards, RSS/Atom feeds, ATS portals, X API v2, Xquik).
+  extract/         Classification prompts, Gemini REST backends with
+                   automatic fallback, and a zero-dependency heuristic extractor.
+  boards/          Job-board scrapers, preference rules, detail-page heuristics,
+                   and filled-position verification.
+  publish/         Telegram Bot API client, X/Twitter broadcast client, message
+                   formatting, `/positions` command handler, and feedback store.
   policy.py        Applies config/preferences.toml to every listing.
-  models.py        Domain model (PredocListing) and the model-facing wire
-                   schema (ExtractionResult) plus the coercion between them.
-  pipeline.py      Orchestrates one full run.
-  state.py         The committed NDJSON journal, dashboard JSON export,
-                   and RSS feed generation.
-  cli.py           `predoc-pipeline` command-line entry points.
+  models.py        Domain models (PredocListing) and extraction schema.
+  pipeline.py      Orchestrates the ingestion, gating, extraction, and broadcasting cycle.
+  state.py         Committed NDJSON journal, dashboard JSON export, and RSS generation.
+  cli.py           `predoc-pipeline` command-line interface.
 
-tests/core/        Unit tests, stdlib only — run with plain `python3 -m
-                   unittest`, no pip install required.
-tests/integration/ Tests needing httpx/pydantic/respx — skip cleanly if
-                   those aren't installed.
-tests/fixtures/    Labeled examples for `predoc-pipeline eval`.
+tests/core/        Unit tests, standard library only (no pip dependencies required).
+tests/integration/ Tests covering HTTP, persistence, extraction, and publishers.
+tests/fixtures/    Labeled examples for precision and recall evaluation.
 
-config/sources.toml   The source registry (see above).
-config/preferences.toml  What counts as a position you want.
-data/                 Committed state: listings.ndjson, seen.ndjson,
-                       feedback.json (your marks), telegram_state.json.
-docs/                 The static dashboard (docs/index.html) and its data
-                       exports, deployed via GitHub Pages.
-.github/workflows/    pipeline.yml (the daily run), telegram.yml (commands and
-                       buttons), ci.yml (tests on every push), pages.yml
-                       (optional dashboard deploy), dependabot.yml.
-tools/build_single_file.py
-                   Regenerates compile_project.py, a dependency-free
-                   single-file materializer of the whole project — useful
-                   for dropping this into an environment that can't clone a
-                   repo. Never hand-edit compile_project.py; regenerate it.
+config/sources.toml      Source registry configuration.
+config/preferences.toml  Field, region, and employer filters.
+data/                    Committed state: listings.ndjson, seen.ndjson, feedback.json.
+docs/                    Static web dashboard (docs/index.html) and JSON/RSS data feeds.
+.github/workflows/       pipeline.yml, telegram.yml, ci.yml, pages.yml.
 ```
 
 ## Testing
 
 ```bash
-make test-core          # stdlib only — runs anywhere with just python3
-make test                # full suite, needs `pip install -e ".[dev]"`
+make test-core          # stdlib only — runs anywhere with standard python3
+make test                # full suite: 281 tests passing
 make eval                # gate precision/recall against tests/fixtures/golden.jsonl
-make smoke               # offline self-check, no network or credentials
+make smoke               # offline self-check without network or credentials
 ```
 
-`tests/core/` is deliberately runnable with zero installed dependencies —
-that's what `tests/core/test_no_third_party.py` enforces. If you're auditing
-this project or just don't want to `pip install` anything yet, start there:
+`tests/core/` is runnable with zero third-party packages installed:
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
@@ -151,19 +142,17 @@ PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
 
 1. **The model's daily request quota, not compute, is the scarce resource.**
    Every layer before extraction exists to protect it: the seen-items gate,
-   the deterministic rule-based classifier, per-source item caps.
+   the deterministic rule-based classifier, and per-source item caps.
 2. **Nothing is asserted without being checked.** Source URLs default to
    `verified = false` until someone runs `sources verify`. Rate limits are
-   configuration, not hard-coded constants, because the provider itself says
-   they aren't guaranteed.
-3. **A crash should never cause a duplicate broadcast or a silent data
-   loss.** Rows are inserted before broadcasting, not after; the committed
-   state is an append-then-sorted-rewrite journal, not a binary database
-   file that can't be diffed or safely merged.
-4. **Silent failure is the default failure mode for an unattended scraper,
-   so it's treated as a first-class case, not an afterthought.** Per-source
-   yield is tracked and surfaced on the dashboard; consecutive empty runs
-   and newly-dead sources trigger a maintainer alert.
+   configurable rather than hard-coded constants.
+3. **A crash should never cause a duplicate broadcast or silent data loss.**
+   Rows are inserted with pending status before broadcasting; committed state
+   uses an append-then-sorted-rewrite NDJSON journal.
+4. **Silent failure is the default failure mode for an unattended scraper.**
+   Per-source yield is tracked in run health metrics; consecutive empty runs
+   and failing sources trigger maintainer alerts.
+
 ## License
 
-MIT — see `LICENSE`.
+GNU Affero General Public License v3.0 (AGPL-3.0-or-later) — see `LICENSE`.
