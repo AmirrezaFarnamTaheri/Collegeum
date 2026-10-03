@@ -299,21 +299,8 @@
     .arcade .hl { stroke: var(--acc); }
     .arcade g:hover path { stroke: var(--acc); }
 
-    /* Meta stats bar */
-    .meta-strip {
-      display: flex;
-      gap: 12px 32px;
-      flex-wrap: wrap;
-      padding: 16px 0;
-      border-block: 1px solid var(--rule);
-      font-size: 13.5px;
-      color: var(--soft);
-      margin-top: 12px;
-    }
-    .meta-strip b { color: var(--ink); font-weight: 600; }
-
     /* Sections */
-    section { padding: 64px 0 16px; }
+    section { padding: 48px 0 16px; }
     h2 {
       font: 500 clamp(28px, 3.8vw, 38px)/1.1 var(--serif);
       letter-spacing: -0.02em;
@@ -325,26 +312,6 @@
       margin: 0 0 28px;
       font-size: 15px;
     }
-
-    /* Steps Section */
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-      counter-reset: s;
-    }
-    .steps div {
-      border-top: 2px solid var(--ink);
-      padding-top: 12px;
-      counter-increment: s;
-    }
-    .steps div::before {
-      content: counter(s, decimal-leading-zero);
-      font: italic 400 15px var(--serif);
-      color: var(--acc);
-    }
-    .steps b { display: block; margin: 2px 0 4px; font-size: 15px; }
-    .steps span { font-size: 13.5px; color: var(--soft); line-height: 1.5; }
 
     /* Board Tools, Filters & Controls */
     .board-controls {
@@ -838,53 +805,109 @@
       flex-wrap: wrap;
     }
 
-    /* Support Section */
-    .sup {
-      display: grid;
-      grid-template-columns: 1fr 1.25fr;
-      gap: 34px;
+    /* Footer Colophon */
+    footer {
+      margin-top: 64px;
+      border-top: 1px solid var(--rule);
+      padding: 36px 0 48px;
+      font-size: 13.5px;
+      color: var(--soft);
     }
-    .sup .btn { margin: 0 8px 8px 0; }
-    .wal { display: grid; gap: 10px; }
-    .w {
+    .footer-grid {
       display: grid;
-      grid-template-columns: 46px 1fr auto;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 36px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .footer-brand {
+      font: 600 20px var(--serif);
+      color: var(--ink);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .footer-desc {
+      font-size: 13.5px;
+      color: var(--soft);
+      line-height: 1.55;
+      max-width: 32em;
+      margin-bottom: 14px;
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
       gap: 12px;
+      font-size: 13px;
+    }
+    .footer-links a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .footer-links a:hover { color: var(--acc); }
+    .footer-note {
+      font-size: 13px;
+      color: var(--soft);
+      line-height: 1.5;
+    }
+    .support-disclosure {
+      margin-top: 12px;
+    }
+    .support-disclosure summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink);
+      user-select: none;
+    }
+    .support-disclosure summary:hover { color: var(--acc); }
+    .support-disclosure[open] summary { margin-bottom: 10px; }
+    .wal-compact {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .w-row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 10px;
       align-items: center;
       background: var(--card);
       border: 1px solid var(--rule);
-      border-radius: 12px;
-      padding: 10px 14px;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
     }
-    .w b { font: 600 12px var(--mono); letter-spacing: 0.08em; }
-    .w code { font: 12px var(--mono); overflow-wrap: anywhere; color: var(--soft); }
-    .w button {
-      font: 500 12px var(--sans);
+    .w-row b { font: 600 11px var(--mono); color: var(--ink); }
+    .w-row code {
+      font: 11.5px var(--mono);
+      color: var(--soft);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .w-row button {
+      font: 500 11px var(--sans);
       border: 1px solid var(--rule);
       background: none;
       color: var(--ink);
-      border-radius: 8px;
-      padding: 6px 12px;
+      border-radius: 6px;
+      padding: 3px 8px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
     }
-    .w button:hover { border-color: var(--acc); }
-    .w button.ok { background: var(--ok); color: #FFF; border-color: var(--ok); }
+    .w-row button:hover { border-color: var(--acc); }
+    .w-row button.ok { background: var(--ok); color: #FFF; border-color: var(--ok); }
 
-    /* Footer Colophon */
-    footer {
-      margin-top: 80px;
-      border-top: 1px solid var(--rule);
-      padding: 30px 0 48px;
-      font-size: 13px;
-      color: var(--soft);
-    }
-    .footer-inner {
+    .footer-bottom {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 12px;
+      padding-top: 20px;
+      font-size: 12.5px;
+      color: var(--faint);
     }
     .health-dot {
       display: inline-block;
@@ -929,9 +952,9 @@
 
     /* Responsive */
     @media (max-width: 780px) {
-      .hero, .sup { grid-template-columns: 1fr; }
+      .hero { grid-template-columns: 1fr; }
       .arcade { justify-self: start; max-width: 240px; order: -1; }
-      .steps { grid-template-columns: 1fr 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
       .row-main { grid-template-columns: 1fr 28px 14px; }
       .row-main .dl { grid-column: 1 / -1; justify-self: start; }
       .row-main .tag { grid-row: 2; justify-self: start; }
@@ -964,8 +987,9 @@
 
       <nav>
         <a href="#board">Board</a>
-        <a href="#pipeline">About</a>
-        <a href="#support">Support</a>
+        <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://github.com/amirrezafarnamtaheri/predoc-not-org" target="_blank" rel="noopener">GitHub</a>
+        <a href="feed.xml">RSS</a>
         <button class="nav-btn" id="nav-saved-btn" title="View saved positions">
           <span>★</span>
           <span class="saved-badge" id="nav-saved-count">0</span>
@@ -988,7 +1012,7 @@
         </p>
         <div class="cta">
           <a class="btn" href="#board">Browse positions</a>
-          <a class="btn alt" href="#pipeline">About the project</a>
+          <a class="btn alt" href="feed.xml">RSS feed</a>
         </div>
         <p style="font-size:13px; color:var(--soft); margin-top:14px;">
           More predoc positions on Telegram: <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener" style="color:var(--acc);">@PredocCollegeum</a>
@@ -1000,15 +1024,6 @@
         <path class="ar" pathLength="1" d="M4 124H236" style="stroke-width:2"/>
         <g id="arches"></g>
       </svg>
-    </div>
-
-    <!-- Metrics Strip -->
-    <div class="meta-strip rv">
-      <span><b id="stat-sources">75</b> job boards</span>
-      <span>Checked daily, <b>04:00 UTC</b></span>
-      <span><b id="stat-active">—</b> positions active</span>
-      <span><b id="stat-urgent">—</b> closing &le; 7 days</span>
-      <span>Open source, MIT</span>
     </div>
 
 
@@ -1096,46 +1111,6 @@
       <p class="note" id="src" style="font-size:12.5px; color:var(--soft); margin-top:8px;"></p>
     </section>
 
-    <!-- Pipeline Workflow Section -->
-    <section id="pipeline">
-      <h2 class="rv">How the board is updated</h2>
-      <p class="sub rv">
-        A scheduled pipeline runs daily at 04:00 UTC. Open source, stateless, and published directly to GitHub Pages.
-      </p>
-      <div class="steps rv">
-        <div>
-          <b>Collect</b>
-          <span>Scrapes university career pages, central banks, research institutes, and RSS feeds.</span>
-        </div>
-        <div>
-          <b>Extract</b>
-          <span>Parses deadlines, advisors, fields, and stated visa sponsorship details.</span>
-        </div>
-        <div>
-          <b>Classify</b>
-          <span>Categorises each post by career stage, sector, discipline, and location.</span>
-        </div>
-        <div>
-          <b>Publish</b>
-          <span>Refreshes the live board, dispatches new predocs to Telegram (<a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener" style="color:var(--acc);">@PredocCollegeum</a>), and updates the RSS feed.</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Support Section -->
-    <section id="support">
-      <h2 class="rv">Support the project</h2>
-      <div class="sup rv">
-        <div>
-          <p class="sub" style="margin-bottom:16px;">
-            Collegeum is free and open source under the MIT licence. Stars, bug reports, and source suggestions help maintain the scrapers.
-          </p>
-          <div id="links"></div>
-          <p class="note" id="maint" style="font-size:12.5px; color:var(--soft); margin-top:12px;"></p>
-        </div>
-        <div class="wal" id="wal"></div>
-      </div>
-    </section>
   </main>
 
   <!-- Detail Dossier Modal -->
@@ -1172,15 +1147,43 @@
 
   <!-- Colophon / Footer -->
   <footer>
-    <div class="wrap footer-inner">
-      <div>
-        <span class="health-dot" id="health-dot"></span>
-        <span id="health-label">Checking pipeline health…</span>
+    <div class="wrap">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">Collegeum</div>
+          <p class="footer-desc">
+            An open index of research appointments in economics, finance, and public policy across universities, central banks, and research institutes.
+          </p>
+          <div class="footer-links">
+            <a href="https://github.com/amirrezafarnamtaheri/predoc-not-org" target="_blank" rel="noopener">GitHub</a>
+            <span>&middot;</span>
+            <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
+            <span>&middot;</span>
+            <a href="feed.xml">RSS</a>
+            <span>&middot;</span>
+            <a href="architecture.html">Architecture</a>
+            <span>&middot;</span>
+            <a href="mailto:taherifarnam@gmail.com">Contact</a>
+          </div>
+        </div>
+
+        <div>
+          <p class="footer-note">
+            Maintained independently by Amirreza Farnam Taheri &middot; GNU AGPLv3.
+          </p>
+          <details class="support-disclosure">
+            <summary>Donate (crypto)</summary>
+            <div class="wal-compact" id="wal"></div>
+          </details>
+        </div>
       </div>
-      <div>
-        <span>Collegeum &middot; MIT licence &middot; Not affiliated with any institution listed &middot; </span>
-        <a href="feed.xml" style="text-decoration:underline;">RSS</a> &middot; 
-        <a href="architecture.html" style="text-decoration:underline;">Architecture</a>
+
+      <div class="footer-bottom">
+        <div>
+          <span class="health-dot" id="health-dot"></span>
+          <span id="health-label">Checking pipeline health…</span>
+        </div>
+        <div>Not affiliated with any listed institution.</div>
       </div>
     </div>
   </footer>
@@ -1769,10 +1772,8 @@
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(payload => {
         listings = (payload.listings || []).map(enrichItem);
-        $('#src').textContent = '';
-        $('#stat-active').textContent = listings.length;
-        const urgent = listings.filter(l => l.days_left != null && l.days_left <= 7 && l.days_left >= 0);
-        $('#stat-urgent').textContent = urgent.length;
+        const srcEl = $('#src');
+        if (srcEl) srcEl.textContent = '';
         populateFilters();
         draw();
 
@@ -1785,9 +1786,8 @@
       })
       .catch(() => {
         listings = [];
-        $('#stat-active').textContent = '0';
-        $('#stat-urgent').textContent = '0';
-        $('#src').textContent = 'The listings file could not be loaded. Reload the page or check the RSS feed.';
+        const srcEl = $('#src');
+        if (srcEl) srcEl.textContent = 'The listings file could not be loaded. Reload the page or check the RSS feed.';
         draw();
       });
 
@@ -1809,42 +1809,39 @@
         $('#health-label').textContent = 'Pipeline status unavailable';
       });
 
-    // Support section
-    $('#links').innerHTML = `
-      <a class="btn" href="${GITHUB_STARS_URL}" target="_blank" rel="noopener">★ Star on GitHub</a>
-      <a class="btn alt" href="${GITHUB_ISSUES_URL}" target="_blank" rel="noopener">Report an issue</a>
-      <a class="btn alt" href="mailto:${MAINTAINER_EMAIL}">Email</a>
-    `;
-    $('#maint').textContent = `Maintained by ${MAINTAINER_NAME}.`;
-    $('#wal').innerHTML = Object.entries(DONATION_WALLETS).map(([k, a]) => `
-      <div class="w">
-        <b>${k.toUpperCase()}</b>
-        <code>${a}</code>
-        <button data-addr="${a}">Copy</button>
-      </div>
-    `).join('');
+    // Render compact donation addresses in footer
+    const walEl = $('#wal');
+    if (walEl) {
+      walEl.innerHTML = Object.entries(DONATION_WALLETS).map(([k, a]) => `
+        <div class="w-row">
+          <b>${k.toUpperCase()}</b>
+          <code>${a}</code>
+          <button data-addr="${a}">Copy</button>
+        </div>
+      `).join('');
 
-    $$('.w button').forEach(b => {
-      b.onclick = async () => {
-        try {
-          await navigator.clipboard.writeText(b.dataset.addr);
-        } catch (_) {
-          const r = document.createRange();
-          r.selectNodeContents(b.previousElementSibling);
-          window.getSelection().removeAllRanges();
-          window.getSelection().addRange(r);
-          toast('Select and copy address');
-          return;
-        }
-        b.textContent = 'Copied';
-        b.classList.add('ok');
-        toast('Address copied');
-        setTimeout(() => {
-          b.textContent = 'Copy';
-          b.classList.remove('ok');
-        }, 1600);
-      };
-    });
+      walEl.querySelectorAll('button').forEach(b => {
+        b.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(b.dataset.addr);
+          } catch (_) {
+            const r = document.createRange();
+            r.selectNodeContents(b.previousElementSibling);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(r);
+            toast('Select and copy address');
+            return;
+          }
+          b.textContent = 'Copied';
+          b.classList.add('ok');
+          toast('Address copied');
+          setTimeout(() => {
+            b.textContent = 'Copy';
+            b.classList.remove('ok');
+          }, 1600);
+        };
+      });
+    }
 
   })();
   </script>
