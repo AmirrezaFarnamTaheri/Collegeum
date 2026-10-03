@@ -57,27 +57,24 @@ If you enable this, do so with the understanding that:
 - This is the reason the flag defaults to `false` and is not enabled in the
   example workflow.
 
-### `ENABLE_TWITTER` (authenticated social search)
+### X / Twitter ingestion methods
 
-`twscrape` requires real X/Twitter account credentials and performs
-authenticated scraping, which X's terms of service prohibit for automated,
-non-API access. Practically: accounts used this way get flagged and
-suspended with some regularity, this treats a real person's account as
-infrastructure (don't use an account you actually care about), and X's
-official API v2 is the ToS-compliant alternative — at a price point that, at
-last check, starts well above this project's zero-dollar constraint for
-search-capable tiers, and should be re-priced against current rates before
-being ruled out.
+The pipeline supports three distinct mechanisms for X/Twitter discovery:
 
-If you enable this:
-- Use a dedicated account created for this purpose, not a personal one.
-- Credentials are read from the `TWSCRAPE_ACCOUNTS` environment variable
-  (a GitHub Actions secret in CI) and are never written to a path git
-  tracks — see `ingest/collectors.py::collect_twitter`, which writes the
-  session database only to a `tempfile.TemporaryDirectory()` that is deleted
-  when the process exits.
-- Understand that account suspension is a "when," not an "if," at any
-  sustained volume.
+1. **Official X API v2 (`X_BEARER_TOKEN`)**:
+   - Uses official developer credentials and calls the v2 recent search endpoint (`/2/tweets/search/recent`).
+   - Fully compliant with the X Developer Agreement and Developer Policy.
+   - Constrained by monthly request quotas on Free/Basic tiers (e.g., 100 queries/month on Free, 10,000 queries/month on Basic).
+   - Recommended and default method when credentials are provided.
+
+2. **Xquik Platform API (`XQUIK_API_KEY`)**:
+   - Queries a third-party managed proxy endpoint without requiring X developer accounts or credentials.
+   - Recommended as an alternative when official API quotas are exceeded.
+
+3. **`ENABLE_TWITTER` via `twscrape` (legacy authenticated scraper)**:
+   - Performs automated session-based scraping with account credentials.
+   - X's terms of service prohibit automated scraping of web interfaces. Accounts used this way risk rate limiting and suspension.
+   - Off by default; requires `ENABLE_TWITTER=true` and `TWSCRAPE_ACCOUNTS`.
 
 ## Data handling
 
@@ -109,7 +106,12 @@ reasonable next step.
 
 | Source | Default | Robots.txt honored | Conditional GET | Primary risk |
 |---|---|---|---|---|
-| RSS/Atom feeds | On | Yes | Yes | Low — this is what feeds are for |
-| Schema.org portals | On | Yes | Yes | Low-medium — depends on the specific site's terms |
+| Academic Job Boards | **On** | No | No | Low — parses public job announcements |
+| RSS/Atom feeds | **On** | Yes | Yes | None — public syndication protocol |
+| Schema.org portals | **On** | Yes | Yes | Low-medium — relies on public structured data |
+| Official X API v2 | **On** (with token) | N/A (REST API) | N/A | None — compliant with X Developer Policy |
+| Xquik Platform API | **On** (with key) | N/A (REST API) | N/A | Low — managed proxy service |
 | `jobspy` (job boards) | **Off** | N/A (library-internal) | No | High — ToS violation risk, IP/account blocking |
 | `twscrape` (social) | **Off** | N/A | No | High — ToS violation, account suspension |
+
+*Note on Academic Job Boards*: Direct job-board and ATS scrapers do not dynamically query `robots.txt` files, but requests are strictly paced per host with politeness delays and concurrency limits to prevent server impact.

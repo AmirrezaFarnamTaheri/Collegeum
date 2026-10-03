@@ -11,12 +11,23 @@
 # Unmistakable predoc wording (big score boost, overrides title exclusions).
 strong_terms = [
   "pre-doc*", "pre-phd*", "research professional", "staff associate",
+  "wissenschaftliche* mitarbeiter*", "wissenschaftliche* hilfskraft*",
+  "personal investigador predoctoral*", "personal investigador en formacion", "personal investigador en formación",
+  "assistant* de recherche*", "allocataire* de recherche predoctoral*", "chercheur* predoctoral*",
+  "assegnista* di ricerca*", "borsista* di ricerca*",
 ]
 
-# RA-type roles (these also need an economics/business field word somewhere).
+# Research roles (these also need an economics/business/policy field word somewhere).
 role_terms = [
   "research assistant*", "research associate*", "research analyst*", "research economist*", "research officer*", "research specialist*",
   "research trainee*", "research intern*", "junior researcher*", "junior economist*", "assistant researcher*", "graduate researcher*",
+  "economic analyst*", "economic associate*", "central bank trainee*",
+  "postdoc*", "post-doc*", "postdoctoral*", "research fellow*",
+  "phd candidate*", "phd researcher*", "phd student*", "doctoral researcher*", "doctoral candidate*", "doctoral student*",
+  "promotionsstelle*", "doktorandenstelle*", "doktorand*", "promovierend*",
+  "shk", "whk", "wimi", "studentische* hilfskraft*",
+  "ayudante* de investigacion*", "ayudante* de investigación*", "asistente* de investigacion*", "asistente* de investigación*",
+  "chargé* d'études économiques", "charge* d'etudes economiques", "assistente* di ricerca",
 ]
 
 # WANTED fields: economics, business, political/social science, law.
@@ -26,6 +37,10 @@ field_terms = [
   "accounting", "marketing", "entrepreneurship", "organizational behavior", "organisational behaviour", "operations management",
   "consumer behavio*", "political science", "international relations", "public administration", "social science*", "quantitative social",
   "sociology", "demography",
+  "wirtschaftswissenschaft*", "volkswirtschaft*", "betriebswirtschaft*", "vwl", "bwl", "ökonomie", "oekonomie",
+  "sciences economiques", "sciences économiques", "economie", "économie", "économétrie", "econometrie",
+  "ciencias economicas", "ciencias económicas", "economia", "economía", "econometría", "econometria",
+  "sozialwissenschaft*",
 ]
 
 # Everyday words: count as a field in a title/department, but on a full job page they
@@ -50,33 +65,35 @@ field_exclude_terms = [
   "architecture",
 ]
 
-# Rejected when found in the TITLE (unless a strong predoc term is there too).
+# Rejected when found in the TITLE (unless a strong role/predoc term is there too).
 exclude_terms = [
-  "postdoc*", "post-doc*", "professor*", "lecturer*", "tenure*", "faculty position*",
-  "faculty member*", "reader in", "senior research fellow*", "senior researcher*", "senior lecturer*", "senior economist*",
+  "professor*", "lecturer*", "tenure*", "faculty position*",
+  "faculty member*", "reader in", "senior lecturer*",
   "head of", "director of", "chair in", "dean", "group leader", "clinical",
   "nurse", "lab technician", "laboratory technician", "scholarship*", "summer school", "conference",
-  "call for papers", "workshop", "seminar", "phd program*", "master's", "masters",
+  "call for papers", "workshop", "seminar", "master's", "masters",
   "msc", "equity research", "credit research", "investment research", "event driven", "sell side",
   "buy side", "private equity", "hedge fund", "trading", "trader", "sales",
-  "real estate", "consultant*", "consulting", "market research", "semiconductor*", "wealth management",
+  "real estate", "market research", "semiconductor*", "wealth management",
   "portfolio", "underwriting", "actuar*",
 ]
 
 # Drop "PhD student / doctoral candidate" jobs (set false to include them).
-exclude_phd_positions = true
+exclude_phd_positions = false
 
-# Who the employer may be: universities, business/economics schools, research institutes.
-# Regexes matched in the employer name (case-insensitive):
+# Who the employer may be: universities, business/economics schools, research institutes,
+# central banks, international organizations, and economic research consultancies.
 employer_allow_patterns = [
   "univ", "college", "school", "institut", "hochschule", "[ée]cole",
   "escuela", "scuola", "politecnico", "academy", "akademie", "faculty",
   "department", "graduate", 'centre\b', 'center\b', "research (unit|group|lab|laboratory|foundation|council|department|programme|program)", '\blab\b',
   "laborator", "observatory", "max planck", "leibniz", "fraunhofer", "cnrs",
   "csic", "sorbonne",
+  "central bank", "reserve bank", "federal reserve", "monetary authority",
+  "international organization", "international organisation", "economic consulting",
 ]
 
-# Well-known academic employers whose names contain none of the words above:
+# Well-known academic, policy, and research employers:
 employer_allow_names = [
   "CEMFI", "CREI", "EUI", "INSEAD", "IESE", "ESADE", "HEC", "ESSEC",
   "EDHEC", "LBS", "LSE", "UCL", "ETH", "EPFL", "Bocconi", "Sciences Po",
@@ -86,40 +103,83 @@ employer_allow_names = [
   "EIEF", "Nuffield", "CREST", "TSE", "PSE", "UPF", "UAB", "UC3M",
   "KU Leuven", "NHH", "SSE", "IIASA", "Resolution Foundation", "Rockwool Foundation", "Kiel", "CEBI",
   "CAGE", "STICERD", "CEP", "IGIER", "LEAP", "Frisch",
+  # Central Banks & Multilateral Institutions
+  "Federal Reserve", "Fed", "ECB", "European Central Bank", "Bank of England", "Bank of Canada",
+  "BIS", "Bank for International Settlements", "Bundesbank", "Deutsche Bundesbank",
+  "Banque de France", "Banca d'Italia", "Banco de España", "Riksbank", "Swiss National Bank", "SNB",
+  "De Nederlandsche Bank", "DNB", "Norges Bank", "Reserve Bank of Australia", "RBA",
+  "OECD", "IMF", "International Monetary Fund", "World Bank", "WTO", "World Trade Organization",
+  "IDB", "Inter-American Development Bank", "EBRD", "EIB", "European Investment Bank",
+  "Asian Development Bank", "ADB", "UN", "United Nations", "ILO",
+  # Economic Consultancies & Policy Institutes
+  "Cornerstone Research", "Analysis Group", "NERA Economic Consulting", "NERA",
+  "Charles River Associates", "CRA", "Compass Lexecon", "The Brattle Group", "Brattle",
+  "Bates White", "Keystone Strategy", "Mathematica", "MDRC", "RAND Corporation", "RAND",
+  "RTI International", "Urban Institute", "Brookings", "Brookings Institution",
+  # Premier US Academic Pre-doc & Research Hubs
+  "Opportunity Insights", "BFI", "Becker Friedman Institute", "SIEPR", "Tobin Center",
+  "Blueprint Labs", "J-PAL", "JPAL", "National Bureau of Economic Research", "NBER",
 ]
 
-# Companies and banks (used when the allow-list doesn't match):
+# When false (the default), only academic and explicitly allowed institutional employers
+# pass the filter. Routing (see [routing]) independently decides which channel a listing
+# goes to — banks, IOs, and named consultancies go to the web even with this set to false.
+allow_private_sector = false
+
+# Operations that never count as research employers, even with allow_private_sector:
 employer_block_patterns = [
-  "bank|banco|banque|bundesbank|sparkasse", "securities", "capital", "investment", "asset management", "wealth",
-  "hedge", "trading", "advisors?", "advisory", "consult", "partners",
-  "holdings?", 'group\b', '\b(inc|ltd|llc|plc|corp|corporation|gmbh|ag|sa|spa|bv|ab|as)\b\.?', "& co", "insurance", "real estate",
-  "pharma", "energy", "technologies", "solutions", "analytics",
+  "retail bank|mortgage|credit union", "insurance", "real estate", "pharma",
 ]
 
-# Never send these, whatever the source (matched in employer, title and link):
-excluded_employers = [
-  "J-PAL", "JPAL", "Poverty Action Lab", "povertyactionlab.org",
-]
+# Never send these (matched in employer, title and link):
+excluded_employers = []
 
-regions_include = ["UK", "Europe", "Canada"]
+regions_include = ["UK", "Europe", "Canada", "US", "Other"]
 keep_unknown_region = true   # keep jobs whose location couldn't be detected
 drop_expired = true
 max_age_days = 120           # ignore postings older than this (when a post date is known)
 
+[routing]
+# Website and X: a listing goes there when ANY of these holds. Everything else
+# (pre-doctoral roles outside the US at universities and research institutes)
+# goes to Telegram only.
+web_regions = ["US"]
+web_position_kinds = ["phd", "postdoc"]
+# Central banks, international organizations, banks, consultancies. Employers that
+# match none of the academic lists above (companies) also go to the website.
+web_employer_patterns = [
+  "central bank", "reserve bank", "federal reserve", "monetary authority",
+  '\bbanks?\b', "banque", "banca", "banco",
+  "international organi[sz]ation", "economic consulting", 'consulting\b', "consultancy",
+]
+web_employer_names = [
+  "Federal Reserve", "Fed", "ECB", "European Central Bank", "Bank of England", "Bank of Canada",
+  "BIS", "Bank for International Settlements", "Bundesbank", "Deutsche Bundesbank",
+  "Banque de France", "Banca d'Italia", "Banco de España", "Riksbank", "Swiss National Bank", "SNB",
+  "De Nederlandsche Bank", "DNB", "Norges Bank", "Reserve Bank of Australia", "RBA",
+  "OECD", "IMF", "International Monetary Fund", "World Bank", "WTO", "World Trade Organization",
+  "IDB", "Inter-American Development Bank", "EBRD", "EIB", "European Investment Bank",
+  "Asian Development Bank", "ADB", "UN", "United Nations", "ILO",
+  "Cornerstone Research", "Analysis Group", "NERA Economic Consulting", "NERA",
+  "Charles River Associates", "CRA", "Compass Lexecon", "The Brattle Group", "Brattle",
+  "Bates White", "Keystone Strategy", "Mathematica", "MDRC", "RAND Corporation", "RAND",
+  "RTI International",
+]
+
 [enrich]
 fetch_details = true         # read every new posting's page (field, region, filled?) before sending
-max_details_per_run = 150    # the rest wait for the next run
-detail_concurrency = 6
+max_details_per_run = 2500   # the rest wait for the next run
+detail_concurrency = 25
 recheck_open_jobs = true     # revisit sent jobs so filled ones drop off /positions and the dashboard
 recheck_every_days = 3
-recheck_max_per_run = 40
+recheck_max_per_run = 500
 
 [http]
 timeout = 30
 max_retries = 3
 default_min_interval = 1.5   # polite delay between requests to the same site (seconds)
-max_concurrent_sources = 6
-source_timeout = 300         # give up on a source that hangs longer than this (seconds)
+max_concurrent_sources = 12
+source_timeout = 600         # give up on a source that hangs longer than this (seconds)
 
 [telegram]
 list_page_size = 5           # positions per message for /positions, /applied...

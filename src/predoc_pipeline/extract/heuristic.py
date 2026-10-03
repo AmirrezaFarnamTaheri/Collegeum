@@ -44,11 +44,15 @@ _DISCIPLINE_WORDS: tuple[tuple[str, Discipline], ...] = (
     (r"international trade|\btrade\b|globali[sz]ation", Discipline.TRADE),
     (r"environment|energy|climate", Discipline.ENVIRONMENTAL),
     (r"health econ", Discipline.HEALTH),
-    (r"political econom|political science|politics|international relations",
-     Discipline.POLITICAL_ECONOMY),
+    (
+        r"political econom|political science|politics|international relations",
+        Discipline.POLITICAL_ECONOMY,
+    ),
     (r"public polic|public econ|public finance|taxation|\btax\b", Discipline.PUBLIC_POLICY),
-    (r"management|marketing|accounting|strategy|entrepreneur|business school|organi[sz]ational",
-     Discipline.BUSINESS),
+    (
+        r"management|marketing|accounting|strategy|entrepreneur|business school|organi[sz]ational",
+        Discipline.BUSINESS,
+    ),
     (r"\blaw\b|legal", Discipline.LAW),
     (r"sociolog|demograph|quantitative social|social science", Discipline.QUANT_SOCIAL),
     (r"micro|applied econ|empirical econ", Discipline.APPLIED_MICRO),
@@ -126,6 +130,83 @@ def _country(country: str | None) -> str | None:
     return country if country and country not in ("Europe", "Other") else None
 
 
+_SALARY_RX = re.compile(
+    r"(?:(?:salary|stipend|remuneration|compensation|pay)[\s:]*)?"
+    r"([$£€]\s*\d[\d,k\.]*(?:\s*(?:-|to|–)\s*[$£€]?\s*\d[\d,k\.]*)?"
+    r"(?:\s*(?:per\s+(?:annum|year|month|hour)|p\.a\.|annually|annual|monthly|hourly|/yr|/year|/month|/mo|/hr))?)",
+    re.IGNORECASE,
+)
+
+_START_RX = re.compile(
+    r"(?:start(?:s|ing)?\s*(?:date)?|commencing|commencement)[\s:]*"
+    r"([A-Za-z]+\s+\d{4}|Summer\s+\d{4}|Fall\s+\d{4}|Spring\s+\d{4}|Immediate(?:ly)?|ASAP)",
+    re.IGNORECASE,
+)
+
+_DEGREE_RX = re.compile(
+    r"\b(bachelor(?:'s)?|undergraduate|ba|bs|bsc|master(?:'s)?|msc|ma|mphil|phd|doctorate)\b",
+    re.IGNORECASE,
+)
+
+
+def _extract_salary(text: str, hints: dict[str, Any]) -> str | None:
+    if hints.get("salary"):
+        return str(hints["salary"])
+    match = _SALARY_RX.search(text)
+    if match:
+        raw = squish(match.group(1) or "").rstrip(".,;")
+        if len(raw) >= 4 and any(c.isdigit() for c in raw):
+            return raw[:80]
+    return None
+
+
+def _extract_start(text: str, hints: dict[str, Any]) -> str | None:
+    if hints.get("start_date"):
+        return str(hints["start_date"])
+    match = _START_RX.search(text)
+    if match:
+        return squish(match.group(1))[:50]
+    return None
+
+
+def _extract_degree(text: str, hints: dict[str, Any]) -> str | None:
+    if hints.get("degree"):
+        return str(hints["degree"])
+    match = _DEGREE_RX.search(text)
+    if match:
+        return match.group(1).lower()
+    return None
+
+
+_TOOL_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\bpython\b", re.IGNORECASE), "Python"),
+    (re.compile(r"\bstata\b", re.IGNORECASE), "Stata"),
+    (re.compile(r"\bmatlab\b", re.IGNORECASE), "MATLAB"),
+    (re.compile(r"\bjulia\b", re.IGNORECASE), "Julia"),
+    (re.compile(r"\bsql\b", re.IGNORECASE), "SQL"),
+    (re.compile(r"\bc\+\+\b", re.IGNORECASE), "C++"),
+    (re.compile(r"\b(?:git|github)\b", re.IGNORECASE), "Git"),
+    (re.compile(r"\b(?:latex|tex)\b", re.IGNORECASE), "LaTeX"),
+    (
+        re.compile(
+            r"(?:\bR\b(?:\s+(?:programming|code|language|scripting|software|package|environment))?"
+            r"|\busing\s+R\b|\bin\s+R\b|,\s*R[,;\s])"
+        ),
+        "R",
+    ),
+)
+
+
+def _extract_tools(text: str, hints: dict[str, Any]) -> list[str]:
+    if hints.get("tools"):
+        return list(hints["tools"])
+    found: list[str] = []
+    for rx, name in _TOOL_PATTERNS:
+        if rx.search(text) and name not in found:
+            found.append(name)
+    return found
+
+
 class HeuristicExtractor:
     """Same interface as the Gemini ``Extractor``; never touches the network."""
 
@@ -178,13 +259,18 @@ class HeuristicExtractor:
             city=city,
             deadline=deadline,
             deadline_note=_deadline_note(deadline, hints.get("deadline_text")),
-            disciplines=disciplines_for(title, hints.get("department"), hints.get("fields"),
-                                        text[:3000]),
+            disciplines=disciplines_for(
+                title, hints.get("department"), hints.get("fields"), text[:3000]
+            ),
             visa_sponsorship_status=visa_status(visa_note),
             visa_note=visa_note,
             application_url=hints.get("final_url"),
             summary=hints.get("summary") or _summary(text),
             confidence=0.95 if hints.get("strong") else 0.9,
+            salary_raw=_extract_salary(text, hints),
+            min_degree=_extract_degree(text, hints),
+            start_date=_extract_start(text, hints),
+            tools=_extract_tools(text, hints),
         )
 
     def _from_text(self, *, text: str, title: str, source_url: str) -> ExtractionResult:
@@ -194,20 +280,37 @@ class HeuristicExtractor:
         if not institution:
             match = _EMPLOYER_RX.search(text[:3000])
             institution = squish(match.group(1)) if match else None
-        post = JobPostSchema(title=role or title, url=source_url or "https://invalid.example/",
-                             source="text", institution=institution or "",
-                             description_snippet=text[:600])
+        post = JobPostSchema(
+            title=role or title,
+            url=source_url or "https://invalid.example/",
+            source="text",
+            institution=institution or "",
+            description_snippet=text[:600],
+        )
         verdict = self.flt.evaluate(post)
         # Only "is this a vacancy at all?" is decided here; whether it is one
         # *you* want (title, employer, field, region) is policy.py's job.
-        if not verdict.keep and verdict.reason in ("no-role-term", "phd-position",
-                                                    "social-no-hiring-cue"):
+        if not verdict.keep and verdict.reason in (
+            "no-role-term",
+            "phd-position",
+            "social-no-hiring-cue",
+        ):
             reason = "phd_studentship" if verdict.reason == "phd-position" else "not_a_vacancy"
-            return ExtractionResult(is_vacancy=False, rejection_reason=reason, title=title,
-                                    institution=institution or "", confidence=0.8)
+            return ExtractionResult(
+                is_vacancy=False,
+                rejection_reason=reason,
+                title=title,
+                institution=institution or "",
+                confidence=0.8,
+            )
         if PHD_POSITION.search(title) and not verdict.strong:
-            return ExtractionResult(is_vacancy=False, rejection_reason="phd_studentship",
-                                    title=title, institution=institution or "", confidence=0.8)
+            return ExtractionResult(
+                is_vacancy=False,
+                rejection_reason="phd_studentship",
+                title=title,
+                institution=institution or "",
+                confidence=0.8,
+            )
 
         deadline_date, deadline_raw = extract_deadline(text)
         country, _region = location_from_labels(text[:6000])
@@ -231,4 +334,8 @@ class HeuristicExtractor:
             visa_note=visa_note,
             summary=_summary(text),
             confidence=confidence,
+            salary_raw=_extract_salary(text, {}),
+            min_degree=_extract_degree(text, {}),
+            start_date=_extract_start(text, {}),
+            tools=_extract_tools(text, {}),
         )

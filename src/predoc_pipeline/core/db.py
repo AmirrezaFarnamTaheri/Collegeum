@@ -26,13 +26,17 @@ Design notes that matter operationally:
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
+import threading
 from collections.abc import Iterator, Sequence
 from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Any
 
 from .timeparse import format_ts
+
+_log = logging.getLogger(__name__)
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -44,7 +48,7 @@ __all__ = [
     "Database",
 ]
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 6
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -76,6 +80,7 @@ CREATE TABLE IF NOT EXISTS listings (
   signature                 BLOB,
   alternate_sources         TEXT    NOT NULL DEFAULT '[]',
   telegram_message_id       INTEGER,
+  x_post_id                 TEXT,
   status                    TEXT    NOT NULL DEFAULT 'pending',
   first_seen_at             TEXT    NOT NULL,
   last_seen_at              TEXT    NOT NULL,
@@ -87,12 +92,32 @@ CREATE TABLE IF NOT EXISTS listings (
   closed_at                 TEXT,
   last_checked_at           TEXT,
   department                TEXT,
-  fields                    TEXT
+  fields                    TEXT,
+  salary_min                REAL,
+  salary_max                REAL,
+  salary_currency           TEXT,
+  salary_period             TEXT,
+  salary_raw                TEXT,
+  tools_required            TEXT    NOT NULL DEFAULT '[]',
+  tools_preferred           TEXT    NOT NULL DEFAULT '[]',
+  min_degree                TEXT,
+  degree_note               TEXT,
+  start_term                TEXT,
+  start_date                TEXT
 );
-CREATE INDEX IF NOT EXISTS ix_listings_status    ON listings(status);
-CREATE INDEX IF NOT EXISTS ix_listings_deadline  ON listings(deadline);
-CREATE INDEX IF NOT EXISTS ix_listings_seen      ON listings(first_seen_at);
-CREATE INDEX IF NOT EXISTS ix_listings_inst      ON listings(institution);
+CREATE INDEX IF NOT EXISTS ix_listings_status     ON listings(status);
+CREATE INDEX IF NOT EXISTS ix_listings_deadline   ON listings(deadline);
+CREATE INDEX IF NOT EXISTS ix_listings_seen       ON listings(first_seen_at);
+CREATE INDEX IF NOT EXISTS ix_listings_inst       ON listings(institution);
+CREATE INDEX IF NOT EXISTS ix_listings_apply_url  ON listings(apply_url);
+CREATE INDEX IF NOT EXISTS ix_listings_source_url ON listings(source_url);
+CREATE INDEX IF NOT EXISTS ix_listings_active     ON listings(first_seen_at DESC)
+  WHERE status='published' AND expired_at IS NULL AND closed_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_listings_identity   ON listings(
+  LOWER(TRIM(institution)), LOWER(TRIM(title))
+) WHERE status='published' AND closed_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_listings_pending    ON listings(id)
+  WHERE status IN ('pending', 'unpublished') AND closed_at IS NULL AND expired_at IS NULL;
 
 -- Every source URL we have ever formed an opinion about, and what that
 -- opinion was. Consulted before any network or model spend.
@@ -171,12 +196,15 @@ def connect(db_path: str | Path) -> sqlite3.Connection:
     """Open a connection in true autocommit mode with sane pragmas."""
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(path), timeout=30.0, isolation_level=None)
+    conn = sqlite3.connect(str(path), timeout=30.0, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("PRAGMA busy_timeout=30000")
+    conn.execute("PRAGMA temp_store=MEMORY")
+    conn.execute("PRAGMA mmap_size=268435456")
+    conn.execute("PRAGMA cache_size=-64000")
     return conn
 
 
@@ -202,12 +230,27 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("listings", "last_checked_at", "TEXT"),
     ("listings", "department", "TEXT"),
     ("listings", "fields", "TEXT"),
+    ("listings", "x_post_id", "TEXT"),
+    ("listings", "salary_min", "REAL"),
+    ("listings", "salary_max", "REAL"),
+    ("listings", "salary_currency", "TEXT"),
+    ("listings", "salary_period", "TEXT"),
+    ("listings", "salary_raw", "TEXT"),
+    ("listings", "tools_required", "TEXT DEFAULT '[]'"),
+    ("listings", "tools_preferred", "TEXT DEFAULT '[]'"),
+    ("listings", "min_degree", "TEXT"),
+    ("listings", "degree_note", "TEXT"),
+    ("listings", "start_term", "TEXT"),
+    ("listings", "start_date", "TEXT"),
 )
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
     for table, column, kind in _ADDED_COLUMNS:
-        have = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+        have = {
+            row[1] if isinstance(row, (tuple, list)) else row["name"]
+            for row in conn.execute(f"PRAGMA table_info({table})")
+        }
         if column not in have:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {kind}")
 
@@ -236,6 +279,7 @@ class Database:
     def __init__(self, db_path: str | Path) -> None:
         self.path = str(db_path)
         self.conn = connect(db_path)
+        self._lock = threading.RLock()
 
     def __enter__(self) -> Database:
         return self
@@ -245,9 +289,17 @@ class Database:
 
     def close(self) -> None:
         try:
+            self.optimize()
             self.checkpoint()
         finally:
             self.conn.close()
+
+    def optimize(self) -> None:
+        """Run PRAGMA optimize to refresh query planner statistics."""
+        try:
+            self.conn.execute("PRAGMA optimize")
+        except sqlite3.Error as exc:  # pragma: no cover - best effort
+            _log.debug("pragma optimize failed: %s", exc)
 
     def checkpoint(self) -> None:
         """Fold the WAL back into the main database file.
@@ -256,8 +308,14 @@ class Database:
         """
         try:
             self.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        except sqlite3.Error:  # pragma: no cover - best effort
-            pass
+        except sqlite3.Error as exc:  # pragma: no cover - best effort
+            _log.debug("wal_checkpoint failed: %s", exc)
+
+    @contextmanager
+    def transaction(self) -> Iterator[sqlite3.Connection]:
+        """Serialize writes on this Database connection with self._lock and transaction()."""
+        with self._lock, transaction(self.conn):
+            yield self.conn
 
     # -- meta -------------------------------------------------------------
     def get_meta(self, key: str, default: str | None = None) -> str | None:
@@ -265,7 +323,7 @@ class Database:
         return row["value"] if row else default
 
     def set_meta(self, key: str, value: str) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "INSERT INTO meta(key, value) VALUES(?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -289,7 +347,7 @@ class Database:
         listing_id: int | None = None,
     ) -> None:
         ts = now()
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 """
                 INSERT INTO seen_items
@@ -311,8 +369,38 @@ class Database:
 
     # -- listings ---------------------------------------------------------
     def listing_by_url_hash(self, url_hash: str) -> sqlite3.Row | None:
+        return self.conn.execute("SELECT * FROM listings WHERE url_hash=?", (url_hash,)).fetchone()
+
+    def listing_by_url(self, url: str) -> sqlite3.Row | None:
+        """Find a listing by exact URL hash, apply_url, source_url, or alternate_sources."""
+        if not url:
+            return None
+        from .urls import canonicalize_url, url_hash
+
+        h = url_hash(url)
+        canon = canonicalize_url(url)
+        row = self.conn.execute(
+            "SELECT * FROM listings WHERE url_hash=? OR apply_url=? OR source_url=? OR "
+            "apply_url=? OR source_url=?",
+            (h, url, url, canon, canon),
+        ).fetchone()
+        if row is not None:
+            return row
         return self.conn.execute(
-            "SELECT * FROM listings WHERE url_hash=?", (url_hash,)
+            "SELECT * FROM listings WHERE alternate_sources LIKE ?",
+            (f'%"{url}"%',),
+        ).fetchone()
+
+    def listing_by_identity(self, institution: str, title: str) -> sqlite3.Row | None:
+        """Find an existing published listing by normalized institution and title."""
+        inst = (institution or "").strip().lower()
+        tit = (title or "").strip().lower()
+        if not inst or not tit:
+            return None
+        return self.conn.execute(
+            "SELECT * FROM listings WHERE LOWER(TRIM(institution))=? AND LOWER(TRIM(title))=? "
+            "AND status='published' AND closed_at IS NULL",
+            (inst, tit),
         ).fetchone()
 
     def listing(self, listing_id: int) -> sqlite3.Row | None:
@@ -326,45 +414,96 @@ class Database:
         message in the channel.
         """
         columns = (
-            "url_hash", "apply_url", "source_url", "source", "title", "institution",
-            "principal_investigator", "country", "city", "is_remote", "duration_years",
-            "deadline", "disciplines", "visa_sponsorship_status", "summary", "language",
-            "model_confidence", "rule_score", "confidence", "signature",
-            "first_seen_at", "last_seen_at", "status", "deadline_note", "visa_note",
-            "department", "fields",
+            "url_hash",
+            "apply_url",
+            "source_url",
+            "source",
+            "title",
+            "institution",
+            "principal_investigator",
+            "country",
+            "city",
+            "is_remote",
+            "duration_years",
+            "deadline",
+            "disciplines",
+            "visa_sponsorship_status",
+            "summary",
+            "language",
+            "model_confidence",
+            "rule_score",
+            "confidence",
+            "signature",
+            "first_seen_at",
+            "last_seen_at",
+            "status",
+            "deadline_note",
+            "visa_note",
+            "department",
+            "fields",
+            "salary_min",
+            "salary_max",
+            "salary_currency",
+            "salary_period",
+            "salary_raw",
+            "tools_required",
+            "tools_preferred",
+            "min_degree",
+            "degree_note",
+            "start_term",
+            "start_date",
         )
         payload = {c: values.get(c) for c in columns}
         payload["first_seen_at"] = payload["first_seen_at"] or now()
         payload["last_seen_at"] = payload["last_seen_at"] or payload["first_seen_at"]
         payload["status"] = payload["status"] or "pending"
+        payload["tools_required"] = payload["tools_required"] or "[]"
+        payload["tools_preferred"] = payload["tools_preferred"] or "[]"
         placeholders = ",".join("?" for _ in columns)
-        with transaction(self.conn):
+        with self.transaction():
             cur = self.conn.execute(
                 f"INSERT INTO listings ({','.join(columns)}) VALUES ({placeholders})",
                 tuple(payload[c] for c in columns),
             )
             return int(cur.lastrowid)
 
-    def mark_published(self, listing_id: int, message_id: int | None) -> None:
-        with transaction(self.conn):
+    def mark_published(
+        self,
+        listing_id: int,
+        message_id: int | None,
+        x_post_id: str | None = None,
+    ) -> None:
+        with self.transaction():
+            if x_post_id:
+                self.conn.execute(
+                    "UPDATE listings SET status='published', telegram_message_id=?, "
+                    "x_post_id=?, published_at=? WHERE id=?",
+                    (message_id, str(x_post_id), now(), listing_id),
+                )
+            else:
+                self.conn.execute(
+                    "UPDATE listings SET status='published', telegram_message_id=?, "
+                    "published_at=? WHERE id=?",
+                    (message_id, now(), listing_id),
+                )
+
+    def mark_x_published(self, listing_id: int, x_post_id: str | None) -> None:
+        with self.transaction():
             self.conn.execute(
-                "UPDATE listings SET status='published', telegram_message_id=?, "
-                "published_at=? WHERE id=?",
-                (message_id, now(), listing_id),
+                "UPDATE listings SET x_post_id=? WHERE id=?",
+                (str(x_post_id) if x_post_id else None, listing_id),
             )
 
     def mark_status(self, listing_id: int, status: str) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute("UPDATE listings SET status=? WHERE id=?", (status, listing_id))
 
     def touch_listing(self, listing_id: int) -> None:
-        with transaction(self.conn):
-            self.conn.execute(
-                "UPDATE listings SET last_seen_at=? WHERE id=?", (now(), listing_id)
-            )
+        with self.transaction():
+            self.conn.execute("UPDATE listings SET last_seen_at=? WHERE id=?", (now(), listing_id))
 
     def add_alternate_source(self, listing_id: int, source_url: str) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             row = self.conn.execute(
                 "SELECT alternate_sources FROM listings WHERE id=?", (listing_id,)
             ).fetchone()
@@ -394,8 +533,31 @@ class Database:
     def recent_listings(self, days: int) -> list[sqlite3.Row]:
         return self.conn.execute(
             "SELECT * FROM listings WHERE first_seen_at >= "
-            "strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?) ORDER BY id",
+            "strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?) ORDER BY first_seen_at DESC, id DESC",
             (since(days),),
+        ).fetchall()
+
+    def search_listings(
+        self, query: str, *, active_only: bool = True, limit: int = 50
+    ) -> list[sqlite3.Row]:
+        """Search listings by keyword across title, institution, department, and summary."""
+        q = (query or "").strip().lower()
+        if not q:
+            return []
+        pattern = f"%{q}%"
+        if active_only:
+            return self.conn.execute(
+                "SELECT * FROM listings WHERE status='published' AND expired_at IS NULL "
+                "AND closed_at IS NULL AND (LOWER(title) LIKE ? OR LOWER(institution) LIKE ? "
+                "OR LOWER(department) LIKE ? OR LOWER(summary) LIKE ?) "
+                "ORDER BY first_seen_at DESC LIMIT ?",
+                (pattern, pattern, pattern, pattern, limit),
+            ).fetchall()
+        return self.conn.execute(
+            "SELECT * FROM listings WHERE LOWER(title) LIKE ? OR LOWER(institution) LIKE ? "
+            "OR LOWER(department) LIKE ? OR LOWER(summary) LIKE ? "
+            "ORDER BY first_seen_at DESC LIMIT ?",
+            (pattern, pattern, pattern, pattern, limit),
         ).fetchall()
 
     def active_listings(self) -> list[sqlite3.Row]:
@@ -424,7 +586,7 @@ class Database:
         return self.listing_by_url_hash(url_hash_value) is not None
 
     def mark_closed(self, listing_id: int, reason: str) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "UPDATE listings SET closed_at=?, closed_reason=?, last_checked_at=? "
                 "WHERE id=? AND closed_at IS NULL",
@@ -432,7 +594,7 @@ class Database:
             )
 
     def mark_checked(self, listing_id: int) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "UPDATE listings SET last_checked_at=? WHERE id=?", (now(), listing_id)
             )
@@ -450,7 +612,7 @@ class Database:
 
     def expire_past_deadline(self, grace_days: int = 1) -> int:
         """Mark listings whose deadline has passed. Returns rows affected."""
-        with transaction(self.conn):
+        with self.transaction():
             cur = self.conn.execute(
                 "UPDATE listings SET expired_at=? WHERE expired_at IS NULL "
                 "AND deadline IS NOT NULL AND deadline != '' "
@@ -461,13 +623,14 @@ class Database:
 
     # -- LLM quota --------------------------------------------------------
     def llm_usage(self, day: str) -> tuple[int, int]:
-        row = self.conn.execute(
-            "SELECT requests, tokens FROM llm_usage WHERE day=?", (day,)
-        ).fetchone()
-        return (int(row["requests"]), int(row["tokens"])) if row else (0, 0)
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT requests, tokens FROM llm_usage WHERE day=?", (day,)
+            ).fetchone()
+            return (int(row["requests"]), int(row["tokens"])) if row else (0, 0)
 
     def record_llm_call(self, day: str, *, tokens: int = 0, error: bool = False) -> int:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "INSERT INTO llm_usage(day, requests, tokens, errors) VALUES(?,?,?,?) "
                 "ON CONFLICT(day) DO UPDATE SET "
@@ -476,9 +639,7 @@ class Database:
                 "  errors   = llm_usage.errors + excluded.errors",
                 (day, 1, tokens, 1 if error else 0),
             )
-            row = self.conn.execute(
-                "SELECT requests FROM llm_usage WHERE day=?", (day,)
-            ).fetchone()
+            row = self.conn.execute("SELECT requests FROM llm_usage WHERE day=?", (day,)).fetchone()
             return int(row["requests"])
 
     # -- HTTP cache -------------------------------------------------------
@@ -497,7 +658,7 @@ class Database:
         body_hash: str | None,
         status: int,
     ) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "INSERT INTO http_cache(url_hash, url, etag, last_modified, body_hash, "
                 "fetched_at, status) VALUES(?,?,?,?,?,?,?) "
@@ -519,7 +680,7 @@ class Database:
         payload: str,
         error: str,
     ) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "INSERT INTO dlq(run_id, stage, source, source_url, payload, error, "
                 "created_at) VALUES(?,?,?,?,?,?,?)",
@@ -532,14 +693,14 @@ class Database:
         ).fetchall()
 
     def start_run(self, run_id: str) -> int:
-        with transaction(self.conn):
+        with self.transaction():
             cur = self.conn.execute(
                 "INSERT INTO run_log(run_id, started_at) VALUES(?, ?)", (run_id, now())
             )
             return int(cur.lastrowid)
 
     def finish_run(self, row_id: int, stats: dict[str, Any], source_stats: dict[str, Any]) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "UPDATE run_log SET finished_at=?, ingested=?, gated=?, extracted=?, "
                 "duplicates=?, published=?, errors=?, llm_calls=?, outcome=?, "
@@ -577,7 +738,7 @@ class Database:
 
     # -- maintenance ------------------------------------------------------
     def prune(self, *, dlq_days: int = 90, seen_days: int = 400, runs_keep: int = 180) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "DELETE FROM dlq WHERE created_at < strftime('%Y-%m-%dT%H:%M:%SZ','now',?)",
                 (since(dlq_days),),
@@ -605,9 +766,7 @@ class Database:
             "published": int(
                 q("SELECT COUNT(*) FROM listings WHERE status='published'").fetchone()[0]
             ),
-            "pending": int(
-                q("SELECT COUNT(*) FROM listings WHERE status='pending'").fetchone()[0]
-            ),
+            "pending": int(q("SELECT COUNT(*) FROM listings WHERE status='pending'").fetchone()[0]),
             "expired": int(
                 q("SELECT COUNT(*) FROM listings WHERE expired_at IS NOT NULL").fetchone()[0]
             ),
@@ -635,7 +794,7 @@ class Database:
     def import_rows(self, records: Sequence[dict[str, Any]]) -> int:
         """Rebuild `listings` from exported records. Used to restore state."""
         inserted = 0
-        with transaction(self.conn):
+        with self.transaction():
             for record in records:
                 data = dict(record)
                 data["disciplines"] = json.dumps(data.get("disciplines") or [])
@@ -666,7 +825,7 @@ class Database:
 
     def import_seen(self, records: Sequence[dict[str, Any]]) -> int:
         inserted = 0
-        with transaction(self.conn):
+        with self.transaction():
             for record in records:
                 if not record.get("url_hash") or not record.get("decision"):
                     continue
@@ -674,9 +833,15 @@ class Database:
                 cur = self.conn.execute(
                     "INSERT OR IGNORE INTO seen_items(url_hash, source, decision, reason, "
                     "content_hash, first_seen_at, last_seen_at) VALUES(?,?,?,?,?,?,?)",
-                    (record["url_hash"], record.get("source") or "", record["decision"],
-                     (record.get("reason") or "")[:200], record.get("content_hash") or "",
-                     first, first),
+                    (
+                        record["url_hash"],
+                        record.get("source") or "",
+                        record["decision"],
+                        (record.get("reason") or "")[:200],
+                        record.get("content_hash") or "",
+                        first,
+                        first,
+                    ),
                 )
                 inserted += cur.rowcount or 0
         return inserted
@@ -688,7 +853,7 @@ class Database:
         in a row" and "source failing N runs in a row" could never be detected.
         """
         inserted = 0
-        with transaction(self.conn):
+        with self.transaction():
             for run in sorted(runs, key=lambda r: r.get("started_at") or ""):
                 if not run.get("run_id") or not run.get("started_at"):
                     continue
@@ -696,11 +861,20 @@ class Database:
                     "INSERT INTO run_log(run_id, started_at, finished_at, ingested, gated, "
                     "extracted, duplicates, published, errors, llm_calls, outcome, source_stats) "
                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (run["run_id"], run["started_at"], run.get("finished_at"),
-                     run.get("ingested", 0), run.get("gated", 0), run.get("extracted", 0),
-                     run.get("duplicates", 0), run.get("published", 0), run.get("errors", 0),
-                     run.get("llm_calls", 0), run.get("outcome", "ok"),
-                     json.dumps(run.get("source_stats") or {}, sort_keys=True)),
+                    (
+                        run["run_id"],
+                        run["started_at"],
+                        run.get("finished_at"),
+                        run.get("ingested", 0),
+                        run.get("gated", 0),
+                        run.get("extracted", 0),
+                        run.get("duplicates", 0),
+                        run.get("published", 0),
+                        run.get("errors", 0),
+                        run.get("llm_calls", 0),
+                        run.get("outcome", "ok"),
+                        json.dumps(run.get("source_stats") or {}, sort_keys=True),
+                    ),
                 )
                 inserted += 1
         return inserted

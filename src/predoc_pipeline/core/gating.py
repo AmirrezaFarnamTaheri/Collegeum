@@ -47,6 +47,10 @@ POSITIVE_TERMS: dict[str, tuple[str, ...]] = {
         r"\bresearch analyst\b",
         r"\bfull[- ]time (research )?(assistant|analyst)\b",
         r"\bresearch professional\b",
+        r"\bpost[- ]?doc(toral)?\b",
+        r"\bph\.?d\b",
+        r"\bdoctoral\b",
+        r"\bresearch fellow\b",
     ),
     "de": (
         r"wissenschaftliche[rn]?\s+(mitarbeiter|hilfskraft)",
@@ -54,26 +58,44 @@ POSITIVE_TERMS: dict[str, tuple[str, ...]] = {
         r"\bforschungsassistent",
         r"\bpr[äa]doktoral",
         r"\btv-?l\s*e\s*13",
+        r"\bpostdoktorand",
+        r"\bdoktorand",
+        r"\bpromotionsstelle",
     ),
     "fr": (
         r"ing[ée]nieur[e]?\s+d['’]?[ée]tudes",
         r"assistant[e]?\s+de\s+recherche",
         r"\bpr[ée]doctoral",
         r"charg[ée]\s+d['’]?[ée]tudes",
+        r"\bpost-?doctorat\b",
+        r"\bdoctorant",
     ),
     "es": (
         r"\bpredoctoral",
         r"ayudante\s+de\s+investigaci[óo]n",
         r"asistente\s+de\s+investigaci[óo]n",
         r"investigador[a]?\s+(junior|no\s+doctor)",
+        r"\bposdoctorado\b",
+        r"\bdoctorando",
     ),
     "it": (
         r"assegn(o|ista)\s+di\s+ricerca",
         r"assistente\s+di\s+ricerca",
         r"\bpre-?dottoral",
+        r"\bpost-?dottorato\b",
+        r"\bdottorato\b",
     ),
-    "nl": (r"onderzoeksassistent", r"\bjunior\s+onderzoeker"),
-    "pt": (r"assistente\s+de\s+(investiga[çc][ãa]o|pesquisa)", r"\bbolseir[oa]\s+de\s+investiga"),
+    "nl": (
+        r"onderzoeksassistent",
+        r"\bjunior\s+onderzoeker",
+        r"\bpromovendus\b",
+        r"\bpostdoc\b",
+    ),
+    "pt": (
+        r"assistente\s+de\s+(investiga[çc][ãa]o|pesquisa)",
+        r"\bbolseir[oa]\s+de\s+investiga",
+        r"\bdoutorando\b",
+    ),
 }
 
 # Hiring intent. Present in nearly every real advert, absent from chatter.
@@ -218,7 +240,15 @@ class GateResult:
         return not self.passed
 
 
-def _reject_reason(title: str, text: str, body: str, *, title_only: bool = False) -> str:
+def _reject_reason(
+    title: str,
+    text: str,
+    body: str,
+    *,
+    title_only: bool = False,
+    allow_phd: bool = False,
+    allow_postdoc: bool = False,
+) -> str:
     """The first hard-reject label that applies, or ''.
 
     ``title_only`` is for job-board items: their text is a whole web page whose
@@ -232,6 +262,10 @@ def _reject_reason(title: str, text: str, body: str, *, title_only: bool = False
     subject = title or squish(text)[:LEAD_CHARS]
     for pattern, label in _TITLE_RE:
         if pattern.search(subject):
+            if label == "postdoc" and allow_postdoc:
+                continue
+            if label == "phd-studentship" and allow_phd:
+                continue
             return label
     if _TITLE_FACULTY_RE.search(subject) and not _ANY_POS_RE.search(subject):
         return "faculty"
@@ -240,15 +274,27 @@ def _reject_reason(title: str, text: str, body: str, *, title_only: bool = False
     lead = squish(text)[:LEAD_CHARS]
     for pattern, label in _LEAD_RE:
         if pattern.search(lead):
+            if label == "postdoc" and allow_postdoc:
+                continue
+            if label == "phd-studentship" and allow_phd:
+                continue
             return label
     for pattern, label in _BODY_RE:
         if pattern.search(body):
+            if label == "phd-required" and (allow_postdoc or allow_phd):
+                continue
             return label
     return ""
 
 
 def evaluate(
-    text: str, *, title: str = "", url: str = "", known_vacancy: bool = False
+    text: str,
+    *,
+    title: str = "",
+    url: str = "",
+    known_vacancy: bool = False,
+    allow_phd: bool = False,
+    allow_postdoc: bool = False,
 ) -> GateResult:
     """Decide whether `text` is worth a model call, and score it.
 
@@ -262,7 +308,14 @@ def evaluate(
 
     lang = language_hint(body)
 
-    reason = _reject_reason(squish(title), text, body, title_only=known_vacancy)
+    reason = _reject_reason(
+        squish(title),
+        text,
+        body,
+        title_only=known_vacancy,
+        allow_phd=allow_phd,
+        allow_postdoc=allow_postdoc,
+    )
     if reason:
         return GateResult(False, f"reject:{reason}", lang)
 

@@ -28,12 +28,14 @@ from typing import Any
 import httpx
 
 from .. import state
+from ..boards.config import load_preferences
 from ..core.db import Database
 from ..core.db import init as init_db
 from ..core.textproc import escape_telegram_html as esc
 from ..core.textproc import truncate
 from ..core.timeparse import parse_datetime, utcnow
 from ..logging_setup import get_logger
+from ..routing import Router
 from ..settings import Settings
 from .feedback import (
     APPLIED,
@@ -248,6 +250,10 @@ def telegram_sync(
             if exc.status == 409:
                 log.error("telegram_webhook_set",
                           hint="a webhook is set for this bot; commands only work without one")
+                return summary
+            if exc.status in (401, 403, 404):
+                log.warning("telegram_auth_or_chat_failed", error=str(exc))
+                return summary
             raise
         if not updates:
             save_state(settings.telegram_state_path, chat_state)
@@ -286,10 +292,11 @@ def telegram_sync(
 def _refresh_public_exports(settings: Settings, store: FeedbackStore) -> None:
     """A ❌ should also take the position off the dashboard and the RSS feed."""
     try:
+        router = Router(load_preferences(settings.preferences_config))
         with Database(settings.db_path) as db:
-            state.export_dashboard(db, settings.dashboard_json, hidden=store.hidden)
+            state.export_dashboard(db, settings.dashboard_json, hidden=store.hidden, router=router)
             state.export_feed(db, settings.feed_path, site_url=settings.site_url,
-                              hidden=store.hidden)
+                              hidden=store.hidden, router=router)
     except Exception as exc:  # noqa: BLE001 - cosmetic; the daily run redoes it
         log.warning("export_refresh_failed", error=str(exc))
 
@@ -354,8 +361,8 @@ def _handle_tap(
         changed = True
     try:  # Telegram rejects answers to taps older than a few minutes; harmless
         bot.call("answerCallbackQuery", {"callback_query_id": cq["id"], "text": reply})
-    except (TelegramError, KeyError):
-        pass
+    except (TelegramError, KeyError) as exc:
+        log.debug("answerCallbackQuery failed for query %s: %s", cq.get("id"), exc)
     message = cq.get("message") or {}
     if message.get("message_id") and message.get("reply_markup"):
         def status_of(pfx: str) -> str | None:

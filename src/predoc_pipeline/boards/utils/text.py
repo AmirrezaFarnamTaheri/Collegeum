@@ -12,6 +12,7 @@ _WS = re.compile(r"\s+")
 _PUNCT = re.compile(r"[^\w\s]", re.UNICODE)
 # Gender / boilerplate suffixes common on European boards: (m/f/d), (w/m/d), (f/m/x) ...
 _GENDER_TAG = re.compile(r"\((?:[mwfdx]\s*/\s*){1,3}[mwfdx]\)", re.IGNORECASE)
+_LINKEDIN_JOB_ID_RX = re.compile(r"(\d{6,})")
 
 TRACKING_PARAMS = {
     "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id",
@@ -78,7 +79,7 @@ def canonical_url(url: str) -> str:
     path = parts.path.rstrip("/") or "/"
     # LinkedIn: /jobs/view/<slug>-<id> -> /jobs/view/<id>
     if "linkedin.com" in host:
-        m = re.search(r"(\d{6,})", path)
+        m = _LINKEDIN_JOB_ID_RX.search(path)
         if m and "/jobs/view" in path:
             return f"https://www.linkedin.com/jobs/view/{m.group(1)}"
     return urlunsplit((parts.scheme.lower() or "https", host, path, urlencode(query), ""))

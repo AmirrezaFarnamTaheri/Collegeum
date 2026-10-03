@@ -265,6 +265,7 @@ async def check_still_open(scraper: Any, post: JobPostSchema) -> str | None:
 class Enricher:
     def __init__(self, cfg: EnrichConfig, http: HttpClient | None = None):
         self.cfg = cfg
+        self.http = http
 
     async def enrich_many(self, items: list[tuple[Any, JobPostSchema]]) -> set[str]:
         """items: (scraper, post). Returns job_ids whose detail page was read (or found dead)."""

@@ -13,6 +13,7 @@ from pathlib import Path
 
 import typer
 
+from .boards.config import load_preferences
 from .core.db import Database
 from .core.db import init as init_db
 from .core.timeparse import format_ts
@@ -21,6 +22,7 @@ from .ingest.http import PoliteClient
 from .ingest.sources import load_sources
 from .logging_setup import configure as configure_logging
 from .logging_setup import get_logger
+from .routing import Router
 from .settings import Settings
 
 app = typer.Typer(
@@ -99,6 +101,30 @@ def stats() -> None:
 
 
 @app.command()
+def search(
+    query: str = typer.Argument(..., help="Search query string (keyword, institution, or field)"),
+    all_status: bool = typer.Option(False, "--all", help="Include closed/expired/pending listings"),
+    limit: int = typer.Option(20, help="Maximum number of results to display"),
+) -> None:
+    """Search listings in the local database by title, institution, or summary."""
+    settings = _settings()
+    init_db(settings.db_path)
+    with Database(settings.db_path) as db:
+        results = db.search_listings(query, active_only=not all_status, limit=limit)
+        if not results:
+            typer.echo(f"No listings found matching '{query}'.")
+            return
+        typer.echo(f"Found {len(results)} listing(s) matching '{query}':\n")
+        for r in results:
+            status_tag = f"[{r['status']}] " if all_status else ""
+            typer.echo(f"- {status_tag}{r['title']} @ {r['institution']}")
+            typer.echo(f"  Apply: {r['apply_url']}")
+            if r["deadline"]:
+                typer.echo(f"  Deadline: {r['deadline']}")
+            typer.echo("")
+
+
+@app.command()
 def dashboard() -> None:
     """Regenerate docs/data/*.json from the current database, without a run."""
     from . import state
@@ -107,10 +133,12 @@ def dashboard() -> None:
     settings = _settings()
     init_db(settings.db_path)
     hidden = FeedbackStore(settings.feedback_path).hidden
+    router = Router(load_preferences(settings.preferences_config))
     with Database(settings.db_path) as db:
         state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
-        count = state.export_dashboard(db, settings.dashboard_json, hidden=hidden)
-        state.export_feed(db, settings.feed_path, site_url=settings.site_url, hidden=hidden)
+        count = state.export_dashboard(db, settings.dashboard_json, hidden=hidden, router=router)
+        state.export_feed(db, settings.feed_path, site_url=settings.site_url,
+                          hidden=hidden, router=router)
     # health.json is left alone: it is the run history, rebuilt only by `run`.
     typer.echo(f"wrote {count} active listings to {settings.dashboard_json}")
 
@@ -241,9 +269,14 @@ def eval(
 def telegram_sync_cmd() -> None:
     """Answer /positions etc. and save your ✅ ❌ 📝 button taps (run every 30 min)."""
     from .publish.bot import telegram_sync
+    from .publish.telegram import TelegramError
 
     settings = _settings()
-    summary = telegram_sync(settings)
+    try:
+        summary = telegram_sync(settings)
+    except TelegramError as exc:
+        typer.secho(f"Telegram sync failed due to error: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(1) from exc
     typer.echo(
         f"answered {summary['commands']} command(s), saved {summary['taps']} button tap(s), "
         f"ignored {summary['ignored']} message(s) from other people"
@@ -301,6 +334,83 @@ def test_telegram() -> None:
         typer.secho(f"failed: {exc}", fg=typer.colors.RED)
         raise typer.Exit(1) from exc
     typer.echo("sent")
+
+
+@app.command("test-x")
+def test_x() -> None:
+    """Send one test tweet to your configured X/Twitter account."""
+    from .publish.x import XClient, XError
+
+    settings = _settings()
+    if not settings.x_broadcast_configured:
+        typer.secho(
+            "X credentials not configured. Please set X_CONSUMER_KEY, X_CONSUMER_SECRET, "
+            "X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET in your environment or .env.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(1)
+
+    client = XClient.from_settings(settings)
+    test_text = (
+        "🎓 Predoc Pipeline connected.\n\n"
+        "Automated monitoring for predoctoral and research assistant positions in economics.\n\n"
+        "#EconTwitter #Predoc"
+    )
+    try:
+        tweet_id = client.post_tweet(test_text)
+        typer.secho(f"Successfully posted test tweet! ID: {tweet_id}", fg=typer.colors.GREEN)
+        typer.echo(f"View at: https://x.com/i/status/{tweet_id}")
+    except XError as exc:
+        typer.secho(f"X API error: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(1) from exc
+
+
+@app.command("search-x")
+def search_x(
+    query: str = typer.Argument(
+        'from:econ_RA OR "predoc" OR "pre-doc"',
+        help="Search query or account filter.",
+    ),
+    limit: int = typer.Option(10, help="Maximum number of results to display."),
+) -> None:
+    """Live search X/Twitter for predoc postings using X API v2 or Xquik."""
+    import os
+
+    from .ingest.collectors import collect_x_api, collect_xquik
+
+    settings = _settings()
+    settings.twitter_search_queries = [query]
+    settings.max_items_per_source = limit
+
+    if settings.x_bearer_token or os.environ.get("X_BEARER_TOKEN"):
+        typer.echo(f"Querying Official X API v2 with query: {query}")
+        items, stats = collect_x_api(settings)
+    elif settings.xquik_api_key or os.environ.get("XQUIK_API_KEY"):
+        typer.echo(f"Querying Xquik Platform API with query: {query}")
+        items, stats = collect_xquik(settings)
+    else:
+        typer.secho(
+            "No X search credentials configured. Set X_BEARER_TOKEN (for official X API v2) "
+            "or XQUIK_API_KEY (for Xquik) in your environment or .env file.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(1)
+
+    for stat in stats:
+        if stat.errors:
+            typer.secho(f"Errors: {', '.join(stat.messages)}", fg=typer.colors.RED)
+    if not items:
+        typer.echo("No matching tweets found.")
+        return
+
+    typer.secho(f"Found {len(items)} tweets:\n", fg=typer.colors.GREEN)
+    for i, it in enumerate(items, 1):
+        typer.echo(f"[{i}] {it.source}")
+        typer.echo(f"    URL: {it.source_url}")
+        typer.echo(f"    Text: {it.title}")
+        if it.hints.get("urls"):
+            typer.echo(f"    Extracted links: {', '.join(it.hints['urls'])}")
+        typer.echo("-" * 60)
 
 
 @sources_app.command("list")

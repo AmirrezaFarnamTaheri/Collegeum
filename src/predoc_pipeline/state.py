@@ -41,6 +41,7 @@ __all__ = [
 # Journal
 # --------------------------------------------------------------------------
 
+
 def write_journal(db: Any, path: str | Path) -> int:
     """Rewrite the journal from the database. Returns the record count.
 
@@ -133,6 +134,7 @@ def restore_runs(db: Any, health_path: str | Path) -> int:
 # Dashboard payloads
 # --------------------------------------------------------------------------
 
+
 def _row_value(row: Any, key: str) -> Any:
     try:
         return row[key]
@@ -145,6 +147,19 @@ def _public_record(row: Any) -> dict[str, Any]:
     deadline = get("deadline")
     parsed = parse_datetime(deadline)
     days_left = (parsed - utcnow()).days if parsed else None
+
+    tools_req: list[str] = []
+    try:
+        tools_req = json.loads(_row_value(row, "tools_required") or "[]")
+    except (ValueError, TypeError):
+        pass
+
+    tools_pref: list[str] = []
+    try:
+        tools_pref = json.loads(_row_value(row, "tools_preferred") or "[]")
+    except (ValueError, TypeError):
+        pass
+
     return {
         "id": int(get("id")),
         "title": get("title"),
@@ -167,18 +182,45 @@ def _public_record(row: Any) -> dict[str, Any]:
         "deadline_note": _row_value(row, "deadline_note"),
         "visa_note": _row_value(row, "visa_note"),
         "alternate_sources": json.loads(get("alternate_sources") or "[]"),
+        "salary_min": _row_value(row, "salary_min"),
+        "salary_max": _row_value(row, "salary_max"),
+        "salary_currency": _row_value(row, "salary_currency"),
+        "salary_period": _row_value(row, "salary_period"),
+        "salary_raw": _row_value(row, "salary_raw"),
+        "tools_required": tools_req,
+        "tools_preferred": tools_pref,
+        "min_degree": _row_value(row, "min_degree"),
+        "degree_note": _row_value(row, "degree_note"),
+        "start_term": _row_value(row, "start_term"),
+        "start_date": _row_value(row, "start_date"),
     }
 
 
-def export_dashboard(db: Any, path: str | Path, *, hidden: set[str] | None = None) -> int:
+def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
+    """Active listings for the website: hidden ones out, Telegram-only ones out."""
+    return [
+        row
+        for row in db.active_listings()
+        if row["url_hash"] not in hidden
+        and (router is None or router.channel_for_row(row) == "web")
+    ]
+
+
+def export_dashboard(
+    db: Any, path: str | Path, *, hidden: set[str] | None = None, router: Any | None = None
+) -> int:
     """Write the JSON snapshot the static dashboard fetches.
 
-    ``hidden`` holds the url_hash of positions marked ❌ in Telegram.
+    ``hidden`` holds the url_hash of positions marked ❌ in Telegram. With a
+    ``router``, only listings routed to the website are included.
     """
-    hidden = hidden or set()
-    records = [
-        _public_record(row) for row in db.active_listings() if row["url_hash"] not in hidden
-    ]
+    records = []
+    for row in _web_rows(db, hidden or set(), router):
+        record = _public_record(row)
+        if router is not None:
+            record["kind"] = router.position_kind(row["title"], row["summary"] or "")
+            record["sector"] = router.sector(row["institution"] or "")
+        records.append(record)
     payload = {
         "generated_at": format_ts(),
         "count": len(records),
@@ -186,9 +228,7 @@ def export_dashboard(db: Any, path: str | Path, *, hidden: set[str] | None = Non
     }
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8"
-    )
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     return len(records)
 
 
@@ -254,24 +294,25 @@ def export_feed(
     site_url: str = "",
     limit: int = 100,
     hidden: set[str] | None = None,
+    router: Any | None = None,
+    title: str = "Collegeum — Research Positions",
 ) -> int:
-    """Publish the channel as RSS as well.
+    """Publish the website's listings as RSS as well.
 
-    Costs about forty lines and removes Telegram as a single point of access:
-    anyone can subscribe in a reader, and the data stays usable if the bot
-    token is ever revoked.
+    Removes any single channel as the only way in: anyone can subscribe in a
+    reader, and the data stays usable if a bot token is ever revoked.
     """
-    hidden = hidden or set()
-    rows = [r for r in db.active_listings() if r["url_hash"] not in hidden][:limit]
+    rows = _web_rows(db, hidden or set(), router)[:limit]
     now = utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
+        '<?xml-stylesheet type="text/xsl" href="rss.xsl"?>',
         '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
         "<channel>",
-        "<title>Predoc listings (non-US)</title>",
+        f"<title>{_xml_escape(title)}</title>",
         f"<link>{_xml_escape(site_url or 'https://example.invalid')}</link>",
-        "<description>Pre-doctoral research positions in economics, finance and "
-        "public policy outside the United States.</description>",
+        "<description>US research positions, PhD and postdoc posts, and openings at "
+        "central banks, international organizations and firms.</description>",
         "<language>en</language>",
         f"<lastBuildDate>{now}</lastBuildDate>",
     ]
@@ -285,21 +326,18 @@ def export_feed(
         record = _public_record(row)
         deadline = record["deadline"] or "rolling"
         description = (
-            f"{record['institution']} \u2014 "
-            f"{record['city'] or ''} {record['country']}".strip()
+            f"{record['institution']} \u2014 {record['city'] or ''} {record['country']}".strip()
             + f". Deadline: {deadline}. "
             + record["summary"]
         )
         published = parse_datetime(record["first_seen_at"])
-        pub_date = (
-            published.strftime("%a, %d %b %Y %H:%M:%S +0000") if published else now
-        )
+        pub_date = published.strftime("%a, %d %b %Y %H:%M:%S +0000") if published else now
         parts += [
             "<item>",
             f"<title>{_xml_escape(record['title'])} \u2014 "
             f"{_xml_escape(record['institution'])}</title>",
             f"<link>{_xml_escape(record['apply_url'])}</link>",
-            f"<guid isPermaLink=\"false\">{_xml_escape(record['source_url'])}</guid>",
+            f'<guid isPermaLink="false">{_xml_escape(record["source_url"])}</guid>',
             f"<pubDate>{pub_date}</pubDate>",
             f"<description>{_xml_escape(description)}</description>",
         ]

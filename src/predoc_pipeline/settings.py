@@ -11,6 +11,8 @@ by editing one variable rather than shipping code.
 
 from __future__ import annotations
 
+import re
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -37,6 +39,11 @@ class Settings(BaseSettings):
                     "digest instead of one card each. Protects the channel from "
                     "a forty-message burst after a backfill.",
     )
+    telegram_feedback_buttons: bool = Field(
+        False,
+        description="Whether to include personal feedback buttons (Interested/Not for me/Applied) "
+                    "on broadcast channel posts.",
+    )
 
     # -- Model provider ---------------------------------------------------
     gemini_api_key: str = ""
@@ -60,6 +67,7 @@ class Settings(BaseSettings):
     anthropic_base_url: str = "https://api.anthropic.com"
 
     openrouter_api_key: str = ""
+    openrouter_api_keys: list[str] = Field(default_factory=list)
     openrouter_model: str = "openrouter/free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
@@ -83,8 +91,14 @@ class Settings(BaseSettings):
             "auto detects configured key in priority order, falling back to heuristic."
         ),
     )
-    llm_requests_per_minute: int = 10
-    llm_requests_per_day: int = 200
+    extraction_concurrency: int = Field(
+        12,
+        ge=1,
+        le=32,
+        description="Parallel workers for LLM candidate digestion and key rotation.",
+    )
+    llm_requests_per_minute: int = 200
+    llm_requests_per_day: int = 10000
     llm_daily_safety_margin: float = Field(0.9, ge=0.1, le=1.0)
     llm_max_input_chars: int = 12_000
     llm_timeout_seconds: float = 45.0
@@ -118,7 +132,7 @@ class Settings(BaseSettings):
     sources_config: str = "config/sources.toml"
     # Fields, region, employer type, excluded employers... (see the file).
     preferences_config: str = "config/preferences.toml"
-    max_items_per_source: int = 120
+    max_items_per_source: int = 400
     http_timeout_seconds: float = 25.0
     http_user_agent: str = (
         "predoc-pipeline/2.0 (+https://github.com/USER/predoc-pipeline; "
@@ -136,6 +150,30 @@ class Settings(BaseSettings):
     enable_portals: bool = True
     enable_jobspy: bool = False
     enable_twitter: bool = False
+
+    # -- X (Twitter) Integration ------------------------------------------
+    x_broadcast_enabled: bool = True
+    x_bearer_token: str = ""
+    xquik_api_key: str = ""
+    x_consumer_key: str = ""
+    x_consumer_secret: str = ""
+    x_access_token: str = ""
+    x_access_token_secret: str = ""
+    twitter_search_accounts: list[str] = Field(
+        default_factory=lambda: ["econ_RA", "predoc_org"]
+    )
+    twitter_search_queries: list[str] = Field(
+        default_factory=lambda: [
+            (
+                '(from:econ_RA OR "predoc" OR "pre-doc" OR "predoctoral") '
+                "(economics OR finance) -is:retweet -is:reply"
+            ),
+            (
+                '"research assistant" (economics OR finance) '
+                '("hiring" OR "now accepting" OR "apply") -is:retweet -is:reply'
+            ),
+        ]
+    )
 
     # -- Operations -------------------------------------------------------
     empty_run_alert_threshold: int = Field(
@@ -175,6 +213,20 @@ class Settings(BaseSettings):
     def telegram_configured(self) -> bool:
         return bool(self.telegram_bot_token and self.telegram_public_channel_id)
 
+    @property
+    def x_broadcast_configured(self) -> bool:
+        return bool(
+            self.x_broadcast_enabled
+            and self.x_consumer_key
+            and self.x_consumer_secret
+            and self.x_access_token
+            and self.x_access_token_secret
+        )
+
+    @property
+    def x_search_configured(self) -> bool:
+        return bool(self.x_bearer_token or self.xquik_api_key)
+
     @staticmethod
     def _is_private_chat(chat_id: str) -> bool:
         """Private chats (people) have positive numeric ids; groups/channels don't."""
@@ -197,3 +249,14 @@ class Settings(BaseSettings):
         if self._is_private_chat(self.telegram_public_channel_id):
             return self.telegram_public_channel_id
         return ""
+
+    def get_openrouter_keys(self) -> list[str]:
+        keys: list[str] = []
+        if self.openrouter_api_keys:
+            keys.extend(self.openrouter_api_keys)
+        if self.openrouter_api_key:
+            for part in re.split(r"[,;\s]+", self.openrouter_api_key.strip()):
+                if part and part not in keys:
+                    keys.append(part)
+        return keys
+

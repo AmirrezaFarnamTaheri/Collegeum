@@ -126,6 +126,15 @@ def settings(tmp_path, monkeypatch):
     # tests must not wait for politeness delays
     prefs = prefs.replace("default_min_interval = 1.5", "default_min_interval = 0")
     prefs = prefs.replace("max_retries = 3", "max_retries = 0")
+    # Fixture tests specifically verify regional and employer rejection behavior
+    prefs = prefs.replace(
+        'regions_include = ["UK", "Europe", "Canada", "US", "Other"]',
+        'regions_include = ["UK", "Europe", "Canada"]',
+    )
+    prefs = prefs.replace(
+        'excluded_employers = []',
+        'excluded_employers = ["J-PAL", "JPAL", "Poverty Action Lab", "povertyactionlab.org"]',
+    )
     (tmp_path / "preferences.toml").write_text(prefs)
     return Settings(
         _env_file=None,
@@ -144,6 +153,7 @@ def settings(tmp_path, monkeypatch):
         dlq_path=str(tmp_path / "dlq.json"),
         enable_feeds=False,
         enable_portals=False,
+        telegram_feedback_buttons=True,
     )
 
 
@@ -198,7 +208,9 @@ def test_full_run_then_nothing_is_sent_twice(settings):
         assert "bit.ly" not in ucl["apply_url"] or ucl["apply_url"] == ucl["source_url"]
 
     dashboard = json.loads(Path(settings.dashboard_json).read_text())
-    assert dashboard["count"] == 4
+    # All 4 published fixtures are non-US predoc positions (Stockholm, UPF, UCL, UBC).
+    # Under the routing rules, they go to Telegram only; the web dashboard is empty.
+    assert dashboard["count"] == 0
     health = json.loads(Path(settings.health_json).read_text())
     last = health["runs"][0]["source_stats"]
     assert last["board:broken"]["ok"] is False and last["board:predoc_org"]["raw"] == 6
@@ -359,3 +371,19 @@ def test_recheck_uses_the_stored_deadline():
     out = check_links(links, cfg, transport=transport)
     assert out[1] is None                     # known deadline 30 Nov: still open
     assert out[2] and "deadline passed" in out[2]  # without it, the review date looks like one
+
+
+def test_feedback_buttons_omitted_when_disabled(settings):
+    no_buttons = settings.model_copy(update={"telegram_feedback_buttons": False})
+    fake = FakeTelegram()
+    stats = run(no_buttons, fake)
+    assert stats.published == 4
+    cards = fake.sent()
+    assert len(cards) == 4
+    for card in cards:
+        rows = card["reply_markup"]["inline_keyboard"]
+        for row in rows:
+            texts = [b["text"] for b in row]
+            assert "✅ Interested" not in texts
+            assert "❌ Not for me" not in texts
+            assert "📝 Applied" not in texts

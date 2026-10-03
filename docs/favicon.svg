@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <rect width="48" height="48" rx="11" fill="#151412"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Outer Collegiate Arch -->
+    <path d="M10 40V24a14 14 0 0 1 28 0v16" stroke="#F6F2EA" stroke-width="4"/>
+    <!-- Inner Arch Accent -->
+    <path d="M18 40V25a6 6 0 0 1 12 0v15" stroke="#B0401B" stroke-width="3.5"/>
+    <!-- Plinth Base Line -->
+    <path d="M6 40h36" stroke="#A29C8E" stroke-width="2"/>
+  </g>
+</svg>

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="rss.xsl"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-<title>Predoc listings (non-US)</title>
+<title>Collegeum — Research Positions</title>
 <link>https://amirrezafarnamtaheri.github.io/predoc-not-org</link>
-<description>Pre-doctoral research positions in economics, finance and public policy outside the United States.</description>
+<description>US predoctoral appointments, global PhD &amp; postdoctoral posts, and research analyst roles at central banks, multilateral bodies, and economic research groups.</description>
 <language>en</language>
 <lastBuildDate>Sat, 03 Oct 2026 09:48:06 +0000</lastBuildDate>
 <atom:link href="https://amirrezafarnamtaheri.github.io/predoc-not-org/feed.xml" rel="self" type="application/rss+xml" />

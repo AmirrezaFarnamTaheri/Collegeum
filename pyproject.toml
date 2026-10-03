@@ -5,11 +5,24 @@ build-backend = "hatchling.build"
 [project]
 name = "predoc-pipeline"
 version = "1.0.0"
-description = "Zero-budget discovery and broadcast of non-US predoctoral research positions"
+description = "Zero-budget pipeline & live web dashboard tracking predoctoral, pre-PhD, and quantitative research positions in economics and social sciences"
 readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
 requires-python = ">=3.11"
 authors = [
     { name = "Amirreza Farnam Taheri", email = "taheri.farnam@gmail.com" }
+]
+keywords = [
+    "predoc",
+    "predoctoral",
+    "economics",
+    "research-assistant",
+    "academic-jobs",
+    "quantitative-social-science",
+    "finance",
+    "public-policy",
+    "telegram-bot",
+    "github-pages",
 ]
 
 # Lean by design: everything here is either load-bearing for the daily run

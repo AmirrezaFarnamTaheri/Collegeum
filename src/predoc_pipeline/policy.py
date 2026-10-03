@@ -68,7 +68,13 @@ class Policy:
                    "final_url": final_url},
         )
 
-    def check(self, listing: PredocListing, item: RawItem) -> str | None:
+    def check(
+        self,
+        listing: PredocListing,
+        item: RawItem,
+        *,
+        trust_model_fields: bool | None = None,
+    ) -> str | None:
         """None if the listing may be published, else the reason it may not."""
         hints = item.hints
         if hints.get("reject"):
@@ -109,11 +115,12 @@ class Policy:
         field = self.flt.field_verdict_long(f"{listing.title}\n{text}")
         if field == "unwanted" and not post.field_implied:
             return "wrong-field"
-        model_field = self.trust_model_fields and any(
+        trust_model = self.trust_model_fields if trust_model_fields is None else trust_model_fields
+        model_field = trust_model and any(
             d is not Discipline.OTHER for d in listing.disciplines)
         if verdict.needs_field_check and field != "wanted" and not model_field:
             return "no-field"
-        if phd_required(text) and not verdict.strong:
+        if self.prefs.filters.exclude_phd_positions and phd_required(text) and not verdict.strong:
             return "requires-phd"
         return None
 

@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Predoc Pipeline System Architecture",
+    "subtitle": "Ingestion sources, deterministic gating, multi-provider LLM extraction, SQLite v5 deduplication, and multi-channel syndication",
+    "output": "docs/architecture.html",
+    "viewBox": [1400, 780],
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "ingest-and-gate",
+        "label": "Ingestion & deterministic gating",
+        "focus": ["boards", "portals", "feeds", "social", "seen_cache", "rule_gate"],
+        "note": "Follow academic job postings through the seen cache into the multilingual deterministic gate."
+      },
+      {
+        "id": "parallel-extraction",
+        "label": "Multi-provider LLM & key rotation",
+        "focus": ["rule_gate", "key_rotator", "llm_pool", "heuristics", "dedupe"],
+        "note": "Examine the high-throughput LLM worker pool with cooldown key rotation and zero-cost heuristic fallback."
+      },
+      {
+        "id": "storage-and-broadcast",
+        "label": "Deduplication, storage & broadcast",
+        "focus": ["dedupe", "sqlite_db", "journal", "telegram", "x_broadcast", "pages_dash"],
+        "note": "Trace canonical listings into SQLite v5, committed git journals, Telegram channels, X/Twitter, and GitHub Pages."
+      },
+      {
+        "id": "feedback-loop",
+        "label": "Reader feedback & Telegram sync",
+        "focus": ["telegram", "bot_sync", "sqlite_db", "journal"],
+        "note": "Track reader marks and hide actions recorded by the 30-minute Telegram sync cron."
+      }
+    ]
+  },
+  "components": [
+    { "id": "boards", "type": "external", "label": "Academic Boards", "sublabel": "NBER, EJM, IFS, ZEW", "pos": [50, 140], "size": [130, 60], "tag": "paged scrapers" },
+    { "id": "portals", "type": "external", "label": "University ATS", "sublabel": "Workday, Greenhouse, Lever", "pos": [50, 260], "size": [130, 60], "tag": "Schema.org LD" },
+    { "id": "feeds", "type": "cloud", "label": "Syndicated Feeds", "sublabel": "RSS / Atom XML feeds", "pos": [50, 380], "size": [130, 60], "tag": "Econ portals" },
+    { "id": "social", "type": "cloud", "label": "X Search Ingest", "sublabel": "API v2 & Xquik proxy", "pos": [50, 500], "size": [130, 60], "tag": "@econ_RA search" },
+
+    { "id": "seen_cache", "type": "database", "label": "Seen Filter", "sublabel": "URL & content hashes", "pos": [340, 200], "size": [130, 60], "tag": "data/seen.ndjson" },
+    { "id": "rule_gate", "type": "security", "label": "Deterministic Gate", "sublabel": "Lexicon & negative rules", "pos": [340, 350], "size": [130, 60], "tag": "7 languages" },
+    { "id": "heuristics", "type": "backend", "label": "Rule Extractor", "sublabel": "Zero-cost offline fallback", "pos": [340, 500], "size": [130, 60], "tag": "offline ready" },
+
+    { "id": "key_rotator", "type": "security", "label": "KeyRotator", "sublabel": "Multi-key cooldown pool", "pos": [640, 160], "size": [130, 60], "tag": "thread-safe" },
+    { "id": "llm_pool", "type": "backend", "label": "Parallel LLM Pool", "sublabel": "Gemini, Groq, NIM, Claude", "pos": [640, 310], "size": [130, 60], "tag": "12 workers" },
+    { "id": "dedupe", "type": "security", "label": "Deduplicator", "sublabel": "MinHash LSH + fuzzy title", "pos": [640, 480], "size": [130, 60], "tag": "3-tier dedupe" },
+
+    { "id": "sqlite_db", "type": "database", "label": "SQLite Cache v5", "sublabel": "WAL mode + locked writes", "pos": [940, 310], "size": [130, 60], "tag": "data/predocs.db" },
+    { "id": "journal", "type": "database", "label": "Committed State", "sublabel": "listings.ndjson + seen.ndjson", "pos": [940, 480], "size": [130, 60], "tag": "git-versioned" },
+
+    { "id": "telegram", "type": "frontend", "label": "Telegram Channel", "sublabel": "Rich cards & digests", "pos": [1220, 150], "size": [130, 60], "tag": "broadcast bot" },
+    { "id": "x_broadcast", "type": "frontend", "label": "X Broadcaster", "sublabel": "OAuth 1.0a auto-threads", "pos": [1220, 310], "size": [130, 60], "tag": "@predoc posts" },
+    { "id": "pages_dash", "type": "cloud", "label": "GitHub Pages", "sublabel": "Web dashboard & RSS", "pos": [1220, 470], "size": [130, 60], "tag": "docs/data/*.json" },
+    { "id": "bot_sync", "type": "backend", "label": "Telegram Sync", "sublabel": "30-min cron feedback loop", "pos": [1220, 630], "size": [130, 60], "tag": "data/feedback.json" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Ingestion Sources (Global Academic Opportunities)", "wraps": ["boards", "portals", "feeds", "social"] },
+    { "kind": "security-group", "label": "Scheduled Batch Processing Pipeline (GitHub Actions Runner)", "wraps": ["seen_cache", "rule_gate", "heuristics", "key_rotator", "llm_pool", "dedupe", "sqlite_db", "journal"] },
+    { "kind": "region", "label": "Multi-Channel Broadcast Outlets & Public Dashboards", "wraps": ["telegram", "x_broadcast", "pages_dash", "bot_sync"] }
+  ],
+  "connections": [
+    { "id": "conn-boards-seen", "from": "boards", "to": "seen_cache", "label": "scraped job", "variant": "emphasis" },
+    { "id": "conn-portals-seen", "from": "portals", "to": "seen_cache" },
+    { "id": "conn-feeds-seen", "from": "feeds", "to": "seen_cache" },
+    { "id": "conn-social-seen", "from": "social", "to": "seen_cache" },
+
+    { "id": "conn-seen-gate", "from": "seen_cache", "to": "rule_gate", "label": "unseen items", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+    { "id": "conn-gate-llm", "from": "rule_gate", "to": "llm_pool", "label": "gated vacancy", "variant": "emphasis" },
+    { "id": "conn-rotator-llm", "from": "key_rotator", "to": "llm_pool", "label": "active key", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+    { "id": "conn-gate-heuristics", "from": "rule_gate", "to": "heuristics", "label": "zero-cost rule", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+
+    { "id": "conn-llm-dedupe", "from": "llm_pool", "to": "dedupe", "label": "extracted listing", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 45 },
+    { "id": "conn-heuristics-dedupe", "from": "heuristics", "to": "dedupe", "label": "regex listing", "variant": "dashed" },
+
+    { "id": "conn-dedupe-sqlite", "from": "dedupe", "to": "sqlite_db", "label": "canonical insert", "variant": "emphasis" },
+    { "id": "conn-sqlite-journal", "from": "sqlite_db", "to": "journal", "label": "export journal", "variant": "default", "fromSide": "bottom", "toSide": "top", "labelDy": 45 },
+
+    { "id": "conn-sqlite-telegram", "from": "sqlite_db", "to": "telegram", "label": "broadcast", "variant": "emphasis" },
+    { "id": "conn-sqlite-x", "from": "sqlite_db", "to": "x_broadcast", "variant": "emphasis", "route": "straight" },
+    { "id": "conn-sqlite-pages", "from": "sqlite_db", "to": "pages_dash", "variant": "default" },
+    { "id": "conn-sync-sqlite", "from": "bot_sync", "to": "sqlite_db", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ingestion & Deterministic Gating",
+      "items": [
+        "Academic scrapers, university ATS portals, and X search discover new listings daily",
+        "Seen cache blocks repeat page fetches using URL and content hashes",
+        "Deterministic gate enforces hiring intent across 7 languages and rejects non-predocs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Parallel Extraction & Deduplication",
+      "items": [
+        "Multi-provider LLM pool rotates API keys with thread-safe exponential cooldown",
+        "Heuristic extractor provides 100% zero-cost fallback for unauthenticated environments",
+        "Three-tier deduplication prevents duplicate broadcasts across overlapping sources"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Multi-Channel Broadcast & Resilience",
+      "items": [
+        "Concurrent broadcasts to Telegram channels and X/Twitter accounts",
+        "Zero-credential fault tolerance keeps dashboard exports active even with missing keys",
+        "Telegram sync cron job runs every 30 minutes to record user feedback marks"
+      ]
+    }
+  ]
+}

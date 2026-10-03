@@ -67,6 +67,14 @@ EXTRACTION RULES
   otherwise "unknown".
 - summary: two neutral sentences. What the role is, who it suits. No marketing
   language.
+- salary_raw: copy compensation or stipend verbatim if stated (e.g. "£35,000 p.a.",
+  "$60,000/yr", "€2,600/month", "fully funded"). Null if unstated.
+- tools: list of programming languages, statistical packages or tools explicitly
+  mentioned as required or preferred (e.g. ["Python", "Stata", "R", "SQL", "Julia"]).
+- min_degree: "bachelors" if an undergraduate degree is required, "masters" if
+  requiring a Master's degree, "phd" if requiring a doctorate, otherwise "unstated".
+- start_date: anticipated start date or term if stated (e.g. "Summer 2027",
+  "September 2027", "Immediate"). Null if unstated.
 - confidence: your calibrated probability that is_vacancy is correct. Use the
   full range. A clear departmental advert deserves 0.95; an ambiguous one-line
   social post deserves 0.5.

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" fill="none">
+  <!-- Brand Emblem -->
+  <g transform="translate(4, 8)">
+    <rect width="48" height="48" rx="11" fill="#151412"/>
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 40V24a14 14 0 0 1 28 0v16" stroke="#F6F2EA" stroke-width="4"/>
+      <path d="M18 40V25a6 6 0 0 1 12 0v15" stroke="#B0401B" stroke-width="3.5"/>
+      <path d="M6 40h36" stroke="#A29C8E" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- Typographic Wordmark -->
+  <text x="68" y="35" font-family="'Newsreader', Georgia, 'Times New Roman', serif" font-size="25" font-weight="600" letter-spacing="0.08em" fill="#1A1916">COLLEGEUM</text>
+  <text x="68.5" y="49" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" font-weight="600" letter-spacing="0.18em" fill="#625D52">RESEARCH POSITIONS DIRECTORY</text>
+</svg>

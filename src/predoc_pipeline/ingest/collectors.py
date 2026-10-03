@@ -59,6 +59,9 @@ class SourceStats:
         }
 
 
+_HREF_RE = re.compile(r'href=["\']([^"\']+)["\']', re.IGNORECASE)
+
+
 # --------------------------------------------------------------------------
 # Feeds
 # --------------------------------------------------------------------------
@@ -236,7 +239,7 @@ def _detail_links(html: str, page_url: str, pattern: str, limit: int) -> list[st
     if not pattern:
         return []
     matcher = re.compile(pattern, re.IGNORECASE)
-    hrefs = re.findall(r'href=["\']([^"\']+)["\']', html or "", re.IGNORECASE)
+    hrefs = _HREF_RE.findall(html or "")
     seen: set[str] = set()
     out: list[str] = []
     for href in hrefs:
@@ -379,20 +382,204 @@ def collect_jobspy(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
     return items, [stat]
 
 
-def collect_twitter(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
-    """Authenticated social search via twscrape. Opt-in; see COMPLIANCE.md.
+def collect_x_api(
+    settings: Any,
+    client: Any | None = None,
+) -> tuple[list[RawItem], list[SourceStats]]:
+    """Query recent tweets via Official X API v2 (OAuth 2.0 Bearer Token)."""
+    import os
 
-    Credentials are read from the ``TWSCRAPE_ACCOUNTS`` environment variable and
-    written to a gitignored temporary file. The reviewed implementation read
-    ``data/accounts.txt`` from inside the repository, with plaintext passwords,
-    and did not gitignore it.
-    """
+    import httpx
+
+    stat = SourceStats("x_api")
+    bearer = getattr(settings, "x_bearer_token", "") or os.environ.get("X_BEARER_TOKEN", "")
+    if not bearer:
+        stat.messages.append("X_BEARER_TOKEN not set; source skipped")
+        return [], [stat]
+
+    queries = list(getattr(settings, "twitter_search_queries", []) or [
+        (
+            '(from:econ_RA OR "predoc" OR "pre-doc" OR "predoctoral") '
+            "(economics OR finance) -is:retweet -is:reply"
+        ),
+        (
+            '"research assistant" (economics OR finance) '
+            '("hiring" OR "now accepting" OR "apply") -is:retweet -is:reply'
+        ),
+    ])
+    accounts = list(getattr(settings, "twitter_search_accounts", []) or ["econ_RA", "predoc_org"])
+    for acct in accounts:
+        q = f"from:{acct} -is:retweet"
+        if q not in queries:
+            queries.append(q)
+
+    max_items = getattr(settings, "max_items_per_source", 100)
+    per_query = max(10, min(100, max_items // max(1, len(queries))))
+
+    items: list[RawItem] = []
+    seen_ids: set[str] = set()
+    headers = {"Authorization": f"Bearer {bearer}"}
+    endpoint = "https://api.x.com/2/tweets/search/recent"
+
+    cm = client if client is not None else httpx.Client(timeout=20.0)
+    try:
+        for query in queries:
+            params: dict[str, Any] = {
+                "query": query,
+                "max_results": per_query,
+                "tweet.fields": "created_at,entities,author_id,text",
+                "expansions": "author_id",
+                "user.fields": "username,name",
+            }
+            try:
+                resp = cm.get(endpoint, headers=headers, params=params)
+            except Exception as exc:
+                stat.errors += 1
+                stat.messages.append(f"query failed ({query[:25]}...): {exc}")
+                continue
+
+            stat.fetched += 1
+            if resp.status_code == 429:
+                stat.errors += 1
+                stat.messages.append("rate limited by X API (429)")
+                break
+            if resp.status_code != 200:
+                stat.errors += 1
+                stat.messages.append(f"X API status {resp.status_code}")
+                continue
+
+            payload = resp.json()
+            users_by_id = {
+                u["id"]: u.get("username", "user")
+                for u in payload.get("includes", {}).get("users", [])
+            }
+            tweets = payload.get("data", [])
+            for tweet in tweets:
+                tid = tweet.get("id")
+                if not tid or tid in seen_ids:
+                    continue
+                seen_ids.add(tid)
+                text = tweet.get("text", "")
+                if not text:
+                    continue
+                author = users_by_id.get(tweet.get("author_id"), "i")
+                urls: list[str] = []
+                for entity_url in tweet.get("entities", {}).get("urls", []):
+                    expanded = entity_url.get("expanded_url") or entity_url.get("url")
+                    if expanded and not (
+                        expanded.startswith("https://twitter.com")
+                        or expanded.startswith("https://x.com")
+                    ):
+                        urls.append(expanded)
+
+                body = text
+                if urls:
+                    body += "\n\nLinks:\n" + "\n".join(urls)
+
+                items.append(
+                    RawItem(
+                        source=f"twitter:@{author}",
+                        source_url=f"https://x.com/{author}/status/{tid}",
+                        title=truncate(squish(text), 100),
+                        text=body,
+                        hints={"author": author, "tweet_id": tid, "urls": urls},
+                    )
+                )
+                stat.items += 1
+    finally:
+        if client is None:
+            cm.close()
+
+    return items, [stat]
+
+
+def collect_xquik(
+    settings: Any,
+    client: Any | None = None,
+) -> tuple[list[RawItem], list[SourceStats]]:
+    """Query recent tweets via Xquik Platform REST API."""
+    import os
+
+    import httpx
+
+    stat = SourceStats("xquik")
+    api_key = getattr(settings, "xquik_api_key", "") or os.environ.get("XQUIK_API_KEY", "")
+    if not api_key:
+        stat.messages.append("XQUIK_API_KEY not set; source skipped")
+        return [], [stat]
+
+    queries = list(getattr(settings, "twitter_search_queries", []) or [
+        '(from:econ_RA OR "predoc" OR "pre-doc") (economics OR finance)',
+    ])
+    max_items = getattr(settings, "max_items_per_source", 50)
+    per_query = max(5, min(50, max_items // max(1, len(queries))))
+
+    items: list[RawItem] = []
+    seen_ids: set[str] = set()
+    headers = {"x-api-key": api_key}
+    endpoint = "https://xquik.com/api/v1/x/tweets/search"
+
+    cm = client if client is not None else httpx.Client(timeout=20.0)
+    try:
+        for query in queries:
+            try:
+                resp = cm.get(
+                    endpoint,
+                    headers=headers,
+                    params={"query": query, "limit": per_query},
+                )
+            except Exception as exc:
+                stat.errors += 1
+                stat.messages.append(f"xquik query failed ({query[:25]}...): {exc}")
+                continue
+
+            stat.fetched += 1
+            if resp.status_code != 200:
+                stat.errors += 1
+                stat.messages.append(f"xquik status {resp.status_code}")
+                continue
+
+            payload = resp.json()
+            if isinstance(payload, dict):
+                tweets = payload.get("data", [])
+            elif isinstance(payload, list):
+                tweets = payload
+            else:
+                tweets = []
+            for tweet in tweets:
+                tid = tweet.get("id") or tweet.get("tweet_id")
+                if not tid or tid in seen_ids:
+                    continue
+                seen_ids.add(tid)
+                text = tweet.get("text") or tweet.get("full_text") or ""
+                if not text:
+                    continue
+                author = tweet.get("username") or (tweet.get("user") or {}).get("username") or "i"
+                items.append(
+                    RawItem(
+                        source=f"xquik:@{author}",
+                        source_url=f"https://x.com/{author}/status/{tid}",
+                        title=truncate(squish(text), 100),
+                        text=text,
+                        hints={"author": author, "tweet_id": tid},
+                    )
+                )
+                stat.items += 1
+    finally:
+        if client is None:
+            cm.close()
+
+    return items, [stat]
+
+
+def _collect_twscrape(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
+    """Legacy scraper via twscrape. Opt-in; see COMPLIANCE.md."""
     import asyncio
     import os
     import tempfile
     from pathlib import Path
 
-    stat = SourceStats("twitter")
+    stat = SourceStats("twscrape")
     blob = os.environ.get("TWSCRAPE_ACCOUNTS", "").strip()
     if not blob:
         stat.messages.append("TWSCRAPE_ACCOUNTS not set; source skipped")
@@ -412,8 +599,6 @@ def collect_twitter(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
     per_query = max(5, settings.max_items_per_source // len(queries))
 
     async def run() -> list[RawItem]:
-        # twscrape uses aiosqlite; connections bind to the creating event loop,
-        # so every await must happen inside this single asyncio.run().
         out: list[RawItem] = []
         with tempfile.TemporaryDirectory() as tmp:
             session_db = str(Path(tmp) / "twscrape.db")
@@ -449,7 +634,7 @@ def collect_twitter(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
                     username = getattr(getattr(tweet, "user", None), "username", "i")
                     out.append(
                         RawItem(
-                            source="twitter",
+                            source="twscrape",
                             source_url=f"https://x.com/{username}/status/{tweet.id}",
                             title=truncate(squish(text), 100),
                             text=text,
@@ -465,6 +650,32 @@ def collect_twitter(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
         stat.messages.append(f"twscrape: {exc}")
         return [], [stat]
     return items, [stat]
+
+
+def collect_twitter(
+    settings: Any,
+    client: Any | None = None,
+) -> tuple[list[RawItem], list[SourceStats]]:
+    """Authenticated social search via Official X API v2, Xquik, or twscrape."""
+    import os
+
+    bearer = getattr(settings, "x_bearer_token", "") or os.environ.get("X_BEARER_TOKEN", "")
+    if bearer:
+        return collect_x_api(settings, client=client)
+
+    xquik_key = getattr(settings, "xquik_api_key", "") or os.environ.get("XQUIK_API_KEY", "")
+    if xquik_key:
+        return collect_xquik(settings, client=client)
+
+    if os.environ.get("TWSCRAPE_ACCOUNTS"):
+        return _collect_twscrape(settings)
+
+    stat = SourceStats("twitter")
+    stat.messages.append(
+        "No X/Twitter ingestion credentials found. Set X_BEARER_TOKEN (Official X API v2), "
+        "XQUIK_API_KEY (Xquik platform), or TWSCRAPE_ACCOUNTS to enable social search."
+    )
+    return [], [stat]
 
 
 COLLECTORS: dict[str, str] = {

@@ -111,30 +111,42 @@ but if it happens:
    which case this is not a duplicate at all — check the Telegram channel's
    actual message history against `telegram_message_id` in the database).
 
+### X/Twitter ingestion or broadcast failures
+
+Run `predoc-pipeline test-x` or `predoc-pipeline search-x` locally to diagnose:
+
+- **`HTTP 401 Unauthorized`**: Invalid or expired OAuth credentials. Verify `X_CONSUMER_KEY`, `X_CONSUMER_SECRET`, `X_ACCESS_TOKEN`, and `X_ACCESS_TOKEN_SECRET` in `.env` or repository secrets.
+- **`HTTP 403 Forbidden` ("duplicate content")**: X rejects identical status text posted within a short interval. The pipeline logs this and continues without dropping listings.
+- **`HTTP 429 Too Many Requests`**: X API v2 rate limit exceeded (e.g., search or posting limits on Free/Basic tiers). Ingestion will retry on the next scheduled run. When `X_BEARER_TOKEN` reaches monthly search caps, clear it from the active settings and process environment before setting `XQUIK_API_KEY`, as the official API takes precedence whenever `X_BEARER_TOKEN` is configured.
+
+### Querying and verifying listings locally
+
+To inspect whether a position was discovered, accepted, or expired without opening SQLite:
+
+```bash
+predoc-pipeline search "institution or keyword"          # active listings only
+predoc-pipeline search "institution or keyword" --all    # include pending, closed, and expired
+```
+
 ## Routine maintenance
 
-- **`predoc-pipeline vacuum`** — occasionally, to reclaim space after
-  `prune()` removes old DLQ/seen-item rows. Not required for correctness;
-  the database is a rebuildable cache regardless.
-- **`predoc-pipeline sources verify`** — after any edit to
-  `config/sources.toml`, and periodically (monthly is reasonable) even
-  without an edit, since sources rot silently.
-- **Review `docs/data/health.json` weekly** even if nothing seems wrong —
-  the whole point of tracking per-source yield is to catch a source that
-  died quietly before it becomes a three-month gap.
-- **Re-run `predoc-pipeline eval`** after any change to
-  `core/gating.py` or `extract/prompt.py`, and add a new fixture line to
-  `tests/fixtures/golden.jsonl` for any false positive/negative you find in
-  production — that's what keeps the eval score meaningful over time rather
-  than becoming a fossil.
+- **`predoc-pipeline stats`** — inspect current database listing counts and outcomes of the last 10 runs.
+- **`predoc-pipeline test-telegram`** — send a verification message to ensure `TELEGRAM_BOT_TOKEN` and `TELEGRAM_PUBLIC_CHANNEL_ID` are valid.
+- **`predoc-pipeline test-x`** — post a test tweet to verify X broadcaster OAuth credentials.
+- **`predoc-pipeline search-x [query]`** — test live X search queries using either official API v2 or Xquik.
+- **`predoc-pipeline vacuum`** — prune expired DLQ and seen-item entries and compact the SQLite database file.
+- **`predoc-pipeline sources verify`** — check reachability and response size for every enabled source in `config/sources.toml`.
+- **Review `docs/data/health.json` weekly** — monitor per-source yield to identify dead feeds or silent scrapers.
+- **Re-run `predoc-pipeline eval`** — verify deterministic gating precision and recall against `tests/fixtures/golden.jsonl` when modifying patterns in `core/gating.py`.
 
 ## Escalation / when to actually worry
 
 Everything above is designed to fail safely: extraction failures retry, DLQ
 entries are visible, and a single dead source doesn't affect the others. The
-one thing to actually treat as urgent is **`TELEGRAM_BOT_TOKEN` compromise**
-(if you suspect it leaked) — revoke and rotate it immediately via
-[@BotFather](https://t.me/BotFather), update the `TELEGRAM_BOT_TOKEN`
-repository secret, and note that `export_feed()`'s RSS output is unaffected
-by a revoked bot token, so the underlying data pipeline keeps working while
-you rotate credentials.
+critical escalation event is **credential compromise**:
+- If `TELEGRAM_BOT_TOKEN` leaks: revoke and regenerate immediately via
+  [@BotFather](https://t.me/BotFather), then update the repository secret.
+- If X credentials leak: revoke the keys and access tokens in the X Developer
+  Portal and update repository secrets.
+- Note that `export_feed()`'s RSS feed and the GitHub Pages dashboard operate
+  independently of broadcast tokens and continue updating even during broadcast outages.

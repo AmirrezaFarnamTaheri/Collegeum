@@ -19,10 +19,11 @@ Two independent constraints:
 
 from __future__ import annotations
 
+import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from typing import Protocol
+from typing import Any, Protocol
 
 __all__ = ["QuotaExceeded", "RateLimiter", "quota_day"]
 
@@ -71,6 +72,7 @@ class RateLimiter:
     _allowance: float = 0.0
     _last_check: float = 0.0
     _local_calls: int = 0
+    _lock: Any = field(default_factory=threading.RLock)
 
     def __post_init__(self) -> None:
         self._allowance = float(self.requests_per_minute)
@@ -83,8 +85,9 @@ class RateLimiter:
 
     def remaining_today(self, day: str | None = None) -> int:
         key = day or quota_day()
-        used = self.store.llm_usage(key)[0] if self.store else self._local_calls
-        return max(0, self.daily_budget - used)
+        with self._lock:
+            used = self.store.llm_usage(key)[0] if self.store else self._local_calls
+            return max(0, self.daily_budget - used)
 
     def check_budget(self, day: str | None = None) -> None:
         if self.remaining_today(day) <= 0:
@@ -96,27 +99,32 @@ class RateLimiter:
     # -- per-minute pacing ------------------------------------------------
     def acquire(self, *, day: str | None = None, sleep=time.sleep) -> None:
         """Block until a request may be sent, or raise if the day is spent."""
-        self.check_budget(day)
-        rate = max(1, self.requests_per_minute)
-        now = time.monotonic()
-        self._allowance += (now - self._last_check) * (rate / 60.0)
-        self._last_check = now
-        if self._allowance > rate:
-            self._allowance = float(rate)
-        if self._allowance < 1.0:
-            sleep((1.0 - self._allowance) * (60.0 / rate))
-            self._last_check = time.monotonic()
-            self._allowance = 0.0
-        else:
+        to_sleep = 0.0
+        with self._lock:
+            self.check_budget(day)
+            rate = max(1, self.requests_per_minute)
+            now = time.monotonic()
+            penalty = max(0.0, self._last_check - now)
+            refill = max(0.0, now - self._last_check) * (rate / 60.0)
+            self._allowance = min(float(rate), self._allowance + refill)
+            self._last_check = max(now, self._last_check)
             self._allowance -= 1.0
+            if self._allowance < 0.0:
+                to_sleep = -self._allowance * (60.0 / rate)
+            if penalty > 0.0:
+                to_sleep += penalty
+        if to_sleep > 0.0:
+            sleep(to_sleep)
 
     def record(self, *, tokens: int = 0, error: bool = False, day: str | None = None) -> None:
         key = day or quota_day()
-        self._local_calls += 1
-        if self.store is not None:
-            self.store.record_llm_call(key, tokens=tokens, error=error)
+        with self._lock:
+            self._local_calls += 1
+            if self.store is not None:
+                self.store.record_llm_call(key, tokens=tokens, error=error)
 
     def penalise(self, seconds: float) -> None:
         """Apply a provider-instructed backoff to the bucket."""
-        self._allowance = 0.0
-        self._last_check = time.monotonic() + max(0.0, seconds)
+        with self._lock:
+            self._allowance = 0.0
+            self._last_check = time.monotonic() + max(0.0, seconds)

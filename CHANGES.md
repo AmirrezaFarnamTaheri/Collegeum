@@ -66,10 +66,52 @@ Note: the board scrapers identify as a normal browser and do not consult
 robots.txt (the feed/portal collectors still do). They fetch each site a few
 times a day at most, with a 1.5 s pause between requests to the same site.
 
+## Recent updates (v1.0.0 enhancements)
+
+### Ingestion & Broadcasting on X/Twitter
+* **X Ingestion Backends** (`src/predoc_pipeline/ingest/x.py`, `src/predoc_pipeline/ingest/xquik.py`):
+  - Official X API v2 search integration via `X_BEARER_TOKEN` with automatic query construction and pagination.
+  - Xquik Platform API integration via `XQUIK_API_KEY` as a cost-effective alternative ingestion backend.
+  - Added `predoc-pipeline search-x [query]` CLI command for live terminal queries.
+* **X Broadcasting Publisher** (`src/predoc_pipeline/publish/x.py`, `src/predoc_pipeline/publish/x_broadcast.py`):
+  - Automated publishing of new predoctoral listings to X/Twitter alongside Telegram broadcasts.
+  - Configurable via `X_BROADCAST_ENABLED` and OAuth credentials (`X_CONSUMER_KEY`, `X_CONSUMER_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`).
+  - Added `predoc-pipeline test-x` command to verify tweet formatting and API credentials.
+
+### High-Performance Database Architecture (Schema v5)
+* **Partial Covering Indexes**:
+  - `ix_listings_active` on `(status, first_seen_at DESC) WHERE status = 'active'` accelerates dashboard exports and public queries without scanning historical rows.
+  - `ix_listings_pending` on `(status, first_seen_at ASC) WHERE status = 'pending'` accelerates pending broadcast recovery during crash restarts.
+* **Expression & Lookup Indexes**:
+  - `ix_listings_identity` on `(lower(institution), lower(title))` for O(1) candidate lookup in fuzzy deduplication.
+  - `ix_seen_items_decision` on `(decision, item_hash)` for fast cache evaluation.
+* **Memory & Storage PRAGMAs**:
+  - `mmap_size = 268435456` (256 MB memory-mapped I/O).
+  - `cache_size = -65536` (64 MB page cache).
+  - `busy_timeout = 10000` (10 seconds timeout for concurrent access).
+  - `temp_store = MEMORY` for intermediate sorting.
+* **Search CLI**:
+  - `predoc-pipeline search <query> [--all] [--limit N]` queries local database records by keyword, institution, or summary.
+
+### Expanded Scope and Scale Caps
+* **Geographic & Institutional Coverage**:
+  - Preferences expanded to include UK, Europe, Canada, the US, and international research organizations.
+  - Covered institutions: universities, central banks (Fed, ECB, BoE, BoC, Bundesbank, etc.), multilateral organizations (World Bank, IMF, OECD, WTO), policy institutes (Brookings, RAND), and economic consultancies (Cornerstone, Analysis Group, NERA, CRA, Brattle).
+  - Option to include doctoral (PhD) studentships and postdoctoral positions via `exclude_phd_positions = false`.
+* **Throughput Scaling**:
+  - Increased run caps: up to 2,500 detail enrichments, 12 concurrent source workers, 25 detail workers, and 10,000 daily LLM request quota.
+
+### Licensing & Open Source Compliance
+* Upgraded repository license from MIT to **GNU Affero General Public License v3.0 (AGPL-3.0-or-later)**.
+
+### Code Craftsmanship & Anti-Slop
+* **Regex Precompilation**: Precompiled regular expressions across `timeparse.py`, `textproc.py`, `dates.py`, `link_scan.py`, `keyboards.py`, and `discover.py` to eliminate hot-path recompilation overhead.
+* **Logging Discipline**: Replaced raw `print()` statements with structured logger calls (`get_logger`).
+* **Mobile Layout Hardening**: Added Hallmark mobile guardrails (`overflow-x: clip;`, `overflow-wrap: anywhere;`) in `docs/index.html` to eliminate horizontal scroll anomalies on mobile devices.
+* **Exception Hygiene**: Cleaned up swallowed exceptions and sanitized function arguments across heuristics and scrapers.
+
 ## Tests
 
-`pytest`: 245 tests (81 original + 164 new: the predoc-bot scraper, filter
-and heuristic suites, end-to-end runs against mocked job boards and a mocked
-Telegram — including a fresh-machine second run that must send nothing — the
-bot conversation, the preference rules, the scoped gate).
-`predoc-pipeline eval`: precision 1.000, recall 1.000 on 30 labelled examples.
+* `pytest`: **295 passing tests** (core standard library utilities, job-board scrapers, preference filters, detail heuristics, Telegram bot conversation flows, X API v2 and Xquik ingestion, X broadcasting, SQLite schema v6 migrations, candidate variables extraction, and end-to-end mocked pipeline runs).
+* `predoc-pipeline eval`: precision 1.000, recall 1.000 on 30 labelled golden examples.
+* `ruff check`: 0 lint errors across `src` and `tests`.

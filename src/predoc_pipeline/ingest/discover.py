@@ -22,6 +22,7 @@ _FEED_TYPES = {
     "text/xml",
     "application/json",  # JSON Feed
 }
+_FEED_KEYWORD_RX = re.compile(r"(rss|atom|feed)", re.IGNORECASE)
 
 CONVENTIONAL_PATHS = (
     "/feed", "/feed/", "/rss", "/rss.xml", "/atom.xml", "/index.xml",
@@ -55,7 +56,7 @@ class _LinkFinder(HTMLParser):
             self.found.append(
                 DiscoveredFeed(url=href, title=attributes.get("title", ""), mime=mime)
             )
-        elif tag == "a" and re.search(r"(rss|atom|feed)", href, re.IGNORECASE):
+        elif tag == "a" and _FEED_KEYWORD_RX.search(href):
             self.found.append(DiscoveredFeed(url=href, title="", mime="", method="anchor"))
 
 

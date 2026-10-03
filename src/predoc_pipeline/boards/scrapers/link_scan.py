@@ -16,8 +16,10 @@ Options:
 """
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup, Tag
 
@@ -27,10 +29,14 @@ from ..utils.geo import detect_location
 from ..utils.text import absolutize, clean_ws, truncate
 from .base import BaseScraper, register
 
+log = logging.getLogger(__name__)
+
 GENERIC_ANCHORS = {
     "read more", "more", "apply", "apply now", "details", "view", "view job", "view details",
     "more info", "more information", "learn more", "here", "click here", "link", "see more",
     "job details", "show more", "next", "previous", "login", "sign in", "share",
+    "link for job posting", "link to job posting", "link for job", "link to job",
+    "apply here", "apply online", "view posting", "job posting", "full posting",
 }
 _CARD_CLASS = re.compile(r"card|job|result|vacanc|listing|item|teaser|views-row|posting|position|opening",
                          re.IGNORECASE)
@@ -46,6 +52,9 @@ _PEOPLE_NAV = re.compile(r"^(?:our\s+|current\s+|former\s+|meet\s+(?:our|the)\s+
                          r"people|team|staff|alumni|faculty|placements?)$", re.IGNORECASE)
 _POSTED_LABEL = re.compile(r"(date\s+placed|posted(?:\s+on)?|published(?:\s+on)?|date\s+posted|"
                            r"publication\s+date|placed\s+on)\s*[:\-]?\s*", re.IGNORECASE)
+_SPONSORING_INST_RX = re.compile(r"^(?:sponsoring\s+)?institution\s*:\s*(.*)$", re.IGNORECASE)
+_NON_INST_PREFIX_RX = re.compile(r"^(closes?|deadline|salary|location)")
+_DEPT_RX = re.compile(r"department|faculty|institute|school of|centre|center", re.IGNORECASE)
 
 
 def find_card(a: Tag, max_chars: int = 1800) -> Tag:
@@ -74,7 +83,10 @@ def guess_institution(lines: list[str], title: str) -> str | None:
         low = ln.lower()
         if low == tnorm or len(ln) > 140 or len(ln) < 3:
             continue
-        if _INSTITUTION_RX.search(ln) and not re.match(r"^(closes?|deadline|salary|location)", low):
+        m_inst = _SPONSORING_INST_RX.match(ln)
+        if m_inst:
+            return m_inst.group(1).strip(" -|•·")
+        if _INSTITUTION_RX.search(ln) and not _NON_INST_PREFIX_RX.match(low):
             return ln.strip(" -|•·")
     return None
 
@@ -99,9 +111,53 @@ class LinkScanScraper(BaseScraper):
     type_name = "link_scan"
 
     async def fetch_raw_postings(self) -> list[Any]:
-        async def get(u: str) -> tuple[str, str]:
-            return u, (await self._render(u) if self.opt("render") else await self.http.get_text(u))
-        return await self.fetch_each(get)
+        param = self.opt("pagination_param")
+        max_pages = int(self.opt("max_pages", 1))
+
+        if not param and max_pages <= 1:
+            async def get(u: str) -> tuple[str, str]:
+                return u, (await self._render(u) if self.opt("render") else await self.http.get_text(u))
+            return await self.fetch_each(get)
+
+        out: list[tuple[str, str]] = []
+        errors: list[str] = []
+        pattern = re.compile(self.opt("link_pattern", r".+"), re.IGNORECASE)
+        for base_url in self.urls():
+            for page in range(1, max_pages + 1):
+                page_url = self._format_page_url(base_url, param, page)
+                try:
+                    html = (
+                        await self._render(page_url)
+                        if self.opt("render")
+                        else await self.http.get_text(page_url)
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    errors.append(f"{page_url}: {exc}")
+                    log.warning("%s: page %d (%s) failed: %s", self.name, page, page_url, exc)
+                    break
+                out.append((page_url, html))
+                soup = BeautifulSoup(html, "lxml")
+                matching = [
+                    a["href"]
+                    for a in soup.find_all("a", href=True)
+                    if pattern.search(absolutize(page_url, a["href"]))
+                ]
+                if not matching:
+                    break
+        if errors and not out:
+            raise RuntimeError("; ".join(errors)[:500])
+        return out
+
+    def _format_page_url(self, base_url: str, param: str | None, page: int) -> str:
+        if "{page}" in base_url:
+            return base_url.format(page=page)
+        if not param or page == 1:
+            return base_url
+        parts = urlsplit(base_url)
+        qs = parse_qs(parts.query, keep_blank_values=True)
+        qs[param] = [str(page)]
+        new_query = urlencode(qs, doseq=True)
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, new_query, parts.fragment))
 
     async def _render(self, url: str) -> str:
         from .university_ats import render_page  # lazy: playwright is optional
@@ -131,6 +187,13 @@ class LinkScanScraper(BaseScraper):
                 title = clean_ws(a.get("title") or a.get("aria-label") or "")
             if (title.lower() in GENERIC_ANCHORS or len(title) < min_len) and self.opt("heading_titles"):
                 title = previous_heading(a)  # "Details" link under an <h3>Job title</h3>
+            if (title.lower() in GENERIC_ANCHORS or len(title) < min_len) and self.opt("card_title"):
+                card = find_card(a)
+                c_lines = card_lines(card)
+                for ln in c_lines:
+                    if len(ln) >= min_len and ln.lower() not in GENERIC_ANCHORS and not _PEOPLE_NAV.match(ln):
+                        title = ln
+                        break
             if not title or title.lower() in GENERIC_ANCHORS or len(title) < min_len or _PEOPLE_NAV.match(title):
                 continue
             seen.add(href)
@@ -160,8 +223,7 @@ class LinkScanScraper(BaseScraper):
 
     def _department(self, lines: list[str], title: str) -> str | None:
         for ln in lines:
-            if ln != title and re.search(r"department|faculty|institute|school of|centre|center",
-                                         ln, re.IGNORECASE) and len(ln) < 160:
+            if ln != title and _DEPT_RX.search(ln) and len(ln) < 160:
                 return ln
         return None
 

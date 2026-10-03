@@ -447,6 +447,27 @@ class TestRateLimiter(unittest.TestCase):
         limiter.acquire(sleep=slept.append)
         self.assertTrue(any(s > 0 for s in slept))
 
+    def test_concurrent_waiters_reserve_slots(self):
+        limiter = RateLimiter(requests_per_minute=60, requests_per_day=1000)
+        # Drain allowance
+        limiter._allowance = 0.0
+        slept: list[float] = []
+        limiter.acquire(sleep=slept.append)
+        limiter.acquire(sleep=slept.append)
+        limiter.acquire(sleep=slept.append)
+        # Each consecutive waiter reserves another slot and sleeps proportionally longer
+        self.assertEqual(len(slept), 3)
+        self.assertAlmostEqual(slept[0], 1.0, places=1)
+        self.assertAlmostEqual(slept[1], 2.0, places=1)
+        self.assertAlmostEqual(slept[2], 3.0, places=1)
+
+    def test_penalise_preserves_future_wait(self):
+        limiter = RateLimiter(requests_per_minute=60, requests_per_day=1000)
+        limiter.penalise(3.0)
+        slept: list[float] = []
+        limiter.acquire(sleep=slept.append)
+        self.assertTrue(len(slept) == 1 and slept[0] >= 3.0)
+
     def test_quota_day_uses_pacific_reset(self):
         # 03:00 UTC on 2 June is still 1 June in Los Angeles.
         moment = datetime(2027, 6, 2, 3, 0, tzinfo=UTC)
@@ -604,6 +625,87 @@ class TestDatabase(unittest.TestCase):
             )
             raise ValueError("boom")
         self.assertIsNone(self.db.get_meta("x"))
+
+    def test_multithreaded_database_access(self):
+        from concurrent.futures import ThreadPoolExecutor
+
+        def worker(i: int):
+            self.db.record_llm_call("2026-10-03", tokens=10 * i)
+            return self.db.llm_usage("2026-10-03")
+
+        with ThreadPoolExecutor(max_workers=5) as pool:
+            results = list(pool.map(worker, range(10)))
+
+        self.assertEqual(len(results), 10)
+        reqs, tokens = self.db.llm_usage("2026-10-03")
+        self.assertEqual(reqs, 10)
+        self.assertEqual(tokens, 450)
+
+    def test_search_listings(self):
+        lid1 = self.db.insert_listing(self._listing(
+            url_hash="h_srch1",
+            title="Pre-Doctoral Fellow in Econometrics",
+            institution="University of Oxford",
+            summary="Working on causal inference and microeconometrics.",
+        ))
+        lid2 = self.db.insert_listing(self._listing(
+            url_hash="h_srch2",
+            title="Research Assistant",
+            institution="Bocconi University",
+            summary="Financial economics project.",
+        ))
+        self.db.mark_published(lid1, 101)
+        self.db.mark_published(lid2, 102)
+
+        # Keyword in title
+        res = self.db.search_listings("econometrics")
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]["id"], lid1)
+
+        # Keyword in institution
+        res = self.db.search_listings("Bocconi")
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]["id"], lid2)
+
+        # Keyword in summary
+        res = self.db.search_listings("causal inference")
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]["id"], lid1)
+
+        # Empty search
+        self.assertEqual(self.db.search_listings(""), [])
+
+        # Active-only filtering
+        self.db.mark_closed(lid1, "Filled")
+        self.assertEqual(len(self.db.search_listings("econometrics", active_only=True)), 0)
+        self.assertEqual(len(self.db.search_listings("econometrics", active_only=False)), 1)
+
+    def test_optimize_and_indexes(self):
+        self.db.optimize()
+        indexes = {
+            row["name"]
+            for row in self.db.conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='index'"
+            ).fetchall()
+        }
+        self.assertIn("ix_listings_apply_url", indexes)
+        self.assertIn("ix_listings_source_url", indexes)
+        self.assertIn("ix_listings_active", indexes)
+        self.assertIn("ix_listings_identity", indexes)
+        self.assertIn("ix_listings_pending", indexes)
+
+    def test_migrate_plain_tuple_connection(self):
+        import sqlite3
+
+        from predoc_pipeline.core.db import _migrate
+
+        raw_conn = sqlite3.connect(":memory:")
+        raw_conn.execute("CREATE TABLE listings (id INT, url_hash TEXT)")
+        _migrate(raw_conn)
+        cols = {r[1] for r in raw_conn.execute("PRAGMA table_info(listings)")}
+        self.assertIn("deadline_note", cols)
+        self.assertIn("x_post_id", cols)
+        raw_conn.close()
 
 
 if __name__ == "__main__":  # pragma: no cover

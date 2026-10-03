@@ -71,6 +71,13 @@ jobs:
           ENABLE_JOBSPY: ${{ vars.ENABLE_JOBSPY || 'false' }}
           ENABLE_TWITTER: ${{ vars.ENABLE_TWITTER || 'false' }}
           TWSCRAPE_ACCOUNTS: ${{ secrets.TWSCRAPE_ACCOUNTS }}
+          X_BROADCAST_ENABLED: ${{ vars.X_BROADCAST_ENABLED || 'true' }}
+          X_CONSUMER_KEY: ${{ secrets.X_CONSUMER_KEY }}
+          X_CONSUMER_SECRET: ${{ secrets.X_CONSUMER_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          XQUIK_API_KEY: ${{ secrets.XQUIK_API_KEY }}
           DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
         run: |
           set -o pipefail
