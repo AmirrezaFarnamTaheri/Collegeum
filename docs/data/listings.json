@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-03T23:04:53Z",
- "count": 40,
+ "generated_at": "2026-10-03T23:13:38Z",
+ "count": 39,
  "listings": [
   {
    "id": 50,
@@ -163,50 +163,6 @@
    "start_date": null,
    "kind": "predoc",
    "sector": "academic"
-  },
-  {
-   "id": 45,
-   "title": "Statistician (Research Assistant)",
-   "institution": "U.S. Federal Government (Census Bureau)",
-   "principal_investigator": null,
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": "2026-10-24T23:59:59Z",
-   "days_left": 21,
-   "disciplines": [
-    "Finance",
-    "Industrial Organization",
-    "International Trade"
-   ],
-   "visa": "unknown",
-   "summary": "Sponsoring Researcher : Bureau of Economics Sponsoring Institution : U.S. Federal Trade Commission Fields of Research : Microeconomics, Statistics and Econometrics, Data Science, Industrial Organization, Antitrust Economics, Behavioral Economics, and Advertising Deadline : October 24, 2026",
-   "language": "en",
-   "apply_url": "https://www.usajobs.gov/job/886136800",
-   "source_url": "https://bit.ly/4iNYQ9Z",
-   "confidence": 0.887,
-   "first_seen_at": "2026-10-03T21:08:37Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": 57736.0,
-   "salary_max": 91815.0,
-   "salary_currency": "USD",
-   "salary_period": "year",
-   "salary_raw": "$57,736 - $91,815 per year",
-   "tools_required": [
-    "Python",
-    "Stata",
-    "R"
-   ],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "institutional"
   },
   {
    "id": 44,

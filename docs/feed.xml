@@ -3,10 +3,11 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
 <title>Collegeum — Research Positions</title>
-<link>https://example.invalid</link>
+<link>https://amirrezafarnamtaheri.github.io/predoc-not-org</link>
 <description>US research positions, PhD and postdoc posts, and openings at central banks, international organizations and firms.</description>
 <language>en</language>
-<lastBuildDate>Sat, 03 Oct 2026 23:04:53 +0000</lastBuildDate>
+<lastBuildDate>Sat, 03 Oct 2026 23:13:38 +0000</lastBuildDate>
+<atom:link href="https://amirrezafarnamtaheri.github.io/predoc-not-org/feed.xml" rel="self" type="application/rss+xml" />
 <item>
 <title>Empirical Research Fellow — Northwestern University, Kellogg School of Management, Finance Department</title>
 <link>https://facultyrecruiting.northwestern.edu/apply/MjY2MQ==</link>
@@ -43,16 +44,6 @@
 <pubDate>Sat, 03 Oct 2026 21:09:05 +0000</pubDate>
 <description>The University of Chicago Booth School of Business —  United States. Deadline: rolling. This is a full-time predoctoral research and communications coordinator role at the Behavior Change for Good Initiative at the University of Pennsylvania. The position focuses on behavioral science research and suits recent bachelor's graduates preparing for doctoral study.</description>
 <category>Other</category>
-</item>
-<item>
-<title>Statistician (Research Assistant) — U.S. Federal Government (Census Bureau)</title>
-<link>https://www.usajobs.gov/job/886136800</link>
-<guid isPermaLink="false">https://bit.ly/4iNYQ9Z</guid>
-<pubDate>Sat, 03 Oct 2026 21:08:37 +0000</pubDate>
-<description>U.S. Federal Government (Census Bureau) —  United States. Deadline: 2026-10-24T23:59:59Z. Sponsoring Researcher : Bureau of Economics Sponsoring Institution : U.S. Federal Trade Commission Fields of Research : Microeconomics, Statistics and Econometrics, Data Science, Industrial Organization, Antitrust Economics, Behavioral Economics, and Advertising Deadline : October 24, 2026</description>
-<category>Finance</category>
-<category>Industrial Organization</category>
-<category>International Trade</category>
 </item>
 <item>
 <title>Senior Community-based Research Analyst — University of Chicago</title>
