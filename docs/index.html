@@ -1138,11 +1138,11 @@
 
     <!-- Metrics Strip -->
     <div class="meta-strip rv">
-      <span><b id="stat-sources">27</b> sources tracked</span>
+      <span><b id="stat-sources">75</b> job boards</span>
       <span>Checked daily, <b>04:00 UTC</b></span>
       <span><b id="stat-active">—</b> positions active</span>
       <span><b id="stat-urgent">—</b> closing &le; 7 days</span>
-      <span>Direct application links only</span>
+      <span>Open source, MIT</span>
     </div>
 
     <!-- Routing Section -->
@@ -1155,12 +1155,9 @@
       <div class="lanes rv">
         <div class="lane" id="L-tg">
           <h3>Telegram</h3>
-          <small>Predoc and RA roles outside the US, excluding central banks</small>
+          <small>Non-US predoc and RA roles at universities and institutes</small>
           <ul>
-            <li>United Kingdom</li>
-            <li>Continental Europe</li>
-            <li>Canada</li>
-            <li>Universities and research institutes</li>
+            <li>Any country except the US</li><li>Universities</li><li>Research institutes</li>
           </ul>
           <div class="tg-card">
             <b>Research Assistant (Predoctoral)</b>
@@ -1209,9 +1206,8 @@
           <div class="grp">
             <div>Location</div>
             <div class="seg" data-k="where">
-              <button data-v="eu" aria-pressed="true">UK, Europe, Canada</button>
+              <button data-v="eu" aria-pressed="true">Outside the US</button>
               <button data-v="us" aria-pressed="false">United States</button>
-              <button data-v="other" aria-pressed="false">Elsewhere</button>
             </div>
           </div>
 
@@ -1330,10 +1326,10 @@
 
         <div class="chips-row">
           <button class="chip" data-k="all" aria-pressed="true">All</button>
-          <button class="chip" data-k="us">🇺🇸 US Pre-docs</button>
-          <button class="chip" data-k="postdoc-phd">🎓 Postdocs &amp; PhDs</button>
-          <button class="chip" data-k="institutional">🏛️ Central Banks &amp; Multilateral</button>
-          <button class="chip" data-k="closing-soon">⏳ Closing &le; 7 Days</button>
+          <button class="chip" data-k="us">US pre-docs</button>
+          <button class="chip" data-k="postdoc-phd">Postdocs and PhDs</button>
+          <button class="chip" data-k="institutional">Central banks and multilateral</button>
+          <button class="chip" data-k="closing-soon">Closing within 7 days</button>
           <button class="chip" data-k="saved" id="chip-saved">
             <span>★ Saved</span>
             <span class="chip-badge" id="chip-saved-count">0</span>
@@ -1395,7 +1391,7 @@
       <footer class="modal-footer">
         <div style="display:flex; gap:8px;">
           <button class="btn alt" id="modal-star-btn">★ Save</button>
-          <button class="btn alt" id="modal-copy-btn">🔗 Copy Link</button>
+          <button class="btn alt" id="modal-copy-btn">Copy link</button>
         </div>
         <div style="display:flex; gap:8px;">
           <a class="btn alt" id="modal-src-link" target="_blank" rel="noopener">Source</a>
@@ -1503,9 +1499,6 @@
       }
       if (where === 'us') {
         return { tg: 0, why: 'All US predoctoral positions are published on the board.' };
-      }
-      if (where === 'other') {
-        return { tg: 0, why: 'Predoc positions outside the UK, Europe, and Canada are not sent to Telegram.' };
       }
       if (emp === 'acad') {
         return { tg: 1, why: 'Non-US predoctoral roles at universities and research institutes are delivered to Telegram.' };
@@ -2062,21 +2055,10 @@
         }
       })
       .catch(() => {
-        // Fallback demo data
-        const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString(); };
-        listings = [
-          { id: 101, title: 'Predoctoral Staff Associate', institution: 'Columbia University, SIPA', country: 'United States', city: 'New York, NY', kind: 'predoc', sector: 'academic', deadline: day(4), days_left: 4, visa: 'explicit', disciplines: ['Applied Microeconomics', 'Public Economics'], summary: 'Full-time empirical research role supporting faculty on environmental and labor economics research using large administrative datasets.' },
-          { id: 102, title: 'Research Analyst — Monetary Policy', institution: 'Federal Reserve Bank of New York', country: 'United States', city: 'New York, NY', kind: 'predoc', sector: 'institutional', deadline: day(21), days_left: 21, visa: 'explicit', disciplines: ['Macroeconomics', 'Monetary Policy'], summary: 'Two-year predoctoral fellowship working directly with research economists on macro-financial modeling and policy briefing.' },
-          { id: 103, title: 'Economist Trainee', institution: 'Bank for International Settlements (BIS)', country: 'Switzerland', city: 'Basel', kind: 'predoc', sector: 'institutional', deadline: day(33), days_left: 33, visa: 'explicit', disciplines: ['Banking', 'International Finance'], summary: 'Rotational analytical appointment supporting research on financial stability, central bank balance sheets, and international capital flows.' },
-          { id: 104, title: 'Postdoctoral Fellow in Macroeconomics', institution: 'National Bureau of Economic Research (NBER)', country: 'United States', city: 'Cambridge, MA', kind: 'postdoc', sector: 'academic', deadline: day(45), days_left: 45, visa: 'inferred', disciplines: ['Macroeconomics', 'Econometrics'], summary: 'Postdoctoral research appointment with protected research time and access to NBER working groups and seminars.' },
-          { id: 105, title: 'PhD Studentship in Quantitative Social Science', institution: 'London School of Economics (LSE)', country: 'United Kingdom', city: 'London', kind: 'phd', sector: 'academic', deadline: day(52), days_left: 52, visa: 'explicit', disciplines: ['Political Economy', 'Public Policy'], summary: 'Four-year fully funded doctoral studentship covering tuition and living stipend, focusing on quantitative political economy.' },
-          { id: 106, title: 'Economic Research Associate', institution: 'Cornerstone Research', country: 'United States', city: 'Boston, MA', kind: 'predoc', sector: 'private', deadline: null, days_left: null, visa: 'explicit', disciplines: ['Industrial Organization', 'Finance'], summary: 'Conduct quantitative analyses for economic and financial litigation matters with academic affiliates.' }
-        ].map(enrichItem);
-        
-        $('#stat-active').textContent = listings.length;
-        $('#stat-urgent').textContent = listings.filter(l => l.days_left != null && l.days_left <= 7).length;
-        $('#src').textContent = 'Showing representative vacancies. Live listings load from data/listings.json once generated by the pipeline.';
-        populateFilters();
+        listings = [];
+        $('#stat-active').textContent = '0';
+        $('#stat-urgent').textContent = '0';
+        $('#src').textContent = 'The listings file could not be loaded. Reload the page or check the RSS feed.';
         draw();
       });
 
@@ -2095,7 +2077,7 @@
       })
       .catch(() => {
         $('#health-dot').className = 'health-dot';
-        $('#health-label').textContent = 'Pipeline verified';
+        $('#health-label').textContent = 'Pipeline status unavailable';
       });
 
     // Support section
