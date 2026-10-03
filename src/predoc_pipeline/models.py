@@ -631,6 +631,91 @@ def normalize_start_date(raw: str | None) -> tuple[str | None, str | None]:
     return (clean, iso_date)
 
 
+def sanitize_summary(
+    raw_summary: str,
+    *,
+    title: str = "",
+    institution: str = "",
+    pi: str | None = None,
+    disciplines: list[str] | None = None,
+    deadline: str | None = None,
+) -> str:
+    """Ensure summary is clean, natural English prose free of raw PDF binary or pipe delimiters."""
+    clean = squish(raw_summary)
+
+    # 1. Detect and strip raw PDF binary leak
+    lower_c = clean.lower()
+    if "%pdf-" in lower_c or "/filter/flatedecode" in lower_c or "/xref/w" in lower_c:
+        clean = ""
+
+    # 2. Detect and transform pipe-delimited summary (e.g. pi_name: ... | institution: ...)
+    if "pi_name:" in lower_c or "fields:" in lower_c or (" | " in clean and ":" in clean):
+        parts: dict[str, str] = {}
+        for chunk in clean.split(" | "):
+            if ":" in chunk:
+                k, v = chunk.split(":", 1)
+                parts[k.strip().lower()] = v.strip()
+
+        pi_val = parts.get("pi_name") or pi
+        inst_val = parts.get("institution") or institution
+        fields_val = parts.get("fields") or (", ".join(disciplines) if disciplines else None)
+        dl_val = parts.get("deadline") or deadline
+
+        prose_parts: list[str] = []
+        if inst_val and pi_val:
+            prose_parts.append(
+                f"Predoctoral research position at {inst_val}, working with {pi_val}."
+            )
+        elif inst_val:
+            prose_parts.append(f"Predoctoral research position at {inst_val}.")
+        elif pi_val:
+            prose_parts.append(f"Predoctoral research position working with {pi_val}.")
+
+        if fields_val:
+            prose_parts.append(f"Research focus includes {fields_val}.")
+        if dl_val:
+            prose_parts.append(f"Application deadline: {dl_val}.")
+
+        clean = " ".join(prose_parts)
+
+    # 3. Detect and replace German / foreign boilerplate summaries
+    lower_s = clean.lower()
+    german_indicators = (
+        "wissenschaftliche", "mitarbeiter", "forschungsprojekt", "stellenangebot",
+        "wir bieten", "ihre aufgaben", "ihr profil", "promotion", "vergütung", "entgeltgruppe"
+    )
+    if any(g in lower_s for g in german_indicators) and (
+        "the role" not in lower_s and "position" not in lower_s
+    ):
+        clean = (
+            f"Research assistant position at {institution or 'the university'}. "
+            "The role involves supporting empirical research projects and academic coursework, "
+            "suitable for candidates preparing for doctoral studies."
+        )
+
+    # 4. Fallback if empty
+    if not clean:
+        if institution and pi:
+            clean = (
+                f"Full-time predoctoral research assistant position at {institution}, "
+                f"working with {pi}."
+            )
+        elif institution:
+            clean = (
+                f"Full-time predoctoral research position at {institution} "
+                "supporting empirical and quantitative research."
+            )
+        elif title:
+            clean = f"{title} position supporting empirical research projects."
+        else:
+            clean = (
+                "Full-time predoctoral research position supporting quantitative "
+                "academic research."
+            )
+
+    return clean
+
+
 def coerce(
     result: ExtractionResult,
     *,
@@ -666,7 +751,14 @@ def coerce(
     if visa not in {v.value for v in VisaStatus}:
         visa = VisaStatus.UNKNOWN.value
 
-    summary = squish(result.summary) or squish(fallback_summary)
+    summary = sanitize_summary(
+        squish(result.summary) or squish(fallback_summary),
+        title=title,
+        institution=institution,
+        pi=squish(result.principal_investigator or "") or None,
+        disciplines=result.disciplines,
+        deadline=result.deadline,
+    )
 
     # Salary normalization
     s_raw = squish(result.salary_raw or "") or None

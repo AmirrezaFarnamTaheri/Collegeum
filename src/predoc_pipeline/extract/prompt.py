@@ -53,9 +53,9 @@ Set is_vacancy = false, and give the matching rejection_reason, when the text is
 - not_a_vacancy      anything else
 
 EXTRACTION RULES
-- Answer in English even when the advert is in another language. Map the local
-  title to its closest English equivalent; keep the employer's own name as
-  written.
+- Answer entirely in English even when the advert is in another language (such
+  as German, French, Spanish, or Italian). Translate the title and summary into
+  clear English. Keep the employer's own proper name as written.
 - Copy facts. Never invent an institution, supervisor, deadline or URL. If a
   field is not in the text, return null.
 - Dates are DAY-FIRST unless the text is unambiguous: "03/01/2027" is
@@ -65,8 +65,9 @@ EXTRACTION RULES
   eligibility; "inferred" when standard institutional policy clearly applies
   (for example a UK university research post under Skilled Worker rules);
   otherwise "unknown".
-- summary: two neutral sentences. What the role is, who it suits. No marketing
-  language.
+- summary: two neutral sentences in English. What the role is, who it suits.
+  Translate foreign language descriptions into fluent English. No marketing
+  language, no raw byte sequences or pipe-separated lists.
 - salary_raw: copy compensation or stipend verbatim if stated (e.g. "£35,000 p.a.",
   "$60,000/yr", "€2,600/month", "fully funded"). Null if unstated.
 - tools: list of programming languages, statistical packages or tools explicitly

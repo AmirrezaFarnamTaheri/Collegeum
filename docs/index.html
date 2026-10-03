@@ -1657,9 +1657,15 @@
     function enrichItem(item) {
       if (!item.kind) {
         const t = (item.title || '').toLowerCase();
-        if (/\bpost-?\s?doc(toral)?\b/.test(t)) item.kind = 'postdoc';
-        else if (/\b(ph\.?d\.?|doctoral)\b/.test(t) && !/\bpre-/.test(t)) item.kind = 'phd';
-        else item.kind = 'predoc';
+        if (/\bpre-?doc/i.test(t) || /\bresearch\s+(?:assistant|analyst|associate|professional|specialist)\b/i.test(t)) {
+          item.kind = 'predoc';
+        } else if (/\bpost-?\s?doc(toral)?\b/i.test(t)) {
+          item.kind = 'postdoc';
+        } else if (/\b(ph\.?d\.?|doctoral)\b/i.test(t) && !/\bpre-?doc/i.test(t)) {
+          item.kind = 'phd';
+        } else {
+          item.kind = 'predoc';
+        }
       }
       if (!item.sector) {
         const inst = (item.institution || '').toLowerCase();

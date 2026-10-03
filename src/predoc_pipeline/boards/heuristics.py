@@ -231,9 +231,9 @@ def apply_heuristics(post: JobPostSchema, text: str) -> None:
         if region:
             post.country, post.region = (country if country not in ("Europe", "Other") else post.country), region
             post.extra["region_from_detail"] = True
-    if len(post.description_snippet) < 200:
+    if len(post.description_snippet) < 200 and not text.startswith("%PDF-"):
         post.description_snippet = truncate(text, 600)
-    post.extra["detail_text"] = text[:6000]
+    post.extra["detail_text"] = text[:6000] if not text.startswith("%PDF-") else ""
 
 
 # --------------------------------------------------------------------------- orchestration

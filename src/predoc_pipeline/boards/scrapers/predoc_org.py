@@ -102,7 +102,27 @@ class PredocOrgScraper(BaseScraper):
                 deadline_text = deadline_raw if deadline_raw else None
                 if deadline_raw and not deadline and ROLLING.search(deadline_raw):
                     deadline_text = "Rolling"
-                snippet = " | ".join(f"{k}: {v}" for k, v in info.items())
+                desc_parts: list[str] = []
+                inst = info.get("institution")
+                pi = info.get("pi_name")
+                fields = info.get("fields")
+                dl = info.get("deadline")
+                visa = info.get("visa")
+                if inst and pi:
+                    desc_parts.append(
+                        f"Full-time predoctoral research role at {inst}, working with {pi}."
+                    )
+                elif inst:
+                    desc_parts.append(f"Full-time predoctoral research role at {inst}.")
+                elif pi:
+                    desc_parts.append(f"Full-time predoctoral research role working with {pi}.")
+                if fields:
+                    desc_parts.append(f"Research focus: {fields}.")
+                if dl:
+                    desc_parts.append(f"Application deadline: {dl}.")
+                if visa:
+                    desc_parts.append(f"Visa note: {visa}.")
+                snippet = " ".join(desc_parts)
                 posts.append(self.make(
                     title=title, url=absolutize(base, href),
                     institution=info.get("institution", ""), location=info.get("location"),
