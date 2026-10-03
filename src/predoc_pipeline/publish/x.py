@@ -214,8 +214,12 @@ class XClient:
             raise XError(f"Network error connecting to X API: {exc}") from exc
 
         if resp.status_code == 201:
-            data = resp.json().get("data", {})
-            return str(data.get("id", ""))
+            body = resp.json() if hasattr(resp, "json") else {}
+            data = body.get("data", {}) if isinstance(body, dict) else {}
+            tweet_id = str(data.get("id", "")).strip() if isinstance(data, dict) else ""
+            if not tweet_id:
+                raise XError("X API 201 response missing valid tweet id in 'data.id'")
+            return tweet_id
 
         status = resp.status_code
         reset_ts = None

@@ -289,13 +289,19 @@ class Database:
         except sqlite3.Error as exc:  # pragma: no cover - best effort
             _log.debug("wal_checkpoint failed: %s", exc)
 
+    @contextmanager
+    def transaction(self) -> Iterator[sqlite3.Connection]:
+        """Serialize writes on this Database connection with self._lock and transaction()."""
+        with self._lock, transaction(self.conn):
+            yield self.conn
+
     # -- meta -------------------------------------------------------------
     def get_meta(self, key: str, default: str | None = None) -> str | None:
         row = self.conn.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
         return row["value"] if row else default
 
     def set_meta(self, key: str, value: str) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "INSERT INTO meta(key, value) VALUES(?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -319,7 +325,7 @@ class Database:
         listing_id: int | None = None,
     ) -> None:
         ts = now()
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 """
                 INSERT INTO seen_items
@@ -400,7 +406,7 @@ class Database:
         payload["last_seen_at"] = payload["last_seen_at"] or payload["first_seen_at"]
         payload["status"] = payload["status"] or "pending"
         placeholders = ",".join("?" for _ in columns)
-        with transaction(self.conn):
+        with self.transaction():
             cur = self.conn.execute(
                 f"INSERT INTO listings ({','.join(columns)}) VALUES ({placeholders})",
                 tuple(payload[c] for c in columns),
@@ -413,7 +419,7 @@ class Database:
         message_id: int | None,
         x_post_id: str | None = None,
     ) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             if x_post_id:
                 self.conn.execute(
                     "UPDATE listings SET status='published', telegram_message_id=?, "
@@ -428,24 +434,24 @@ class Database:
                 )
 
     def mark_x_published(self, listing_id: int, x_post_id: str | None) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "UPDATE listings SET x_post_id=? WHERE id=?",
                 (str(x_post_id) if x_post_id else None, listing_id),
             )
 
     def mark_status(self, listing_id: int, status: str) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute("UPDATE listings SET status=? WHERE id=?", (status, listing_id))
 
     def touch_listing(self, listing_id: int) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "UPDATE listings SET last_seen_at=? WHERE id=?", (now(), listing_id)
             )
 
     def add_alternate_source(self, listing_id: int, source_url: str) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             row = self.conn.execute(
                 "SELECT alternate_sources FROM listings WHERE id=?", (listing_id,)
             ).fetchone()
@@ -528,7 +534,7 @@ class Database:
         return self.listing_by_url_hash(url_hash_value) is not None
 
     def mark_closed(self, listing_id: int, reason: str) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "UPDATE listings SET closed_at=?, closed_reason=?, last_checked_at=? "
                 "WHERE id=? AND closed_at IS NULL",
@@ -536,7 +542,7 @@ class Database:
             )
 
     def mark_checked(self, listing_id: int) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "UPDATE listings SET last_checked_at=? WHERE id=?", (now(), listing_id)
             )
@@ -554,7 +560,7 @@ class Database:
 
     def expire_past_deadline(self, grace_days: int = 1) -> int:
         """Mark listings whose deadline has passed. Returns rows affected."""
-        with transaction(self.conn):
+        with self.transaction():
             cur = self.conn.execute(
                 "UPDATE listings SET expired_at=? WHERE expired_at IS NULL "
                 "AND deadline IS NOT NULL AND deadline != '' "
@@ -572,7 +578,7 @@ class Database:
             return (int(row["requests"]), int(row["tokens"])) if row else (0, 0)
 
     def record_llm_call(self, day: str, *, tokens: int = 0, error: bool = False) -> int:
-        with self._lock, transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "INSERT INTO llm_usage(day, requests, tokens, errors) VALUES(?,?,?,?) "
                 "ON CONFLICT(day) DO UPDATE SET "
@@ -602,7 +608,7 @@ class Database:
         body_hash: str | None,
         status: int,
     ) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "INSERT INTO http_cache(url_hash, url, etag, last_modified, body_hash, "
                 "fetched_at, status) VALUES(?,?,?,?,?,?,?) "
@@ -624,7 +630,7 @@ class Database:
         payload: str,
         error: str,
     ) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "INSERT INTO dlq(run_id, stage, source, source_url, payload, error, "
                 "created_at) VALUES(?,?,?,?,?,?,?)",
@@ -637,14 +643,14 @@ class Database:
         ).fetchall()
 
     def start_run(self, run_id: str) -> int:
-        with transaction(self.conn):
+        with self.transaction():
             cur = self.conn.execute(
                 "INSERT INTO run_log(run_id, started_at) VALUES(?, ?)", (run_id, now())
             )
             return int(cur.lastrowid)
 
     def finish_run(self, row_id: int, stats: dict[str, Any], source_stats: dict[str, Any]) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "UPDATE run_log SET finished_at=?, ingested=?, gated=?, extracted=?, "
                 "duplicates=?, published=?, errors=?, llm_calls=?, outcome=?, "
@@ -682,7 +688,7 @@ class Database:
 
     # -- maintenance ------------------------------------------------------
     def prune(self, *, dlq_days: int = 90, seen_days: int = 400, runs_keep: int = 180) -> None:
-        with transaction(self.conn):
+        with self.transaction():
             self.conn.execute(
                 "DELETE FROM dlq WHERE created_at < strftime('%Y-%m-%dT%H:%M:%SZ','now',?)",
                 (since(dlq_days),),
@@ -740,7 +746,7 @@ class Database:
     def import_rows(self, records: Sequence[dict[str, Any]]) -> int:
         """Rebuild `listings` from exported records. Used to restore state."""
         inserted = 0
-        with transaction(self.conn):
+        with self.transaction():
             for record in records:
                 data = dict(record)
                 data["disciplines"] = json.dumps(data.get("disciplines") or [])
@@ -771,7 +777,7 @@ class Database:
 
     def import_seen(self, records: Sequence[dict[str, Any]]) -> int:
         inserted = 0
-        with transaction(self.conn):
+        with self.transaction():
             for record in records:
                 if not record.get("url_hash") or not record.get("decision"):
                     continue
@@ -793,7 +799,7 @@ class Database:
         in a row" and "source failing N runs in a row" could never be detected.
         """
         inserted = 0
-        with transaction(self.conn):
+        with self.transaction():
             for run in sorted(runs, key=lambda r: r.get("started_at") or ""):
                 if not run.get("run_id") or not run.get("started_at"):
                     continue

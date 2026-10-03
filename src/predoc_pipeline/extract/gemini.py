@@ -116,7 +116,7 @@ class KeyRotator:
             earliest = min(self._states, key=lambda s: s.cooldown_until)
             wait = max(0.0, earliest.cooldown_until - now)
             key = earliest.key
-        if 0.0 < wait <= 2.0:
+        if wait > 0.0:
             time.sleep(wait)
         return key
 
@@ -516,7 +516,7 @@ class Extractor:
                     key_had_rate_limit = True
                     log.warning(
                         "key_rate_limited",
-                        key=f"{current_key[:10]}...{current_key[-4:]}",
+                        key=f"...{current_key[-4:]}" if len(current_key) > 8 else "***",
                         attempt=key_attempt + 1,
                         of=max_key_attempts,
                         delay=delay,

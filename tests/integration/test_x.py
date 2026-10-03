@@ -99,6 +99,24 @@ class TestXClient(unittest.TestCase):
         self.assertEqual(tweet_id, "189000111222333444")
         mock_session.post.assert_called_once()
 
+    def test_post_tweet_missing_id_raises(self):
+        mock_session = MagicMock()
+        mock_resp = MagicMock()
+        mock_resp.status_code = 201
+        mock_resp.json.return_value = {"data": {}}
+        mock_session.post.return_value = mock_resp
+
+        client = XClient(
+            consumer_key="key",
+            consumer_secret="secret",
+            access_token="tok",
+            access_token_secret="sec",
+            session=mock_session,
+        )
+        with self.assertRaises(XError) as ctx:
+            client.post_tweet("Hello from predoc bot!")
+        self.assertIn("missing valid tweet id", str(ctx.exception))
+
     def test_post_tweet_rate_limited(self):
         mock_session = MagicMock()
         mock_resp = MagicMock()

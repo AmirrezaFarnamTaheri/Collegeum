@@ -152,6 +152,7 @@ class Settings(BaseSettings):
     enable_twitter: bool = False
 
     # -- X (Twitter) Integration ------------------------------------------
+    x_broadcast_enabled: bool = True
     x_bearer_token: str = ""
     xquik_api_key: str = ""
     x_consumer_key: str = ""
@@ -215,7 +216,8 @@ class Settings(BaseSettings):
     @property
     def x_broadcast_configured(self) -> bool:
         return bool(
-            self.x_consumer_key
+            self.x_broadcast_enabled
+            and self.x_consumer_key
             and self.x_consumer_secret
             and self.x_access_token
             and self.x_access_token_secret

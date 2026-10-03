@@ -265,9 +265,14 @@ def eval(
 def telegram_sync_cmd() -> None:
     """Answer /positions etc. and save your ✅ ❌ 📝 button taps (run every 30 min)."""
     from .publish.bot import telegram_sync
+    from .publish.telegram import TelegramError
 
     settings = _settings()
-    summary = telegram_sync(settings)
+    try:
+        summary = telegram_sync(settings)
+    except TelegramError as exc:
+        typer.secho(f"Telegram sync skipped due to error: {exc}", fg=typer.colors.YELLOW)
+        return
     typer.echo(
         f"answered {summary['commands']} command(s), saved {summary['taps']} button tap(s), "
         f"ignored {summary['ignored']} message(s) from other people"
