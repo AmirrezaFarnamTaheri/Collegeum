@@ -92,13 +92,13 @@ class Settings(BaseSettings):
         ),
     )
     extraction_concurrency: int = Field(
-        8,
+        12,
         ge=1,
         le=32,
         description="Parallel workers for LLM candidate digestion and key rotation.",
     )
-    llm_requests_per_minute: int = 150
-    llm_requests_per_day: int = 5000
+    llm_requests_per_minute: int = 200
+    llm_requests_per_day: int = 10000
     llm_daily_safety_margin: float = Field(0.9, ge=0.1, le=1.0)
     llm_max_input_chars: int = 12_000
     llm_timeout_seconds: float = 45.0

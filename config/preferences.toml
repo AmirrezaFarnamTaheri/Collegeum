@@ -139,17 +139,17 @@ max_age_days = 120           # ignore postings older than this (when a post date
 
 [enrich]
 fetch_details = true         # read every new posting's page (field, region, filled?) before sending
-max_details_per_run = 1200   # the rest wait for the next run
-detail_concurrency = 20
+max_details_per_run = 2500   # the rest wait for the next run
+detail_concurrency = 25
 recheck_open_jobs = true     # revisit sent jobs so filled ones drop off /positions and the dashboard
 recheck_every_days = 3
-recheck_max_per_run = 250
+recheck_max_per_run = 500
 
 [http]
 timeout = 30
 max_retries = 3
 default_min_interval = 1.5   # polite delay between requests to the same site (seconds)
-max_concurrent_sources = 10
+max_concurrent_sources = 12
 source_timeout = 600         # give up on a source that hangs longer than this (seconds)
 
 [telegram]
