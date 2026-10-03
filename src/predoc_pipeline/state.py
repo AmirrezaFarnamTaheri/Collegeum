@@ -271,7 +271,7 @@ def export_feed(
     limit: int = 100,
     hidden: set[str] | None = None,
     router: Any | None = None,
-    title: str = "Research positions",
+    title: str = "Collegeum — Research Positions",
 ) -> int:
     """Publish the website's listings as RSS as well.
 

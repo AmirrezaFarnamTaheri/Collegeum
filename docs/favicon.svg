@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="c-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="gold-grad" x1="16" y1="12" x2="48" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="50%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Shield / Tile -->
+  <rect width="64" height="64" rx="14" fill="url(#c-grad)"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" stroke="#1E293B" stroke-width="1.5"/>
+
+  <!-- Colonnade Arch & Pediment (Academy) -->
+  <path d="M16 48V28C16 19.163 23.163 12 32 12C40.837 12 48 19.163 48 28V48" stroke="url(#gold-grad)" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Inner Arch Accent -->
+  <path d="M21 48V29C21 22.925 25.925 18 32 18C38.075 18 43 22.925 43 29V48" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Base Plinth -->
+  <line x1="12" y1="48" x2="52" y2="48" stroke="url(#gold-grad)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="10" y1="52" x2="54" y2="52" stroke="#475569" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Compass Star / Empirical Light -->
+  <path d="M32 24L34 29.5L39.5 31.5L34 33.5L32 39L30 33.5L24.5 31.5L30 29.5Z" fill="#F8FAFC"/>
+  <circle cx="32" cy="31.5" r="1.5" fill="#D97706"/>
+</svg>

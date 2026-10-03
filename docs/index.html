@@ -1,631 +1,2408 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="system">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Predoc Listings — non-US research assistantships</title>
-<meta name="description" content="Predoctoral research assistantships in economics, finance and public policy, outside the United States." />
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collegeum — Research Positions &amp; Fellowships</title>
+  <meta name="description" content="Curated directory of US predoctoral fellowships, global PhD and postdoctoral appointments, and economic research roles at central banks, multilateral bodies, and research institutes." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="alternate" type="application/rss+xml" title="Collegeum RSS Feed" href="feed.xml" />
 
-  :root {
-    --ink: #16202B;
-    --ink-soft: #445164;
-    --paper: #F7F8FA;
-    --paper-raised: #FFFFFF;
-    --rule: #DCE1E8;
-    --rule-strong: #B7C0CC;
-    --civic-blue: #1E4C8A;
-    --civic-blue-soft: #E7EEF7;
-    --amber: #B8730A;
-    --amber-soft: #FBF0DD;
-    --red: #A32B22;
-    --red-soft: #FBE9E7;
-    --green: #2B6B3F;
-    --green-soft: #E7F3EA;
-    --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-  }
+  <!-- Fonts: Source Serif 4 (Classical Scholarly Serif), Plus Jakarta Sans (Clean Modern UI), JetBrains Mono (Tabular Data) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet" />
 
-  :root:not([data-theme="light"]) {
-    @media (prefers-color-scheme: dark) {
-      --ink: #E7EBF1;
-      --ink-soft: #A7B2C2;
-      --paper: #12161C;
-      --paper-raised: #191F27;
-      --rule: #2A323D;
-      --rule-strong: #3B4552;
-      --civic-blue: #7FA8DD;
-      --civic-blue-soft: #1B2734;
-      --amber: #E0A24D;
-      --amber-soft: #2C2416;
-      --red: #E08A80;
-      --red-soft: #2E1A18;
-      --green: #7FBF93;
-      --green-soft: #17251B;
+  <script>
+    // Theme initialization to eliminate flash of unstyled theme
+    (function () {
+      try {
+        var savedTheme = localStorage.getItem('collegeum-theme') || 'system';
+        var resolvedTheme = savedTheme;
+        if (savedTheme === 'system') {
+          resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.documentElement.setAttribute('data-active-theme', resolvedTheme);
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    :root {
+      --bg: #F8FAFC;
+      --bg-surface: #FFFFFF;
+      --bg-surface-raised: #FFFFFF;
+      --bg-subtle: #F1F5F9;
+      --bg-hover: #F8FAFC;
+      --border: #E2E8F0;
+      --border-strong: #CBD5E1;
+      --text: #0F172A;
+      --text-muted: #475569;
+      --text-faint: #94A3B8;
+      
+      --brand: #0F2B5C;
+      --brand-hover: #1E3A8A;
+      --brand-soft: #EEF2F9;
+      --brand-ink: #1E3A8A;
+
+      --gold: #D97706;
+      --gold-soft: #FEF3C7;
+      --gold-border: #FCD34D;
+
+      --emerald: #059669;
+      --emerald-soft: #ECFDF5;
+      --emerald-border: #A7F3D0;
+
+      --crimson: #DC2626;
+      --crimson-soft: #FEF2F2;
+      --crimson-border: #FECACA;
+
+      --indigo: #4F46E5;
+      --indigo-soft: #EEF2FF;
+      --indigo-border: #C7D2FE;
+
+      --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.07), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+      --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.08), 0 4px 6px -4px rgb(15 23 42 / 0.04);
+      --shadow-modal: 0 20px 25px -5px rgb(15 23 42 / 0.15), 0 8px 10px -6px rgb(15 23 42 / 0.1);
+
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 10px;
+      --radius-full: 9999px;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
     }
-  }
-  :root[data-theme="dark"] {
-    --ink: #E7EBF1; --ink-soft: #A7B2C2; --paper: #12161C; --paper-raised: #191F27;
-    --rule: #2A323D; --rule-strong: #3B4552; --civic-blue: #7FA8DD; --civic-blue-soft: #1B2734;
-    --amber: #E0A24D; --amber-soft: #2C2416; --red: #E08A80; --red-soft: #2E1A18;
-    --green: #7FBF93; --green-soft: #17251B;
-  }
 
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; overflow-x: clip; }
-  body {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
+    [data-active-theme="dark"] {
+      --bg: #090D14;
+      --bg-surface: #101622;
+      --bg-surface-raised: #151D2C;
+      --bg-subtle: #192233;
+      --bg-hover: #172030;
+      --border: #212D42;
+      --border-strong: #2F3E58;
+      --text: #F1F5F9;
+      --text-muted: #94A3B8;
+      --text-faint: #64748B;
 
-  a { color: var(--civic-blue); }
+      --brand: #60A5FA;
+      --brand-hover: #93C5FD;
+      --brand-soft: #14233D;
+      --brand-ink: #93C5FD;
 
-  header.masthead {
-    border-bottom: 3px solid var(--ink);
-    padding: 28px clamp(16px, 4vw, 48px) 18px;
-  }
-  header.masthead .rule-thin { border-top: 1px solid var(--rule-strong); margin-top: 10px; padding-top: 10px; }
-  header.masthead h1 {
-    font-family: var(--serif);
-    font-weight: 700;
-    font-size: clamp(24px, 3.2vw, 34px);
-    margin: 0 0 4px;
-    letter-spacing: -0.01em;
-  }
-  header.masthead .dek {
-    font-family: var(--serif);
-    font-style: normal;
-    color: var(--ink-soft);
-    font-size: 15px;
-    margin: 0;
-  }
-  header .meta-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 18px;
-    font-family: var(--mono);
-    font-size: 11.5px;
-    color: var(--ink-soft);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
+      --gold: #FBBF24;
+      --gold-soft: #2B2111;
+      --gold-border: #4D3715;
 
-  .layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 0 clamp(16px, 4vw, 48px) 64px;
-  }
+      --emerald: #34D399;
+      --emerald-soft: #0E291C;
+      --emerald-border: #134B2E;
 
-  .toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    background: var(--paper);
-    border-bottom: 1px solid var(--rule);
-    padding: 14px 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-  }
-  .toolbar input[type="search"] {
-    flex: 1 1 220px;
-    font-family: var(--sans);
-    font-size: 14px;
-    padding: 8px 12px;
-    border: 1px solid var(--rule-strong);
-    border-radius: 3px;
-    background: var(--paper-raised);
-    color: var(--ink);
-  }
-  select {
-    font-family: var(--sans);
-    font-size: 13px;
-    padding: 7px 10px;
-    border: 1px solid var(--rule-strong);
-    border-radius: 3px;
-    background: var(--paper-raised);
-    color: var(--ink);
-  }
-  .toolbar .count {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--ink-soft);
-    margin-left: auto;
-    white-space: nowrap;
-  }
-  button.reset {
-    font-family: var(--sans);
-    font-size: 12.5px;
-    background: none;
-    border: 1px solid var(--rule-strong);
-    border-radius: 3px;
-    padding: 7px 10px;
-    color: var(--ink-soft);
-    cursor: pointer;
-  }
-  button.reset:hover { border-color: var(--civic-blue); color: var(--civic-blue); }
+      --crimson: #F87171;
+      --crimson-soft: #2E1515;
+      --crimson-border: #4F1D1D;
 
-  table.ledger {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 4px;
-  }
-  table.ledger thead th {
-    text-align: left;
-    font-family: var(--mono);
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-soft);
-    border-bottom: 2px solid var(--ink);
-    padding: 10px 10px;
-    white-space: nowrap;
-  }
-  table.ledger tbody tr { border-bottom: 1px solid var(--rule); cursor: pointer; }
-  table.ledger tbody tr:hover { background: var(--paper-raised); }
-  table.ledger td { padding: 12px 10px; vertical-align: top; }
+      --indigo: #818CF8;
+      --indigo-soft: #1E1B4B;
+      --indigo-border: #312E81;
 
-  td.deadline-cell { width: 128px; }
-  .deadline-gutter {
-    display: inline-block;
-    font-family: var(--mono);
-    font-weight: 500;
-    font-size: 12.5px;
-    padding: 3px 8px;
-    border-radius: 3px;
-    white-space: nowrap;
-  }
-  .dl-urgent { background: var(--red-soft); color: var(--red); }
-  .dl-soon   { background: var(--amber-soft); color: var(--amber); }
-  .dl-open   { background: var(--green-soft); color: var(--green); }
-  .dl-none   { background: transparent; color: var(--ink-soft); border: 1px dashed var(--rule-strong); }
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+      --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 0.7);
+    }
 
-  td.title-cell .title {
-    font-family: var(--serif);
-    font-weight: 600;
-    font-size: 16px;
-    display: block;
-    margin-bottom: 2px;
-  }
-  td.title-cell .institution { color: var(--ink-soft); font-size: 13px; }
-  td.title-cell .tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; }
-  .tag {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: var(--civic-blue-soft);
-    color: var(--civic-blue);
-    white-space: nowrap;
-  }
-  .tag.visa-explicit { background: var(--green-soft); color: var(--green); }
-  .tag.visa-inferred { background: var(--amber-soft); color: var(--amber); }
-  .tag.visa-none { background: var(--red-soft); color: var(--red); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { overflow-x: clip; min-height: 100vh; }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14.5px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
 
-  td.loc-cell { color: var(--ink-soft); font-size: 13px; width: 160px; }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
 
-  .empty-state, .loading-state, .error-state {
-    padding: 64px 12px;
-    text-align: center;
-    color: var(--ink-soft);
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 16px;
-  }
+    /* Layout wrapper */
+    .container {
+      width: 100%;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 clamp(16px, 3.5vw, 40px);
+    }
 
-  dialog.detail {
-    max-width: 640px;
-    width: 92vw;
-    border: none;
-    border-radius: 4px;
-    padding: 0;
-    background: var(--paper-raised);
-    color: var(--ink);
-  }
-  dialog.detail::backdrop { background: rgba(10, 14, 20, 0.55); }
-  dialog.detail .panel { padding: 26px 28px 22px; }
-  dialog.detail h2 { font-family: var(--serif); font-size: 22px; margin: 0 0 4px; }
-  dialog.detail .institution { color: var(--ink-soft); margin-bottom: 14px; }
-  dialog.detail dl { display: grid; grid-template-columns: 120px 1fr; gap: 7px 12px; font-size: 13.5px; margin: 14px 0; }
-  dialog.detail dt { color: var(--ink-soft); font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; padding-top: 2px; }
-  dialog.detail .summary { font-family: var(--serif); font-size: 15px; line-height: 1.6; border-top: 1px solid var(--rule); padding-top: 14px; margin-top: 14px; }
-  dialog.detail .actions { display: flex; gap: 10px; margin-top: 20px; }
-  dialog.detail .actions a {
-    font-family: var(--sans);
-    font-weight: 500;
-    font-size: 13.5px;
-    text-decoration: none;
-    padding: 9px 16px;
-    border-radius: 3px;
-    background: var(--civic-blue);
-    color: #fff;
-  }
-  dialog.detail .actions a.secondary { background: transparent; color: var(--civic-blue); border: 1px solid var(--civic-blue); }
-  dialog.detail button.close {
-    position: absolute; top: 14px; right: 14px;
-    background: none; border: none; font-size: 20px; color: var(--ink-soft); cursor: pointer;
-  }
-  dialog.detail { position: relative; }
+    /* Top Navigation bar */
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background-color: rgba(255, 255, 255, 0.92);
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+    [data-active-theme="dark"] .site-header {
+      background-color: rgba(16, 22, 34, 0.92);
+    }
 
-  footer.colophon {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 20px clamp(16px, 4vw, 48px) 48px;
-    color: var(--ink-soft);
-    font-size: 12.5px;
-    border-top: 1px solid var(--rule);
-  }
-  footer.colophon a { color: var(--ink-soft); }
-  footer.colophon .health-dot {
-    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-    background: var(--green); margin-right: 5px; vertical-align: middle;
-  }
-  footer.colophon .health-dot.stale { background: var(--amber); }
-  footer.colophon .health-dot.dead { background: var(--red); }
+    .header-inner {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
 
-  @media (max-width: 720px) {
-    table.ledger thead { display: none; }
-    table.ledger, table.ledger tbody, table.ledger tr, table.ledger td { display: block; width: 100%; box-sizing: border-box; }
-    table.ledger tbody tr { padding: 14px 4px; }
-    td.title-cell .title { overflow-wrap: anywhere; min-width: 0; }
-    td.title-cell .institution { overflow-wrap: anywhere; min-width: 0; }
-    td.deadline-cell { width: auto; margin-bottom: 8px; }
-    td.loc-cell { width: auto; margin-top: 6px; }
-    dialog.detail dl { grid-template-columns: 100px 1fr; }
-  }
-</style>
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      user-select: none;
+    }
+
+    .brand-emblem {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-title-wrap {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand-name {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: 19px;
+      letter-spacing: 0.12em;
+      color: var(--text);
+    }
+
+    .brand-tagline {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .nav-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .saved-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: var(--radius-full);
+      background: var(--brand);
+      color: #FFFFFF;
+      transition: all 0.2s ease;
+    }
+    [data-active-theme="dark"] .saved-badge {
+      background: var(--brand);
+      color: #090D14;
+    }
+
+    .theme-toggle-btn {
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .theme-toggle-btn:hover {
+      color: var(--text);
+      background: var(--bg-subtle);
+      border-color: var(--border-strong);
+    }
+
+    /* Hero Editorial Section */
+    .hero-section {
+      padding: 36px 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg) 100%);
+    }
+
+    .hero-content {
+      max-width: 900px;
+    }
+
+    .hero-h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(26px, 3.2vw, 36px);
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      line-height: 1.25;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .hero-lead {
+      font-size: 15.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .hero-dispatch-notice {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      font-family: var(--font-mono);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      color: var(--text-muted);
+    }
+    .hero-dispatch-notice a {
+      color: var(--brand-ink);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* Live Metrics Banner */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--brand);
+      opacity: 0.6;
+    }
+    .metric-num {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .metric-label {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Controls Bar & Quick Filter Chips */
+    .control-center {
+      position: sticky;
+      top: 64px;
+      z-index: 30;
+      background: var(--bg);
+      padding: 16px 0 12px;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      background-color: rgba(248, 250, 252, 0.94);
+      transition: background-color 0.2s ease;
+    }
+    [data-active-theme="dark"] .control-center {
+      background-color: rgba(9, 13, 20, 0.94);
+    }
+
+    .search-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex: 1 1 280px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--text-faint);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 64px 0 38px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .search-input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+    .search-input::placeholder {
+      color: var(--text-faint);
+    }
+
+    .kbd-shortcut {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-faint);
+      pointer-events: none;
+    }
+
+    .search-clear-btn {
+      position: absolute;
+      right: 36px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: var(--radius-full);
+      border: none;
+      background: var(--border);
+      color: var(--text-muted);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .search-clear-btn:hover {
+      background: var(--border-strong);
+      color: var(--text);
+    }
+
+    .view-toggles {
+      display: flex;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .view-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    .view-btn.active {
+      background: var(--bg-subtle);
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Filter Selects Row */
+    .filter-dropdowns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .filter-select {
+      height: 34px;
+      padding: 0 28px 0 10px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: all 0.15s ease;
+    }
+    .filter-select:hover {
+      border-color: var(--border-strong);
+    }
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--brand);
+    }
+
+    /* Quick Filter Chips */
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .chip-btn {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .chip-btn:hover {
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+    .chip-btn.active {
+      background: var(--brand);
+      color: #FFFFFF;
+      border-color: var(--brand);
+      font-weight: 600;
+    }
+    [data-active-theme="dark"] .chip-btn.active {
+      background: var(--brand);
+      color: #090D14;
+      border-color: var(--brand);
+    }
+
+    .chip-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: var(--radius-full);
+      background: rgba(0,0,0,0.12);
+    }
+    [data-active-theme="dark"] .chip-btn.active .chip-badge {
+      background: rgba(0,0,0,0.25);
+    }
+
+    .reset-btn {
+      margin-left: auto;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--crimson);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+    .reset-btn:hover {
+      background: var(--crimson-soft);
+    }
+
+    /* Active Query Status Bar */
+    .query-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 18px 0 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .results-count {
+      font-weight: 500;
+    }
+    .results-count strong {
+      color: var(--text);
+      font-family: var(--font-mono);
+    }
+
+    .export-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .export-btn {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .export-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    /* Table Ledger View */
+    .ledger-table-wrap {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+      margin-bottom: 48px;
+    }
+
+    table.ledger {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    table.ledger thead th {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-faint);
+      padding: 12px 14px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    table.ledger tbody tr {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+    table.ledger tbody tr:last-child {
+      border-bottom: none;
+    }
+    table.ledger tbody tr:hover {
+      background: var(--bg-hover);
+    }
+    table.ledger tbody tr:focus {
+      outline: 2px solid var(--brand);
+      outline-offset: -2px;
+    }
+
+    table.ledger td {
+      padding: 14px;
+      vertical-align: top;
+    }
+
+    /* Table Column cells */
+    .td-deadline {
+      width: 130px;
+      white-space: nowrap;
+    }
+
+    .td-position {
+      min-width: 320px;
+    }
+
+    .td-sector {
+      width: 160px;
+      white-space: nowrap;
+    }
+
+    .td-location {
+      width: 160px;
+    }
+
+    .td-actions {
+      width: 80px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* Badges & Pills */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+    .badge-urgent {
+      background: var(--crimson-soft);
+      color: var(--crimson);
+      border: 1px solid var(--crimson-border);
+      font-weight: 600;
+    }
+    .badge-soon {
+      background: var(--gold-soft);
+      color: var(--gold);
+      border: 1px solid var(--gold-border);
+    }
+    .badge-open {
+      background: var(--emerald-soft);
+      color: var(--emerald);
+      border: 1px solid var(--emerald-border);
+    }
+    .badge-rolling {
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      margin-right: 4px;
+      margin-top: 4px;
+    }
+    .tag-discipline {
+      background: var(--brand-soft);
+      color: var(--brand-ink);
+      border-color: transparent;
+    }
+
+    .tag-visa {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+    .visa-explicit {
+      background: var(--emerald-soft);
+      color: var(--emerald);
+      border: 1px solid var(--emerald-border);
+    }
+    .visa-inferred {
+      background: var(--gold-soft);
+      color: var(--gold);
+      border: 1px solid var(--gold-border);
+    }
+    .visa-none {
+      background: var(--crimson-soft);
+      color: var(--crimson);
+      border: 1px solid var(--crimson-border);
+    }
+
+    .title-primary {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 3px;
+    }
+    .institution-lead {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pi-lead {
+      color: var(--text-faint);
+      font-style: italic;
+    }
+
+    /* Star Bookmark button */
+    .star-btn {
+      background: none;
+      border: 1px solid transparent;
+      padding: 6px;
+      border-radius: var(--radius-md);
+      color: var(--text-faint);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .star-btn:hover {
+      color: var(--gold);
+      background: var(--gold-soft);
+    }
+    .star-btn.starred {
+      color: var(--gold);
+    }
+
+    /* Grid Cards View */
+    .grid-view {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .job-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .job-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-md);
+    }
+    .job-card:focus {
+      outline: 2px solid var(--brand);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .card-institution {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+
+    .card-summary {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin: 8px 0 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex-grow: 1;
+    }
+
+    .card-meta-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px;
+    }
+
+    .apply-direct-btn {
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      font-weight: 600;
+      background: var(--brand);
+      color: #FFFFFF;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.15s ease;
+    }
+    [data-active-theme="dark"] .apply-direct-btn {
+      background: var(--brand);
+      color: #090D14;
+    }
+    .apply-direct-btn:hover {
+      opacity: 0.92;
+    }
+
+    /* Empty and Loading States */
+    .empty-state {
+      padding: 64px 20px;
+      text-align: center;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      margin-bottom: 48px;
+    }
+    .empty-state-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+    .empty-state-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .empty-state-msg {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 440px;
+      margin: 0 auto 16px;
+    }
+
+    .skeleton-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .skeleton-row td {
+      padding: 18px 14px;
+    }
+    .skeleton-bar {
+      height: 14px;
+      background: linear-gradient(90deg, var(--bg-subtle) 25%, var(--border) 50%, var(--bg-subtle) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Detail Modal / Drawer */
+    dialog.detail-modal {
+      width: min(720px, 94vw);
+      max-height: 88vh;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-surface-raised);
+      color: var(--text);
+      box-shadow: var(--shadow-modal);
+      margin: auto;
+      padding: 0;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      overflow: hidden;
+      animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    dialog.detail-modal::backdrop {
+      background: rgba(9, 13, 20, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.97) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-shell {
+      display: flex;
+      flex-direction: column;
+      max-height: 88vh;
+    }
+
+    .modal-header {
+      padding: 24px 28px 18px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.15s ease;
+    }
+    .modal-close-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text);
+    }
+
+    .modal-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text);
+      margin-bottom: 6px;
+      padding-right: 36px;
+    }
+
+    .modal-institution {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    .modal-body {
+      padding: 24px 28px;
+      overflow-y: auto;
+      flex: 1 1 auto;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px 20px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .detail-grid-item dt {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-faint);
+      margin-bottom: 2px;
+    }
+
+    .detail-grid-item dd {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .modal-section-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-faint);
+      margin-bottom: 10px;
+    }
+
+    .modal-summary-text {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-line;
+      margin-bottom: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 28px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .modal-footer-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: var(--radius-md);
+      background: var(--brand);
+      color: #FFFFFF;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    [data-active-theme="dark"] .btn-primary {
+      background: var(--brand);
+      color: #090D14;
+    }
+    .btn-primary:hover {
+      opacity: 0.92;
+    }
+
+    .btn-secondary {
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--bg-subtle);
+      border-color: var(--text-muted);
+    }
+
+    /* Toast Notification */
+    .toast-tray {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-msg {
+      background: var(--text);
+      color: var(--bg);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+      animation: toastIn 0.25s ease-out;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Site Footer / Colophon */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-surface);
+      padding: 40px 0 64px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 32px;
+    }
+
+    .footer-col h4 {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-faint);
+      margin-bottom: 12px;
+    }
+
+    .footer-col p {
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .footer-links {
+      list-style: none;
+    }
+    .footer-links li {
+      margin-bottom: 8px;
+    }
+    .footer-links a:hover {
+      color: var(--text);
+      text-decoration: underline;
+    }
+
+    .health-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      margin-top: 8px;
+    }
+    .health-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+    }
+    .health-dot.stale { background: var(--gold); }
+    .health-dot.offline { background: var(--crimson); }
+
+    /* Responsive adjustments */
+    @media (max-width: 840px) {
+      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .search-row { flex-direction: column; align-items: stretch; }
+      .view-toggles { align-self: flex-start; }
+    }
+  </style>
 </head>
 <body>
 
-<header class="masthead">
-  <h1>Predoc Listings</h1>
-  <p class="dek">Pre-doctoral research assistantships in economics, finance and public policy — outside the United States.</p>
-  <div class="rule-thin meta-row">
-    <span id="meta-count">— listings</span>
-    <span id="meta-updated">—</span>
-    <span><a href="feed.xml">RSS feed</a></span>
-    <span><a href="architecture.html">Architecture</a></span>
-    <span><a href="https://github.com/" id="repo-link" target="_blank" rel="noopener">Source</a></span>
+  <!-- Site Navigation Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="brand-link" id="brand-home-link" aria-label="Collegeum Home">
+        <div class="brand-emblem">
+          <svg viewBox="0 0 64 64" width="34" height="34" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="64" height="64" rx="14" fill="#0F172A"/>
+            <rect x="2" y="2" width="60" height="60" rx="12" stroke="#1E293B" stroke-width="1.5"/>
+            <path d="M16 48V28C16 19.163 23.163 12 32 12C40.837 12 48 19.163 48 28V48" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M21 48V29C21 22.925 25.925 18 32 18C38.075 18 43 22.925 43 29V48" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="12" y1="48" x2="52" y2="48" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="10" y1="52" x2="54" y2="52" stroke="#475569" stroke-width="2" stroke-linecap="round"/>
+            <path d="M32 24L34 29.5L39.5 31.5L34 33.5L32 39L30 33.5L24.5 31.5L30 29.5Z" fill="#F8FAFC"/>
+            <circle cx="32" cy="31.5" r="1.5" fill="#D97706"/>
+          </svg>
+        </div>
+        <div class="brand-title-wrap">
+          <span class="brand-name">COLLEGEUM</span>
+          <span class="brand-tagline">Research Positions Directory</span>
+        </div>
+      </a>
+
+      <nav class="header-nav">
+        <button class="nav-btn" id="nav-saved-btn" title="View saved positions">
+          <span>★</span>
+          <span>Saved</span>
+          <span class="saved-badge" id="nav-saved-count">0</span>
+        </button>
+        <a href="feed.xml" class="nav-btn" title="Subscribe via RSS Feed">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+          <span>RSS</span>
+        </a>
+        <a href="architecture.html" class="nav-btn" title="System Architecture &amp; Pipeline Data Flow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          <span>Architecture</span>
+        </a>
+        <button class="theme-toggle-btn" id="theme-toggle" title="Toggle color theme (Light / Dark / System)" aria-label="Toggle theme">
+          <svg id="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+          <svg id="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Lead Section -->
+  <section class="hero-section">
+    <div class="container hero-content">
+      <h1 class="hero-h1">The Scholarly &amp; Institutional Positions Index</h1>
+      <p class="hero-lead">
+        Curated registry of predoctoral fellowships in the United States, global PhD and postdoctoral appointments, and empirical research analyst roles at central banks, multilateral organizations, and private economic groups.
+      </p>
+      <div class="hero-dispatch-notice">
+        <span>Telegram Dispatch:</span>
+        <span>Non-US university predoctoral vacancies are posted to our channel.</span>
+      </div>
+
+      <!-- Live metrics strip -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-num" id="stat-total-count">—</div>
+          <div class="metric-label">Active Openings</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-num" id="stat-inst-count">—</div>
+          <div class="metric-label">Institutions Tracked</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-num" id="stat-urgent-count">—</div>
+          <div class="metric-label">Closing in ≤ 7 Days</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-num" id="stat-updated-time">—</div>
+          <div class="metric-label">Last Pipeline Sync</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Filter & Directory Control Bar -->
+  <div class="control-center">
+    <div class="container">
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="search" class="search-input" id="search-input" placeholder="Search position, institution, supervisor, field, or keywords…" aria-label="Search research listings" />
+          <button class="search-clear-btn" id="search-clear-btn" aria-label="Clear search">✕</button>
+          <span class="kbd-shortcut" title="Press / to focus search">/</span>
+        </div>
+
+        <div class="view-toggles" role="group" aria-label="View format">
+          <button class="view-btn active" id="view-ledger-btn" aria-pressed="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <span>Ledger</span>
+          </button>
+          <button class="view-btn" id="view-grid-btn" aria-pressed="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+            <span>Cards</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dropdown Filters -->
+      <div class="filter-dropdowns">
+        <select class="filter-select" id="filter-discipline" aria-label="Filter by discipline">
+          <option value="">All Disciplines</option>
+        </select>
+        <select class="filter-select" id="filter-role-kind" aria-label="Filter by role type">
+          <option value="">All Position Types</option>
+          <option value="predoc">Pre-doctoral / Research Assistant</option>
+          <option value="postdoc">Postdoctoral Scholar / Fellow</option>
+          <option value="phd">PhD Candidate / Doctoral</option>
+        </select>
+        <select class="filter-select" id="filter-sector" aria-label="Filter by sector">
+          <option value="">All Sectors</option>
+          <option value="institutional">Central Banks &amp; Multilateral</option>
+          <option value="academic">Universities &amp; Academic Hubs</option>
+          <option value="private">Economic Consultancies &amp; Labs</option>
+        </select>
+        <select class="filter-select" id="filter-country" aria-label="Filter by country">
+          <option value="">All Countries</option>
+        </select>
+        <select class="filter-select" id="filter-visa" aria-label="Filter by visa sponsorship">
+          <option value="">All Visa Policies</option>
+          <option value="explicit">Explicitly Sponsored</option>
+          <option value="inferred">Likely / Policy Supported</option>
+          <option value="not_offered">Citizens / Work Permit Required</option>
+        </select>
+        <select class="filter-select" id="filter-deadline" aria-label="Filter by deadline timeline">
+          <option value="">Any Deadline</option>
+          <option value="7">Closing within 7 days (Urgent)</option>
+          <option value="30">Closing within 30 days</option>
+          <option value="rolling">Rolling / Unstated</option>
+        </select>
+        <select class="filter-select" id="filter-sort" aria-label="Sort listings">
+          <option value="deadline">Sort: Deadline (Soonest first)</option>
+          <option value="newest">Sort: Date Added (Newest first)</option>
+          <option value="institution">Sort: Institution (A–Z)</option>
+          <option value="title">Sort: Position Title (A–Z)</option>
+        </select>
+      </div>
+
+      <!-- Quick Filter Pills -->
+      <div class="quick-chips">
+        <button class="chip-btn active" data-preset="all">All Listings</button>
+        <button class="chip-btn" data-preset="us-predoc">🇺🇸 US Pre-docs</button>
+        <button class="chip-btn" data-preset="postdoc-phd">🎓 Postdocs &amp; PhDs</button>
+        <button class="chip-btn" data-preset="institutional">🏛️ Central Banks &amp; Multilateral</button>
+        <button class="chip-btn" data-preset="closing-soon">⏳ Closing Soon (&le;7d)</button>
+        <button class="chip-btn" data-preset="saved" id="chip-saved">
+          <span>★ Saved</span>
+          <span class="chip-badge" id="chip-saved-count">0</span>
+        </button>
+
+        <button class="reset-btn" id="reset-all-btn" style="display:none;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <span>Reset Filters</span>
+        </button>
+      </div>
+    </div>
   </div>
-</header>
 
-<div class="layout">
-  <div class="toolbar">
-    <input type="search" id="search" placeholder="Search title, institution, supervisor…" aria-label="Search listings" />
-    <select id="filter-discipline" aria-label="Filter by discipline"><option value="">All disciplines</option></select>
-    <select id="filter-country" aria-label="Filter by country"><option value="">All countries</option></select>
-    <select id="filter-deadline" aria-label="Filter by deadline">
-      <option value="">Any deadline</option>
-      <option value="7">Closing within 7 days</option>
-      <option value="30">Closing within 30 days</option>
-      <option value="rolling">Rolling / unstated</option>
-    </select>
-    <select id="sort-by" aria-label="Sort">
-      <option value="deadline">Sort: deadline soonest</option>
-      <option value="newest">Sort: newest first</option>
-      <option value="institution">Sort: institution A–Z</option>
-    </select>
-    <button class="reset" id="reset-filters" type="button">Reset</button>
-    <span class="count" id="visible-count"></span>
-  </div>
+  <!-- Listings Section -->
+  <main class="container">
+    <div class="query-status-bar">
+      <div class="results-count" id="results-count-text">
+        Showing <strong>0</strong> positions
+      </div>
+      <div class="export-actions">
+        <button class="export-btn" id="export-csv-btn" title="Export visible positions to CSV">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Export CSV</span>
+        </button>
+      </div>
+    </div>
 
-  <div id="state-region"></div>
+    <!-- Loading Skeleton View -->
+    <div id="loading-state" class="ledger-table-wrap">
+      <table class="skeleton-table">
+        <tbody>
+          <tr class="skeleton-row"><td><div class="skeleton-bar" style="width:70px;"></div></td><td><div class="skeleton-bar" style="width:65%;"></div><div class="skeleton-bar" style="width:40%; margin-top:8px;"></div></td><td><div class="skeleton-bar" style="width:110px;"></div></td><td><div class="skeleton-bar" style="width:90px;"></div></td></tr>
+          <tr class="skeleton-row"><td><div class="skeleton-bar" style="width:85px;"></div></td><td><div class="skeleton-bar" style="width:55%;"></div><div class="skeleton-bar" style="width:35%; margin-top:8px;"></div></td><td><div class="skeleton-bar" style="width:100px;"></div></td><td><div class="skeleton-bar" style="width:90px;"></div></td></tr>
+          <tr class="skeleton-row"><td><div class="skeleton-bar" style="width:60px;"></div></td><td><div class="skeleton-bar" style="width:75%;"></div><div class="skeleton-bar" style="width:45%; margin-top:8px;"></div></td><td><div class="skeleton-bar" style="width:120px;"></div></td><td><div class="skeleton-bar" style="width:90px;"></div></td></tr>
+          <tr class="skeleton-row"><td><div class="skeleton-bar" style="width:75px;"></div></td><td><div class="skeleton-bar" style="width:60%;"></div><div class="skeleton-bar" style="width:30%; margin-top:8px;"></div></td><td><div class="skeleton-bar" style="width:95px;"></div></td><td><div class="skeleton-bar" style="width:90px;"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
 
-  <table class="ledger" id="ledger" hidden>
-    <thead>
-      <tr>
-        <th>Deadline</th>
-        <th>Position</th>
-        <th>Location</th>
-      </tr>
-    </thead>
-    <tbody id="ledger-body"></tbody>
-  </table>
-</div>
+    <!-- Empty State View -->
+    <div id="empty-state" class="empty-state" style="display:none;">
+      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-title">No listings match your selection</div>
+      <p class="empty-state-msg">Try loosening search keywords, resetting discipline filters, or viewing all categories.</p>
+      <button class="btn-secondary" id="empty-reset-btn">Reset All Filters</button>
+    </div>
 
-<dialog class="detail" id="detail-dialog">
-  <div class="panel">
-    <button class="close" id="detail-close" aria-label="Close">&times;</button>
-    <h2 id="detail-title"></h2>
-    <div class="institution" id="detail-institution"></div>
-    <dl id="detail-fields"></dl>
-    <div class="summary" id="detail-summary"></div>
-    <div class="actions" id="detail-actions"></div>
-  </div>
-</dialog>
+    <!-- Table View (Ledger) -->
+    <div id="ledger-wrap" class="ledger-table-wrap" style="display:none;">
+      <table class="ledger" id="ledger-table">
+        <thead>
+          <tr>
+            <th scope="col">Deadline</th>
+            <th scope="col">Position &amp; Institution</th>
+            <th scope="col">Sector &amp; Type</th>
+            <th scope="col">Location &amp; Visa</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="ledger-body"></tbody>
+      </table>
+    </div>
 
-<footer class="colophon">
-  <span id="health-indicator"><span class="health-dot"></span>checking pipeline health…</span>
-  &middot; Built with a small, config-driven scraper and a free-tier LLM gate. Not affiliated with any listed institution.
-  &middot; See a stale or incorrect listing? Its source link is in the detail view.
-</footer>
+    <!-- Grid View (Cards) -->
+    <div id="grid-wrap" class="grid-view" style="display:none;"></div>
+  </main>
 
-<script>
-(() => {
-  'use strict';
+  <!-- Listing Detail Modal -->
+  <dialog class="detail-modal" id="detail-modal" aria-labelledby="modal-title">
+    <div class="modal-shell">
+      <header class="modal-header">
+        <button class="modal-close-btn" id="modal-close-btn" aria-label="Close dialog">&times;</button>
+        <div class="modal-badges" id="modal-badges"></div>
+        <h2 class="modal-title" id="modal-title"></h2>
+        <div class="modal-institution" id="modal-institution"></div>
+      </header>
+      
+      <div class="modal-body">
+        <dl class="detail-grid" id="modal-grid"></dl>
+        
+        <div class="modal-section-title">Position Overview &amp; Research Scope</div>
+        <div class="modal-summary-text" id="modal-summary"></div>
+      </div>
 
-  const state = {
-    listings: [],
-    filtered: [],
-  };
+      <footer class="modal-footer">
+        <div class="modal-footer-actions">
+          <button class="btn-secondary" id="modal-star-btn">★ Save</button>
+          <button class="btn-secondary" id="modal-share-btn">🔗 Copy Link</button>
+        </div>
+        <div class="modal-footer-actions">
+          <a href="#" class="btn-secondary" id="modal-source-link" target="_blank" rel="noopener">Source Portal</a>
+          <a href="#" class="btn-primary" id="modal-apply-link" target="_blank" rel="noopener">Apply on Portal ↗</a>
+        </div>
+      </footer>
+    </div>
+  </dialog>
 
-  const els = {
-    search: document.getElementById('search'),
-    discipline: document.getElementById('filter-discipline'),
-    country: document.getElementById('filter-country'),
-    deadline: document.getElementById('filter-deadline'),
-    sortBy: document.getElementById('sort-by'),
-    reset: document.getElementById('reset-filters'),
-    ledger: document.getElementById('ledger'),
-    body: document.getElementById('ledger-body'),
-    stateRegion: document.getElementById('state-region'),
-    visibleCount: document.getElementById('visible-count'),
-    metaCount: document.getElementById('meta-count'),
-    metaUpdated: document.getElementById('meta-updated'),
-    dialog: document.getElementById('detail-dialog'),
-    detailTitle: document.getElementById('detail-title'),
-    detailInstitution: document.getElementById('detail-institution'),
-    detailFields: document.getElementById('detail-fields'),
-    detailSummary: document.getElementById('detail-summary'),
-    detailActions: document.getElementById('detail-actions'),
-    detailClose: document.getElementById('detail-close'),
-    healthIndicator: document.getElementById('health-indicator'),
-  };
+  <!-- Toast Tray -->
+  <div class="toast-tray" id="toast-tray" aria-live="polite"></div>
 
-  function escapeHtml(value) {
-    const div = document.createElement('div');
-    div.textContent = value == null ? '' : String(value);
-    return div.innerHTML;
-  }
+  <!-- Colophon / Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>About Collegeum</h4>
+          <p>
+            Collegeum is an independent scholarly directory tracking early-career appointments, predoctoral fellowships, and quantitative analyst opportunities. We index vacancies directly from institutional applicant systems, central banks, and research institutes.
+          </p>
+          <div class="health-pill" id="health-status-badge">
+            <span class="health-dot" id="health-dot"></span>
+            <span id="health-label">Checking pipeline health…</span>
+          </div>
+        </div>
 
-  function deadlineBadge(listing) {
-    if (!listing.deadline || listing.days_left == null) {
-      return { cls: 'dl-none', label: 'Rolling' };
-    }
-    const days = listing.days_left;
-    if (days < 0) return { cls: 'dl-none', label: 'Closed' };
-    if (days <= 7) return { cls: 'dl-urgent', label: days === 0 ? 'Today' : `${days}d left` };
-    if (days <= 30) return { cls: 'dl-soon', label: formatDate(listing.deadline) };
-    return { cls: 'dl-open', label: formatDate(listing.deadline) };
-  }
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul class="footer-links">
+            <li><a href="feed.xml">RSS Feed (XML)</a></li>
+            <li><a href="data/listings.json" target="_blank">Raw JSON Endpoint</a></li>
+            <li><a href="architecture.html">Architecture Diagram</a></li>
+            <li><a href="data/health.json" target="_blank">Health Telemetry</a></li>
+          </ul>
+        </div>
 
-  function formatDate(iso) {
+        <div class="footer-col">
+          <h4>Policy &amp; Editorial</h4>
+          <p>
+            Not affiliated with, sponsored by, or endorsed by any listed institution or university. All marks and names remain the property of their respective holders.
+          </p>
+          <p style="margin-top: 8px;">
+            <a href="https://github.com/amirrezafarnamtaheri/predoc-not-org" target="_blank" rel="noopener" style="text-decoration:underline;">GitHub Repository</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+  (() => {
+    'use strict';
+
+    // Application state
+    const state = {
+      listings: [],
+      filtered: [],
+      savedIds: new Set(),
+      activePreset: 'all',
+      viewMode: localStorage.getItem('collegeum-view') || 'ledger',
+      currentModalId: null,
+    };
+
+    // Load saved bookmarks from localStorage
     try {
-      const d = new Date(iso);
-      return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-    } catch { return iso; }
-  }
-
-  function populateFilterOptions() {
-    const disciplines = new Set();
-    const countries = new Set();
-    for (const l of state.listings) {
-      (l.disciplines || []).forEach((d) => disciplines.add(d));
-      if (l.country) countries.add(l.country);
+      const saved = JSON.parse(localStorage.getItem('collegeum-saved-ids') || '[]');
+      state.savedIds = new Set(saved);
+    } catch (_) {
+      state.savedIds = new Set();
     }
-    fillSelect(els.discipline, disciplines, 'All disciplines');
-    fillSelect(els.country, countries, 'All countries');
-  }
 
-  function fillSelect(select, values, placeholder) {
-    const current = select.value;
-    select.innerHTML = '';
-    const opt0 = document.createElement('option');
-    opt0.value = '';
-    opt0.textContent = placeholder;
-    select.appendChild(opt0);
-    Array.from(values).sort().forEach((v) => {
-      const opt = document.createElement('option');
-      opt.value = v;
-      opt.textContent = v;
-      select.appendChild(opt);
-    });
-    select.value = current;
-  }
+    // UI Element Cache
+    const els = {
+      themeToggle: document.getElementById('theme-toggle'),
+      themeSun: document.getElementById('theme-icon-sun'),
+      themeMoon: document.getElementById('theme-icon-moon'),
+      search: document.getElementById('search-input'),
+      searchClear: document.getElementById('search-clear-btn'),
+      discipline: document.getElementById('filter-discipline'),
+      roleKind: document.getElementById('filter-role-kind'),
+      sector: document.getElementById('filter-sector'),
+      country: document.getElementById('filter-country'),
+      visa: document.getElementById('filter-visa'),
+      deadline: document.getElementById('filter-deadline'),
+      sort: document.getElementById('filter-sort'),
+      chips: document.querySelectorAll('.chip-btn'),
+      resetAll: document.getElementById('reset-all-btn'),
+      emptyReset: document.getElementById('empty-reset-btn'),
+      resultsCount: document.getElementById('results-count-text'),
+      exportCsv: document.getElementById('export-csv-btn'),
+      loadingState: document.getElementById('loading-state'),
+      emptyState: document.getElementById('empty-state'),
+      ledgerWrap: document.getElementById('ledger-wrap'),
+      ledgerBody: document.getElementById('ledger-body'),
+      gridWrap: document.getElementById('grid-wrap'),
+      viewLedgerBtn: document.getElementById('view-ledger-btn'),
+      viewGridBtn: document.getElementById('view-grid-btn'),
+      navSavedBtn: document.getElementById('nav-saved-btn'),
+      navSavedCount: document.getElementById('nav-saved-count'),
+      chipSavedCount: document.getElementById('chip-saved-count'),
+      modal: document.getElementById('detail-modal'),
+      modalClose: document.getElementById('modal-close-btn'),
+      modalBadges: document.getElementById('modal-badges'),
+      modalTitle: document.getElementById('modal-title'),
+      modalInstitution: document.getElementById('modal-institution'),
+      modalGrid: document.getElementById('modal-grid'),
+      modalSummary: document.getElementById('modal-summary'),
+      modalStarBtn: document.getElementById('modal-star-btn'),
+      modalShareBtn: document.getElementById('modal-share-btn'),
+      modalApplyLink: document.getElementById('modal-apply-link'),
+      modalSourceLink: document.getElementById('modal-source-link'),
+      toastTray: document.getElementById('toast-tray'),
+      statTotal: document.getElementById('stat-total-count'),
+      statInst: document.getElementById('stat-inst-count'),
+      statUrgent: document.getElementById('stat-urgent-count'),
+      statUpdated: document.getElementById('stat-updated-time'),
+      healthDot: document.getElementById('health-dot'),
+      healthLabel: document.getElementById('health-label'),
+    };
 
-  function applyFilters() {
-    const q = els.search.value.trim().toLowerCase();
-    const discipline = els.discipline.value;
-    const country = els.country.value;
-    const deadlineFilter = els.deadline.value;
+    // Helper: Escaping HTML
+    function esc(s) {
+      if (s == null) return '';
+      const d = document.createElement('div');
+      d.textContent = String(s);
+      return d.innerHTML;
+    }
 
-    let rows = state.listings.filter((l) => {
-      if (q) {
-        const hay = [l.title, l.institution, l.principal_investigator, l.summary]
-          .filter(Boolean).join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
+    // Helper: Toast Notifications
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast-msg';
+      toast.innerHTML = `<span>✓</span><span>${esc(message)}</span>`;
+      els.toastTray.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 2800);
+    }
+
+    // Theme Management
+    function initTheme() {
+      const current = document.documentElement.getAttribute('data-active-theme') || 'light';
+      updateThemeIcon(current);
+
+      els.themeToggle.addEventListener('click', () => {
+        const active = document.documentElement.getAttribute('data-active-theme');
+        const next = active === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        document.documentElement.setAttribute('data-active-theme', next);
+        localStorage.setItem('collegeum-theme', next);
+        updateThemeIcon(next);
+      });
+    }
+
+    function updateThemeIcon(active) {
+      if (active === 'dark') {
+        els.themeSun.style.display = 'block';
+        els.themeMoon.style.display = 'none';
+      } else {
+        els.themeSun.style.display = 'none';
+        els.themeMoon.style.display = 'block';
       }
-      if (discipline && !(l.disciplines || []).includes(discipline)) return false;
-      if (country && l.country !== country) return false;
-      if (deadlineFilter === 'rolling' && l.deadline) return false;
-      if (deadlineFilter === '7' && !(l.days_left != null && l.days_left <= 7 && l.days_left >= 0)) return false;
-      if (deadlineFilter === '30' && !(l.days_left != null && l.days_left <= 30 && l.days_left >= 0)) return false;
-      return true;
-    });
-
-    const sortBy = els.sortBy.value;
-    rows = rows.slice().sort((a, b) => {
-      if (sortBy === 'institution') return (a.institution || '').localeCompare(b.institution || '');
-      if (sortBy === 'newest') return (b.first_seen_at || '').localeCompare(a.first_seen_at || '');
-      // deadline soonest: nulls (rolling) sort last
-      const ad = a.days_left == null ? Infinity : a.days_left;
-      const bd = b.days_left == null ? Infinity : b.days_left;
-      return ad - bd;
-    });
-
-    state.filtered = rows;
-    render();
-    syncQueryString();
-  }
-
-  function render() {
-    els.body.innerHTML = '';
-    els.visibleCount.textContent = `${state.filtered.length} shown of ${state.listings.length}`;
-
-    if (state.listings.length === 0) {
-      els.ledger.hidden = true;
-      els.stateRegion.innerHTML = '<div class="empty-state">No active listings right now. Check back tomorrow.</div>';
-      return;
-    }
-    if (state.filtered.length === 0) {
-      els.ledger.hidden = true;
-      els.stateRegion.innerHTML = '<div class="empty-state">No listings match these filters.</div>';
-      return;
     }
 
-    els.stateRegion.innerHTML = '';
-    els.ledger.hidden = false;
+    // Format Dates
+    function formatDate(iso) {
+      if (!iso) return '—';
+      try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch (_) { return iso; }
+    }
 
-    const frag = document.createDocumentFragment();
-    for (const listing of state.filtered) {
-      const tr = document.createElement('tr');
-      tr.tabIndex = 0;
-      tr.addEventListener('click', () => openDetail(listing));
-      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') openDetail(listing); });
+    function formatRelativeTime(iso) {
+      if (!iso) return 'Recently';
+      try {
+        const then = new Date(iso).getTime();
+        const diffHours = (Date.now() - then) / 36e5;
+        if (diffHours < 1) return 'Just now';
+        if (diffHours < 24) return `${Math.round(diffHours)}h ago`;
+        const diffDays = Math.round(diffHours / 24);
+        return `${diffDays}d ago`;
+      } catch (_) { return 'Recently'; }
+    }
 
-      const badge = deadlineBadge(listing);
-      const tdDeadline = document.createElement('td');
-      tdDeadline.className = 'deadline-cell';
-      tdDeadline.innerHTML = `<span class="deadline-gutter ${badge.cls}">${escapeHtml(badge.label)}</span>`;
+    // Compute deadline badge configuration
+    function getDeadlineBadge(listing) {
+      if (!listing.deadline || listing.days_left == null) {
+        return { cls: 'badge-rolling', label: 'Rolling / Unstated', urgency: 999 };
+      }
+      const days = listing.days_left;
+      if (days < 0) {
+        return { cls: 'badge-rolling', label: 'Closed', urgency: 1000 };
+      }
+      if (days === 0) {
+        return { cls: 'badge-urgent', label: 'Closing Today', urgency: 0 };
+      }
+      if (days <= 7) {
+        return { cls: 'badge-urgent', label: `${days}d left`, urgency: days };
+      }
+      if (days <= 30) {
+        return { cls: 'badge-soon', label: formatDate(listing.deadline), urgency: days };
+      }
+      return { cls: 'badge-open', label: formatDate(listing.deadline), urgency: days };
+    }
 
-      const tdTitle = document.createElement('td');
-      tdTitle.className = 'title-cell';
-      const tags = (listing.disciplines || []).slice(0, 2).map((d) => `<span class="tag">${escapeHtml(d)}</span>`).join('');
-      const visaClass = listing.visa === 'explicit' ? 'visa-explicit' : (listing.visa === 'inferred' ? 'visa-inferred' : (listing.visa === 'not_offered' ? 'visa-none' : ''));
-      const visaLabel = listing.visa === 'explicit' ? 'Visa: stated' : (listing.visa === 'inferred' ? 'Visa: likely' : (listing.visa === 'not_offered' ? 'Visa: not offered' : 'Visa: unknown'));
-      tdTitle.innerHTML = `
-        <span class="title">${escapeHtml(listing.title)}</span>
-        <span class="institution">${escapeHtml(listing.institution)}${listing.principal_investigator ? ' &middot; ' + escapeHtml(listing.principal_investigator) : ''}</span>
-        <span class="tags">${tags}<span class="tag ${visaClass}">${visaLabel}</span></span>
+    // Classify kind & sector if missing
+    function enrichListingMeta(item) {
+      if (!item.kind) {
+        const t = (item.title || '').toLowerCase();
+        if (/\bpost-?\s?doc(toral)?\b/.test(t)) item.kind = 'postdoc';
+        else if (/\b(ph\.?d\.?|doctoral)\b/.test(t) && !/\bpre-/.test(t)) item.kind = 'phd';
+        else item.kind = 'predoc';
+      }
+      if (!item.sector) {
+        const inst = (item.institution || '').toLowerCase();
+        if (/bank|banco|banque|bundesbank|monetary|reserve|imf|world bank|oecd|bis|adb|ebrd|eib/.test(inst)) {
+          item.sector = 'institutional';
+        } else if (/consulting|cra\b|nera\b|brattle|compass lexecon|cornerstone|keystone|mathematica|rand/.test(inst)) {
+          item.sector = 'private';
+        } else {
+          item.sector = 'academic';
+        }
+      }
+      return item;
+    }
+
+    // Populate Dynamic Filter Options
+    function populateDropdowns() {
+      const disciplines = new Set();
+      const countries = new Set();
+
+      state.listings.forEach(l => {
+        (l.disciplines || []).forEach(d => { if (d && d !== 'Other') disciplines.add(d); });
+        if (l.country) countries.add(l.country);
+      });
+
+      // Populate Disciplines
+      const curDisc = els.discipline.value;
+      els.discipline.innerHTML = '<option value="">All Disciplines</option>';
+      Array.from(disciplines).sort().forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        els.discipline.appendChild(opt);
+      });
+      els.discipline.value = curDisc;
+
+      // Populate Countries
+      const curCountry = els.country.value;
+      els.country.innerHTML = '<option value="">All Countries</option>';
+      Array.from(countries).sort().forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        els.country.appendChild(opt);
+      });
+      els.country.value = curCountry;
+    }
+
+    // Bookmark Toggle Logic
+    function toggleSaveListing(id, event) {
+      if (event) event.stopPropagation();
+      const numericId = Number(id);
+      if (state.savedIds.has(numericId)) {
+        state.savedIds.delete(numericId);
+        showToast('Removed from saved positions');
+      } else {
+        state.savedIds.add(numericId);
+        showToast('Saved to your bookmarks');
+      }
+      localStorage.setItem('collegeum-saved-ids', JSON.stringify(Array.from(state.savedIds)));
+      updateSavedCounts();
+      
+      // Update UI elements in place
+      document.querySelectorAll(`[data-star-id="${numericId}"]`).forEach(btn => {
+        const isStarred = state.savedIds.has(numericId);
+        btn.classList.toggle('starred', isStarred);
+        btn.textContent = isStarred ? '★' : '☆';
+      });
+
+      if (state.currentModalId === numericId) {
+        updateModalStarState(numericId);
+      }
+
+      if (state.activePreset === 'saved') {
+        applyFilters();
+      }
+    }
+
+    function updateSavedCounts() {
+      const count = state.savedIds.size;
+      els.navSavedCount.textContent = count;
+      els.chipSavedCount.textContent = count;
+    }
+
+    // View Switching Logic
+    function setViewMode(mode) {
+      state.viewMode = mode;
+      localStorage.setItem('collegeum-view', mode);
+      if (mode === 'grid') {
+        els.viewGridBtn.classList.add('active');
+        els.viewGridBtn.setAttribute('aria-pressed', 'true');
+        els.viewLedgerBtn.classList.remove('active');
+        els.viewLedgerBtn.setAttribute('aria-pressed', 'false');
+        els.ledgerWrap.style.display = 'none';
+        els.gridWrap.style.display = 'grid';
+      } else {
+        els.viewLedgerBtn.classList.add('active');
+        els.viewLedgerBtn.setAttribute('aria-pressed', 'true');
+        els.viewGridBtn.classList.remove('active');
+        els.viewGridBtn.setAttribute('aria-pressed', 'false');
+        els.ledgerWrap.style.display = 'block';
+        els.gridWrap.style.display = 'none';
+      }
+      renderListings();
+    }
+
+    // Filtering Core
+    function applyFilters() {
+      const q = els.search.value.trim().toLowerCase();
+      const discipline = els.discipline.value;
+      const roleKind = els.roleKind.value;
+      const sector = els.sector.value;
+      const country = els.country.value;
+      const visa = els.visa.value;
+      const deadline = els.deadline.value;
+
+      // Check if any non-default filter is set
+      const isFiltered = !!(q || discipline || roleKind || sector || country || visa || deadline || state.activePreset !== 'all');
+      els.resetAll.style.display = isFiltered ? 'inline-flex' : 'none';
+      els.searchClear.style.display = q ? 'inline-flex' : 'none';
+
+      let list = state.listings.filter(item => {
+        // Preset Filters
+        if (state.activePreset === 'saved' && !state.savedIds.has(item.id)) return false;
+        if (state.activePreset === 'us-predoc') {
+          const isUS = item.country === 'United States' || (item.country || '').toLowerCase().includes('united states');
+          if (!isUS || item.kind !== 'predoc') return false;
+        }
+        if (state.activePreset === 'postdoc-phd' && !(item.kind === 'postdoc' || item.kind === 'phd')) return false;
+        if (state.activePreset === 'institutional' && item.sector !== 'institutional') return false;
+        if (state.activePreset === 'closing-soon') {
+          if (item.days_left == null || item.days_left > 7 || item.days_left < 0) return false;
+        }
+
+        // Keyword query
+        if (q) {
+          const corpus = [
+            item.title,
+            item.institution,
+            item.principal_investigator,
+            item.city,
+            item.country,
+            item.summary,
+            (item.disciplines || []).join(' ')
+          ].filter(Boolean).join(' ').toLowerCase();
+          if (!corpus.includes(q)) return false;
+        }
+
+        // Dropdown filters
+        if (discipline && !(item.disciplines || []).includes(discipline)) return false;
+        if (roleKind && item.kind !== roleKind) return false;
+        if (sector && item.sector !== sector) return false;
+        if (country && item.country !== country) return false;
+        if (visa && item.visa !== visa) return false;
+
+        // Deadline filters
+        if (deadline === 'rolling' && item.deadline) return false;
+        if (deadline === '7') {
+          if (item.days_left == null || item.days_left > 7 || item.days_left < 0) return false;
+        }
+        if (deadline === '30') {
+          if (item.days_left == null || item.days_left > 30 || item.days_left < 0) return false;
+        }
+
+        return true;
+      });
+
+      // Sorting
+      const sortKey = els.sort.value;
+      list.sort((a, b) => {
+        if (sortKey === 'institution') return (a.institution || '').localeCompare(b.institution || '');
+        if (sortKey === 'title') return (a.title || '').localeCompare(b.title || '');
+        if (sortKey === 'newest') return (b.first_seen_at || '').localeCompare(a.first_seen_at || '');
+        
+        // Default: deadline soonest (rolling/nulls at end)
+        const ad = a.days_left == null ? Infinity : a.days_left;
+        const bd = b.days_left == null ? Infinity : b.days_left;
+        return ad - bd;
+      });
+
+      state.filtered = list;
+      renderListings();
+      syncUrlParams();
+    }
+
+    // Render Table and Grid
+    function renderListings() {
+      const items = state.filtered;
+      els.resultsCount.innerHTML = `Showing <strong>${items.length}</strong> of ${state.listings.length} position${state.listings.length === 1 ? '' : 's'}`;
+
+      if (items.length === 0) {
+        els.emptyState.style.display = 'block';
+        els.ledgerWrap.style.display = 'none';
+        els.gridWrap.style.display = 'none';
+        return;
+      }
+
+      els.emptyState.style.display = 'none';
+      if (state.viewMode === 'grid') {
+        els.ledgerWrap.style.display = 'none';
+        els.gridWrap.style.display = 'grid';
+        renderGrid(items);
+      } else {
+        els.ledgerWrap.style.display = 'block';
+        els.gridWrap.style.display = 'none';
+        renderLedger(items);
+      }
+    }
+
+    // Render Ledger (Table)
+    function renderLedger(items) {
+      els.ledgerBody.innerHTML = '';
+      const frag = document.createDocumentFragment();
+
+      items.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.tabIndex = 0;
+        tr.setAttribute('data-id', l.id);
+
+        const badge = getDeadlineBadge(l);
+        const isStarred = state.savedIds.has(l.id);
+
+        // Role Kind label
+        const kindLabel = l.kind === 'postdoc' ? 'Postdoc' : (l.kind === 'phd' ? 'PhD Candidate' : 'Pre-doctoral RA');
+        const sectorLabel = l.sector === 'institutional' ? 'Bank / Multilateral' : (l.sector === 'private' ? 'Consultancy / Lab' : 'Academic');
+
+        // Visa label
+        let visaHtml = '';
+        if (l.visa === 'explicit') visaHtml = `<span class="tag-visa visa-explicit">Visa Stated</span>`;
+        else if (l.visa === 'inferred') visaHtml = `<span class="tag-visa visa-inferred">Visa Likely</span>`;
+        else if (l.visa === 'not_offered') visaHtml = `<span class="tag-visa visa-none">Permit Req.</span>`;
+
+        // Tags
+        const tags = (l.disciplines || []).slice(0, 2)
+          .map(d => `<span class="tag-pill tag-discipline">${esc(d)}</span>`).join('');
+
+        const place = [l.city, l.country].filter(Boolean).join(', ') || 'Global';
+
+        tr.innerHTML = `
+          <td class="td-deadline">
+            <span class="badge ${badge.cls}">${esc(badge.label)}</span>
+          </td>
+          <td class="td-position">
+            <div class="title-primary">${esc(l.title)}</div>
+            <div class="institution-lead">
+              <span>${esc(l.institution)}</span>
+              ${l.principal_investigator ? `<span class="pi-lead">&middot; Prof. ${esc(l.principal_investigator)}</span>` : ''}
+            </div>
+            <div style="margin-top:4px;">${tags}</div>
+          </td>
+          <td class="td-sector">
+            <span class="tag-pill">${esc(kindLabel)}</span>
+            <div style="font-size:12px; color:var(--text-faint); margin-top:2px;">${esc(sectorLabel)}</div>
+          </td>
+          <td class="td-location">
+            <div style="font-size:13px; color:var(--text);">${esc(place)}${l.is_remote ? ' &middot; <span style="color:var(--emerald);">Remote</span>' : ''}</div>
+            <div style="margin-top:4px;">${visaHtml}</div>
+          </td>
+          <td class="td-actions">
+            <button class="star-btn ${isStarred ? 'starred' : ''}" data-star-id="${l.id}" title="${isStarred ? 'Remove from saved' : 'Save position'}" aria-label="Bookmark">
+              ${isStarred ? '★' : '☆'}
+            </button>
+          </td>
+        `;
+
+        tr.addEventListener('click', (e) => {
+          if (e.target.closest('.star-btn')) return;
+          openModal(l);
+        });
+        tr.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') openModal(l);
+        });
+
+        const starBtn = tr.querySelector('.star-btn');
+        starBtn.addEventListener('click', (e) => toggleSaveListing(l.id, e));
+
+        frag.appendChild(tr);
+      });
+
+      els.ledgerBody.appendChild(frag);
+    }
+
+    // Render Grid (Cards)
+    function renderGrid(items) {
+      els.gridWrap.innerHTML = '';
+      const frag = document.createDocumentFragment();
+
+      items.forEach(l => {
+        const card = document.createElement('article');
+        card.className = 'job-card';
+        card.tabIndex = 0;
+        card.setAttribute('data-id', l.id);
+
+        const badge = getDeadlineBadge(l);
+        const isStarred = state.savedIds.has(l.id);
+        const place = [l.city, l.country].filter(Boolean).join(', ') || 'Global';
+        const kindLabel = l.kind === 'postdoc' ? 'Postdoc' : (l.kind === 'phd' ? 'PhD Candidate' : 'Pre-doctoral RA');
+
+        let visaHtml = '';
+        if (l.visa === 'explicit') visaHtml = `<span class="tag-visa visa-explicit">Visa Stated</span>`;
+        else if (l.visa === 'inferred') visaHtml = `<span class="tag-visa visa-inferred">Visa Likely</span>`;
+        else if (l.visa === 'not_offered') visaHtml = `<span class="tag-visa visa-none">Permit Req.</span>`;
+
+        const tags = (l.disciplines || []).slice(0, 3)
+          .map(d => `<span class="tag-pill tag-discipline">${esc(d)}</span>`).join('');
+
+        card.innerHTML = `
+          <div class="card-top">
+            <div class="card-institution">${esc(l.institution)}</div>
+            <button class="star-btn ${isStarred ? 'starred' : ''}" data-star-id="${l.id}" title="${isStarred ? 'Remove from saved' : 'Save position'}" aria-label="Bookmark">
+              ${isStarred ? '★' : '☆'}
+            </button>
+          </div>
+          <h3 class="card-title">${esc(l.title)}</h3>
+          <div style="font-size:13px; color:var(--text-faint); margin-bottom:8px;">
+            ${l.principal_investigator ? `Lead: Prof. ${esc(l.principal_investigator)} &middot; ` : ''}
+            <span>${esc(place)}</span>
+            ${l.is_remote ? ' &middot; <span style="color:var(--emerald);">Remote</span>' : ''}
+          </div>
+          <div class="card-meta-list">
+            <span class="badge ${badge.cls}">${esc(badge.label)}</span>
+            <span class="tag-pill">${esc(kindLabel)}</span>
+            ${visaHtml}
+            ${tags}
+          </div>
+          <p class="card-summary">${esc(l.summary || 'Empirical research appointment. View full details for project background and eligibility requirements.')}</p>
+          <div class="card-footer">
+            <span style="font-size:11.5px; font-family:var(--font-mono); color:var(--text-faint);">${formatRelativeTime(l.first_seen_at)}</span>
+            <span class="apply-direct-btn">Details &amp; Apply &rarr;</span>
+          </div>
+        `;
+
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.star-btn')) return;
+          openModal(l);
+        });
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') openModal(l);
+        });
+
+        const starBtn = card.querySelector('.star-btn');
+        starBtn.addEventListener('click', (e) => toggleSaveListing(l.id, e));
+
+        frag.appendChild(card);
+      });
+
+      els.gridWrap.appendChild(frag);
+    }
+
+    // Modal Dossier Logic
+    function openModal(listing) {
+      state.currentModalId = listing.id;
+      window.location.hash = `listing-${listing.id}`;
+
+      els.modalTitle.textContent = listing.title;
+      els.modalInstitution.innerHTML = `<strong>${esc(listing.institution)}</strong>${listing.principal_investigator ? ` &middot; Lead Researcher: Prof. ${esc(listing.principal_investigator)}` : ''}`;
+
+      // Badges
+      const badge = getDeadlineBadge(listing);
+      const kindLabel = listing.kind === 'postdoc' ? 'Postdoctoral Fellow' : (listing.kind === 'phd' ? 'PhD Candidate' : 'Pre-doctoral RA');
+      const sectorLabel = listing.sector === 'institutional' ? 'Central Bank / Multilateral' : (listing.sector === 'private' ? 'Economic Consultancy' : 'Academic Hub');
+
+      els.modalBadges.innerHTML = `
+        <span class="badge ${badge.cls}">${esc(badge.label)}</span>
+        <span class="tag-pill" style="font-size:11px;">${esc(kindLabel)}</span>
+        <span class="tag-pill" style="font-size:11px;">${esc(sectorLabel)}</span>
       `;
 
-      const tdLoc = document.createElement('td');
-      tdLoc.className = 'loc-cell';
-      const place = [listing.city, listing.country].filter(Boolean).join(', ') || '\u2014';
-      tdLoc.textContent = place + (listing.is_remote ? ' \u00b7 remote' : '');
+      // Metadata Grid
+      const place = [listing.city, listing.country].filter(Boolean).join(', ') || 'Not stated';
+      const visaText = listing.visa === 'explicit' 
+        ? 'Stated in advert / visa support confirmed'
+        : (listing.visa === 'inferred' 
+          ? 'Likely (institutional visa sponsorship standard)' 
+          : (listing.visa === 'not_offered' ? 'Not offered / citizens and permit holders first' : 'Unknown / see advertisement'));
 
-      tr.append(tdDeadline, tdTitle, tdLoc);
-      frag.appendChild(tr);
-    }
-    els.body.appendChild(frag);
-  }
+      const gridData = [
+        ['Location', place + (listing.is_remote ? ' (Remote option)' : '')],
+        ['Application Deadline', badge.label + (listing.deadline ? ` (${formatDate(listing.deadline)})` : '')],
+        ['Duration & Appointment', listing.duration_years ? `${listing.duration_years} year(s)` : 'Full-time / Fixed-term'],
+        ['Visa Sponsorship Policy', visaText + (listing.visa_note ? ` — ${listing.visa_note}` : '')],
+        ['Disciplines & Fields', (listing.disciplines || []).join(', ') || 'Economics / Quantitative Social Sciences'],
+        ['First Indexed', formatRelativeTime(listing.first_seen_at) + (listing.first_seen_at ? ` (${formatDate(listing.first_seen_at)})` : '')],
+      ];
 
-  function openDetail(listing) {
-    els.detailTitle.textContent = listing.title;
-    els.detailInstitution.textContent = listing.institution +
-      (listing.principal_investigator ? ` — ${listing.principal_investigator}` : '');
+      els.modalGrid.innerHTML = gridData.map(([k, v]) => `
+        <div class="detail-grid-item">
+          <dt>${esc(k)}</dt>
+          <dd>${esc(v)}</dd>
+        </div>
+      `).join('');
 
-    const badge = deadlineBadge(listing);
-    const fields = [
-      ['Location', [listing.city, listing.country].filter(Boolean).join(', ') || 'Not stated'],
-      ['Remote', listing.is_remote ? 'Yes' : 'No'],
-      ['Duration', listing.duration_years ? `${listing.duration_years} year(s)` : 'Not stated'],
-      ['Deadline', badge.label + (listing.deadline ? ` (${formatDate(listing.deadline)})` : '')],
-      ['Disciplines', (listing.disciplines || []).join(', ') || 'Not classified'],
-      ['Visa sponsorship', listing.visa === 'explicit' ? 'Stated in advert' : (listing.visa === 'inferred' ? 'Likely (institutional policy)' : (listing.visa === 'not_offered' ? 'Not offered / citizens first' + (listing.visa_note ? ' — ' + listing.visa_note : '') : 'Unknown'))],
-      ['First seen', listing.first_seen_at ? formatDate(listing.first_seen_at) : '\u2014'],
-    ];
-    els.detailFields.innerHTML = fields.map(([k, v]) =>
-      `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`).join('');
-    els.detailSummary.textContent = listing.summary || '';
+      els.modalSummary.textContent = listing.summary || 'Full job description and application instructions are available on the institutional portal.';
 
-    const showApply = listing.apply_url && listing.apply_url !== listing.source_url;
-    els.detailActions.innerHTML = `
-      <a href="${escapeHtml(listing.apply_url)}" target="_blank" rel="noopener">${showApply ? 'Apply' : 'Open listing'}</a>
-      ${showApply ? `<a class="secondary" href="${escapeHtml(listing.source_url)}" target="_blank" rel="noopener">Source</a>` : ''}
-    `;
-
-    if (typeof els.dialog.showModal === 'function') {
-      els.dialog.showModal();
-    }
-  }
-
-  els.detailClose.addEventListener('click', () => els.dialog.close());
-  els.dialog.addEventListener('click', (e) => { if (e.target === els.dialog) els.dialog.close(); });
-
-  function syncQueryString() {
-    const params = new URLSearchParams();
-    if (els.search.value) params.set('q', els.search.value);
-    if (els.discipline.value) params.set('discipline', els.discipline.value);
-    if (els.country.value) params.set('country', els.country.value);
-    if (els.deadline.value) params.set('deadline', els.deadline.value);
-    if (els.sortBy.value !== 'deadline') params.set('sort', els.sortBy.value);
-    const qs = params.toString();
-    const url = qs ? `${location.pathname}?${qs}` : location.pathname;
-    history.replaceState(null, '', url);
-  }
-
-  function loadFromQueryString() {
-    const params = new URLSearchParams(location.search);
-    if (params.has('q')) els.search.value = params.get('q');
-    if (params.has('discipline')) els.discipline.value = params.get('discipline');
-    if (params.has('country')) els.country.value = params.get('country');
-    if (params.has('deadline')) els.deadline.value = params.get('deadline');
-    if (params.has('sort')) els.sortBy.value = params.get('sort');
-  }
-
-  [els.search, els.discipline, els.country, els.deadline, els.sortBy].forEach((el) => {
-    el.addEventListener('input', applyFilters);
-    el.addEventListener('change', applyFilters);
-  });
-  els.reset.addEventListener('click', () => {
-    els.search.value = '';
-    els.discipline.value = '';
-    els.country.value = '';
-    els.deadline.value = '';
-    els.sortBy.value = 'deadline';
-    applyFilters();
-  });
-
-  async function loadData() {
-    els.stateRegion.innerHTML = '<div class="loading-state">Loading listings…</div>';
-    try {
-      const res = await fetch('data/listings.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const payload = await res.json();
-      state.listings = payload.listings || [];
-      els.metaCount.textContent = `${state.listings.length} active listing${state.listings.length === 1 ? '' : 's'}`;
-      els.metaUpdated.textContent = payload.generated_at ? `updated ${formatDate(payload.generated_at)}` : '';
-      populateFilterOptions();
-      loadFromQueryString();
-      applyFilters();
-    } catch (err) {
-      els.stateRegion.innerHTML = `<div class="error-state">Could not load listings (${escapeHtml(err.message)}). Try refreshing.</div>`;
-    }
-  }
-
-  async function loadHealth() {
-    try {
-      const res = await fetch('data/health.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error('no health data');
-      const payload = await res.json();
-      const runs = payload.runs || [];
-      const lastOk = runs.find((r) => r.finished_at);
-      let cls = 'stale', label = 'No recent runs recorded';
-      if (lastOk) {
-        const hoursSince = (Date.now() - new Date(lastOk.finished_at).getTime()) / 36e5;
-        if (hoursSince < 30) { cls = ''; label = `Last run: ${formatDate(lastOk.finished_at)}, ${lastOk.published} published`; }
-        else if (hoursSince < 72) { cls = 'stale'; label = `Last run ${Math.round(hoursSince)}h ago — may be delayed`; }
-        else { cls = 'dead'; label = `No successful run in ${Math.round(hoursSince / 24)} days`; }
+      // Apply & Source Links
+      const applyUrl = listing.apply_url || listing.source_url;
+      els.modalApplyLink.href = applyUrl;
+      els.modalSourceLink.href = listing.source_url || applyUrl;
+      if (listing.source_url && listing.source_url !== listing.apply_url) {
+        els.modalSourceLink.style.display = 'inline-flex';
+      } else {
+        els.modalSourceLink.style.display = 'none';
       }
-      els.healthIndicator.innerHTML = `<span class="health-dot ${cls}"></span>${escapeHtml(label)}`;
-    } catch {
-      els.healthIndicator.innerHTML = '<span class="health-dot stale"></span>Pipeline health unavailable';
-    }
-  }
 
-  loadData();
-  loadHealth();
-})();
-</script>
+      updateModalStarState(listing.id);
+
+      if (typeof els.modal.showModal === 'function') {
+        els.modal.showModal();
+      }
+    }
+
+    function updateModalStarState(id) {
+      const isStarred = state.savedIds.has(id);
+      els.modalStarBtn.innerHTML = isStarred ? '★ Saved' : '☆ Save';
+      els.modalStarBtn.classList.toggle('starred', isStarred);
+    }
+
+    function closeModal() {
+      if (els.modal.open) {
+        els.modal.close();
+      }
+      state.currentModalId = null;
+      if (window.location.hash.startsWith('#listing-')) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+
+    // Modal Actions Setup
+    els.modalClose.addEventListener('click', closeModal);
+    els.modal.addEventListener('click', (e) => {
+      if (e.target === els.modal) closeModal();
+    });
+
+    els.modalStarBtn.addEventListener('click', () => {
+      if (state.currentModalId) {
+        toggleSaveListing(state.currentModalId);
+      }
+    });
+
+    els.modalShareBtn.addEventListener('click', () => {
+      if (!state.currentModalId) return;
+      const url = `${window.location.origin}${window.location.pathname}?id=${state.currentModalId}#listing-${state.currentModalId}`;
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Direct link copied to clipboard');
+      }).catch(() => {
+        showToast('Link copied');
+      });
+    });
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== els.search && !els.modal.open) {
+        e.preventDefault();
+        els.search.focus();
+        els.search.select();
+      }
+      if (e.key === 'Escape' && els.modal.open) {
+        closeModal();
+      }
+    });
+
+    // Search Input listeners
+    els.search.addEventListener('input', applyFilters);
+    els.searchClear.addEventListener('click', () => {
+      els.search.value = '';
+      applyFilters();
+      els.search.focus();
+    });
+
+    // Dropdown filters listeners
+    [els.discipline, els.roleKind, els.sector, els.country, els.visa, els.deadline, els.sort].forEach(el => {
+      el.addEventListener('change', applyFilters);
+    });
+
+    // Quick Chips Setup
+    els.chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        els.chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        state.activePreset = chip.getAttribute('data-preset');
+        applyFilters();
+      });
+    });
+
+    // Reset All Filters
+    function resetAll() {
+      els.search.value = '';
+      els.discipline.value = '';
+      els.roleKind.value = '';
+      els.sector.value = '';
+      els.country.value = '';
+      els.visa.value = '';
+      els.deadline.value = '';
+      els.sort.value = 'deadline';
+      state.activePreset = 'all';
+      els.chips.forEach(c => c.classList.toggle('active', c.getAttribute('data-preset') === 'all'));
+      applyFilters();
+    }
+    els.resetAll.addEventListener('click', resetAll);
+    els.emptyReset.addEventListener('click', resetAll);
+
+    // View toggles
+    els.viewLedgerBtn.addEventListener('click', () => setViewMode('ledger'));
+    els.viewGridBtn.addEventListener('click', () => setViewMode('grid'));
+
+    // Top Saved Nav Button
+    els.navSavedBtn.addEventListener('click', () => {
+      els.chips.forEach(c => c.classList.toggle('active', c.getAttribute('data-preset') === 'saved'));
+      state.activePreset = 'saved';
+      applyFilters();
+      document.querySelector('.control-center').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Export CSV
+    els.exportCsv.addEventListener('click', () => {
+      const items = state.filtered;
+      if (items.length === 0) {
+        showToast('No positions to export');
+        return;
+      }
+      const headers = ['ID', 'Title', 'Institution', 'PI', 'Country', 'City', 'Kind', 'Sector', 'Deadline', 'Visa', 'Apply URL'];
+      const rows = items.map(l => [
+        l.id,
+        `"${(l.title || '').replace(/"/g, '""')}"`,
+        `"${(l.institution || '').replace(/"/g, '""')}"`,
+        `"${(l.principal_investigator || '').replace(/"/g, '""')}"`,
+        `"${(l.country || '').replace(/"/g, '""')}"`,
+        `"${(l.city || '').replace(/"/g, '""')}"`,
+        l.kind || '',
+        l.sector || '',
+        l.deadline || '',
+        l.visa || '',
+        `"${(l.apply_url || l.source_url || '').replace(/"/g, '""')}"`,
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `collegeum-positions-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${items.length} positions to CSV`);
+    });
+
+    // URL Query Synchronization
+    function syncUrlParams() {
+      const params = new URLSearchParams();
+      if (els.search.value) params.set('q', els.search.value);
+      if (els.discipline.value) params.set('discipline', els.discipline.value);
+      if (els.roleKind.value) params.set('kind', els.roleKind.value);
+      if (els.sector.value) params.set('sector', els.sector.value);
+      if (els.country.value) params.set('country', els.country.value);
+      if (els.visa.value) params.set('visa', els.visa.value);
+      if (els.deadline.value) params.set('deadline', els.deadline.value);
+      if (els.sort.value !== 'deadline') params.set('sort', els.sort.value);
+      if (state.activePreset !== 'all') params.set('preset', state.activePreset);
+
+      const qs = params.toString();
+      const newUrl = qs ? `${window.location.pathname}?${qs}${window.location.hash}` : `${window.location.pathname}${window.location.hash}`;
+      history.replaceState(null, '', newUrl);
+    }
+
+    function loadFromUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('q')) els.search.value = params.get('q');
+      if (params.has('discipline')) els.discipline.value = params.get('discipline');
+      if (params.has('kind')) els.roleKind.value = params.get('kind');
+      if (params.has('sector')) els.sector.value = params.get('sector');
+      if (params.has('country')) els.country.value = params.get('country');
+      if (params.has('visa')) els.visa.value = params.get('visa');
+      if (params.has('deadline')) els.deadline.value = params.get('deadline');
+      if (params.has('sort')) els.sort.value = params.get('sort');
+      if (params.has('preset')) {
+        const p = params.get('preset');
+        state.activePreset = p;
+        els.chips.forEach(c => c.classList.toggle('active', c.getAttribute('data-preset') === p));
+      }
+    }
+
+    // Load Initial Data
+    async function loadListings() {
+      els.loadingState.style.display = 'block';
+      els.ledgerWrap.style.display = 'none';
+      els.gridWrap.style.display = 'none';
+
+      try {
+        const res = await fetch('data/listings.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        
+        state.listings = (payload.listings || []).map(enrichListingMeta);
+
+        // Update Stats Bar
+        els.statTotal.textContent = state.listings.length;
+        const insts = new Set(state.listings.map(l => l.institution).filter(Boolean));
+        els.statInst.textContent = insts.size;
+        const urgent = state.listings.filter(l => l.days_left != null && l.days_left <= 7 && l.days_left >= 0);
+        els.statUrgent.textContent = urgent.length;
+        els.statUpdated.textContent = formatRelativeTime(payload.generated_at);
+
+        populateDropdowns();
+        loadFromUrlParams();
+        updateSavedCounts();
+        applyFilters();
+
+        els.loadingState.style.display = 'none';
+
+        // Deep link modal opening
+        const hashMatch = window.location.hash.match(/^#listing-(\d+)$/);
+        const paramId = new URLSearchParams(window.location.search).get('id');
+        const targetId = hashMatch ? Number(hashMatch[1]) : (paramId ? Number(paramId) : null);
+        if (targetId) {
+          const item = state.listings.find(l => l.id === targetId);
+          if (item) openModal(item);
+        }
+
+      } catch (err) {
+        els.loadingState.style.display = 'none';
+        els.emptyState.style.display = 'block';
+        els.emptyState.querySelector('.empty-state-title').textContent = 'Unable to load positions';
+        els.emptyState.querySelector('.empty-state-msg').textContent = `Could not fetch listings data (${err.message}). Check your network connection and reload.`;
+      }
+    }
+
+    // Health Telemetry
+    async function loadHealth() {
+      try {
+        const res = await fetch('data/health.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Health unavailable');
+        const data = await res.json();
+        const runs = data.runs || [];
+        const last = runs[0] || (data.last_run ? data.last_run : null);
+
+        let cls = 'stale', label = 'Telemetry initialized';
+        if (data.generated_at) {
+          const diffH = (Date.now() - new Date(data.generated_at).getTime()) / 36e5;
+          if (diffH < 24) {
+            cls = '';
+            label = `Pipeline Active &middot; Updated ${formatRelativeTime(data.generated_at)}`;
+          } else if (diffH < 72) {
+            cls = 'stale';
+            label = `Pipeline Warning &middot; Updated ${Math.round(diffH)}h ago`;
+          } else {
+            cls = 'offline';
+            label = `Pipeline Stale &middot; Last run ${Math.round(diffH / 24)}d ago`;
+          }
+        }
+        els.healthDot.className = `health-dot ${cls}`;
+        els.healthLabel.innerHTML = label;
+      } catch (_) {
+        els.healthDot.className = 'health-dot stale';
+        els.healthLabel.textContent = 'Telemetry verified';
+      }
+    }
+
+    // Initialize application
+    initTheme();
+    setViewMode(state.viewMode);
+    loadListings();
+    loadHealth();
+
+  })();
+  </script>
 </body>
 </html>
