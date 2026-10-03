@@ -328,10 +328,21 @@ class _OpenAICompatibleBackend(_Backend):
         if not choices:
             error = payload.get("error")
             raise ExtractionError(f"no choices returned ({error})")
-        message = choices[0].get("message") or {}
+        choice = choices[0] if isinstance(choices[0], dict) else {}
+        message = choice.get("message") or {}
         content = message.get("content")
         if isinstance(content, str) and content.strip():
             return content
+        text = choice.get("text")
+        if isinstance(text, str) and text.strip():
+            return text
+        for r_key in ("reasoning_content", "reasoning"):
+            r_val = message.get(r_key)
+            if isinstance(r_val, str) and r_val.strip():
+                return r_val
+        refusal = message.get("refusal")
+        if refusal:
+            raise ExtractionError(f"model refusal: {refusal}")
         raise ExtractionError("no text content in model response message")
 
 
@@ -542,34 +553,37 @@ class Extractor:
                 if response.status_code >= 400:
                     self.rotator.mark_error(current_key)
                     self.limiter.record(error=True, day=day)
-                    raise ExtractionError(
+                    last_error = ExtractionError(
                         f"{backend.name}: HTTP {response.status_code}: {response.text[:300]}"
                     )
+                    continue
 
                 payload = response.json()
-                raw = _strip_fence(backend.extract_text(payload))
-                tokens = int(
-                    (payload.get("usageMetadata") or {}).get("totalTokenCount", 0)
-                    or (payload.get("usage") or {}).get("total_tokens", 0)
-                    or (
-                        (payload.get("usage") or {}).get("input_tokens", 0)
-                        + (payload.get("usage") or {}).get("output_tokens", 0)
-                    )
-                    or 0
-                )
-                self.limiter.record(tokens=tokens, day=day)
-                self.rotator.mark_success(current_key, tokens=tokens)
-                self.calls += 1
-                self._remember_backend(backend.name)
-
                 try:
+                    raw = _strip_fence(backend.extract_text(payload))
+                    tokens = int(
+                        (payload.get("usageMetadata") or {}).get("totalTokenCount", 0)
+                        or (payload.get("usage") or {}).get("total_tokens", 0)
+                        or (
+                            (payload.get("usage") or {}).get("input_tokens", 0)
+                            + (payload.get("usage") or {}).get("output_tokens", 0)
+                        )
+                        or 0
+                    )
+                    self.limiter.record(tokens=tokens, day=day)
+                    self.rotator.mark_success(current_key, tokens=tokens)
+                    self.calls += 1
+                    self._remember_backend(backend.name)
+
                     return ExtractionResult.model_validate(json.loads(raw))
+                except (QuotaExceeded, RateLimited):
+                    raise
                 except Exception as exc:
                     if self.fallback_extractor is not None:
                         log.warning(
-                            "model_schema_failed_fallback_heuristic",
+                            "model_extraction_failed_fallback_heuristic",
                             error=str(exc),
-                            raw=raw[:200],
+                            raw=raw[:200] if "raw" in locals() and isinstance(raw, str) else "",
                         )
                         fallback_hints = dict(hints or {})
                         fallback_hints["is_heuristic_fallback"] = True
@@ -580,10 +594,25 @@ class Extractor:
                         return res
                     if isinstance(exc, json.JSONDecodeError):
                         raise ExtractionError(f"model returned non-JSON: {exc}") from exc
+                    if isinstance(exc, ExtractionError):
+                        raise
                     raise ExtractionError(f"schema validation failed: {exc}") from exc
 
             if not key_had_rate_limit and last_error is None:
                 break
+
+        if self.fallback_extractor is not None:
+            log.warning(
+                "model_all_candidates_failed_fallback_heuristic",
+                error=str(last_error or "no extraction backend succeeded"),
+            )
+            fallback_hints = dict(hints or {})
+            fallback_hints["is_heuristic_fallback"] = True
+            res = self.fallback_extractor.extract(
+                text=text, source_url=source_url, title=title, hints=fallback_hints
+            )
+            res.is_heuristic_fallback = True
+            return res
 
         raise last_error or ExtractionError("no extraction backend succeeded")
 

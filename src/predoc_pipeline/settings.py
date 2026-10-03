@@ -34,10 +34,10 @@ class Settings(BaseSettings):
     # when that is a private chat.
     telegram_admin_chat_id: str = ""
     telegram_digest_threshold: int = Field(
-        12,
+        0,
         description="Above this many new listings in one run, post a compact "
-                    "digest instead of one card each. Protects the channel from "
-                    "a forty-message burst after a backfill.",
+                    "digest instead of one card each. Set to 0 (default) to disable "
+                    "digest mode and always post individual cards regardless of count.",
     )
     telegram_feedback_buttons: bool = Field(
         False,

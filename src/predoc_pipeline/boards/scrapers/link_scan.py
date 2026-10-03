@@ -50,6 +50,30 @@ _INSTITUTION_RX = re.compile(
 _PEOPLE_NAV = re.compile(r"^(?:our\s+|current\s+|former\s+|meet\s+(?:our|the)\s+)?(?:pre-?docs?|pre-?doctoral\s+"
                          r"(?:fellows|researchers|students|program(?:me)?)|research\s+(?:assistants|associates|fellows)|"
                          r"people|team|staff|alumni|faculty|placements?)$", re.IGNORECASE)
+
+_EXCLUDED_URL_RX = re.compile(
+    r"/people/(?:faculty/|staff/|index|$|\?)|"
+    r"/faculty/(?:index|pages/profile|personal|$|\?)|"
+    r"/staff/(?:index|directory|$|\?)|"
+    r"/alumni/|/experts?/|"
+    r"/news/stories/|"
+    r"/was-wir-bieten|/diversitaet|/studierende|/stellenangebote|"
+    r"/ra-matching|/learn-more|/before-applying|/courses|/private-firms|/pre-workshop|"
+    r"facid=|facId=",
+    re.IGNORECASE,
+)
+
+_EXCLUDED_TITLE_RX = re.compile(
+    r"^(?:(?:our\s+|current\s+|former\s+|meet\s+(?:our|the)\s+|external\s+|academic\s+)?"
+    r"(?:faculty|staff|people|team|alumni|directors|board|students|studierende)|"
+    r"was\s+wir\s+bieten|studierende|diversit[äa]t|stellenangebote|karriere|"
+    r"why\s+do\s+a\s+pre-?doc\??|ra\s+award\s+program|before\s+applying|"
+    r"benefits|our\s+culture|work\s+with\s+us|join\s+us|contact\s+us|"
+    r"postdocs?|faq|privacy\s+policy|asynchronous\s+courses|pre-?docs?\s+in\s+industry|"
+    r".*pre-?doctoral\s+research\s+in\s+economics\s+\(pre\)\s+workshop.*|"
+    r".*students\s+achieve\s+outstanding\s+placements.*)$",
+    re.IGNORECASE,
+)
 _POSTED_LABEL = re.compile(r"(date\s+placed|posted(?:\s+on)?|published(?:\s+on)?|date\s+posted|"
                            r"publication\s+date|placed\s+on)\s*[:\-]?\s*", re.IGNORECASE)
 _SPONSORING_INST_RX = re.compile(r"^(?:sponsoring\s+)?institution\s*:\s*(.*)$", re.IGNORECASE)
@@ -180,7 +204,7 @@ class LinkScanScraper(BaseScraper):
         posts, seen = [], set()
         for a in soup.find_all("a", href=True):
             href = absolutize(base, a["href"])
-            if not pattern.search(href) or href in seen:
+            if not pattern.search(href) or href in seen or _EXCLUDED_URL_RX.search(href):
                 continue
             title = clean_ws(a.get_text(" "))
             if title.lower() in GENERIC_ANCHORS or len(title) < min_len:
@@ -191,10 +215,21 @@ class LinkScanScraper(BaseScraper):
                 card = find_card(a)
                 c_lines = card_lines(card)
                 for ln in c_lines:
-                    if len(ln) >= min_len and ln.lower() not in GENERIC_ANCHORS and not _PEOPLE_NAV.match(ln):
+                    if (
+                        len(ln) >= min_len
+                        and ln.lower() not in GENERIC_ANCHORS
+                        and not _PEOPLE_NAV.match(ln)
+                        and not _EXCLUDED_TITLE_RX.match(ln)
+                    ):
                         title = ln
                         break
-            if not title or title.lower() in GENERIC_ANCHORS or len(title) < min_len or _PEOPLE_NAV.match(title):
+            if (
+                not title
+                or title.lower() in GENERIC_ANCHORS
+                or len(title) < min_len
+                or _PEOPLE_NAV.match(title)
+                or _EXCLUDED_TITLE_RX.match(title)
+            ):
                 continue
             seen.add(href)
             posts.append(self._post_from_card(href, title, find_card(a)))

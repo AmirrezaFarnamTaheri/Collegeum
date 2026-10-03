@@ -149,6 +149,37 @@ _DEGREE_RX = re.compile(
 )
 
 
+_EXCLUDED_URL_RX = re.compile(
+    r"/people/(?:faculty/|staff/|index|$|\?)|"
+    r"/faculty/(?:index|pages/profile|personal|$|\?)|"
+    r"/staff/(?:index|directory|$|\?)|"
+    r"/alumni/|/experts?/|"
+    r"/news/stories/|"
+    r"/was-wir-bieten|/diversitaet|/studierende|/stellenangebote|"
+    r"/ra-matching|/learn-more|/before-applying|/courses|/private-firms|/pre-workshop|"
+    r"facid=|facId=",
+    re.IGNORECASE,
+)
+
+_EXCLUDED_TITLE_RX = re.compile(
+    r"^(?:(?:our\s+|current\s+|former\s+|meet\s+(?:our|the)\s+|external\s+|academic\s+)?"
+    r"(?:faculty|staff|people|team|alumni|directors|board|students|studierende)|"
+    r"was\s+wir\s+bieten|studierende|diversit[äa]t|stellenangebote|karriere|"
+    r"why\s+do\s+a\s+pre-?doc\??|ra\s+award\s+program|before\s+applying|"
+    r"benefits|our\s+culture|work\s+with\s+us|join\s+us|contact\s+us|"
+    r"postdocs?|faq|privacy\s+policy|asynchronous\s+courses|pre-?docs?\s+in\s+industry|"
+    r".*pre-?doctoral\s+research\s+in\s+economics\s+\(pre\)\s+workshop.*|"
+    r".*students\s+achieve\s+outstanding\s+placements.*)$",
+    re.IGNORECASE,
+)
+
+_BIO_PROFILE_RX = re.compile(
+    r"(?:is\s+(?:an?\s+)?(?:associate\s+|assistant\s+|full\s+|adjunct\s+)?professor|teaches\s+in|"
+    r"received\s+(?:his|her|their)\s+ph\.?d|earned\s+(?:his|her|their)\s+ph\.?d|joined\s+the\s+faculty)",
+    re.IGNORECASE,
+)
+
+
 def _extract_salary(text: str, hints: dict[str, Any]) -> str | None:
     if hints.get("salary"):
         return str(hints["salary"])
@@ -277,6 +308,39 @@ class HeuristicExtractor:
         title = squish(title) or squish(text.split("\n", 1)[0])[:140]
         role, inst, _loc = split_role_at_institution(title)
         institution = inst
+
+        if _EXCLUDED_TITLE_RX.search(title) or _EXCLUDED_URL_RX.search(source_url):
+            return ExtractionResult(
+                is_vacancy=False,
+                rejection_reason="not_a_vacancy",
+                title=title,
+                institution=institution or "",
+                confidence=0.95,
+            )
+
+        if _BIO_PROFILE_RX.search(text[:1200]) and not any(
+            t in title.lower()
+            for t in (
+                "assistant",
+                "fellow",
+                "associate",
+                "intern",
+                "predoc",
+                "pre-doc",
+                "phd",
+                "candidate",
+                "position",
+                "scholar",
+                "analyst",
+            )
+        ):
+            return ExtractionResult(
+                is_vacancy=False,
+                rejection_reason="faculty",
+                title=title,
+                institution=institution or "",
+                confidence=0.95,
+            )
         if not institution:
             match = _EMPLOYER_RX.search(text[:3000])
             institution = squish(match.group(1)) if match else None
