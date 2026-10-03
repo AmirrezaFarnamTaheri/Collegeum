@@ -126,6 +126,15 @@ def settings(tmp_path, monkeypatch):
     # tests must not wait for politeness delays
     prefs = prefs.replace("default_min_interval = 1.5", "default_min_interval = 0")
     prefs = prefs.replace("max_retries = 3", "max_retries = 0")
+    # Fixture tests specifically verify regional and employer rejection behavior
+    prefs = prefs.replace(
+        'regions_include = ["UK", "Europe", "Canada", "US", "Other"]',
+        'regions_include = ["UK", "Europe", "Canada"]',
+    )
+    prefs = prefs.replace(
+        'excluded_employers = []',
+        'excluded_employers = ["J-PAL", "JPAL", "Poverty Action Lab", "povertyactionlab.org"]',
+    )
     (tmp_path / "preferences.toml").write_text(prefs)
     return Settings(
         _env_file=None,

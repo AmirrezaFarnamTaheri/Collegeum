@@ -7,7 +7,23 @@ from predoc_pipeline.boards.filter import RelevanceFilter
 from predoc_pipeline.boards.models import JobPostSchema
 from tests.boards.conftest import ROOT
 
-FLT = RelevanceFilter(load_preferences(ROOT / "config" / "preferences.toml").filters)
+PREFS = load_preferences(ROOT / "config" / "preferences.toml")
+FLT = RelevanceFilter(PREFS.filters)
+STRICT_FLT = RelevanceFilter(
+    PREFS.filters.model_copy(
+        update={
+            "exclude_phd_positions": True,
+            "exclude_terms": PREFS.filters.exclude_terms + ["postdoc*", "post-doc*"],
+            "regions_include": ["UK", "Europe", "Canada"],
+            "excluded_employers": ["J-PAL", "JPAL", "Poverty Action Lab", "povertyactionlab.org"],
+            "employer_allow_names": [
+                n for n in PREFS.filters.employer_allow_names
+                if n not in ("Bank of Canada", "J-PAL", "JPAL")
+            ],
+            "employer_block_patterns": ["bank|banco|banque|bundesbank|sparkasse"] + PREFS.filters.employer_block_patterns,
+        }
+    )
+)
 
 
 def post(title, **kw):
@@ -46,8 +62,14 @@ def test_predoc_without_field_is_checked_on_detail_page():
     ("Summer School in Econometrics", "excluded-title"),
 ])
 def test_rejects(title, reason):
-    v = FLT.evaluate(post(title))
+    v = STRICT_FLT.evaluate(post(title))
     assert not v.keep and v.reason == reason
+
+
+def test_inclusive_defaults_keep_phd_and_postdoc():
+    assert FLT.evaluate(post("Postdoctoral Fellow in Economics")).keep
+    assert FLT.evaluate(post("PhD student in Economics")).keep
+    assert FLT.evaluate(post("Doctoral candidate in finance")).keep
 
 
 def test_role_without_field_is_deferred_to_detail_page():
@@ -78,7 +100,8 @@ def test_social_post_needs_hiring_cue():
 def test_region_gate():
     us = post("Predoctoral RA", institution="Columbia Business School")
     assert FLT.assign_region(us) is True
-    assert FLT.region_ok(us) == (False, "region-US")
+    assert STRICT_FLT.region_ok(us) == (False, "region-US")
+    assert FLT.region_ok(us) == (True, None)  # US positions now included by default
     eu = post("Predoctoral RA", institution="Universitat Pompeu Fabra, Barcelona, Spain")
     FLT.assign_region(eu)
     assert FLT.region_ok(eu) == (True, None)
@@ -125,12 +148,24 @@ def test_field_verdict_on_long_pages():
     ("Event Driven Research Analyst", "Susquehanna International Group"),
     ("Equity Research Associate - Metals & Mining", "Canaccord Genuity Group Inc."),
     ("Equity Research Associate, Paper & Forest Products", "TD Securities"),
-    ("Research Analyst in Economics", "Bank of Canada"),
-    ("Predoctoral Research Associate - Development Economics", "J-PAL Europe"),
 ])
-def test_industry_banks_and_jpal_are_dropped(title, inst):
+def test_industry_employers_are_dropped(title, inst):
     v = FLT.evaluate(post(title, institution=inst, extra={"employer_required": True}))
     assert not v.keep, v
+
+
+def test_central_banks_and_jpal_are_kept_by_default():
+    assert FLT.evaluate(post("Research Analyst in Economics", institution="Bank of Canada", extra={"employer_required": True})).keep
+    assert FLT.evaluate(post("Predoctoral Research Associate - Development Economics", institution="J-PAL Europe", extra={"employer_required": True})).keep
+
+
+def test_industry_banks_and_jpal_dropped_when_configured():
+    for title, inst in [
+        ("Research Analyst in Economics", "Bank of Canada"),
+        ("Predoctoral Research Associate - Development Economics", "J-PAL Europe"),
+    ]:
+        v = STRICT_FLT.evaluate(post(title, institution=inst, extra={"employer_required": True}))
+        assert not v.keep, v
 
 
 @pytest.mark.parametrize("title,inst", [
@@ -154,7 +189,8 @@ def test_unknown_employer_only_matters_where_required():
 
 def test_jpal_url_is_banned_even_without_name():
     p = post("Predoctoral Research Associate in economics", url="https://www.povertyactionlab.org/careers/x-job-1")
-    assert FLT.evaluate(p).reason == "excluded-employer"
+    assert STRICT_FLT.evaluate(p).reason == "excluded-employer"
+    assert FLT.evaluate(p).keep
 
 
 def test_arts_media_jobs_are_dropped():

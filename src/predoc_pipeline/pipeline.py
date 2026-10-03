@@ -268,8 +268,15 @@ def _process(
                      content_hash=digest)
         return None
 
-    gate = gating.evaluate(item.text, title=item.title, url=item.source_url,
-                           known_vacancy=board)
+    allow_phd = not policy.prefs.filters.exclude_phd_positions if policy and policy.prefs else True
+    gate = gating.evaluate(
+        item.text,
+        title=item.title,
+        url=item.source_url,
+        known_vacancy=board,
+        allow_phd=allow_phd,
+        allow_postdoc=True,
+    )
     if not gate.passed:
         stats.gated += 1
         stats.gate_reasons[gate.reason] = stats.gate_reasons.get(gate.reason, 0) + 1
@@ -764,9 +771,16 @@ def run(
             items = items[:limit]
         if dry_run:
             stats.outcome = "dry-run"
+            allow_phd = not prefs.filters.exclude_phd_positions if prefs else True
             for item in items[:25]:
-                gate = gating.evaluate(item.text, title=item.title, url=item.source_url,
-                                       known_vacancy=bool(item.hints.get("board")))
+                gate = gating.evaluate(
+                    item.text,
+                    title=item.title,
+                    url=item.source_url,
+                    known_vacancy=bool(item.hints.get("board")),
+                    allow_phd=allow_phd,
+                    allow_postdoc=True,
+                )
                 log.info(
                     "dry_run_item",
                     source=item.source,
@@ -881,11 +895,14 @@ def run(
                                 )
                                 continue
 
+                            allow_phd = not prefs.filters.exclude_phd_positions if prefs else True
                             gate = gating.evaluate(
                                 item.text,
                                 title=item.title,
                                 url=item.source_url,
                                 known_vacancy=board,
+                                allow_phd=allow_phd,
+                                allow_postdoc=True,
                             )
                             if not gate.passed:
                                 stats.gated += 1

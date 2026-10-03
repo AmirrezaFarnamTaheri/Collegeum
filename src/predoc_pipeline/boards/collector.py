@@ -275,7 +275,7 @@ async def _collect(
         elif verdict.needs_field_check and not strong:
             out.deferred += 1  # page unreachable today and field unknown: retry tomorrow
             continue
-        if not reason and post.extra.get("phd_required") and not strong:
+        if not reason and prefs.filters.exclude_phd_positions and post.extra.get("phd_required") and not strong:
             reason = "requires-phd"
         if not reason:
             ok, why = flt.region_ok(post)  # the page may have revealed the location

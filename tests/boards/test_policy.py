@@ -13,12 +13,22 @@ PREFS = load_preferences(ROOT / "config" / "preferences.toml")
 POLICY = Policy(PREFS)
 EXTRACTOR = HeuristicExtractor(PREFS)
 
+STRICT_PREFS = PREFS.model_copy(deep=True)
+STRICT_PREFS.filters.regions_include = ["UK", "Europe", "Canada"]
+STRICT_PREFS.filters.excluded_employers = ["J-PAL", "JPAL", "Poverty Action Lab", "povertyactionlab.org"]
+STRICT_PREFS.filters.employer_allow_names = [
+    n for n in STRICT_PREFS.filters.employer_allow_names
+    if n not in ("Federal Reserve", "Fed", "Bank of Canada", "J-PAL", "JPAL")
+]
+STRICT_PREFS.filters.employer_block_patterns = ["bank"] + STRICT_PREFS.filters.employer_block_patterns
+STRICT_POLICY = Policy(STRICT_PREFS)
+
 
 def feed_item(title: str, text: str, url: str = "https://jobs.example.org/1") -> RawItem:
     return RawItem(source="feed:test", source_url=url, title=title, text=text)
 
 
-def verdict(item: RawItem) -> str | None:
+def verdict(item: RawItem, pol: Policy = POLICY) -> str | None:
     """Gate -> heuristic extraction -> coerce -> preferences, as the pipeline does."""
     gate = gating.evaluate(item.text, title=item.title, url=item.source_url)
     if not gate.passed:
@@ -26,7 +36,7 @@ def verdict(item: RawItem) -> str | None:
     result = EXTRACTOR.extract(text=item.text, source_url=item.source_url, title=item.title)
     if not result.is_vacancy:
         return f"extract:{result.rejection_reason}"
-    return POLICY.check(coerce(result, source_url=item.source_url), item)
+    return pol.check(coerce(result, source_url=item.source_url), item)
 
 
 def test_good_european_predoc_passes_and_is_parsed():
@@ -46,6 +56,20 @@ def test_good_european_predoc_passes_and_is_parsed():
     assert "Labor Economics" in result.disciplines
 
 
+def test_us_and_jpal_positions_pass_by_default():
+    jpal = feed_item(
+        "Predoctoral Research Associate - Economics",
+        "J-PAL Europe is hiring a predoctoral research associate in economics. Apply by 1 Dec 2026.",
+    )
+    stanford = feed_item(
+        "Pre-doctoral Research Assistant in Economics",
+        "Stanford University is hiring a predoctoral research assistant in economics in Stanford, "
+        "California. Applications are invited until 1 December 2026.",
+    )
+    assert verdict(jpal) is None
+    assert verdict(stanford) is None
+
+
 @pytest.mark.parametrize("title,text,reason", [
     ("Predoctoral Research Associate - Economics",
      "J-PAL Europe is hiring a predoctoral research associate in economics. Apply by 1 Dec 2026.",
@@ -54,6 +78,12 @@ def test_good_european_predoc_passes_and_is_parsed():
      "Stanford University is hiring a predoctoral research assistant in economics in Stanford, "
      "California. Applications are invited until 1 December 2026.",
      "region-US"),
+])
+def test_unwanted_positions_are_dropped_when_configured(title, text, reason):
+    assert verdict(feed_item(title, text), pol=STRICT_POLICY) == reason
+
+
+@pytest.mark.parametrize("title,text,reason", [
     ("Research Assistant in Developmental Psychology",
      "The University of Oslo is hiring a research assistant in developmental psychology. "
      "Applications are invited until 1 December 2026.",
@@ -76,7 +106,20 @@ def test_unwanted_positions_are_dropped(title, text, reason):
 
 
 def test_rules_bind_a_model_too():
-    """A confident Gemini answer still cannot publish a US bank job."""
+    """A confident Gemini answer still cannot publish a non-academic commercial firm."""
+    listing = PredocListing(
+        title="Event Driven Research Analyst", institution="Susquehanna International Group",
+        location=Location(country="United States", city="Boston"),
+        apply_url="https://example.org/hedgefund", source_url="https://example.org/hedgefund",
+        model_confidence=0.99, confidence=0.99,
+    )
+    item = feed_item(listing.title, "A research analyst position at a commercial trading firm.")
+    assert Policy(PREFS, trust_model_fields=True).check(listing, item) in (
+        "industry-employer", "not-academic-employer", "excluded-title")
+
+
+def test_policy_keeps_central_banks_and_us_institutions():
+    """Federal Reserve Bank and US universities pass under inclusive preferences."""
     listing = PredocListing(
         title="Research Analyst, Monetary Policy", institution="Federal Reserve Bank of Boston",
         location=Location(country="United States", city="Boston"),
@@ -84,8 +127,7 @@ def test_rules_bind_a_model_too():
         model_confidence=0.99, confidence=0.99,
     )
     item = feed_item(listing.title, "A research analyst position in monetary policy.")
-    assert Policy(PREFS, trust_model_fields=True).check(listing, item) in (
-        "industry-employer", "region-US", "not-academic-employer")
+    assert Policy(PREFS, trust_model_fields=True).check(listing, item) is None
 
 
 def test_board_items_carry_their_verdict():

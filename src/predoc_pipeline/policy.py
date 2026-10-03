@@ -113,7 +113,7 @@ class Policy:
             d is not Discipline.OTHER for d in listing.disciplines)
         if verdict.needs_field_check and field != "wanted" and not model_field:
             return "no-field"
-        if phd_required(text) and not verdict.strong:
+        if self.prefs.filters.exclude_phd_positions and phd_required(text) and not verdict.strong:
             return "requires-phd"
         return None
 

@@ -133,13 +133,13 @@ institution_from_context = true
 [[board]]
 name = "academictransfer"
 type = "link_scan"
-enabled = false
+enabled = true
 group = "aggregator"
 urls = ["https://www.academictransfer.com/en/jobs/?q=research+assistant+economics", "https://www.academictransfer.com/en/jobs/?q=predoc"]
 link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
 institution_from_context = true
 country = "Netherlands"
-note = "OFF: page is built by JavaScript (always 0 jobs); Dutch jobs arrive via EURAXESS."
+note = "AcademicTransfer - Dutch universities and research institutes clearinghouse."
 
 [[board]]
 name = "jobbnorge"
@@ -162,6 +162,25 @@ render = true
 link_pattern = 'academicpositions\.com/ad/'
 institution_from_context = true
 note = "OFF: JavaScript-rendered; needs Playwright."
+
+[[board]]
+name = "the_unijobs"
+type = "link_scan"
+group = "aggregator"
+url = "https://www.timeshighereducation.com/unijobs/listings/economics-and-econometrics/"
+link_pattern = 'timeshighereducation\.com/unijobs/listing/\d+/'
+institution_from_context = true
+field_implied = true
+note = "Times Higher Education UniJobs - Economics and Econometrics postings."
+
+[[board]]
+name = "akadeus"
+type = "rss"
+group = "aggregator"
+url = "https://www.akadeus.com/rss.php"
+institution_from_context = true
+field_implied = true
+note = "Akadeus European Business Schools and Economics positions RSS."
 
 
 # --- university ------------------------------------------------------------
@@ -471,6 +490,151 @@ institution = "ETH Zurich Center for Law & Economics"
 country = "Switzerland"
 field_implied = true
 note = "Empirical data science, experimental economics, and law & economics predoc/RA program."
+
+[[board]]
+name = "ifw_kiel"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.ifw-kiel.de/institute/career/job-vacancies/"
+link_pattern = 'ifw-kiel\.de/.*job-vacancies/'
+institution = "Kiel Institute for the World Economy"
+country = "Germany"
+field_implied = true
+note = "IfW Kiel international economics, macro, environmental and global supply chain research."
+
+[[board]]
+name = "iwh_halle"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.iwh-halle.de/ueber-das-iwh/karriere/stellenangebote/"
+link_pattern = 'iwh-halle\.de/.*stellenangebote/'
+institution = "Halle Institute for Economic Research (IWH)"
+country = "Germany"
+field_implied = true
+note = "IWH financial markets, macroeconomics, structural change."
+
+[[board]]
+name = "rwi_essen"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.rwi-essen.de/karriere"
+link_pattern = 'rwi-essen\.de/.*karriere'
+institution = "RWI - Leibniz Institute for Economic Research"
+country = "Germany"
+field_implied = true
+note = "RWI empirical economics, labor, energy, health economics."
+
+[[board]]
+name = "niesr"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.niesr.ac.uk/about/vacancies"
+link_pattern = 'niesr\.ac\.uk/.*vacancies/'
+institution = "National Institute of Economic and Social Research"
+country = "United Kingdom"
+field_implied = true
+note = "NIESR UK oldest independent economic research institute (macro, public policy)."
+
+[[board]]
+name = "eui_florence"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.eui.eu/About/Working-at-the-EUI/Academic-vacancies"
+link_pattern = 'eui\.eu/.*vacancies/'
+institution = "European University Institute"
+country = "Italy"
+field_implied = true
+note = "EUI Florence academic and research assistant vacancies in economics and social sciences."
+
+[[board]]
+name = "max_planck_econ"
+type = "rss"
+group = "research_institute"
+url = "https://www.mpg.de/job-offers.rss"
+institution = "Max Planck Society"
+country = "Germany"
+note = "Max Planck Society RSS feed across research institutes including Tax Law & Public Finance."
+
+[[board]]
+name = "jpal_global"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.povertyactionlab.org/careers"
+link_pattern = 'povertyactionlab\.org/careers/'
+institution = "J-PAL"
+country = "United States"
+field_implied = true
+note = "Abdul Latif Jameel Poverty Action Lab (J-PAL) global, North America, and regional positions."
+
+# --- central banks & multilateral organizations ----------------------------
+
+[[board]]
+name = "ecb"
+type = "link_scan"
+group = "central_bank"
+url = "https://jobs.ecb.europa.eu/search/?createNewAlert=false&q=trainee"
+link_pattern = 'jobs\.ecb\.europa\.eu/job/'
+institution = "European Central Bank"
+country = "Germany"
+field_implied = true
+note = "ECB Student Research Assistant Traineeship Programme in Directorate General Research."
+
+[[board]]
+name = "bank_of_england"
+type = "link_scan"
+group = "central_bank"
+url = "https://www.bankofengland.co.uk/careers"
+link_pattern = 'bankofengland\.co\.uk/.*careers'
+institution = "Bank of England"
+country = "United Kingdom"
+field_implied = true
+note = "Bank of England Research Assistants and Analysts in monetary policy and financial stability."
+
+[[board]]
+name = "bis"
+type = "link_scan"
+group = "central_bank"
+url = "https://www.bis.org/careers/vacancies.htm"
+link_pattern = 'bis\.org/.*vacancies/'
+institution = "Bank for International Settlements"
+country = "Switzerland"
+field_implied = true
+note = "BIS Research Assistant and Analyst positions in international banking and economics."
+
+[[board]]
+name = "oecd"
+type = "link_scan"
+group = "international_org"
+url = "https://careers.smartrecruiters.com/OECD"
+link_pattern = 'smartrecruiters\.com/OECD/[0-9a-fA-F-]+'
+institution = "OECD"
+country = "France"
+field_implied = true
+note = "OECD Junior Economists, Policy Analysts, and Research Assistant roles via SmartRecruiters."
+
+# --- US university workday portals ----------------------------------------
+
+[[board]]
+name = "uchicago_bfi"
+type = "workday"
+group = "university"
+url = "https://uchicago.wd5.myworkdayjobs.com/External"
+search_terms = ["research professional", "research assistant economics", "pre-doctoral"]
+institution = "University of Chicago"
+country = "United States"
+field_implied = true
+note = "Becker Friedman Institute (BFI) and UChicago predoctoral research professionals."
+
+[[board]]
+name = "brown_econ"
+type = "workday"
+group = "university"
+url = "https://brown.wd5.myworkdayjobs.com/staff-careers-brown"
+search_terms = ["research assistant economics", "predoctoral", "research analyst"]
+institution = "Brown University"
+country = "United States"
+field_implied = true
+note = "Brown University economics and social sciences research assistants."
 
 
 # --- social ------------------------------------------------------------
