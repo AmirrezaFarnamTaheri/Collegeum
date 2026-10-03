@@ -175,37 +175,6 @@
     nav a:hover { color: var(--ink); }
     nav a.on { color: var(--ink); background: var(--acc2); font-weight: 500; }
 
-    .nav-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 13.5px;
-      font-family: var(--sans);
-      color: var(--soft);
-      border: 1px solid transparent;
-      background: none;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .nav-btn:hover { color: var(--ink); background: var(--card); border-color: var(--rule); }
-
-    .saved-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 600;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 4px;
-      border-radius: 999px;
-      background: var(--acc);
-      color: #FFF;
-    }
-
     #theme {
       border: 1px solid var(--rule);
       background: var(--card);
@@ -446,13 +415,6 @@
       font-weight: 500;
     }
 
-    .chip-badge {
-      font: 500 10.5px var(--mono);
-      padding: 1px 5px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.14);
-    }
-
     .reset-btn {
       margin-left: auto;
       font: 500 12.5px var(--sans);
@@ -510,7 +472,7 @@
       box-sizing: border-box;
       width: 100%;
       display: grid;
-      grid-template-columns: 100px 1fr auto 32px 14px;
+      grid-template-columns: 100px 1fr auto 14px;
       gap: 16px;
       align-items: center;
       padding: 16px 18px;
@@ -576,21 +538,6 @@
     .tag-visa.exp { background: var(--okbg); color: var(--ok); border: 1px solid var(--ok-border); }
     .tag-visa.inf { background: var(--warnbg); color: var(--warn); border: 1px solid var(--warn-border); }
     .tag-visa.none { background: var(--acc2); color: var(--acc); border: 1px solid var(--acc); }
-
-    .star-btn {
-      background: none;
-      border: none;
-      color: var(--faint);
-      cursor: pointer;
-      font-size: 16px;
-      padding: 4px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: color 0.15s ease, transform 0.15s ease;
-    }
-    .star-btn:hover { color: var(--warn); transform: scale(1.15); }
-    .star-btn.starred { color: var(--warn); }
 
     .chev {
       width: 8px;
@@ -805,82 +752,134 @@
       flex-wrap: wrap;
     }
 
-    /* Footer Colophon */
+    /* Footer Colophon - Two Column */
     footer {
-      margin-top: 64px;
+      margin-top: 72px;
       border-top: 1px solid var(--rule);
-      padding: 36px 0 48px;
+      padding: 44px 0 52px;
       font-size: 13.5px;
       color: var(--soft);
     }
-    .footer-grid {
+    .footer-cols {
       display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 36px;
-      padding-bottom: 28px;
-      border-bottom: 1px solid var(--rule);
+      grid-template-columns: 1.35fr 1fr;
+      gap: 36px 56px;
+      align-items: start;
+    }
+    .footer-col-left {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
     .footer-brand {
-      font: 600 20px var(--serif);
+      font: 600 22px var(--serif);
       color: var(--ink);
-      margin-bottom: 6px;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.015em;
     }
     .footer-desc {
-      font-size: 13.5px;
+      font-size: 14px;
       color: var(--soft);
-      line-height: 1.55;
-      max-width: 32em;
-      margin-bottom: 14px;
+      line-height: 1.6;
+      max-width: 34em;
+      margin: 0;
     }
-    .footer-links {
+    .footer-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12.5px;
+      color: var(--faint);
+    }
+    .health-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--soft);
+      font-family: var(--mono);
+      margin-top: 2px;
+    }
+    .health-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ok);
+      flex-shrink: 0;
+    }
+    .health-dot.stale { background: var(--warn); }
+    .health-dot.dead { background: var(--acc); }
+
+    .footer-col-right {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .footer-nav {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      font-size: 13px;
+      gap: 10px 18px;
+      font-size: 13.5px;
     }
-    .footer-links a {
+    .footer-nav a {
       color: var(--ink);
       text-decoration: underline;
       text-underline-offset: 3px;
+      font-weight: 500;
+      transition: color 0.15s ease;
     }
-    .footer-links a:hover { color: var(--acc); }
-    .footer-note {
-      font-size: 13px;
-      color: var(--soft);
-      line-height: 1.5;
-    }
+    .footer-nav a:hover { color: var(--acc); }
+
     .support-disclosure {
-      margin-top: 12px;
+      background: var(--card);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 12px 16px;
+      transition: border-color 0.2s ease;
+    }
+    .support-disclosure:hover {
+      border-color: var(--rule-strong);
     }
     .support-disclosure summary {
       cursor: pointer;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--ink);
       user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .support-disclosure summary:hover { color: var(--acc); }
-    .support-disclosure[open] summary { margin-bottom: 10px; }
+    .support-disclosure summary::after {
+      content: '▾';
+      font-size: 11px;
+      color: var(--soft);
+      transition: transform 0.2s ease;
+    }
+    .support-disclosure[open] summary::after {
+      transform: rotate(180deg);
+    }
+    .support-disclosure[open] summary {
+      margin-bottom: 12px;
+    }
     .wal-compact {
       display: grid;
       gap: 8px;
-      margin-top: 8px;
     }
     .w-row {
       display: grid;
-      grid-template-columns: 48px 1fr auto;
+      grid-template-columns: 50px 1fr auto;
       gap: 10px;
       align-items: center;
-      background: var(--card);
+      background: var(--bg);
       border: 1px solid var(--rule);
       border-radius: 8px;
-      padding: 7px 10px;
+      padding: 6px 10px;
       font-size: 12px;
     }
     .w-row b { font: 600 11px var(--mono); color: var(--ink); }
     .w-row code {
-      font: 11.5px var(--mono);
+      font: 11px var(--mono);
       color: var(--soft);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -889,37 +888,15 @@
     .w-row button {
       font: 500 11px var(--sans);
       border: 1px solid var(--rule);
-      background: none;
+      background: var(--card);
       color: var(--ink);
       border-radius: 6px;
       padding: 3px 8px;
       cursor: pointer;
       transition: all 0.15s ease;
     }
-    .w-row button:hover { border-color: var(--acc); }
+    .w-row button:hover { border-color: var(--acc); color: var(--acc); }
     .w-row button.ok { background: var(--ok); color: #FFF; border-color: var(--ok); }
-
-    .footer-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      padding-top: 20px;
-      font-size: 12.5px;
-      color: var(--faint);
-    }
-    .health-dot {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--ok);
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-    .health-dot.stale { background: var(--warn); }
-    .health-dot.dead { background: var(--acc); }
 
     /* Toast Notification */
     #toast {
@@ -954,8 +931,8 @@
     @media (max-width: 780px) {
       .hero { grid-template-columns: 1fr; }
       .arcade { justify-self: start; max-width: 240px; order: -1; }
-      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
-      .row-main { grid-template-columns: 1fr 28px 14px; }
+      .footer-cols { grid-template-columns: 1fr; gap: 28px; }
+      .row-main { grid-template-columns: 1fr 14px; }
       .row-main .dl { grid-column: 1 / -1; justify-self: start; }
       .row-main .tag { grid-row: 2; justify-self: start; }
       .more-inner { padding-left: 18px; }
@@ -989,11 +966,6 @@
         <a href="#board">Board</a>
         <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
         <a href="https://github.com/amirrezafarnamtaheri/predoc-not-org" target="_blank" rel="noopener">GitHub</a>
-        <a href="feed.xml">RSS</a>
-        <button class="nav-btn" id="nav-saved-btn" title="View saved positions">
-          <span>★</span>
-          <span class="saved-badge" id="nav-saved-count">0</span>
-        </button>
       </nav>
 
       <button id="theme" aria-label="Toggle theme">◐</button>
@@ -1012,7 +984,6 @@
         </p>
         <div class="cta">
           <a class="btn" href="#board">Browse positions</a>
-          <a class="btn alt" href="feed.xml">RSS feed</a>
         </div>
         <p style="font-size:13px; color:var(--soft); margin-top:14px;">
           More predoc positions on Telegram: <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener" style="color:var(--acc);">@PredocCollegeum</a>
@@ -1085,10 +1056,6 @@
           <button class="chip" data-k="postdoc-phd">Postdocs and PhDs</button>
           <button class="chip" data-k="institutional">Central banks and multilateral</button>
           <button class="chip" data-k="closing-soon">Closing within 7 days</button>
-          <button class="chip" data-k="saved" id="chip-saved">
-            <span>★ Saved</span>
-            <span class="chip-badge" id="chip-saved-count">0</span>
-          </button>
           <button class="reset-btn" id="reset-btn" style="display:none;">Reset filters</button>
         </div>
       </div>
@@ -1130,8 +1097,7 @@
       </div>
 
       <footer class="modal-footer">
-        <div style="display:flex; gap:8px;">
-          <button class="btn alt" id="modal-star-btn">★ Save</button>
+        <div>
           <button class="btn alt" id="modal-copy-btn">Copy link</button>
         </div>
         <div style="display:flex; gap:8px;">
@@ -1147,43 +1113,33 @@
 
   <!-- Colophon / Footer -->
   <footer>
-    <div class="wrap">
-      <div class="footer-grid">
-        <div>
-          <div class="footer-brand">Collegeum</div>
-          <p class="footer-desc">
-            An open index of research appointments in economics, finance, and public policy across universities, central banks, and research institutes.
-          </p>
-          <div class="footer-links">
-            <a href="https://github.com/amirrezafarnamtaheri/predoc-not-org" target="_blank" rel="noopener">GitHub</a>
-            <span>&middot;</span>
-            <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
-            <span>&middot;</span>
-            <a href="feed.xml">RSS</a>
-            <span>&middot;</span>
-            <a href="architecture.html">Architecture</a>
-            <span>&middot;</span>
-            <a href="mailto:taherifarnam@gmail.com">Contact</a>
-          </div>
+    <div class="wrap footer-cols">
+      <div class="footer-col-left">
+        <div class="footer-brand">Collegeum</div>
+        <p class="footer-desc">
+          An open index of research appointments in economics, finance, and public policy across universities, central banks, and research institutes.
+        </p>
+        <div class="footer-meta">
+          <span>Maintained by Amirreza Farnam Taheri &middot; GNU AGPLv3</span>
+          <span>Not affiliated with listed institutions</span>
         </div>
-
-        <div>
-          <p class="footer-note">
-            Maintained independently by Amirreza Farnam Taheri &middot; GNU AGPLv3.
-          </p>
-          <details class="support-disclosure">
-            <summary>Donate (crypto)</summary>
-            <div class="wal-compact" id="wal"></div>
-          </details>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <div>
+        <div class="health-row">
           <span class="health-dot" id="health-dot"></span>
           <span id="health-label">Checking pipeline health…</span>
         </div>
-        <div>Not affiliated with any listed institution.</div>
+      </div>
+
+      <div class="footer-col-right">
+        <nav class="footer-nav" aria-label="Footer navigation">
+          <a href="https://github.com/amirrezafarnamtaheri/predoc-not-org" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
+          <a href="architecture.html">Architecture</a>
+          <a href="mailto:taherifarnam@gmail.com">Contact</a>
+        </nav>
+        <details class="support-disclosure">
+          <summary>Financial support</summary>
+          <div class="wal-compact" id="wal"></div>
+        </details>
       </div>
     </div>
   </footer>
@@ -1263,22 +1219,9 @@
 
     // Data State & Enrichment
     let listings = [];
-    let savedIds = new Set();
     let currentKind = 'all';
     let viewMode = localStorage.getItem('collegeum-view') || 'ledger';
     let currentModalListing = null;
-
-    try {
-      const saved = JSON.parse(localStorage.getItem('collegeum-saved-ids') || '[]');
-      savedIds = new Set(saved);
-    } catch (_) {}
-
-    function updateSavedBadges() {
-      const c = savedIds.size;
-      $('#nav-saved-count').textContent = c;
-      $('#chip-saved-count').textContent = c;
-    }
-    updateSavedBadges();
 
     function enrichItem(item) {
       if (!item.kind) {
@@ -1368,7 +1311,6 @@
       $('#search-clear-btn').style.display = q ? 'flex' : 'none';
 
       let rows = listings.filter(r => {
-        if (currentKind === 'saved' && !savedIds.has(r.id)) return false;
         if (currentKind === 'us') {
           const isUS = r.country === 'United States' || (r.country || '').toLowerCase().includes('united states');
           if (!isUS || r.kind !== 'predoc') return false;
@@ -1428,7 +1370,6 @@
     function renderLedger(rows) {
       $('#list').innerHTML = rows.map((r, i) => {
         const b = deadlineBadge(r);
-        const isStarred = savedIds.has(r.id);
         const place = [r.city, r.country].filter(Boolean).join(', ') || 'Unstated';
         
         let visaHtml = '';
@@ -1450,7 +1391,6 @@
                 <span class="tag">${esc(kindLabel)}</span>
                 ${visaHtml}
               </div>
-              <button class="star-btn ${isStarred ? 'starred' : ''}" data-star="${r.id}" aria-label="Bookmark position">${isStarred ? '★' : '☆'}</button>
               <i class="chev"></i>
             </div>
             <div class="more">
@@ -1468,18 +1408,10 @@
 
       // Wire row accordion and actions
       $$('.row-main').forEach(btn => {
-        btn.onclick = (e) => {
-          if (e.target.closest('.star-btn')) return;
+        btn.onclick = () => {
           const row = btn.closest('.row');
           const isOpen = row.classList.toggle('open');
           btn.setAttribute('aria-expanded', isOpen);
-        };
-      });
-
-      $$('.star-btn').forEach(btn => {
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          toggleStar(Number(btn.dataset.star));
         };
       });
 
@@ -1495,7 +1427,6 @@
     function renderGrid(rows) {
       $('#grid-wrap').innerHTML = rows.map(r => {
         const b = deadlineBadge(r);
-        const isStarred = savedIds.has(r.id);
         const place = [r.city, r.country].filter(Boolean).join(', ') || 'Unstated';
         const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : 'Predoc / RA');
 
@@ -1503,7 +1434,6 @@
           <article class="job-card" data-open="${r.id}">
             <div class="card-head">
               <span class="card-inst">${esc(r.institution)}</span>
-              <button class="star-btn ${isStarred ? 'starred' : ''}" data-star="${r.id}" aria-label="Bookmark">${isStarred ? '★' : '☆'}</button>
             </div>
             <h3 class="card-title">${esc(r.title)}</h3>
             <div style="font-size:13px; color:var(--soft); margin-bottom:10px;">
@@ -1524,44 +1454,11 @@
       }).join('');
 
       $$('.job-card').forEach(c => {
-        c.onclick = (e) => {
-          if (e.target.closest('.star-btn')) return;
+        c.onclick = () => {
           const item = listings.find(l => l.id === Number(c.dataset.open));
           if (item) openModal(item);
         };
       });
-
-      $$('#grid-wrap .star-btn').forEach(btn => {
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          toggleStar(Number(btn.dataset.star));
-        };
-      });
-    }
-
-    // Bookmarks / Saved
-    function toggleStar(id) {
-      if (savedIds.has(id)) {
-        savedIds.delete(id);
-        toast('Removed from saved positions');
-      } else {
-        savedIds.add(id);
-        toast('Saved to your bookmarks');
-      }
-      try {
-        localStorage.setItem('collegeum-saved-ids', JSON.stringify([...savedIds]));
-      } catch (_) {}
-      updateSavedBadges();
-      draw();
-      if (currentModalListing && currentModalListing.id === id) {
-        updateModalStar();
-      }
-    }
-
-    function updateModalStar() {
-      const isStarred = currentModalListing && savedIds.has(currentModalListing.id);
-      $('#modal-star-btn').textContent = isStarred ? '★ Saved' : '☆ Save';
-      $('#modal-star-btn').classList.toggle('starred', isStarred);
     }
 
     // Modal Dossier
@@ -1615,7 +1512,6 @@
         $('#modal-src-link').style.display = 'none';
       }
 
-      updateModalStar();
       if (typeof modal.showModal === 'function') modal.showModal();
     }
 
@@ -1629,9 +1525,6 @@
 
     $('#modal-close').onclick = closeModal;
     modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-    $('#modal-star-btn').onclick = () => {
-      if (currentModalListing) toggleStar(currentModalListing.id);
-    };
     $('#modal-copy-btn').onclick = () => {
       if (!currentModalListing) return;
       const url = `${window.location.origin}${window.location.pathname}#listing-${currentModalListing.id}`;
@@ -1706,14 +1599,6 @@
       $('#view-ledger-btn').setAttribute('aria-pressed', 'false');
     }
 
-    // Nav Saved button
-    $('#nav-saved-btn').onclick = () => {
-      $$('.chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.k === 'saved'));
-      currentKind = 'saved';
-      draw();
-      $('#board').scrollIntoView({ behavior: 'smooth' });
-    };
-
     // CSV Export
     $('#export-csv-btn').onclick = () => {
       const q = $('#q').value.trim().toLowerCase();
@@ -1724,7 +1609,6 @@
       const visa = $('#filter-visa').value;
 
       const rows = listings.filter(r => {
-        if (currentKind === 'saved' && !savedIds.has(r.id)) return false;
         if (disc && !(r.disciplines || []).includes(disc)) return false;
         if (kindSel && r.kind !== kindSel) return false;
         if (sector && r.sector !== sector) return false;
@@ -1787,7 +1671,7 @@
       .catch(() => {
         listings = [];
         const srcEl = $('#src');
-        if (srcEl) srcEl.textContent = 'The listings file could not be loaded. Reload the page or check the RSS feed.';
+        if (srcEl) srcEl.textContent = 'The listings file could not be loaded. Please reload the page.';
         draw();
       });
 
