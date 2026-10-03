@@ -641,6 +641,72 @@ class TestDatabase(unittest.TestCase):
         self.assertEqual(reqs, 10)
         self.assertEqual(tokens, 450)
 
+    def test_search_listings(self):
+        lid1 = self.db.insert_listing(self._listing(
+            url_hash="h_srch1",
+            title="Pre-Doctoral Fellow in Econometrics",
+            institution="University of Oxford",
+            summary="Working on causal inference and microeconometrics.",
+        ))
+        lid2 = self.db.insert_listing(self._listing(
+            url_hash="h_srch2",
+            title="Research Assistant",
+            institution="Bocconi University",
+            summary="Financial economics project.",
+        ))
+        self.db.mark_published(lid1, 101)
+        self.db.mark_published(lid2, 102)
+
+        # Keyword in title
+        res = self.db.search_listings("econometrics")
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]["id"], lid1)
+
+        # Keyword in institution
+        res = self.db.search_listings("Bocconi")
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]["id"], lid2)
+
+        # Keyword in summary
+        res = self.db.search_listings("causal inference")
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]["id"], lid1)
+
+        # Empty search
+        self.assertEqual(self.db.search_listings(""), [])
+
+        # Active-only filtering
+        self.db.mark_closed(lid1, "Filled")
+        self.assertEqual(len(self.db.search_listings("econometrics", active_only=True)), 0)
+        self.assertEqual(len(self.db.search_listings("econometrics", active_only=False)), 1)
+
+    def test_optimize_and_indexes(self):
+        self.db.optimize()
+        indexes = {
+            row["name"]
+            for row in self.db.conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='index'"
+            ).fetchall()
+        }
+        self.assertIn("ix_listings_apply_url", indexes)
+        self.assertIn("ix_listings_source_url", indexes)
+        self.assertIn("ix_listings_active", indexes)
+        self.assertIn("ix_listings_identity", indexes)
+        self.assertIn("ix_listings_pending", indexes)
+
+    def test_migrate_plain_tuple_connection(self):
+        import sqlite3
+
+        from predoc_pipeline.core.db import _migrate
+
+        raw_conn = sqlite3.connect(":memory:")
+        raw_conn.execute("CREATE TABLE listings (id INT, url_hash TEXT)")
+        _migrate(raw_conn)
+        cols = {r[1] for r in raw_conn.execute("PRAGMA table_info(listings)")}
+        self.assertIn("deadline_note", cols)
+        self.assertIn("x_post_id", cols)
+        raw_conn.close()
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main(verbosity=2)

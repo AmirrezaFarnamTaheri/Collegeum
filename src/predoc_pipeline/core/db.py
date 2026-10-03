@@ -48,7 +48,7 @@ __all__ = [
     "Database",
 ]
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -94,10 +94,19 @@ CREATE TABLE IF NOT EXISTS listings (
   department                TEXT,
   fields                    TEXT
 );
-CREATE INDEX IF NOT EXISTS ix_listings_status    ON listings(status);
-CREATE INDEX IF NOT EXISTS ix_listings_deadline  ON listings(deadline);
-CREATE INDEX IF NOT EXISTS ix_listings_seen      ON listings(first_seen_at);
-CREATE INDEX IF NOT EXISTS ix_listings_inst      ON listings(institution);
+CREATE INDEX IF NOT EXISTS ix_listings_status     ON listings(status);
+CREATE INDEX IF NOT EXISTS ix_listings_deadline   ON listings(deadline);
+CREATE INDEX IF NOT EXISTS ix_listings_seen       ON listings(first_seen_at);
+CREATE INDEX IF NOT EXISTS ix_listings_inst       ON listings(institution);
+CREATE INDEX IF NOT EXISTS ix_listings_apply_url  ON listings(apply_url);
+CREATE INDEX IF NOT EXISTS ix_listings_source_url ON listings(source_url);
+CREATE INDEX IF NOT EXISTS ix_listings_active     ON listings(first_seen_at DESC)
+  WHERE status='published' AND expired_at IS NULL AND closed_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_listings_identity   ON listings(
+  LOWER(TRIM(institution)), LOWER(TRIM(title))
+) WHERE status='published' AND closed_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_listings_pending    ON listings(id)
+  WHERE status IN ('pending', 'unpublished') AND closed_at IS NULL AND expired_at IS NULL;
 
 -- Every source URL we have ever formed an opinion about, and what that
 -- opinion was. Consulted before any network or model spend.
@@ -182,6 +191,9 @@ def connect(db_path: str | Path) -> sqlite3.Connection:
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("PRAGMA busy_timeout=30000")
+    conn.execute("PRAGMA temp_store=MEMORY")
+    conn.execute("PRAGMA mmap_size=268435456")
+    conn.execute("PRAGMA cache_size=-64000")
     return conn
 
 
@@ -213,7 +225,10 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
 
 def _migrate(conn: sqlite3.Connection) -> None:
     for table, column, kind in _ADDED_COLUMNS:
-        have = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+        have = {
+            row[1] if isinstance(row, (tuple, list)) else row["name"]
+            for row in conn.execute(f"PRAGMA table_info({table})")
+        }
         if column not in have:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {kind}")
 
@@ -252,9 +267,17 @@ class Database:
 
     def close(self) -> None:
         try:
+            self.optimize()
             self.checkpoint()
         finally:
             self.conn.close()
+
+    def optimize(self) -> None:
+        """Run PRAGMA optimize to refresh query planner statistics."""
+        try:
+            self.conn.execute("PRAGMA optimize")
+        except sqlite3.Error as exc:  # pragma: no cover - best effort
+            _log.debug("pragma optimize failed: %s", exc)
 
     def checkpoint(self) -> None:
         """Fold the WAL back into the main database file.
@@ -452,8 +475,31 @@ class Database:
     def recent_listings(self, days: int) -> list[sqlite3.Row]:
         return self.conn.execute(
             "SELECT * FROM listings WHERE first_seen_at >= "
-            "strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?) ORDER BY id",
+            "strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?) ORDER BY first_seen_at DESC, id DESC",
             (since(days),),
+        ).fetchall()
+
+    def search_listings(
+        self, query: str, *, active_only: bool = True, limit: int = 50
+    ) -> list[sqlite3.Row]:
+        """Search listings by keyword across title, institution, department, and summary."""
+        q = (query or "").strip().lower()
+        if not q:
+            return []
+        pattern = f"%{q}%"
+        if active_only:
+            return self.conn.execute(
+                "SELECT * FROM listings WHERE status='published' AND expired_at IS NULL "
+                "AND closed_at IS NULL AND (LOWER(title) LIKE ? OR LOWER(institution) LIKE ? "
+                "OR LOWER(department) LIKE ? OR LOWER(summary) LIKE ?) "
+                "ORDER BY first_seen_at DESC LIMIT ?",
+                (pattern, pattern, pattern, pattern, limit),
+            ).fetchall()
+        return self.conn.execute(
+            "SELECT * FROM listings WHERE LOWER(title) LIKE ? OR LOWER(institution) LIKE ? "
+            "OR LOWER(department) LIKE ? OR LOWER(summary) LIKE ? "
+            "ORDER BY first_seen_at DESC LIMIT ?",
+            (pattern, pattern, pattern, pattern, limit),
         ).fetchall()
 
     def active_listings(self) -> list[sqlite3.Row]:

@@ -99,6 +99,30 @@ def stats() -> None:
 
 
 @app.command()
+def search(
+    query: str = typer.Argument(..., help="Search query string (keyword, institution, or field)"),
+    all_status: bool = typer.Option(False, "--all", help="Include closed/expired/pending listings"),
+    limit: int = typer.Option(20, help="Maximum number of results to display"),
+) -> None:
+    """Search listings in the local database by title, institution, or summary."""
+    settings = _settings()
+    init_db(settings.db_path)
+    with Database(settings.db_path) as db:
+        results = db.search_listings(query, active_only=not all_status, limit=limit)
+        if not results:
+            typer.echo(f"No listings found matching '{query}'.")
+            return
+        typer.echo(f"Found {len(results)} listing(s) matching '{query}':\n")
+        for r in results:
+            status_tag = f"[{r['status']}] " if all_status else ""
+            typer.echo(f"- {status_tag}{r['title']} @ {r['institution']}")
+            typer.echo(f"  Apply: {r['apply_url']}")
+            if r["deadline"]:
+                typer.echo(f"  Deadline: {r['deadline']}")
+            typer.echo("")
+
+
+@app.command()
 def dashboard() -> None:
     """Regenerate docs/data/*.json from the current database, without a run."""
     from . import state
