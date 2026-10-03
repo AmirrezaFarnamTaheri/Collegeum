@@ -144,6 +144,7 @@ def settings(tmp_path, monkeypatch):
         dlq_path=str(tmp_path / "dlq.json"),
         enable_feeds=False,
         enable_portals=False,
+        telegram_feedback_buttons=True,
     )
 
 
@@ -359,3 +360,19 @@ def test_recheck_uses_the_stored_deadline():
     out = check_links(links, cfg, transport=transport)
     assert out[1] is None                     # known deadline 30 Nov: still open
     assert out[2] and "deadline passed" in out[2]  # without it, the review date looks like one
+
+
+def test_feedback_buttons_omitted_when_disabled(settings):
+    no_buttons = settings.model_copy(update={"telegram_feedback_buttons": False})
+    fake = FakeTelegram()
+    stats = run(no_buttons, fake)
+    assert stats.published == 4
+    cards = fake.sent()
+    assert len(cards) == 4
+    for card in cards:
+        rows = card["reply_markup"]["inline_keyboard"]
+        for row in rows:
+            texts = [b["text"] for b in row]
+            assert "✅ Interested" not in texts
+            assert "❌ Not for me" not in texts
+            assert "📝 Applied" not in texts

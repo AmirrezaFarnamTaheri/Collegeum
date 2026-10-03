@@ -11,12 +11,15 @@
 # Unmistakable predoc wording (big score boost, overrides title exclusions).
 strong_terms = [
   "pre-doc*", "pre-phd*", "research professional", "staff associate",
+  "wissenschaftliche* mitarbeiter*", "wissenschaftliche hilfskraft*",
+  "personal investigador predoctoral*", "assistant* de recherche*",
 ]
 
 # RA-type roles (these also need an economics/business field word somewhere).
 role_terms = [
   "research assistant*", "research associate*", "research analyst*", "research economist*", "research officer*", "research specialist*",
   "research trainee*", "research intern*", "junior researcher*", "junior economist*", "assistant researcher*", "graduate researcher*",
+  "shk", "whk", "promotionsstelle*",
 ]
 
 # WANTED fields: economics, business, political/social science, law.
@@ -108,7 +111,7 @@ max_age_days = 120           # ignore postings older than this (when a post date
 
 [enrich]
 fetch_details = true         # read every new posting's page (field, region, filled?) before sending
-max_details_per_run = 150    # the rest wait for the next run
+max_details_per_run = 500    # the rest wait for the next run
 detail_concurrency = 6
 recheck_open_jobs = true     # revisit sent jobs so filled ones drop off /positions and the dashboard
 recheck_every_days = 3

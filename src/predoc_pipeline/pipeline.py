@@ -352,9 +352,14 @@ def _process(
                          content_hash=digest)
             return None
 
-    # Tier 1: exact canonical application URL.
+    # Tier 1: exact canonical application URL or source URL.
     apply_key = url_hash(listing.apply_url)
     existing = db.listing_by_url_hash(apply_key)
+    if existing is None and listing.source_url:
+        existing = db.listing_by_url(listing.source_url)
+    if existing is None and listing.apply_url and listing.apply_url != listing.source_url:
+        existing = db.listing_by_url(listing.apply_url)
+
     if existing is not None:
         stats.duplicates += 1
         db.add_alternate_source(int(existing["id"]), listing.source_url)
@@ -454,11 +459,22 @@ def _broadcast(
         log.warning("telegram_not_configured", held=len(listings))
         return
 
-    buttons = bool(settings.owner_ids)
+    include_feedback = settings.telegram_feedback_buttons
     digest_page_size = max(1, digest_page_size)
     hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
     status_of = feedback.status if feedback is not None else (lambda _h: None)
     send_kw: dict[str, Any] = {"sleep": sleep} if sleep else {}
+
+    from .core.urls import canonicalize_url
+
+    # Track URLs to prevent any repeated post
+    seen_urls: set[str] = set()
+
+    for pub_row in db.published_listings():
+        if pub_row["apply_url"]:
+            seen_urls.add(canonicalize_url(pub_row["apply_url"]))
+        if pub_row["source_url"]:
+            seen_urls.add(canonicalize_url(pub_row["source_url"]))
 
     if len(listings) > settings.telegram_digest_threshold:
         # A backfill should not fire forty separate notifications.
@@ -466,7 +482,7 @@ def _broadcast(
             [(hashes[lid], listing) for lid, listing in listings],
             site_url=settings.site_url,
             page_size=digest_page_size,
-            feedback=buttons,
+            feedback=include_feedback,
             status_of=status_of,
         )
         for index, (html, keyboard) in enumerate(pages):
@@ -492,10 +508,46 @@ def _broadcast(
         return
 
     for listing_id, listing in listings:
+        row = db.listing(listing_id)
+        if row is not None and (row["status"] == "published" or row["telegram_message_id"]):
+            log.info("skip_already_published", listing_id=listing_id)
+            continue
+
+        canon_apply = canonicalize_url(listing.apply_url)
+        canon_source = canonicalize_url(listing.source_url)
+
+        if (
+            (canon_apply and canon_apply in seen_urls)
+            or (canon_source and canon_source in seen_urls)
+        ):
+            log.info(
+                "skip_duplicate_post_url",
+                listing_id=listing_id,
+                url=canon_apply or canon_source,
+            )
+            db.mark_status(listing_id, "published")
+            continue
+
+        existing = None
+        if listing.apply_url:
+            existing = db.listing_by_url(listing.apply_url)
+        if existing is None and listing.source_url:
+            existing = db.listing_by_url(listing.source_url)
+        if existing is not None and int(existing["id"]) != listing_id and (
+            existing["status"] == "published" or existing["telegram_message_id"]
+        ):
+            log.info(
+                "skip_duplicate_post_existing_db",
+                listing_id=listing_id,
+                existing_id=existing["id"],
+            )
+            db.mark_published(listing_id, existing["telegram_message_id"])
+            continue
+
         keyboard = render_keyboard(
             listing,
-            url_hash=hashes[listing_id] if buttons else None,
-            status=status_of(hashes[listing_id]),
+            url_hash=hashes[listing_id] if include_feedback else None,
+            status=status_of(hashes[listing_id]) if include_feedback else None,
         )
         try:
             try:
@@ -509,11 +561,10 @@ def _broadcast(
                 # Telegram refuses the whole message when one button URL is
                 # malformed; the link is also in the text, so send it without.
                 link = escape_telegram_html(listing.apply_url)
-                feedback_rows = keyboard["inline_keyboard"][1:]
                 message_id = telegram.send_message(
                     chat_id=settings.telegram_public_channel_id,
                     html=render_card(listing) + f'\n\n<a href="{link}">Open the advert</a>',
-                    keyboard={"inline_keyboard": feedback_rows} if feedback_rows else None,
+                    keyboard=None,
                     **send_kw,
                 )
         except TelegramError as exc:
@@ -534,6 +585,12 @@ def _broadcast(
             if exc.permanent:
                 db.mark_status(listing_id, "undeliverable")
             continue
+
+        if canon_apply:
+            seen_urls.add(canon_apply)
+        if canon_source:
+            seen_urls.add(canon_source)
+
         db.mark_published(listing_id, message_id)
         stats.published += 1
         log.info(
@@ -738,40 +795,306 @@ def run(
             accepted: list[tuple[int, PredocListing]] = []
             sent_now: set[int] = set()
             with build_extractor(settings, store=db, prefs=prefs) as extractor:
-                policy = Policy(prefs,
-                                trust_model_fields=not isinstance(extractor, HeuristicExtractor))
-                for item in items:
-                    try:
-                        listing = _process(
-                            item,
-                            db=db,
-                            extractor=extractor,
-                            deduper=deduper,
-                            settings=settings,
-                            stats=stats,
-                            policy=policy,
-                        )
-                    except (QuotaExceeded, RateLimited) as exc:
-                        # Stop cleanly and publish what we have. The remaining
-                        # items are not marked seen, so tomorrow resumes here.
-                        stats.quota_stopped = True
-                        stats.outcome = "quota-stopped"
-                        log.warning("quota_stopped", error=str(exc))
-                        break
-                    except Exception as exc:  # per-item guard
-                        stats.errors += 1
-                        log.exception("item_failed", source=item.source)
-                        db.log_dlq(
-                            run_id=stats.run_id,
-                            stage="process",
-                            source=item.source,
-                            source_url=item.source_url,
-                            payload=truncate(item.text, 1500),
-                            error=repr(exc),
-                        )
-                        continue
-                    if listing is not None:
-                        accepted.append((listing.__dict__["_listing_id"], listing))
+                is_heuristic = isinstance(extractor, HeuristicExtractor)
+                policy = Policy(prefs, trust_model_fields=not is_heuristic)
+                if is_heuristic or settings.extraction_concurrency <= 1:
+                    for item in items:
+                        try:
+                            listing = _process(
+                                item,
+                                db=db,
+                                extractor=extractor,
+                                deduper=deduper,
+                                settings=settings,
+                                stats=stats,
+                                policy=policy,
+                            )
+                        except (QuotaExceeded, RateLimited) as exc:
+                            stats.quota_stopped = True
+                            stats.outcome = "quota-stopped"
+                            log.warning("quota_stopped", error=str(exc))
+                            break
+                        except Exception as exc:
+                            stats.errors += 1
+                            log.exception("item_failed", source=item.source)
+                            db.log_dlq(
+                                run_id=stats.run_id,
+                                stage="process",
+                                source=item.source,
+                                source_url=item.source_url,
+                                payload=truncate(item.text, 1500),
+                                error=repr(exc),
+                            )
+                            continue
+                        if listing is not None:
+                            accepted.append((listing.__dict__["_listing_id"], listing))
+                else:
+                    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+                    def _do_extract(raw_item: RawItem, gate_score: float, gate_lang: str):
+                        try:
+                            res = extractor.extract(
+                                text=raw_item.text,
+                                source_url=raw_item.source_url,
+                                title=raw_item.title,
+                                hints=raw_item.hints,
+                            )
+                            return raw_item, gate_score, gate_lang, res, None
+                        except Exception as exc:
+                            return raw_item, gate_score, gate_lang, None, exc
+
+                    batch_size = max(1, settings.extraction_concurrency * 2)
+                    item_iter = iter(items)
+                    stop_pipeline = False
+
+                    while not stop_pipeline:
+                        to_submit: list[tuple[RawItem, float, str]] = []
+                        while len(to_submit) < batch_size:
+                            try:
+                                item = next(item_iter)
+                            except StopIteration:
+                                break
+
+                            source_key = url_hash(item.source_url)
+                            digest = content_hash(item.text)
+                            board = bool(item.hints.get("board"))
+
+                            seen = db.seen(source_key)
+                            if seen is not None and (seen["content_hash"] == digest or board):
+                                stats.already_seen += 1
+                                if seen["listing_id"]:
+                                    db.touch_listing(int(seen["listing_id"]))
+                                continue
+
+                            if item.hints.get("reject"):
+                                reason = f"board:{item.hints['reject']}"
+                                stats.not_wanted += 1
+                                stats.gate_reasons[reason] = (
+                                    stats.gate_reasons.get(reason, 0) + 1
+                                )
+                                db.mark_seen(
+                                    source_key,
+                                    source=item.source,
+                                    decision="rejected",
+                                    reason=reason,
+                                    content_hash=digest,
+                                )
+                                continue
+
+                            gate = gating.evaluate(
+                                item.text,
+                                title=item.title,
+                                url=item.source_url,
+                                known_vacancy=board,
+                            )
+                            if not gate.passed:
+                                stats.gated += 1
+                                stats.gate_reasons[gate.reason] = (
+                                    stats.gate_reasons.get(gate.reason, 0) + 1
+                                )
+                                db.mark_seen(
+                                    source_key,
+                                    source=item.source,
+                                    decision="rejected",
+                                    reason=gate.reason,
+                                    content_hash=digest,
+                                )
+                                continue
+
+                            to_submit.append((item, gate.score, gate.language))
+
+                        if not to_submit:
+                            break
+
+                        workers = min(len(to_submit), settings.extraction_concurrency)
+                        with ThreadPoolExecutor(max_workers=workers) as pool:
+                            futures = [
+                                pool.submit(_do_extract, it, score, lang)
+                                for it, score, lang in to_submit
+                            ]
+                            for fut in as_completed(futures):
+                                it, score, lang, result, exc = fut.result()
+                                source_key = url_hash(it.source_url)
+                                digest = content_hash(it.text)
+
+                                if exc is not None:
+                                    if isinstance(exc, (QuotaExceeded, RateLimited)):
+                                        stats.quota_stopped = True
+                                        stats.outcome = "quota-stopped"
+                                        log.warning("quota_stopped", error=str(exc))
+                                        stop_pipeline = True
+                                        break
+                                    stats.errors += 1
+                                    log.exception("item_failed", source=it.source)
+                                    db.log_dlq(
+                                        run_id=stats.run_id,
+                                        stage="extract",
+                                        source=it.source,
+                                        source_url=it.source_url,
+                                        payload=truncate(it.text, 2000),
+                                        error=str(exc),
+                                    )
+                                    continue
+
+                                if result is None:
+                                    continue
+
+                                stats.extracted += 1
+                                result = _merge_hints(result, it.hints)
+
+                                try:
+                                    listing = coerce(
+                                        result,
+                                        source_url=it.source_url,
+                                        rule_score=score,
+                                        language=lang,
+                                        fallback_summary=it.text,
+                                        confidence=gating.blend_confidence(
+                                            result.confidence,
+                                            score,
+                                            weight=settings.model_confidence_weight,
+                                        ),
+                                    )
+                                except CoercionError as c_exc:
+                                    stats.gated += 1
+                                    reason = f"model:{result.rejection_reason or 'rejected'}"
+                                    stats.gate_reasons[reason] = (
+                                        stats.gate_reasons.get(reason, 0) + 1
+                                    )
+                                    db.mark_seen(
+                                        source_key,
+                                        source=it.source,
+                                        decision="rejected",
+                                        reason=str(c_exc)[:200],
+                                        content_hash=digest,
+                                    )
+                                    continue
+
+                                if listing.confidence < settings.confidence_threshold:
+                                    stats.low_confidence += 1
+                                    db.mark_seen(
+                                        source_key,
+                                        source=it.source,
+                                        decision="rejected",
+                                        reason=f"low-confidence:{listing.confidence:.2f}",
+                                        content_hash=digest,
+                                    )
+                                    continue
+
+                                if policy is not None:
+                                    why = policy.check(listing, it)
+                                    if why:
+                                        stats.not_wanted += 1
+                                        reason = f"preferences:{why}"
+                                        stats.gate_reasons[reason] = (
+                                            stats.gate_reasons.get(reason, 0) + 1
+                                        )
+                                        stats.policy_rejections[why] = (
+                                            stats.policy_rejections.get(why, 0) + 1
+                                        )
+                                        db.mark_seen(
+                                            source_key,
+                                            source=it.source,
+                                            decision="rejected",
+                                            reason=reason,
+                                            content_hash=digest,
+                                        )
+                                        continue
+
+                                # Tier 1 deduplication
+                                apply_key = url_hash(listing.apply_url)
+                                existing = db.listing_by_url_hash(apply_key)
+                                if existing is None and listing.source_url:
+                                    existing = db.listing_by_url(listing.source_url)
+                                if (
+                                    existing is None
+                                    and listing.apply_url
+                                    and listing.apply_url != listing.source_url
+                                ):
+                                    existing = db.listing_by_url(listing.apply_url)
+                                if existing is not None:
+                                    stats.duplicates += 1
+                                    db.add_alternate_source(
+                                        int(existing["id"]), listing.source_url
+                                    )
+                                    reason = "url"
+                                    db.mark_seen(
+                                        source_key,
+                                        source=it.source,
+                                        decision="duplicate",
+                                        reason=reason,
+                                        content_hash=digest,
+                                        listing_id=int(existing["id"]),
+                                    )
+                                    continue
+
+                                # Tiers 2 and 3 deduplication
+                                dedupe_text = f"{listing.title}. {listing.summary or it.text}"
+                                dedupe_inst = _dedupe_institution(listing, it)
+                                signature = Deduplicator.signature(
+                                    dedupe_text, deduper.num_perm
+                                )
+                                duplicate = deduper.find(
+                                    text=dedupe_text,
+                                    institution=dedupe_inst,
+                                    title=listing.title,
+                                    principal_investigator=listing.principal_investigator,
+                                    deadline=listing.deadline,
+                                    signature=signature,
+                                )
+                                if (
+                                    duplicate is not None
+                                    and not _really_same(db, duplicate.listing_id, listing, it)
+                                ):
+                                    duplicate = None
+                                if duplicate is not None:
+                                    stats.duplicates += 1
+                                    db.add_alternate_source(
+                                        duplicate.listing_id, listing.source_url
+                                    )
+                                    db.mark_seen(
+                                        source_key,
+                                        source=it.source,
+                                        decision="duplicate",
+                                        reason=duplicate.tier,
+                                        content_hash=digest,
+                                        listing_id=duplicate.listing_id,
+                                    )
+                                    log.info(
+                                        "duplicate",
+                                        tier=duplicate.tier,
+                                        score=round(duplicate.score, 3),
+                                        against=duplicate.listing_id,
+                                    )
+                                    continue
+
+                                listing_id = db.insert_listing(
+                                    _listing_row(
+                                        listing,
+                                        source=it.source,
+                                        signature=signature.to_bytes() if signature else None,
+                                        hints=it.hints,
+                                    )
+                                )
+                                deduper.add(
+                                    listing_id,
+                                    text=dedupe_text,
+                                    institution=dedupe_inst,
+                                    title=listing.title,
+                                    principal_investigator=listing.principal_investigator,
+                                    deadline=listing.deadline,
+                                    signature=signature,
+                                )
+                                db.mark_seen(
+                                    source_key,
+                                    source=it.source,
+                                    decision="accepted",
+                                    content_hash=digest,
+                                    listing_id=listing_id,
+                                )
+                                listing.__dict__["_listing_id"] = listing_id
+                                listing.__dict__["_page_read"] = bool(it.hints.get("enriched"))
+                                accepted.append((listing_id, listing))
                 stats.llm_calls = getattr(extractor, "calls", 0)
 
             # Rows inserted by an earlier run that never reached Telegram

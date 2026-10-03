@@ -68,7 +68,7 @@ class FilterConfig(BaseModel):
 
 class EnrichConfig(BaseModel):
     fetch_details: bool = True
-    max_details_per_run: int = 150
+    max_details_per_run: int = 500
     detail_concurrency: int = 6
     recheck_open_jobs: bool = True
     recheck_every_days: float = 3

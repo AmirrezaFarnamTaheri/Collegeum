@@ -315,6 +315,38 @@ class Database:
             "SELECT * FROM listings WHERE url_hash=?", (url_hash,)
         ).fetchone()
 
+    def listing_by_url(self, url: str) -> sqlite3.Row | None:
+        """Find a listing by exact URL hash, apply_url, source_url, or alternate_sources."""
+        if not url:
+            return None
+        from .urls import canonicalize_url, url_hash
+
+        h = url_hash(url)
+        canon = canonicalize_url(url)
+        row = self.conn.execute(
+            "SELECT * FROM listings WHERE url_hash=? OR apply_url=? OR source_url=? OR "
+            "apply_url=? OR source_url=?",
+            (h, url, url, canon, canon),
+        ).fetchone()
+        if row is not None:
+            return row
+        return self.conn.execute(
+            "SELECT * FROM listings WHERE alternate_sources LIKE ?",
+            (f'%"{url}"%',),
+        ).fetchone()
+
+    def listing_by_identity(self, institution: str, title: str) -> sqlite3.Row | None:
+        """Find an existing published listing by normalized institution and title."""
+        inst = (institution or "").strip().lower()
+        tit = (title or "").strip().lower()
+        if not inst or not tit:
+            return None
+        return self.conn.execute(
+            "SELECT * FROM listings WHERE LOWER(TRIM(institution))=? AND LOWER(TRIM(title))=? "
+            "AND status='published' AND closed_at IS NULL",
+            (inst, tit),
+        ).fetchone()
+
     def listing(self, listing_id: int) -> sqlite3.Row | None:
         return self.conn.execute("SELECT * FROM listings WHERE id=?", (listing_id,)).fetchone()
 

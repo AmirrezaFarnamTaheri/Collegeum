@@ -27,18 +27,24 @@ from __future__ import annotations
 
 import json
 import re
+import threading
+import time
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
 
 from ..core.ratelimit import QuotaExceeded, RateLimiter, quota_day
+from ..logging_setup import get_logger
 from ..models import EXTRACTION_JSON_SCHEMA, ExtractionResult
 from .prompt import SYSTEM_PROMPT, build_user_prompt
+
+log = get_logger(__name__)
 
 __all__ = [
     "ExtractionError",
     "RateLimited",
+    "KeyRotator",
     "Extractor",
     "build_extractor",
     "NullExtractor",
@@ -46,6 +52,101 @@ __all__ = [
 
 _BACKEND_META_KEY = "extraction_backend_resolved"
 _JSON_FENCE = re.compile(r"^\s*```(?:json)?\s*|\s*```\s*$", re.IGNORECASE)
+
+
+@dataclass
+class KeyState:
+    key: str
+    cooldown_until: float = 0.0
+    calls: int = 0
+    tokens: int = 0
+    errors: int = 0
+
+
+class KeyRotator:
+    """Thread-safe round-robin API key rotator with automatic per-key cooldowns."""
+
+    def __init__(self, keys: Any) -> None:
+        clean: list[str] = []
+        if isinstance(keys, str):
+            raw = re.split(r"[,;\s]+", keys.strip())
+        elif isinstance(keys, (list, tuple, set)):
+            raw = list(keys)
+        else:
+            raw = [keys]
+
+        for k in raw:
+            if not k:
+                continue
+            for item in re.split(r"[,;\s]+", str(k).strip()):
+                if item and item not in clean:
+                    clean.append(item)
+
+        if not clean:
+            raise ValueError("KeyRotator requires at least one API key")
+
+        self._states = [KeyState(key=k) for k in clean]
+        self._lock = threading.Lock()
+        self._index = 0
+
+    @property
+    def keys(self) -> list[str]:
+        return [s.key for s in self._states]
+
+    @property
+    def primary_key(self) -> str:
+        return self._states[0].key
+
+    def __len__(self) -> int:
+        return len(self._states)
+
+    def get_key(self) -> str:
+        """Return the next available healthy key in round-robin order."""
+        with self._lock:
+            now = time.monotonic()
+            n = len(self._states)
+            for i in range(n):
+                idx = (self._index + i) % n
+                state = self._states[idx]
+                if state.cooldown_until <= now:
+                    self._index = (idx + 1) % n
+                    return state.key
+            # All keys in cooldown: return the one that becomes free earliest
+            earliest = min(self._states, key=lambda s: s.cooldown_until)
+            wait = max(0.0, earliest.cooldown_until - now)
+            if 0.0 < wait <= 2.0:
+                time.sleep(wait)
+            return earliest.key
+
+    def mark_rate_limited(self, key: str, retry_after: float = 30.0) -> None:
+        """Mark a specific key as rate-limited / on cooldown."""
+        with self._lock:
+            now = time.monotonic()
+            for s in self._states:
+                if s.key == key:
+                    s.cooldown_until = now + max(10.0, retry_after)
+                    s.errors += 1
+                    break
+
+    def mark_success(self, key: str, tokens: int = 0) -> None:
+        """Record a successful call for this key."""
+        with self._lock:
+            for s in self._states:
+                if s.key == key:
+                    s.calls += 1
+                    s.tokens += tokens
+                    s.errors = 0
+                    break
+
+    def mark_error(self, key: str) -> None:
+        """Record a transport or non-429 error for this key."""
+        with self._lock:
+            for s in self._states:
+                if s.key == key:
+                    s.errors += 1
+                    if s.errors >= 3:
+                        s.cooldown_until = time.monotonic() + 15.0
+                    break
 
 
 class ExtractionError(RuntimeError):
@@ -61,8 +162,16 @@ class RateLimited(ExtractionError):
 
 
 def _strip_fence(text: str) -> str:
-    """Remove ```json fences some models still emit around structured output."""
-    return _JSON_FENCE.sub("", text or "").strip()
+    """Extract JSON from raw text, removing markdown fences or surrounding commentary."""
+    s = (text or "").strip()
+    fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", s, re.IGNORECASE)
+    if fence_match:
+        return fence_match.group(1).strip()
+    start = s.find("{")
+    end = s.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return s[start:end + 1]
+    return s
 
 
 def _parse_retry_delay(response: httpx.Response) -> float:
@@ -264,7 +373,8 @@ class Extractor:
     def __init__(
         self,
         *,
-        api_key: str,
+        api_key: str = "",
+        api_keys: Any = None,
         model: str,
         base_url: str,
         limiter: RateLimiter,
@@ -273,20 +383,40 @@ class Extractor:
         max_input_chars: int = 12_000,
         client: httpx.Client | None = None,
         store: Any | None = None,
+        fallback_extractor: Any | None = None,
     ) -> None:
-        if not api_key:
+        raw_keys: list[str] = []
+        if api_keys:
+            if isinstance(api_keys, str):
+                raw_keys.extend(re.split(r"[,;\s]+", api_keys.strip()))
+            elif isinstance(api_keys, (list, tuple, set)):
+                raw_keys.extend(list(api_keys))
+            else:
+                raw_keys.append(str(api_keys))
+        if api_key:
+            for part in re.split(r"[,;\s]+", api_key.strip()):
+                if part and part not in raw_keys:
+                    raw_keys.append(part)
+        if not raw_keys:
             raise ExtractionError("An API key is required for model extraction")
-        self.api_key = api_key
+
+        self.rotator = KeyRotator(raw_keys)
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.limiter = limiter
         self.timeout = timeout
         self.max_input_chars = max_input_chars
         self.store = store
+        self.fallback_extractor = fallback_extractor
         self._owns_client = client is None
         self._client = client or httpx.Client(timeout=timeout)
         self._candidates = self._resolve_candidates(backend)
         self.calls = 0
+
+    @property
+    def api_key(self) -> str:
+        """Primary active key, for backward compatibility."""
+        return self.rotator.primary_key
 
     def _resolve_candidates(self, backend: str) -> list[_Backend]:
         cached = None
@@ -320,7 +450,9 @@ class Extractor:
     def __exit__(self, *exc: object) -> None:
         self.close()
 
-    def _post(self, backend: _Backend, body: dict[str, Any]) -> httpx.Response:
+    def _post(
+        self, backend: _Backend, body: dict[str, Any], key: str | None = None
+    ) -> httpx.Response:
         endpoint = backend.path(self.model)
         base = self.base_url.rstrip("/")
         if endpoint.startswith("/"):
@@ -338,9 +470,10 @@ class Extractor:
                 url = f"{base}{endpoint}"
         else:
             url = f"{base}/{endpoint}"
+        active_key = key or self.rotator.get_key()
         return self._client.post(
             url,
-            headers=backend.headers(self.api_key),
+            headers=backend.headers(active_key),
             json=body,
             timeout=self.timeout,
         )
@@ -361,55 +494,86 @@ class Extractor:
             text=text[: self.max_input_chars], source_url=source_url, title=title
         )
         last_error: Exception | None = None
+        max_key_attempts = min(len(self.rotator), 5) if len(self.rotator) > 1 else 1
 
-        for index, backend in enumerate(self._candidates):
-            try:
-                response = self._post(backend, backend.request(self.model, SYSTEM_PROMPT, user))
-            except httpx.RequestError as exc:
-                last_error = ExtractionError(f"{backend.name}: transport error: {exc}")
-                continue
+        for key_attempt in range(max_key_attempts):
+            current_key = self.rotator.get_key()
+            key_had_rate_limit = False
+            for index, backend in enumerate(self._candidates):
+                try:
+                    req_body = backend.request(self.model, SYSTEM_PROMPT, user)
+                    response = self._post(backend, req_body, key=current_key)
+                except httpx.RequestError as exc:
+                    last_error = ExtractionError(f"{backend.name}: transport error: {exc}")
+                    self.rotator.mark_error(current_key)
+                    continue
 
-            if response.status_code == 429:
-                delay = _parse_retry_delay(response)
-                self.limiter.penalise(delay or 30.0)
-                self.limiter.record(error=True, day=day)
-                raise RateLimited(f"provider rate limit ({backend.name})", delay)
+                if response.status_code == 429:
+                    delay = _parse_retry_delay(response)
+                    self.rotator.mark_rate_limited(current_key, delay or 30.0)
+                    key_had_rate_limit = True
+                    log.warning(
+                        "key_rate_limited",
+                        key=f"{current_key[:10]}...{current_key[-4:]}",
+                        attempt=key_attempt + 1,
+                        of=max_key_attempts,
+                        delay=delay,
+                    )
+                    if key_attempt + 1 < max_key_attempts:
+                        break  # rotate to next key
+                    self.limiter.penalise(delay or 30.0)
+                    self.limiter.record(error=True, day=day)
+                    raise RateLimited(f"provider rate limit ({backend.name})", delay)
 
-            if response.status_code in (400, 404) and index + 1 < len(self._candidates):
-                # Unknown endpoint or unsupported field: try the other shape
-                # once rather than failing the whole run on a vendor change.
-                last_error = ExtractionError(
-                    f"{backend.name}: HTTP {response.status_code}: {response.text[:200]}"
+                if response.status_code in (400, 404) and index + 1 < len(self._candidates):
+                    # Unknown endpoint or unsupported field: try the other shape
+                    # once rather than failing the whole run on a vendor change.
+                    last_error = ExtractionError(
+                        f"{backend.name}: HTTP {response.status_code}: {response.text[:200]}"
+                    )
+                    continue
+
+                if response.status_code >= 400:
+                    self.rotator.mark_error(current_key)
+                    self.limiter.record(error=True, day=day)
+                    raise ExtractionError(
+                        f"{backend.name}: HTTP {response.status_code}: {response.text[:300]}"
+                    )
+
+                payload = response.json()
+                raw = _strip_fence(backend.extract_text(payload))
+                tokens = int(
+                    (payload.get("usageMetadata") or {}).get("totalTokenCount", 0)
+                    or (payload.get("usage") or {}).get("total_tokens", 0)
+                    or (
+                        (payload.get("usage") or {}).get("input_tokens", 0)
+                        + (payload.get("usage") or {}).get("output_tokens", 0)
+                    )
+                    or 0
                 )
-                continue
+                self.limiter.record(tokens=tokens, day=day)
+                self.rotator.mark_success(current_key, tokens=tokens)
+                self.calls += 1
+                self._remember_backend(backend.name)
 
-            if response.status_code >= 400:
-                self.limiter.record(error=True, day=day)
-                raise ExtractionError(
-                    f"{backend.name}: HTTP {response.status_code}: {response.text[:300]}"
-                )
+                try:
+                    return ExtractionResult.model_validate(json.loads(raw))
+                except Exception as exc:
+                    if self.fallback_extractor is not None:
+                        log.warning(
+                            "model_schema_failed_fallback_heuristic",
+                            error=str(exc),
+                            raw=raw[:200],
+                        )
+                        return self.fallback_extractor.extract(
+                            text=text, source_url=source_url, title=title, hints=hints
+                        )
+                    if isinstance(exc, json.JSONDecodeError):
+                        raise ExtractionError(f"model returned non-JSON: {exc}") from exc
+                    raise ExtractionError(f"schema validation failed: {exc}") from exc
 
-            payload = response.json()
-            raw = _strip_fence(backend.extract_text(payload))
-            tokens = int(
-                (payload.get("usageMetadata") or {}).get("totalTokenCount", 0)
-                or (payload.get("usage") or {}).get("total_tokens", 0)
-                or (
-                    (payload.get("usage") or {}).get("input_tokens", 0)
-                    + (payload.get("usage") or {}).get("output_tokens", 0)
-                )
-                or 0
-            )
-            self.limiter.record(tokens=tokens, day=day)
-            self.calls += 1
-            self._remember_backend(backend.name)
-
-            try:
-                return ExtractionResult.model_validate(json.loads(raw))
-            except json.JSONDecodeError as exc:
-                raise ExtractionError(f"model returned non-JSON: {exc}") from exc
-            except Exception as exc:
-                raise ExtractionError(f"schema validation failed: {exc}") from exc
+            if not key_had_rate_limit and last_error is None:
+                break
 
         raise last_error or ExtractionError("no extraction backend succeeded")
 
@@ -483,6 +647,16 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
 
         return HeuristicExtractor(prefs or load_preferences(settings.preferences_config))
 
+    from ..boards.config import load_preferences
+    from .heuristic import HeuristicExtractor
+
+    pref_obj = prefs or (
+        load_preferences(settings.preferences_config)
+        if hasattr(settings, "preferences_config")
+        else None
+    )
+    fallback_extractor = HeuristicExtractor(pref_obj)
+
     limiter = RateLimiter(
         requests_per_minute=settings.llm_requests_per_minute,
         requests_per_day=settings.llm_requests_per_day,
@@ -510,6 +684,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             timeout=settings.llm_timeout_seconds,
             max_input_chars=settings.llm_max_input_chars,
             store=store,
+            fallback_extractor=fallback_extractor,
         )
 
     if provider in ("nvidia", "nim"):
@@ -522,6 +697,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             timeout=settings.llm_timeout_seconds,
             max_input_chars=settings.llm_max_input_chars,
             store=store,
+            fallback_extractor=fallback_extractor,
         )
 
     if provider == "openai":
@@ -534,6 +710,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             timeout=settings.llm_timeout_seconds,
             max_input_chars=settings.llm_max_input_chars,
             store=store,
+            fallback_extractor=fallback_extractor,
         )
 
     if provider in ("anthropic", "claude"):
@@ -546,11 +723,19 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             timeout=settings.llm_timeout_seconds,
             max_input_chars=settings.llm_max_input_chars,
             store=store,
+            fallback_extractor=fallback_extractor,
         )
 
     if provider == "openrouter":
+        keys = (
+            settings.get_openrouter_keys()
+            if hasattr(settings, "get_openrouter_keys")
+            else []
+        )
+        primary_key = keys[0] if keys else settings.openrouter_api_key
         return Extractor(
-            api_key=settings.openrouter_api_key,
+            api_key=primary_key,
+            api_keys=keys or None,
             model=settings.openrouter_model,
             base_url=settings.openrouter_base_url,
             limiter=limiter,
@@ -558,6 +743,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             timeout=settings.llm_timeout_seconds,
             max_input_chars=settings.llm_max_input_chars,
             store=store,
+            fallback_extractor=fallback_extractor,
         )
 
     if provider == "mistral":
@@ -570,6 +756,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             timeout=settings.llm_timeout_seconds,
             max_input_chars=settings.llm_max_input_chars,
             store=store,
+            fallback_extractor=fallback_extractor,
         )
 
     if provider == "memo":
@@ -582,6 +769,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             timeout=settings.llm_timeout_seconds,
             max_input_chars=settings.llm_max_input_chars,
             store=store,
+            fallback_extractor=fallback_extractor,
         )
 
     if provider == "custom":
@@ -594,6 +782,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             timeout=settings.llm_timeout_seconds,
             max_input_chars=settings.llm_max_input_chars,
             store=store,
+            fallback_extractor=fallback_extractor,
         )
 
     return Extractor(
@@ -605,6 +794,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
         timeout=settings.llm_timeout_seconds,
         max_input_chars=settings.llm_max_input_chars,
         store=store,
+        fallback_extractor=fallback_extractor,
     )
 
 

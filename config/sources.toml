@@ -353,6 +353,97 @@ institution = "University of Toronto"
 country = "Canada"
 
 
+# --- research institutes & think tanks ---------------------------------
+
+[[board]]
+name = "ifs"
+type = "link_scan"
+group = "research_institute"
+urls = ["https://ifs.org.uk/jobs", "https://app.beapplied.com/org/institute-for-fiscal-studies"]
+link_pattern = '(ifs\.org\.uk/jobs/|app\.beapplied\.com/apply/)'
+institution = "Institute for Fiscal Studies"
+country = "United Kingdom"
+field_implied = true
+note = "UK premier microeconomics research institute (tax, labor, public economics)."
+
+[[board]]
+name = "insead"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.insead.edu/faculty-research/research-positions"
+link_pattern = 'insead\.edu/faculty-research/research-positions/'
+institution = "INSEAD"
+country = "France"
+field_implied = true
+note = "Full-time predoctoral researchers across Econ, Finance, Strategy, Decision Sciences."
+
+[[board]]
+name = "ifo"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.ifo.de/karriere"
+link_pattern = 'ifo\.de/.*karriere'
+institution = "ifo Institute"
+country = "Germany"
+field_implied = true
+note = "Leibniz Institute for Economic Research at the University of Munich."
+
+[[board]]
+name = "diw_berlin"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.diw.de/karriere"
+link_pattern = 'diw\.de/.*karriere'
+institution = "DIW Berlin"
+country = "Germany"
+field_implied = true
+note = "German Institute for Economic Research (Berlin)."
+
+[[board]]
+name = "zew"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.zew.de/karriere"
+link_pattern = 'zew\.de/.*karriere'
+institution = "ZEW Mannheim"
+country = "Germany"
+field_implied = true
+note = "ZEW Leibniz Centre for European Economic Research (Mannheim)."
+
+[[board]]
+name = "wzb"
+type = "link_scan"
+group = "research_institute"
+url = "https://www.wzb.eu/de/jobs"
+link_pattern = 'wzb\.eu/.*jobs'
+institution = "WZB Berlin Social Science Center"
+country = "Germany"
+field_implied = true
+note = "WZB quantitative political economy and economics of change."
+
+[[board]]
+name = "carlo_alberto"
+type = "link_scan"
+group = "research_institute"
+urls = ["https://www.carloalberto.org/about-us/jobs-and-fellowships/", "https://www.eief.it/"]
+link_pattern = '(carloalberto\.org/|eief\.it/)'
+institution = "Collegio Carlo Alberto & EIEF"
+country = "Italy"
+field_implied = true
+note = "Centralized research assistantships supporting faculty in macro, finance, applied micro."
+
+[[board]]
+name = "eth_lawecon"
+type = "link_scan"
+group = "research_institute"
+url = "https://lawecon.ethz.ch/news-and-jobs/job-opportunities.html"
+link_pattern = 'lawecon\.ethz\.ch/.*job-opportunities'
+institution = "ETH Zurich Center for Law & Economics"
+country = "Switzerland"
+field_implied = true
+note = "Empirical data science, experimental economics, and law & economics predoc/RA program."
+
+
 # --- social ------------------------------------------------------------
 
 [[board]]
