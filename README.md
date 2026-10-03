@@ -9,7 +9,7 @@ An automated pipeline that discovers, deduplicates, and broadcasts
 **pre-doctoral** research assistantships, fellowships, and academic research
 openings in economics, finance, public policy, and quantitative social
 science across the UK, Europe, Canada, the US, and international research
-institutions — to Telegram and X/Twitter daily, at zero dollar cost.
+institutions to Telegram and X/Twitter daily, at zero dollar cost.
 
 🌐 **Live Web Dashboard:** [https://amirrezafarnamtaheri.github.io/predoc-not-org](https://amirrezafarnamtaheri.github.io/predoc-not-org)
 
@@ -76,18 +76,14 @@ patterns, position types (predoc, PhD, postdoc), and deadline expiry rules.
 `config/sources.toml` lists the sources: `[[board]]` entries are active by
 default, while `[[feed]]` and `[[portal]]` entries serve as configured templates.
 
-### About the feed and portal templates
+### Feed and portal templates
 
-**The `[[feed]]` and `[[portal]]` entries ship with `verified = false` and
-`enabled = false`.** During this project's research, no confirmable,
-currently-live public feed URL could be found for INOMICS, EconJobMarket,
-EURAXESS, or jobs.ac.uk specifically — job board feed infrastructure changes
-often enough that a URL found via search is not the same thing as a URL that
-returns data today. `predoc-pipeline sources verify` fetches every enabled
-source once and reports what actually comes back; treat it as the mandatory
-first step, not an optional check. See the notes on each entry in
-`config/sources.toml` for what to look for, and `predoc-pipeline sources
-discover <url>` to find a site's real feed URL from its homepage.
+`[[feed]]` and `[[portal]]` entries default to `verified = false` and
+`enabled = false`. Public syndication endpoints change frequently across
+academic portals. Run `predoc-pipeline sources verify` to validate connectivity
+and data return for configured sources. Consult `config/sources.toml` for
+site-specific parameters, and run `predoc-pipeline sources discover <url>` to
+detect live RSS or Atom feeds directly from publisher homepages.
 
 ## Project layout
 
@@ -126,10 +122,10 @@ docs/                    Static web dashboard (docs/index.html) and JSON/RSS dat
 ## Testing
 
 ```bash
-make test-core          # stdlib only — runs anywhere with standard python3
-make test                # full suite: 281 tests passing
-make eval                # gate precision/recall against tests/fixtures/golden.jsonl
-make smoke               # offline self-check without network or credentials
+make test-core          # stdlib only: runs with standard python3 without dependencies
+make test               # full suite: 282 tests passing
+make eval               # gate precision/recall against tests/fixtures/golden.jsonl
+make smoke              # offline self-check without network or credentials
 ```
 
 `tests/core/` is runnable with zero third-party packages installed:
@@ -155,4 +151,4 @@ PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
 
 ## License
 
-GNU Affero General Public License v3.0 (AGPL-3.0-or-later) — see `LICENSE`.
+GNU Affero General Public License v3.0 (AGPL-3.0-or-later). See `LICENSE`.
