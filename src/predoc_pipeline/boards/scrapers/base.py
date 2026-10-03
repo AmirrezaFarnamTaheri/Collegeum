@@ -119,4 +119,13 @@ async def generic_fetch_detail(http: HttpClient, post: JobPostSchema) -> str | N
     wd = workday_parts_from_url(final)
     if wd:
         return await workday_api_detail(http, *wd, post)
+
+    from ...utils.pdf import extract_pdf_text, is_pdf
+
+    content_type = resp.headers.get("content-type", "")
+    if is_pdf(resp.content, content_type, final):
+        pdf_text = extract_pdf_text(resp.content, max_chars=20000)
+        if pdf_text:
+            return pdf_text
+
     return html_to_text(resp.text, max_chars=20000)

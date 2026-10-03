@@ -7,7 +7,7 @@ name: predoc-pipeline
 # A run takes ~5-12 minutes (it reads each new job page), i.e. ~250 a month.
 on:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 */6 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
