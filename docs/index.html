@@ -54,7 +54,7 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; overflow-x: clip; }
   body {
     background: var(--paper);
     color: var(--ink);
@@ -80,7 +80,7 @@
   }
   header.masthead .dek {
     font-family: var(--serif);
-    font-style: italic;
+    font-style: normal;
     color: var(--ink-soft);
     font-size: 15px;
     margin: 0;
@@ -274,8 +274,10 @@
 
   @media (max-width: 720px) {
     table.ledger thead { display: none; }
-    table.ledger, table.ledger tbody, table.ledger tr, table.ledger td { display: block; width: 100%; }
+    table.ledger, table.ledger tbody, table.ledger tr, table.ledger td { display: block; width: 100%; box-sizing: border-box; }
     table.ledger tbody tr { padding: 14px 4px; }
+    td.title-cell .title { overflow-wrap: anywhere; min-width: 0; }
+    td.title-cell .institution { overflow-wrap: anywhere; min-width: 0; }
     td.deadline-cell { width: auto; margin-bottom: 8px; }
     td.loc-cell { width: auto; margin-top: 6px; }
     dialog.detail dl { grid-template-columns: 100px 1fr; }

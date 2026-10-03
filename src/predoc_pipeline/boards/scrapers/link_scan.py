@@ -52,6 +52,9 @@ _PEOPLE_NAV = re.compile(r"^(?:our\s+|current\s+|former\s+|meet\s+(?:our|the)\s+
                          r"people|team|staff|alumni|faculty|placements?)$", re.IGNORECASE)
 _POSTED_LABEL = re.compile(r"(date\s+placed|posted(?:\s+on)?|published(?:\s+on)?|date\s+posted|"
                            r"publication\s+date|placed\s+on)\s*[:\-]?\s*", re.IGNORECASE)
+_SPONSORING_INST_RX = re.compile(r"^(?:sponsoring\s+)?institution\s*:\s*(.*)$", re.IGNORECASE)
+_NON_INST_PREFIX_RX = re.compile(r"^(closes?|deadline|salary|location)")
+_DEPT_RX = re.compile(r"department|faculty|institute|school of|centre|center", re.IGNORECASE)
 
 
 def find_card(a: Tag, max_chars: int = 1800) -> Tag:
@@ -80,10 +83,10 @@ def guess_institution(lines: list[str], title: str) -> str | None:
         low = ln.lower()
         if low == tnorm or len(ln) > 140 or len(ln) < 3:
             continue
-        m_inst = re.match(r"^(?:sponsoring\s+)?institution\s*:\s*(.*)$", ln, re.IGNORECASE)
+        m_inst = _SPONSORING_INST_RX.match(ln)
         if m_inst:
             return m_inst.group(1).strip(" -|•·")
-        if _INSTITUTION_RX.search(ln) and not re.match(r"^(closes?|deadline|salary|location)", low):
+        if _INSTITUTION_RX.search(ln) and not _NON_INST_PREFIX_RX.match(low):
             return ln.strip(" -|•·")
     return None
 
@@ -220,8 +223,7 @@ class LinkScanScraper(BaseScraper):
 
     def _department(self, lines: list[str], title: str) -> str | None:
         for ln in lines:
-            if ln != title and re.search(r"department|faculty|institute|school of|centre|center",
-                                         ln, re.IGNORECASE) and len(ln) < 160:
+            if ln != title and _DEPT_RX.search(ln) and len(ln) < 160:
                 return ln
         return None
 

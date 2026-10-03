@@ -14,6 +14,7 @@ LEGEND = "Buttons: ✅ interested · ❌ not for me (hides it) · 📝 applied. 
 _ORDER = (VALID, INVALID, APPLIED)
 _ICON = {VALID: "✅", INVALID: "❌", APPLIED: "📝"}
 _WORD = {VALID: "Interested", INVALID: "Not for me", APPLIED: "Applied"}
+_DIGITS_RX = re.compile(r"\d+")
 
 
 def feedback_row(
@@ -53,7 +54,7 @@ def rebuild(
         if not parsed:
             rows.append(row)
             continue
-        match = re.search(r"\d+", row[0].get("text", ""))
+        match = _DIGITS_RX.search(row[0].get("text", ""))
         prefix = parsed[1]
         rows.append(feedback_row(prefix, status_of(prefix), int(match.group()) if match else None))
     return {"inline_keyboard": rows}

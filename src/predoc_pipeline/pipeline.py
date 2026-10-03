@@ -720,11 +720,15 @@ def _chat_level(exc: TelegramError) -> bool:
 
 
 def _telegram_setup_problem(settings: Settings, exc: TelegramError) -> None:
-    log.error("telegram_setup_problem", error=str(exc))
-    print(  # visible in the Actions log
-        f"Telegram refused the message ({exc}). Check TELEGRAM_BOT_TOKEN and "
-        "TELEGRAM_PUBLIC_CHANNEL_ID, and press Start in your chat with the bot. "
-        "Nothing was lost: the positions will be sent on the next run."
+    log.error(
+        "telegram_setup_problem",
+        error=str(exc),
+        channel_id=settings.telegram_public_channel_id,
+        advice=(
+            "Telegram refused the message. Check TELEGRAM_BOT_TOKEN and "
+            "TELEGRAM_PUBLIC_CHANNEL_ID, and press Start in your chat with the bot. "
+            "Nothing was lost: the positions will be sent on the next run."
+        ),
     )
 
 

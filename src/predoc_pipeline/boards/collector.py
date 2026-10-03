@@ -304,7 +304,7 @@ def collect_boards(
     sources_config: str,
     prefs: Preferences,
     *,
-    known: Callable[[str], bool] = lambda url: False,
+    known: Callable[[str], bool] = lambda _url: False,
     only: set[str] | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
 ) -> BoardRun:

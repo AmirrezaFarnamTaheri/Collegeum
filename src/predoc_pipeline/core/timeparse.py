@@ -24,6 +24,8 @@ _DATE_PATTERNS = (
     "%Y-%m-%d", "%d/%m/%Y", "%d.%m.%Y", "%d-%m-%Y",
     "%d %B %Y", "%d %b %Y", "%B %d, %Y", "%b %d, %Y", "%Y/%m/%d",
 )
+_TIME_SPLIT = re.compile(r"[T ]\d{1,2}:\d{2}")
+_YMD_REGEX = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 
 
 def utcnow() -> datetime:
@@ -63,14 +65,14 @@ def parse_datetime(value: str | datetime | None) -> datetime | None:
     except ValueError:
         pass
 
-    head = re.split(r"[T ]\d{1,2}:\d{2}", text)[0].strip().rstrip(",")
+    head = _TIME_SPLIT.split(text)[0].strip().rstrip(",")
     for pattern in _DATE_PATTERNS:
         try:
             return to_utc(datetime.strptime(head, pattern))
         except ValueError:
             continue
 
-    match = re.search(r"(\d{4})-(\d{2})-(\d{2})", text)
+    match = _YMD_REGEX.search(text)
     if match:
         try:
             year, month, day = (int(g) for g in match.groups())

@@ -47,6 +47,8 @@ DEADLINE_LABELS = re.compile(
     re.IGNORECASE,
 )
 ROLLING = re.compile(r"\b(rolling|until\s+filled|open\s+until|as\s+soon\s+as\s+possible|asap)\b", re.IGNORECASE)
+_DEADLINE_OR_REVIEW_RX = re.compile(r"deadline|review", re.IGNORECASE)
+_POSTED_RECENT_RX = re.compile(r"\b\d+\s*(minute|hour)s?\s+ago")
 
 
 def today() -> date:
@@ -108,7 +110,7 @@ def extract_deadline(text: str | None, ref: date | None = None) -> tuple[date | 
             return d, (m.group(0) + window).strip()[:120]
         if ROLLING.search(window[:40]):
             return None, "Rolling"
-    if ROLLING.search(text[:400]) and re.search(r"deadline|review", text[:400], re.I):
+    if ROLLING.search(text[:400]) and _DEADLINE_OR_REVIEW_RX.search(text[:400]):
         return None, "Rolling"
     return None, None
 
@@ -122,7 +124,7 @@ def parse_posted(text: str | None, ref: date | None = None) -> date | None:
         return None
     ref = ref or today()
     t = text.lower()
-    if "today" in t or "just now" in t or re.search(r"\b\d+\s*(minute|hour)s?\s+ago", t):
+    if "today" in t or "just now" in t or _POSTED_RECENT_RX.search(t):
         return ref
     if "yesterday" in t:
         return ref - timedelta(days=1)

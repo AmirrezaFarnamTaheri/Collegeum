@@ -28,6 +28,9 @@ __all__ = [
 
 _INLINE_WS = re.compile(r"[ \t\r\f\v]+")
 _BLANKS = re.compile(r"\n{3,}")
+_HTML_TAG_STRIP = re.compile(r"<[^>]+>")
+_ASCII_ALPHANUM = re.compile(r"[A-Za-z0-9]+")
+_LATIN_TOKENS = re.compile(r"[a-zà-öø-ÿ]+")
 _BLOCK_TAGS = {
     "p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6",
     "section", "article", "header", "footer", "blockquote", "table", "ul", "ol",
@@ -80,7 +83,7 @@ def html_to_text(html: str) -> str:
         parser.feed(html)
         parser.close()
     except Exception:  # pragma: no cover - HTMLParser is very tolerant
-        return squish_lines(re.sub(r"<[^>]+>", " ", html))
+        return squish_lines(_HTML_TAG_STRIP.sub(" ", html))
     return squish_lines(parser.text())
 
 
@@ -134,7 +137,7 @@ def hashtag(value: str) -> str:
     """
     folded = unicodedata.normalize("NFKD", value or "")
     ascii_only = "".join(c for c in folded if not unicodedata.combining(c))
-    parts = re.findall(r"[A-Za-z0-9]+", ascii_only)
+    parts = _ASCII_ALPHANUM.findall(ascii_only)
     tag = "".join(p[:1].upper() + p[1:] for p in parts)
     if tag and tag[0].isdigit():
         tag = "_" + tag
@@ -165,7 +168,7 @@ def language_hint(text: str) -> str:
     lowered = (text or "").lower()
     if not lowered:
         return "en"
-    tokens = set(re.findall(r"[a-zà-öø-ÿ]+", lowered))
+    tokens = set(_LATIN_TOKENS.findall(lowered))
     best, best_score = "en", 1  # 'en' starts with a one-point handicap
     for lang, markers in _LANG_MARKERS:
         score = sum(1 for m in markers if m in tokens)
