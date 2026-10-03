@@ -1,5 +1,131 @@
 {
- "generated_at": "2026-10-02T22:44:15Z",
- "count": 0,
- "listings": []
+ "generated_at": "2026-10-03T07:34:38Z",
+ "count": 5,
+ "listings": [
+  {
+   "id": 5,
+   "title": "Research Assistant",
+   "institution": "IESE Business School",
+   "principal_investigator": null,
+   "country": "Spain",
+   "city": null,
+   "is_remote": false,
+   "duration_years": null,
+   "deadline": null,
+   "days_left": null,
+   "disciplines": [
+    "Other"
+   ],
+   "visa": "explicit",
+   "summary": "Full-time, paid research assistant role based in Barcelona supporting Professor Xavier Vives' work in industrial organization, digital economies, and finance. The position is open to candidates with a Bachelor's or Master's degree who plan to pursue a PhD and require a valid work permit for Spain.",
+   "language": "en",
+   "apply_url": "https://jobs.iese.edu/jobs/8108580-research-assistant-to-prof-xavier-vives",
+   "source_url": "https://jobs.iese.edu/jobs/8108580-research-assistant-to-prof-xavier-vives",
+   "confidence": 0.88,
+   "first_seen_at": "2026-10-03T07:33:49Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": []
+  },
+  {
+   "id": 4,
+   "title": "Research Assistant (Predoctoral)",
+   "institution": "University of Warwick",
+   "principal_investigator": null,
+   "country": "United Kingdom",
+   "city": null,
+   "is_remote": false,
+   "duration_years": null,
+   "deadline": "2026-10-15T00:00:00Z",
+   "days_left": 11,
+   "disciplines": [
+    "Other"
+   ],
+   "visa": "inferred",
+   "summary": "This is a full-time, fixed-term predoctoral research assistant position at the University of Warwick's Department of Economics, working with Professor Sonia Bhalotra on an ERC project on violence against women. The role suits recent graduates with strong quantitative skills who intend to pursue a PhD in economics or a related field.",
+   "language": "en",
+   "apply_url": "https://www.jobs.ac.uk/job/DTD138/research-assistant",
+   "source_url": "https://www.jobs.ac.uk/job/DTD138/research-assistant",
+   "confidence": 0.95,
+   "first_seen_at": "2026-10-03T07:32:10Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": []
+  },
+  {
+   "id": 3,
+   "title": "Research assistant (f/m/d)",
+   "institution": "Technische Universität Ilmenau",
+   "principal_investigator": null,
+   "country": "Germany",
+   "city": null,
+   "is_remote": false,
+   "duration_years": null,
+   "deadline": "2026-10-11T00:00:00Z",
+   "days_left": 7,
+   "disciplines": [
+    "Other"
+   ],
+   "visa": "unknown",
+   "summary": "Full-time research assistant position at Technische Universität Ilmenau (Germany) in the Department of Economics and Media Science, Marketing Group. The role involves supporting research projects, teaching, and working on one's own dissertation project, suitable for candidates with a Master's degree in economics or a related field preparing for doctoral study.",
+   "language": "de",
+   "apply_url": "https://www.linkedin.com/jobs/view/4460364908",
+   "source_url": "https://www.linkedin.com/jobs/view/4460364908",
+   "confidence": 0.95,
+   "first_seen_at": "2026-10-03T07:31:43Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": []
+  },
+  {
+   "id": 2,
+   "title": "Research Assistants and Teaching Assistants – House of Innovation, Stockholm School of Economics",
+   "institution": "Stockholm School of Economics",
+   "principal_investigator": null,
+   "country": "Sweden",
+   "city": null,
+   "is_remote": false,
+   "duration_years": null,
+   "deadline": null,
+   "days_left": null,
+   "disciplines": [
+    "Other"
+   ],
+   "visa": "unknown",
+   "summary": "The Stockholm School of Economics is hiring Research Assistants and Teaching Assistants to support ongoing research projects across economics and organizational studies. The position is suited for early-career researchers seeking to develop analytical skills and gain empirical research experience.",
+   "language": "en",
+   "apply_url": "https://jobs.hhs.se/en/job/stockholm/research_assistants_and_teaching_assistants__house_of_innovation_stockholm_school_of_economics_-878378.html",
+   "source_url": "http://jobs.hhs.se/en/job/stockholm/research_assistants_and_teaching_assistants__house_of_innovation_stockholm_school_of_economics_-878378.html",
+   "confidence": 0.924,
+   "first_seen_at": "2026-10-03T07:30:05Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": []
+  },
+  {
+   "id": 1,
+   "title": "Research Assistant (Pre-Doc Intern)",
+   "institution": "University of British Columbia",
+   "principal_investigator": "Sam Norris",
+   "country": "Canada",
+   "city": null,
+   "is_remote": false,
+   "duration_years": null,
+   "deadline": "2026-10-04T00:00:00Z",
+   "days_left": 0,
+   "disciplines": [
+    "Other"
+   ],
+   "visa": "unknown",
+   "summary": "The University of British Columbia's Vancouver School of Economics is hiring a full-time Research Assistant (Pre-Doc Intern) to work with faculty at the Centre for Innovative Data in Economics Research on applied microeconomics projects involving large datasets. The role is designed for candidates with strong quantitative and programming skills who intend to pursue a PhD in economics.",
+   "language": "en",
+   "apply_url": "https://ubc.wd10.myworkdayjobs.com/ubcstaffjobs/job/UBC-Vancouver-Campus---Vancouver-BC-Canada/Research-Assistant--Pre-Doc-Intern-_JR26112",
+   "source_url": "https://bit.ly/3VuuwHD",
+   "confidence": 0.962,
+   "first_seen_at": "2026-10-03T07:28:30Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": []
+  }
+ ]
 }
