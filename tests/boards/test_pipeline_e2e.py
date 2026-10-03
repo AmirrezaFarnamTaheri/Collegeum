@@ -208,7 +208,9 @@ def test_full_run_then_nothing_is_sent_twice(settings):
         assert "bit.ly" not in ucl["apply_url"] or ucl["apply_url"] == ucl["source_url"]
 
     dashboard = json.loads(Path(settings.dashboard_json).read_text())
-    assert dashboard["count"] == 4
+    # All 4 published fixtures are non-US predoc positions (Stockholm, UPF, UCL, UBC).
+    # Under the routing rules, they go to Telegram only; the web dashboard is empty.
+    assert dashboard["count"] == 0
     health = json.loads(Path(settings.health_json).read_text())
     last = health["runs"][0]["source_stats"]
     assert last["board:broken"]["ok"] is False and last["board:predoc_org"]["raw"] == 6

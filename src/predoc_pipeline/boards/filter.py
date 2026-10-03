@@ -91,7 +91,13 @@ class RelevanceFilter:
             return None
         if any(rx.search(inst) for rx in self.emp_block):
             return "industry-employer"
-        return "not-academic-employer"
+        return None if self.cfg.allow_private_sector else "not-academic-employer"
+
+    def employer_is_academic(self, institution: str) -> bool:
+        """True when the employer matches the academic allow-lists."""
+        return any(rx.search(institution) for rx in self.emp_allow) or any(
+            rx.search(institution) for rx in self.emp_names
+        )
 
     # ---- field logic ------------------------------------------------------------------
     def field_verdict_short(self, text: str | None) -> str:

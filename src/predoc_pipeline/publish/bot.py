@@ -28,12 +28,14 @@ from typing import Any
 import httpx
 
 from .. import state
+from ..boards.config import load_preferences
 from ..core.db import Database
 from ..core.db import init as init_db
 from ..core.textproc import escape_telegram_html as esc
 from ..core.textproc import truncate
 from ..core.timeparse import parse_datetime, utcnow
 from ..logging_setup import get_logger
+from ..routing import Router
 from ..settings import Settings
 from .feedback import (
     APPLIED,
@@ -290,10 +292,11 @@ def telegram_sync(
 def _refresh_public_exports(settings: Settings, store: FeedbackStore) -> None:
     """A ❌ should also take the position off the dashboard and the RSS feed."""
     try:
+        router = Router(load_preferences(settings.preferences_config))
         with Database(settings.db_path) as db:
-            state.export_dashboard(db, settings.dashboard_json, hidden=store.hidden)
+            state.export_dashboard(db, settings.dashboard_json, hidden=store.hidden, router=router)
             state.export_feed(db, settings.feed_path, site_url=settings.site_url,
-                              hidden=store.hidden)
+                              hidden=store.hidden, router=router)
     except Exception as exc:  # noqa: BLE001 - cosmetic; the daily run redoes it
         log.warning("export_refresh_failed", error=str(exc))
 

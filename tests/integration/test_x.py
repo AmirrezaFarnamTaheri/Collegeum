@@ -195,7 +195,7 @@ class TestPipelineXBroadcasting(unittest.TestCase):
             init_db(db_path)
             db = Database(db_path)
             try:
-                listing = _sample_listing()
+                listing = _sample_listing(country="United States", city="Cambridge, MA")
                 from predoc_pipeline.pipeline import _listing_row
                 row_data = _listing_row(listing, source="test", signature=None)
                 lid = db.insert_listing(row_data)
@@ -203,8 +203,11 @@ class TestPipelineXBroadcasting(unittest.TestCase):
                 mock_x = MagicMock()
                 mock_x.post_listing.return_value = "tweet_999888"
 
+                from predoc_pipeline.boards.config import Preferences
+                from predoc_pipeline.routing import Router
                 settings = Settings()
                 stats = RunStats()
+                router = Router(Preferences())
 
                 _broadcast(
                     [(lid, listing)],
@@ -213,6 +216,7 @@ class TestPipelineXBroadcasting(unittest.TestCase):
                     db=db,
                     stats=stats,
                     x_client=mock_x,
+                    router=router,
                 )
 
                 mock_x.post_listing.assert_called_once()

@@ -59,6 +59,9 @@ class FilterConfig(BaseModel):
     employer_allow_patterns: list[str] = Field(default_factory=list)
     employer_allow_names: list[str] = Field(default_factory=list)
     employer_block_patterns: list[str] = Field(default_factory=list)
+    # When true, employers outside academia (banks, firms, consultancies) pass the
+    # employer check; only employer_block_patterns still reject them.
+    allow_private_sector: bool = False
     excluded_employers: list[str] = Field(default_factory=list)
     regions_include: list[str] = Field(default_factory=lambda: ["UK", "Europe", "Canada"])
     keep_unknown_region: bool = True
@@ -92,8 +95,18 @@ class TelegramPrefs(BaseModel):
     alert_on_source_failures: int = 3  # warn when a source failed N runs in a row (0 = off)
 
 
+class RoutingConfig(BaseModel):
+    """Which listings go to the website (and X) and which go to Telegram only."""
+
+    web_regions: list[str] = Field(default_factory=lambda: ["US"])
+    web_position_kinds: list[str] = Field(default_factory=lambda: ["phd", "postdoc"])
+    web_employer_patterns: list[str] = Field(default_factory=list)
+    web_employer_names: list[str] = Field(default_factory=list)
+
+
 class Preferences(BaseModel):
     filters: FilterConfig = Field(default_factory=FilterConfig)
+    routing: RoutingConfig = Field(default_factory=RoutingConfig)
     enrich: EnrichConfig = Field(default_factory=EnrichConfig)
     http: HttpConfig = Field(default_factory=HttpConfig)
     telegram: TelegramPrefs = Field(default_factory=TelegramPrefs)

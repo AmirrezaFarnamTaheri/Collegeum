@@ -170,15 +170,31 @@ def _public_record(row: Any) -> dict[str, Any]:
     }
 
 
-def export_dashboard(db: Any, path: str | Path, *, hidden: set[str] | None = None) -> int:
+def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
+    """Active listings for the website: hidden ones out, Telegram-only ones out."""
+    return [
+        row
+        for row in db.active_listings()
+        if row["url_hash"] not in hidden
+        and (router is None or router.channel_for_row(row) == "web")
+    ]
+
+
+def export_dashboard(
+    db: Any, path: str | Path, *, hidden: set[str] | None = None, router: Any | None = None
+) -> int:
     """Write the JSON snapshot the static dashboard fetches.
 
-    ``hidden`` holds the url_hash of positions marked ❌ in Telegram.
+    ``hidden`` holds the url_hash of positions marked ❌ in Telegram. With a
+    ``router``, only listings routed to the website are included.
     """
-    hidden = hidden or set()
-    records = [
-        _public_record(row) for row in db.active_listings() if row["url_hash"] not in hidden
-    ]
+    records = []
+    for row in _web_rows(db, hidden or set(), router):
+        record = _public_record(row)
+        if router is not None:
+            record["kind"] = router.position_kind(row["title"], row["summary"] or "")
+            record["sector"] = router.sector(row["institution"] or "")
+        records.append(record)
     payload = {
         "generated_at": format_ts(),
         "count": len(records),
@@ -254,24 +270,24 @@ def export_feed(
     site_url: str = "",
     limit: int = 100,
     hidden: set[str] | None = None,
+    router: Any | None = None,
+    title: str = "Research positions",
 ) -> int:
-    """Publish the channel as RSS as well.
+    """Publish the website's listings as RSS as well.
 
-    Costs about forty lines and removes Telegram as a single point of access:
-    anyone can subscribe in a reader, and the data stays usable if the bot
-    token is ever revoked.
+    Removes any single channel as the only way in: anyone can subscribe in a
+    reader, and the data stays usable if a bot token is ever revoked.
     """
-    hidden = hidden or set()
-    rows = [r for r in db.active_listings() if r["url_hash"] not in hidden][:limit]
+    rows = _web_rows(db, hidden or set(), router)[:limit]
     now = utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
         "<channel>",
-        "<title>Predoc listings (non-US)</title>",
+        f"<title>{_xml_escape(title)}</title>",
         f"<link>{_xml_escape(site_url or 'https://example.invalid')}</link>",
-        "<description>Pre-doctoral research positions in economics, finance and "
-        "public policy outside the United States.</description>",
+        "<description>US research positions, PhD and postdoc posts, and openings at "
+        "central banks, international organizations and firms.</description>",
         "<language>en</language>",
         f"<lastBuildDate>{now}</lastBuildDate>",
     ]

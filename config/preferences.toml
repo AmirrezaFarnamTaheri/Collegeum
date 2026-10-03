@@ -121,12 +121,14 @@ employer_allow_names = [
   "Blueprint Labs", "J-PAL", "JPAL", "National Bureau of Economic Research", "NBER",
 ]
 
-# Non-research commercial retail operations:
+# When false (the default), only academic and explicitly allowed institutional employers
+# pass the filter. Routing (see [routing]) independently decides which channel a listing
+# goes to — banks, IOs, and named consultancies go to the web even with this set to false.
+allow_private_sector = false
+
+# Operations that never count as research employers, even with allow_private_sector:
 employer_block_patterns = [
-  "retail bank|mortgage|credit union", "securities", "capital", "investment", "asset management", "wealth",
-  "hedge", "trading", "advisors?", "advisory", "partners",
-  "holdings?", 'group\b', '\b(inc|ltd|llc|plc|corp|corporation|gmbh|ag|sa|spa|bv|ab|as)\b\.?', "& co", "insurance", "real estate",
-  "pharma", "energy", "technologies", "solutions",
+  "retail bank|mortgage|credit union", "insurance", "real estate", "pharma",
 ]
 
 # Never send these (matched in employer, title and link):
@@ -136,6 +138,33 @@ regions_include = ["UK", "Europe", "Canada", "US", "Other"]
 keep_unknown_region = true   # keep jobs whose location couldn't be detected
 drop_expired = true
 max_age_days = 120           # ignore postings older than this (when a post date is known)
+
+[routing]
+# Website and X: a listing goes there when ANY of these holds. Everything else
+# (pre-doctoral roles outside the US at universities and research institutes)
+# goes to Telegram only.
+web_regions = ["US"]
+web_position_kinds = ["phd", "postdoc"]
+# Central banks, international organizations, banks, consultancies. Employers that
+# match none of the academic lists above (companies) also go to the website.
+web_employer_patterns = [
+  "central bank", "reserve bank", "federal reserve", "monetary authority",
+  '\bbanks?\b', "banque", "banca", "banco",
+  "international organi[sz]ation", "economic consulting", 'consulting\b', "consultancy",
+]
+web_employer_names = [
+  "Federal Reserve", "Fed", "ECB", "European Central Bank", "Bank of England", "Bank of Canada",
+  "BIS", "Bank for International Settlements", "Bundesbank", "Deutsche Bundesbank",
+  "Banque de France", "Banca d'Italia", "Banco de España", "Riksbank", "Swiss National Bank", "SNB",
+  "De Nederlandsche Bank", "DNB", "Norges Bank", "Reserve Bank of Australia", "RBA",
+  "OECD", "IMF", "International Monetary Fund", "World Bank", "WTO", "World Trade Organization",
+  "IDB", "Inter-American Development Bank", "EBRD", "EIB", "European Investment Bank",
+  "Asian Development Bank", "ADB", "UN", "United Nations", "ILO",
+  "Cornerstone Research", "Analysis Group", "NERA Economic Consulting", "NERA",
+  "Charles River Associates", "CRA", "Compass Lexecon", "The Brattle Group", "Brattle",
+  "Bates White", "Keystone Strategy", "Mathematica", "MDRC", "RAND Corporation", "RAND",
+  "RTI International",
+]
 
 [enrich]
 fetch_details = true         # read every new posting's page (field, region, filled?) before sending

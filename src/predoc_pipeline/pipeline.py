@@ -65,6 +65,7 @@ from .publish.telegram import (
     render_digest_pages,
     render_keyboard,
 )
+from .routing import Channel, Router
 from .settings import Settings
 
 log = get_logger(__name__)
@@ -536,23 +537,21 @@ def _broadcast(
     db: Database,
     stats: RunStats,
     *,
+    router: Router | None = None,
     x_client: Any | None = None,
     feedback: FeedbackStore | None = None,
     digest_page_size: int = 6,
     sleep: Any = None,
 ) -> None:
-    """Deliver accepted listings, as cards or as a few numbered digest messages.
+    """Deliver accepted listings to the channel the router picks for each.
 
-    With a personal chat configured (see ``Settings.owner_ids``) every card and
-    digest carries ✅ ❌ 📝 buttons; ``telegram-sync`` records the taps.
-    Also broadcasts to X/Twitter if configured.
+    Web listings (US, PhD/postdoc, banks, international organizations, firms) are
+    published by the dashboard export and posted to X when configured. Telegram
+    listings (non-US predocs) go out as cards or as a few numbered digest messages;
+    with a personal chat configured (see ``Settings.owner_ids``) every card and
+    digest carries ✅ ❌ 📝 buttons and ``telegram-sync`` records the taps.
     """
     if not listings:
-        return
-    if telegram is None and x_client is None:
-        for listing_id, _ in listings:
-            db.mark_status(listing_id, "unpublished")
-        log.warning("broadcast_channels_not_configured", held=len(listings))
         return
 
     include_feedback = settings.telegram_feedback_buttons
@@ -614,20 +613,38 @@ def _broadcast(
     if not listings:
         return
 
-    x_post_ids: dict[int, str | None] = {}
-    if x_client is not None:
-        for listing_id, listing in listings:
-            x_post_ids[listing_id] = _publish_to_x(x_client, listing_id, listing, db, stats)
+    web = (
+        [(lid, lst) for lid, lst in listings if router.channel_for(lst) is Channel.WEB]
+        if router is not None
+        else []
+    )
+    listings = (
+        [(lid, lst) for lid, lst in listings if router.channel_for(lst) is Channel.TELEGRAM]
+        if router is not None
+        else listings
+    )
 
+    # The website is regenerated from the database on every run, so a web listing
+    # is live once it is marked published. X is best effort: a failed post is
+    # logged to the dead-letter table and does not hold the listing back.
+    for listing_id, listing in web:
+        x_post_id = _publish_to_x(x_client, listing_id, listing, db, stats) if x_client else None
+        db.mark_published(listing_id, None, x_post_id=x_post_id)
+        stats.published += 1
+        log.info(
+            "published_web", listing_id=listing_id, institution=truncate(listing.institution, 60)
+        )
+
+    if not listings:
+        return
     if telegram is None:
-        if x_client is not None:
-            for listing_id, _ in listings:
-                if x_post_ids.get(listing_id):
-                    db.mark_published(listing_id, None, x_post_id=x_post_ids[listing_id])
-                    stats.published += 1
+        for listing_id, _ in listings:
+            db.mark_status(listing_id, "unpublished")
+        log.warning("telegram_not_configured", held=len(listings))
         return
 
     hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
+    x_post_ids: dict[int, str | None] = {}
 
     if len(listings) > settings.telegram_digest_threshold:
         # A backfill should not fire forty separate notifications.
@@ -1073,12 +1090,14 @@ def run(
                         if url_hash(lst.apply_url) not in hidden]
             accepted = _verify_before_sending(accepted, prefs, db, stats, board_transport)
             sent_now = {lid for lid, _ in accepted}
+            router = Router(prefs)
             _broadcast(
                 accepted,
                 telegram,
                 settings,
                 db,
                 stats,
+                router=router,
                 x_client=x_client,
                 feedback=feedback,
                 digest_page_size=prefs.telegram.digest_page_size,
@@ -1103,8 +1122,12 @@ def run(
             stats.outcome = "partial"
 
         journal = state.write_journal(db, settings.state_path)
-        dashboard = state.export_dashboard(db, settings.dashboard_json, hidden=hidden)
-        state.export_feed(db, settings.feed_path, site_url=settings.site_url, hidden=hidden)
+        router = Router(prefs)
+        dashboard = state.export_dashboard(
+            db, settings.dashboard_json, hidden=hidden, router=router
+        )
+        state.export_feed(db, settings.feed_path, site_url=settings.site_url,
+                          hidden=hidden, router=router)
 
         log.info(
             "run_complete",

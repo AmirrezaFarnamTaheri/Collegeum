@@ -13,6 +13,7 @@ from pathlib import Path
 
 import typer
 
+from .boards.config import load_preferences
 from .core.db import Database
 from .core.db import init as init_db
 from .core.timeparse import format_ts
@@ -21,6 +22,7 @@ from .ingest.http import PoliteClient
 from .ingest.sources import load_sources
 from .logging_setup import configure as configure_logging
 from .logging_setup import get_logger
+from .routing import Router
 from .settings import Settings
 
 app = typer.Typer(
@@ -131,10 +133,12 @@ def dashboard() -> None:
     settings = _settings()
     init_db(settings.db_path)
     hidden = FeedbackStore(settings.feedback_path).hidden
+    router = Router(load_preferences(settings.preferences_config))
     with Database(settings.db_path) as db:
         state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
-        count = state.export_dashboard(db, settings.dashboard_json, hidden=hidden)
-        state.export_feed(db, settings.feed_path, site_url=settings.site_url, hidden=hidden)
+        count = state.export_dashboard(db, settings.dashboard_json, hidden=hidden, router=router)
+        state.export_feed(db, settings.feed_path, site_url=settings.site_url,
+                          hidden=hidden, router=router)
     # health.json is left alone: it is the run history, rebuilt only by `run`.
     typer.echo(f"wrote {count} active listings to {settings.dashboard_json}")
 
