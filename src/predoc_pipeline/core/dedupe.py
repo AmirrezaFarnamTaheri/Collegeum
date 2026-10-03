@@ -31,11 +31,12 @@ _STOP_TOKENS = {
     "the", "of", "at", "for", "and", "university", "universite", "universitat",
     "universidad", "universita", "school", "institute", "college", "de", "di", "du",
 }
+_WORD_RE = re.compile(r"\w+")
 
 
 def _blocking_key(institution: str) -> str:
     """Most distinctive token of an institution name, used to block tier 3."""
-    tokens = [t for t in re.findall(r"\w+", (institution or "").lower()) if t not in _STOP_TOKENS]
+    tokens = [t for t in _WORD_RE.findall((institution or "").lower()) if t not in _STOP_TOKENS]
     return max(tokens, key=len) if tokens else ""
 
 

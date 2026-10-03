@@ -7,6 +7,7 @@ X API v2 using OAuth 1.0a (User Context), with 280-character budget accounting
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from typing import Any
@@ -234,7 +235,7 @@ class XClient:
             detail = ""
             try:
                 detail = resp.json().get("detail", "")
-            except Exception:
+            except (ValueError, TypeError, KeyError, json.JSONDecodeError):
                 pass
             raise XError(
                 f"X authentication/permission error ({status}): {detail or resp.text}",

@@ -27,6 +27,7 @@ failure mode rather than a style preference:
 
 from __future__ import annotations
 
+import json
 import re
 import time
 from dataclasses import dataclass, field
@@ -342,7 +343,7 @@ class TelegramClient:
                     retry_after = float(
                         response.json().get("parameters", {}).get("retry_after", 5)
                     )
-                except Exception:
+                except (ValueError, TypeError, KeyError, json.JSONDecodeError):
                     pass
                 # The server told us how long to wait; local guesses lose.
                 sleep(retry_after + 0.5)

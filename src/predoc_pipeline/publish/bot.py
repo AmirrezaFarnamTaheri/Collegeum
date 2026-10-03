@@ -354,8 +354,8 @@ def _handle_tap(
         changed = True
     try:  # Telegram rejects answers to taps older than a few minutes; harmless
         bot.call("answerCallbackQuery", {"callback_query_id": cq["id"], "text": reply})
-    except (TelegramError, KeyError):
-        pass
+    except (TelegramError, KeyError) as exc:
+        log.debug("answerCallbackQuery failed for query %s: %s", cq.get("id"), exc)
     message = cq.get("message") or {}
     if message.get("message_id") and message.get("reply_markup"):
         def status_of(pfx: str) -> str | None:

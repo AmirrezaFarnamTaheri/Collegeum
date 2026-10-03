@@ -26,6 +26,7 @@ Design notes that matter operationally:
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import threading
 from collections.abc import Iterator, Sequence
@@ -34,6 +35,8 @@ from pathlib import Path
 from typing import Any
 
 from .timeparse import format_ts
+
+_log = logging.getLogger(__name__)
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -260,8 +263,8 @@ class Database:
         """
         try:
             self.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        except sqlite3.Error:  # pragma: no cover - best effort
-            pass
+        except sqlite3.Error as exc:  # pragma: no cover - best effort
+            _log.debug("wal_checkpoint failed: %s", exc)
 
     # -- meta -------------------------------------------------------------
     def get_meta(self, key: str, default: str | None = None) -> str | None:

@@ -1009,6 +1009,8 @@ def run(
                                         stats.outcome = "quota-stopped"
                                         log.warning("quota_stopped", error=str(exc))
                                         stop_pipeline = True
+                                        for f in futures:
+                                            f.cancel()
                                         break
                                     stats.errors += 1
                                     log.exception("item_failed", source=it.source)

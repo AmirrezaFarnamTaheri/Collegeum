@@ -33,6 +33,9 @@ from urllib.robotparser import RobotFileParser
 import httpx
 
 from ..core.urls import content_hash, registrable_host, url_hash
+from ..logging_setup import get_logger
+
+log = get_logger(__name__)
 
 __all__ = ["FetchResult", "PoliteClient"]
 
@@ -193,5 +196,5 @@ class PoliteClient:
                 body_hash=body_hash,
                 status=response.status_code,
             )
-        except Exception:  # pragma: no cover - cache is advisory
-            pass
+        except Exception as exc:  # pragma: no cover - cache is advisory
+            log.debug("Failed to record http cache metadata for %s: %s", url, exc)

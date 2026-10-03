@@ -59,6 +59,9 @@ class SourceStats:
         }
 
 
+_HREF_RE = re.compile(r'href=["\']([^"\']+)["\']', re.IGNORECASE)
+
+
 # --------------------------------------------------------------------------
 # Feeds
 # --------------------------------------------------------------------------
@@ -236,7 +239,7 @@ def _detail_links(html: str, page_url: str, pattern: str, limit: int) -> list[st
     if not pattern:
         return []
     matcher = re.compile(pattern, re.IGNORECASE)
-    hrefs = re.findall(r'href=["\']([^"\']+)["\']', html or "", re.IGNORECASE)
+    hrefs = _HREF_RE.findall(html or "")
     seen: set[str] = set()
     out: list[str] = []
     for href in hrefs:

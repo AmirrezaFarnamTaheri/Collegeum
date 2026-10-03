@@ -149,8 +149,8 @@ async def render_page(url: str, wait_for: str | None = None, timeout_ms: int = 4
             else:
                 try:
                     await page.wait_for_load_state("networkidle", timeout=15000)
-                except Exception:  # noqa: BLE001 - some boards never go idle; take what we have
-                    pass
+                except Exception as exc:  # some boards never go idle; log and use loaded DOM
+                    log.debug("networkidle_wait_timed_out: %s (%s)", url, exc)
             return await page.content()
         finally:
             await browser.close()

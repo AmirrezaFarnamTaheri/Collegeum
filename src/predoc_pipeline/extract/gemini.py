@@ -52,6 +52,7 @@ __all__ = [
 
 _BACKEND_META_KEY = "extraction_backend_resolved"
 _JSON_FENCE = re.compile(r"^\s*```(?:json)?\s*|\s*```\s*$", re.IGNORECASE)
+_FENCE_BLOCK_RE = re.compile(r"```(?:json)?\s*([\s\S]*?)\s*```", re.IGNORECASE)
 
 
 @dataclass
@@ -165,7 +166,7 @@ class RateLimited(ExtractionError):
 def _strip_fence(text: str) -> str:
     """Extract JSON from raw text, removing markdown fences or surrounding commentary."""
     s = (text or "").strip()
-    fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", s, re.IGNORECASE)
+    fence_match = _FENCE_BLOCK_RE.search(s)
     if fence_match:
         return fence_match.group(1).strip()
     start = s.find("{")
@@ -588,8 +589,8 @@ class Extractor:
         try:
             if self.store.get_meta(_BACKEND_META_KEY) != name:
                 self.store.set_meta(_BACKEND_META_KEY, name)
-        except Exception:  # pragma: no cover - advisory only
-            pass
+        except Exception as exc:  # pragma: no cover - advisory only
+            log.debug("Failed to persist backend preference %s: %s", name, exc)
 
 
 class NullExtractor:
