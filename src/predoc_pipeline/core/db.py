@@ -520,14 +520,16 @@ class Database:
     def pending_listings(self) -> list[sqlite3.Row]:
         """Rows inserted but never confirmed as broadcast. Crash recovery.
 
-        'unpublished' rows (found while Telegram was not configured) are
-        included, so they are delivered once it is.
+        'unpublished' rows (found while Telegram was not configured) and rows
+        awaiting broadcast (where telegram_message_id is null) are included,
+        so they are delivered once Telegram is available.
         """
         return self.conn.execute(
-            "SELECT * FROM listings WHERE status IN ('pending', 'unpublished') "
+            "SELECT * FROM listings WHERE status != 'undeliverable' "
+            "AND (status IN ('pending', 'unpublished') OR telegram_message_id IS NULL) "
             "AND closed_at IS NULL AND expired_at IS NULL "
             "AND (deadline IS NULL OR deadline = '' OR "
-            "     deadline >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) ORDER BY id"
+            "     deadline >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-1 day')) ORDER BY id"
         ).fetchall()
 
     def recent_listings(self, days: int) -> list[sqlite3.Row]:

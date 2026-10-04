@@ -95,7 +95,7 @@ def deadline_label(deadline: Any, note: str | None = None) -> str:
     if note and not _HAS_YEAR.search(note):
         # e.g. PREDOC.org "Deadline: Feb 28" -- could be last year's cycle
         return f"{when:%d %b} (year not stated \u2014 check the ad)"
-    days = (when - utcnow()).days
+    days = (when.date() - utcnow().date()).days
     stamp = when.strftime("%d %b %Y")
     if days < 0:
         return f"{stamp} (closed)"
