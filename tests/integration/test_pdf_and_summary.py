@@ -87,3 +87,96 @@ class TestSummarySanitization(unittest.TestCase):
         )
         self.assertIn("Warwick University", result)
         self.assertIn("Sonia Bhalotra", result)
+
+    def test_strips_browser_warning_banner(self):
+        banner = (
+            "Please switch to a supported browser listed here , "
+            "or some features may not work correctly."
+        )
+        result = sanitize_summary(
+            banner,
+            title="Research Assistant",
+            institution="National Bureau of Economic Research",
+            pi="Joseph Shapiro",
+        )
+        self.assertNotIn("supported browser", result)
+        self.assertIn("National Bureau of Economic Research", result)
+        self.assertIn("Joseph Shapiro", result)
+
+    def test_strips_skip_links_and_navigation(self):
+        text = "Skip to main content Back to search results Research Fellow at UCL"
+        result = sanitize_summary(text)
+        self.assertFalse(result.lower().startswith("skip to"))
+        self.assertFalse(result.lower().startswith("back to search"))
+        self.assertIn("Research Fellow at UCL", result)
+
+    def test_sponsoring_researcher_pattern(self):
+        text = (
+            "Sponsoring Researcher : Bureau of Economics "
+            "Sponsoring Institution : U.S. Federal Trade Commission "
+            "Fields of Research : Microeconomics, Statistics "
+            "Deadline : October 15, 2026"
+        )
+        result = sanitize_summary(text)
+        self.assertIn("Predoctoral research position at U.S. Federal Trade Commission", result)
+        self.assertIn("Bureau of Economics", result)
+        self.assertIn("Research focus includes Microeconomics, Statistics", result)
+
+    def test_about_us_preamble_stripped(self):
+        text = (
+            "Research Fellow UCL - School of Management Location: London Salary: £43,000 "
+            "About us The UCL School of Management is home to world-leading research."
+        )
+        result = sanitize_summary(text)
+        self.assertFalse(result.startswith("Research Fellow UCL - School of Management Location"))
+        self.assertTrue(result.startswith("The UCL School of Management is home to"))
+
+
+class TestPendingAndDeadlineLogic(unittest.TestCase):
+    def test_deadline_label_same_day(self):
+        from datetime import datetime
+
+        from predoc_pipeline.publish.telegram import deadline_label
+
+        today_str = datetime.now().strftime("%Y-%m-%dT12:00:00Z")
+        label = deadline_label(today_str)
+        self.assertIn("today", label)
+
+    def test_pending_listings_queries_unbroadcast(self):
+        import tempfile
+        from pathlib import Path
+
+        from predoc_pipeline.core.db import Database, init
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test.db"
+            init(db_path)
+            with Database(db_path) as db:
+                db.import_rows([
+                    {
+                        "url_hash": "h1",
+                        "title": "Predoc 1",
+                        "institution": "Inst 1",
+                        "apply_url": "https://example.org/1",
+                        "source_url": "https://example.org/1",
+                        "status": "published",
+                        "telegram_message_id": None,
+                        "first_seen_at": "2026-10-04T00:00:00Z",
+                        "last_seen_at": "2026-10-04T00:00:00Z",
+                    },
+                    {
+                        "url_hash": "h2",
+                        "title": "Predoc 2",
+                        "institution": "Inst 2",
+                        "apply_url": "https://example.org/2",
+                        "source_url": "https://example.org/2",
+                        "status": "published",
+                        "telegram_message_id": 12,
+                        "first_seen_at": "2026-10-04T00:00:00Z",
+                        "last_seen_at": "2026-10-04T00:00:00Z",
+                    },
+                ])
+                pending = db.pending_listings()
+                ids = [p["url_hash"] for p in pending]
+                self.assertIn("h1", ids)
+                self.assertNotIn("h2", ids)
+

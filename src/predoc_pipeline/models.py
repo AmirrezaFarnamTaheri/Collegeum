@@ -643,12 +643,93 @@ def sanitize_summary(
     """Ensure summary is clean, natural English prose free of raw PDF binary or pipe delimiters."""
     clean = squish(raw_summary)
 
-    # 1. Detect and strip raw PDF binary leak
+    # 1. Detect and strip raw PDF binary leak or browser warning banners
     lower_c = clean.lower()
-    if "%pdf-" in lower_c or "/filter/flatedecode" in lower_c or "/xref/w" in lower_c:
+    if (
+        "%pdf-" in lower_c
+        or "/filter/flatedecode" in lower_c
+        or "/xref/w" in lower_c
+        or "switch to a supported browser" in lower_c
+        or "please enable javascript" in lower_c
+        or "javascript is disabled" in lower_c
+    ):
         clean = ""
+        lower_c = ""
 
-    # 2. Detect and transform pipe-delimited summary (e.g. pi_name: ... | institution: ...)
+    # 2. Strip navigation breadcrumbs and skip links
+    clean = re.sub(
+        r"^(?:skip to (?:main )?content\s*|back to search results\s*)+",
+        "",
+        clean,
+        flags=re.IGNORECASE,
+    ).strip()
+    lower_c = clean.lower()
+
+    # 3. Detect and transform sponsoring researcher patterns
+    if "sponsoring researcher" in lower_c or "sponsoring institution" in lower_c:
+        m_pi = re.search(
+            r"sponsoring researcher\s*:\s*([^:]+?)"
+            r"(?=\s*sponsoring institution|\s*fields of research|\s*deadline|$)",
+            clean,
+            re.IGNORECASE,
+        )
+        m_inst = re.search(
+            r"sponsoring institution\s*:\s*([^:]+?)"
+            r"(?=\s*sponsoring researcher|\s*fields of research|\s*deadline|$)",
+            clean,
+            re.IGNORECASE,
+        )
+        m_fields = re.search(
+            r"fields of research\s*:\s*([^:]+?)"
+            r"(?=\s*sponsoring researcher|\s*sponsoring institution|\s*deadline|$)",
+            clean,
+            re.IGNORECASE,
+        )
+        m_dl = re.search(
+            r"deadline\s*:\s*([^:]+?)"
+            r"(?=\s*sponsoring researcher|\s*sponsoring institution|\s*fields of research|$)",
+            clean,
+            re.IGNORECASE,
+        )
+
+        pi_val = m_pi.group(1).strip() if m_pi else pi
+        inst_val = m_inst.group(1).strip() if m_inst else institution
+        fields_val = (
+            m_fields.group(1).strip()
+            if m_fields
+            else (", ".join(disciplines) if disciplines else None)
+        )
+        dl_val = m_dl.group(1).strip() if m_dl else deadline
+
+        prose_parts = []
+        if inst_val and pi_val:
+            prose_parts.append(
+                f"Predoctoral research position at {inst_val}, working with {pi_val}."
+            )
+        elif inst_val:
+            prose_parts.append(f"Predoctoral research position at {inst_val}.")
+        elif pi_val:
+            prose_parts.append(f"Predoctoral research position working with {pi_val}.")
+        if fields_val:
+            prose_parts.append(f"Research focus includes {fields_val}.")
+        if dl_val:
+            prose_parts.append(f"Application deadline: {dl_val}.")
+        clean = " ".join(prose_parts)
+        lower_c = clean.lower()
+
+    # 4. Extract description from location/description structured headers or strip portal preamble
+    if clean.lower().startswith("location :") or "description:" in clean.lower()[:150]:
+        m_desc = re.search(r"description\s*:\s*(.*)", clean, re.IGNORECASE | re.DOTALL)
+        if m_desc and len(m_desc.group(1).strip()) > 30:
+            clean = m_desc.group(1).strip()
+            lower_c = clean.lower()
+    elif "about us" in lower_c and (
+        clean.lower().startswith("research fellow") or "salary:" in lower_c[:150]
+    ):
+        clean = re.sub(r"^.*?about us\s*", "", clean, flags=re.IGNORECASE).strip()
+        lower_c = clean.lower()
+
+    # 5. Detect and transform pipe-delimited summary (e.g. pi_name: ... | institution: ...)
     if "pi_name:" in lower_c or "fields:" in lower_c or (" | " in clean and ":" in clean):
         parts: dict[str, str] = {}
         for chunk in clean.split(" | "):

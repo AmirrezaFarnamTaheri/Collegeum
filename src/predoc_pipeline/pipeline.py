@@ -161,7 +161,7 @@ def _listing_row(
 def _listing_from_row(row: Any) -> PredocListing:
     """Rebuild a domain object from a stored row, for republishing."""
     from .core.timeparse import parse_datetime
-    from .models import Discipline, Location, VisaStatus
+    from .models import Discipline, Location, VisaStatus, sanitize_summary
 
     raw_disc = row.get("disciplines") if isinstance(row, dict) else row["disciplines"]
     if isinstance(raw_disc, list):
@@ -205,6 +205,13 @@ def _listing_from_row(row: Any) -> PredocListing:
     else:
         tools_pref = []
 
+    clean_summary = sanitize_summary(
+        row["summary"] or "",
+        title=row["title"],
+        institution=row["institution"],
+        pi=row["principal_investigator"],
+    )
+
     return PredocListing(
         title=row["title"],
         institution=row["institution"],
@@ -218,7 +225,7 @@ def _listing_from_row(row: Any) -> PredocListing:
         deadline=parse_datetime(row["deadline"]),
         disciplines=disciplines,
         visa_sponsorship_status=VisaStatus(row["visa_sponsorship_status"]),
-        summary=row["summary"] or "",
+        summary=clean_summary,
         language=row["language"] or "en",
         apply_url=row["apply_url"],
         source_url=row["source_url"],
@@ -653,19 +660,20 @@ def _broadcast(
 
     from .core.urls import canonicalize_url
 
-    # Track URLs to prevent any repeated post
+    # Track URLs already broadcast to prevent any repeated Telegram post
     seen_urls: set[str] = set()
 
     for pub_row in db.published_listings():
-        if pub_row["apply_url"]:
-            seen_urls.add(canonicalize_url(pub_row["apply_url"]))
-        if pub_row["source_url"]:
-            seen_urls.add(canonicalize_url(pub_row["source_url"]))
+        if pub_row["telegram_message_id"]:
+            if pub_row["apply_url"]:
+                seen_urls.add(canonicalize_url(pub_row["apply_url"]))
+            if pub_row["source_url"]:
+                seen_urls.add(canonicalize_url(pub_row["source_url"]))
 
     kept: list[tuple[int, PredocListing]] = []
     for lid, lst in listings:
         row = db.listing(lid)
-        if row is not None and (row["status"] == "published" or row["telegram_message_id"]):
+        if row is not None and row["telegram_message_id"]:
             log.info("skip_already_published", listing_id=lid)
             continue
 
@@ -689,7 +697,7 @@ def _broadcast(
         if (
             existing is not None
             and int(existing["id"]) != lid
-            and (existing["status"] == "published" or existing["telegram_message_id"])
+            and existing["telegram_message_id"]
         ):
             log.info(
                 "skip_duplicate_post_existing_db",

@@ -143,6 +143,70 @@ def dashboard() -> None:
     typer.echo(f"wrote {count} active listings to {settings.dashboard_json}")
 
 
+@app.command("broadcast-pending")
+def broadcast_pending() -> None:
+    """Broadcast unposted pending predoc positions directly to Telegram and update state."""
+    from . import state
+    from .models import RunStats
+    from .pipeline import _broadcast, _listing_from_row
+    from .publish.feedback import FeedbackStore
+    from .publish.telegram import build_telegram
+
+    settings = _settings()
+    init_db(settings.db_path)
+    prefs = load_preferences(settings.preferences_config)
+    router = Router(prefs)
+    feedback = FeedbackStore(settings.feedback_path)
+    telegram = build_telegram(settings)
+    if telegram is None:
+        typer.secho(
+            "Telegram credentials not configured; cannot broadcast.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    with Database(settings.db_path) as db:
+        state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
+        pending_rows = db.pending_listings()
+        accepted = []
+        for row in pending_rows:
+            if row["url_hash"] not in feedback.hidden:
+                accepted.append((int(row["id"]), _listing_from_row(row)))
+
+        typer.echo(f"Found {len(accepted)} pending position(s) eligible for broadcast.")
+        if not accepted:
+            return
+
+        stats = RunStats(run_id="broadcast-manual")
+        try:
+            _broadcast(
+                accepted,
+                telegram,
+                settings,
+                db,
+                stats,
+                router=router,
+                feedback=feedback,
+                digest_page_size=prefs.telegram.digest_page_size,
+            )
+        finally:
+            telegram.close()
+
+        state.write_journal(db, settings.state_path)
+        state.export_dashboard(
+            db, settings.dashboard_json, hidden=feedback.hidden, router=router
+        )
+        state.export_feed(
+            db,
+            settings.feed_path,
+            site_url=settings.site_url,
+            hidden=feedback.hidden,
+            router=router,
+        )
+        typer.echo(f"Broadcast completed: published={stats.published} errors={stats.errors}")
+
+
 @app.command()
 def vacuum() -> None:
     """Prune old dead-letter and seen-item rows, then VACUUM the database."""
