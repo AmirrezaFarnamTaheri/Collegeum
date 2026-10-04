@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-04T06:16:27Z",
- "count": 39,
+ "generated_at": "2026-10-04T06:24:09Z",
+ "count": 38,
  "listings": [
   {
    "id": 50,
@@ -1476,47 +1476,6 @@
    "salary_period": null,
    "salary_raw": null,
    "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
-   "id": 6,
-   "title": "Pre-Doctoral Research Fellow in Economics",
-   "institution": "Yale School of Management",
-   "principal_investigator": "Professors Barbara Biasi (Yale SOM), Song Ma (Yale SOM), and Professor Zhengren Zhu (Vassar College)",
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": null,
-   "days_left": null,
-   "disciplines": [
-    "Labor Economics",
-    "Applied Microeconomics"
-   ],
-   "visa": "unknown",
-   "summary": "Predoctoral research position at Yale School of Management, working with Professors Barbara Biasi (Yale SOM), Song Ma (Yale SOM), and Professor Zhengren Zhu (Vassar College). Research focus includes Projects in applied microeconomics, with a focus on higher education, skills, and labor-market outcomes.. Application deadline: Applications will be reviewed on a rolling basis; shortlisted candidates will be contacted to schedule an interview..",
-   "language": "en",
-   "apply_url": "https://www.barbarabiasi.com/uploads/1/0/1/2/101280322/predoc_ad_2026.pdf",
-   "source_url": "https://bit.ly/3QNqJmH",
-   "confidence": 0.88,
-   "first_seen_at": "2026-10-03T20:48:06Z",
-   "deadline_note": "Rolling",
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [
-    "R"
-   ],
    "tools_preferred": [],
    "min_degree": "unstated",
    "degree_note": null,

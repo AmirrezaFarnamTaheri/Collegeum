@@ -3,10 +3,11 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
 <title>Collegeum — Research Positions</title>
-<link>https://example.invalid</link>
+<link>https://amirrezafarnamtaheri.github.io/predoc-not-org</link>
 <description>US research positions, PhD and postdoc posts, and openings at central banks, international organizations and firms.</description>
 <language>en</language>
-<lastBuildDate>Sun, 04 Oct 2026 06:16:27 +0000</lastBuildDate>
+<lastBuildDate>Sun, 04 Oct 2026 06:24:09 +0000</lastBuildDate>
+<atom:link href="https://amirrezafarnamtaheri.github.io/predoc-not-org/feed.xml" rel="self" type="application/rss+xml" />
 <item>
 <title>Empirical Research Fellow — Northwestern University, Kellogg School of Management, Finance Department</title>
 <link>https://facultyrecruiting.northwestern.edu/apply/MjY2MQ==</link>
@@ -341,15 +342,6 @@
 <description>Brown University —  United States. Deadline: 2026-10-31T23:59:59Z. Predoctoral research position at Brown University, working with Jesse Bruhn. Research focus includes Labor, Public Economics, Public Policy, and Education. Application deadline: Applications received by October 31 will receive priority consideration.</description>
 <category>Labor Economics</category>
 <category>Public Policy</category>
-</item>
-<item>
-<title>Pre-Doctoral Research Fellow in Economics — Yale School of Management</title>
-<link>https://www.barbarabiasi.com/uploads/1/0/1/2/101280322/predoc_ad_2026.pdf</link>
-<guid isPermaLink="false">https://bit.ly/3QNqJmH</guid>
-<pubDate>Sat, 03 Oct 2026 20:48:06 +0000</pubDate>
-<description>Yale School of Management —  United States. Deadline: rolling. Predoctoral research position at Yale School of Management, working with Professors Barbara Biasi (Yale SOM), Song Ma (Yale SOM), and Professor Zhengren Zhu (Vassar College). Research focus includes Projects in applied microeconomics, with a focus on higher education, skills, and labor-market outcomes.. Application deadline: Applications will be reviewed on a rolling basis; shortlisted candidates will be contacted to schedule an interview..</description>
-<category>Labor Economics</category>
-<category>Applied Microeconomics</category>
 </item>
 <item>
 <title>Predoctoral Research Specialist — Rodney White Center for Financial Research, The Wharton School, University of Pennsylvania</title>
