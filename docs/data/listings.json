@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-05T14:17:51Z",
+ "generated_at": "2026-10-06T00:01:40Z",
  "count": 38,
  "listings": [
   {
@@ -97,7 +97,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-06T23:59:59Z",
-   "days_left": 32,
+   "days_left": 31,
    "disciplines": [
     "Labor Economics",
     "Environmental and Energy Economics"
@@ -174,7 +174,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-03-04T23:59:59Z",
-   "days_left": 150,
+   "days_left": 149,
    "disciplines": [
     "Labor Economics",
     "Environmental and Energy Economics"
@@ -213,7 +213,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 11,
+   "days_left": 10,
    "disciplines": [
     "Finance",
     "Business and Management"
@@ -290,7 +290,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 10,
+   "days_left": 9,
    "disciplines": [
     "Macroeconomics",
     "Econometrics",
@@ -375,7 +375,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 11,
+   "days_left": 10,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -455,7 +455,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 10,
+   "days_left": 9,
    "disciplines": [
     "Econometrics",
     "Public Policy",
@@ -577,7 +577,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-12-30T23:59:59Z",
-   "days_left": 86,
+   "days_left": 85,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -621,7 +621,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-03-08T23:59:59Z",
-   "days_left": 154,
+   "days_left": 153,
    "disciplines": [
     "Labor Economics",
     "Behavioral/Experimental Economics"
@@ -660,7 +660,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 11,
+   "days_left": 10,
    "disciplines": [
     "Applied Microeconomics"
    ],
@@ -700,7 +700,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-05T23:59:59Z",
-   "days_left": 0,
+   "days_left": -1,
    "disciplines": [
     "Finance",
     "Applied Microeconomics"
@@ -820,7 +820,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 26,
+   "days_left": 25,
    "disciplines": [
     "Macroeconomics",
     "Finance",
@@ -907,7 +907,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-21T23:59:59Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Other"
    ],
@@ -983,7 +983,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-07T23:59:59Z",
-   "days_left": 2,
+   "days_left": 1,
    "disciplines": [
     "Labor Economics",
     "Environmental and Energy Economics",
@@ -1023,7 +1023,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T23:59:59Z",
-   "days_left": 41,
+   "days_left": 40,
    "disciplines": [
     "Finance",
     "Industrial Organization",
@@ -1417,7 +1417,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-06-30T23:59:59Z",
-   "days_left": 268,
+   "days_left": 267,
    "disciplines": [
     "Development Economics"
    ],
@@ -1455,7 +1455,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 26,
+   "days_left": 25,
    "disciplines": [
     "Labor Economics",
     "Public Policy"
@@ -1494,7 +1494,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-19T23:59:59Z",
-   "days_left": 14,
+   "days_left": 13,
    "disciplines": [
     "Macroeconomics",
     "Finance"
