@@ -1,7 +1,51 @@
 {
- "generated_at": "2026-10-07T05:29:21Z",
- "count": 37,
+ "generated_at": "2026-10-07T13:07:59Z",
+ "count": 38,
  "listings": [
+  {
+   "id": 53,
+   "title": "Research Associate - Good Business Lab",
+   "institution": "J-PAL",
+   "principal_investigator": null,
+   "country": "United States",
+   "city": null,
+   "is_remote": false,
+   "duration_years": null,
+   "deadline": null,
+   "days_left": null,
+   "disciplines": [
+    "Econometrics",
+    "Labor Economics",
+    "Development Economics"
+   ],
+   "visa": "unknown",
+   "summary": "Research Associate - Good Business Lab Location: Colombia Start Date (Earliest): 4 October 2026 Length of Commitment: Less than one year About Us: Good Business Lab is an independent, non-profit labor innovation company. We use rigorous academic research to prove that worker well-being programs have business impacts. We develop market-ready, scalable interventions that benefit both workers and businesses. Our goal is to disrupt the traditional notion of business and show that worker well-being can be a good business practice. The founders of the lab are Ach Adhvaryu - Professor of Economics...",
+   "language": "en",
+   "apply_url": "https://www.povertyactionlab.org/careers/research-associate-good-business-lab-job-105625",
+   "source_url": "https://www.povertyactionlab.org/careers/research-associate-good-business-lab-job-105625",
+   "confidence": 0.887,
+   "first_seen_at": "2026-10-07T13:07:14Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": [],
+   "salary_min": null,
+   "salary_max": null,
+   "salary_currency": null,
+   "salary_period": null,
+   "salary_raw": null,
+   "tools_required": [
+    "Python",
+    "Stata",
+    "R"
+   ],
+   "tools_preferred": [],
+   "min_degree": "bachelors",
+   "degree_note": "bachelor",
+   "start_term": null,
+   "start_date": null,
+   "kind": "predoc",
+   "sector": "academic"
+  },
   {
    "id": 50,
    "title": "Empirical Research Fellow",
