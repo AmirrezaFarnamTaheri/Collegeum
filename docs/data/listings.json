@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-06T18:15:36Z",
- "count": 38,
+ "generated_at": "2026-10-07T05:29:21Z",
+ "count": 37,
  "listings": [
   {
    "id": 50,
@@ -97,7 +97,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-06T23:59:59Z",
-   "days_left": 31,
+   "days_left": 30,
    "disciplines": [
     "Labor Economics",
     "Environmental and Energy Economics"
@@ -174,7 +174,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-03-04T23:59:59Z",
-   "days_left": 149,
+   "days_left": 148,
    "disciplines": [
     "Labor Economics",
     "Environmental and Energy Economics"
@@ -213,7 +213,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 10,
+   "days_left": 9,
    "disciplines": [
     "Finance",
     "Business and Management"
@@ -290,7 +290,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 9,
+   "days_left": 8,
    "disciplines": [
     "Macroeconomics",
     "Econometrics",
@@ -375,7 +375,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 10,
+   "days_left": 9,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -455,7 +455,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 9,
+   "days_left": 8,
    "disciplines": [
     "Econometrics",
     "Public Policy",
@@ -577,7 +577,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-12-30T23:59:59Z",
-   "days_left": 85,
+   "days_left": 84,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -621,7 +621,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-03-08T23:59:59Z",
-   "days_left": 153,
+   "days_left": 152,
    "disciplines": [
     "Labor Economics",
     "Behavioral/Experimental Economics"
@@ -660,7 +660,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 10,
+   "days_left": 9,
    "disciplines": [
     "Applied Microeconomics"
    ],
@@ -685,47 +685,6 @@
    "tools_preferred": [],
    "min_degree": "bachelors",
    "degree_note": "bs",
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
-   "id": 27,
-   "title": "Research Professional",
-   "institution": "The University of Chicago Booth School of Business",
-   "principal_investigator": "Eric Budish",
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": "2026-10-05T23:59:59Z",
-   "days_left": -1,
-   "disciplines": [
-    "Finance",
-    "Applied Microeconomics"
-   ],
-   "visa": "unknown",
-   "summary": "Full-time predoctoral research assistant position at The University of Chicago Booth School of Business, working with Eric Budish.",
-   "language": "en",
-   "apply_url": "https://www.chicagobooth.edu/-/media/faculty/research-professional-program/job-ads/2026-27/budish-rp-ad.pdf",
-   "source_url": "https://bit.ly/4zMoB0s",
-   "confidence": 0.847,
-   "first_seen_at": "2026-10-03T20:55:16Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [
-    "R"
-   ],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": null,
    "start_term": null,
    "start_date": null,
    "kind": "predoc",
@@ -820,7 +779,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 25,
+   "days_left": 24,
    "disciplines": [
     "Macroeconomics",
     "Finance",
@@ -907,7 +866,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-21T23:59:59Z",
-   "days_left": 15,
+   "days_left": 14,
    "disciplines": [
     "Other"
    ],
@@ -983,7 +942,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-07T23:59:59Z",
-   "days_left": 1,
+   "days_left": 0,
    "disciplines": [
     "Labor Economics",
     "Environmental and Energy Economics",
@@ -1023,7 +982,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T23:59:59Z",
-   "days_left": 40,
+   "days_left": 39,
    "disciplines": [
     "Finance",
     "Industrial Organization",
@@ -1417,7 +1376,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-06-30T23:59:59Z",
-   "days_left": 267,
+   "days_left": 266,
    "disciplines": [
     "Development Economics"
    ],
@@ -1455,7 +1414,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 25,
+   "days_left": 24,
    "disciplines": [
     "Labor Economics",
     "Public Policy"
@@ -1494,7 +1453,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-19T23:59:59Z",
-   "days_left": 13,
+   "days_left": 12,
    "disciplines": [
     "Macroeconomics",
     "Finance"
