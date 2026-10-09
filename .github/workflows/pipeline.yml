@@ -128,7 +128,7 @@ jobs:
 
       - name: Upload dead-letter queue
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dlq-${{ github.run_id }}
           path: |
