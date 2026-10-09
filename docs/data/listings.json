@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-08T23:15:05Z",
- "count": 41,
+ "generated_at": "2026-10-09T05:42:05Z",
+ "count": 40,
  "listings": [
   {
    "id": 58,
@@ -12,7 +12,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-29T23:59:59Z",
-   "days_left": 113,
+   "days_left": 112,
    "disciplines": [
     "Other"
    ],
@@ -52,7 +52,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-02-26T00:00:00Z",
-   "days_left": 140,
+   "days_left": 139,
    "disciplines": [
     "Other"
    ],
@@ -259,7 +259,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-06T23:59:59Z",
-   "days_left": 29,
+   "days_left": 28,
    "disciplines": [
     "Labor Economics",
     "Environmental and Energy Economics"
@@ -336,7 +336,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-03-04T23:59:59Z",
-   "days_left": 147,
+   "days_left": 146,
    "disciplines": [
     "Labor Economics",
     "Environmental and Energy Economics"
@@ -375,7 +375,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 8,
+   "days_left": 7,
    "disciplines": [
     "Finance",
     "Business and Management"
@@ -452,7 +452,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 7,
+   "days_left": 6,
    "disciplines": [
     "Macroeconomics",
     "Econometrics",
@@ -537,7 +537,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 8,
+   "days_left": 7,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -617,7 +617,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 7,
+   "days_left": 6,
    "disciplines": [
     "Econometrics",
     "Public Policy",
@@ -739,7 +739,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-12-30T23:59:59Z",
-   "days_left": 83,
+   "days_left": 82,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -783,7 +783,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-03-08T23:59:59Z",
-   "days_left": 151,
+   "days_left": 150,
    "disciplines": [
     "Labor Economics",
     "Behavioral/Experimental Economics"
@@ -822,7 +822,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 8,
+   "days_left": 7,
    "disciplines": [
     "Applied Microeconomics"
    ],
@@ -941,7 +941,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 23,
+   "days_left": 22,
    "disciplines": [
     "Macroeconomics",
     "Finance",
@@ -1028,7 +1028,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-21T23:59:59Z",
-   "days_left": 13,
+   "days_left": 12,
    "disciplines": [
     "Other"
    ],
@@ -1095,46 +1095,6 @@
    "sector": "academic"
   },
   {
-   "id": 21,
-   "title": "Predoctoral Staff Associate",
-   "institution": "Columbia University, School of International and Public Affairs",
-   "principal_investigator": "Robert Metcalfe",
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": "2026-10-07T23:59:59Z",
-   "days_left": -1,
-   "disciplines": [
-    "Labor Economics",
-    "Environmental and Energy Economics",
-    "Public Policy"
-   ],
-   "visa": "unknown",
-   "summary": "Predoctoral research position at Columbia University, School of International and Public Affairs, working with Robert Metcalfe. Research focus includes Environmental, Data Science, Tech Innovation, Labor, and Public Economics. Application deadline: F irst review date October 7, 2026, then rolling.",
-   "language": "en",
-   "apply_url": "https://apply.interfolio.com/194121",
-   "source_url": "https://bit.ly/3VseHRO",
-   "confidence": 0.95,
-   "first_seen_at": "2026-10-03T20:54:44Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
    "id": 19,
    "title": "Research Professional",
    "institution": "The University of Chicago Booth School of Business",
@@ -1144,7 +1104,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T23:59:59Z",
-   "days_left": 38,
+   "days_left": 37,
    "disciplines": [
     "Finance",
     "Industrial Organization",
@@ -1538,7 +1498,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-06-30T23:59:59Z",
-   "days_left": 265,
+   "days_left": 264,
    "disciplines": [
     "Development Economics"
    ],
@@ -1576,7 +1536,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 23,
+   "days_left": 22,
    "disciplines": [
     "Labor Economics",
     "Public Policy"
@@ -1615,7 +1575,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-19T23:59:59Z",
-   "days_left": 11,
+   "days_left": 10,
    "disciplines": [
     "Macroeconomics",
     "Finance"
