@@ -27,24 +27,32 @@ concurrency:
 
 jobs:
   run:
+    # Scheduled/manual publication must never execute unreviewed branch code.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
       # ref: the branch, not the commit that triggered the run. A run that
       # waited in the queue behind the other workflow must start from the
       # newest data, not from the state before that run.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-          cache: pip
 
-      - name: Install
-        run: pip install -e ".[portals]"
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          activate-environment: true
+          enable-cache: true
+
+      - name: Install locked pipeline dependencies
+        run: |
+          uv lock --check
+          uv sync --locked --extra portals
 
       # Restores the SQLite cache from data/listings.ndjson + data/seen.ndjson
       # (the committed state) when it is absent, so a fresh runner never
@@ -106,7 +114,9 @@ jobs:
       # committed. `git pull --rebase` first, in case you edited a file on
       # GitHub while the run was going.
       - name: Commit updated state
-        if: always()
+        # Dry runs never push data, even if a command partially mutated files.
+        # For actual runs, preserve partial journal checkpoints on failure.
+        if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' }}
         run: |
           git config user.name "predoc-pipeline-bot"
           git config user.email "actions@users.noreply.github.com"
@@ -132,7 +142,7 @@ jobs:
 
       - name: Upload dead-letter queue
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dlq-${{ github.run_id }}
           path: |

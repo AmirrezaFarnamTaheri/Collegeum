@@ -1,58 +1,97 @@
 name: refresh-release
 
-# Maintainer-only artifact regeneration for this remediation branch.
-# Run with workflow_dispatch for a later refresh. This workflow never deploys
-# or publishes; CI independently checks the committed generated manifest.
+# Rebuild the checked-in single-file distribution and uv.lock on a working
+# branch. Production main is intentionally not mutated by this bot.
+# A maintainer may dispatch a refresh on any working branch.
+# Include stdlib workflow-contract tests in the reproducible manifest. Editing this
+# workflow also refreshes it automatically, with no feature-branch hardcoding.
 on:
   push:
-    branches:
-      - codex/finalize-sources-and-pipeline
+    branches: ['**']
     paths:
       - .github/workflows/refresh-release.yml
   workflow_dispatch:
 
-# Refresh checkpoint: finalization documentation aligned to verified CI.
-
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: collegeum-release-refresh-${{ github.ref }}
   cancel-in-progress: false
+  queue: max
 
 jobs:
   regenerate:
-    if: github.repository == 'AmirrezaFarnamTaheri/Collegeum' && github.ref == 'refs/heads/codex/finalize-sources-and-pipeline'
+    if: >-
+      github.repository == 'AmirrezaFarnamTaheri/Collegeum' &&
+      github.ref_type == 'branch' &&
+      github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Install lockfile generator
-        run: python -m pip install uv
-      - name: Resolve dependencies from current project
-        run: uv lock
-      - name: Rebuild reproducible project distribution
+
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+
+      - name: Rebuild and push only from current remote branch state
+        id: refresh
+        shell: bash
         run: |
-          python tools/build_single_file.py
-          python -S tools/verify_single_file.py
-      - name: Commit generated artifacts to the existing PR branch
-        run: |
-          set -eu
+          set -euo pipefail
           git config user.name 'collegeum-release-bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add -- uv.lock compile_project.py
-          if git diff --cached --quiet; then
-            echo 'Generated artifacts already current'
-            exit 0
-          fi
-          git commit -m 'chore: synchronize locked dependencies and reproducible distribution [skip ci]'
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
-      - name: Verify committed distribution
+          # A concurrent writer must not make the regenerated manifest stale.
+          # On a push conflict, refetch/recompute rather than pushing an
+          # artifact constructed from yesterday's source tree.
+          for attempt in 1 2 3; do
+            git fetch origin "$GITHUB_REF_NAME"
+            git reset --hard FETCH_HEAD
+            uv lock
+            python tools/build_single_file.py
+            python -S tools/verify_single_file.py
+            git add -- uv.lock compile_project.py
+            if git diff --cached --quiet; then
+              echo 'Generated artifacts already current'
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git commit -m 'chore: synchronize locked dependencies and reproducible distribution [skip ci]'
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Branch advanced during refresh (attempt ${attempt}); retrying."
+            sleep 3
+          done
+          echo 'Could not push refreshed artifacts without overwriting newer changes.'
+          exit 1
+
+      - name: Verify committed artifact
         run: python -S tools/verify_single_file.py
+
+      - name: Dispatch CI for the new generated commit
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # workflow_dispatch works with GITHUB_TOKEN, unlike push events.
+          # The trigger must exist on default main before GitHub will accept
+          # a dispatch; during this PR's bootstrap it is only on the branch.
+          git fetch origin main
+          if git show origin/main:.github/workflows/ci.yml | grep -q '^  workflow_dispatch:'; then
+            gh workflow run ci.yml --ref "$GITHUB_REF_NAME"
+          else
+            echo '::notice::Manual CI dispatch becomes available when the new CI workflow is merged.'
+          fi
