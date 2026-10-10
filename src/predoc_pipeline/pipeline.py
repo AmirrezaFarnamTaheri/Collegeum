@@ -840,10 +840,18 @@ def _broadcast(
                     payload=f"{len(chunk)} listings",
                     error=str(exc),
                 )
+                if getattr(exc, "uncertain", False):
+                    # A message may have been delivered without its acknowledgement.
+                    # Never automatically resend any member of this digest.
+                    for listing_id, _ in chunk:
+                        db.mark_status(listing_id, "delivery-uncertain")
+                    log.error("telegram_digest_needs_reconciliation",
+                              listing_ids=[lid for lid, _ in chunk])
+                    continue
                 if _chat_level(exc):
                     _telegram_setup_problem(settings, exc)
                     return
-                continue  # these stay pending and are retried next run
+                continue  # a definite failed send can be retried next run
             for listing_id, _ in chunk:
                 db.mark_published(listing_id, message_id)
             stats.published += len(chunk)
@@ -885,6 +893,12 @@ def _broadcast(
                 payload=truncate(listing.title, 300),
                 error=str(exc),
             )
+            if getattr(exc, "uncertain", False):
+                # Preserve a durable hold instead of duplicating a possibly
+                # delivered message after a crash or a later scheduled run.
+                db.mark_status(listing_id, "delivery-uncertain")
+                log.error("telegram_card_needs_reconciliation", listing_id=listing_id)
+                continue
             if _chat_level(exc):
                 # Bad token, bot blocked, "chat not found": no message can get
                 # through. Keep everything pending for the next run.
