@@ -40,16 +40,22 @@ jobs:
       - name: Offline smoke check
         run: PYTHONPATH=src python3 -m predoc_pipeline.cli smoke
 
+      - name: Lint
+        run: ruff check src tests tools
+
+      - name: Type check
+        run: mypy src
+
       - name: Full test suite with coverage
         run: |
           PYTHONPATH=src python3 -m pytest tests/ \
             --cov=predoc_pipeline --cov-report=xml --cov-report=term-missing -v
 
-      - name: Lint
-        run: ruff check src tests
-
-      - name: Type check
-        run: mypy src
+      - name: Build and verify release archives
+        run: |
+          python3 -m pip install build
+          python3 -m build --sdist --wheel --outdir build/release
+          python3 -S tools/verify_release.py
 
       - name: Enforce stdlib-only core (belt and suspenders)
         run: PYTHONPATH=src python3 -m pytest tests/core/test_no_third_party.py -v
