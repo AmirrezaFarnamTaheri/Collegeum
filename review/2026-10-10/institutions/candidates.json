@@ -1,0 +1,380 @@
+[
+  {
+    "name": "penn",
+    "url": "https://www.hr.upenn.edu/PennHR/careers-at-penn/how-to-apply",
+    "error": "HTTP 403 for https://www.hr.upenn.edu/PennHR/careers-at-penn/how-to-apply"
+  },
+  {
+    "name": "rand",
+    "url": "https://www.rand.org/jobs.html",
+    "final_url": "https://www.rand.org/jobs.html",
+    "status": 200,
+    "links": [
+      {
+        "title": "Find a Job",
+        "href": "https://rand.wd5.myworkdayjobs.com/External_Career_Site/"
+      },
+      {
+        "title": "Log in",
+        "href": "https://rand.wd5.myworkdayjobs.com/External_Career_Site/"
+      },
+      {
+        "title": "What is E-Verify? ( PDF )",
+        "href": "https://www.e-verify.gov/sites/default/files/everify/posters/EVerifyParticipationPoster.pdf"
+      },
+      {
+        "title": "E-Verify Right to Work ( PDF )",
+        "href": "https://www.e-verify.gov/sites/default/files/everify/posters/IER_RighttoWorkPoster.pdf"
+      },
+      {
+        "title": "EEO: Know Your Rights ( PDF )",
+        "href": "https://www.eeoc.gov/sites/default/files/2023-06/22-088_EEOC_KnowYourRights6.12ScreenRdr.pdf"
+      },
+      {
+        "title": "Your Rights Under the Uniformed Services Employment and Reemployment Rights Act ( PDF )",
+        "href": "https://www.dol.gov/sites/dolgov/files/VETS/files/USERRA-Poster.pdf"
+      },
+      {
+        "title": "Am I a Protected Veteran? ( PDF )",
+        "href": "https://www.dol.gov/sites/dolgov/files/ofccp/posters/Infographics/files/ProtectedVet-2016-11x17_ENGESQA508c.pdf"
+      },
+      {
+        "title": "Employee Polygraph Protection Act ( PDF )",
+        "href": "https://www.dol.gov/sites/dolgov/files/WHD/legacy/files/eppac.pdf"
+      },
+      {
+        "title": "Family and Medical Leave Act (FMLA) ( PDF )",
+        "href": "https://www.dol.gov/sites/dolgov/files/WHD/legacy/files/fmlaen.pdf"
+      }
+    ],
+    "text_sample": " to Work ( PDF ) . EEO: Know Your Rights ( PDF ) Your Rights Under the Uniformed Services Employment and Reemployment Rights Act ( PDF ) Am I a Protected Veteran? ( PDF ) Employee Polygraph Protection Act ( PDF ) Family and Medical Leave Act (FMLA) ( PDF ) Explore More Graduate Student Summer Associate Program The RAND School of Public Policy Why Work at RAND? RAND Employment Benefits Careers Menu Careers at RAND Why Work at RAND? Job Categories Research and Analysis Jobs Benefits How to Apply Frequently Asked Questions Objective Analysis. Effective Solutions. RAND is a research organization that develops solutions to public policy challenges to help make communities throughout the world safer and more secure, healthier and more prosperous. RAND is nonprofit, nonpartisan, and committed to the public interest. RAND Headquarters P.O. Box 2138 1776 Main Street Santa Monica, CA 90401-2138 RAND has offices across the U.S., in Europe, and in Australia See all RAND locations About Leadership Research Integrity Graduate School Support RAND Careers Contact Work with Us For Media For Congress Subscribe to the Policy Currents Newsletter And stay on top of the issues that matter most. Email Subscribe View all newsletters RAND on LinkedIn RAND on X RAND on Instagram RAND on Facebook RAND on YouTube RAND on Bluesky RAND on Threads Policy Minded: RAND's Flagship Podcast RAND® is a registered trademark. © 2026 RAND Corporation. Privacy Policy Terms and Conditions International Websites: 中文 العربية This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply."
+  },
+  {
+    "name": "duke",
+    "url": "https://careers.duke.edu/search/?q=economics",
+    "final_url": "https://careers.duke.edu/search/?q=economics",
+    "status": 200,
+    "links": [
+      {
+        "title": "Senior Policy Analyst",
+        "href": "/job/Durham-Senior-Policy-Analyst-NC-27710/1438184700/"
+      },
+      {
+        "title": "Senior Policy Analyst",
+        "href": "/job/Durham-Senior-Policy-Analyst-NC-27710/1438184700/"
+      },
+      {
+        "title": "Project Planner I",
+        "href": "/job/Durham-Project-Planner-I-NC-27710/1429716100/"
+      },
+      {
+        "title": "Project Planner I",
+        "href": "/job/Durham-Project-Planner-I-NC-27710/1429716100/"
+      },
+      {
+        "title": "Senior Policy Analyst",
+        "href": "/job/Durham-Senior-Policy-Analyst-NC-27710/1437927300/"
+      },
+      {
+        "title": "Senior Policy Analyst",
+        "href": "/job/Durham-Senior-Policy-Analyst-NC-27710/1437927300/"
+      },
+      {
+        "title": "Administrative Assistant",
+        "href": "/job/Durham-Administrative-Assistant-NC-27710/1438384900/"
+      },
+      {
+        "title": "Administrative Assistant",
+        "href": "/job/Durham-Administrative-Assistant-NC-27710/1438384900/"
+      },
+      {
+        "title": "Medical Interpreter- PRN Duke Regional Hospital",
+        "href": "/job/Durham-Medical-Interpreter-PRN-Duke-Regional-Hospital-NC-27710/1355448700/"
+      },
+      {
+        "title": "Medical Interpreter- PRN Duke Regional Hospital",
+        "href": "/job/Durham-Medical-Interpreter-PRN-Duke-Regional-Hospital-NC-27710/1355448700/"
+      },
+      {
+        "title": "Medical Interpreter - Spanish",
+        "href": "/job/Durham-Medical-Interpreter-Spanish-NC-27710/1382387700/"
+      },
+      {
+        "title": "Medical Interpreter - Spanish",
+        "href": "/job/Durham-Medical-Interpreter-Spanish-NC-27710/1382387700/"
+      },
+      {
+        "title": "Medical Interpreter - Arabic",
+        "href": "/job/Durham-Medical-Interpreter-Arabic-NC-27710/1424248900/"
+      },
+      {
+        "title": "Medical Interpreter - Arabic",
+        "href": "/job/Durham-Medical-Interpreter-Arabic-NC-27710/1424248900/"
+      },
+      {
+        "title": "Medical Interpreter - Spanish",
+        "href": "/job/Durham-Medical-Interpreter-Spanish-NC-27710/1432975800/"
+      },
+      {
+        "title": "Medical Interpreter - Spanish",
+        "href": "/job/Durham-Medical-Interpreter-Spanish-NC-27710/1432975800/"
+      },
+      {
+        "title": "Quantitative Associate",
+        "href": "/job/Durham-Quantitative-Associate-NC-27710/1390904000/"
+      },
+      {
+        "title": "Quantitative Associate",
+        "href": "/job/Durham-Quantitative-Associate-NC-27710/1390904000/"
+      },
+      {
+        "title": "Assistant Manager, Duke Dining Services",
+        "href": "/job/Durham-Assistant-Manager%2C-Duke-Dining-Services-NC-27710/1368239300/"
+      },
+      {
+        "title": "Assistant Manager, Duke Dining Services",
+        "href": "/job/Durham-Assistant-Manager%2C-Duke-Dining-Services-NC-27710/1368239300/"
+      },
+      {
+        "title": "Population Health Care Manager- QuEST",
+        "href": "/job/Durham-Population-Health-Care-Manager-QuEST-NC-27710/1420248300/"
+      },
+      {
+        "title": "Population Health Care Manager- QuEST",
+        "href": "/job/Durham-Population-Health-Care-Manager-QuEST-NC-27710/1420248300/"
+      },
+      {
+        "title": "Assistant Policy Research Director, Duke Margolis Institute Hybrid (Washington DC or Durham NC)",
+        "href": "/job/Durham-Assistant-Policy-Research-Director%2C-Duke-Margolis-Institute-Hybrid-%28Washington-DC-or-Durham-NC%29-NC-27710/1412886300/"
+      },
+      {
+        "title": "Assistant Policy Research Director, Duke Margolis Institute Hybrid (Washington DC or Durham NC)",
+        "href": "/job/Durham-Assistant-Policy-Research-Director%2C-Duke-Margolis-Institute-Hybrid-%28Washington-DC-or-Durham-NC%29-NC-27710/1412886300/"
+      },
+      {
+        "title": "Assistant Policy Research Director, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Assistant-Policy-Research-Director%2C-Duke-Margolis-Institute-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1432682500/"
+      },
+      {
+        "title": "Assistant Policy Research Director, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Assistant-Policy-Research-Director%2C-Duke-Margolis-Institute-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1432682500/"
+      },
+      {
+        "title": "Policy Analyst, Margolis Institute for Health Policy,  Hybrid Durham NC",
+        "href": "/job/Durham-Policy-Analyst%2C-Margolis-Institute-for-Health-Policy%2C-Hybrid-Durham-NC-NC-27710/1425703600/"
+      },
+      {
+        "title": "Policy Analyst, Margolis Institute for Health Policy,  Hybrid Durham NC",
+        "href": "/job/Durham-Policy-Analyst%2C-Margolis-Institute-for-Health-Policy%2C-Hybrid-Durham-NC-NC-27710/1425703600/"
+      },
+      {
+        "title": "Senior Policy Analyst, Duke Margolis Institute for Health Policy Hybrid (Washington DC or Durham NC)",
+        "href": "/job/Durham-Senior-Policy-Analyst%2C-Duke-Margolis-Institute-for-Health-Policy-Hybrid-%28Washington-DC-or-Durham-NC%29-NC-27710/1415339000/"
+      },
+      {
+        "title": "Senior Policy Analyst, Duke Margolis Institute for Health Policy Hybrid (Washington DC or Durham NC)",
+        "href": "/job/Durham-Senior-Policy-Analyst%2C-Duke-Margolis-Institute-for-Health-Policy-Hybrid-%28Washington-DC-or-Durham-NC%29-NC-27710/1415339000/"
+      },
+      {
+        "title": "Senior Policy Analyst, Duke Margolis Institute for Health Policy Hybrid (Washington DC or Durham NC)",
+        "href": "/job/Durham-Senior-Policy-Analyst%2C-Duke-Margolis-Institute-for-Health-Policy-Hybrid-%28Washington-DC-or-Durham-NC%29-NC-27710/1410623100/"
+      },
+      {
+        "title": "Senior Policy Analyst, Duke Margolis Institute for Health Policy Hybrid (Washington DC or Durham NC)",
+        "href": "/job/Durham-Senior-Policy-Analyst%2C-Duke-Margolis-Institute-for-Health-Policy-Hybrid-%28Washington-DC-or-Durham-NC%29-NC-27710/1410623100/"
+      },
+      {
+        "title": "Senior Policy Analyst, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Senior-Policy-Analyst%2C-Duke-Margolis-Institute-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1433102600/"
+      },
+      {
+        "title": "Senior Policy Analyst, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Senior-Policy-Analyst%2C-Duke-Margolis-Institute-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1433102600/"
+      },
+      {
+        "title": "Policy Research Associate, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Policy-Research-Associate%2C-Duke-Margolis-Institute-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1432711600/"
+      },
+      {
+        "title": "Policy Research Associate, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Policy-Research-Associate%2C-Duke-Margolis-Institute-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1432711600/"
+      },
+      {
+        "title": "Research Director, Duke Margolis Institute for Health Policy Hybrid (Washington DC or Durham NC)",
+        "href": "/job/Durham-Research-Director%2C-Duke-Margolis-Institute-for-Health-Policy-Hybrid-%28Washington-DC-or-Durham-NC%29-NC-27710/1376289200/"
+      },
+      {
+        "title": "Research Director, Duke Margolis Institute for Health Policy Hybrid (Washington DC or Durham NC)",
+        "href": "/job/Durham-Research-Director%2C-Duke-Margolis-Institute-for-Health-Policy-Hybrid-%28Washington-DC-or-Durham-NC%29-NC-27710/1376289200/"
+      },
+      {
+        "title": "Policy Research Associate, Duke Margolis Institute (Hybrid) Washington DC or Durham NC",
+        "href": "/job/Durham-Policy-Research-Associate%2C-Duke-Margolis-Institute-%28Hybrid%29-Washington-DC-or-Durham-NC-NC-27710/1419567300/"
+      },
+      {
+        "title": "Policy Research Associate, Duke Margolis Institute (Hybrid) Washington DC or Durham NC",
+        "href": "/job/Durham-Policy-Research-Associate%2C-Duke-Margolis-Institute-%28Hybrid%29-Washington-DC-or-Durham-NC-NC-27710/1419567300/"
+      },
+      {
+        "title": "Advocacy Lead",
+        "href": "/job/Durham-Advocacy-Lead-NC-27710/1437378200/"
+      },
+      {
+        "title": "Advocacy Lead",
+        "href": "/job/Durham-Advocacy-Lead-NC-27710/1437378200/"
+      },
+      {
+        "title": "Senior Policy Analyst, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Senior-Policy-Analyst%2C-Duke-Margolis-Institute-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1433112600/"
+      },
+      {
+        "title": "Senior Policy Analyst, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Senior-Policy-Analyst%2C-Duke-Margolis-Institute-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1433112600/"
+      },
+      {
+        "title": "Policy Analyst, Duke Margolis Institute for Health Policy (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Policy-Analyst%2C-Duke-Margolis-Institute-for-Health-Policy-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1432659300/"
+      },
+      {
+        "title": "Policy Analyst, Duke Margolis Institute for Health Policy (Hybrid - Washington, DC or Durham, NC)",
+        "href": "/job/Durham-Policy-Analyst%2C-Duke-Margolis-Institute-for-Health-Policy-%28Hybrid-Washington%2C-DC-or-Durham%2C-NC%29-NC-27710/1432659300/"
+      },
+      {
+        "title": "Program Coordinator, Social Science Research Institute Duke University",
+        "href": "/job/Durham-Program-Coordinator%2C-Social-Science-Research-Institute-Duke-University-NC-27710/1417141900/"
+      },
+      {
+        "title": "Program Coordinator, Social Science Research Institute Duke University",
+        "href": "/job/Durham-Program-Coordinator%2C-Social-Science-Research-Institute-Duke-University-NC-27710/1417141900/"
+      }
+    ],
+    "text_sample": "4, 2026 Durham, NC, US, 27710 Margolis Institute Operations Sep 14, 2026 Policy Research Associate, Duke Margolis Institute (Hybrid) Washington DC or Durham NC Policy Research Associate, Duke Margolis Institute (Hybrid) Washington DC or Durham NC Durham, NC, US, 27710 Sep 12, 2026 Durham, NC, US, 27710 Margolis Institute Operations Sep 12, 2026 Advocacy Lead Advocacy Lead Durham, NC, US, 27710 Oct 6, 2026 Durham, NC, US, 27710 Global Health Innovation Center at Duke Oct 6, 2026 Senior Policy Analyst, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC) Senior Policy Analyst, Duke Margolis Institute (Hybrid - Washington, DC or Durham, NC) Durham, NC, US, 27710 Sep 23, 2026 Durham, NC, US, 27710 Margolis Institute Operations Sep 23, 2026 Policy Analyst, Duke Margolis Institute for Health Policy (Hybrid - Washington, DC or Durham, NC) Policy Analyst, Duke Margolis Institute for Health Policy (Hybrid - Washington, DC or Durham, NC) Durham, NC, US, 27710 Sep 22, 2026 Durham, NC, US, 27710 Margolis Institute Operations Sep 22, 2026 Program Coordinator, Social Science Research Institute Duke University Program Coordinator, Social Science Research Institute Duke University Durham, NC, US, 27710 Oct 4, 2026 Durham, NC, US, 27710 SSRI Incubator Projects and Support Oct 4, 2026 Results 1 – 24 of 24 Page 1 of 1 Select how often (in days) to receive an alert: Create Alert × Select how often (in days) to receive an alert: Opens in a new tab. Opens in a new tab. Opens in a new tab. Read more about Duke’s commitment to affirmative action and nondiscrimination at hr.duke.edu/eeo."
+  },
+  {
+    "name": "gothenburg",
+    "url": "https://www.gu.se/en/work-at-the-university-of-gothenburg/vacancies",
+    "final_url": "https://www.gu.se/en/work-at-the-university-of-gothenburg/vacancies",
+    "status": 200,
+    "links": [
+      {
+        "title": "English",
+        "href": "/en/work-at-the-university-of-gothenburg/vacancies"
+      },
+      {
+        "title": "Vacancies",
+        "href": "/en/work-at-the-university-of-gothenburg/vacancies"
+      },
+      {
+        "title": "English",
+        "href": "/en/work-at-the-university-of-gothenburg/vacancies"
+      }
+    ],
+    "text_sample": "e no PAR 2026/672 Application deadline 2026-10-30 Assistant Professor in Archaeology, with a specialization in the Nordic Iron Age Type of employment Fixed term Reference no PAR 2026/517 Application deadline 2026-10-30 Assistant Professor in English with a Specialisation in Literary Studies Type of employment Fixed term Reference no PAR 2026/579 Application deadline 2026-10-30 Assistant Professor in Design, specialised in Business and Design Type of employment Fixed term Reference no PAR 2026/562 Application deadline 2026-10-30 Assistant Professor in Economics Type of employment Fixed term Reference no PAR 2026/642 Application deadline 2026-10-30 Assistant Professor in Social Work with a focus on crime prevention Type of employment Fixed term Reference no PAR 2026/549 Application deadline 2026-10-30 Doctoral position in practical philosophy, with a focus on economic ethics and/or environmental ethics Type of employment Fixed term Reference no PAR 2026/638 Application deadline 2026-10-13 Postdoctor in Bioinformatics and Cancer Genetics Type of employment Fixed term Reference no PAR 2026/634 Application deadline 2026-10-10 Contact The University of Gothenburg Box 100 405 30 Gothenburg Sweden Main Switchboard +46 31-786 00 00 Visiting address Find organisation Organisation identity number: 202100-3153 Our channels facebook linkedin youtube instagram Shortcuts Student portal (External link) Staff Portal (External link) University library (External link) Work at the University Press and media EUTOPIA About the website Processing personal data Cookie settings Accessibility report"
+  },
+  {
+    "name": "umea",
+    "url": "https://www.umu.se/en/usbe/about-us/open-positions/",
+    "final_url": "https://www.umu.se/en/usbe/about-us/open-positions/",
+    "status": 200,
+    "links": [
+      {
+        "title": "Subscribe to open positions at Umeå University",
+        "href": "https://umu.varbi.com/en/what:subscribe/type:checklist/"
+      }
+    ],
+    "text_sample": "Open positions \"False\" Skip to content umu.se For students For researchers Library For staff Login Students Log into the student web Edit Edit content at umu.se Svensk webbplats Search Menu X close menu Menu Search Search within: Search within: All Education Research Staff Student web News Main menu hidden. Login Students Log into the student web Edit Edit content at umu.se Svenska Start About us You are here: Open positions Open positions Open positions for Swedish speaking applicants can be found here . Subscribe to open positions at Umeå University PhD students in Statistics Application deadline: 2026-11-04 Type of employment Temporary position Extent 100% Department Umeå School of Business, Economics and Statistics Postdoctoral scholarship (2 years) in Statistics - Application deadline: 2026-11-04 Postdoctoral scholarship (3 years) in Economics - Application deadline: 2027-01-05 Latest update: 2026-09-30 Umeå University 901 87 Umeå, Sweden Tel: +46 90-786 50 00 Find us Contact us Media relations Departments and units Make a donation About the website Accessibility of umu.se Personal data Cookie settings Facebook Instagram YouTube LinkedIn"
+  },
+  {
+    "name": "linkoping",
+    "url": "https://liu.se/en/work-at-liu/vacancies",
+    "final_url": "https://liu.se/en/work-at-liu/vacancies",
+    "status": 200,
+    "links": [
+      {
+        "title": "Subscribe",
+        "href": "https://web103.reachmee.com/ext/I011/853/subscribe?site=7&lang=UK&validator=d7a66c13be778ef950c393a904293789&ref=https%3A%2F%2Fliu.se%2Fen%2Fwork-at-liu%2Fvacancies&ihelper=https%3A%2F%2Fliu.se%2Fen%2Fwork-at-liu%2Fvacancies"
+      },
+      {
+        "title": "Sign In or Sign Up",
+        "href": "https://web103.reachmee.com/ext/I011/853/auth?site=7&lang=UK&validator=d7a66c13be778ef950c393a904293789&ref=https%3A%2F%2Fliu.se%2Fen%2Fwork-at-liu%2Fvacancies&ihelper=https%3A%2F%2Fliu.se%2Fen%2Fwork-at-liu%2Fvacancies"
+      }
+    ],
+    "text_sample": " Teachers and Scientists https://liu.se/en/work-at-liu/vacancies/30020 Postdoc in neuroscience specializing in non-invasive brain stimulation of the cerebellum 2026-11-30 Time limited employment (temporary) BKV-2026-00786 Linkoping BKV - Department of Biomedical and Clinical Sciences Teachers and Scientists https://liu.se/en/work-at-liu/vacancies/30022 Postdoc in tumor immunology and immunotherapy 2026-11-30 Time limited employment (temporary) BKV-2026-00811 Linkoping BKV - Department of Biomedical and Clinical Sciences Teachers and Scientists https://liu.se/en/work-at-liu/vacancies/30029 Postdoctoral Position in Computational Materials Science 2026-10-23 Time limited employment (temporary) LiU-2026-04290 Norrkoping ITN - Department of Science and Technology Teachers and Scientists https://liu.se/en/work-at-liu/vacancies/30032 PhD student in Environmental Science, Department of Thematic Studies 2026-11-02 Time limited employment (temporary) TEMA-2026-00186 Linkoping TEMA - Department of Thematic Studies PhD students https://liu.se/en/work-at-liu/vacancies/30041 Linköping University SE-581 83 Linköping Sweden infocenter@liu.se +46 13 281000 Follow us Facebook Instagram LinkedIn Getting here Map\ninformation Campus Valla Campus US Campus Norrköping Campus Lidingö Regulations and governing documents Quick links University library Calendar LiU\nAlumni LiU\nWebstore Organisation Press Work at\nLiU Internal Liunet for co-workers Liunet for students LISAM Information about liu.se About this website LiU's Privacy Policy Manage cookies Social media Website manager: webmaster@liu.se Edit"
+  },
+  {
+    "name": "aarhus",
+    "url": "https://international.au.dk/about/profile/vacant-positions",
+    "final_url": "https://international.au.dk/about/profile/vacant-positions",
+    "status": 200,
+    "links": [
+      {
+        "title": "Vacant positions",
+        "href": "/about/profile/vacant-positions"
+      },
+      {
+        "title": "Rules and Regulations",
+        "href": "/about/profile/vacant-positions/rules-and-regulations"
+      },
+      {
+        "title": "PhD positions at Aarhus University See a full list of vacant PhD positions at Aarhus University",
+        "href": "https://phd.au.dk/vacant-phd-positions/"
+      },
+      {
+        "title": "Vacant positions",
+        "href": "https://www.international.au.dk/about/profile/vacant-positions/"
+      }
+    ],
+    "text_sample": "uts Collaboration About AU Profile Top reasons to choose AU Rankings Key statistics Strategy History Organisation Faculties Departments and schools Research centres Management Contact AU contact information and map AU locations Employee contact information International services Vacant positions Vacant positions Vacant PhD positions About AU You are here: AU About AU Profile Vacant positions About AU Profile Top reasons to choose AU AU in the world rankings Vacant positions Rules and Regulations Key statistics and annual reports Strategy Sustainability A changing campus History Alumni Honorary awards and grants Organisation AU for visitors Contact 37,500 students including PhD students 9,000 employees full-time equivalents 1,2 EUR billion in revenue Working at AU Key information for potential and future international employees AIAS-Fellowships See deadline and call for applications for programmes at Aarhus Institute of Advanced Studies (AIAS) PhD positions at Aarhus University See a full list of vacant PhD positions at Aarhus University How to apply for academic positions Revised\n    30.06.2026 - AU HR Aarhus University Nordre Ringgade 1 8000 Aarhus E-mail: [email protected] Tel: +45 8715 0000 CVR no: 31119103 EORI no: DK-31119103 About us Profile Departments and faculties Contact & map Vacant positions Degree programmes Bachelor's programmes Master’s programmes Engineering programmes Exchange programmes AU Summer University PhD programmes Shortcuts Library For students For PhDs For employees For Alumni © — Cookies at au.dk Privacy Policy Accessibility Statement 96261 / i48"
+  },
+  {
+    "name": "trinity",
+    "url": "https://www.trin.cam.ac.uk/vacancies/",
+    "final_url": "https://www.trin.cam.ac.uk/hr/vacancies/",
+    "status": 200,
+    "links": [
+      {
+        "title": "",
+        "href": "https://www.trin.cam.ac.uk/vacancies/trinity-plus-coordinator/"
+      },
+      {
+        "title": "Trinity Plus Coordinator",
+        "href": "https://www.trin.cam.ac.uk/vacancies/trinity-plus-coordinator/"
+      },
+      {
+        "title": "More Info",
+        "href": "https://www.trin.cam.ac.uk/vacancies/trinity-plus-coordinator/"
+      },
+      {
+        "title": "",
+        "href": "https://www.trin.cam.ac.uk/vacancies/functions-supervisor/"
+      },
+      {
+        "title": "Functions Supervisor",
+        "href": "https://www.trin.cam.ac.uk/vacancies/functions-supervisor/"
+      },
+      {
+        "title": "More Info",
+        "href": "https://www.trin.cam.ac.uk/vacancies/functions-supervisor/"
+      },
+      {
+        "title": "Vacancies",
+        "href": "https://www.trin.cam.ac.uk/hr/vacancies/"
+      },
+      {
+        "title": "Vacancies",
+        "href": "https://www.trin.cam.ac.uk/hr/vacancies/"
+      }
+    ],
+    "text_sample": "nt Master & Fellows Honorary Fellows Fellow Benefactors Reflections by Trinity Fellows Fellows’ Birthday Speeches Junior Research Fellowships People Directory Back History and Traditions Historical Overview College Grace and Crest College Gardens Trinity Burnt Cream The College Clock College Paintings College Publications Royals At Trinity Trinity Olympians Back Governance and Legal College Notices Data Protection Notices Publication Scheme Trinity Scheme for Joint Lectureships Contacts Schedule Back Trinity College and USS Back Contact Us Vacancies Back Library Visit the Library Search the Catalogue Explore the Collections Back Alumni Community Alumni Profiles and Interviews Information for Alumni Members’ Obituaries Mentoring Back Events Upcoming Events Recent Events Reunion Events Back News and Publications The Fountain Annual Record Annual Report Alumni Newsletters Publications by Alumni Submit Alumni Publication Back Back Keep in touch Update Your Details Policies and Statements Data Protection Statement Data Protection Annex Blackbaud Data Breach Events Terms and Conditions Back Back Supporting Trinity Make a gift How to Give Annual Fund Our Fundraising Promise Back Priorities for Support Access and Outreach Leon Brittan Fund for European Studies Student Experience, Health and Wellbeing Supporting Students Back Recognising our Donors Leaving a Legacy Back Back Chapel and Choir Trinity College Chapel About the building Who’s who Services Sermons The Organ Back Trinity College Choir Back Hospitality Contact us &nbsp &nbsp &nbsp &nbsp Intranet | Student Hub × Close Panel"
+  },
+  {
+    "name": "kings",
+    "url": "https://www.kings.cam.ac.uk/about/working-at-kings",
+    "error": ""
+  },
+  {
+    "name": "urban",
+    "url": "https://www.urban.org/careers",
+    "error": "HTTP 403 for https://www.urban.org/careers"
+  }
+]

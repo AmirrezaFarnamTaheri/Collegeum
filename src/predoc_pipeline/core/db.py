@@ -32,7 +32,7 @@ import threading
 from collections.abc import Iterator, Sequence
 from contextlib import closing, contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .timeparse import format_ts
 
@@ -211,6 +211,16 @@ def connect(db_path: str | Path) -> sqlite3.Connection:
 @contextmanager
 def transaction(conn: sqlite3.Connection) -> Iterator[sqlite3.Connection]:
     """Explicit BEGIN IMMEDIATE / COMMIT, rolling back on any exception."""
+    if conn.in_transaction:
+        conn.execute("SAVEPOINT predoc_nested_write")
+        try:
+            yield conn
+        except BaseException:
+            conn.execute("ROLLBACK TO SAVEPOINT predoc_nested_write")
+            conn.execute("RELEASE SAVEPOINT predoc_nested_write")
+            raise
+        conn.execute("RELEASE SAVEPOINT predoc_nested_write")
+        return
     conn.execute("BEGIN IMMEDIATE")
     try:
         yield conn
@@ -332,9 +342,9 @@ class Database:
 
     # -- seen items -------------------------------------------------------
     def seen(self, url_hash: str) -> sqlite3.Row | None:
-        return self.conn.execute(
+        return cast(sqlite3.Row | None, self.conn.execute(
             "SELECT * FROM seen_items WHERE url_hash=?", (url_hash,)
-        ).fetchone()
+        ).fetchone())
 
     def mark_seen(
         self,
@@ -369,7 +379,9 @@ class Database:
 
     # -- listings ---------------------------------------------------------
     def listing_by_url_hash(self, url_hash: str) -> sqlite3.Row | None:
-        return self.conn.execute("SELECT * FROM listings WHERE url_hash=?", (url_hash,)).fetchone()
+        return cast(sqlite3.Row | None, self.conn.execute(
+            "SELECT * FROM listings WHERE url_hash=?", (url_hash,),
+        ).fetchone())
 
     def listing_by_url(self, url: str) -> sqlite3.Row | None:
         """Find a listing by exact URL hash, apply_url, source_url, or alternate_sources."""
@@ -385,11 +397,11 @@ class Database:
             (h, url, url, canon, canon),
         ).fetchone()
         if row is not None:
-            return row
-        return self.conn.execute(
+            return cast(sqlite3.Row | None, row)
+        return cast(sqlite3.Row | None, self.conn.execute(
             "SELECT * FROM listings WHERE alternate_sources LIKE ?",
             (f'%"{url}"%',),
-        ).fetchone()
+        ).fetchone())
 
     def listing_by_identity(self, institution: str, title: str) -> sqlite3.Row | None:
         """Find an existing published listing by normalized institution and title."""
@@ -397,14 +409,16 @@ class Database:
         tit = (title or "").strip().lower()
         if not inst or not tit:
             return None
-        return self.conn.execute(
+        return cast(sqlite3.Row | None, self.conn.execute(
             "SELECT * FROM listings WHERE LOWER(TRIM(institution))=? AND LOWER(TRIM(title))=? "
             "AND status='published' AND closed_at IS NULL",
             (inst, tit),
-        ).fetchone()
+        ).fetchone())
 
     def listing(self, listing_id: int) -> sqlite3.Row | None:
-        return self.conn.execute("SELECT * FROM listings WHERE id=?", (listing_id,)).fetchone()
+        return cast(sqlite3.Row | None, self.conn.execute(
+            "SELECT * FROM listings WHERE id=?", (listing_id,),
+        ).fetchone())
 
     def insert_listing(self, values: dict[str, Any]) -> int:
         """Insert a listing in `pending` status. Returns the new row id.
@@ -465,7 +479,35 @@ class Database:
                 f"INSERT INTO listings ({','.join(columns)}) VALUES ({placeholders})",
                 tuple(payload[c] for c in columns),
             )
-            return int(cur.lastrowid)
+            return int(cast(int, cur.lastrowid))
+
+    def refresh_listing_facts(self, listing_id: int, values: dict[str, Any]) -> None:
+        """Refresh extracted facts without rewriting identity or delivery history.
+
+        The caller must establish that the new evidence describes the same
+        vacancy. Reopening and cohort changes require separate lifecycle actions.
+        """
+        allowed = {
+            "title", "institution", "principal_investigator", "country", "city",
+            "is_remote", "duration_years", "deadline", "disciplines",
+            "visa_sponsorship_status", "summary", "language", "model_confidence",
+            "rule_score", "confidence", "signature", "deadline_note", "visa_note",
+            "department", "fields", "salary_min", "salary_max", "salary_currency",
+            "salary_period", "salary_raw", "tools_required", "tools_preferred",
+            "min_degree", "degree_note", "start_term", "start_date",
+        }
+        invalid = set(values) - allowed
+        if invalid:
+            raise ValueError(f"non-fact listing fields: {', '.join(sorted(invalid))}")
+        columns = sorted(values)
+        assignments = [f"{column}=?" for column in columns] + ["last_seen_at=?"]
+        with self.transaction():
+            result = self.conn.execute(
+                f"UPDATE listings SET {','.join(assignments)} WHERE id=?",
+                (*[values[column] for column in columns], now(), listing_id),
+            )
+            if result.rowcount != 1:
+                raise ValueError(f"listing {listing_id} does not exist")
 
     def mark_published(
         self,
@@ -520,13 +562,12 @@ class Database:
     def pending_listings(self) -> list[sqlite3.Row]:
         """Rows inserted but never confirmed as broadcast. Crash recovery.
 
-        'unpublished' rows (found while Telegram was not configured) and rows
-        awaiting broadcast (where telegram_message_id is null) are included,
-        so they are delivered once Telegram is available.
+        Publication status is authoritative: web-only publications intentionally
+        have no Telegram message ID. Unpublished rows remain retryable when
+        credentials become available.
         """
         return self.conn.execute(
-            "SELECT * FROM listings WHERE status != 'undeliverable' "
-            "AND (status IN ('pending', 'unpublished') OR telegram_message_id IS NULL) "
+            "SELECT * FROM listings WHERE status IN ('pending', 'unpublished') "
             "AND closed_at IS NULL AND expired_at IS NULL "
             "AND (deadline IS NULL OR deadline = '' OR "
             "     deadline >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-1 day')) ORDER BY id"
@@ -644,11 +685,57 @@ class Database:
             row = self.conn.execute("SELECT requests FROM llm_usage WHERE day=?", (day,)).fetchone()
             return int(row["requests"])
 
+    def reserve_llm_call(self, day: str, budget: int) -> bool:
+        """One atomic check-and-increment, including across SQLite connections."""
+        with self.transaction():
+            if self.llm_usage(day)[0] >= budget:
+                return False
+            self.record_llm_call(day)
+            return True
+
+    def record_llm_result(self, day: str, *, tokens: int = 0, error: bool = False) -> None:
+        with self.transaction():
+            cur = self.conn.execute(
+                "UPDATE llm_usage SET tokens=tokens+?, errors=errors+? WHERE day=?",
+                (max(0, tokens), int(error), day),
+            )
+            if cur.rowcount != 1:
+                raise ValueError(f"no model request reserved for quota day {day}")
+
+    def export_llm_usage(self) -> list[dict[str, Any]]:
+        with self._lock:
+            return [dict(row) for row in self.conn.execute(
+                "SELECT day, requests, tokens, errors FROM llm_usage ORDER BY day DESC LIMIT 32"
+            )]
+
+    def import_llm_usage(self, records: Sequence[dict[str, Any]]) -> None:
+        """Merge replayed cumulative counters monotonically, never add twice."""
+        from datetime import date
+
+        with self.transaction():
+            for record in records:
+                if not isinstance(record, dict):
+                    raise ValueError("quota usage records must be objects")
+                day = record.get("day")
+                if not isinstance(day, str) or date.fromisoformat(day).isoformat() != day:
+                    raise ValueError("quota usage day must be YYYY-MM-DD")
+                counts = [record.get(key) for key in ("requests", "tokens", "errors")]
+                if any(type(value) is not int or value < 0 for value in counts):
+                    raise ValueError("quota usage counters must be nonnegative integers")
+                self.conn.execute(
+                    "INSERT INTO llm_usage(day, requests, tokens, errors) VALUES(?,?,?,?) "
+                    "ON CONFLICT(day) DO UPDATE SET "
+                    "requests=MAX(llm_usage.requests, excluded.requests), "
+                    "tokens=MAX(llm_usage.tokens, excluded.tokens), "
+                    "errors=MAX(llm_usage.errors, excluded.errors)",
+                    (day, *counts),
+                )
+
     # -- HTTP cache -------------------------------------------------------
     def http_cache_get(self, url_hash: str) -> sqlite3.Row | None:
-        return self.conn.execute(
+        return cast(sqlite3.Row | None, self.conn.execute(
             "SELECT * FROM http_cache WHERE url_hash=?", (url_hash,)
-        ).fetchone()
+        ).fetchone())
 
     def http_cache_put(
         self,
@@ -699,7 +786,7 @@ class Database:
             cur = self.conn.execute(
                 "INSERT INTO run_log(run_id, started_at) VALUES(?, ?)", (run_id, now())
             )
-            return int(cur.lastrowid)
+            return int(cast(int, cur.lastrowid))
 
     def finish_run(self, row_id: int, stats: dict[str, Any], source_stats: dict[str, Any]) -> None:
         with self.transaction():
@@ -786,7 +873,7 @@ class Database:
         out = []
         for row in rows:
             # sqlite3.Row: `in row` would test values, so .keys() is required here.
-            record = {k: row[k] for k in row.keys() if k not in {"signature", "id"}}  # noqa: SIM118
+            record = {k: row[k] for k in row.keys() if k != "signature"}  # noqa: SIM118
             record["disciplines"] = json.loads(record.get("disciplines") or "[]")
             record["alternate_sources"] = json.loads(record.get("alternate_sources") or "[]")
             record["is_remote"] = bool(record.get("is_remote"))
@@ -794,47 +881,67 @@ class Database:
         return out
 
     def import_rows(self, records: Sequence[dict[str, Any]]) -> int:
-        """Rebuild `listings` from exported records. Used to restore state."""
+        """Restore IDs atomically; return actual inserts and surface invalid records."""
         inserted = 0
+        allowed = {row["name"] for row in self.conn.execute("PRAGMA table_info(listings)")}
         with self.transaction():
             for record in records:
                 data = dict(record)
+                unknown = set(data) - allowed
+                if unknown:
+                    raise ValueError(f"unknown listing columns: {sorted(unknown)}")
+                if "id" in data and (
+                    type(data["id"]) is not int or data["id"] <= 0
+                ):
+                    raise ValueError("listing id must be a positive integer")
+                if not isinstance(data.get("url_hash"), str) or not data["url_hash"]:
+                    raise ValueError("listing url_hash must be a nonempty string")
                 data["disciplines"] = json.dumps(data.get("disciplines") or [])
                 data["alternate_sources"] = json.dumps(data.get("alternate_sources") or [])
                 data["is_remote"] = int(bool(data.get("is_remote")))
-                columns = [c for c in data if c != "id"]
+                existing = self.listing_by_url_hash(data["url_hash"])
+                if existing is not None and "id" in data and existing["id"] != data["id"]:
+                    raise ValueError("listing URL has conflicting durable IDs")
+                columns = list(data)
                 placeholders = ",".join("?" for _ in columns)
-                try:
-                    self.conn.execute(
-                        f"INSERT OR IGNORE INTO listings ({','.join(columns)}) "
-                        f"VALUES ({placeholders})",
-                        tuple(data[c] for c in columns),
-                    )
-                    inserted += 1
-                except sqlite3.Error:
-                    continue
+                cur = self.conn.execute(
+                    f"INSERT INTO listings ({','.join(columns)}) "
+                    f"VALUES ({placeholders}) ON CONFLICT(url_hash) DO NOTHING",
+                    tuple(data[c] for c in columns),
+                )
+                inserted += cur.rowcount
         return inserted
 
     # -- committed state for tables other than listings -----------------------
     _SEEN_EXPORT = ("url_hash", "source", "decision", "reason", "content_hash", "first_seen_at")
 
     def export_seen(self) -> list[dict[str, Any]]:
-        """Every judged posting, for data/seen.ndjson (``listing_id`` is not stable)."""
+        """Export judgments with listing URL keys for durable recovery links."""
         rows = self.conn.execute(
-            "SELECT * FROM seen_items ORDER BY first_seen_at, url_hash"
+            "SELECT seen_items.*, listings.url_hash AS listing_url_hash "
+            "FROM seen_items LEFT JOIN listings ON listings.id=seen_items.listing_id "
+            "ORDER BY seen_items.first_seen_at, seen_items.url_hash"
         ).fetchall()
-        return [{k: row[k] for k in self._SEEN_EXPORT} for row in rows]
+        return [{k: row[k] for k in (*self._SEEN_EXPORT, "listing_url_hash")} for row in rows]
 
     def import_seen(self, records: Sequence[dict[str, Any]]) -> int:
         inserted = 0
         with self.transaction():
             for record in records:
-                if not record.get("url_hash") or not record.get("decision"):
-                    continue
+                for field in ("url_hash", "decision"):
+                    if not isinstance(record.get(field), str) or not record[field]:
+                        raise ValueError(f"seen record requires nonempty {field}")
+                listing_id = None
+                if record.get("listing_url_hash"):
+                    listing = self.listing_by_url_hash(record["listing_url_hash"])
+                    if listing is None:
+                        raise ValueError("seen record references a missing listing")
+                    listing_id = listing["id"]
                 first = record.get("first_seen_at") or now()
                 cur = self.conn.execute(
                     "INSERT OR IGNORE INTO seen_items(url_hash, source, decision, reason, "
-                    "content_hash, first_seen_at, last_seen_at) VALUES(?,?,?,?,?,?,?)",
+                    "content_hash, first_seen_at, last_seen_at, listing_id) "
+                    "VALUES(?,?,?,?,?,?,?,?)",
                     (
                         record["url_hash"],
                         record.get("source") or "",
@@ -843,6 +950,7 @@ class Database:
                         record.get("content_hash") or "",
                         first,
                         first,
+                        listing_id,
                     ),
                 )
                 inserted += cur.rowcount or 0
@@ -913,7 +1021,7 @@ def _source_failed(data: dict[str, Any]) -> bool:
     if data.get("ok") is False:
         return True
     items = data.get("items", 0) or 0
-    if data.get("errors") and not items:
+    if data.get("errors"):
         return True
     if items == 0 and data.get("fetched") and not data.get("unchanged"):
         return not data.get("may_be_empty", False)

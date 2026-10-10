@@ -103,6 +103,119 @@ def rows_of(settings):
         return list(db.published_listings())
 
 
+def test_local_processing_failure_preserves_cursor_and_retries_in_order(settings, monkeypatch):
+    import predoc_pipeline.publish.bot as module
+
+    original = module._handle_message
+    failed_once = False
+
+    def transient(*args, **kwargs):
+        nonlocal failed_once
+        if not failed_once:
+            failed_once = True
+            raise RuntimeError('temporary local processing failure')
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(module, '_handle_message', transient)
+    fake = FakeTelegram([msg(77, '/help'), msg(78, '/help')])
+    first = run_sync(settings, fake)
+    assert first['failed'] == 1 and first['dropped'] == 0 and first['commands'] == 0
+    assert load_state(settings.telegram_state_path).get('offset', 0) <= 77
+    assert fake.sent() == []
+    second = run_sync(settings, fake)
+    assert second['commands'] == 2 and second['failed'] == 0
+    assert load_state(settings.telegram_state_path)['offset'] == 79
+    assert len(fake.sent()) == 2
+
+
+def test_telegram_server_outage_preserves_update_until_success(settings):
+    class OutageTelegram(FakeTelegram):
+        unavailable = True
+        rejected = 0
+
+        def handler(self, request):
+            if self.unavailable and str(request.url).endswith('/sendMessage'):
+                self.rejected += 1
+                return httpx.Response(503, json={"ok": False, "description": "temporary outage"})
+            return super().handler(request)
+
+    fake = OutageTelegram([msg(77, '/help'), msg(78, '/help')])
+    first = run_sync(settings, fake)
+    assert fake.rejected >= 2  # Exercise retries inside the actual Telegram client.
+    assert first['failed'] == 1 and first['commands'] == 0 and first['dropped'] == 0
+    assert load_state(settings.telegram_state_path).get('offset', 0) <= 77
+    fake.unavailable = False
+    second = run_sync(settings, fake)
+    assert second['commands'] == 2 and second['failed'] == 0
+    assert load_state(settings.telegram_state_path)['offset'] == 79
+    assert len(fake.sent()) == 2
+
+
+def test_callback_replay_after_cursor_failure_preserves_mark(settings, monkeypatch):
+    import predoc_pipeline.publish.bot as module
+
+    hashes = add_listings(settings)
+    target = hashes['Research Assistant in Finance']
+    keyboard = {'inline_keyboard': [feedback_row(target, None, 1)]}
+    fake = FakeTelegram([tap(77, f'fb|v|{target[:16]}', keyboard)])
+    original = module.save_state
+    failed_once = False
+
+    def fail_cursor(path, data):
+        nonlocal failed_once
+        if data.get('offset') == 78 and not failed_once:
+            failed_once = True
+            raise OSError('temporary cursor write failure')
+        return original(path, data)
+
+    monkeypatch.setattr(module, 'save_state', fail_cursor)
+    with pytest.raises(OSError, match='cursor write'):
+        run_sync(settings, fake)
+    saved = FeedbackStore(settings.feedback_path)
+    assert saved.status(target) == 'valid' and saved.callback_seen('cb77')
+    assert load_state(settings.telegram_state_path).get('offset', 0) <= 77
+    assert not Path(settings.dashboard_json).exists()
+    second = run_sync(settings, fake)
+    assert second['taps'] == 0
+    assert FeedbackStore(settings.feedback_path).status(target) == 'valid'
+    assert load_state(settings.telegram_state_path)['offset'] == 78
+    assert Path(settings.dashboard_json).exists()
+
+
+def test_failed_export_retries_without_new_updates(settings, monkeypatch):
+    import predoc_pipeline.publish.bot as module
+
+    target = add_listings(settings)['Research Assistant in Finance']
+    keyboard = {'inline_keyboard': [feedback_row(target, None, 1)]}
+    fake = FakeTelegram([tap(77, f'fb|v|{target[:16]}', keyboard)])
+    original = module.state.export_feed
+    attempts = 0
+
+    def fail_once(*args, **kwargs):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise OSError('temporary feed write failure')
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(module.state, 'export_feed', fail_once)
+    first = run_sync(settings, fake)
+    assert first['taps'] == 1 and first['failed'] == 1
+    saved = load_state(settings.telegram_state_path)
+    assert saved['offset'] == 78 and saved['exports_pending'] is True
+    assert FeedbackStore(settings.feedback_path).status(target) == 'valid'
+    assert Path(settings.dashboard_json).exists()
+    assert not Path(settings.feed_path).exists()
+
+    second = run_sync(settings, fake)
+    assert second['received'] == 0 and second['taps'] == 0 and second['failed'] == 0
+    assert load_state(settings.telegram_state_path)['exports_pending'] is False
+    assert FeedbackStore(settings.feedback_path).status(target) == 'valid'
+    assert Path(settings.feed_path).exists()
+    run_sync(settings, fake)
+    assert attempts == 2
+
+
 def test_positions_are_sorted_by_deadline_and_paged(settings):
     add_listings(settings)
     store = FeedbackStore(settings.feedback_path)
@@ -132,7 +245,8 @@ def test_full_conversation(settings):
         msg(8, "hello"),
     ])
     summary = run_sync(settings, fake)
-    assert summary == {"commands": 4, "taps": 2, "ignored": 2}
+    assert summary == {"received": 4, "commands": 4, "taps": 2, "ignored": 2,
+                       "failed": 0, "dropped": 0}
 
     store = FeedbackStore(settings.feedback_path)  # saved to disk
     assert store.status(lse) == "applied" and store.status(upf) == "invalid"
@@ -168,7 +282,7 @@ def test_tapping_again_undoes(settings):
 def test_no_owner_means_no_commands(settings):
     public = settings.model_copy(update={"telegram_public_channel_id": "@mychannel"})
     assert run_sync(public, FakeTelegram([msg(1, "/positions")])) == {
-        "commands": 0, "taps": 0, "ignored": 0}
+        "received": 0, "commands": 0, "taps": 0, "ignored": 0, "failed": 0, "dropped": 0}
 
 
 def test_command_words():

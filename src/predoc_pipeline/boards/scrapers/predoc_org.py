@@ -14,7 +14,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, Tag
+from bs4.element import NavigableString
 
 from ..models import JobPostSchema
 from ..utils.dates import ROLLING, parse_date
@@ -90,7 +91,7 @@ class PredocOrgScraper(BaseScraper):
                 if not a:
                     continue
                 title = clean_ws(a.get_text(" "))
-                href = a["href"]
+                href = str(a["href"])
                 if len(title) < 5 or href.startswith(("#", "mailto:", "javascript:")):
                     continue
                 # Cards repeat the title as an "apply" button; drop it so it doesn't leak into values.

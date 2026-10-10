@@ -1,13 +1,13 @@
 name: telegram-sync
 
-# Answers /positions, /applied, /valid, /hidden, /help and saves your
-# ✅ ❌ 📝 button taps to data/feedback.json.
+# Answers /positions, /applied, /valid, /hidden, /help and saves the
+# interested / not-for-me / applied button taps to the encrypted data/feedback.enc.
 #
 # There is no always-on server: this checks for new messages every 30 minutes
 # from 03:15 to 20:45 UTC (06:45-00:15 in Tehran), so a reply can take up to
 # half an hour. Telegram keeps unread messages for 24 hours, so nothing is lost
-# overnight. The 04:xx slots are skipped: the daily run (04:00 UTC) answers
-# messages itself, and the two jobs share one queue. About 34 short runs a day
+# overnight. The 04:xx slots are omitted by this schedule. Pipeline runs also
+# answer messages, and the two jobs share one queue. About 34 short runs a day
 # (~1,000 of the 2,000 free minutes a month on a private repository); widen
 # the interval below to use fewer.
 on:
@@ -21,6 +21,7 @@ permissions:
 concurrency:
   group: predoc-bot
   cancel-in-progress: false
+  queue: max
 
 jobs:
   sync:
@@ -48,14 +49,22 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_PUBLIC_CHANNEL_ID: ${{ secrets.TELEGRAM_PUBLIC_CHANNEL_ID }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
+          FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
           SITE_URL: ${{ vars.SITE_URL }}
-        run: PYTHONPATH=src python3 -m predoc_pipeline.cli telegram-sync
+        run: |
+          # Marks are personal and this repository may be public: refuse to run
+          # (and so to commit) without the key that encrypts them.
+          if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]; then
+            echo "Set the FEEDBACK_ENCRYPTION_KEY secret (python -m predoc_pipeline.cli feedback-key)."
+            exit 1
+          fi
+          PYTHONPATH=src python3 -m predoc_pipeline.cli telegram-sync
 
       - name: Save marks
         run: |
           git config user.name "predoc-pipeline-bot"
           git config user.email "actions@users.noreply.github.com"
-          for f in data/feedback.json data/telegram_state.json docs/data/listings.json \
+          for f in data/feedback.enc data/telegram_state.json docs/data/listings.json \
                    docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
           done

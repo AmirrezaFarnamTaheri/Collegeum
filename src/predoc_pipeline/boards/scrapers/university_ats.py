@@ -50,16 +50,38 @@ class WorkdayScraper(BaseScraper):
         host, tenant, site, _ = parse_workday_url(self.opt("url"))
         api = f"https://{host}/wday/cxs/{tenant}/{site}/jobs"
         max_pages = int(self.opt("max_pages", 3))
-        raw: list[dict] = []
+        if max_pages <= 0:
+            raise ValueError("Workday max_pages must be positive")
+        raw: list[dict[str, Any]] = []
         for term in self.opt("search_terms", [""]):
             for page in range(max_pages):
                 payload = {"appliedFacets": {}, "limit": self.PAGE, "offset": page * self.PAGE, "searchText": term}
-                data = await self.http.post_json(api, payload)
+                try:
+                    data = await self.http.post_json(api, payload)
+                except Exception as exc:  # noqa: BLE001 - preserve other pages/search terms
+                    self.discovery_fetch_errors.append(type(exc).__name__)
+                    break
+                if not isinstance(data, dict) or not isinstance(data.get("jobPostings"), list):
+                    self.discovery_parse_errors.append("invalid Workday posting payload")
+                    break
                 batch = data.get("jobPostings", []) or []
                 raw.extend(batch)
-                total = data.get("total") or 0
-                if len(batch) < self.PAGE or (page + 1) * self.PAGE >= total:
+                total = data.get("total")
+                if total is not None and (
+                    isinstance(total, bool) or not isinstance(total, int) or total < 0
+                ):
+                    self.discovery_parse_errors.append("invalid Workday total")
+                    total = None
+                consumed = page * self.PAGE + len(batch)
+                if total is not None and total < consumed:
+                    self.discovery_parse_errors.append("inconsistent Workday total")
+                    total = None
+                if len(batch) < self.PAGE and total is not None and consumed < total:
+                    self.discovery_parse_errors.append("incomplete Workday page")
+                if len(batch) < self.PAGE or (total and (page + 1) * self.PAGE >= total):
                     break
+            else:
+                self.discovery_limits.append("Workday pagination cap reached")
         return raw
 
     def parse_postings(self, raw_data: list[Any]) -> list[JobPostSchema]:
@@ -67,16 +89,37 @@ class WorkdayScraper(BaseScraper):
         prefix = f"https://{host}/" + (f"{locale}/" if locale else "") + site
         posts = []
         for jp in raw_data:
-            path = jp.get("externalPath")
-            title = clean_ws(jp.get("title"))
-            if not path or not title:
+            if not isinstance(jp, dict):
+                self.discovery_parse_errors.append("invalid Workday entry")
                 continue
-            posts.append(self.make(
-                title=title, url=prefix + path, location=jp.get("locationsText"),
-                date_posted=parse_posted(jp.get("postedOn")),
-                description_snippet=" | ".join(jp.get("bulletFields") or []),
-                extra={"wd_path": path},
-            ))
+            path = jp.get("externalPath")
+            title_value = jp.get("title")
+            title = clean_ws(title_value) if isinstance(title_value, str) else ""
+            if (not isinstance(path, str) or not path.startswith("/job/") or not title):
+                self.discovery_parse_errors.append("Workday entry missing title or job path")
+                continue
+            bullets = jp.get("bulletFields") or []
+            location, posted = jp.get("locationsText"), jp.get("postedOn")
+            invalid_metadata = False
+            if not isinstance(bullets, list) or not all(isinstance(b, str) for b in bullets):
+                bullets = []
+                invalid_metadata = True
+            if location is not None and not isinstance(location, str):
+                location = None
+                invalid_metadata = True
+            if posted is not None and not isinstance(posted, str):
+                posted = None
+                invalid_metadata = True
+            if invalid_metadata:
+                self.discovery_parse_errors.append("invalid Workday entry metadata")
+            try:
+                posts.append(self.make(
+                    title=title, url=prefix + path, location=location,
+                    date_posted=parse_posted(posted),
+                    description_snippet=" | ".join(bullets), extra={"wd_path": path},
+                ))
+            except (ValueError, TypeError, OverflowError):
+                self.discovery_parse_errors.append("unparseable Workday entry")
         return posts
 
     async def fetch_detail(self, post: JobPostSchema) -> str | None:
@@ -151,7 +194,7 @@ async def render_page(url: str, wait_for: str | None = None, timeout_ms: int = 4
                     await page.wait_for_load_state("networkidle", timeout=15000)
                 except Exception as exc:  # some boards never go idle; log and use loaded DOM
                     log.debug("networkidle_wait_timed_out: %s (%s)", url, exc)
-            return await page.content()
+            return str(await page.content())
         finally:
             await browser.close()
 

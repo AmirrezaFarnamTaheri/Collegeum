@@ -5,13 +5,12 @@ Order of work for one run (all async, a few sources at a time):
 1. scrape every enabled ``[[board]]`` source;
 2. cheap title-level rules (role wording, excluded titles, employer type, field,
    region, expiry) -- rejects here cost nothing and are simply re-judged tomorrow;
-3. drop postings the pipeline has already judged (``known``), so each posting's
-   page is read once, not every day;
-4. read each new posting's own page (following bit.ly & co.): deadline, PI, visa
+3. prioritize unseen postings before previously judged URLs;
+4. read posting pages within the detail budget (following bit.ly & co.): deadline, PI, visa
    rules, "PhD required", filled/closed wording, dead links, real location;
 5. emit a ``RawItem`` per new posting. Postings that failed a page-level rule are
    emitted too, with ``hints["reject"]`` set, so the pipeline records the verdict
-   and never fetches that page again.
+   while allowing later changes to be reconsidered.
 
 Postings over the page-reading budget are *not* emitted; the next run picks them up.
 """
@@ -20,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -34,7 +34,7 @@ from .heuristics import Enricher, check_still_open
 from .http import HttpClient
 from .models import JobPostSchema
 from .scrapers import SCRAPERS, BaseScraper, SourceSkipped
-from .scrapers.base import generic_fetch_detail
+from .scrapers.base import DiscoveryFetchError, DiscoveryParseError, generic_fetch_detail
 from .utils.text import truncate
 
 log = logging.getLogger(__name__)
@@ -49,6 +49,7 @@ class SourceResult:
     ok: bool = True
     skipped: bool = False
     error: str | None = None
+    failure_stage: str | None = None
     seconds: float = 0.0
     n_relevant: int = 0
     n_new: int = 0
@@ -61,12 +62,15 @@ class SourceResult:
             "relevant": self.n_relevant,
             "new": self.n_new,
             "fetched": 1 if self.ok and not self.skipped else 0,
-            "errors": 0 if self.ok else 1,
+            "errors": max(len(self.scraper.discovery_fetch_errors)
+                          + len(self.scraper.discovery_parse_errors)
+                          + len(self.scraper.discovery_limits), 0 if self.ok else 1),
             "ok": self.ok,
             "skipped": self.skipped,
             "may_be_empty": self.scraper.cfg.may_be_empty,
             "seconds": round(self.seconds, 1),
             "messages": [self.error] if self.error else [],
+            "failure_stage": self.failure_stage,
         }
 
 
@@ -113,6 +117,10 @@ def select_sources(
 async def _scrape_all(
     scrapers: list[BaseScraper], max_concurrent: int, timeout: float
 ) -> list[SourceResult]:
+    if max_concurrent <= 0:
+        raise ValueError("source concurrency must be positive")
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("source timeout must be finite and positive")
     sem = asyncio.Semaphore(max_concurrent)
 
     async def one(s: BaseScraper) -> SourceResult:
@@ -121,12 +129,33 @@ async def _scrape_all(
             res = SourceResult(s)
             try:
                 res.posts, _ = await asyncio.wait_for(s.run(), timeout=timeout)
+                if s.discovery_fetch_errors:
+                    res.ok = False
+                    res.failure_stage = "fetch"
+                    res.error = f"{len(s.discovery_fetch_errors)} discovery endpoint(s) failed"
+                if s.discovery_parse_errors:
+                    res.ok = False
+                    res.failure_stage = "fetch/parse" if s.discovery_fetch_errors else "parse"
+                    note = f"{len(s.discovery_parse_errors)} payload(s) parsed incompletely"
+                    res.error = f"{res.error}; {note}" if res.error else note
+                if s.discovery_limits:
+                    res.ok = False
+                    res.failure_stage = (
+                        f"{res.failure_stage}/limit" if res.failure_stage else "limit"
+                    )
+                    note = f"{len(s.discovery_limits)} discovery limit(s) reached"
+                    res.error = f"{res.error}; {note}" if res.error else note
             except TimeoutError:
                 res.ok, res.error = False, f"timed out after {timeout:.0f}s"
+                res.failure_stage = "timeout"
             except SourceSkipped as exc:
                 res.skipped, res.error = True, f"skipped: {exc}"
             except Exception as exc:  # noqa: BLE001 - one broken source must not sink the run
                 res.ok, res.error = False, f"{type(exc).__name__}: {exc}"[:500]
+                res.failure_stage = (
+                    "fetch" if isinstance(exc, DiscoveryFetchError)
+                    else "parse" if isinstance(exc, DiscoveryParseError) else "discovery"
+                )
                 log.warning("board %s failed: %s", s.name, res.error)
             res.seconds = time.monotonic() - t0
             log.info("board %-28s %4d postings %s", s.name, len(res.posts),
@@ -238,14 +267,18 @@ async def _collect(
             if not prev or verdict.score > prev[2].score:
                 candidates[post.job_id] = (res, post, verdict)
 
-    # ---- 2. only postings the pipeline has not judged yet --------------------------
+    # ---- 2. unseen postings first, then refresh known URLs within the same budget --
     new_items = []
+    known_items = []
     for item in candidates.values():
         if known(item[1].url):
             out.known += 1
+            known_items.append(item)
         else:
             new_items.append(item)
     new_items.sort(key=lambda v: -v[2].score)
+    known_items.sort(key=lambda v: -v[2].score)
+    new_items.extend(known_items)
 
     # ---- 3. read each new posting's page -------------------------------------------
     enrich = prefs.enrich
@@ -268,7 +301,7 @@ async def _collect(
             reason = "excluded-employer"  # e.g. "J-PAL Europe" named only in the ad text
         elif pid in enriched_ids and detail:
             field_v = flt.field_verdict_long(detail)
-            if field_v == "unwanted" and not post.field_implied:
+            if field_v == "unwanted":
                 reason = "wrong-field-detail"
             elif verdict.needs_field_check and field_v != "wanted":
                 reason = "no-field-in-detail"
@@ -320,6 +353,32 @@ def collect_boards(
     return asyncio.run(go())
 
 
+def verify_boards(
+    sources_config: str, prefs: Preferences,
+    *, transport: httpx.AsyncBaseTransport | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Probe discovery through production adapters without gating or enrichment."""
+    sources = select_sources(load_board_sources(sources_config))
+
+    async def go() -> dict[str, dict[str, Any]]:
+        stats: dict[str, dict[str, Any]] = {}
+        async with build_http(prefs.http, transport) as http:
+            scrapers = []
+            for cfg in sources:
+                if cfg.type not in SCRAPERS:
+                    stats[cfg.name] = {"ok": False, "errors": 1, "items": 0,
+                                       "messages": [f"unknown board type {cfg.type!r}"]}
+                else:
+                    scrapers.append(SCRAPERS[cfg.type](cfg, http))
+            results = await _scrape_all(
+                scrapers, prefs.http.max_concurrent_sources, prefs.http.source_timeout,
+            )
+            stats.update({result.scraper.name: result.as_stats() for result in results})
+        return stats
+
+    return asyncio.run(go())
+
+
 # ------------------------------------------------------------------------------------
 # Is it still open?  (before sending, and every few days after)
 # ------------------------------------------------------------------------------------
@@ -351,6 +410,8 @@ def check_links(
     accepts applications, or a start date long gone all count as closed. A site
     that is merely unreachable does *not*: unknown is not closed.
     """
+    if concurrency <= 0:
+        raise ValueError("link-check concurrency must be positive")
     if not links:
         return {}
 

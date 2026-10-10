@@ -44,6 +44,12 @@ dependencies = [
     "tenacity>=8.3",
     "typer>=0.12",
     "pypdf>=6.19.0",
+    "requests-oauthlib>=2.0",
+    # Encrypts personal feedback marks before they are committed (publish/feedback.py).
+    "cryptography>=42",
+    "twitter-text-parser>=3.0,<4",
+    # twitter-text-parser loads its emoji data through pkg_resources.
+    "setuptools>=70,<81",
 ]
 
 [project.optional-dependencies]
@@ -70,12 +76,25 @@ all = ["predoc-pipeline[portals,boards,social,llm-instructor,dev]"]
 predoc-pipeline = "predoc_pipeline.cli:main"
 
 [project.urls]
-Homepage = "https://amirrezafarnamtaheri.github.io/predoc-not-org"
-Repository = "https://github.com/AmirrezaFarnamTaheri/predoc-not-org"
-Issues = "https://github.com/AmirrezaFarnamTaheri/predoc-not-org/issues"
+Homepage = "https://amirrezafarnamtaheri.github.io/Collegeum"
+Repository = "https://github.com/AmirrezaFarnamTaheri/Collegeum"
+Issues = "https://github.com/AmirrezaFarnamTaheri/Collegeum/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/predoc_pipeline"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.codegraph/**", "/.serena/**", "/.statamcp/**", "/.venv/**", "/.env",
+    "**/__pycache__/**", "**/*.pyc", "**/*.db", "**/*.sqlite3", "/data/**",
+]
+include = [
+    "src", "tests", "tools", "config", "docs", ".github",
+    "review/**/*.md", "review/**/*.json", "review/**/*.py",
+    "pyproject.toml", "uv.lock", "Makefile", "LICENSE", ".env.example", ".gitignore", ".gitattributes",
+    "README.md", "ARCHITECTURE.md", "REVIEW.md", "COMPLIANCE.md", "OPERATIONS.md",
+    "CHANGES.md", "SETUP_GUIDE.md", "FINALIZATION.md", "compile_project.py",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -95,9 +114,17 @@ ignore = ["SIM105"]
 # two projects stay easy to compare.
 "src/predoc_pipeline/boards/**" = ["E501", "SIM102", "SIM108", "SIM401", "B905", "UP038"]
 "tests/boards/**" = ["E501"]
+# pytest fixtures re-exported from test_bot look like redefinitions to ruff (F811).
+"tests/integration/test_personal_state.py" = ["F811"]
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 python_version = "3.11"
 strict = true
 warn_unused_ignores = true
 exclude = ["tests/"]
+
+[[tool.mypy.overrides]]
+# Optional SDKs and untyped parser libraries are validated at our model boundaries.
+module = ["instructor", "google", "google.*", "playwright.*", "jobspy", "twscrape", "feedparser", "extruct"]
+ignore_missing_imports = true

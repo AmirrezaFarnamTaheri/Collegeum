@@ -26,6 +26,7 @@ over any local estimate, and the limiter is penalised accordingly.
 from __future__ import annotations
 
 import json
+import math
 import re
 import threading
 import time
@@ -34,7 +35,7 @@ from typing import Any
 
 import httpx
 
-from ..core.ratelimit import QuotaExceeded, RateLimiter, quota_day
+from ..core.ratelimit import QuotaExceeded, RateLimiter
 from ..logging_setup import get_logger
 from ..models import EXTRACTION_JSON_SCHEMA, ExtractionResult
 from .prompt import SYSTEM_PROMPT, build_user_prompt
@@ -185,18 +186,29 @@ def _parse_retry_delay(response: httpx.Response) -> float:
     header = response.headers.get("retry-after")
     if header:
         try:
-            return float(header)
+            delay = float(header)
+            if math.isfinite(delay) and delay >= 0:
+                return delay
         except ValueError:
             pass
     try:
         payload = response.json()
     except Exception:
         return 0.0
-    for detail in (payload.get("error", {}) or {}).get("details", []) or []:
-        delay = detail.get("retryDelay")
-        if isinstance(delay, str) and delay.endswith("s"):
+    if not isinstance(payload, dict) or not isinstance(payload.get("error"), dict):
+        return 0.0
+    details = payload["error"].get("details") or []
+    if not isinstance(details, list):
+        return 0.0
+    for detail in details:
+        if not isinstance(detail, dict):
+            continue
+        retry_delay = detail.get("retryDelay")
+        if isinstance(retry_delay, str) and retry_delay.endswith("s"):
             try:
-                return float(delay[:-1])
+                parsed = float(retry_delay[:-1])
+                if math.isfinite(parsed) and parsed >= 0:
+                    return parsed
             except ValueError:
                 continue
     return 0.0
@@ -429,6 +441,7 @@ class Extractor:
         self._client = client or httpx.Client(timeout=timeout)
         self._candidates = self._resolve_candidates(backend)
         self.calls = 0
+        self._calls_lock = threading.Lock()
 
     @property
     def api_key(self) -> str:
@@ -504,9 +517,6 @@ class Extractor:
         hints: dict[str, Any] | None = None,
     ) -> ExtractionResult:
         """One extraction. Raises on quota exhaustion or unusable output."""
-        day = quota_day()
-        self.limiter.acquire(day=day)
-
         user = build_user_prompt(
             text=text[: self.max_input_chars], source_url=source_url, title=title
         )
@@ -517,15 +527,20 @@ class Extractor:
             current_key = self.rotator.get_key()
             key_had_rate_limit = False
             for index, backend in enumerate(self._candidates):
+                req_body = backend.request(self.model, SYSTEM_PROMPT, user)
+                day = self.limiter.acquire()
+                with self._calls_lock:
+                    self.calls += 1
                 try:
-                    req_body = backend.request(self.model, SYSTEM_PROMPT, user)
                     response = self._post(backend, req_body, key=current_key)
                 except httpx.RequestError as exc:
+                    self.limiter.record(error=True, day=day)
                     last_error = ExtractionError(f"{backend.name}: transport error: {exc}")
                     self.rotator.mark_error(current_key)
                     continue
 
                 if response.status_code == 429:
+                    self.limiter.record(error=True, day=day)
                     delay = _parse_retry_delay(response)
                     self.rotator.mark_rate_limited(current_key, delay or 30.0)
                     key_had_rate_limit = True
@@ -539,10 +554,10 @@ class Extractor:
                     if key_attempt + 1 < max_key_attempts:
                         break  # rotate to next key
                     self.limiter.penalise(delay or 30.0)
-                    self.limiter.record(error=True, day=day)
                     raise RateLimited(f"provider rate limit ({backend.name})", delay)
 
                 if response.status_code in (400, 404) and index + 1 < len(self._candidates):
+                    self.limiter.record(error=True, day=day)
                     # Unknown endpoint or unsupported field: try the other shape
                     # once rather than failing the whole run on a vendor change.
                     last_error = ExtractionError(
@@ -558,8 +573,12 @@ class Extractor:
                     )
                     continue
 
-                payload = response.json()
+                raw = ""
+                tokens = 0
                 try:
+                    payload = response.json()
+                    if not isinstance(payload, dict):
+                        raise ExtractionError("provider response must be a JSON object")
                     raw = _strip_fence(backend.extract_text(payload))
                     tokens = int(
                         (payload.get("usageMetadata") or {}).get("totalTokenCount", 0)
@@ -570,15 +589,24 @@ class Extractor:
                         )
                         or 0
                     )
+                    decoded = json.loads(raw)
+                    if not isinstance(decoded, dict) or any(
+                        key not in decoded for key in EXTRACTION_JSON_SCHEMA["required"]
+                    ):
+                        raise ExtractionError(
+                            "model JSON is missing required classification fields"
+                        )
+                    result = ExtractionResult.model_validate(decoded)
+                    if result.is_vacancy and (not result.title or not result.institution):
+                        raise ExtractionError("accepted vacancy is missing title or institution")
                     self.limiter.record(tokens=tokens, day=day)
                     self.rotator.mark_success(current_key, tokens=tokens)
-                    self.calls += 1
                     self._remember_backend(backend.name)
-
-                    return ExtractionResult.model_validate(json.loads(raw))
+                    return result
                 except (QuotaExceeded, RateLimited):
                     raise
                 except Exception as exc:
+                    self.limiter.record(tokens=tokens, error=True, day=day)
                     if self.fallback_extractor is not None:
                         log.warning(
                             "model_extraction_failed_fallback_heuristic",
@@ -591,7 +619,7 @@ class Extractor:
                             text=text, source_url=source_url, title=title, hints=fallback_hints
                         )
                         res.is_heuristic_fallback = True
-                        return res
+                        return ExtractionResult.model_validate(res)
                     if isinstance(exc, json.JSONDecodeError):
                         raise ExtractionError(f"model returned non-JSON: {exc}") from exc
                     if isinstance(exc, ExtractionError):
@@ -612,7 +640,7 @@ class Extractor:
                 text=text, source_url=source_url, title=title, hints=fallback_hints
             )
             res.is_heuristic_fallback = True
-            return res
+            return ExtractionResult.model_validate(res)
 
         raise last_error or ExtractionError("no extraction backend succeeded")
 
@@ -799,10 +827,15 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
         )
 
     if provider == "memo":
+        if not settings.memo_base_url.strip() or not settings.memo_model.strip():
+            raise ExtractionError(
+                "memo requires explicit MEMO_BASE_URL and MEMO_MODEL for an "
+                "OpenAI-compatible chat endpoint; custom/local defaults are not inherited"
+            )
         return Extractor(
-            api_key=settings.memo_api_key or settings.custom_llm_api_key,
-            model=settings.memo_model or settings.custom_llm_model,
-            base_url=settings.memo_base_url or settings.custom_llm_base_url or "https://api.mem0.ai/v1",
+            api_key=settings.memo_api_key,
+            model=settings.memo_model.strip(),
+            base_url=settings.memo_base_url.strip(),
             limiter=limiter,
             backend="memo",
             timeout=settings.llm_timeout_seconds,

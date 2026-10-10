@@ -19,6 +19,7 @@ from datetime import datetime
 from typing import Any
 
 from .fuzzy import token_sort_ratio
+from .identity import normalize_institution
 from .minhash import MinHash, MinHashLSH
 from .textproc import char_ngrams, word_shingles
 from .timeparse import days_between, parse_datetime
@@ -36,7 +37,9 @@ _WORD_RE = re.compile(r"\w+")
 
 def _blocking_key(institution: str) -> str:
     """Most distinctive token of an institution name, used to block tier 3."""
-    tokens = [t for t in _WORD_RE.findall((institution or "").lower()) if t not in _STOP_TOKENS]
+    tokens = [
+        t for t in _WORD_RE.findall(normalize_institution(institution)) if t not in _STOP_TOKENS
+    ]
     return max(tokens, key=len) if tokens else ""
 
 
@@ -87,6 +90,11 @@ class Deduplicator:
         return self._lsh.bands, self._lsh.rows
 
     @staticmethod
+    def text_for(title: str, summary: str) -> str:
+        """The reproducible identity text available both live and after recovery."""
+        return f"{title or ''}. {summary or ''}"
+
+    @staticmethod
     def signature(text: str, num_perm: int = 128) -> MinHash | None:
         """Word 5-shingles for real descriptions, char trigrams for stubs."""
         words = (text or "").split()
@@ -134,7 +142,7 @@ class Deduplicator:
                 sig = None
             self.add(
                 int(get("id")),
-                text=get("summary") or get("title") or "",
+                text=self.text_for(get("title"), get("summary")),
                 institution=get("institution") or "",
                 title=get("title") or "",
                 principal_investigator=get("principal_investigator"),
@@ -148,6 +156,32 @@ class Deduplicator:
             return True  # unknown deadline is not evidence of difference
         return gap <= self.deadline_window_days
 
+    def _compatible(
+        self, record: _Record, institution: str, title: str,
+        principal_investigator: str | None, deadline: datetime | None,
+    ) -> bool:
+        employer = normalize_institution(institution)
+        if not employer or employer != normalize_institution(record.institution):
+            return False
+        if not self._deadlines_compatible(deadline, record.deadline):
+            return False
+        mine = " ".join(_WORD_RE.findall((title or "").lower()))
+        theirs = " ".join(_WORD_RE.findall(record.title.lower()))
+        if not mine or not theirs:
+            return False
+        if not (mine.startswith(theirs + " ") or theirs.startswith(mine + " ")) and (
+            token_sort_ratio(mine, theirs) < self.fuzzy_threshold
+        ):
+            return False
+        if principal_investigator and record.principal_investigator:
+            def surnames(value: str) -> set[str]:
+                parts = re.split(r"[,;&]|\band\b", value, flags=re.I)
+                return {tokens[-1] for part in parts if (tokens := _WORD_RE.findall(part.lower()))}
+
+            if not surnames(principal_investigator) & surnames(record.principal_investigator):
+                return False
+        return True
+
     def find(
         self,
         *,
@@ -159,20 +193,28 @@ class Deduplicator:
         signature: MinHash | None = None,
     ) -> Duplicate | None:
         """First duplicate found, or None. Tiers run cheapest-first."""
+        want = parse_datetime(deadline)
         sig = signature if signature is not None else self.signature(text, self.num_perm)
         if sig is not None and len(self._lsh):
-            key, score = self._lsh.best_match(sig)
-            if key is not None and score >= self.jaccard_threshold:
-                return Duplicate(key, "minhash", score)
+            best_key, best_score = None, 0.0
+            for key in sorted(self._lsh.query(sig)):
+                record = self._records[key]
+                if not self._compatible(record, institution, title, principal_investigator, want):
+                    continue
+                other_signature = self._lsh.signature(key)
+                score = sig.jaccard(other_signature) if other_signature is not None else 0.0
+                if score >= self.jaccard_threshold and score > best_score:
+                    best_key, best_score = key, score
+            if best_key is not None:
+                return Duplicate(best_key, "minhash", best_score)
 
         incoming = composite_key(institution, title, principal_investigator)
         if not incoming.strip(" |"):
             return None
-        want = parse_datetime(deadline)
         block = self._by_block.get(_blocking_key(institution), [])
         best_id, best_score = None, 0.0
         for record in block:
-            if not self._deadlines_compatible(want, record.deadline):
+            if not self._compatible(record, institution, title, principal_investigator, want):
                 continue
             score = token_sort_ratio(incoming, record.composite)
             if score > best_score:

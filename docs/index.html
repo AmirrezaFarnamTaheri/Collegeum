@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Collegeum — Economics Research Positions</title>
-  <meta name="description" content="Research positions in economics, finance, and public policy from 75 university portals, central banks, and research institutes, updated daily.">
+  <meta name="description" content="Research positions in economics, finance, and public policy collected from university portals, central banks, and research institutes. Check the dashboard for update age and source health.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="alternate" type="application/rss+xml" title="Collegeum RSS Feed" href="feed.xml">
 
@@ -16,15 +16,20 @@
   <script>
     // Prevent theme flash
     (function () {
+      var saved = 'system';
       try {
-        var saved = localStorage.getItem('collegeum-theme') || 'system';
-        var resolved = saved;
-        if (saved === 'system') {
-          resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        document.documentElement.setAttribute('data-theme', saved);
-        document.documentElement.setAttribute('data-active-theme', resolved);
+        var preference = localStorage.getItem('collegeum-theme');
+        if (['system', 'light', 'dark'].includes(preference)) saved = preference;
       } catch (e) {}
+      var resolved = saved;
+      if (saved === 'system') {
+        resolved = 'light';
+        try {
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) resolved = 'dark';
+        } catch (e) {}
+      }
+      document.documentElement.setAttribute('data-theme', saved);
+      document.documentElement.setAttribute('data-active-theme', resolved);
     })();
   </script>
 
@@ -558,6 +563,7 @@
       cursor: pointer;
       transition: background 0.15s ease, box-shadow 0.15s ease;
     }
+    .job-card:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
     .row-main:hover, .row-main:focus-visible {
       background: linear-gradient(90deg, var(--acc2), transparent);
       box-shadow: inset 3.5px 0 0 var(--acc);
@@ -1195,8 +1201,8 @@
       color: var(--faint);
     }
     .health-row {
-      display: inline-flex;
-      align-items: center;
+      display: flex;
+      align-items: flex-start;
       gap: 6px;
       font-size: 12px;
       color: var(--soft);
@@ -1210,9 +1216,18 @@
       border-radius: 50%;
       background: var(--ok);
       flex-shrink: 0;
+      margin-top: 4px;
     }
     .health-dot.stale { background: var(--warn); }
     .health-dot.dead { background: var(--acc); }
+    #health-sources {
+      font-size: 12px;
+      color: var(--soft);
+      padding-left: 1rem;
+      max-height: 20rem;
+      overflow-y: auto;
+      overflow-wrap: anywhere;
+    }
 
     .footer-col-right {
       display: flex;
@@ -1403,7 +1418,7 @@
         <div class="eyebrow">Economics · Finance · Public Policy</div>
         <h1>The economics <em>research board.</em></h1>
         <p class="lede">
-          75 institutional career pages and university portals, checked each morning. Predoctoral, postdoctoral, and doctoral positions — plus roles at central banks, multilateral bodies, and research consultancies.
+          Research opportunities collected from institutional career pages and university portals. Predoctoral, postdoctoral, and doctoral positions — plus roles at central banks, multilateral bodies, and research consultancies. Update age and source-check results appear below.
         </p>
         <div class="cta">
           <a class="btn" href="#board">Browse positions</a>
@@ -1465,7 +1480,7 @@
             <option value="">All Visa Policies</option>
             <option value="explicit">Explicitly Sponsored</option>
             <option value="inferred">Likely / Policy Supported</option>
-            <option value="not_offered">Citizens / Permit Required</option>
+            <option value="not_offered">No Sponsorship / Eligibility Restricted</option>
           </select>
           <select class="filter-select" id="filter-sort" aria-label="Sort listings">
             <option value="d">Closing soonest</option>
@@ -1529,6 +1544,9 @@
       <footer class="modal-footer">
         <div>
           <button class="btn alt" id="modal-copy-btn">Copy link</button>
+          <label id="modal-copy-fallback" hidden>Copy this link manually
+            <input id="modal-copy-text" type="text" readonly aria-label="Listing link to copy manually" style="max-width:100%;">
+          </label>
         </div>
         <div style="display:flex; gap:8px;">
           <a class="btn alt" id="modal-src-link" target="_blank" rel="noopener">Official Advert</a>
@@ -1554,10 +1572,14 @@
           <span>Maintained by Amirreza Farnam Taheri &middot; GNU AGPLv3</span>
           <span>Not affiliated with listed institutions</span>
         </div>
-        <div class="health-row">
-          <span class="health-dot" id="health-dot"></span>
+        <div class="health-row" role="status" aria-live="polite">
+          <span class="health-dot stale" id="health-dot" aria-hidden="true"></span>
           <span id="health-label">Checking pipeline health…</span>
         </div>
+        <details class="support-disclosure" id="health-details" hidden>
+          <summary>Source checks</summary>
+          <ul id="health-sources" tabindex="0" aria-label="Source check details"></ul>
+        </details>
       </div>
 
       <div class="footer-col-right">
@@ -1651,8 +1673,50 @@
     // Data State & Enrichment
     let listings = [];
     let currentKind = 'all';
-    let viewMode = localStorage.getItem('collegeum-view') || 'ledger';
+    function readViewPreference() {
+      try {
+        const saved = localStorage.getItem('collegeum-view');
+        return ['ledger', 'grid', 'stats'].includes(saved) ? saved : 'ledger';
+      } catch (_) { return 'ledger'; }
+    }
+    let viewMode = readViewPreference();
     let currentModalListing = null;
+    let listingsGeneratedAt = null;
+    let pipelineHealth = null;
+    let deadlineRenderDay = null;
+
+    // Deadlines and countdowns use UTC calendar days, independent of viewer timezone.
+    function deadlineDays(item, now = Date.now()) {
+      if (typeof item.deadline !== 'string' || !Number.isFinite(now) || Math.abs(now) > 8.64e15) return null;
+      const match = item.deadline.match(/^(\d{4}-\d{2}-\d{2})(?:$|T)/);
+      if (!match) return null;
+      const calendar = new Date(match[1] + 'T00:00:00Z');
+      if (!Number.isFinite(calendar.getTime()) || calendar.toISOString().slice(0, 10) !== match[1]) return null;
+      // Unqualified timestamps have no reliable timezone; accept a date or an explicit offset.
+      if (item.deadline.length > 10 && !/(?:Z|[+-]\d{2}:\d{2})$/.test(item.deadline)) return null;
+      const deadline = new Date(item.deadline);
+      if (!Number.isFinite(deadline.getTime())) return null;
+      return Math.floor(deadline.getTime() / 86400000) - Math.floor(now / 86400000);
+    }
+
+    function snapshotLabel(timestamp, now = Date.now()) {
+      const updated = typeof timestamp === 'string' ? Date.parse(timestamp) : NaN;
+      const elapsed = now - updated;
+      if (!Number.isFinite(elapsed) || elapsed < -60000) return 'Snapshot age unavailable';
+      const minutes = Math.max(0, Math.floor(elapsed / 60000));
+      if (minutes < 60) return `Listings snapshot: ${minutes}m old`;
+      if (minutes < 1440) return `Listings snapshot: ${Math.floor(minutes / 60)}h old`;
+      return `Listings snapshot: ${Math.floor(minutes / 1440)}d old`;
+    }
+
+    function refreshDeadlineState(now = Date.now()) {
+      listings.forEach(item => { item.days_left = deadlineDays(item, now); });
+      const source = $('#src');
+      if (source && listingsGeneratedAt !== null) {
+        const label = `${snapshotLabel(listingsGeneratedAt, now)} · Deadline dates use UTC`;
+        if (source.textContent !== label) source.textContent = label;
+      }
+    }
 
     function enrichItem(item) {
       if (!item.kind) {
@@ -1677,6 +1741,7 @@
           item.sector = 'academic';
         }
       }
+      item.days_left = deadlineDays(item);
       return item;
     }
 
@@ -1685,7 +1750,7 @@
       try {
         const d = new Date(iso);
         if (isNaN(d.getTime())) return iso;
-        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
       } catch (_) { return iso; }
     }
 
@@ -1711,7 +1776,9 @@
 
     function deadlineBadge(item) {
       if (!item.deadline || item.days_left == null) {
-        return { cls: 'r', label: 'Rolling', days: 999, pip: '○' };
+        const label = item.deadline ? 'Check deadline' :
+          (/rolling|until filled/i.test(item.deadline_note || '') ? 'Rolling' : 'Unstated');
+        return { cls: 'r', label, days: 999, pip: '○' };
       }
       const days = item.days_left;
       if (days < 0) return { cls: 'r', label: 'Closed', days: 1000, pip: '✕' };
@@ -1723,7 +1790,6 @@
 
     // Dynamic Filter Chip Counts
     function updateChipCounts() {
-      if (!listings.length) return;
       const countAll = $('#count-all');
       if (countAll) countAll.textContent = listings.length;
       const countUs = $('#count-us');
@@ -1768,8 +1834,55 @@
       cSel.value = curC;
     }
 
+    // Shared selection for the board and downloaded exports.
+    function activeListingFilters() {
+      return {
+        q: $('#q').value.trim().toLowerCase(),
+        disc: $('#filter-discipline').value,
+        kindSel: $('#filter-kind').value,
+        sector: $('#filter-sector').value,
+        country: $('#filter-country').value,
+        visa: $('#filter-visa').value,
+        sort: $('#filter-sort').value,
+        category: currentKind
+      };
+    }
+
+    function selectListingRows(data, filters) {
+      const {q, disc, kindSel, sector, country, visa, sort, category} = filters;
+      const rows = data.filter(r => {
+        if (category === 'us') {
+          const isUS = (r.country || '').toLowerCase().includes('united states');
+          if (!isUS || r.kind !== 'predoc') return false;
+        }
+        if (category === 'postdoc-phd' && !['postdoc', 'phd'].includes(r.kind)) return false;
+        if (category === 'institutional' && r.sector !== 'institutional') return false;
+        if (category === 'closing-soon' &&
+            (r.days_left == null || r.days_left > 7 || r.days_left < 0)) return false;
+        if (disc && !(r.disciplines || []).includes(disc)) return false;
+        if (kindSel && r.kind !== kindSel) return false;
+        if (sector && r.sector !== sector) return false;
+        if (country && r.country !== country) return false;
+        if (visa && r.visa !== visa) return false;
+        const hay = [r.title, r.institution, r.principal_investigator, r.city, r.country, r.summary]
+          .filter(Boolean).join(' ').toLowerCase();
+        return !q || hay.includes(q);
+      });
+      rows.sort((a, b) => {
+        if (sort === 'i') return (a.institution || '').localeCompare(b.institution || '');
+        if (sort === 't') return (a.title || '').localeCompare(b.title || '');
+        if (sort === 'newest') return (b.first_seen_at || '').localeCompare(a.first_seen_at || '');
+        return (a.days_left ?? 9999) - (b.days_left ?? 9999);
+      });
+      return rows;
+    }
+
     // Board Filter & Render Engine
     function draw() {
+      const now = Date.now();
+      refreshDeadlineState(now);
+      deadlineRenderDay = Math.floor(now / 86400000);
+      updateChipCounts();
       const q = $('#q').value.trim().toLowerCase();
       const disc = $('#filter-discipline').value;
       const kindSel = $('#filter-kind').value;
@@ -1792,41 +1905,7 @@
       $('#filter-visa').classList.toggle('active', !!visa);
       $('#filter-sort').classList.toggle('active', sort !== 'd');
 
-      let rows = listings.filter(r => {
-        if (currentKind === 'us') {
-          const isUS = r.country === 'United States' || (r.country || '').toLowerCase().includes('united states');
-          if (!isUS || r.kind !== 'predoc') return false;
-        }
-        if (currentKind === 'postdoc-phd' && !(r.kind === 'postdoc' || r.kind === 'phd')) return false;
-        if (currentKind === 'institutional' && r.sector !== 'institutional') return false;
-        if (currentKind === 'closing-soon') {
-          if (r.days_left == null || r.days_left > 7 || r.days_left < 0) return false;
-        }
-
-        if (disc && !(r.disciplines || []).includes(disc)) return false;
-        if (kindSel && r.kind !== kindSel) return false;
-        if (sector && r.sector !== sector) return false;
-        if (country && r.country !== country) return false;
-        if (visa && r.visa !== visa) return false;
-
-        if (q) {
-          const hay = [r.title, r.institution, r.principal_investigator, r.city, r.country, r.summary]
-            .filter(Boolean).join(' ').toLowerCase();
-          if (!hay.includes(q)) return false;
-        }
-        return true;
-      });
-
-      // Sorting
-      rows.sort((a, b) => {
-        if (sort === 'i') return (a.institution || '').localeCompare(b.institution || '');
-        if (sort === 't') return (a.title || '').localeCompare(b.title || '');
-        if (sort === 'newest') return (b.first_seen_at || '').localeCompare(a.first_seen_at || '');
-        // default: deadline soonest
-        const ad = a.days_left == null ? 9999 : a.days_left;
-        const bd = b.days_left == null ? 9999 : b.days_left;
-        return ad - bd;
-      });
+      const rows = selectListingRows(listings, activeListingFilters());
 
       $('#cnt').textContent = `${rows.length} of ${listings.length} positions`;
 
@@ -1865,7 +1944,7 @@
         let visaHtml = '';
         if (r.visa === 'explicit') visaHtml = '<span class="tag-visa exp">Visa: Stated</span>';
         else if (r.visa === 'inferred') visaHtml = '<span class="tag-visa inf">Visa: Likely</span>';
-        else if (r.visa === 'not_offered') visaHtml = '<span class="tag-visa none">Citizens/Permit</span>';
+        else if (r.visa === 'not_offered') visaHtml = '<span class="tag-visa none">No sponsorship / Restricted</span>';
 
         const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : 'Predoc / RA');
         const sal = formatSalary(r);
@@ -1914,6 +1993,7 @@
           const isOpen = row.classList.toggle('open');
           btn.setAttribute('aria-expanded', isOpen);
         };
+        wireKeyboardActivation(btn);
       });
 
       $$('[data-open]').forEach(btn => {
@@ -1934,7 +2014,7 @@
         const salBadge = sal ? `<span class="tag-salary">${esc(sal)}</span>` : '';
 
         return `
-          <article class="job-card" data-open="${r.id}">
+          <article class="job-card" data-open="${r.id}" tabindex="0" role="button" aria-label="Open details: ${esc(r.title)}">
             <div class="card-head">
               <span class="card-inst">${esc(r.institution)}</span>
             </div>
@@ -1968,7 +2048,16 @@
           const item = listings.find(l => l.id === Number(c.dataset.open));
           if (item) openModal(item);
         };
+        wireKeyboardActivation(c);
       });
+    }
+
+    function wireKeyboardActivation(element) {
+      element.onkeydown = event => {
+        if (event.target !== element || !['Enter', ' '].includes(event.key)) return;
+        event.preventDefault();
+        if (!event.repeat) element.click();
+      };
     }
 
     // Render Analytics Dashboard (Collegiate Bulletin Style)
@@ -1980,6 +2069,9 @@
       }
 
       // 1. Ratio Computations
+      const institutionNames = new Set(rows.map(r => (r.institution || '').trim())
+        .filter(name => name && !/^(unknown(?: institution)?|unstated)$/i.test(name))
+        .map(name => name.normalize('NFKC').toLocaleLowerCase('en')));
       const visaExplicit = rows.filter(r => r.visa === 'explicit').length;
       const visaLikely = rows.filter(r => r.visa === 'inferred').length;
       const visaTotal = visaExplicit + visaLikely;
@@ -1988,8 +2080,11 @@
       const remoteCount = rows.filter(r => r.is_remote).length;
       const remotePct = Math.round((remoteCount / total) * 100);
 
-      const rollingCount = rows.filter(r => !r.deadline || r.days_left == null).length;
+      const rollingCount = rows.filter(r => deadlineBadge(r).label === 'Rolling').length;
       const rollingPct = Math.round((rollingCount / total) * 100);
+      const unknownDeadlineCount = rows.filter(r => ['Unstated', 'Check deadline'].includes(deadlineBadge(r).label)).length;
+      const closedCount = rows.filter(r => r.days_left != null && r.days_left < 0).length;
+      const visaUnknown = rows.filter(r => !['explicit', 'inferred', 'not_offered'].includes(r.visa)).length;
 
       const urgentCount = rows.filter(r => r.days_left != null && r.days_left >= 0 && r.days_left <= 7).length;
       const urgentPct = Math.round((urgentCount / total) * 100);
@@ -2001,7 +2096,7 @@
       const laterPct = Math.round((laterCount / total) * 100);
 
       // 2. Geographic Distribution
-      const countryMap = {};
+      const countryMap = Object.create(null);
       rows.forEach(r => {
         const c = r.country || 'Unstated';
         countryMap[c] = (countryMap[c] || 0) + 1;
@@ -2011,7 +2106,7 @@
         .slice(0, 6);
 
       // 3. Institutional Volume
-      const instMap = {};
+      const instMap = Object.create(null);
       rows.forEach(r => {
         const inst = r.institution || 'Unstated';
         instMap[inst] = (instMap[inst] || 0) + 1;
@@ -2029,7 +2124,7 @@
             <strong>Market Scope:</strong>
             ${isFiltered 
               ? `Analyzing <b>${total}</b> of ${listings.length} positions matching active criteria.` 
-              : `Analyzing all <b>${total}</b> active appointments indexed across 75 institutions.`}
+              : `Analyzing all <b>${total}</b> indexed appointments with ${institutionNames.size} distinct reported institution names. This is listing coverage, not a count of healthy monitors.`}
           </div>
           ${isFiltered ? '<button class="analytics-scope-reset" id="analytics-reset-scope">Reset all filters</button>' : ''}
         </div>
@@ -2047,13 +2142,13 @@
           </div>
           <div class="metric-card">
             <span class="stat-val">${visaPct}%</span>
-            <span class="stat-lbl">Visa Friendly</span>
-            <span class="stat-sub">${visaTotal} roles stated / likely</span>
+            <span class="stat-lbl">Visa Support Signals</span>
+            <span class="stat-sub">${visaExplicit} stated, ${visaLikely} inferred; ${visaUnknown} unknown. Share of all roles.</span>
           </div>
           <div class="metric-card">
             <span class="stat-val">${remotePct}%</span>
             <span class="stat-lbl">Remote Eligible</span>
-            <span class="stat-sub">${remoteCount} roles with remote option</span>
+            <span class="stat-sub">${remoteCount} roles marked remote; other roles may be unstated. Share of all roles.</span>
           </div>
           <div class="metric-card">
             <span class="stat-val">${rollingPct}%</span>
@@ -2108,13 +2203,15 @@
 
         <div class="horizon-panel">
           <h3 class="analytics-panel-title">Application &amp; Deadline Horizon</h3>
-          <div class="analytics-panel-sub">Temporal distribution of review windows and expiration dates</div>
+          <div class="analytics-panel-sub">Review windows: ${unknownDeadlineCount} unstated or unverified; ${closedCount} past deadline. Shares use all roles in view.</div>
           
           <div class="horizon-stacked-bar">
             ${urgentCount ? `<div class="horizon-seg urgent" style="width:${(urgentCount / total) * 100}%" title="Urgent: ${urgentCount}"></div>` : ''}
             ${soonCount ? `<div class="horizon-seg soon" style="width:${(soonCount / total) * 100}%" title="Closing soon: ${soonCount}"></div>` : ''}
             ${laterCount ? `<div class="horizon-seg later" style="width:${(laterCount / total) * 100}%" title="Extended: ${laterCount}"></div>` : ''}
             ${rollingCount ? `<div class="horizon-seg rolling" style="width:${(rollingCount / total) * 100}%" title="Rolling: ${rollingCount}"></div>` : ''}
+            ${unknownDeadlineCount ? `<div class="horizon-seg" style="width:${(unknownDeadlineCount / total) * 100}%;background:var(--faint)" title="Unstated or unverified: ${unknownDeadlineCount}"></div>` : ''}
+            ${closedCount ? `<div class="horizon-seg" style="width:${(closedCount / total) * 100}%;background:var(--warn)" title="Past deadline: ${closedCount}"></div>` : ''}
           </div>
 
           <div class="horizon-legend">
@@ -2146,9 +2243,12 @@
 
     // Modal Dossier
     const modal = $('#detail-modal');
-    function openModal(item) {
+    function openModal(item, { updateUrl = true } = {}) {
       currentModalListing = item;
-      window.location.hash = `listing-${item.id}`;
+      $('#modal-copy-fallback').hidden = true;
+      if (updateUrl && window.location.hash !== `#listing-${item.id}`) {
+        window.location.hash = `listing-${item.id}`;
+      }
 
       $('#modal-title').textContent = item.title;
       $('#modal-inst').textContent = item.institution + (item.principal_investigator ? ` · Prof. ${item.principal_investigator}` : '');
@@ -2159,7 +2259,7 @@
       const sal = formatSalary(item);
 
       $('#modal-badges').innerHTML = `
-        <span class="dl ${b.cls}"><span class="pip">${b.pip}</span>${esc(b.label)}</span>
+        <span id="modal-deadline-badge" class="dl ${b.cls}"><span class="pip">${b.pip}</span>${esc(b.label)}</span>
         <span class="tag">${esc(kindLabel)}</span>
         <span class="tag">${esc(sectorLabel)}</span>
         ${item.is_remote ? '<span class="tag-remote">Remote</span>' : ''}
@@ -2171,19 +2271,19 @@
         timelineEl.innerHTML = `
           <span>First Indexed: <b>${formatDate(item.first_seen_at)}</b></span>
           <span class="timeline-arrow" aria-hidden="true">──────▶</span>
-          <span>Review Status: <b>${esc(b.label)}</b></span>
+          <span>Review Status: <b id="modal-deadline-status">${esc(b.label)}</b></span>
         `;
       }
 
       const place = [item.city, item.country].filter(Boolean).join(', ') || 'Unstated';
       const visaText = item.visa === 'explicit' 
         ? 'Stated in advert' 
-        : (item.visa === 'inferred' ? 'Likely (institutional policy)' : (item.visa === 'not_offered' ? 'Citizens or work permit required' : 'Unstated'));
+        : (item.visa === 'inferred' ? 'Likely (institutional policy)' : (item.visa === 'not_offered' ? 'Sponsorship unavailable or eligibility restricted; check advert' : 'Unstated'));
 
       const degreeStr = (item.min_degree && item.min_degree !== 'unstated')
         ? formatDegree(item.min_degree) + (item.degree_note ? ` (${item.degree_note})` : '')
         : (item.degree_note || 'Unstated');
-      const startStr = item.start_term || (item.start_date ? formatDate(item.start_date) : 'Unstated / Flexible');
+      const startStr = item.start_term || (item.start_date ? formatDate(item.start_date) : 'Unstated');
 
       const reqTools = (item.tools_required || []).join(', ');
       const prefTools = (item.tools_preferred || []).join(', ');
@@ -2196,20 +2296,20 @@
       const gridData = [
         ['Location', place + (item.is_remote ? ' (Remote option)' : '')],
         ['Deadline', b.label + (item.deadline ? ` (${formatDate(item.deadline)})` : '')],
-        ['Duration', item.duration_years ? `${item.duration_years} year(s)` : 'Full-time / Fixed-term'],
-        ['Compensation', sal || 'Institutional salary scale'],
+        ['Duration', item.duration_years ? `${item.duration_years} year(s)` : 'Unstated'],
+        ['Compensation', sal || 'Unstated'],
         ['Degree Requirement', degreeStr],
         ['Start Date / Term', startStr],
         ['Technical Stack', toolsStr],
         ['Visa Terms', visaText + (item.visa_note ? ` — ${item.visa_note}` : '')],
-        ['Disciplines', (item.disciplines || []).join(', ') || 'Economics / Quantitative Social Science'],
+        ['Disciplines', (item.disciplines || []).join(', ') || 'Unstated'],
         ['Sector', sectorLabel],
       ];
 
       $('#modal-grid').innerHTML = gridData.map(([k, v]) => `
         <div>
           <dt>${esc(k)}</dt>
-          <dd>${esc(v)}</dd>
+          <dd${k === 'Deadline' ? ' id="modal-deadline-value"' : ''}>${esc(v)}</dd>
         </div>
       `).join('');
 
@@ -2224,23 +2324,48 @@
         $('#modal-src-link').style.display = 'none';
       }
 
-      if (typeof modal.showModal === 'function') modal.showModal();
+      if (!modal.open && typeof modal.showModal === 'function') modal.showModal();
     }
 
-    function closeModal() {
+    function closeModal({ updateUrl = true } = {}) {
       if (modal.open) modal.close();
       currentModalListing = null;
-      if (window.location.hash.startsWith('#listing-')) {
+      if (updateUrl && window.location.hash.startsWith('#listing-')) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
       }
     }
 
+    function syncModalWithUrl() {
+      const match = window.location.hash.match(/^#listing-(\d+)$/);
+      const item = match && listings.find(l => l.id === Number(match[1]));
+      if (!item) {
+        closeModal({ updateUrl: false });
+      } else if (!modal.open || currentModalListing?.id !== item.id) {
+        openModal(item, { updateUrl: false });
+      }
+    }
+    window.addEventListener('hashchange', syncModalWithUrl);
+    window.addEventListener('popstate', syncModalWithUrl);
+
     $('#modal-close').onclick = closeModal;
     modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-    $('#modal-copy-btn').onclick = () => {
+    $('#modal-copy-btn').onclick = async () => {
       if (!currentModalListing) return;
-      const url = `${window.location.origin}${window.location.pathname}#listing-${currentModalListing.id}`;
-      navigator.clipboard.writeText(url).then(() => toast('Link copied to clipboard')).catch(() => toast('Link copied'));
+      const id = currentModalListing.id;
+      const url = `${window.location.origin}${window.location.pathname}#listing-${id}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast('Link copied to clipboard');
+      } catch (_) {
+        toast('Could not copy automatically. Copy the link manually.');
+        if (currentModalListing?.id === id) {
+          const input = $('#modal-copy-text');
+          input.value = url;
+          $('#modal-copy-fallback').hidden = false;
+          input.focus();
+          input.select();
+        }
+      }
     };
 
     // Keyboard shortcuts
@@ -2293,7 +2418,7 @@
 
     // View toggles
     function setViewMode(mode) {
-      viewMode = mode;
+      viewMode = ['ledger', 'grid', 'stats'].includes(mode) ? mode : 'ledger';
       try { localStorage.setItem('collegeum-view', viewMode); } catch (_) {}
       $('#view-ledger-btn').classList.toggle('active', viewMode === 'ledger');
       $('#view-ledger-btn').setAttribute('aria-pressed', viewMode === 'ledger');
@@ -2319,56 +2444,42 @@
     }
 
     // CSV Export
-    $('#export-csv-btn').onclick = () => {
-      const q = $('#q').value.trim().toLowerCase();
-      const disc = $('#filter-discipline').value;
-      const kindSel = $('#filter-kind').value;
-      const sector = $('#filter-sector').value;
-      const country = $('#filter-country').value;
-      const visa = $('#filter-visa').value;
+    function csvCell(value) {
+      let text = String(value ?? '');
+      // A visible text prefix survives spreadsheet save/reopen operations,
+      // unlike apostrophes that some spreadsheet programs remove.
+      const normalized = text.normalize('NFKC');
+      if (/^[\s\uFEFF]*[=+\-@]/u.test(normalized) || /^[\t\r\n]/u.test(normalized)) {
+        text = '[text] ' + text;
+      }
+      return '"' + text.replace(/"/g, '""') + '"';
+    }
 
-      const rows = listings.filter(r => {
-        if (disc && !(r.disciplines || []).includes(disc)) return false;
-        if (kindSel && r.kind !== kindSel) return false;
-        if (sector && r.sector !== sector) return false;
-        if (country && r.country !== country) return false;
-        if (visa && r.visa !== visa) return false;
-        if (q) {
-          const hay = [r.title, r.institution, r.principal_investigator, r.city, r.country, r.summary].filter(Boolean).join(' ').toLowerCase();
-          if (!hay.includes(q)) return false;
-        }
-        return true;
-      });
+    function serializeListingsCsv(rows) {
+      const headers = [
+        'ID', 'Title', 'Institution', 'PI', 'Country', 'City', 'Kind', 'Sector',
+        'Deadline', 'Visa', 'Salary', 'Tools Required', 'Tools Preferred', 'Degree', 'Start Date', 'Apply URL'
+      ];
+      const dataRows = rows.map(l => [
+        l.id, l.title, l.institution, l.principal_investigator, l.country, l.city,
+        l.kind, l.sector, l.deadline, l.visa, formatSalary(l) || l.salary_raw,
+        (l.tools_required || []).join(', '), (l.tools_preferred || []).join(', '),
+        l.min_degree, l.start_term || l.start_date, l.apply_url || l.source_url
+      ]);
+      return [headers, ...dataRows].map(row => row.map(csvCell).join(',')).join('\r\n');
+    }
+
+    $('#export-csv-btn').onclick = () => {
+      draw();
+      const rows = selectListingRows(listings, activeListingFilters());
 
       if (!rows.length) {
         toast('No positions to export');
         return;
       }
 
-      const headers = [
-        'ID', 'Title', 'Institution', 'PI', 'Country', 'City', 'Kind', 'Sector',
-        'Deadline', 'Visa', 'Salary', 'Tools Required', 'Tools Preferred', 'Degree', 'Start Date', 'Apply URL'
-      ];
-      const dataRows = rows.map(l => [
-        l.id,
-        `"${(l.title || '').replace(/"/g, '""')}"`,
-        `"${(l.institution || '').replace(/"/g, '""')}"`,
-        `"${(l.principal_investigator || '').replace(/"/g, '""')}"`,
-        `"${(l.country || '').replace(/"/g, '""')}"`,
-        `"${(l.city || '').replace(/"/g, '""')}"`,
-        l.kind || '',
-        l.sector || '',
-        l.deadline || '',
-        l.visa || '',
-        `"${(formatSalary(l) || l.salary_raw || '').replace(/"/g, '""')}"`,
-        `"${((l.tools_required || []).join(', ')).replace(/"/g, '""')}"`,
-        `"${((l.tools_preferred || []).join(', ')).replace(/"/g, '""')}"`,
-        `"${(l.min_degree || '').replace(/"/g, '""')}"`,
-        `"${(l.start_term || l.start_date || '').replace(/"/g, '""')}"`,
-        `"${(l.apply_url || l.source_url || '').replace(/"/g, '""')}"`,
-      ]);
-      const csv = [headers.join(','), ...dataRows.map(r => r.join(','))].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const csv = serializeListingsCsv(rows);
+      const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -2382,43 +2493,114 @@
     fetch('data/listings.json', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(payload => {
+        listingsGeneratedAt = payload.generated_at || '';
         listings = (payload.listings || []).map(enrichItem);
         const srcEl = $('#src');
-        if (srcEl) srcEl.textContent = '';
+        if (srcEl) srcEl.textContent = `${snapshotLabel(listingsGeneratedAt)} · Deadline dates use UTC`;
         populateFilters();
         updateChipCounts();
         draw();
 
-        // Deep linking check
-        const m = window.location.hash.match(/^#listing-(\d+)$/);
-        if (m) {
-          const it = listings.find(l => l.id === Number(m[1]));
-          if (it) openModal(it);
-        }
+        syncModalWithUrl();
       })
       .catch(() => {
+        listingsGeneratedAt = null;
         listings = [];
         const srcEl = $('#src');
         if (srcEl) srcEl.textContent = 'The listings file could not be loaded. Please reload the page.';
         draw();
       });
 
+    // Refresh a page left open across UTC midnight, and after sleep/backgrounding.
+    function deadlineRefreshDelay(now = Date.now()) {
+      if (!Number.isFinite(now)) return 60000;
+      return Math.max(1000, 86400000 - ((now % 86400000) + 86400000) % 86400000);
+    }
+    let deadlineRefreshTimer;
+    function refreshDeadlineViews() {
+      if (deadlineRenderDay !== null) draw();
+      else refreshDeadlineState();
+      refreshHealthDisplay();
+      if (currentModalListing) {
+        const badge = deadlineBadge(currentModalListing);
+        const element = $('#modal-deadline-badge');
+        if (element) {
+          element.className = `dl ${badge.cls}`;
+          element.innerHTML = `<span class="pip">${badge.pip}</span>${esc(badge.label)}`;
+        }
+        const status = $('#modal-deadline-status');
+        if (status) status.textContent = badge.label;
+        const value = $('#modal-deadline-value');
+        if (value) value.textContent = badge.label + (currentModalListing.deadline ? ` (${formatDate(currentModalListing.deadline)})` : '');
+      }
+      clearTimeout(deadlineRefreshTimer);
+      deadlineRefreshTimer = setTimeout(refreshDeadlineViews, deadlineRefreshDelay());
+    }
+    deadlineRefreshTimer = setTimeout(refreshDeadlineViews, deadlineRefreshDelay());
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshDeadlineViews();
+    });
+    window.addEventListener('focus', refreshDeadlineViews);
+    setInterval(() => {
+      if (deadlineRenderDay !== null && deadlineRenderDay !== Math.floor(Date.now() / 86400000)) {
+        refreshDeadlineViews();
+      } else {
+        refreshDeadlineState();
+        refreshHealthDisplay();
+      }
+    }, 60000);
+
+    function healthPresentation(data, now = Date.now()) {
+      const latest = data.runs?.[0] || {};
+      const timestamp = latest.finished_at || data.generated_at;
+      const diffH = (now - new Date(timestamp).getTime()) / 36e5;
+      if (!Number.isFinite(diffH) || diffH < -1) {
+        return { cls: 'stale', label: 'Pipeline status unavailable' };
+      }
+      const failed = data.source_summary?.failed ?? Object.entries(latest.source_stats || {})
+        .filter(([name, source]) => !name.startsWith('_') && !source.skipped &&
+          (source.ok === false || source.errors > 0)).length;
+      const outcome = data.status || data.last_run?.outcome || latest.outcome || 'unknown';
+      const age = diffH >= 48 ? `${Math.floor(diffH / 24)}d ago` : `${Math.max(0, Math.floor(diffH))}h ago`;
+      if (outcome === 'fatal') return { cls: 'dead', label: `Pipeline failed · ${age}` };
+      if (outcome === 'quota-stopped') return { cls: 'stale', label: `Pipeline stopped at request limit · ${age}` };
+      if (failed || outcome === 'partial' || outcome === 'degraded' || data.last_run?.errors > 0) {
+        return { cls: 'stale', label: `Pipeline incomplete${failed ? ` · ${failed} source checks failed` : ''} · ${age}` };
+      }
+      if (outcome !== 'ok') return { cls: 'stale', label: `Pipeline status unavailable · ${age}` };
+      if (diffH >= 72) return { cls: 'dead', label: `Pipeline delayed · ${age}` };
+      if (diffH >= 24) return { cls: 'stale', label: `Pipeline run · ${age}` };
+      return { cls: '', label: `Pipeline active · updated ${age}` };
+    }
+
+    function refreshHealthDisplay() {
+      const display = healthPresentation(pipelineHealth || {});
+      const dot = $('#health-dot'), label = $('#health-label');
+      const className = `health-dot ${display.cls}`;
+      if (dot.className !== className) dot.className = className;
+      if (label.textContent !== display.label) label.textContent = display.label;
+    }
+
     // Health Telemetry
     fetch('data/health.json', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(data => {
-        if (data.generated_at) {
-          const diffH = (Date.now() - new Date(data.generated_at).getTime()) / 36e5;
-          let cls = '', label = `Pipeline active · updated ${Math.round(diffH)}h ago`;
-          if (diffH >= 72) { cls = 'dead'; label = `Pipeline delayed · ${Math.round(diffH / 24)}d ago`; }
-          else if (diffH >= 24) { cls = 'stale'; label = `Pipeline run ${Math.round(diffH)}h ago`; }
-          $('#health-dot').className = `health-dot ${cls}`;
-          $('#health-label').textContent = label;
+        pipelineHealth = data;
+        refreshHealthDisplay();
+        const list = $('#health-sources');
+        list.replaceChildren();
+        for (const [name, source] of Object.entries(data.sources || {})) {
+          const li = document.createElement('li');
+          const success = source.last_successful_at
+            ? new Date(source.last_successful_at).toLocaleString() : 'unavailable in recorded history';
+          li.textContent = `${name}: ${source.status}${source.messages?.length ? ` · ${source.messages.join('; ')}` : ''} · last successful check: ${success}`;
+          list.append(li);
         }
+        $('#health-details').hidden = list.children.length === 0;
       })
       .catch(() => {
-        $('#health-dot').className = 'health-dot';
-        $('#health-label').textContent = 'Pipeline status unavailable';
+        pipelineHealth = null;
+        refreshHealthDisplay();
       });
 
     // Floating back-to-top handler

@@ -25,6 +25,7 @@ a firewall rule.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlsplit
@@ -130,7 +131,7 @@ class PoliteClient:
             return True
 
     # -- pacing -----------------------------------------------------------
-    def _pace(self, url: str, sleep=time.sleep) -> None:
+    def _pace(self, url: str, sleep: Callable[[float], None] = time.sleep) -> None:
         host = registrable_host(url)
         elapsed = time.monotonic() - self._last_request.get(host, 0.0)
         if elapsed < self.per_host_delay:
@@ -138,7 +139,10 @@ class PoliteClient:
         self._last_request[host] = time.monotonic()
 
     # -- fetching ---------------------------------------------------------
-    def get(self, url: str, *, use_cache: bool = True, sleep=time.sleep) -> FetchResult:
+    def get(
+        self, url: str, *, use_cache: bool = True,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> FetchResult:
         """Fetch a URL, returning a result object rather than raising."""
         if not self.allowed(url):
             return FetchResult(url=url, status=999, error="blocked by robots.txt")

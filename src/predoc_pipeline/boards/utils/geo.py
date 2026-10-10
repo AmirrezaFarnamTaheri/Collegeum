@@ -148,7 +148,46 @@ _OTHER = ["australia", "sydney", "melbourne", "canberra", "new zealand", "auckla
           "bogot[aá]", "argentina", "buenos aires", "peru", "lima", "malaysia", "kuala lumpur", "lebanon",
           "beirut", "byblos", "pakistan", "bangladesh", "vietnam", "indonesia", "thailand", "philippines",
           "egypt", "cairo", "iran", "tehran"]
-_add("Other", "Other", *_OTHER)
+_OTHER_COUNTRIES = {
+    "Australia": ["australia", "sydney", "melbourne", "canberra"],
+    "New Zealand": ["new zealand", "auckland"],
+    "China": ["china", "beijing", "shanghai"],
+    "Singapore": ["singapore"],
+    "Japan": ["japan", "tokyo"],
+    "India": ["india", "delhi", "mumbai", "bangalore"],
+    "Hong Kong": ["hong kong"],
+    "South Korea": ["south korea", "seoul"],
+    "Israel": ["israel", "tel aviv"],
+    "Turkey": ["turkey", "istanbul", "ankara"],
+    "United Arab Emirates": ["united arab emirates", "dubai", "abu dhabi"],
+    "Qatar": ["qatar", "doha"],
+    "Saudi Arabia": ["saudi arabia", "riyadh"],
+    "South Africa": ["south africa", "cape town", "johannesburg"],
+    "Kenya": ["kenya", "nairobi"],
+    "Nigeria": ["nigeria"],
+    "Ghana": ["ghana"],
+    "Rwanda": ["rwanda"],
+    "Brazil": ["brazil", "são paulo", "sao paulo", "rio de janeiro"],
+    "Mexico": ["mexico"],
+    "Chile": ["chile", "santiago"],
+    "Colombia": ["colombia", "bogot[aá]"],
+    "Argentina": ["argentina", "buenos aires"],
+    "Peru": ["peru", "lima"],
+    "Malaysia": ["malaysia", "kuala lumpur"],
+    "Lebanon": ["lebanon", "beirut", "byblos"],
+    "Pakistan": ["pakistan"],
+    "Bangladesh": ["bangladesh"],
+    "Vietnam": ["vietnam"],
+    "Indonesia": ["indonesia"],
+    "Thailand": ["thailand"],
+    "Philippines": ["philippines"],
+    "Egypt": ["egypt", "cairo"],
+    "Iran": ["iran", "tehran"],
+}
+_specific_other = {pattern for patterns in _OTHER_COUNTRIES.values() for pattern in patterns}
+for _country, _patterns in _OTHER_COUNTRIES.items():
+    _add("Other", _country, *_patterns)
+_add("Other", "Other", *(pattern for pattern in _OTHER if pattern not in _specific_other))
 
 
 # Short acronyms are matched case-sensitively in UPPER CASE so that e.g. German "mit"
@@ -164,7 +203,7 @@ ACRONYMS = {
 
 
 @lru_cache(maxsize=1)
-def _compiled() -> list[tuple[re.Pattern, str, str]]:
+def _compiled() -> list[tuple[re.Pattern[str], str, str]]:
     out = []
     for pat, country, region in _ENTRIES:
         if pat in ACRONYMS:
@@ -196,9 +235,18 @@ def detect_location(*texts: str | None) -> tuple[str | None, str | None]:
     Within one text the earliest match wins, but a country-level match beats the generic "Europe".
     """
     for text in texts:
+        if not text:
+            continue
         hits = detect_all(text)
         if not hits:
             continue
+        # In an explicit comma-separated address, a named country suffix is
+        # stronger evidence than an ambiguous city (London, Canada).
+        for _, named_country, named_region in hits:
+            if named_country in ("Europe", "Other"):
+                continue
+            if re.search(r",\s*" + re.escape(named_country) + r"\s*(?:$|[.\n])", text, re.I):
+                return named_country, named_region
         specific = [h for h in hits if h[1] not in ("Europe",)]
         _, country, region = (specific or hits)[0]
         return country, region
@@ -288,7 +336,8 @@ _US_SIGNALS = [re.compile(p, re.IGNORECASE if i else 0) for i, p in enumerate([
 
 def location_from_labels(text: str | None) -> tuple[str | None, str | None]:
     """'Location: Zurich, Switzerland' -> ('Switzerland', 'Europe'). First labelled location wins."""
-    for m in _LOCATION_LABEL.finditer(text or ""):
+    text = text or ""
+    for m in _LOCATION_LABEL.finditer(text):
         country, region = detect_location(text[m.end(): m.end() + 80])
         if region:
             return country, region

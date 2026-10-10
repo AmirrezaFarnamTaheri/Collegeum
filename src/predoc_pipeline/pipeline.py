@@ -24,20 +24,21 @@ proportional to genuinely new items.
 broadcast first and inserted second, so a crash in between left a message in
 the channel with no record of it -- and the next run would send it again. Here
 the row goes in as ``pending``, the broadcast happens, and success flips it to
-``published``. A crash leaves a recoverable pending row, which
-``_republish_pending`` picks up on the next run. Duplicate delivery becomes
-impossible rather than merely unlikely.
+``published``. A crash leaves a recoverable pending row, which the next run
+loads before broadcasting. An uncertain remote acceptance still requires
+reconciliation; inserting first does not establish exactly-once delivery.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from . import state
 from .boards.config import Preferences, load_preferences
@@ -45,12 +46,13 @@ from .core import gating
 from .core.db import Database
 from .core.db import init as init_db
 from .core.dedupe import Deduplicator
+from .core.health import source_error_count, source_summary
 from .core.ratelimit import QuotaExceeded
 from .core.textproc import escape_telegram_html, truncate
-from .core.timeparse import format_ts, parse_datetime
-from .core.urls import content_hash, url_hash
+from .core.timeparse import format_ts, parse_datetime, utcnow
+from .core.urls import url_hash
 from .extract import ExtractionError, RateLimited, build_extractor
-from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor
+from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor, _deadline_iso
 from .ingest.collectors import gather
 from .ingest.http import PoliteClient
 from .ingest.sources import load_sources
@@ -62,7 +64,7 @@ from .publish.telegram import (
     TelegramClient,
     TelegramError,
     render_card,
-    render_digest_pages,
+    render_digest_batches,
     render_keyboard,
 )
 from .routing import Channel, Router
@@ -86,8 +88,11 @@ class RunStats:
     extracted: int = 0
     low_confidence: int = 0
     duplicates: int = 0
+    refreshed: int = 0
     published: int = 0
     errors: int = 0
+    source_errors: int = 0
+    sources: dict[str, int] = field(default_factory=dict)
     llm_calls: int = 0
     quota_stopped: bool = False
     expired: int = 0
@@ -258,7 +263,7 @@ def _merge_hints(result: ExtractionResult, hints: dict[str, Any]) -> ExtractionR
     if not result.country and hints.get("country") not in (None, "Europe", "Other"):
         update["country"] = hints["country"]
     if not result.deadline and hints.get("deadline"):
-        update["deadline"] = f"{hints['deadline']}T23:59:59Z"
+        update["deadline"] = _deadline_iso(hints["deadline"])
     if not result.principal_investigator and hints.get("pi"):
         update["principal_investigator"] = hints["pi"]
     if not result.application_url and hints.get("final_url"):
@@ -313,13 +318,20 @@ def _pre_extract(
 ) -> tuple[gating.GateResult, str, str] | None:
     """Evaluate seen-check and pre-extraction gating for one item."""
     source_key = url_hash(item.source_url)
-    digest = content_hash(item.text)
+    # The verdict also depends on title and structured collector evidence.
+    # Version the digest so legacy text-only verdicts are reconsidered once.
+    evidence = json.dumps(
+        {"text": item.text, "title": item.title, "apply_url_hint": item.apply_url_hint,
+         "hints": item.hints},
+        sort_keys=True, ensure_ascii=False, default=str,
+    )
+    digest = "candidate-v3:" + hashlib.sha256(evidence.encode("utf-8")).hexdigest()
     board = bool(item.hints.get("board"))
 
     seen = db.seen(source_key)
-    # A board posting is judged once per URL: its page text changes with every
-    # "posted 3 days ago", which must not trigger a fresh verdict.
-    if seen is not None and (seen["content_hash"] == digest or board):
+    # A recurring board URL may change its deadline, cohort, or vacancy status.
+    # Only unchanged candidate evidence can reuse its prior verdict.
+    if seen is not None and seen["content_hash"] == digest:
         # Same URL, same body: we already decided about this one.
         stats.already_seen += 1
         if seen["listing_id"]:
@@ -424,19 +436,23 @@ def _post_extract(
         )
         return None
 
-    for pattern, label in gating._TITLE_RE:
-        if pattern.search(listing.title):
-            stats.gated += 1
-            reason = f"title:{label}"
-            stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
-            db.mark_seen(
-                source_key,
-                source=item.source,
-                decision="rejected",
-                reason=reason,
-                content_hash=digest,
-            )
-            return None
+    allow_phd = not policy.prefs.filters.exclude_phd_positions if policy and policy.prefs else True
+    title_gate = gating.evaluate(
+        "", title=listing.title, known_vacancy=True,
+        allow_phd=allow_phd, allow_postdoc=True,
+    )
+    if not title_gate.passed:
+        stats.gated += 1
+        reason = f"title:{title_gate.reason.removeprefix('reject:')}"
+        stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
+        db.mark_seen(
+            source_key,
+            source=item.source,
+            decision="rejected",
+            reason=reason,
+            content_hash=digest,
+        )
+        return None
 
     if listing.confidence < settings.confidence_threshold:
         stats.low_confidence += 1
@@ -475,6 +491,22 @@ def _post_extract(
 
     if existing is not None:
         stats.duplicates += 1
+        # Only refresh the exact application identity. A shared programme or
+        # publisher URL alone does not establish the same vacancy/cohort.
+        if (existing["url_hash"] == apply_key
+                and existing["title"].strip().casefold() == listing.title.strip().casefold()
+                and existing["institution"].strip().casefold()
+                == listing.institution.strip().casefold()
+                and _really_same(db, int(existing["id"]), listing, item)):
+            facts = _listing_row(listing, source=item.source, signature=None, hints=item.hints)
+            for key in ("url_hash", "apply_url", "source_url", "source", "first_seen_at",
+                        "last_seen_at", "status", "signature"):
+                facts.pop(key)
+            # Partial extraction must not erase previously observed nullable facts.
+            facts = {key: value for key, value in facts.items()
+                     if value not in (None, "", "[]", "unknown")}
+            db.refresh_listing_facts(int(existing["id"]), facts)
+            stats.refreshed += 1
         db.add_alternate_source(int(existing["id"]), listing.source_url)
         db.mark_seen(
             source_key,
@@ -487,7 +519,7 @@ def _post_extract(
         return None
 
     # Tiers 2 and 3.
-    dedupe_text = f"{listing.title}. {listing.summary or item.text}"
+    dedupe_text = Deduplicator.text_for(listing.title, listing.summary)
     dedupe_inst = _dedupe_institution(listing, item)
     signature = Deduplicator.signature(dedupe_text, deduper.num_perm)
     duplicate = deduper.find(
@@ -613,7 +645,7 @@ def _publish_to_x(
         tweet_id = x_client.post_listing(listing)
         db.mark_x_published(listing_id, tweet_id)
         log.info("x_published", listing_id=listing_id, tweet_id=tweet_id)
-        return tweet_id
+        return cast(str, tweet_id)
     except Exception as exc:
         stats.errors += 1
         db.log_dlq(
@@ -626,6 +658,42 @@ def _publish_to_x(
         )
         log.warning("x_publish_failed", listing_id=listing_id, error=str(exc))
         return None
+
+
+def _retry_x_publications(
+    x_client: Any,
+    settings: Settings,
+    db: Database,
+    stats: RunStats,
+    prefs: Preferences,
+    policy: Policy,
+    feedback: FeedbackStore,
+    router: Router,
+    *,
+    skip: set[int],
+    transport: Any = None,
+) -> None:
+    """Recover independent X delivery without changing website publication history."""
+    if x_client is None or settings.x_retry_limit == 0:
+        return
+    candidates = []
+    for row in reversed(db.active_listings()):
+        lid = int(row["id"])
+        if lid in skip or row["x_post_id"] or row["url_hash"] in feedback.hidden:
+            continue
+        if policy.check_stored(row):
+            continue
+        listing = _listing_from_row(row)
+        if listing.deadline is not None and listing.deadline < utcnow():
+            continue
+        if router.channel_for(listing) is not Channel.WEB:
+            continue
+        candidates.append((lid, listing))
+        if len(candidates) >= settings.x_retry_limit:
+            break
+    candidates = _verify_before_sending(candidates, prefs, db, stats, transport)
+    for lid, listing in candidates:
+        _publish_to_x(x_client, lid, listing, db, stats)
 
 
 def _broadcast(
@@ -654,7 +722,6 @@ def _broadcast(
 
     include_feedback = settings.telegram_feedback_buttons
     digest_page_size = max(1, digest_page_size)
-    hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
     status_of = feedback.status if feedback is not None else (lambda _h: None)
     send_kw: dict[str, Any] = {"sleep": sleep} if sleep else {}
 
@@ -714,16 +781,12 @@ def _broadcast(
     if not listings:
         return
 
-    web = (
-        [(lid, lst) for lid, lst in listings if router.channel_for(lst) is Channel.WEB]
-        if router is not None
-        else []
-    )
-    listings = (
-        [(lid, lst) for lid, lst in listings if router.channel_for(lst) is Channel.TELEGRAM]
-        if router is not None
-        else listings
-    )
+    web: list[tuple[int, PredocListing]] = []
+    cards: list[tuple[int, PredocListing]] = []
+    for lid, listing in listings:
+        target = web if router is not None and router.channel_for(listing) is Channel.WEB else cards
+        target.append((lid, listing))
+    listings = cards
 
     # The website is regenerated from the database on every run, so a web listing
     # is live once it is marked published. X is best effort: a failed post is
@@ -745,27 +808,26 @@ def _broadcast(
         return
 
     hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
-    x_post_ids: dict[int, str | None] = {}
 
     if (
         settings.telegram_digest_threshold > 0
         and len(listings) > settings.telegram_digest_threshold
     ):
         # A backfill should not fire forty separate notifications.
-        pages = render_digest_pages(
+        pages = render_digest_batches(
             [(hashes[lid], listing) for lid, listing in listings],
             site_url=settings.site_url,
             page_size=digest_page_size,
             feedback=include_feedback,
             status_of=status_of,
         )
-        for index, (html, keyboard) in enumerate(pages):
-            chunk = listings[index * digest_page_size : (index + 1) * digest_page_size]
+        for page in pages:
+            chunk = listings[page.start:page.end]
             try:
                 message_id = telegram.send_message(
                     chat_id=settings.telegram_public_channel_id,
-                    html=html,
-                    keyboard=keyboard,
+                    html=page.html,
+                    keyboard=page.keyboard,
                     **send_kw,
                 )
             except TelegramError as exc:
@@ -783,7 +845,7 @@ def _broadcast(
                     return
                 continue  # these stay pending and are retried next run
             for listing_id, _ in chunk:
-                db.mark_published(listing_id, message_id, x_post_id=x_post_ids.get(listing_id))
+                db.mark_published(listing_id, message_id)
             stats.published += len(chunk)
         return
 
@@ -832,7 +894,7 @@ def _broadcast(
                 db.mark_status(listing_id, "undeliverable")
             continue
 
-        db.mark_published(listing_id, message_id, x_post_id=x_post_ids.get(listing_id))
+        db.mark_published(listing_id, message_id)
         stats.published += 1
         log.info(
             "published",
@@ -992,7 +1054,7 @@ def run(
         state_ready = True
 
         prefs = load_preferences(settings.preferences_config)
-        feedback = FeedbackStore(settings.feedback_path)
+        feedback = FeedbackStore.from_settings(settings)
         sources = load_sources(settings.sources_config)
         unverified = [s.name for s in sources if s.enabled and not s.verified]
         if unverified:
@@ -1016,6 +1078,8 @@ def run(
             )
 
         stats.ingested = len(items)
+        stats.sources = source_summary(source_stats)
+        stats.source_errors = source_error_count(source_stats)
         log.info("ingest_complete", items=len(items), sources=len(source_stats))
 
         if limit:
@@ -1106,7 +1170,9 @@ def run(
 
                     def _do_extract(
                         raw_item: RawItem, gate_score: float, gate_lang: str, skey: str, dig: str
-                    ):
+                    ) -> tuple[
+                        RawItem, float, str, str, str, ExtractionResult | None, Exception | None,
+                    ]:
                         try:
                             res = extractor.extract(
                                 text=raw_item.text,
@@ -1146,17 +1212,21 @@ def run(
                                 for it, score, lang, skey, dig in to_submit
                             ]
                             for fut in as_completed(futures):
-                                it, score, lang, skey, dig, result, exc = fut.result()
+                                if fut.cancelled():
+                                    continue
+                                it, score, lang, skey, dig, result, extraction_error = fut.result()
 
-                                if exc is not None:
-                                    if isinstance(exc, (QuotaExceeded, RateLimited)):
+                                if extraction_error is not None:
+                                    if isinstance(extraction_error, (QuotaExceeded, RateLimited)):
                                         stats.quota_stopped = True
                                         stats.outcome = "quota-stopped"
-                                        log.warning("quota_stopped", error=str(exc))
+                                        log.warning("quota_stopped", error=str(extraction_error))
                                         stop_pipeline = True
                                         for f in futures:
                                             f.cancel()
-                                        break
+                                        # Drain workers already running: their completed
+                                        # results still consume quota and must be saved.
+                                        continue
                                     stats.errors += 1
                                     log.exception("item_failed", source=it.source)
                                     db.log_dlq(
@@ -1165,7 +1235,7 @@ def run(
                                         source=it.source,
                                         source_url=it.source_url,
                                         payload=truncate(it.text, 2000),
-                                        error=str(exc),
+                                        error=str(extraction_error),
                                     )
                                     continue
 
@@ -1227,6 +1297,10 @@ def run(
                 feedback=feedback,
                 digest_page_size=prefs.telegram.digest_page_size,
             )
+            _retry_x_publications(
+                x_client, settings, db, stats, prefs, policy, feedback, router,
+                skip=sent_now, transport=board_transport,
+            )
         finally:
             if telegram is not None:
                 telegram.close()
@@ -1243,7 +1317,7 @@ def run(
             json.dumps(dlq_rows, indent=2, ensure_ascii=False), encoding="utf-8"
         )
 
-        if stats.errors and stats.outcome == "ok":
+        if (stats.errors or stats.source_errors) and stats.outcome == "ok":
             stats.outcome = "partial"
 
         journal = state.write_journal(db, settings.state_path)
@@ -1281,7 +1355,10 @@ def run(
         if stats.outcome != "dry-run":
             # After finish_run, so the run history includes this run.
             try:
-                state.export_health(db, settings.health_json, stats=stats.as_dict())
+                state.export_health(
+                    db, settings.health_json, stats=stats.as_dict(),
+                    preserve_existing=not state_ready,
+                )
             except Exception:  # pragma: no cover - never mask the real outcome
                 log.exception("health_export_failed")
         db.close()

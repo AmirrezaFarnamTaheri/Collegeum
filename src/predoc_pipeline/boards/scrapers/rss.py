@@ -44,6 +44,11 @@ class RSSScraper(BaseScraper):
         posts: list[JobPostSchema] = []
         for xml in raw_data:
             feed = feedparser.parse(xml)
+            if not feed.version or (feed.bozo and not feed.entries):
+                self.discovery_parse_errors.append("response is not a parseable RSS/Atom feed")
+                continue
+            if feed.bozo:
+                self.discovery_parse_errors.append("malformed feed with recoverable entries")
             for e in feed.entries:
                 link = e.get("link") or ""
                 low = link.lower()
@@ -55,6 +60,9 @@ class RSSScraper(BaseScraper):
                 if cat_exc and any(c in cat.lower() for cat in cats for c in cat_exc):
                     continue
                 title = clean_ws(e.get("title", ""))
+                if not title or not link:
+                    self.discovery_parse_errors.append("feed entry lacks title or link")
+                    continue
                 institution, location = None, None
                 if split_title:
                     title, institution, location = split_role_at_institution(title)
@@ -63,10 +71,15 @@ class RSSScraper(BaseScraper):
                     summary_html = e["content"][0].get("value", summary_html)
                 text = html_to_text(summary_html) if "<" in summary_html else clean_ws(summary_html)
                 deadline, deadline_text = extract_deadline(text)
-                posts.append(self.make(
-                    title=title, url=link, institution=institution or "", location=location,
-                    date_posted=_entry_date(e), deadline=deadline, deadline_text=deadline_text,
-                    description_snippet=truncate(text, 600),
-                    extra={"categories": cats} if cats else {},
-                ))
+                try:
+                    post = self.make(
+                        title=title, url=link, institution=institution or "", location=location,
+                        date_posted=_entry_date(e), deadline=deadline, deadline_text=deadline_text,
+                        description_snippet=truncate(text, 600),
+                        extra={"categories": cats} if cats else {},
+                    )
+                except (ValueError, OverflowError):
+                    self.discovery_parse_errors.append("feed entry has invalid posting fields")
+                    continue
+                posts.append(post)
         return posts

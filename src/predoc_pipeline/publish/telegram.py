@@ -14,7 +14,8 @@ failure mode rather than a style preference:
 * **The 4096-character limit is measured after entity parsing**, as the API
   documents. Capping only the summary leaves a long institution name free to
   push the card over the limit; measuring raw HTML instead truncates far too
-  early. ``telegram_visible_length`` measures what Telegram counts.
+  early. ``telegram_visible_length`` uses a conservative UTF-16 budget on
+  parsed text, preserving complete Unicode code points and HTML tags.
 
 * **``disable_web_page_preview`` is deprecated** -- Bot API 7.0 replaced it
   with ``link_preview_options``. The old field is sent as a fallback for
@@ -30,7 +31,9 @@ from __future__ import annotations
 import json
 import re
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from html import escape as escape_attribute
 from typing import Any
 
 import httpx
@@ -40,7 +43,7 @@ from ..core.textproc import (
     hashtag,
     squish,
     telegram_visible_length,
-    truncate,
+    truncate_utf16,
 )
 from ..models import PredocListing
 from .keyboards import LEGEND, feedback_row
@@ -52,6 +55,9 @@ __all__ = [
     "render_keyboard",
     "render_digest",
     "render_digest_pages",
+    "render_digest_batches",
+    "pack_html_blocks",
+    "RenderedPage",
     "deadline_label",
 ]
 
@@ -60,6 +66,46 @@ SAFETY_CHARS = 64          # headroom for entity-parsing differences
 MAX_SUMMARY_CHARS = 420
 MIN_SEND_INTERVAL = 1.05   # Telegram allows ~1 message/second/chat
 _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+
+
+@dataclass(frozen=True)
+class RenderedPage:
+    start: int
+    end: int
+    html: str
+    keyboard: dict[str, Any] | None = None
+
+
+def pack_html_blocks(
+    blocks: list[str], *, header: str = "", footer: str = "", page_size: int = 6,
+) -> list[RenderedPage]:
+    """Pack complete bounded blocks, retaining their exact input membership."""
+    pages = []
+    start = 0
+    size = max(1, page_size)
+    limit = MAX_MESSAGE_CHARS - SAFETY_CHARS
+    while start < len(blocks):
+        head = header if start == 0 else ""
+        chosen: list[str] = []
+        end = start
+        while end < len(blocks) and len(chosen) < size:
+            trial = head + "\n\n".join([*chosen, blocks[end]]) + footer
+            if telegram_visible_length(trial) > limit:
+                break
+            chosen.append(blocks[end])
+            end += 1
+        if not chosen:
+            raise ValueError(f"Telegram block {start + 1} cannot fit the message budget")
+        body = head + "\n\n".join(chosen)
+        if end == len(blocks):
+            body += footer
+        pages.append(RenderedPage(start, end, body))
+        start = end
+    return pages
+
+
+def _field(text: str, limit: int) -> str:
+    return escape_telegram_html(truncate_utf16(squish(text), limit))
 
 
 class TelegramError(RuntimeError):
@@ -76,14 +122,14 @@ def _visa_badge(status: str) -> str:
         "explicit": "\u2705 stated",
         "inferred": "\U0001f7e1 likely",
         "unknown": "\u2753 unknown",
-        "not_offered": "\u26a0\ufe0f not offered / citizens first",
+        "not_offered": "\u26a0\ufe0f not offered / eligibility restricted",
     }.get(status, "\u2753 unknown")
 
 
 _HAS_YEAR = re.compile(r"(?:19|20)\d{2}|\d{1,2}/\d{1,2}/\d{2}\b")
 
 
-def deadline_label(deadline: Any, note: str | None = None) -> str:
+def deadline_label(deadline: Any, note: str | None = None, *, relative: bool = True) -> str:
     """'15 Nov 2026', '15 Nov 2026 \u2014 3 days left', 'Rolling', '28 Feb (year not stated...)'."""
     from ..core.timeparse import parse_datetime, utcnow
 
@@ -97,6 +143,8 @@ def deadline_label(deadline: Any, note: str | None = None) -> str:
         return f"{when:%d %b} (year not stated \u2014 check the ad)"
     days = (when.date() - utcnow().date()).days
     stamp = when.strftime("%d %b %Y")
+    if not relative:
+        return stamp
     if days < 0:
         return f"{stamp} (closed)"
     if days == 0:
@@ -127,10 +175,11 @@ def _detect_situation(listing: PredocListing) -> str:
 def _format_requirements(listing: PredocListing) -> str | None:
     parts = []
     tools: list[str] = []
+    legacy_tools = getattr(listing, "tools", None)
     if getattr(listing, "tools_required", None):
         tools.extend(listing.tools_required)
-    elif getattr(listing, "tools", None):
-        tools.extend(listing.tools)
+    elif legacy_tools:
+        tools.extend(legacy_tools)
     if getattr(listing, "tools_preferred", None):
         pref = [t for t in listing.tools_preferred if t not in tools]
         if pref:
@@ -188,30 +237,30 @@ def render_card(listing: PredocListing) -> str:
     other = _format_other(listing)
 
     lines = [
-        f"🎓 <b>{esc(truncate(listing.title, 140))}</b>",
-        f"<i>{esc(truncate(listing.institution, 120))}</i>",
+        f"🎓 <b>{_field(listing.title, 140)}</b>",
+        f"<i>{_field(listing.institution, 120)}</i>",
     ]
     if listing.principal_investigator:
-        lines.append(f"👤 {esc(truncate(listing.principal_investigator, 80))}")
+        lines.append(f"👤 {_field(listing.principal_investigator, 80)}")
     lines.append("")
     lines.extend([
-        f"📍 {esc(location)}",
-        f"🔬 {esc(', '.join(d.value for d in listing.disciplines))}",
+        f"📍 {_field(location, 160)}",
+        f"🔬 {_field(', '.join(d.value for d in listing.disciplines), 160)}",
         f"⏳ {esc(duration)}",
-        f"📅 <b>{esc(_deadline_line(listing))}</b>",
+        f"📅 <b>{_field(_deadline_line(listing), 120)}</b>",
         f"🛂 visa: {_visa_badge(listing.visa_sponsorship_status.value)}",
         f"Situation: {esc(situation)}",
     ])
     if requirements:
-        lines.append(f"Requirements: {esc(requirements)}")
+        lines.append(f"Requirements: {_field(requirements, 200)}")
     salary = getattr(listing, "salary_raw", None)
     if salary:
-        lines.append(f"💰 Compensation: {esc(salary)}")
+        lines.append(f"💰 Compensation: {_field(salary, 200)}")
     start = getattr(listing, "start_term", None) or getattr(listing, "start_date", None)
     if start:
-        lines.append(f"🗓 Start: {esc(start)}")
+        lines.append(f"🗓 Start: {_field(start, 100)}")
     if other:
-        lines.append(f"Other: {esc(truncate(other, 140))}")
+        lines.append(f"Other: {_field(other, 140)}")
 
     tags = [
         hashtag(listing.disciplines[0].value) if listing.disciplines else "",
@@ -224,15 +273,13 @@ def render_card(listing: PredocListing) -> str:
     fixed = "\n".join(lines) + "\n\n\n" + tag_line
     budget = MAX_MESSAGE_CHARS - SAFETY_CHARS - telegram_visible_length(fixed)
     summary_budget = max(0, min(MAX_SUMMARY_CHARS, budget))
-    summary = truncate(squish(listing.summary), summary_budget) if summary_budget > 40 else ""
+    summary = truncate_utf16(squish(listing.summary), summary_budget) if summary_budget > 40 else ""
 
     body = "\n".join(lines)
     if summary:
         body += f"\n\n{esc(summary)}"
     body += f"\n\n{tag_line}"
 
-    if telegram_visible_length(body) > MAX_MESSAGE_CHARS:  # pragma: no cover - defensive
-        body = body[: MAX_MESSAGE_CHARS - SAFETY_CHARS]
     return body
 
 
@@ -266,36 +313,38 @@ def render_keyboard(
 
 def render_digest(listings: list[PredocListing], *, site_url: str = "") -> str:
     """Compact multi-listing message for high-volume runs and backfills."""
-    esc = escape_telegram_html
     header = f"\U0001f393 <b>{len(listings)} new predoc listings</b>"
+    footer = (
+        f'\n\n<a href="{escape_attribute(site_url, quote=True)}">Browse and filter all listings</a>'
+        if site_url else ""
+    )
     rows = []
     for listing in listings:
         where = listing.location.country or "\u2014"
         deadline = listing.deadline.strftime("%d %b") if listing.deadline else "rolling"
         rows.append(
-            f'\u2022 <a href="{esc(listing.apply_url)}">'
-            f"{esc(truncate(listing.title, 70))}</a>\n"
-            f"  {esc(truncate(listing.institution, 60))} \u00b7 {esc(where)} "
-            f"\u00b7 closes {esc(deadline)}"
+            f'\u2022 <a href="{escape_attribute(listing.apply_url, quote=True)}">'
+            f"{_field(listing.title, 70)}</a>\n"
+            f"  {_field(listing.institution, 60)} \u00b7 {_field(where, 100)} "
+            f"\u00b7 closes {_field(deadline, 40)}"
         )
-    body = header + "\n\n" + "\n".join(rows)
-    if site_url:
-        body += f'\n\n<a href="{esc(site_url)}">Browse and filter all listings</a>'
-
+    body = header + "\n\n" + "\n".join(rows) + footer
     while telegram_visible_length(body) > MAX_MESSAGE_CHARS - SAFETY_CHARS and rows:
         rows.pop()
-        body = header + "\n\n" + "\n".join(rows) + "\n\u2026and more on the dashboard."
+        omitted = len(listings) - len(rows)
+        body = (header + "\n\n" + "\n".join(rows)
+                + f"\n\u2026{omitted} more listings omitted from this preview." + footer)
     return body
 
 
-def render_digest_pages(
+def render_digest_batches(
     listings: list[tuple[str, PredocListing]],
     *,
     site_url: str = "",
     page_size: int = 6,
     feedback: bool = True,
     status_of: Any = None,
-) -> list[tuple[str, dict[str, Any] | None]]:
+) -> list[RenderedPage]:
     """Many new listings as a few numbered messages, each with ✅ ❌ 📝 rows.
 
     ``listings`` is ``[(url_hash, listing), ...]``. Numbering continues across
@@ -304,35 +353,41 @@ def render_digest_pages(
     esc = escape_telegram_html
     status_of = status_of or (lambda _h: None)
     total = len(listings)
-    pages: list[tuple[str, dict[str, Any] | None]] = []
-    for start in range(0, total, max(1, page_size)):
-        chunk = listings[start:start + page_size]
-        blocks = []
-        for i, (_, listing) in enumerate(chunk, start + 1):
-            where = ", ".join(b for b in (listing.location.city, listing.location.country) if b)
-            place = f" \u2014 {esc(where)}" if where else ""
-            blocks.append(
-                f"<b>{i}. {esc(truncate(listing.title, 110))}</b>\n"
-                f"\U0001f3db {esc(truncate(listing.institution, 90))}{place}\n"
-                f"\U0001f4c5 {esc(deadline_label(listing.deadline, listing.deadline_note))}"
-                f" \u00b7 <a href=\"{esc(listing.apply_url)}\">open ad</a>"
-            )
-        head = ""
-        if start == 0:
-            head = f"\U0001f393 <b>{total} new predoc listing{'s' if total != 1 else ''}</b>\n\n"
-        body = head + "\n\n".join(blocks)
-        if start + page_size >= total:
-            if site_url:
-                body += f'\n\n<a href="{esc(site_url)}">Browse and filter all listings</a>'
-            if feedback:
-                body += f"\n\n<i>{esc(LEGEND)}</i>"
+    blocks = []
+    for i, (_, listing) in enumerate(listings, 1):
+        where = ", ".join(b for b in (listing.location.city, listing.location.country) if b)
+        place = f" — {_field(where, 120)}" if where else ""
+        blocks.append(
+            f"<b>{i}. {_field(listing.title, 110)}</b>\n"
+            f"🏛 {_field(listing.institution, 90)}{place}\n"
+            f"📅 {_field(deadline_label(listing.deadline, listing.deadline_note), 120)}"
+            f' · <a href="{escape_attribute(listing.apply_url, quote=True)}">open ad</a>'
+        )
+    head = f"🎓 <b>{total} new predoc listing{'s' if total != 1 else ''}</b>\n\n"
+    footer = ""
+    if site_url:
+        footer += (f'\n\n<a href="{escape_attribute(site_url, quote=True)}">'
+                   'Browse and filter all listings</a>')
+    if feedback:
+        footer += f"\n\n<i>{esc(LEGEND)}</i>"
+    pages = []
+    for page in pack_html_blocks(blocks, header=head, footer=footer,
+                                 page_size=min(page_size, 30)):
+        chunk = listings[page.start:page.end]
         keyboard = None
         if feedback:
             keyboard = {"inline_keyboard": [
-                feedback_row(h, status_of(h), i) for i, (h, _) in enumerate(chunk, start + 1)
+                feedback_row(h, status_of(h), i) for i, (h, _) in enumerate(chunk, page.start + 1)
             ]}
-        pages.append((body, keyboard))
+        pages.append(RenderedPage(page.start, page.end, page.html, keyboard))
     return pages
+
+
+def render_digest_pages(
+    listings: list[tuple[str, PredocListing]], **kwargs: Any,
+) -> list[tuple[str, dict[str, Any] | None]]:
+    """Compatibility surface for callers that only need text and buttons."""
+    return [(page.html, page.keyboard) for page in render_digest_batches(listings, **kwargs)]
 
 
 @dataclass
@@ -362,7 +417,7 @@ class TelegramClient:
     def __exit__(self, *exc: object) -> None:
         self.close()
 
-    def _pace(self, chat_id: str, sleep=time.sleep) -> None:
+    def _pace(self, chat_id: str, sleep: Callable[[float], None] = time.sleep) -> None:
         elapsed = time.monotonic() - self._last_send.get(chat_id, 0.0)
         if elapsed < MIN_SEND_INTERVAL:
             sleep(MIN_SEND_INTERVAL - elapsed)
@@ -373,7 +428,7 @@ class TelegramClient:
         chat_id: str,
         html: str,
         keyboard: dict[str, Any] | None = None,
-        sleep=time.sleep,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> int:
         """Send one HTML message. Returns the Telegram message id."""
         if not self.bot_token or not chat_id:
@@ -441,7 +496,10 @@ class TelegramClient:
 
         raise last or TelegramError("send failed")
 
-    def call(self, method: str, payload: dict[str, Any], *, sleep=time.sleep) -> Any:
+    def call(
+        self, method: str, payload: dict[str, Any], *,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> Any:
         """Any other Bot API method (getUpdates, answerCallbackQuery...). Returns ``result``."""
         url = f"https://api.telegram.org/bot{self.bot_token}/{method}"
         last: TelegramError | None = None
@@ -471,7 +529,9 @@ class TelegramClient:
             sleep(min(2**attempt, 15))
         raise last or TelegramError(f"{method} failed")
 
-    def send_plain(self, *, chat_id: str, text: str, sleep=time.sleep) -> int:
+    def send_plain(
+        self, *, chat_id: str, text: str, sleep: Callable[[float], None] = time.sleep,
+    ) -> int:
         """Escaped plain-text send. Used for operational alerts."""
         return self.send_message(
             chat_id=chat_id, html=escape_telegram_html(text), sleep=sleep

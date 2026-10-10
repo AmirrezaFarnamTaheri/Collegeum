@@ -31,6 +31,9 @@ jobs:
       - name: Install
         run: pip install -e ".[dev,portals]"
 
+      - name: Verify single-file distribution
+        run: python3 tools/verify_single_file.py
+
       - name: Gate eval (precision/recall against golden fixtures)
         run: PYTHONPATH=src python3 -m predoc_pipeline.cli eval
 
@@ -47,7 +50,6 @@ jobs:
 
       - name: Type check
         run: mypy src
-        continue-on-error: true  # advisory until the codebase is fully annotated
 
       - name: Enforce stdlib-only core (belt and suspenders)
         run: PYTHONPATH=src python3 -m pytest tests/core/test_no_third_party.py -v

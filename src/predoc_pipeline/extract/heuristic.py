@@ -15,16 +15,18 @@ expressions (deadline, visa rules, PI, location, field) that the board path uses
 from __future__ import annotations
 
 import re
+from datetime import date, datetime
 from typing import Any
 
 from ..boards.config import Preferences
-from ..boards.filter import PHD_POSITION, RelevanceFilter
+from ..boards.filter import RelevanceFilter
 from ..boards.heuristics import PI_RX, detect_visa
 from ..boards.models import JobPostSchema
 from ..boards.utils.dates import extract_deadline
 from ..boards.utils.geo import detect_location, is_confident_single_region, location_from_labels
 from ..boards.utils.text import split_role_at_institution
 from ..core.textproc import squish, truncate
+from ..core.timeparse import valid_iso_offset
 from ..models import Discipline, ExtractionResult
 
 __all__ = ["HeuristicExtractor", "UNKNOWN_INSTITUTION", "disciplines_for", "visa_status"]
@@ -82,7 +84,9 @@ def disciplines_for(*texts: str | None) -> list[str]:
 def visa_status(note: str | None) -> str:
     if not note:
         return "unknown"
-    if note.startswith(("No sponsorship", "Priority to citizens")):
+    # Board-labelled notes may contain the original advert, not a generated prefix.
+    note = detect_visa(note) or note
+    if note.startswith("No sponsorship"):
         return "not_offered"
     if note.startswith("Visa support"):
         return "explicit"
@@ -104,10 +108,30 @@ def _summary(text: str, limit: int = 420) -> str:
 
 
 def _deadline_iso(value: Any) -> str | None:
-    """Store the end of the deadline day, so a card never says "closed" on the day itself."""
+    """Preserve explicit times; use the legacy day-end convention for bare dates.
+
+    Date-only persistence still needs a separate precision contract. Never
+    erase an advertised time/offset or manufacture a date from a string prefix.
+    """
     if not value:
         return None
-    return f"{str(value)[:10]}T23:59:59Z"
+    if isinstance(value, datetime):
+        return value.isoformat()
+    text = value.isoformat() if isinstance(value, date) else str(value).strip()
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
+        try:
+            day = date.fromisoformat(text)
+        except ValueError:
+            return None
+        return f"{day.isoformat()}T23:59:59Z"
+    if not re.match(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}", text):
+        return None
+    if not valid_iso_offset(text):
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).isoformat()
+    except ValueError:
+        return None
 
 
 _HAS_YEAR = re.compile(r"(?:19|20)\d{2}|\d{1,2}/\d{1,2}/\d{2}\b")
@@ -367,15 +391,6 @@ class HeuristicExtractor:
                 institution=institution or "",
                 confidence=0.8,
             )
-        if PHD_POSITION.search(title) and not verdict.strong:
-            return ExtractionResult(
-                is_vacancy=False,
-                rejection_reason="phd_studentship",
-                title=title,
-                institution=institution or "",
-                confidence=0.8,
-            )
-
         deadline_date, deadline_raw = extract_deadline(text)
         country, _region = location_from_labels(text[:6000])
         if not country:
@@ -392,7 +407,9 @@ class HeuristicExtractor:
             principal_investigator=match.group("name") if match else None,
             country=_country(country),
             deadline=_deadline_iso(deadline_date.isoformat() if deadline_date else None),
-            deadline_note=_deadline_note(deadline_date and deadline_date.isoformat(), deadline_raw),
+            deadline_note=_deadline_note(
+                deadline_date.isoformat() if deadline_date else None, deadline_raw,
+            ),
             disciplines=disciplines_for(title, text[:3000]),
             visa_sponsorship_status=visa_status(visa_note),
             visa_note=visa_note,

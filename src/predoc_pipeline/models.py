@@ -179,8 +179,8 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
         "is_vacancy": {
             "type": "boolean",
             "description": (
-                "True only if the text advertises an open, full-time pre-doctoral "
-                "or pre-PhD research position that someone can apply to now."
+                "True only for an open paid predoctoral, doctoral or postdoctoral "
+                "research position in the supported fields, worldwide."
             ),
         },
         "rejection_reason": {
@@ -198,7 +198,7 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
                 "already_closed",
                 None,
             ],
-            "description": "Why this is not a predoctoral vacancy. Null if it is one.",
+            "description": "Why this is not a supported research vacancy. Null if it is one.",
         },
         "title": {
             "type": ["string", "null"],
@@ -228,8 +228,9 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
             "type": ["string", "null"],
             "format": "date-time",
             "description": (
-                "Application deadline as ISO 8601. Null if rolling or unstated. "
-                "Day-first for European dates: 03/01/2027 is 3 January 2027."
+                "Explicit hard application deadline as ISO 8601. Null for rolling, "
+                "review/priority, unstated or ambiguous yearless dates. Follow explicit "
+                "format instructions; otherwise use regional context then day-first."
             ),
         },
         "disciplines": {
@@ -241,8 +242,8 @@ EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
             "type": ["string", "null"],
             "enum": ["explicit", "inferred", "unknown", "not_offered", None],
             "description": (
-                "'explicit' if the text states sponsorship or eligibility; "
-                "'inferred' if standard institutional policy clearly applies; "
+                "'explicit' only if visa sponsorship is stated; welcoming international "
+                "applicants does not establish sponsorship. 'inferred' needs sourced evidence; "
                 "'not_offered' if it says no sponsorship or citizens/residents only; "
                 "otherwise 'unknown'."
             ),
@@ -470,89 +471,105 @@ _DEGREE_ALIASES: dict[str, str] = {
 }
 
 
+def _salary_number(raw: str) -> float:
+    """Read decimal and grouping separators without assuming one locale."""
+    value = re.sub(r"[ '\u00a0\u202f]", "", raw)
+    suffix = value.lower().endswith("k")
+    value = value[:-1] if suffix else value
+    if "." in value and "," in value:
+        decimal = "." if value.rfind(".") > value.rfind(",") else ","
+        grouping = "," if decimal == "." else "."
+        value = value.replace(grouping, "").replace(decimal, ".")
+    elif "." in value or "," in value:
+        separator = "." if "." in value else ","
+        pieces = value.split(separator)
+        if all(len(part) == 3 for part in pieces[1:]):
+            value = "".join(pieces)
+        elif len(pieces) == 2 and len(pieces[1]) in (1, 2):
+            value = ".".join(pieces)
+        else:
+            raise ValueError("ambiguous numeric separators")
+    return float(value) * (1000 if suffix else 1)
+
+
 def parse_salary(
     raw: str | None,
 ) -> tuple[float | None, float | None, str | None, str | None]:
-    """Parse raw compensation text into (min, max, currency, period).
+    """Parse one compensation amount/range, preserving unknown currency/period.
 
-    Returns (None, None, None, None) if no recognizable amounts are present.
+    Currency-adjacent numbers take precedence over grades, dates and contract
+    lengths. Multiple currency alternatives are not collapsed into one range.
     """
     if not raw:
         return (None, None, None, None)
-    text = raw.replace(",", "").strip()
-
-    # Currency detection
-    currency = None
-    if "£" in text or re.search(r"\bGBP\b", text, re.IGNORECASE):
-        currency = "GBP"
-    elif "€" in text or re.search(r"\bEUR\b", text, re.IGNORECASE):
-        currency = "EUR"
-    elif "$" in text or re.search(r"\bUSD\b", text, re.IGNORECASE):
-        currency = "USD"
-    elif re.search(r"\bCHF\b", text, re.IGNORECASE):
-        currency = "CHF"
-    elif re.search(r"\b(CAD|C\$)\b", text, re.IGNORECASE):
-        currency = "CAD"
-    elif re.search(r"\b(AUD|A\$)\b", text, re.IGNORECASE):
-        currency = "AUD"
-    elif re.search(r"\bSEK\b", text, re.IGNORECASE):
-        currency = "SEK"
-    elif re.search(r"\bNOK\b", text, re.IGNORECASE):
-        currency = "NOK"
-    elif re.search(r"\bDKK\b", text, re.IGNORECASE):
-        currency = "DKK"
-
-    # Period detection
-    period = None
-    if re.search(r"\b(hour|hourly|hr|p/h)\b", text, re.IGNORECASE):
-        period = "hour"
-    elif re.search(r"\b(month|monthly|mo|p\.m\.|pcm)\b", text, re.IGNORECASE):
-        period = "month"
-    elif re.search(
-        r"\b(year|yearly|annum|annual|annually|p\.a\.|per annum|pa)\b", text, re.IGNORECASE
-    ):
-        period = "year"
-
-    # Numbers detection, handling 'k' (e.g. 35k -> 35000)
-    matches = re.findall(r"\b(\d+(?:\.\d+)?)\s*(k|kilo)?\b", text, re.IGNORECASE)
-    nums: list[float] = []
-    for val, k in matches:
-        try:
-            n = float(val)
-            if k:
-                n *= 1000.0
-            if n > 0:
-                nums.append(n)
-        except ValueError:
-            continue
-
-    if not nums:
+    text = squish(raw)
+    codes = set(re.findall(
+        r"\b(?:GBP|EUR|USD|CHF|CAD|AUD|NZD|HKD|SGD|SEK|NOK|DKK)\b", text, re.I
+    ))
+    currencies = {code.upper() for code in codes}
+    for pattern, code in [
+        (r"£", "GBP"), (r"€", "EUR"),
+        (r"\b(?:CA|C)\$", "CAD"), (r"\b(?:AU|A)\$", "AUD"),
+        (r"\bNZ\$", "NZD"), (r"\bHK\$", "HKD"), (r"\bSG\$", "SGD"),
+        (r"\bUS\$", "USD"),
+    ]:
+        if re.search(pattern, text, re.I):
+            currencies.add(code)
+    # Bare dollars follow the existing USD convention only without a qualifier.
+    if not currencies and "$" in text:
+        currencies.add("USD")
+    currency = next(iter(currencies)) if len(currencies) == 1 else None
+    periods = set()
+    for pattern, name in [
+        (r"\b(?:hour|hourly|hr)\b|p/h", "hour"),
+        (r"\b(?:month|monthly|mo|pcm)\b|p\.m\.", "month"),
+        (r"\b(?:year|yearly|yr|annum|annual|annually|pa)\b|p\.a\.", "year"),
+    ]:
+        if re.search(pattern, text, re.I):
+            periods.add(name)
+    period = next(iter(periods)) if len(periods) == 1 else None
+    if len(currencies) > 1 or len(periods) > 1:
         return (None, None, currency, period)
 
-    # Filter out potential years like 2024, 2025, 2026, 2027 if they look like calendar years
-    valid_nums = [n for n in nums if not (1990 <= n <= 2040 and not currency)]
-    if not valid_nums:
-        valid_nums = nums
-
-    s_min: float | None = min(valid_nums)
-    s_max: float | None = max(valid_nums) if len(valid_nums) > 1 else s_min
-
-    # Default period heuristic if unstated:
-    if not period and s_min is not None:
-        if s_min >= 15000:
-            period = "year"
-        elif 1000 <= s_min < 15000:
-            period = "month"
-        elif 10 <= s_min < 200:
-            period = "hour"
-
-    # Clamp sane limits
-    if s_min is not None and s_min > 2_000_000:
-        s_min = None
-    if s_max is not None and s_max > 2_000_000:
-        s_max = None
-
-    return (s_min, s_max, currency, period)
+    marker = r"(?:\b(?:GBP|EUR|USD|CHF|CAD|AUD|NZD|HKD|SGD|SEK|NOK|DKK)|[£€$])"
+    numbers = list(re.finditer(
+        r"(?<![\w.])\d+(?:[.,]\d+)*(?:[ '\u00a0\u202f]\d{3})*"
+        r"(?:[.,]\d+)?(?:\s*k\b)?", text, re.I
+    ))
+    anchored = [
+        i for i, match in enumerate(numbers)
+        if re.search(marker + r"\s*$", text[:match.start()], re.I)
+        or re.match(r"\s*" + marker, text[match.end():], re.I)
+    ]
+    if not numbers:
+        return (None, None, currency, period)
+    index = anchored[0] if anchored else 0
+    if currency and not anchored:
+        return (None, None, currency, period)
+    selected = [numbers[index]]
+    # Accept an adjacent range endpoint, with a repeated currency marker.
+    connector = r"\s*(?:-|–|—|to)\s*(?:" + marker + r"\s*)?"
+    if index > 0 and re.fullmatch(
+        connector, text[numbers[index - 1].end():numbers[index].start()], re.I
+    ):
+        selected.insert(0, numbers[index - 1])
+    elif index + 1 < len(numbers) and re.fullmatch(
+        connector, text[numbers[index].end():numbers[index + 1].start()], re.I
+    ):
+        selected.append(numbers[index + 1])
+    if text[:selected[0].start()].rstrip().endswith("-"):
+        return (None, None, currency, period)
+    try:
+        amounts = [_salary_number(match[0]) for match in selected]
+    except ValueError:
+        return (None, None, currency, period)
+    if len(amounts) == 2 and selected[1][0].strip().lower().endswith("k") and not (
+        selected[0][0].strip().lower().endswith("k")
+    ) and amounts[0] < 1000:
+        amounts[0] *= 1000
+    if any(amount <= 0 or amount > 2_000_000 for amount in amounts):
+        return (None, None, currency, period)
+    return (min(amounts), max(amounts), currency, period)
 
 
 def normalize_tools(
@@ -704,12 +721,12 @@ def sanitize_summary(
         prose_parts = []
         if inst_val and pi_val:
             prose_parts.append(
-                f"Predoctoral research position at {inst_val}, working with {pi_val}."
+                f"{title or 'Research position'} at {inst_val}, working with {pi_val}."
             )
         elif inst_val:
-            prose_parts.append(f"Predoctoral research position at {inst_val}.")
+            prose_parts.append(f"{title or 'Research position'} at {inst_val}.")
         elif pi_val:
-            prose_parts.append(f"Predoctoral research position working with {pi_val}.")
+            prose_parts.append(f"{title or 'Research position'} working with {pi_val}.")
         if fields_val:
             prose_parts.append(f"Research focus includes {fields_val}.")
         if dl_val:
@@ -742,15 +759,15 @@ def sanitize_summary(
         fields_val = parts.get("fields") or (", ".join(disciplines) if disciplines else None)
         dl_val = parts.get("deadline") or deadline
 
-        prose_parts: list[str] = []
+        prose_parts = []
         if inst_val and pi_val:
             prose_parts.append(
-                f"Predoctoral research position at {inst_val}, working with {pi_val}."
+                f"{title or 'Research position'} at {inst_val}, working with {pi_val}."
             )
         elif inst_val:
-            prose_parts.append(f"Predoctoral research position at {inst_val}.")
+            prose_parts.append(f"{title or 'Research position'} at {inst_val}.")
         elif pi_val:
-            prose_parts.append(f"Predoctoral research position working with {pi_val}.")
+            prose_parts.append(f"{title or 'Research position'} working with {pi_val}.")
 
         if fields_val:
             prose_parts.append(f"Research focus includes {fields_val}.")
@@ -768,31 +785,21 @@ def sanitize_summary(
     if any(g in lower_s for g in german_indicators) and (
         "the role" not in lower_s and "position" not in lower_s
     ):
-        clean = (
-            f"Research assistant position at {institution or 'the university'}. "
-            "The role involves supporting empirical research projects and academic coursework, "
-            "suitable for candidates preparing for doctoral studies."
-        )
+        # Language detection cannot establish duties or provide a translation.
+        role = title or "Position"
+        clean = f"{role} at {institution}." if institution else f"{role}."
+        clean += " Consult the original-language advert for detailed duties."
 
     # 4. Fallback if empty
     if not clean:
         if institution and pi:
-            clean = (
-                f"Full-time predoctoral research assistant position at {institution}, "
-                f"working with {pi}."
-            )
+            clean = f"{title or 'Research position'} at {institution}, working with {pi}."
         elif institution:
-            clean = (
-                f"Full-time predoctoral research position at {institution} "
-                "supporting empirical and quantitative research."
-            )
+            clean = f"{title or 'Research position'} at {institution}."
         elif title:
-            clean = f"{title} position supporting empirical research projects."
+            clean = f"{title}."
         else:
-            clean = (
-                "Full-time predoctoral research position supporting quantitative "
-                "academic research."
-            )
+            clean = "Description not provided; consult the original advert."
 
     return clean
 

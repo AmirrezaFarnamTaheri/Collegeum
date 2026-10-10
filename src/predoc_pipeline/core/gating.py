@@ -409,4 +409,4 @@ def blend_confidence(model_confidence: float, rule: float, *, weight: float = 0.
     """
     m = min(max(float(model_confidence), 0.0), 1.0)
     r = min(max(float(rule), 0.0), 1.0)
-    return round(m**weight * max(r, 0.05) ** (1.0 - weight), 4)
+    return float(round(m**weight * max(r, 0.05) ** (1.0 - weight), 4))

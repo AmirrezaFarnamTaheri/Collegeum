@@ -9,6 +9,10 @@ data/predocs.db-shm
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/x_threads.sqlite3
+data/x_threads.sqlite3-journal
+data/x_threads.sqlite3-wal
+data/x_threads.sqlite3-shm
 
 # Never commit real X/Twitter credentials. TWSCRAPE_ACCOUNTS is read from the
 # environment (see ingest/collectors.py); nothing account-shaped belongs here.
@@ -45,3 +49,8 @@ htmlcov/
 
 # Never commit the auto-generated single-file materializer's scratch output.
 /build/
+
+# Plaintext personal marks (local use only; CI commits the encrypted data/feedback.enc)
+data/feedback.json
+data/feedback.json.tmp
+data/*.corrupt-*

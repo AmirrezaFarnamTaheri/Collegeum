@@ -46,7 +46,7 @@ DEADLINE_LABELS = re.compile(
     r"bewerbungsfrist|date\s+limite|fecha\s+l[ií]mite|scadenza)\s*[:\-–]?\s*",
     re.IGNORECASE,
 )
-ROLLING = re.compile(r"\b(rolling|until\s+filled|open\s+until|as\s+soon\s+as\s+possible|asap)\b", re.IGNORECASE)
+ROLLING = re.compile(r"\b(rolling|until\s+filled)\b", re.IGNORECASE)
 _DEADLINE_OR_REVIEW_RX = re.compile(r"deadline|review", re.IGNORECASE)
 _POSTED_RECENT_RX = re.compile(r"\b\d+\s*(minute|hour)s?\s+ago")
 
@@ -103,13 +103,34 @@ def extract_deadline(text: str | None, ref: date | None = None) -> tuple[date | 
     """Find a deadline after a deadline-ish label. Returns (date, raw_snippet)."""
     if not text:
         return None, None
-    for m in DEADLINE_LABELS.finditer(text):
-        window = text[m.end(): m.end() + 90]
+    matches = list(DEADLINE_LABELS.finditer(text))
+    review_note = None
+    rolling_note = None
+    for index, m in enumerate(matches):
+        end = min(m.end() + 90, matches[index + 1].start() if index + 1 < len(matches)
+                  else len(text))
+        window = text[m.end():end]
+        # A different labelled date is not an application cutoff merely because
+        # it falls inside the fixed lookahead window.
+        other_date = re.search(
+            r"\b(?:start(?:ing)?\s+(?:date|on)|expected\s+start|commencement|"
+            r"interviews?(?:\s+(?:date|on))?|posted(?:\s+on)?|publication\s+date)\b",
+            window, re.I)
+        if other_date:
+            window = window[:other_date.start()]
+        snippet = (m.group(0) + window).strip()[:120]
+        if re.search(r"review", m.group(0), re.I):
+            review_note = review_note or snippet
+            continue
         d = parse_date(window, ref)
         if d:
-            return d, (m.group(0) + window).strip()[:120]
+            return d, snippet
         if ROLLING.search(window[:40]):
-            return None, "Rolling"
+            rolling_note = snippet
+    if review_note:
+        return None, review_note
+    if rolling_note:
+        return None, "Rolling"
     if ROLLING.search(text[:400]) and _DEADLINE_OR_REVIEW_RX.search(text[:400]):
         return None, "Rolling"
     return None, None

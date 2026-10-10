@@ -8,7 +8,8 @@ files change, and commit the regenerated output alongside your edit.
 
 The output is a plain Python script with **no dependencies of its own**
 (stdlib only): running it with `python3 compile_project.py [target_dir]`
-writes out the entire project tree byte-for-byte. This exists for two
+writes out the project tree with canonical LF text line endings. Binary
+fixtures are preserved byte-for-byte. This exists for two
 reasons: a single file is easy to paste into an environment that can't clone
 a git repo, and it makes tampering obvious -- the file's own embedded
 manifest hash is checked at materialization time, so a corrupted or
@@ -26,6 +27,7 @@ import base64
 import hashlib
 import lzma
 import sys
+from datetime import UTC
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -36,10 +38,11 @@ OUTPUT_PATH = REPO_ROOT / "compile_project.py"
 # artifact (this tool's own output).
 INCLUDE_GLOBS = [
     "src/**/*.py",
+    "tools/*.py",
     "src/predoc_pipeline/py.typed",
     "tests/**/*.py",
     "tests/fixtures/*.jsonl",
-    "tests/fixtures/boards/*",
+    "tests/fixtures/boards/**/*",
     "config/*.toml",
     "docs/index.html",
     "docs/data/*.json",
@@ -47,7 +50,12 @@ INCLUDE_GLOBS = [
     ".github/workflows/*.yml",
     ".github/dependabot.yml",
     "pyproject.toml",
+    "uv.lock",
+    "review/**/*.md",
+    "review/**/*.json",
+    "review/**/*.py",
     ".gitignore",
+    ".gitattributes",
     ".env.example",
     "Makefile",
     "LICENSE",
@@ -57,11 +65,17 @@ INCLUDE_GLOBS = [
     "COMPLIANCE.md",
     "OPERATIONS.md",
     "CHANGES.md",
+    "FINALIZATION.md",
+    "docs/X_THREAD_RECOVERY.md",
     "SETUP_GUIDE.md",
 ]
 
 EXCLUDE_SUFFIXES = (".pyc", ".pyo")
 EXCLUDE_DIR_PARTS = {"__pycache__", ".git", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+TEXT_SUFFIXES = {
+    '.py', '.toml', '.md', '.yml', '.html', '.json', '.xml', '.jsonl', '.lock', '.example',
+}
+TEXT_NAMES = {'Makefile', '.gitignore', '.gitattributes'}
 
 
 def collect_files() -> list[Path]:
@@ -75,7 +89,7 @@ def collect_files() -> list[Path]:
                 continue
             if EXCLUDE_DIR_PARTS & set(path.relative_to(REPO_ROOT).parts):
                 continue
-            if path == OUTPUT_PATH or path.resolve() == Path(__file__).resolve():
+            if path == OUTPUT_PATH:
                 continue
             if path not in seen:
                 seen.add(path)
@@ -95,7 +109,12 @@ def build_manifest(files: list[Path]) -> tuple[dict[str, bytes], str]:
     payload: dict[str, bytes] = {}
     for path in files:
         rel = path.relative_to(REPO_ROOT).as_posix()
-        payload[rel] = path.read_bytes()
+        content = path.read_bytes()
+        # Git may check out text as CRLF on Windows and LF in Linux CI. Encode
+        # the same distribution from both checkouts without touching binaries.
+        if path.suffix in TEXT_SUFFIXES or path.name in TEXT_NAMES:
+            content = content.replace(b'\r\n', b'\n')
+        payload[rel] = content
 
     hasher = hashlib.sha256()
     for rel in sorted(payload):
@@ -208,7 +227,7 @@ def main() -> None:
     raw = bytearray()
     for rel_path in sorted(payload):
         data = payload[rel_path]
-        header = f"{rel_path}\t{len(data)}\n".encode("utf-8")
+        header = f"{rel_path}\t{len(data)}\n".encode()
         raw += header
         raw += data
 
@@ -216,10 +235,10 @@ def main() -> None:
     payload_b64 = base64.b64encode(compressed).decode("ascii")
     wrapped = "\n".join(payload_b64[i : i + 100] for i in range(0, len(payload_b64), 100))
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     output = MATERIALIZER_TEMPLATE.format(
-        generated_at=datetime.now(timezone.utc).isoformat(),
+        generated_at=datetime.now(UTC).isoformat(),
         file_count=len(files),
         manifest_hash=manifest_hash,
         payload_b64=wrapped,

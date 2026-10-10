@@ -91,7 +91,9 @@ def find_card(a: Tag, max_chars: int = 1800) -> Tag:
         text_len = len(node.get_text(" ", strip=True))
         if text_len > max_chars:
             break
-        if node.name in ("tr", "li", "article") or _CARD_CLASS.search(" ".join(node.get("class", []))):
+        classes: str | list[str] = node.get("class") or []
+        class_text = classes if isinstance(classes, str) else " ".join(classes)
+        if node.name in ("tr", "li", "article") or _CARD_CLASS.search(class_text):
             return node
     return a.parent if isinstance(a.parent, Tag) else a
 
@@ -164,7 +166,7 @@ class LinkScanScraper(BaseScraper):
                 matching = [
                     a["href"]
                     for a in soup.find_all("a", href=True)
-                    if pattern.search(absolutize(page_url, a["href"]))
+                    if pattern.search(absolutize(page_url, str(a["href"])))
                 ]
                 if not matching:
                     break
@@ -203,12 +205,12 @@ class LinkScanScraper(BaseScraper):
         min_len = int(self.opt("title_min_len", 6))
         posts, seen = [], set()
         for a in soup.find_all("a", href=True):
-            href = absolutize(base, a["href"])
+            href = absolutize(base, str(a["href"]))
             if not pattern.search(href) or href in seen or _EXCLUDED_URL_RX.search(href):
                 continue
             title = clean_ws(a.get_text(" "))
             if title.lower() in GENERIC_ANCHORS or len(title) < min_len:
-                title = clean_ws(a.get("title") or a.get("aria-label") or "")
+                title = clean_ws(str(a.get("title") or a.get("aria-label") or ""))
             if (title.lower() in GENERIC_ANCHORS or len(title) < min_len) and self.opt("heading_titles"):
                 title = previous_heading(a)  # "Details" link under an <h3>Job title</h3>
             if (title.lower() in GENERIC_ANCHORS or len(title) < min_len) and self.opt("card_title"):
@@ -282,7 +284,7 @@ class LinkScanScraper(BaseScraper):
             deadline_raw = pick(item, "deadline")
             deadline, deadline_text = extract_deadline(f"deadline: {deadline_raw}") if deadline_raw else (None, None)
             posts.append(self.make(
-                title=title, url=absolutize(base, link_el["href"]),
+                title=title, url=absolutize(base, str(link_el["href"])),
                 institution=pick(item, "institution") or self.cfg.institution or "",
                 location=pick(item, "location"), deadline=deadline, deadline_text=deadline_text or deadline_raw,
                 date_posted=parse_posted(pick(item, "posted")),

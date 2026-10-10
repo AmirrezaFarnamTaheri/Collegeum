@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import cast
 
 import structlog
+from structlog.typing import FilteringBoundLogger
 
 _CONFIGURED = False
 
@@ -36,5 +38,5 @@ def configure(level: int = logging.INFO) -> None:
     _CONFIGURED = True
 
 
-def get_logger(name: str):
-    return structlog.get_logger(name)
+def get_logger(name: str) -> FilteringBoundLogger:
+    return cast(FilteringBoundLogger, structlog.get_logger(name))

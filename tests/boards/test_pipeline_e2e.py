@@ -96,6 +96,7 @@ url = "https://predoc.org/opportunities"
 [[board]]
 name = "ubc"
 type = "workday"
+field_implied = true
 url = "https://ubc.wd10.myworkdayjobs.com/ubcstaffjobs"
 search_terms = ["research assistant"]
 institution = "University of British Columbia"
@@ -203,7 +204,11 @@ def test_full_run_then_nothing_is_sent_twice(settings):
         vse = next(r for r in db.published_listings() if "Vancouver" in r["title"])
         assert vse["principal_investigator"] == "Jane Doe"
         assert vse["deadline"].startswith("2026-11-15")
-        assert vse["visa_sponsorship_status"] == "explicit"
+        # This fixture welcomes international applicants but promises no sponsorship.
+        assert vse["visa_sponsorship_status"] == "unknown"
+        assert "International applications welcome" in vse["visa_note"]
+        upf = next(r for r in db.published_listings() if "Pompeu" in r["institution"])
+        assert upf["visa_sponsorship_status"] == "explicit"
         ucl = next(r for r in db.published_listings() if "Finance" in r["title"])
         assert "bit.ly" not in ucl["apply_url"] or ucl["apply_url"] == ucl["source_url"]
 
@@ -370,7 +375,7 @@ def test_recheck_uses_the_stored_deadline():
     links = {1: ("RA", "https://x.org/ra", date(2026, 11, 30)), 2: ("RA", "https://x.org/ra")}
     out = check_links(links, cfg, transport=transport)
     assert out[1] is None                     # known deadline 30 Nov: still open
-    assert out[2] and "deadline passed" in out[2]  # without it, the review date looks like one
+    assert out[2] is None  # Review scheduling alone does not establish a closed application window.
 
 
 def test_feedback_buttons_omitted_when_disabled(settings):

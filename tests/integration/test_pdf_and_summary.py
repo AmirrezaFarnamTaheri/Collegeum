@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import unittest
+from datetime import UTC
 
 from predoc_pipeline.models import sanitize_summary
 from predoc_pipeline.utils.pdf import clean_pdf_text, extract_pdf_text, is_pdf
@@ -75,8 +76,10 @@ class TestSummarySanitization(unittest.TestCase):
         )
         result = sanitize_summary(german_summary, institution="TU Ilmenau")
         self.assertNotIn("Verstärkung", result)
-        self.assertIn("Research assistant position at TU Ilmenau", result)
-        self.assertIn("doctoral studies", result)
+        self.assertIn("Position at TU Ilmenau", result)
+        self.assertIn("original-language advert", result)
+        self.assertNotIn("doctoral studies", result)
+        self.assertNotIn("academic coursework", result)
 
     def test_empty_summary_fallback(self):
         result = sanitize_summary(
@@ -118,7 +121,8 @@ class TestSummarySanitization(unittest.TestCase):
             "Deadline : October 15, 2026"
         )
         result = sanitize_summary(text)
-        self.assertIn("Predoctoral research position at U.S. Federal Trade Commission", result)
+        self.assertIn("Research position at U.S. Federal Trade Commission", result)
+        self.assertNotIn("Predoctoral", result)
         self.assertIn("Bureau of Economics", result)
         self.assertIn("Research focus includes Microeconomics, Statistics", result)
 
@@ -138,7 +142,7 @@ class TestPendingAndDeadlineLogic(unittest.TestCase):
 
         from predoc_pipeline.publish.telegram import deadline_label
 
-        today_str = datetime.now().strftime("%Y-%m-%dT12:00:00Z")
+        today_str = datetime.now(UTC).strftime("%Y-%m-%dT12:00:00Z")
         label = deadline_label(today_str)
         self.assertIn("today", label)
 
@@ -154,11 +158,11 @@ class TestPendingAndDeadlineLogic(unittest.TestCase):
                 db.import_rows([
                     {
                         "url_hash": "h1",
-                        "title": "Predoc 1",
+                        "title": "Pending Predoc 1",
                         "institution": "Inst 1",
                         "apply_url": "https://example.org/1",
                         "source_url": "https://example.org/1",
-                        "status": "published",
+                        "status": "pending",
                         "telegram_message_id": None,
                         "first_seen_at": "2026-10-04T00:00:00Z",
                         "last_seen_at": "2026-10-04T00:00:00Z",

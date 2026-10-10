@@ -11,7 +11,7 @@ from .utils.dates import today
 from .utils.geo import detect_location, region_from_url
 
 
-def term_rx(term: str) -> re.Pattern:
+def term_rx(term: str) -> re.Pattern[str]:
     """'pre-doctoral' matches 'pre-doctoral', 'pre doctoral', 'predoctoral'.
 
     A trailing * is a prefix match ('econom*' -> economics); a leading * also allows letters
@@ -66,11 +66,11 @@ class RelevanceFilter:
         self.emp_banned = [re.compile(re.escape(n), re.IGNORECASE) for n in cfg.excluded_employers]
 
     @staticmethod
-    def _any(pats: list[re.Pattern], text: str) -> bool:
+    def _any(pats: list[re.Pattern[str]], text: str) -> bool:
         return any(p.search(text) for p in pats)
 
     @staticmethod
-    def _count(pats: list[re.Pattern], text: str) -> int:
+    def _count(pats: list[re.Pattern[str]], text: str) -> int:
         return sum(len(p.findall(text)) for p in pats) if text else 0
 
     # ---- employer logic ---------------------------------------------------------------
@@ -163,6 +163,8 @@ class RelevanceFilter:
         primary = " ".join(x for x in (title, post.department or "", post.fields_of_research or "") if x)
         if self.field_verdict_short(primary) == "unwanted":
             return Verdict(False, reason="wrong-field")
+        if self.field_verdict_long(context) == "unwanted":
+            return Verdict(False, reason="wrong-field-context")
         field_t = self._any(self.fields, title)
         field_c = self.field_verdict_short(primary) == "wanted" or self.field_verdict_long(context) == "wanted"
         has_field = field_t or field_c or post.field_implied

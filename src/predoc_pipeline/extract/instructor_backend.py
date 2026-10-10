@@ -8,9 +8,9 @@ must not pull instructor in for users who never select it.
 
 from __future__ import annotations
 
+import threading
 from typing import Any
 
-from ..core.ratelimit import quota_day
 from ..models import ExtractionResult
 from .prompt import SYSTEM_PROMPT, build_user_prompt
 
@@ -29,6 +29,7 @@ class InstructorExtractor:
         try:
             import instructor  # noqa: F401
             from google import genai
+            from google.genai import types
         except ImportError as exc:  # pragma: no cover - optional path
             raise RuntimeError(
                 "extraction_backend='instructor' needs the 'llm-instructor' extra: "
@@ -41,7 +42,12 @@ class InstructorExtractor:
         self.limiter = limiter
         self.max_input_chars = max_input_chars
         self.calls = 0
-        self._client = _instructor.from_genai(genai.Client(api_key=api_key))
+        self._calls_lock = threading.Lock()
+        self._genai = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=1)),
+        )
+        self._client = _instructor.from_genai(self._genai)
 
     def extract(
         self,
@@ -51,13 +57,18 @@ class InstructorExtractor:
         title: str = "",
         hints: dict[str, Any] | None = None,
     ) -> ExtractionResult:
-        day = quota_day()
-        self.limiter.acquire(day=day)
+        from tenacity import Retrying, stop_after_attempt
+
+        day = self.limiter.acquire()
+        with self._calls_lock:
+            self.calls += 1
         try:
             result = self._client.chat.completions.create(
                 model=self.model,
                 response_model=ExtractionResult,
-                max_retries=1,
+                # Explicit total-attempt bound, independent of the SDK's
+                # integer retry-count conventions. Every call is reserved.
+                max_retries=Retrying(stop=stop_after_attempt(1), reraise=True),
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {
@@ -70,18 +81,18 @@ class InstructorExtractor:
                     },
                 ],
             )
+            result = ExtractionResult.model_validate(result)
         except Exception:
             self.limiter.record(error=True, day=day)
             raise
         self.limiter.record(day=day)
-        self.calls += 1
         return result
 
     def close(self) -> None:
-        return None
+        self._genai.close()
 
     def __enter__(self) -> InstructorExtractor:
         return self
 
     def __exit__(self, *exc: object) -> None:
-        return None
+        self.close()

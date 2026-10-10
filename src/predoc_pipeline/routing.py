@@ -27,6 +27,23 @@ __all__ = ["Channel", "Router"]
 
 _POSTDOC = re.compile(r"\bpost-?\s?doc(toral)?\b", re.IGNORECASE)
 _PREDOC = re.compile(r"\bpre-?\s?(doc(toral)?|phd)\b", re.IGNORECASE)
+_DOCTORAL_DUTY = re.compile(
+    r"\b(?:holder|appointee|candidate|you|employee|successful applicant)\b"
+    r"[^.!?\n]{0,100}?\b(?:enroll?|register|complete|undertake|pursue|write)\w*"
+    r"[^.!?\n]{0,45}?\b(?:doctoral candidate|doctoral student|"
+    r"(?:ph\.?d\.?|doctoral)\s+(?:dissertation|thesis|degree|program(?:me)?))\b",
+    re.IGNORECASE,
+)
+_COMPLETED_PHD_REQUIRED = re.compile(
+    r"\b(?:completed|earned)\s+(?:a\s+)?(?:ph\.?d\.?|doctorate)\s+"
+    r"(?:is\s+)?required\b|\brequires?\s+(?:a\s+)?completed\s+(?:ph\.?d\.?|doctorate)\b",
+    re.IGNORECASE,
+)
+_POSTDOC_ROLE = re.compile(
+    r"\bpost-?\s?doc(?:toral)?\s+(?:position|appointment|fellowship|role)\b|"
+    r"\b(?:position|appointment|fellowship|role)\s+is\s+(?:a\s+)?post-?\s?doc(?:toral)?\b",
+    re.IGNORECASE,
+)
 _US_NAMES = frozenset({"united states", "united states of america", "usa", "us", "u.s.", "u.s.a."})
 
 
@@ -43,20 +60,25 @@ class Router:
             re.compile(p, re.IGNORECASE) for p in self.cfg.web_employer_patterns
         ]
         self._employer_names = [
-            re.compile(r"(?<![\\w-])" + re.escape(n) + r"(?![\\w-])")
+            re.compile(r"(?<![\w-])" + re.escape(n) + r"(?![\w-])", re.IGNORECASE)
             for n in self.cfg.web_employer_names
         ]
 
     @staticmethod
     def position_kind(title: str, summary: str = "") -> str:
         """``predoc``, ``phd`` or ``postdoc``. Predoc is the default."""
-        if _PREDOC.search(title):
-            return "predoc"
         if _POSTDOC.search(title):
             return "postdoc"
+        if _COMPLETED_PHD_REQUIRED.search(summary):
+            return "postdoc"
+        for match in _DOCTORAL_DUTY.finditer(summary):
+            if not re.search(r"\b(?:not|no|may|can|optional|opportunity)\b", match[0], re.I):
+                return "phd"
+        if _PREDOC.search(title):
+            return "predoc"
         if PHD_POSITION.search(title):
             return "phd"
-        if _POSTDOC.search(summary[:300]) and not _PREDOC.search(summary[:300]):
+        if _POSTDOC_ROLE.search(summary):
             return "postdoc"
         return "predoc"
 

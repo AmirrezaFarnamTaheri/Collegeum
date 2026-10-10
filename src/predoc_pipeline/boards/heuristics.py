@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+from datetime import date
 from typing import Any
 
 from .config import EnrichConfig
@@ -32,8 +33,8 @@ VISA_NEGATIVE = [
         r"(?:to\s+)?(?:offer|provide|sponsor|support)\s+(?:a\s+|any\s+)?(?:visa|sponsorship|work\s+permit)",
         r"no\s+visa\s+sponsorship", r"sponsorship\s+(?:is\s+)?not\s+(?:available|possible|provided|offered)",
         _C + r"\s+citizens?(?:hip)?\s+(?:only|is\s+required|required)",
-        r"(?:must|should)\s+be\s+(?:a\s+)?" + _C + r"\s+(?:citizen|national|permanent\s+resident)",
-        r"open\s+(?:only\s+)?to\s+" + _C + r"\s+(?:citizens|nationals)",
+        r"must\s+be\s+(?:a\s+)?" + _C + r"\s+(?:citizen|national|permanent\s+resident)",
+        r"open\s+only\s+to\s+" + _C + r"\s+(?:citizens|nationals)",
     )
 ]
 VISA_PRIORITY = [
@@ -56,9 +57,13 @@ VISA_POSITIVE = [
         r"(?:will|can|may|able\s+to)\s+(?:sponsor|support)\s+(?:a\s+|the\s+)?(?:visa|work\s+permit|skilled\s+worker)",
         r"visas?\s+for\s+international\s+(?:candidates|applicants)[^.]{0,80}(?:supported|sponsored|provided)",
         r"(?:eligible\s+for|qualif(?:y|ies)\s+for)\s+(?:visa\s+)?sponsorship",
-        r"international\s+(?:applicants|candidates)\s+(?:are\s+)?(?:welcome|encouraged)",
-        r"relocation\s+(?:support|assistance|package)",
     )
+]
+VISA_CONTEXT = [
+    (re.compile(r"international\s+(?:applicants|candidates)\s+(?:are\s+)?(?:welcome|encouraged)", re.I),
+     "International applications welcome; sponsorship unstated"),
+    (re.compile(r"relocation\s+(?:support|assistance|package)", re.I),
+     "Relocation assistance mentioned; sponsorship unstated"),
 ]
 
 PHD_REQUIRED = re.compile(
@@ -138,9 +143,9 @@ def detect_closed(text: str | None) -> str | None:
             if not _OPEN_CONTEXT.search(head[max(0, m.start() - 25): m.start()]):
                 return truncate(m.group(0), 80)
     for rx in STATUS_PATTERNS:
-        m = rx.search(text)
-        if m:
-            return truncate(m.group(0), 80)
+        status_match = rx.search(text)
+        if status_match:
+            return truncate(status_match.group(0), 80)
     return None
 
 
@@ -151,13 +156,13 @@ _MONTH_NUM = {m: i for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "ju
                                             "oct", "nov", "dec"], 1)}
 
 
-def _today():
+def _today() -> date:
     from .utils import dates as _d  # looked up at call time (tests pin "today")
     return _d.today()
 
 
 def start_date_passed(text: str | None, grace_days: int = 30) -> str | None:
-    """'Start date: from July to September 2025' long ago and no future deadline -> stale ad."""
+    """Return a stale-start suspicion cue; this is never proof that recruitment closed."""
     from datetime import date as _date
     from datetime import timedelta
 
@@ -178,23 +183,48 @@ def start_date_passed(text: str | None, grace_days: int = 30) -> str | None:
 
 
 def detect_visa(text: str) -> str | None:
-    for rx in VISA_NEGATIVE:
-        m = rx.search(text)
-        if m:
-            return f"No sponsorship / citizenship restriction (“{truncate(m.group(0), 80)}”)"
+    def evidence(rx: re.Pattern[str]) -> re.Match[str] | None:
+        for match in rx.finditer(text):
+            # Local negation must not turn a denied cue into an affirmative fact.
+            before = text[max(0, match.start() - 30):match.start()]
+            after = text[match.end():match.end() + 60]
+            if _NEGATION_BEFORE.search(before) or re.search(
+                r"\b(?:cannot|can't|unable\s+to|may\s+not)\s+(?:confirm|guarantee|promise)\s+(?:that\s+)?$",
+                before, re.I
+            ) or re.match(
+                r"\s+(?:is|are|will\s+be)\s+not\b", after, re.I
+            ):
+                continue
+            return match
+        return None
+
+    context = []
     for rx in VISA_PRIORITY:
-        m = rx.search(text)
+        m = evidence(rx)
         if m:
-            return f"Priority to citizens/residents (\u201c{truncate(m.group(0), 90)}\u201d)"
+            context.append(f"Priority to citizens/residents (“{truncate(m.group(0), 90)}”)")
+            break
+    for rx, label in VISA_CONTEXT:
+        m = evidence(rx)
+        if m:
+            context.append(f"{label} (“{truncate(m.group(0), 80)}”)")
+
+    def note(primary: str) -> str:
+        return "; ".join([primary, *context])
+
+    for rx in VISA_NEGATIVE:
+        m = evidence(rx)
+        if m:
+            return note(f"No sponsorship / citizenship restriction (“{truncate(m.group(0), 80)}”)")
     for rx in VISA_POSITIVE:
-        m = rx.search(text)
+        m = evidence(rx)
         if m:
-            return f"Visa support mentioned (“{truncate(m.group(0), 80)}”)"
+            return note(f"Visa support mentioned (“{truncate(m.group(0), 80)}”)")
     for rx in VISA_WORK_AUTH:
-        m = rx.search(text)
+        m = evidence(rx)
         if m:
-            return f"Existing work authorisation may be required (“{truncate(m.group(0), 80)}”)"
-    return None
+            return note(f"Existing work authorisation may be required (“{truncate(m.group(0), 80)}”)")
+    return "; ".join(context) or None
 
 
 def apply_heuristics(post: JobPostSchema, text: str) -> None:
@@ -216,9 +246,15 @@ def apply_heuristics(post: JobPostSchema, text: str) -> None:
     if closed and not post.extra.get("closed"):
         post.extra["closed"] = f"page says \u201c{closed}\u201d"
     stale = start_date_passed(text)
+    post.extra.pop("stale_start_note", None)
     if stale and not post.extra.get("closed") and not (post.deadline and post.deadline >= _today()):
-        post.extra["closed"] = stale
-    if not post.region:
+        post.extra["stale_start_note"] = stale
+    # Attempt detail-page location when: region is absent OR when region came only from a
+    # source-config default (not from the actual job text).  A "Location:" label or a
+    # confident single-region signal in the advert is more reliable than a US-based
+    # aggregator's configured country default (F03).
+    source_default = post.extra.get("source_country_default") and not post.extra.get("region_from_detail")
+    if not post.region or source_default:
         # Most to least reliable: a "Location:" line, the domain the link landed on,
         # a page that only ever mentions one region, then typical US-only wording.
         country, region = location_from_labels(text[:6000])
@@ -229,8 +265,11 @@ def apply_heuristics(post: JobPostSchema, text: str) -> None:
         if not region and us_signal_count(text) >= 2:
             country, region = "United States", "US"
         if region:
-            post.country, post.region = (country if country not in ("Europe", "Other") else post.country), region
+            post.country = (country if country not in ("Europe", "Other")
+                            else None if source_default else post.country)
+            post.region = region
             post.extra["region_from_detail"] = True
+            post.extra.pop("source_country_default", None)  # resolved; no longer a bare default
     if len(post.description_snippet) < 200 and not text.startswith("%PDF-"):
         post.description_snippet = truncate(text, 600)
     post.extra["detail_text"] = text[:6000] if not text.startswith("%PDF-") else ""
@@ -249,7 +288,7 @@ async def check_still_open(scraper: Any, post: JobPostSchema) -> str | None:
     except Exception:  # noqa: BLE001 - unreachable != closed
         return None
     if post.extra.get("closed"):  # e.g. Workday: canApply=false / posting end date passed
-        return post.extra["closed"]
+        return str(post.extra["closed"])
     closed = detect_closed(text)
     if closed:
         return f"page says \u201c{closed}\u201d"
@@ -257,8 +296,9 @@ async def check_still_open(scraper: Any, post: JobPostSchema) -> str | None:
     if d and d < _today() and not post.deadline:
         return f"deadline passed ({d:%d %b %Y})"
     stale = start_date_passed(text)
+    post.extra.pop("stale_start_note", None)
     if stale and not (post.deadline and post.deadline >= _today()):
-        return stale
+        post.extra["stale_start_note"] = stale
     return None
 
 

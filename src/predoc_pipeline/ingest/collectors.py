@@ -27,9 +27,10 @@ than ``ImportError`` at startup.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import urljoin, urlsplit
 
 from ..core.textproc import html_to_text, squish, truncate
 from ..core.urls import canonicalize_url
@@ -104,17 +105,33 @@ def collect_feeds(
             continue
 
         parsed = feedparser.parse(result.content or result.text.encode("utf-8"))
-        if getattr(parsed, "bozo", 0) and not parsed.entries:
+        if not parsed.version or (getattr(parsed, "bozo", False) and not parsed.entries):
             stat.errors = 1
             stat.messages.append(f"unparseable feed: {getattr(parsed, 'bozo_exception', '')}")
             stats.append(stat)
             continue
+
+        if getattr(parsed, "bozo", False):
+            stat.errors += 1
+            stat.messages.append("malformed feed with recoverable entries")
 
         cap = source.max_items or max_items
         for entry in parsed.entries[:cap]:
             link = entry.get("link") or entry.get("id") or ""
             title = squish(entry.get("title", ""))
             if not link or not title:
+                stat.errors += 1
+                stat.messages.append("feed entry missing title or link")
+                continue
+            try:
+                link = urljoin(getattr(result, "url", None) or source.url, link)
+                parts = urlsplit(link)
+                if parts.scheme not in {"http", "https"} or not parts.hostname:
+                    raise ValueError("not a web link")
+                _ = parts.port  # Reject malformed ports before emitting a vacancy.
+            except ValueError:
+                stat.errors += 1
+                stat.messages.append("feed entry has invalid web link")
                 continue
             text, html = _feed_entry_text(entry)
             body = f"{title}\n\n{text}".strip()
@@ -143,29 +160,55 @@ _JSONLD_BLOCK = re.compile(
 )
 
 
-def _iter_jobpostings(payload: Any):
+def _iter_jobpostings(
+    payload: Any, *, issues: list[str] | None = None,
+) -> Iterator[dict[str, Any]]:
     """Walk arbitrarily nested JSON-LD looking for JobPosting nodes."""
-    if isinstance(payload, dict):
-        types = payload.get("@type")
-        types = [types] if isinstance(types, str) else (types or [])
-        if any(str(t).lower() == "jobposting" for t in types):
-            yield payload
-        for value in payload.values():
-            yield from _iter_jobpostings(value)
-    elif isinstance(payload, list):
-        for value in payload:
-            yield from _iter_jobpostings(value)
+    pending = [payload]
+    while pending:
+        node = pending.pop()
+        if isinstance(node, dict):
+            types = node.get("@type")
+            if isinstance(types, str):
+                types = [types]
+            elif types is None:
+                types = []
+            elif not isinstance(types, list):
+                if issues is not None:
+                    issues.append("invalid metadata type")
+                types = []
+            if any(isinstance(t, str) and t.lower() == "jobposting" for t in types):
+                yield node
+            pending.extend(reversed(list(node.values())))
+        elif isinstance(node, list):
+            pending.extend(reversed(node))
 
 
-def _jobposting_items(html: str, page_url: str, source_name: str) -> list[RawItem]:
-    """Extract JobPosting nodes, preferring extruct and falling back to stdlib.
+def _schema_name(value: Any) -> str:
+    if isinstance(value, dict):
+        value = value.get("name")
+    return squish(value) if isinstance(value, str) else ""
+
+
+def _jobposting_items(
+    html: str, page_url: str, source_name: str, *, issues: list[str] | None = None,
+) -> list[RawItem]:
+    """Parse JSON-LD independently and add optional Microdata extraction.
 
     extruct also reads Microdata and RDFa, which is worth having, but it is an
     optional extra: a JSON-LD-only fallback with the standard library covers
     the large majority of modern applicant-tracking systems and keeps the base
     install lean.
     """
+    import json
+
+    diagnostics = issues if issues is not None else []
     postings: list[dict[str, Any]] = []
+    for block in _JSONLD_BLOCK.findall(html or ""):
+        try:
+            postings.extend(_iter_jobpostings(json.loads(block), issues=diagnostics))
+        except (ValueError, TypeError, RecursionError):
+            diagnostics.append("invalid JSON-LD block")
     try:
         import extruct
         from w3lib.html import get_base_url
@@ -173,41 +216,54 @@ def _jobposting_items(html: str, page_url: str, source_name: str) -> list[RawIte
         data = extruct.extract(
             html,
             base_url=get_base_url(html, page_url),
-            syntaxes=["json-ld", "microdata"],
+            syntaxes=["microdata"],
             uniform=True,
         )
-        for syntax in ("json-ld", "microdata"):
-            postings.extend(_iter_jobpostings(data.get(syntax, [])))
+        postings.extend(_iter_jobpostings(data.get("microdata", []), issues=diagnostics))
     except ImportError:
-        import json
-
-        for block in _JSONLD_BLOCK.findall(html or ""):
-            try:
-                postings.extend(_iter_jobpostings(json.loads(block)))
-            except (ValueError, TypeError):
-                continue
+        pass  # JSON-LD parsing above works without the optional dependency.
     except Exception:
-        return []
+        diagnostics.append("microdata parser failed")
 
     items: list[RawItem] = []
     for posting in postings:
-        title = squish(str(posting.get("title") or ""))
+        raw_title = posting.get("title")
+        title = squish(raw_title) if isinstance(raw_title, str) else ""
         if not title:
+            diagnostics.append("JobPosting missing valid title")
             continue
         org = posting.get("hiringOrganization") or {}
-        org_name = org.get("name") if isinstance(org, dict) else str(org)
+        org_name = _schema_name(org)
         description = html_to_text(str(posting.get("description") or ""))
         location = posting.get("jobLocation") or {}
-        place = ""
-        if isinstance(location, dict):
-            address = location.get("address") or {}
+        locations = location if isinstance(location, list) else [location]
+        places: list[str] = []
+        for loc in locations:
+            address = loc.get("address") if isinstance(loc, dict) else None
             if isinstance(address, dict):
-                place = " ".join(
-                    str(address.get(k, ""))
+                place = " ".join(filter(None, (
+                    _schema_name(address.get(k))
                     for k in ("addressLocality", "addressRegion", "addressCountry")
-                ).strip()
+                )))
+            else:
+                place = _schema_name(address)
+            if place and place not in places:
+                places.append(place)
+        place = "; ".join(places)
         deadline = posting.get("validThrough") or ""
-        url = canonicalize_url(str(posting.get("url") or page_url))
+        raw_url = posting.get("url") or page_url
+        try:
+            if not isinstance(raw_url, str):
+                raise ValueError("not a string")
+            absolute = urljoin(page_url, raw_url)
+            parts = urlsplit(absolute)
+            if parts.scheme not in {"http", "https"} or not parts.hostname:
+                raise ValueError("not a web link")
+            _ = parts.port
+        except ValueError:
+            diagnostics.append("JobPosting has invalid web link")
+            continue
+        url = canonicalize_url(absolute)
         body = "\n".join(
             part
             for part in (
@@ -234,22 +290,42 @@ def _jobposting_items(html: str, page_url: str, source_name: str) -> list[RawIte
 
 def _detail_links(html: str, page_url: str, pattern: str, limit: int) -> list[str]:
     """Candidate detail-page links from an index page."""
-    from urllib.parse import urljoin
+    from html import unescape
+    from urllib.parse import urldefrag
 
-    if not pattern:
+    if not pattern or limit <= 0:
         return []
     matcher = re.compile(pattern, re.IGNORECASE)
     hrefs = _HREF_RE.findall(html or "")
     seen: set[str] = set()
     out: list[str] = []
     for href in hrefs:
-        absolute = urljoin(page_url, href)
+        try:
+            absolute = urljoin(page_url, unescape(href).strip())
+            parts = urlsplit(absolute)
+            if parts.scheme not in {"http", "https"} or not parts.hostname:
+                continue
+            _ = parts.port
+            if not parts.fragment.startswith(("/", "!/")):
+                absolute = urldefrag(absolute)[0]
+        except ValueError:
+            continue
         if matcher.search(absolute) and absolute not in seen:
             seen.add(absolute)
             out.append(absolute)
         if len(out) >= limit:
             break
     return out
+
+
+def _add_unique_postings(
+    found: list[RawItem], seen: set[tuple[str, str]], candidates: list[RawItem],
+) -> None:
+    for candidate in candidates:
+        key = (candidate.source_url, candidate.title.casefold())
+        if key not in seen:
+            seen.add(key)
+            found.append(candidate)
 
 
 def collect_portals(
@@ -281,11 +357,19 @@ def collect_portals(
             stats.append(stat)
             continue
 
-        found = _jobposting_items(result.text, result.url, source.name)
+        parse_issues: list[str] = []
+        found: list[RawItem] = []
+        seen: set[tuple[str, str]] = set()
+
+        _add_unique_postings(found, seen, _jobposting_items(
+            result.text, result.url, source.name, issues=parse_issues,
+        ))
+        stat.errors += len(parse_issues)
+        stat.messages.extend(parse_issues)
 
         if source.follow_links and len(found) < cap:
             for link in _detail_links(
-                result.text, result.url, source.link_pattern, limit=cap - len(found)
+                result.text, result.url, source.link_pattern, limit=cap
             ):
                 detail = client.get(link)
                 stat.fetched += 1
@@ -295,7 +379,12 @@ def collect_portals(
                 if not detail.ok:
                     stat.errors += 1
                     continue
-                found.extend(_jobposting_items(detail.text, detail.url, source.name))
+                parse_issues = []
+                _add_unique_postings(found, seen, _jobposting_items(
+                    detail.text, detail.url, source.name, issues=parse_issues,
+                ))
+                stat.errors += len(parse_issues)
+                stat.messages.extend(parse_issues)
                 if len(found) >= cap:
                     break
 

@@ -23,6 +23,7 @@ from __future__ import annotations
 import sqlite3
 import time
 from collections.abc import Callable
+from html import escape as escape_attribute
 from typing import Any
 
 import httpx
@@ -32,7 +33,7 @@ from ..boards.config import load_preferences
 from ..core.db import Database
 from ..core.db import init as init_db
 from ..core.textproc import escape_telegram_html as esc
-from ..core.textproc import truncate
+from ..core.textproc import truncate_utf16
 from ..core.timeparse import parse_datetime, utcnow
 from ..logging_setup import get_logger
 from ..routing import Router
@@ -44,11 +45,11 @@ from .feedback import (
     STATUS_BY_CODE,
     VALID,
     FeedbackStore,
-    load_state,
+    load_chat_state,
     save_state,
 )
 from .keyboards import LEGEND, feedback_row, parse_callback, rebuild
-from .telegram import TelegramClient, TelegramError, deadline_label
+from .telegram import TelegramClient, TelegramError, deadline_label, pack_html_blocks
 
 log = get_logger(__name__)
 
@@ -135,13 +136,14 @@ def listing_block(row: sqlite3.Row, n: int, store: FeedbackStore) -> str:
     mark = {VALID: " ✅", APPLIED: " 📝", INVALID: " ❌"}.get(status or "", "")
     where = ", ".join(x for x in (row["city"], row["country"]) if x) or "location not stated"
     lines = [
-        f"<b>{n}. {esc(truncate(row['title'], 140))}</b>{mark}",
-        f"🏛 {esc(truncate(row['institution'], 110))} — {esc(where)}",
-        f"⏳ {esc(deadline_label(row['deadline'], row['deadline_note']))} · "
-        f'<a href="{esc(row["apply_url"])}">open ad</a>',
+        f"<b>{n}. {esc(truncate_utf16(row['title'], 140))}</b>{mark}",
+        f"🏛 {esc(truncate_utf16(row['institution'], 110))} — {esc(truncate_utf16(where, 120))}",
+        f"⏳ {esc(truncate_utf16(deadline_label(row['deadline'], row['deadline_note']), 120))} · "
+        f'<a href="{escape_attribute(row["apply_url"], quote=True)}">open ad</a>',
     ]
-    if status == APPLIED and store.marked_at(row["url_hash"]):
-        note = f"📝 applied on {store.marked_at(row['url_hash'])[:10]}"
+    marked_at = store.marked_at(row["url_hash"])
+    if status == APPLIED and marked_at:
+        note = f"📝 applied on {marked_at[:10]}"
         if row["closed_at"]:
             note += " · ⚠️ ad now closed"
         lines.append(note)
@@ -160,29 +162,29 @@ def build_pages(
     """The messages (text, buttons) that answer one command."""
     if not rows:
         return [(EMPTY[kind], None)]
+    if max_items < 1:
+        raise ValueError("bot command max_items must be positive")
     shown = rows[:max_items]
+    blocks = [listing_block(row, i, store) for i, row in enumerate(shown, 1)]
+    head = TITLES[kind].format(n=len(rows), s="" if len(rows) == 1 else "s") + "\n\n"
+    footer = ""
+    if len(rows) > len(shown):
+        more = len(rows) - len(shown)
+        footer += f"\n\n…and {more} more" + (
+            f' on the <a href="{escape_attribute(site_url, quote=True)}">dashboard</a>.'
+            if site_url else "."
+        )
+    if kind == "positions":
+        n_applied = len(store.with_status(APPLIED))
+        if n_applied:
+            footer += f"\n\n📝 You've applied to {n_applied}: send /applied"
+    footer += f"\n\n<i>{esc(LEGEND)}</i>"
     pages: list[tuple[str, dict[str, Any] | None]] = []
-    for start in range(0, len(shown), page_size):
-        chunk = shown[start:start + page_size]
-        blocks = [listing_block(r, start + i + 1, store) for i, r in enumerate(chunk)]
-        head = ""
-        if start == 0:
-            head = TITLES[kind].format(n=len(rows), s="" if len(rows) == 1 else "s") + "\n\n"
-        text = head + "\n\n".join(blocks)
-        if start + page_size >= len(shown):  # last page
-            if len(rows) > len(shown):
-                more = len(rows) - len(shown)
-                text += f"\n\n…and {more} more" + (
-                    f' on the <a href="{esc(site_url)}">dashboard</a>.' if site_url else "."
-                )
-            if kind == "positions":
-                n_applied = len(store.with_status(APPLIED))
-                if n_applied:
-                    text += f"\n\n📝 You've applied to {n_applied}: send /applied"
-            text += f"\n\n<i>{esc(LEGEND)}</i>"
-        buttons = [feedback_row(r["url_hash"], store.status(r["url_hash"]), start + i + 1)
+    for page in pack_html_blocks(blocks, header=head, footer=footer, page_size=min(page_size, 30)):
+        chunk = shown[page.start:page.end]
+        buttons = [feedback_row(r["url_hash"], store.status(r["url_hash"]), page.start + i + 1)
                    for i, r in enumerate(chunk)]
-        pages.append((text, {"inline_keyboard": buttons}))
+        pages.append((page.html, {"inline_keyboard": buttons}))
     return pages
 
 
@@ -219,7 +221,7 @@ def telegram_sync(
     tg_prefs = load_preferences(settings.preferences_config).telegram
     page_size = max(1, page_size or tg_prefs.list_page_size)
     max_items = max(1, max_items or tg_prefs.list_max)
-    summary = {"commands": 0, "taps": 0, "ignored": 0}
+    summary = {"received": 0, "commands": 0, "taps": 0, "ignored": 0, "failed": 0, "dropped": 0}
     owners = settings.owner_ids
     if not settings.telegram_bot_token or not owners:
         log.warning("telegram_sync_skipped",
@@ -229,8 +231,12 @@ def telegram_sync(
 
     tg = TelegramClient(bot_token=settings.telegram_bot_token, client=http_client)
     bot = _Bot(tg, sleep)
-    chat_state = load_state(settings.telegram_state_path)
-    store = FeedbackStore(settings.feedback_path)
+    try:
+        chat_state = load_chat_state(settings.telegram_state_path)
+        store = FeedbackStore.from_settings(settings)
+    except Exception:
+        tg.close()
+        raise
     try:
         if chat_state.get("commands_version") != COMMANDS_VERSION:
             try:
@@ -256,6 +262,11 @@ def telegram_sync(
                 return summary
             raise
         if not updates:
+            if chat_state.get("exports_pending"):
+                if _refresh_public_exports(settings, store):
+                    chat_state["exports_pending"] = False
+                else:
+                    summary["failed"] += 1
             save_state(settings.telegram_state_path, chat_state)
             return summary
 
@@ -267,7 +278,7 @@ def telegram_sync(
         changed = False
 
         for update in updates:
-            chat_state["offset"] = int(update["update_id"]) + 1
+            update_id = int(update["update_id"])
             try:
                 if "callback_query" in update:
                     changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,
@@ -276,20 +287,47 @@ def telegram_sync(
                     _handle_message(bot, update["message"], rows, store, owners, summary,
                                     page_size=page_size, max_items=max_items,
                                     site_url=settings.site_url)
-            except Exception as exc:  # noqa: BLE001 - one bad update must not block the rest
-                log.warning("update_failed", update_id=update.get("update_id"), error=str(exc))
+            except Exception as exc:  # noqa: BLE001
+                if _is_retryable(exc):
+                    # Do not acknowledge: this update (and everything after it) is
+                    # fetched again next run. Marks are replay-safe (callback ids).
+                    summary["failed"] += 1
+                    log.warning("update_deferred", update_id=update_id, error=str(exc))
+                    break
+                summary["dropped"] += 1  # a poison update must not block the queue forever
+                log.warning("update_dropped", update_id=update_id, error=str(exc))
+            chat_state["offset"] = update_id + 1
+            if changed:
+                chat_state["exports_pending"] = True
             store.save()
             save_state(settings.telegram_state_path, chat_state)
 
-        if changed:
-            _refresh_public_exports(settings, store)
+        store.save()
+        save_state(settings.telegram_state_path, chat_state)
+        if changed or chat_state.get("exports_pending"):
+            if _refresh_public_exports(settings, store):
+                chat_state["exports_pending"] = False
+                save_state(settings.telegram_state_path, chat_state)
+            else:
+                summary["failed"] += 1
         log.info("telegram_sync", **summary)
         return summary
     finally:
         tg.close()
 
 
-def _refresh_public_exports(settings: Settings, store: FeedbackStore) -> None:
+def _is_retryable(exc: BaseException) -> bool:
+    """Only explicit permanent API rejection justifies dropping an update.
+
+    Local processing/storage failures have unknown outcomes and must not
+    silently acknowledge the user's request.
+    """
+    if isinstance(exc, TelegramError):
+        return not exc.permanent
+    return True
+
+
+def _refresh_public_exports(settings: Settings, store: FeedbackStore) -> bool:
     """A ❌ should also take the position off the dashboard and the RSS feed."""
     try:
         router = Router(load_preferences(settings.preferences_config))
@@ -297,8 +335,10 @@ def _refresh_public_exports(settings: Settings, store: FeedbackStore) -> None:
             state.export_dashboard(db, settings.dashboard_json, hidden=store.hidden, router=router)
             state.export_feed(db, settings.feed_path, site_url=settings.site_url,
                               hidden=store.hidden, router=router)
-    except Exception as exc:  # noqa: BLE001 - cosmetic; the daily run redoes it
+        return True
+    except Exception as exc:  # noqa: BLE001 - retain durable retry intent
         log.warning("export_refresh_failed", error=str(exc))
+        return False
 
 
 def _chat_id(obj: dict[str, Any] | None) -> int | None:
@@ -324,12 +364,14 @@ def _handle_message(
     kind = command_of(msg.get("text"))
     if not kind:
         return
-    summary["commands"] += 1
+    summary["received"] += 1
     if kind == "help":
         bot.send(str(chat), HELP)
+        summary["commands"] += 1
         return
     for text, keyboard in build_pages(kind, select_rows(kind, rows, store), store, **page_opts):
         bot.send(str(chat), text, keyboard)
+    summary["commands"] += 1
 
 
 def _handle_tap(
@@ -340,7 +382,7 @@ def _handle_tap(
     owners: set[int],
     summary: dict[str, int],
 ) -> bool:
-    """Returns True when a mark changed."""
+    """Returns True when public exports need refreshing, including replay recovery."""
     if _chat_id(cq.get("from")) not in owners:
         summary["ignored"] += 1
         return False
@@ -351,11 +393,17 @@ def _handle_tap(
     row = by_prefix.get(prefix)
     reply = "This position is no longer in the list."
     changed = False
-    if row is not None:
+    callback_id = cq.get("id")
+    replayed = store.callback_seen(callback_id)
+    if row is not None and replayed:
+        reply = DONE[store.status(row["url_hash"])]  # already applied once; do not toggle
+        changed = True  # A prior crash may have saved the mark before refreshing exports.
+    elif row is not None:
         wanted = STATUS_BY_CODE[code]
         new = None if store.status(row["url_hash"]) == wanted else wanted  # tap again = undo
         store.set(row["url_hash"], new, title=row["title"], institution=row["institution"],
                   url=row["apply_url"])
+        store.remember_callback(callback_id)
         reply = DONE[new]
         summary["taps"] += 1
         changed = True

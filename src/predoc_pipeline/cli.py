@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import typer
 
@@ -132,7 +133,7 @@ def dashboard() -> None:
 
     settings = _settings()
     init_db(settings.db_path)
-    hidden = FeedbackStore(settings.feedback_path).hidden
+    hidden = FeedbackStore.from_settings(settings).hidden
     router = Router(load_preferences(settings.preferences_config))
     with Database(settings.db_path) as db:
         state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
@@ -143,29 +144,34 @@ def dashboard() -> None:
     typer.echo(f"wrote {count} active listings to {settings.dashboard_json}")
 
 
+@app.command("feedback-key")
+def feedback_key() -> None:
+    """Print a new key for FEEDBACK_ENCRYPTION_KEY (store it as a repository secret)."""
+    from .publish.feedback import generate_key
+
+    typer.echo(generate_key())
+
+
 @app.command("broadcast-pending")
 def broadcast_pending() -> None:
     """Broadcast unposted pending predoc positions directly to Telegram and update state."""
     from . import state
-    from .models import RunStats
-    from .pipeline import _broadcast, _listing_from_row
+    from .pipeline import RunStats, _broadcast, _listing_from_row
     from .publish.feedback import FeedbackStore
-    from .publish.telegram import build_telegram
+    from .publish.telegram import TelegramClient
 
     settings = _settings()
-    init_db(settings.db_path)
-    prefs = load_preferences(settings.preferences_config)
-    router = Router(prefs)
-    feedback = FeedbackStore(settings.feedback_path)
-    telegram = build_telegram(settings)
-    if telegram is None:
+    if not settings.telegram_configured:
         typer.secho(
             "Telegram credentials not configured; cannot broadcast.",
             fg=typer.colors.RED,
             err=True,
         )
         raise typer.Exit(1)
-
+    init_db(settings.db_path)
+    prefs = load_preferences(settings.preferences_config)
+    router = Router(prefs)
+    feedback = FeedbackStore.from_settings(settings)
     with Database(settings.db_path) as db:
         state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
         pending_rows = db.pending_listings()
@@ -179,6 +185,7 @@ def broadcast_pending() -> None:
             return
 
         stats = RunStats(run_id="broadcast-manual")
+        telegram = TelegramClient(bot_token=settings.telegram_bot_token)
         try:
             _broadcast(
                 accepted,
@@ -236,49 +243,38 @@ def smoke() -> None:
     settings = Settings()
     typer.echo(f"settings ok (db_path={settings.db_path})")
 
-    _json.dumps(EXTRACTION_JSON_SCHEMA)  # must be JSON-serialisable
-    assert "$ref" not in _json.dumps(EXTRACTION_JSON_SCHEMA), "schema must not use $ref"
+    if "$ref" in _json.dumps(EXTRACTION_JSON_SCHEMA):
+        raise RuntimeError("extraction schema must not use $ref")
     typer.echo("extraction schema ok (no $ref, JSON-serialisable)")
 
     real = gating.evaluate(
         "We are hiring a predoctoral research assistant in economics. "
         "Applications are invited. Closing date 1 March 2027."
     )
-    assert real.passed
     phd = gating.evaluate(
         "Applications are invited for a PhD studentship in economics. "
         "The doctoral candidate will work on macro modelling. Deadline March."
     )
-    assert not phd.passed
+    if not real.passed or phd.passed:
+        raise RuntimeError("gate sanity check failed")
     typer.echo("gate sanity ok (accepts predoc, rejects PhD studentship)")
 
     dedup = Deduplicator()
     dedup.add(1, text="a" * 200, institution="Test University", title="Predoc")
-    assert dedup.find(text="a" * 200, institution="Test University", title="Predoc") is not None
+    if dedup.find(text="a" * 200, institution="Test University", title="Predoc") is None:
+        raise RuntimeError("dedupe sanity check failed")
     typer.echo("dedupe sanity ok")
 
-    with tempdir_db() as path:
+    with TemporaryDirectory() as directory:
+        path = Path(directory) / "smoke.db"
         init_db(path)
         with Database(path) as db:
             db.set_meta("smoke", format_ts())
-            assert db.get_meta("smoke") is not None
+            if db.get_meta("smoke") is None:
+                raise RuntimeError("database sanity check failed")
     typer.echo("database sanity ok")
 
     typer.secho("smoke check passed", fg=typer.colors.GREEN)
-
-
-def tempdir_db():
-    import tempfile
-
-    class _Ctx:
-        def __enter__(self):
-            self._tmp = tempfile.TemporaryDirectory()
-            return str(Path(self._tmp.name) / "smoke.db")
-
-        def __exit__(self, *exc):
-            self._tmp.cleanup()
-
-    return _Ctx()
 
 
 @app.command()
@@ -495,21 +491,52 @@ def sources_verify(
     config: str = typer.Option("config/sources.toml"),
     timeout: float = typer.Option(20.0),
 ) -> None:
-    """Fetch every enabled source once and report what actually comes back.
+    """Probe board, feed and portal discovery through production collectors.
 
-    Run this after cloning, and after any change to config/sources.toml. Every
-    shipped source defaults to ``verified = false`` precisely so this command
-    is not optional: no confirmable public feed URL for the major non-US
-    academic job boards could be found during this project's research, and a
-    URL that has never been fetched is a liability dressed as configuration.
+    Disabled entries are reported separately. This checks board discovery,
+    not vacancy eligibility or every posting's detail/application destination.
     """
     settings = Settings()
     sources = load_sources(config)
-    if not sources:
+    from .boards.collector import verify_boards
+    from .boards.config import load_board_sources
+    from .ingest.collectors import collect_feeds, collect_portals
+
+    boards = load_board_sources(config)
+    if not sources and not boards:
         typer.secho(f"no sources found in {config}", fg=typer.colors.YELLOW)
         raise typer.Exit(1)
 
+    prefs = load_preferences(settings.preferences_config)
+    prefs.http.timeout = timeout
+    prefs.http.source_timeout = timeout
+    board_stats = verify_boards(config, prefs)
     ok = 0
+    failed = 0
+    for board in boards:
+        if not board.enabled:
+            typer.echo(f"skip     {board.name} (disabled)")
+            continue
+        stat = board_stats[board.name]
+        if stat.get("skipped"):
+            typer.echo(f"SKIPPED  {board.name}")
+            failed += 1
+        elif not stat.get("ok") or stat.get("errors"):
+            stage = stat.get('failure_stage') or 'discovery'
+            label = 'PARTIAL' if stat.get('items') else 'FAIL'
+            typer.echo(f"{label:<8} {board.name} (adapter {stage} failed; "
+                       f"{stat.get('items', 0)} postings discovered)")
+            failed += 1
+        elif not stat.get("items"):
+            expected = stat.get("may_be_empty", False)
+            detail = 'seasonal empty allowed' if expected else 'unexpected empty discovery'
+            typer.echo(f"{'EMPTY' if expected else 'CHECK':<8} {board.name} "
+                       f"({detail})")
+            ok += int(expected)
+            failed += int(not expected)
+        else:
+            typer.echo(f"OK       {board.name} {stat['items']} discovered postings")
+            ok += 1
     with PoliteClient(
         user_agent=settings.http_user_agent,
         timeout=timeout,
@@ -519,22 +546,31 @@ def sources_verify(
             if not source.enabled:
                 typer.echo(f"skip     {source.name} (disabled)")
                 continue
-            result = client.get(source.url, use_cache=False)
             mark = "verified" if source.verified else "UNVERIFIED"
-            if result.ok:
+            collector = collect_feeds if source.kind == 'feed' else collect_portals
+            _, outcomes = collector([source], client, max_items=settings.max_items_per_source)
+            outcome = outcomes[0]
+            if outcome.errors:
+                failed += 1
+                label = 'PARTIAL' if outcome.items else 'FAIL'
+                typer.echo(f"{label:<8} {source.name} {outcome.errors} collector errors [{mark}]")
+            elif outcome.items:
                 ok += 1
-                size = len(result.text)
                 typer.secho(
-                    f"OK       {source.name:<28} {size:>7} bytes  [{mark}]",
+                    f"OK       {source.name:<28} {outcome.items} discovered postings [{mark}]",
                     fg=typer.colors.GREEN,
                 )
             else:
+                failed += 1
                 typer.secho(
-                    f"FAIL     {source.name:<28} {result.error or result.status}  [{mark}]",
+                    f"CHECK    {source.name:<28} no postings discovered [{mark}]",
                     fg=typer.colors.RED,
                 )
             time.sleep(0.2)
-    typer.echo(f"\n{ok}/{len(sources)} sources reachable")
+    enabled = sum(s.enabled for s in sources) + sum(b.enabled for b in boards)
+    typer.echo(f"\n{ok}/{enabled} enabled sources passed; {failed} require attention")
+    if not enabled or failed:
+        raise typer.Exit(1)
 
 
 @sources_app.command("discover")
