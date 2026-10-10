@@ -46,8 +46,9 @@ INCLUDE_GLOBS = [
     "tests/fixtures/boards/**/*",
     "config/*.toml",
     "docs/index.html",
-    "docs/data/*.json",
-    "docs/feed.xml",
+    # docs/data/*.json and docs/feed.xml are mutable publications; the
+    # pull-request merge checkout can contain newer website state than this branch.
+    # Only versioned source and reproducible fixtures belong in this artifact.
     ".github/workflows/*.yml",
     ".github/dependabot.yml",
     "pyproject.toml",
