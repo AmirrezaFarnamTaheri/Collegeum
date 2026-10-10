@@ -39,7 +39,6 @@ VALID, INVALID, APPLIED = "valid", "invalid", "applied"
 STATUS_BY_CODE = {"v": VALID, "x": INVALID, "a": APPLIED}
 CODE_BY_STATUS = {v: k for k, v in STATUS_BY_CODE.items()}
 ID_PREFIX = 16  # characters of url_hash carried in a button (Telegram allows 64 bytes)
-MAX_REMEMBERED_CALLBACKS = 500
 
 
 class StateCorruptError(RuntimeError):
@@ -204,8 +203,10 @@ class FeedbackStore:
         tap (a retried getUpdates batch) cannot toggle the mark a second time."""
         if not callback_id or callback_id in self.data["callbacks"]:
             return
+        # A cursor reset can replay even an old callback. Pruning by a fixed
+        # count would allow that replay to toggle an existing mark again.
+        # Retain processed IDs until an explicit audited state compaction.
         self.data["callbacks"].append(str(callback_id))
-        del self.data["callbacks"][:-MAX_REMEMBERED_CALLBACKS]
         self._dirty = True
 
     def save(self) -> None:

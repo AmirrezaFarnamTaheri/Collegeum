@@ -542,6 +542,42 @@ class Database:
                 (str(x_post_id) if x_post_id else None, listing_id),
             )
 
+    def resolve_telegram_delivery(
+        self, listing_id: int, *, message_id: int | None = None,
+        confirmed_not_delivered: bool = False,
+    ) -> None:
+        """Resolve a manually verified ambiguous Telegram submission.
+
+        Never infer remote delivery from a timeout. The operator must inspect
+        the destination chat before supplying either explicit outcome.
+        """
+        if (message_id is None) == (not confirmed_not_delivered):
+            raise ValueError("Provide a verified message ID or confirm no delivery")
+        if message_id is not None and (
+            type(message_id) is not int or not 0 < message_id < 2**63
+        ):
+            raise ValueError("Telegram message ID must be a positive 64-bit integer")
+        with self.transaction():
+            row = self.listing(listing_id)
+            if row is None:
+                raise ValueError(f"Unknown listing {listing_id}")
+            if row["status"] != "delivery-uncertain":
+                if (message_id is not None and row["status"] == "published"
+                        and row["telegram_message_id"] == message_id):
+                    return  # verified resolution may be safely repeated
+                raise ValueError(f"Listing {listing_id} is not delivery-uncertain")
+            if message_id is not None:
+                self.conn.execute(
+                    "UPDATE listings SET status='published', telegram_message_id=?, "
+                    "published_at=COALESCE(published_at, ?) WHERE id=?",
+                    (message_id, now(), listing_id),
+                )
+            else:
+                self.conn.execute(
+                    "UPDATE listings SET status='pending' WHERE id=?",
+                    (listing_id,),
+                )
+
     def mark_status(self, listing_id: int, status: str) -> None:
         with self.transaction():
             self.conn.execute("UPDATE listings SET status=? WHERE id=?", (status, listing_id))

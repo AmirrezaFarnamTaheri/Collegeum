@@ -214,6 +214,48 @@ def broadcast_pending() -> None:
         typer.echo(f"Broadcast completed: published={stats.published} errors={stats.errors}")
 
 
+@app.command("telegram-reconcile")
+def telegram_reconcile(
+    listing_id: int = typer.Argument(..., help="ID of the uncertain listing"),
+    message_id: int | None = typer.Option(
+        None, "--message-id", help="Verified ID of the message in the destination chat"),
+    confirmed_not_delivered: bool = typer.Option(
+        False, "--confirmed-not-delivered",
+        help="I checked the destination and confirmed no message was created"),
+) -> None:
+    """Reconcile an uncertain Telegram send after manually checking the chat.
+
+    Never choose the 'not delivered' outcome merely because an API timed out.
+    The recovered state is written to the tracked journal for the next run.
+    """
+    from . import state
+
+    if (message_id is None) == (not confirmed_not_delivered):
+        typer.secho(
+            "Supply exactly one of --message-id or --confirmed-not-delivered",
+            fg=typer.colors.RED, err=True,
+        )
+        raise typer.Exit(2)
+    settings = _settings()
+    init_db(settings.db_path)
+    with Database(settings.db_path) as db:
+        state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
+        try:
+            db.resolve_telegram_delivery(
+                listing_id, message_id=message_id,
+                confirmed_not_delivered=confirmed_not_delivered,
+            )
+        except ValueError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(1) from exc
+        state.write_journal(db, settings.state_path)
+    typer.echo(
+        f"Listing {listing_id} reconciled: "
+        + (f"confirmed message {message_id}" if message_id is not None
+           else "confirmed not delivered, pending retry")
+    )
+
+
 @app.command()
 def vacuum() -> None:
     """Prune old dead-letter and seen-item rows, then VACUUM the database."""
