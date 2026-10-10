@@ -29,6 +29,7 @@ import json
 import logging
 import sqlite3
 import threading
+from datetime import datetime, timedelta
 from collections.abc import Iterator, Sequence
 from contextlib import closing, contextmanager
 from pathlib import Path
@@ -91,6 +92,8 @@ CREATE TABLE IF NOT EXISTS listings (
   closed_reason             TEXT,
   closed_at                 TEXT,
   last_checked_at           TEXT,
+  missing_404_at            TEXT,
+  missing_404_observations  INTEGER NOT NULL DEFAULT 0,
   department                TEXT,
   fields                    TEXT,
   salary_min                REAL,
@@ -253,6 +256,8 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("listings", "degree_note", "TEXT"),
     ("listings", "start_term", "TEXT"),
     ("listings", "start_date", "TEXT"),
+    ("listings", "missing_404_at", "TEXT"),
+    ("listings", "missing_404_observations", "INTEGER NOT NULL DEFAULT 0"),
     ("http_cache", "body", "BLOB"),
 )
 
@@ -676,6 +681,40 @@ class Database:
                 "UPDATE listings SET closed_at=?, closed_reason=?, last_checked_at=? "
                 "WHERE id=? AND closed_at IS NULL",
                 (now(), reason[:200], now(), listing_id),
+            )
+
+    def observe_http_404(self, listing_id: int) -> bool:
+        """Two 404 observations at least 24h apart constitute closure evidence.
+
+        A lone 404 might be a broken proxy/CDN response. Preserve the suspect
+        state in the listing journal so the next run can recheck it.
+        """
+        with self.transaction():
+            row = self.listing(listing_id)
+            if row is None:
+                raise ValueError(f"Unknown listing {listing_id}")
+            timestamp = now()
+            previous = row["missing_404_at"]
+            count = int(row["missing_404_observations"] or 0)
+            if previous is not None:
+                elapsed = (datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                           - datetime.fromisoformat(previous.replace("Z", "+00:00")))
+                if elapsed < timedelta(hours=24):
+                    return False
+            count += 1
+            self.conn.execute(
+                "UPDATE listings SET missing_404_at=?, missing_404_observations=? WHERE id=?",
+                (timestamp, count, listing_id),
+            )
+            return count >= 2
+
+    def clear_http_404(self, listing_id: int) -> None:
+        """Reset stale 404 evidence after a confirmed successful page read."""
+        with self.transaction():
+            self.conn.execute(
+                "UPDATE listings SET missing_404_at=NULL, missing_404_observations=0 "
+                "WHERE id=?",
+                (listing_id,),
             )
 
     def mark_checked(self, listing_id: int) -> None:

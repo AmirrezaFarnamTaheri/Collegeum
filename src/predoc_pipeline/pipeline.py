@@ -963,16 +963,32 @@ def _verify_before_sending(
         for lid, listing in candidates
         if not listing.__dict__.get("_page_read")
     }
+    verified_open: set[int] = set()
     verdicts = check_links(
-        todo, prefs.http, concurrency=prefs.enrich.detail_concurrency, transport=transport
+        todo, prefs.http, concurrency=prefs.enrich.detail_concurrency,
+        transport=transport, verified_open=verified_open,
     )
     kept = []
     for lid, listing in candidates:
         reason = verdicts.get(lid)
+        if reason and "HTTP 404" in reason:
+            if db.observe_http_404(lid):
+                db.mark_closed(lid, "confirmed HTTP 404 on separate days")
+                stats.closed_before_send += 1
+            else:
+                log.warning("delivery_deferred_unconfirmed_404", listing_id=lid)
+            continue
         if reason:
             db.mark_closed(lid, reason)
             stats.closed_before_send += 1
             log.info("closed_before_send", listing_id=lid, reason=reason)
+            continue
+        if lid in verified_open:
+            db.clear_http_404(lid)
+        elif lid in todo and (db.listing(lid)["missing_404_observations"] or 0):
+            # Network failure does not disprove the prior 404. Do not publish
+            # a pending job until its availability is actually re-established.
+            log.warning("delivery_deferred_unverified_availability", listing_id=lid)
             continue
         if lid in todo:
             db.mark_checked(lid)
@@ -994,14 +1010,26 @@ def _recheck_published(
     for r in rows:
         when = parse_datetime(r["deadline"])
         todo[int(r["id"])] = (r["title"], r["apply_url"], when.date() if when else None)
-    for lid, reason in check_links(
-        todo, prefs.http, concurrency=cfg.detail_concurrency, transport=transport
-    ).items():
+    verified_open: set[int] = set()
+    verdicts = check_links(
+        todo, prefs.http, concurrency=cfg.detail_concurrency,
+        transport=transport, verified_open=verified_open,
+    )
+    for lid, reason in verdicts.items():
+        if reason and "HTTP 404" in reason:
+            if db.observe_http_404(lid):
+                db.mark_closed(lid, "confirmed HTTP 404 on separate days")
+                stats.closed_found += 1
+            else:
+                db.mark_checked(lid)
+            continue
         if reason:
             db.mark_closed(lid, reason)
             stats.closed_found += 1
             log.info("closed_on_recheck", listing_id=lid, reason=reason)
         else:
+            if lid in verified_open:
+                db.clear_http_404(lid)
             db.mark_checked(lid)
 
 

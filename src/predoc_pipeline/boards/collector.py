@@ -399,6 +399,7 @@ def check_links(
     *,
     concurrency: int = 6,
     transport: httpx.AsyncBaseTransport | None = None,
+    verified_open: set[Any] | None = None,
 ) -> dict[Any, str | None]:
     """``{key: (title, url[, deadline])}`` -> ``{key: reason it is filled/closed, or None}``.
 
@@ -427,6 +428,9 @@ def check_links(
                                          deadline=deadline)
                     try:
                         out[key] = await check_still_open(opener, post)
+                        if out[key] is None and post.extra.get("recheck_reached"):
+                            if verified_open is not None:
+                                verified_open.add(key)
                     except Exception as exc:  # noqa: BLE001 - never fail a run over a recheck
                         log.info("recheck failed for %s: %s", url, exc)
                         out[key] = None
