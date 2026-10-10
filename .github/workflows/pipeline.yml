@@ -95,8 +95,10 @@ jobs:
         env:
           PIPELINE_OUTCOME: ${{ steps.pipeline.outcome }}
         run: |
-          if [ "$PIPELINE_OUTCOME" = "failure" ] && ! grep -q "outcome=partial" run.log; then
-            echo "Pipeline failed fatally; see log above."
+          # A partial run exits successfully by design. A failing process
+          # must never be reclassified by a string in stdout/stderr.
+          if [ "$PIPELINE_OUTCOME" != "success" ]; then
+            echo "Pipeline command failed; inspect the preserved run log."
             exit 1
           fi
 
