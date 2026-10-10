@@ -11,7 +11,7 @@ on:
       - .github/workflows/refresh-release.yml
   workflow_dispatch:
 
-# Refresh checkpoint: exclude mutable docs/data and feed output from reproducible manifest.
+# Refresh checkpoint: completed safe Telegram, CSS selectors, JSON-LD and 404 changes.
 
 permissions:
   contents: write
