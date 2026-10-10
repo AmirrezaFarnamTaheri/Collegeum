@@ -61,7 +61,7 @@ jobs:
 
       - name: Build and verify release archives
         run: |
-          uv build --locked --sdist --wheel --out-dir build/release
+          uv build --out-dir build/release
           python3 -S tools/verify_release.py
 
       - name: Enforce stdlib-only core (belt and suspenders)
