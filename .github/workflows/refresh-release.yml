@@ -2,7 +2,8 @@ name: refresh-release
 
 # Rebuild the checked-in single-file distribution and uv.lock on a working
 # branch. Production main is intentionally not mutated by this bot.
-# A maintainer may dispatch a refresh on any working branch. Editing this
+# A maintainer may dispatch a refresh on any working branch.
+# Recheck all source files after Pages' Node-24-compatible action upgrades. Editing this
 # workflow also refreshes it automatically, with no feature-branch hardcoding.
 on:
   push:
