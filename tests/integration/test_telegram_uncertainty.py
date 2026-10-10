@@ -1,7 +1,5 @@
 """Regression guards for ambiguous Telegram sendMessage outcomes."""
 
-from unittest.mock import Mock
-
 import httpx
 import pytest
 
