@@ -29,17 +29,26 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Do not abort an upload/deployment already in progress.
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    if: vars.ENABLE_PAGES == 'true'
+    # workflow_run executes with main's privileges, so never deploy on
+    # untrusted branch completions or failed state-writing runs.
+    if: >-
+      vars.ENABLE_PAGES == 'true' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+        (github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.head_branch == 'main' &&
+         github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
 

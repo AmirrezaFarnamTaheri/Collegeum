@@ -15,12 +15,11 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
 
       # Runs first and separately: this is the suite that needs nothing
       # installed at all, so a break here means the core itself regressed
@@ -28,8 +27,17 @@ jobs:
       - name: Core tests (stdlib only, no dependencies installed)
         run: PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
 
-      - name: Install
-        run: pip install -e ".[dev,portals]"
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          activate-environment: true
+          enable-cache: true
+
+      - name: Install exact locked test environment
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          uv lock --check
+          uv sync --locked --python "$PYTHON_VERSION" --extra dev --extra portals
 
       - name: Verify single-file distribution
         run: python3 tools/verify_single_file.py
@@ -53,8 +61,7 @@ jobs:
 
       - name: Build and verify release archives
         run: |
-          python3 -m pip install build
-          python3 -m build --sdist --wheel --outdir build/release
+          uv build --locked --sdist --wheel --out-dir build/release
           python3 -S tools/verify_release.py
 
       - name: Enforce stdlib-only core (belt and suspenders)
