@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: collegeum-release-refresh-${{ github.ref }}
@@ -43,6 +44,7 @@ jobs:
           enable-cache: true
 
       - name: Rebuild and push only from current remote branch state
+        id: refresh
         shell: bash
         run: |
           set -euo pipefail
@@ -60,10 +62,12 @@ jobs:
             git add -- uv.lock compile_project.py
             if git diff --cached --quiet; then
               echo 'Generated artifacts already current'
+              echo "changed=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             git commit -m 'chore: synchronize locked dependencies and reproducible distribution [skip ci]'
             if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             echo "Branch advanced during refresh (attempt ${attempt}); retrying."
@@ -74,3 +78,20 @@ jobs:
 
       - name: Verify committed artifact
         run: python -S tools/verify_single_file.py
+
+      - name: Dispatch CI for the new generated commit
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # workflow_dispatch works with GITHUB_TOKEN, unlike push events.
+          # The trigger must exist on default main before GitHub will accept
+          # a dispatch; during this PR's bootstrap it is only on the branch.
+          git fetch origin main
+          if git show origin/main:.github/workflows/ci.yml | grep -q '^  workflow_dispatch:'; then
+            gh workflow run ci.yml --ref "$GITHUB_REF_NAME"
+          else
+            echo '::notice::Manual CI dispatch becomes available when the new CI workflow is merged.'
+          fi
