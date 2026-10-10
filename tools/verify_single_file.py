@@ -17,7 +17,16 @@ def main() -> None:
     actual = artifact['_unpack']()
     artifact['_verify'](actual)
     if actual != expected or artifact['MANIFEST_SHA256'] != digest:
-        raise SystemExit('Distribution is stale; run python tools/build_single_file.py')
+        differing = sorted(
+            name for name in set(expected) | set(actual)
+            if expected.get(name) != actual.get(name)
+        )
+        raise SystemExit(
+            "Distribution is stale: "
+            f"{len(differing)} file(s) differ: {differing[:20]!r}; "
+            f"embedded={artifact['MANIFEST_SHA256']} expected={digest}. "
+            "Run python tools/build_single_file.py"
+        )
     with tempfile.TemporaryDirectory(prefix='predoc-distribution-') as temporary:
         target = Path(temporary) / 'project'
         subprocess.run([sys.executable, '-S', str(OUTPUT_PATH), str(target)], check=True)
