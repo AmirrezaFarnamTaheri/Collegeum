@@ -406,10 +406,10 @@ def check_links(
     Passing the known deadline (a ``date``) stops a dated line such as "review
     of applications begins 15 Sep" from being mistaken for a passed deadline.
 
-    A link that answers 404/410 (bit.ly does this when a predoc is filled), a page
-    saying "this position has been filled", a Workday posting that no longer
-    accepts applications, or a start date long gone all count as closed. A site
-    that is merely unreachable does *not*: unknown is not closed.
+    A link that answers 404 produces ambiguous missing-page evidence, which
+    pipeline callers confirm on a separate day before closing the listing.
+    Explicit 410, clear closure text and Workday canApply=false are stronger
+    closure evidence. Unreachable is not proof of closure.
     """
     if concurrency <= 0:
         raise ValueError("link-check concurrency must be positive")

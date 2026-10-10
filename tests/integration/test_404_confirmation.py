@@ -2,8 +2,6 @@
 
 from datetime import UTC, datetime, timedelta
 
-import pytest
-
 from predoc_pipeline.core import db as db_module
 from predoc_pipeline.core.db import Database, init
 

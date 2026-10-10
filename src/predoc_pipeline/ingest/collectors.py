@@ -159,6 +159,7 @@ _JSONLD_BLOCK = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
+
 def _too_deep_json(text: str, max_nesting: int = 256) -> bool:
     """Bound parser nesting consistently across Python and JSON decoder versions.
 
@@ -185,8 +186,6 @@ def _too_deep_json(text: str, max_nesting: int = 256) -> bool:
         elif char in "]}":
             depth -= 1
     return False
-
-
 
 
 def _iter_jobpostings(
