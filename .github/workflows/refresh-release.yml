@@ -11,7 +11,7 @@ on:
       - .github/workflows/refresh-release.yml
   workflow_dispatch:
 
-# Refresh checkpoint: completed safe Telegram, CSS selectors, JSON-LD and 404 changes.
+# Refresh checkpoint: full-suite repairs, schema 8 and CI artifact build gates.
 
 permissions:
   contents: write
