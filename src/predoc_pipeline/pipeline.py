@@ -985,11 +985,13 @@ def _verify_before_sending(
             continue
         if lid in verified_open:
             db.clear_http_404(lid)
-        elif lid in todo and (db.listing(lid)["missing_404_observations"] or 0):
-            # Network failure does not disprove the prior 404. Do not publish
-            # a pending job until its availability is actually re-established.
-            log.warning("delivery_deferred_unverified_availability", listing_id=lid)
-            continue
+        elif lid in todo:
+            stored = db.listing(lid)
+            if stored is not None and (stored["missing_404_observations"] or 0):
+                # Network failure does not disprove the prior 404. Do not
+                # publish until availability is actually re-established.
+                log.warning("delivery_deferred_unverified_availability", listing_id=lid)
+                continue
         if lid in todo:
             db.mark_checked(lid)
         kept.append((lid, listing))

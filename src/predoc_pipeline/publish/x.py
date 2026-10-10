@@ -14,7 +14,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
-from twitter_text import (  # type: ignore[import-untyped]
+from twitter_text import (
     extract_emojis_with_indices,
     extract_urls_with_indices,
     parse_tweet,
