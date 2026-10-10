@@ -111,10 +111,14 @@ def _field(text: str, limit: int) -> str:
 class TelegramError(RuntimeError):
     """The Bot API rejected the request, or was unreachable."""
 
-    def __init__(self, message: str, *, status: int | None = None, permanent: bool = False):
+    def __init__(
+        self, message: str, *, status: int | None = None,
+        permanent: bool = False, uncertain: bool = False,
+    ):
         super().__init__(message)
         self.status = status
         self.permanent = permanent
+        self.uncertain = uncertain
 
 
 def _visa_badge(status: str) -> str:
@@ -454,16 +458,26 @@ class TelegramClient:
             try:
                 response = self.client.post(url, json=payload)  # type: ignore[union-attr]
             except httpx.RequestError as exc:
-                last = TelegramError(f"transport error: {exc}")
-                sleep(min(2**attempt, 15))
-                continue
+                # The server may have accepted the message before the response
+                # was lost. Replaying it here can create duplicate broadcasts.
+                raise TelegramError(
+                    f"sendMessage outcome unknown after transport error: {exc}",
+                    uncertain=True,
+                ) from exc
 
             if response.status_code == 200:
                 self._last_send[chat_id] = time.monotonic()
                 try:
-                    return int(response.json()["result"]["message_id"])
-                except (KeyError, ValueError, TypeError) as exc:
-                    raise TelegramError(f"unexpected success payload: {exc}") from exc
+                    result = response.json()["result"]
+                    message_id = result["message_id"]
+                    if type(message_id) is not int or message_id <= 0:
+                        raise ValueError("message_id must be a positive integer")
+                    return message_id
+                except (KeyError, ValueError, TypeError, AttributeError) as exc:
+                    raise TelegramError(
+                        f"sendMessage succeeded but the acknowledgement is invalid: {exc}",
+                        status=200, uncertain=True,
+                    ) from exc
 
             detail = response.text[:300]
             if response.status_code == 429:
@@ -491,10 +505,14 @@ class TelegramClient:
                     permanent=True,
                 )
 
-            last = TelegramError(f"{response.status_code}: {detail}", status=response.status_code)
-            sleep(min(2**attempt, 15))
+            # A 5xx/other ambiguous response can follow an accepted write.
+            # Only an explicit 429 confirms that no message was created.
+            raise TelegramError(
+                f"sendMessage outcome unknown (HTTP {response.status_code}): {detail}",
+                status=response.status_code, uncertain=True,
+            )
 
-        raise last or TelegramError("send failed")
+        raise last or TelegramError("sendMessage rate-limit retries exhausted", status=429)
 
     def call(
         self, method: str, payload: dict[str, Any], *,
