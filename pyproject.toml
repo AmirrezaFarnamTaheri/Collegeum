@@ -47,9 +47,8 @@ dependencies = [
     "requests-oauthlib>=2.0",
     # Encrypts personal feedback marks before they are committed (publish/feedback.py).
     "cryptography>=42",
-    "twitter-text-parser>=3.0,<4",
-    # twitter-text-parser loads its emoji data through pkg_resources.
-    "setuptools>=70,<81",
+    # twitter-text parsing is vendored (MIT license, src/twitter_text/LICENSE).
+    # It loads Unicode emoji data through importlib.resources, not pkg_resources.
 ]
 
 [project.optional-dependencies]
@@ -81,7 +80,7 @@ Repository = "https://github.com/AmirrezaFarnamTaheri/Collegeum"
 Issues = "https://github.com/AmirrezaFarnamTaheri/Collegeum/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/predoc_pipeline"]
+packages = ["src/predoc_pipeline", "src/twitter_text"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
@@ -102,6 +101,7 @@ addopts = "-ra"
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["src/twitter_text"]
 target-version = "py311"
 
 [tool.ruff.lint]
@@ -122,7 +122,7 @@ plugins = ["pydantic.mypy"]
 python_version = "3.11"
 strict = true
 warn_unused_ignores = true
-exclude = ["tests/"]
+exclude = ["tests/", "src/twitter_text/"]
 
 [[tool.mypy.overrides]]
 # Optional SDKs and untyped parser libraries are validated at our model boundaries.

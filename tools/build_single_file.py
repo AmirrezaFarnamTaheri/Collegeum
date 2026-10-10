@@ -39,6 +39,8 @@ INCLUDE_GLOBS = [
     "src/**/*.py",
     "tools/*.py",
     "src/predoc_pipeline/py.typed",
+    "src/twitter_text/regexp/emoji-test.txt",
+    "src/twitter_text/LICENSE",
     "tests/**/*.py",
     "tests/fixtures/*.jsonl",
     "tests/fixtures/boards/**/*",

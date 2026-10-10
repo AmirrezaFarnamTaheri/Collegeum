@@ -27,11 +27,14 @@ def main() -> None:
         raise SystemExit('Expected one wheel and one source archive in build/release')
     with zipfile.ZipFile(wheels[0]) as wheel:
         check_names(wheel.namelist())
-        for path in (ROOT / 'src' / 'predoc_pipeline').rglob('*'):
-            if path.is_file() and (path.suffix == '.py' or path.name == 'py.typed'):
-                name = path.relative_to(ROOT / 'src').as_posix()
-                if wheel.read(name) != path.read_bytes():
-                    raise SystemExit(f'Wheel source mismatch: {name}')
+        for package in ('predoc_pipeline', 'twitter_text'):
+            for path in (ROOT / 'src' / package).rglob('*'):
+                if path.is_file() and (
+                    path.suffix == '.py' or path.name in ('py.typed', 'emoji-test.txt', 'LICENSE')
+                ):
+                    name = path.relative_to(ROOT / 'src').as_posix()
+                    if wheel.read(name) != path.read_bytes():
+                        raise SystemExit(f'Wheel source mismatch: {name}')
     with tarfile.open(sources[0], 'r:gz') as archive:
         names = archive.getnames()
         check_names(names)
