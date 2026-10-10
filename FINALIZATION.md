@@ -1,9 +1,9 @@
-# Local finalization status — 10 October 2026
+# PR #12 implementation and acceptance status — 10 October 2026
 
-The current working tree has been reviewed and the immediate local blockers
-repaired. Full project acceptance remains open: the audit includes requirements
-that are not established by these local checks. Nothing was pushed, deployed,
-or sent to Telegram/X during this work.
+The pull-request branch was updated and its CI matrix completed successfully.
+Full project acceptance remains open: historical reconciliation and live
+provider/source/browser/device checks are not established by offline CI.
+No website deployment or real Telegram/X message was performed in this pass.
 
 ## Completed in this finalization pass
 
@@ -27,14 +27,17 @@ or sent to Telegram/X during this work.
   SQLite return types, nullable values, parser attributes and provider output
   contracts are corrected. Missing-import exemptions apply only to named optional
   SDKs/untyped parser libraries; first-party checking remains strict.
-- `uv.lock` regenerated from cached package metadata and checked against the
-  current project. A network resolution attempt failed because the configured
-  proxy was unavailable. Fresh online installation has not been verified.
+- The dedicated GitHub Actions refresh workflow resolved `uv.lock` from the
+  updated project. The runtime no longer depends on vulnerable setuptools:
+  the MIT-licensed Twitter text parser is vendored with `importlib.resources`
+  replacing `pkg_resources`. CI installs these dependencies on Python 3.11/3.12.
 - The single-file distribution includes nested source fixtures, build/verification
   tools, the lockfile, recovery instructions and audit documentation. CI now
   checks manifest freshness and byte-for-byte materialization without dependencies.
   Text is canonicalized to LF so Windows and Linux checkouts produce identical
-  manifests; binary fixtures retain their original bytes.
+  manifests; binary fixtures retain their original bytes. Generated dashboard,
+  health and RSS outputs are excluded from the reproducible source manifest:
+  their publication history is mutable between PR branch and merge checkouts.
 
 ## Source expansion delivered
 
@@ -56,27 +59,32 @@ The latest seven sources yielded 171 discovered adverts/calls, 27 enriched items
 and 11 emitted candidates after 16 rejections. These candidates have not been
 established as accepted, deduplicated eligible vacancies or published results.
 
-## Local verification
+## Verified CI and release evidence
 
-- **83 dependency-free core tests passed**, using Python `-S`.
-- **908 tests and 15 subtests passed** after pruning and adding malformed SDK
-  response coverage (168.51 seconds).
-- Strict mypy passed across all 63 source files; CI now enforces the check.
-- Source/test/tool Ruff lint and Git whitespace checks passed.
-- Offline smoke passed. Golden-fixture evaluation: 30 cases, 12 true positives,
-  18 true negatives, zero false positives/negatives; precision and recall 1.000.
-- `uv lock --check --offline` passed (111 resolved packages).
-- Single-file manifest and temporary-directory materialization passed with `-S`.
-- Offline source archive and wheel builds passed. Archive verification checks
-  source fidelity, required distribution files and excluded local/private state.
+[CI run 38081644997](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/38081644997)
+completed successfully on Python **3.11 and 3.12**, covering:
+
+- **83 dependency-free core tests** before package installation.
+- **930 tests and 15 subtests on each Python version**.
+- Strict mypy across 63 project source files and Ruff for source, tests and tools.
+- Golden-fixture evaluation and offline smoke checks.
+- Single-file source freshness and byte-for-byte temporary materialization.
+- Actual Hatchling wheel and source archive builds and `verify_release.py` checks
+  for required packaged files and exclusion of private/local state.
+- Lockfile resolution and artifact regeneration performed by the dedicated
+  `refresh-release` workflow before the CI matrix ran.
+
+These are genuine CI observations, not claims of verified external delivery.
 
 Reproduce distribution checks with `python tools/build_single_file.py`,
 `python -S tools/verify_single_file.py`, `uv build --offline --out-dir build/release`,
 then `python -S tools/verify_release.py`. Archive SHA-256 values are written to
 `build/release/verification.json`. Build outputs are local, ignored artifacts.
 
-The known twitter-text `pkg_resources` deprecation warning remains. Pinning
-setuptools below 81 preserves the parser's present dependency contract.
+The old twitter-text `pkg_resources` deprecation and setuptools compatibility
+pin have been removed. The vendored MIT implementation and Unicode emoji data
+are checked as part of wheel verification. Future Unicode/X-weight updates
+remain a maintenance obligation.
 
 The cleanup consolidates six source-test modules into two and removes 65 repeated
 cases from the 972-case baseline. All institution parser contracts and distinct
@@ -91,23 +99,23 @@ that remain active under Python `-O`; X reconciliation retains its input guard.
 
 ## Remaining acceptance requirements
 
-- Dependency audit reported setuptools 80.10.2 with two duplicate records for
-  [GHSA-h35f-9h28-mq5c](https://github.com/advisories/GHSA-h35f-9h28-mq5c).
-  The advisory concerns setuptools source-distribution exclusion matching on
-  normalization-preserving filesystems; the fix is setuptools 83. The current
-  twitter-text parser imports `pkg_resources`, requiring setuptools below 81.
-  This project builds with Hatchling and separately verifies archive contents,
-  so its current release build does not invoke the affected setuptools path.
-  The installed dependency remains flagged; replacing that compatibility
-  dependency is still open, and the audit is not reported as clean.
 - New recruitment cohorts, explicit reopening, source-refresh budget rotation
   and complete refreshed-versus-new discovery counters still require work.
   This pass preserves closure and does not automatically reopen a closed row.
 - Historical IDs, deduplication decisions, categories, dates, locations and
   feedback associations need a controlled reconciliation with reviewed backups.
   Existing stored outputs were not migrated or regenerated here.
-- Remaining network/cache/redirect and single-404 closure obligations, uncertain
-  Telegram delivery and callback-history retention need requirement-level closure.
+- HTTP cache 304 replay now preserves bodies, conditional requests require a
+  replayable body, robots decisions are keyed by origin, and a single 404 no
+  longer permanently closes a listing. Pending delivery defers ambiguous 404s
+  until independently confirmed after 24 hours. Remaining DNS/public-IP and
+  cross-origin redirect constraints need live and adversarial acceptance.
+- Telegram uncertain sends are held in `delivery-uncertain` rather than
+  automatically replayed. An operator must inspect the destination before using
+  `predoc-pipeline telegram-reconcile ID --message-id N`, or
+  `predoc-pipeline telegram-reconcile ID --confirmed-not-delivered`.
+  Callback replay identifiers are no longer truncated to the latest 500.
+  Ambiguous bot-command acknowledgements and real delivery remain to be proven.
 - X uncertainty requires verified remote reconciliation. Changed publication
   text fails the journal fingerprint check; changing publication mode/account
   scope starts a separate logical publication. Old unresolved attempts can
@@ -120,4 +128,4 @@ that remain active under Python `-O`; X reconciliation retains its input guard.
 The detailed outstanding audit remains in
 [the remediation ledger](review/2026-10-05/remediation-ledger.md) and
 [the dated remaining-work inventory](review/2026-10-05/remaining-work.md).
-Passing local checks do not close these requirements.
+Passing CI does not close these requirements or certify live publication.
