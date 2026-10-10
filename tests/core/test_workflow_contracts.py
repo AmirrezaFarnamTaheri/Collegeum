@@ -4,8 +4,8 @@ CI tests cannot exercise live tokens or GitHub Pages, but they can refuse to
 accept workflow edits that remove the critical safety/locking contracts.
 """
 
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
