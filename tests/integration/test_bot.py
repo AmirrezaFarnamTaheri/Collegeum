@@ -141,7 +141,7 @@ def test_telegram_server_outage_preserves_update_until_success(settings):
 
     fake = OutageTelegram([msg(77, '/help'), msg(78, '/help')])
     first = run_sync(settings, fake)
-    assert fake.rejected >= 2  # Exercise retries inside the actual Telegram client.
+    assert fake.rejected == 1  # A possibly accepted send is never blindly replayed.
     assert first['failed'] == 1 and first['commands'] == 0 and first['dropped'] == 0
     assert load_state(settings.telegram_state_path).get('offset', 0) <= 77
     fake.unavailable = False

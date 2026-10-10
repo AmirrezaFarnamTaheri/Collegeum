@@ -479,6 +479,16 @@ class Database:
             "start_date",
         )
         payload = {c: values.get(c) for c in columns}
+        # Explicit NULLs override SQLite column defaults. Supply required
+        # defaults to make minimal direct callers and recovery inserts valid.
+        required_defaults = {
+            "country": "", "is_remote": 0, "disciplines": "[]",
+            "visa_sponsorship_status": "unknown", "summary": "", "language": "en",
+            "model_confidence": 0.0, "rule_score": 0.0, "confidence": 0.0,
+        }
+        for column, default in required_defaults.items():
+            if payload[column] is None:
+                payload[column] = default
         payload["first_seen_at"] = payload["first_seen_at"] or now()
         payload["last_seen_at"] = payload["last_seen_at"] or payload["first_seen_at"]
         payload["status"] = payload["status"] or "pending"

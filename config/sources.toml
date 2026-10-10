@@ -850,7 +850,7 @@ url = "https://www.nhh.no/om-nhh/ledige-stillinger/"
 institution = "NHH Norwegian School of Economics"
 country = "Norway"
 may_be_empty = true
-selectors = { item = 'article.article:has(h2 a[href^="https://www.jobbnorge.no/ledige-stillinger/stilling/"])', title = "h2", link = 'h2 a[href^="https://www.jobbnorge.no/ledige-stillinger/stilling/"]' }
+selectors = { item = "article.article", title = "h2", link = 'h2 a[href^="https://www.jobbnorge.no/ledige-stillinger/stilling/"]' }
 note = "STAGED: official index discovery works, but production Jobbnorge detail extraction returned only 'Laster...' on 10 October 2026. Keep disabled until structured detail/PDF support is validated. Faculty/admin roles must still be rejected; programme-wide PhD dates must not create listings."
 
 [[board]]
@@ -950,7 +950,7 @@ url = "https://www.trin.cam.ac.uk/hr/vacancies/"
 institution = "Trinity College, University of Cambridge"
 country = "United Kingdom"
 may_be_empty = true
-selectors = { item = '.vc_gitem-post-data-source-post_title:has(h4 a[href^="https://www.trin.cam.ac.uk/vacancies/"])', title = "h4", link = 'h4 a[href^="https://www.trin.cam.ac.uk/vacancies/"]' }
+selectors = { item = ".vc_gitem-post-data-source-post_title", title = "h4", link = 'h4 a[href^="https://www.trin.cam.ac.uk/vacancies/"]' }
 note = "Official college HR vacancy cards only, excluding news/navigation and repeated More Info links. Current two roles are non-research and should fail role policy. Separate junior-research-fellowship competition page is not covered by this HR monitor."
 
 [[board]]

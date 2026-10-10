@@ -159,6 +159,35 @@ _JSONLD_BLOCK = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
+def _too_deep_json(text: str, max_nesting: int = 256) -> bool:
+    """Bound parser nesting consistently across Python and JSON decoder versions.
+
+    Brackets inside strings must not count as structure, and escaped quotes
+    must not end a string. Deep hostile JSON blocks are skipped individually.
+    """
+    depth = 0
+    quoted = False
+    escaped = False
+    for char in text:
+        if quoted:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quoted = False
+        elif char == '"':
+            quoted = True
+        elif char in "[{":
+            depth += 1
+            if depth > max_nesting:
+                return True
+        elif char in "]}":
+            depth -= 1
+    return False
+
+
+
 
 def _iter_jobpostings(
     payload: Any, *, issues: list[str] | None = None,
@@ -206,6 +235,8 @@ def _jobposting_items(
     postings: list[dict[str, Any]] = []
     for block in _JSONLD_BLOCK.findall(html or ""):
         try:
+            if _too_deep_json(block):
+                raise ValueError("JSON-LD nesting exceeds resource budget")
             postings.extend(_iter_jobpostings(json.loads(block), issues=diagnostics))
         except (ValueError, TypeError, RecursionError):
             diagnostics.append("invalid JSON-LD block")

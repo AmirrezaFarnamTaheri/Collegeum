@@ -83,17 +83,15 @@ class TestTelegramClient(unittest.TestCase):
         self.assertTrue(any(s >= 7 for s in sleeps))
 
     @respx_mock
-    def test_5xx_is_retried_then_succeeds(self):
+    def test_5xx_is_uncertain_and_not_replayed(self):
         route = respx.post("https://api.telegram.org/bottoken/sendMessage")
-        route.side_effect = [
-            httpx.Response(500, text="internal error"),
-            httpx.Response(200, json={"ok": True, "result": {"message_id": 3}}),
-        ]
+        route.mock(return_value=httpx.Response(500, text="internal error"))
         client = TelegramClient(bot_token="token")
         _, sleep_fn = _sleeps()
-        message_id = client.send_message(chat_id="@chan", html="hi", sleep=sleep_fn)
-        self.assertEqual(message_id, 3)
-        self.assertEqual(route.call_count, 2)
+        with self.assertRaises(TelegramError) as error:
+            client.send_message(chat_id="@chan", html="hi", sleep=sleep_fn)
+        self.assertTrue(error.exception.uncertain)
+        self.assertEqual(route.call_count, 1)
 
     @respx_mock
     def test_link_preview_options_and_legacy_field_both_sent(self):
