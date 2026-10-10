@@ -48,7 +48,7 @@ __all__ = [
     "Database",
 ]
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -140,6 +140,7 @@ CREATE TABLE IF NOT EXISTS http_cache (
   etag          TEXT,
   last_modified TEXT,
   body_hash     TEXT,
+  body          BLOB,
   fetched_at    TEXT NOT NULL,
   status        INTEGER NOT NULL DEFAULT 0
 );
@@ -252,6 +253,7 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("listings", "degree_note", "TEXT"),
     ("listings", "start_term", "TEXT"),
     ("listings", "start_date", "TEXT"),
+    ("http_cache", "body", "BLOB"),
 )
 
 
@@ -746,16 +748,19 @@ class Database:
         last_modified: str | None,
         body_hash: str | None,
         status: int,
+        body: bytes | None = None,
     ) -> None:
         with self.transaction():
             self.conn.execute(
                 "INSERT INTO http_cache(url_hash, url, etag, last_modified, body_hash, "
-                "fetched_at, status) VALUES(?,?,?,?,?,?,?) "
+                "body, fetched_at, status) VALUES(?,?,?,?,?,?,?,?) "
                 "ON CONFLICT(url_hash) DO UPDATE SET "
-                "  etag=excluded.etag, last_modified=excluded.last_modified,"
+                "  etag=COALESCE(excluded.etag, http_cache.etag),"
+                "  last_modified=COALESCE(excluded.last_modified, http_cache.last_modified),"
                 "  body_hash=COALESCE(excluded.body_hash, http_cache.body_hash),"
+                "  body=COALESCE(excluded.body, http_cache.body),"
                 "  fetched_at=excluded.fetched_at, status=excluded.status",
-                (url_hash, url, etag, last_modified, body_hash, now(), status),
+                (url_hash, url, etag, last_modified, body_hash, body, now(), status),
             )
 
     # -- DLQ and run log --------------------------------------------------
