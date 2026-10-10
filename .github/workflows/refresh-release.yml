@@ -11,7 +11,7 @@ on:
       - .github/workflows/refresh-release.yml
   workflow_dispatch:
 
-# Refresh checkpoint: all 930 tests, four lint fixes and strict typing fixes.
+# Refresh checkpoint: finalization documentation aligned to verified CI.
 
 permissions:
   contents: write
