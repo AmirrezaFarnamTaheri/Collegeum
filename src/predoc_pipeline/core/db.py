@@ -263,6 +263,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
             row[1] if isinstance(row, (tuple, list)) else row["name"]
             for row in conn.execute(f"PRAGMA table_info({table})")
         }
+        # Legacy tests and partially created caches may not have every table.
+        # Do not attempt ALTER TABLE against a table that does not exist.
+        if not have:
+            continue
         if column not in have:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {kind}")
 
