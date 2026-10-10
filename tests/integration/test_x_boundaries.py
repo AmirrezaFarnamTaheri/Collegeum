@@ -3,7 +3,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-from twitter_text import extract_emojis_with_indices, parse_tweet
 
 from predoc_pipeline.models import Discipline, Location, PredocListing, VisaStatus
 from predoc_pipeline.publish.x import (
@@ -14,6 +13,7 @@ from predoc_pipeline.publish.x import (
     format_tweet,
     tweet_length,
 )
+from twitter_text import extract_emojis_with_indices, parse_tweet
 
 
 def example(**overrides):

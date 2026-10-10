@@ -453,7 +453,7 @@ class TelegramClient:
         url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
         last: TelegramError | None = None
 
-        for attempt in range(self.max_attempts):
+        for _attempt in range(self.max_attempts):
             self._pace(chat_id, sleep=sleep)
             try:
                 response = self.client.post(url, json=payload)  # type: ignore[union-attr]

@@ -19,7 +19,9 @@ def test_replayed_304_includes_body_and_is_not_skipped(tmp_path):
     path = tmp_path / "cache.sqlite3"
     init(path)
     with Database(path) as db, httpx.Client(transport=httpx.MockTransport(handler)) as client:
-        fetcher = PoliteClient(user_agent="Collegeum", client=client, store=db, respect_robots=False)
+        fetcher = PoliteClient(
+            user_agent="Collegeum", client=client, store=db, respect_robots=False,
+        )
         first = fetcher.get("https://example.org/jobs", sleep=lambda _: None)
         second = fetcher.get("https://example.org/jobs", sleep=lambda _: None)
         assert first.ok and not first.skipped

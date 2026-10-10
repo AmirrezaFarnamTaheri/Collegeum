@@ -29,9 +29,9 @@ import json
 import logging
 import sqlite3
 import threading
-from datetime import datetime, timedelta
 from collections.abc import Iterator, Sequence
 from contextlib import closing, contextmanager
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
@@ -49,7 +49,7 @@ __all__ = [
     "Database",
 ]
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
