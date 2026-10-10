@@ -25,6 +25,7 @@ a firewall rule.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlsplit
@@ -36,6 +37,7 @@ from ..core.urls import content_hash, registrable_host, url_hash
 from ..logging_setup import get_logger
 
 log = get_logger(__name__)
+MAX_CACHED_BODY_BYTES = 1_000_000
 
 __all__ = ["FetchResult", "PoliteClient"]
 
@@ -102,12 +104,14 @@ class PoliteClient:
 
     # -- robots -----------------------------------------------------------
     def _robots_for(self, url: str) -> RobotFileParser | None:
-        host = registrable_host(url)
-        if host in self._robots:
-            return self._robots[host]
-        parser: RobotFileParser | None = None
         parts = urlsplit(url)
-        robots_url = f"{parts.scheme}://{parts.netloc}/robots.txt"
+        # Robots policies are origin-scoped, not registrable-host scoped.
+        # Different schemes and ports can serve different robots.txt files.
+        origin = f"{parts.scheme.lower()}://{parts.netloc.lower()}"
+        if origin in self._robots:
+            return self._robots[origin]
+        parser: RobotFileParser | None = None
+        robots_url = f"{origin}/robots.txt"
         try:
             response = self.client.get(robots_url, timeout=10.0)  # type: ignore[union-attr]
             if response.status_code == 200:
@@ -115,7 +119,7 @@ class PoliteClient:
                 parser.parse(response.text.splitlines())
         except Exception:
             parser = None  # unreachable robots.txt is treated as "no rules"
-        self._robots[host] = parser
+        self._robots[origin] = parser
         return parser
 
     def allowed(self, url: str) -> bool:
@@ -130,7 +134,7 @@ class PoliteClient:
             return True
 
     # -- pacing -----------------------------------------------------------
-    def _pace(self, url: str, sleep=time.sleep) -> None:
+    def _pace(self, url: str, sleep: Callable[[float], None] = time.sleep) -> None:
         host = registrable_host(url)
         elapsed = time.monotonic() - self._last_request.get(host, 0.0)
         if elapsed < self.per_host_delay:
@@ -138,7 +142,10 @@ class PoliteClient:
         self._last_request[host] = time.monotonic()
 
     # -- fetching ---------------------------------------------------------
-    def get(self, url: str, *, use_cache: bool = True, sleep=time.sleep) -> FetchResult:
+    def get(
+        self, url: str, *, use_cache: bool = True,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> FetchResult:
         """Fetch a URL, returning a result object rather than raising."""
         if not self.allowed(url):
             return FetchResult(url=url, status=999, error="blocked by robots.txt")
@@ -148,7 +155,9 @@ class PoliteClient:
         cached = None
         if use_cache and self.store is not None:
             cached = self.store.http_cache_get(key)
-            if cached is not None:
+            # An ETag alone is not a replayable cache. Only send conditional
+            # headers if the original body is actually available for parsing.
+            if cached is not None and cached["body"] is not None:
                 if cached["etag"]:
                     headers["If-None-Match"] = cached["etag"]
                 if cached["last_modified"]:
@@ -161,8 +170,16 @@ class PoliteClient:
             return FetchResult(url=url, status=0, error=f"transport: {exc}")
 
         if response.status_code == 304:
+            if cached is None or cached["body"] is None:
+                # 304 with no replayable body cannot count as a successful
+                # collection; the original content might never be processed.
+                return FetchResult(url=url, status=0, error="304 without cached body")
+            body = bytes(cached["body"])
             self._remember(key, url, response, body_hash=None)
-            return FetchResult(url=url, status=304, from_cache=True, unchanged=True)
+            return FetchResult(
+                url=url, status=200, text=body.decode("utf-8", errors="replace"),
+                content=body, from_cache=True,
+            )
 
         if response.status_code != 200:
             self._remember(key, url, response, body_hash=None)
@@ -172,14 +189,11 @@ class PoliteClient:
 
         text = response.text
         digest = content_hash(text)
-        unchanged = bool(cached is not None and cached["body_hash"] == digest)
+        # Identical bytes do not imply that all previously discovered jobs
+        # reached gating/extraction. Replay every readable response.
         self._remember(key, url, response, body_hash=digest)
         return FetchResult(
-            url=url,
-            status=200,
-            text=text,
-            content=response.content,
-            unchanged=unchanged,
+            url=url, status=200, text=text, content=response.content,
         )
 
     def _remember(
@@ -195,6 +209,9 @@ class PoliteClient:
                 last_modified=response.headers.get("last-modified"),
                 body_hash=body_hash,
                 status=response.status_code,
+                body=(response.text.encode("utf-8")
+                      if response.status_code == 200
+                      and len(response.content) <= MAX_CACHED_BODY_BYTES else None),
             )
         except Exception as exc:  # pragma: no cover - cache is advisory
             log.debug("Failed to record http cache metadata for %s: %s", url, exc)

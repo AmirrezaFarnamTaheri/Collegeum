@@ -1,5 +1,5 @@
 .PHONY: install install-dev test test-core test-integration smoke lint typecheck \
-        verify-sources dashboard run vacuum single-file clean
+        verify-sources dashboard run vacuum single-file verify-single-file clean
 
 PY := python3
 
@@ -52,6 +52,9 @@ vacuum:
 # Regenerate the single-file materializer (compile_project.py) from src/.
 single-file:
 	$(PY) tools/build_single_file.py
+
+verify-single-file:
+	$(PY) tools/verify_single_file.py
 
 clean:
 	find . -name '__pycache__' -exec rm -rf {} +

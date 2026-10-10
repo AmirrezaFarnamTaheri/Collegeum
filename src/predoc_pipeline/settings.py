@@ -116,6 +116,9 @@ class Settings(BaseSettings):
     seen_state_path: str = "data/seen.ndjson"
     # Your ✅ ❌ 📝 marks from Telegram, and the bot's update offset.
     feedback_path: str = "data/feedback.json"
+    # Fernet key (``predoc-pipeline feedback-key``). When set, marks are stored only
+    # as data/feedback.enc, which is safe to commit; without it they stay local.
+    feedback_encryption_key: str = ""
     telegram_state_path: str = "data/telegram_state.json"
 
     # -- Classification ---------------------------------------------------
@@ -153,12 +156,17 @@ class Settings(BaseSettings):
 
     # -- X (Twitter) Integration ------------------------------------------
     x_broadcast_enabled: bool = True
+    x_retry_limit: int = Field(20, ge=0, description="Existing web listings retried on X per run")
     x_bearer_token: str = ""
     xquik_api_key: str = ""
     x_consumer_key: str = ""
     x_consumer_secret: str = ""
     x_access_token: str = ""
     x_access_token_secret: str = ""
+    x_thread_journal_path: str = 'data/x_threads.sqlite3'
+    x_publication_scope: str = Field(
+        '', description='Stable X account identifier for recovery across credential rotation',
+    )
     twitter_search_accounts: list[str] = Field(
         default_factory=lambda: ["econ_RA", "predoc_org"]
     )

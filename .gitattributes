@@ -1,0 +1,2 @@
+# Captured publisher HTML retains its original trailing whitespace as fixture evidence.
+tests/fixtures/boards/**/*.html whitespace=-blank-at-eol

@@ -4,43 +4,20 @@ from __future__ import annotations
 import hashlib
 import re
 import unicodedata
-from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
+from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
+
+from ...core.identity import INSTITUTION_ALIASES as INSTITUTION_ALIASES
+from ...core.identity import normalize_institution as normalize_institution
+from ...core.urls import TRACKING_PARAMS as TRACKING_PARAMS
+from ...core.urls import canonicalize_url
 
 _WS = re.compile(r"\s+")
 _PUNCT = re.compile(r"[^\w\s]", re.UNICODE)
 # Gender / boilerplate suffixes common on European boards: (m/f/d), (w/m/d), (f/m/x) ...
 _GENDER_TAG = re.compile(r"\((?:[mwfdx]\s*/\s*){1,3}[mwfdx]\)", re.IGNORECASE)
-_LINKEDIN_JOB_ID_RX = re.compile(r"(\d{6,})")
-
-TRACKING_PARAMS = {
-    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id",
-    "gclid", "fbclid", "mc_cid", "mc_eid", "ref", "refid", "trk", "trackingid",
-    "position", "pagenum", "src", "source", "sessionid",
-}
-
-INSTITUTION_ALIASES = {
-    "lse": "london school of economics and political science",
-    "london school of economics": "london school of economics and political science",
-    "ucl": "university college london",
-    "lbs": "london business school",
-    "sse": "stockholm school of economics",
-    "ucph": "university of copenhagen",
-    "ku": "university of copenhagen",
-    "upf": "universitat pompeu fabra",
-    "bse": "barcelona school of economics",
-    "ubc": "university of british columbia",
-    "uoft": "university of toronto",
-    "u of t": "university of toronto",
-    "eui": "european university institute",
-    "tse": "toulouse school of economics",
-    "pse": "paris school of economics",
-    "ifs": "institute for fiscal studies",
-    "ecb": "european central bank",
-}
-
-_STOP = {"the", "of", "and", "for", "in", "at", "a", "an", "de", "la", "le", "du"}
+_LINKEDIN_JOB_ID_RX = re.compile(r"/jobs/view/(?:[^/?#]*-)?(\d{6,})(?:/|$)")
 
 
 def clean_ws(text: str | None) -> str:
@@ -59,30 +36,21 @@ def normalize_title(title: str) -> str:
     return _WS.sub(" ", t).strip()
 
 
-def normalize_institution(name: str | None) -> str:
-    n = clean_ws(name).lower()
-    n = INSTITUTION_ALIASES.get(n, n)
-    n = _PUNCT.sub(" ", n)
-    words = [w for w in n.split() if w not in _STOP]
-    return " ".join(words)
-
 
 def canonical_url(url: str) -> str:
-    """Strip fragments/tracking params so the same posting hashes identically."""
+    """Normalise posting URLs while retaining functional IDs and clickable hosts."""
     url = clean_ws(url)
     if not url:
         return url
     parts = urlsplit(url)
-    query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
-             if k.lower() not in TRACKING_PARAMS]
-    host = parts.netloc.lower()
-    path = parts.path.rstrip("/") or "/"
+    host = (parts.hostname or "").lower()
+    path = parts.path
     # LinkedIn: /jobs/view/<slug>-<id> -> /jobs/view/<id>
-    if "linkedin.com" in host:
+    if host == "linkedin.com" or host.endswith(".linkedin.com"):
         m = _LINKEDIN_JOB_ID_RX.search(path)
-        if m and "/jobs/view" in path:
+        if m:
             return f"https://www.linkedin.com/jobs/view/{m.group(1)}"
-    return urlunsplit((parts.scheme.lower() or "https", host, path, urlencode(query), ""))
+    return canonicalize_url(url, preserve_www=True)
 
 
 def absolutize(base: str, href: str) -> str:

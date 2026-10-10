@@ -1,0 +1,80 @@
+{
+  "F52_output_contract_incomplete": {
+    "json_mode": true,
+    "json_instruction": false,
+    "anthropic_keys": [
+      "max_tokens",
+      "messages",
+      "model",
+      "system",
+      "temperature"
+    ]
+  },
+  "F53_employer_substring_routing": {
+    "institution": "University of Naples Federico II",
+    "sector": "institutional",
+    "channel": "web"
+  },
+  "F54_boilerplate_discipline_tags": [
+    "International Trade",
+    "Environmental and Energy Economics",
+    "Law and Economics"
+  ],
+  "F55_pi_field_boundary": "Amanda Gilmore Sponsoring",
+  "F56_geography_homonyms": {
+    "Durham, NC": [
+      "United Kingdom",
+      "UK"
+    ],
+    "York University": [
+      "United Kingdom",
+      "UK"
+    ],
+    "Kent State University": [
+      "United Kingdom",
+      "UK"
+    ],
+    "Hong Kong": [
+      "Other",
+      "Other"
+    ]
+  },
+  "F57_doctoral_role_defaults_to_predoc": "predoc",
+  "F58_salary_locale_and_currency": {
+    "european": [
+      3.7761,
+      3.7761,
+      "EUR",
+      "month"
+    ],
+    "canadian": [
+      60000,
+      60000,
+      "USD",
+      "year"
+    ]
+  },
+  "F59_zero_width_survives_normalization": {
+    "hashes_differ": true
+  },
+  "F63_generic_summary_invents_duties": "Research assistant position at Example University. The role involves supporting empirical research projects and academic coursework, suitable for candidates preparing for doctoral studies.",
+  "F49_post_extraction_ignores_allowance": {
+    "approved_extraction_discarded": true,
+    "reasons": {
+      "title:phd-studentship": 1
+    }
+  },
+  "F64_single_404_stops_future_verification": {
+    "first_reason": "link no longer works (HTTP 404)",
+    "later_requests": 0
+  },
+  "F61_replayed_identical_callback_undoes_mark": {
+    "after_replay": null
+  },
+  "F65_restored_signature_differs": 0.5078125,
+  "F66_memo_key_selects_local_chat_api": {
+    "base_url": "http://localhost:8000/v1",
+    "path": "/chat/completions"
+  },
+  "F22_tracking_identifier_collision": true
+}

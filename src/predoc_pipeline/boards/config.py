@@ -15,6 +15,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..ingest.registry import read_registry
+
 _ENV = re.compile(r"\$\{([A-Z0-9_]+)(?::-([^}]*))?\}")
 
 
@@ -70,21 +72,23 @@ class FilterConfig(BaseModel):
 
 
 class EnrichConfig(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
     fetch_details: bool = True
-    max_details_per_run: int = 500
-    detail_concurrency: int = 6
+    max_details_per_run: int = Field(500, ge=0)
+    detail_concurrency: int = Field(6, gt=0)
     recheck_open_jobs: bool = True
-    recheck_every_days: float = 3
-    recheck_max_per_run: int = 40
+    recheck_every_days: float = Field(3, ge=0, allow_inf_nan=False)
+    recheck_max_per_run: int = Field(40, ge=0)
 
 
 class HttpConfig(BaseModel):
-    timeout: float = 30.0
-    max_retries: int = 3
-    backoff_base: float = 2.0
-    default_min_interval: float = 1.5
-    max_concurrent_sources: int = 6
-    source_timeout: float = 300.0
+    model_config = ConfigDict(validate_assignment=True)
+    timeout: float = Field(30.0, gt=0, allow_inf_nan=False)
+    max_retries: int = Field(3, ge=0)
+    backoff_base: float = Field(2.0, ge=0, allow_inf_nan=False)
+    default_min_interval: float = Field(1.5, ge=0, allow_inf_nan=False)
+    max_concurrent_sources: int = Field(6, gt=0)
+    source_timeout: float = Field(300.0, gt=0, allow_inf_nan=False)
     user_agents: list[str] = Field(default_factory=list)
 
 
@@ -124,9 +128,8 @@ def load_preferences(path: str | Path) -> Preferences:
 
 def load_board_sources(path: str | Path) -> list[SourceConfig]:
     """Read every ``[[board]]`` table from ``config/sources.toml``."""
-    file = Path(path)
-    if not file.exists():
-        return []
-    with file.open("rb") as handle:
-        raw = tomllib.load(handle)
-    return [SourceConfig.model_validate(_interpolate(entry)) for entry in raw.get("board", [])]
+    raw = read_registry(path)
+    # Registry identities are already resolved and validated across collector kinds.
+    # Do not interpolate them twice if an environment value contains another template.
+    return [SourceConfig.model_validate({**_interpolate(entry), "name": entry["name"]})
+            for entry in raw.get("board", [])]

@@ -165,13 +165,13 @@ class TestXClient(unittest.TestCase):
                 {
                     "id": "111",
                     "text": "We are hiring a predoc! Apply here: https://t.co/xyz",
-                    "author_id": "u1",
+                    "author_id": "1001",
                     "entities": {
                         "urls": [{"url": "https://t.co/xyz", "expanded_url": "https://jobs.example.org/predoc"}]
                     },
                 }
             ],
-            "includes": {"users": [{"id": "u1", "username": "econ_RA", "name": "Econ RA"}]},
+            "includes": {"users": [{"id": "1001", "username": "econ_RA", "name": "Econ RA"}]},
         }
         mock_http.get.return_value = mock_resp
 

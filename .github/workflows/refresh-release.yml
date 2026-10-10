@@ -1,0 +1,58 @@
+name: refresh-release
+
+# Maintainer-only artifact regeneration for this remediation branch.
+# Run with workflow_dispatch for a later refresh. This workflow never deploys
+# or publishes; CI independently checks the committed generated manifest.
+on:
+  push:
+    branches:
+      - codex/finalize-sources-and-pipeline
+    paths:
+      - .github/workflows/refresh-release.yml
+  workflow_dispatch:
+
+# Refresh checkpoint: finalization documentation aligned to verified CI.
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collegeum-release-refresh-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    if: github.repository == 'AmirrezaFarnamTaheri/Collegeum' && github.ref == 'refs/heads/codex/finalize-sources-and-pipeline'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install lockfile generator
+        run: python -m pip install uv
+      - name: Resolve dependencies from current project
+        run: uv lock
+      - name: Rebuild reproducible project distribution
+        run: |
+          python tools/build_single_file.py
+          python -S tools/verify_single_file.py
+      - name: Commit generated artifacts to the existing PR branch
+        run: |
+          set -eu
+          git config user.name 'collegeum-release-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -- uv.lock compile_project.py
+          if git diff --cached --quiet; then
+            echo 'Generated artifacts already current'
+            exit 0
+          fi
+          git commit -m 'chore: synchronize locked dependencies and reproducible distribution [skip ci]'
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Verify committed distribution
+        run: python -S tools/verify_single_file.py

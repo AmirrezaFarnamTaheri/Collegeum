@@ -8,6 +8,10 @@ the same normalisation, and the tests assert they agree on a fixture set.
 
 from __future__ import annotations
 
+from types import ModuleType
+
+_rf: ModuleType | None
+
 __all__ = ["token_sort_ratio", "ratio", "BACKEND"]
 
 try:  # pragma: no cover - depends on environment

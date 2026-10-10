@@ -1,8 +1,8 @@
-# predoc-not-org
+# Collegeum
 
-[![CI](https://github.com/AmirrezaFarnamTaheri/predoc-not-org/actions/workflows/ci.yml/badge.svg)](https://github.com/AmirrezaFarnamTaheri/predoc-not-org/actions/workflows/ci.yml)
-[![GitHub Pages](https://github.com/AmirrezaFarnamTaheri/predoc-not-org/actions/workflows/pages.yml/badge.svg)](https://amirrezafarnamtaheri.github.io/predoc-not-org/)
-[![Dashboard](https://img.shields.io/badge/Live_Dashboard-GitHub_Pages-blue)](https://amirrezafarnamtaheri.github.io/predoc-not-org/)
+[![CI](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/workflows/ci.yml/badge.svg)](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/workflows/ci.yml)
+[![GitHub Pages](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/workflows/pages.yml/badge.svg)](https://amirrezafarnamtaheri.github.io/Collegeum/)
+[![Dashboard](https://img.shields.io/badge/Live_Dashboard-GitHub_Pages-blue)](https://amirrezafarnamtaheri.github.io/Collegeum/)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 
 An automated pipeline that discovers, deduplicates, and broadcasts
@@ -11,7 +11,7 @@ openings in economics, finance, public policy, and quantitative social
 science across the UK, Europe, Canada, the US, and international research
 institutions to Telegram and X/Twitter daily, at zero dollar cost.
 
-🌐 **Live Web Dashboard:** [https://amirrezafarnamtaheri.github.io/predoc-not-org](https://amirrezafarnamtaheri.github.io/predoc-not-org)
+🌐 **Live Web Dashboard:** [https://amirrezafarnamtaheri.github.io/Collegeum](https://amirrezafarnamtaheri.github.io/Collegeum)
 
 The pipeline monitors academic job boards (PREDOC.org, EconJobMarket, European
 Job Market, jobs.ac.uk, EURAXESS, SOMMA, academics.de), university applicant
@@ -30,6 +30,8 @@ extraction subject to the same policy rules.
 
 **Getting Started:** Read `SETUP_GUIDE.md` for deployment instructions.
 **Recent Updates:** See `CHANGES.md` for release history and architecture changes.
+**Current readiness:** See [FINALIZATION.md](FINALIZATION.md) for verified local
+changes, source coverage and the requirements still blocking full acceptance.
 **Technical Details:** Consult `ARCHITECTURE.md` for design trade-offs,
 `COMPLIANCE.md` before enabling external scrapers, `REVIEW.md` for the defect
 register, and `OPERATIONS.md` for production runbooks.
@@ -47,7 +49,7 @@ cp .env.example .env
 
 predoc-pipeline init             # initialize local database and directories
 predoc-pipeline smoke            # offline sanity check (tests gating & models)
-predoc-pipeline sources verify   # verify reachability of enabled sources
+predoc-pipeline sources verify   # exercise discovery/parsing for enabled sources
 predoc-pipeline run --dry-run    # ingest and gate without calling models or broadcasting
 predoc-pipeline run --only cemfi,predoc_org   # run specific job boards
 predoc-pipeline run              # execute full cycle: ingest, gate, extract, dedupe, broadcast
@@ -63,10 +65,16 @@ predoc-pipeline vacuum           # prune dead-letter/seen rows and compact the d
 
 For a scheduled, hosted setup add `TELEGRAM_BOT_TOKEN` and
 `TELEGRAM_PUBLIC_CHANNEL_ID` (your own chat id, for a personal bot) as
-repository secrets. `.github/workflows/pipeline.yml` runs daily at 04:00 UTC
-and `.github/workflows/telegram.yml` answers commands every 30 minutes. The
+repository secrets. `.github/workflows/pipeline.yml` runs every six hours
+(00:00, 06:00, 12:00 and 18:00 UTC),
+and `.github/workflows/telegram.yml` checks commands at its configured half-hour
+slots. Both workflows share a serial queue with multiple waiting runs enabled;
+[GitHub permits up to 100 waiting runs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+in that concurrency group. The
 dashboard (`pages.yml`) is optional: it needs a public repository on the Free
-plan and the repository variable `ENABLE_PAGES=true`.
+plan and the repository variable `ENABLE_PAGES=true`. This switch applies to
+pushes, completed pipeline/bot runs and manual dashboard deployment alike;
+leaving it unset or setting it to `false` disables the deployment job.
 
 ### What you get, and how to change it
 
@@ -75,6 +83,18 @@ Europe, Canada, US, Other), academic and research fields, employer classificatio
 patterns, position types (predoc, PhD, postdoc), and deadline expiry rules.
 `config/sources.toml` lists the sources: `[[board]]` entries are active by
 default, while `[[feed]]` and `[[portal]]` entries serve as configured templates.
+
+The [10 October source validation record](review/2026-10-10/source-expansion.md)
+documents the enabled Nuffield, CREST and ESSEC additions and the staged NHH
+source. The [second expansion batch](review/2026-10-10/source-expansion-batch2.md)
+adds Warwick, the Bank of Canada and Sciences Po with live discovery/detail
+evidence and explicit coverage limits. Discovery counts are separate from eligible
+vacancies and healthy coverage.
+
+The [institution coverage investigation](review/2026-10-10/institution-expansion.md)
+adds seven further official pages, including Aarhus, Gothenburg, Umeå, Linköping,
+Duke, Trinity College Cambridge and Bruegel. It records working discovery/detail
+contracts and the blocked candidate backlog separately.
 
 ### Feed and portal templates
 

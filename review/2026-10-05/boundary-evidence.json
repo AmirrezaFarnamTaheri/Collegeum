@@ -1,0 +1,55 @@
+{
+  "F39_card_budget_breaks_entities": "not well-formed (invalid token): line 10, column 3873",
+  "F40_digest_exceeds_message_limit": {
+    "pages": 1,
+    "characters": 7356
+  },
+  "F43_partial_thread_loses_created_id": {
+    "calls": 2,
+    "recoverable_ids_on_error": false
+  },
+  "F44_corrupt_personal_state_overwritten": {
+    "marks": {
+      "marks": {}
+    },
+    "cursor": {}
+  },
+  "F44_valid_json_wrong_shape_crashes": "'NoneType' object has no attribute 'items'",
+  "F45_partial_restore_erases_bad_line": {
+    "original_lines": 2,
+    "rewritten_lines": 1
+  },
+  "F41_rss_forbidden_control_character": "not well-formed (invalid token): line 15, column 95",
+  "F46_unprocessed_feed_items_not_replayed": {
+    "first_items": 1,
+    "retry_items": 0,
+    "retry_unchanged": 1
+  },
+  "F47_case_sensitive_link_change_hidden": {
+    "changed_items": 0,
+    "marked_unchanged": 1
+  },
+  "F42_formula_survives_csv_quoting": "\"=1+1\"",
+  "F48_source_budget_exceeds_workflow_deadline": {
+    "enabled": 69,
+    "concurrent": 12,
+    "source_timeout_seconds": 600,
+    "source_stage_worst_case_seconds": 3600,
+    "workflow_timeout_seconds": 2400
+  },
+  "F49_policy_changes_not_propagated_to_extraction": {
+    "gate_passed": true,
+    "feed_extraction": false,
+    "board_extraction": true,
+    "feed_rejection": "not_a_vacancy"
+  },
+  "F50_explicit_month_first_deadline_ignored": {
+    "expected": "2027-03-04",
+    "parsed": "2027-04-03"
+  },
+  "F51_pagination_cap_has_no_partial_signal": {
+    "advertised_total": 61,
+    "returned": 60,
+    "reported_count": 60
+  }
+}

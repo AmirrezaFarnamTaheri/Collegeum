@@ -17,7 +17,7 @@ REF = date(2026, 9, 24)
     ("Deadline: 20th April 2027", date(2027, 4, 20)),
     ("Closing date: 01 Oct", date(2026, 10, 1)),
     ("Application deadline: 31.10.2026", date(2026, 10, 31)),
-    ("Deadline: First review date October 7, 2026, then rolling", date(2026, 10, 7)),
+    ("Deadline: First review date October 7, 2026, then rolling", None),
     ("Applications close on 15 November 2026.", date(2026, 11, 15)),
     ("Closes: 28th November 2026", date(2026, 11, 28)),
     ("Last application date 2026-10-15", date(2026, 10, 15)),

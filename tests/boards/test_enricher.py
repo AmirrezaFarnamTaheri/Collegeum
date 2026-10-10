@@ -129,11 +129,14 @@ def _wd_transport(api_json=None, status=200):
     ({"jobPostingInfo": {"title": "RA", "canApply": True, "endDate": "2026-09-01"}}, 200, "posting ended"),
     ({}, 404, "HTTP 404"),
 ])
-def test_workday_links_are_checked_through_the_api(api, status, closed):
+def test_workday_links_are_checked_through_the_api(api, status, closed, monkeypatch):
     import asyncio
+    from datetime import date
 
     from predoc_pipeline.boards.heuristics import _GenericOpenerForTests, check_still_open
     from predoc_pipeline.boards.http import HttpClient
+    monkeypatch.setattr("predoc_pipeline.boards.scrapers.university_ats.today", lambda: date(2026, 10, 5))
+    monkeypatch.setattr("predoc_pipeline.boards.utils.dates.today", lambda: date(2026, 10, 5))
     http = HttpClient(transport=_wd_transport(api, status), default_min_interval=0, max_retries=0)
     p = JobPostSchema(title="Research Assistant (Pre-Doc Intern)", url="https://bit.ly/3VuuwHD", source="predoc_org")
     reason = asyncio.run(check_still_open(_GenericOpenerForTests(http), p))

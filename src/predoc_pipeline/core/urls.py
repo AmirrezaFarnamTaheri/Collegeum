@@ -9,9 +9,9 @@ to w3lib.
 Canonical form:
   * scheme and host lowercased, default ports dropped
   * a ``www.`` prefix dropped when a real subdomain remains
-  * fragment dropped
-  * tracking and session parameters dropped (see TRACKING_PARAMS)
-  * remaining query parameters sorted by (key, value)
+  * ordinary anchor fragments dropped; SPA route fragments preserved
+  * established analytics parameters dropped (see TRACKING_PARAMS)
+  * remaining query keys sorted, with repeated-key value order preserved
   * percent-encoding normalised; unreserved characters decoded
   * trailing slash dropped from non-root paths
   * IDN hosts normalised to punycode
@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from urllib.parse import parse_qsl, quote, unquote, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote, urlsplit, urlunsplit
 
 __all__ = [
     "TRACKING_PARAMS",
@@ -46,14 +46,9 @@ TRACKING_PARAMS: frozenset[str] = frozenset(
         # newsletter and CRM
         "mc_cid", "mc_eid", "mkt_tok", "_hsenc", "_hsmi", "hsctatracking",
         "vero_id", "vero_conv", "ck_subscriber_id",
-        # job boards
-        "refid", "ref", "referer", "referrer", "trackingid", "trk",
-        "trkcampaign", "trackid", "src", "source", "originalsubdomain",
-        "recommendedflavour", "eboid", "sponsored", "campaignid",
-        "jobsearchtype", "savedsearchid",
-        # sessions
-        "sessionid", "sid", "phpsessid", "jsessionid", "aspsessionid",
-        "_ga", "_gl", "cmpid", "cid",
+        # Names such as position, cid, sid, ref, source and sessionid may be
+        # functional identifiers. Only established analytics names are global.
+        "_ga", "_gl",
     }
 )
 
@@ -63,10 +58,19 @@ _UNRESERVED_SAFE = "-._~"
 
 def _normalise_pct(value: str, safe: str) -> str:
     """Decode unreserved escapes, then re-encode to one canonical spelling."""
-    return quote(unquote(value), safe=safe + _UNRESERVED_SAFE)
+    pieces = []
+    for part in re.split(r"(%[0-9a-fA-F]{2})", value):
+        if re.fullmatch(r"%[0-9a-fA-F]{2}", part):
+            character = chr(int(part[1:], 16))
+            pieces.append(character if character in (
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" + _UNRESERVED_SAFE
+            ) else part.upper())
+        else:
+            pieces.append(quote(part, safe=safe + _UNRESERVED_SAFE))
+    return "".join(pieces)
 
 
-def _normalise_host(host: str) -> str:
+def _normalise_host(host: str, *, strip_www: bool = True) -> str:
     host = host.strip().rstrip(".").lower()
     if not host:
         return ""
@@ -74,12 +78,14 @@ def _normalise_host(host: str) -> str:
         host = host.encode("idna").decode("ascii")
     except (UnicodeError, UnicodeDecodeError):
         pass  # a malformed host is data to record, not a reason to raise
-    if host.startswith("www.") and host.count(".") >= 2:
+    if strip_www and host.startswith("www.") and host.count(".") >= 2:
         host = host[4:]
     return host
 
 
-def canonicalize_url(url: str, *, drop_tracking: bool = True) -> str:
+def canonicalize_url(
+    url: str, *, drop_tracking: bool = True, preserve_www: bool = False
+) -> str:
     """Return a stable canonical spelling of ``url``.
 
     Unparseable input is returned stripped rather than raising.
@@ -98,7 +104,7 @@ def canonicalize_url(url: str, *, drop_tracking: bool = True) -> str:
         return raw
 
     scheme = (parts.scheme or "https").lower()
-    host = _normalise_host(host_raw)
+    host = _normalise_host(host_raw, strip_www=not preserve_www)
     if port is not None and str(port) == _DEFAULT_PORTS.get(scheme, ""):
         port = None
 
@@ -111,29 +117,33 @@ def canonicalize_url(url: str, *, drop_tracking: bool = True) -> str:
     if port is not None:
         netloc = f"{netloc}:{port}"
 
-    path = _normalise_pct(parts.path or "/", safe="/")
+    path = _normalise_pct(parts.path or "/", safe="/:@!$&'()*+,;=")
     if len(path) > 1 and path.endswith("/"):
         path = path.rstrip("/") or "/"
 
-    pairs = parse_qsl(parts.query, keep_blank_values=True)
+    pairs = parse_qsl(parts.query, keep_blank_values=True, errors="surrogateescape")
     if drop_tracking:
         pairs = [(k, v) for k, v in pairs if k.lower() not in TRACKING_PARAMS]
-    pairs.sort(key=lambda kv: (kv[0], kv[1]))
+    # Different keys can be ordered; repeated values of one key retain order.
+    pairs.sort(key=lambda kv: kv[0])
     query = "&".join(
-        f"{_normalise_pct(k, safe='')}={_normalise_pct(v, safe='')}" for k, v in pairs
+        f"{quote(k, safe=_UNRESERVED_SAFE, errors='surrogateescape')}="
+        f"{quote(v, safe=_UNRESERVED_SAFE, errors='surrogateescape')}" for k, v in pairs
     )
 
-    return urlunsplit((scheme, netloc, path, query, ""))
+    fragment = _normalise_pct(parts.fragment, safe="/!:@?=&") if (
+        parts.fragment.startswith(("/", "!/"))
+    ) else ""
+    return urlunsplit((scheme, netloc, path, query, fragment))
 
 
 def clean_url(url: str) -> str:
-    """A link safe to show and click: trimmed, with a scheme, without the #fragment.
+    """A link safe to show and click, preserving its functional original spelling.
 
     ``canonicalize_url`` is for *identity* (hashing, dedupe). It drops "www.",
-    trailing slashes and percent-encodes reserved characters -- fine for a
-    hash, but it can break the actual link: ``cemfi.es`` without "www." may not
-    resolve, and Varbi's ``/what:job/jobID:123`` path 404s as ``what%3Ajob``.
-    Links shown to people therefore keep their original spelling.
+    trailing slashes and normalises escape spelling. Links shown to people
+    retain their host and path spelling: ``cemfi.es`` without "www." may not
+    resolve. Ordinary anchors are dropped; SPA route fragments are retained.
     """
     raw = (url or "").strip()
     if not raw or raw.lower().startswith(("mailto:", "tel:", "javascript:", "data:")):
@@ -152,7 +162,10 @@ def clean_url(url: str) -> str:
     # characters and existing %XX escapes are left exactly as they were.
     path = quote(parts.path or "/", safe="/:@!$&'()*+,;=%~-._")
     query = quote(parts.query, safe="=&%/:?@!$'()*+,;~-._")
-    return urlunsplit((parts.scheme.lower(), parts.netloc, path, query, ""))
+    fragment = quote(parts.fragment, safe="/:?@!$&'()*+,;=%~-._") if (
+        parts.fragment.startswith(("/", "!/"))
+    ) else ""
+    return urlunsplit((parts.scheme.lower(), parts.netloc, path, query, fragment))
 
 
 def url_hash(url: str) -> str:
@@ -162,7 +175,9 @@ def url_hash(url: str) -> str:
 
 def content_hash(text: str) -> str:
     """SHA-256 of whitespace-normalised text. Detects unchanged re-fetches."""
-    normalised = " ".join((text or "").split()).lower()
+    from .textproc import squish
+
+    normalised = squish(text).lower()
     return hashlib.sha256(normalised.encode("utf-8")).hexdigest()
 
 

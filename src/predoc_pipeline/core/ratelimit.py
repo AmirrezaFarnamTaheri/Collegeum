@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
@@ -28,18 +29,17 @@ from typing import Any, Protocol
 __all__ = ["QuotaExceeded", "RateLimiter", "quota_day"]
 
 # America/Los_Angeles without a tzdata dependency: PST is UTC-8, PDT UTC-7.
-# Being an hour off at a DST boundary shifts the reset by an hour, which is
-# harmless; being eight hours off (UTC) is not.
+# Transition instants use UTC: 02:00 PST in March and 02:00 PDT in November.
 _PACIFIC_STANDARD_OFFSET = timedelta(hours=-8)
 _PACIFIC_DAYLIGHT_OFFSET = timedelta(hours=-7)
 
 
 def _pacific_offset(moment: datetime) -> timedelta:
-    """Rough US DST window: second Sunday in March to first Sunday in November."""
+    """Current US DST rule, with the actual transition hours."""
     year = moment.year
-    march = datetime(year, 3, 8, tzinfo=UTC)
+    march = datetime(year, 3, 8, 10, tzinfo=UTC)
     dst_start = march + timedelta(days=(6 - march.weekday()) % 7)
-    november = datetime(year, 11, 1, tzinfo=UTC)
+    november = datetime(year, 11, 1, 9, tzinfo=UTC)
     dst_end = november + timedelta(days=(6 - november.weekday()) % 7)
     return _PACIFIC_DAYLIGHT_OFFSET if dst_start <= moment < dst_end else _PACIFIC_STANDARD_OFFSET
 
@@ -49,7 +49,8 @@ def quota_day(moment: datetime | None = None) -> str:
     now = moment or datetime.now(UTC)
     if now.tzinfo is None:
         now = now.replace(tzinfo=UTC)
-    return (now.astimezone(UTC) + _pacific_offset(now)).strftime("%Y-%m-%d")
+    now = now.astimezone(UTC)
+    return (now + _pacific_offset(now)).strftime("%Y-%m-%d")
 
 
 class QuotaExceeded(RuntimeError):
@@ -58,7 +59,8 @@ class QuotaExceeded(RuntimeError):
 
 class _DailyCounter(Protocol):
     def llm_usage(self, day: str) -> tuple[int, int]: ...
-    def record_llm_call(self, day: str, *, tokens: int = 0, error: bool = False) -> int: ...
+    def reserve_llm_call(self, day: str, budget: int) -> bool: ...
+    def record_llm_result(self, day: str, *, tokens: int = 0, error: bool = False) -> None: ...
 
 
 @dataclass(slots=True)
@@ -72,9 +74,14 @@ class RateLimiter:
     _allowance: float = 0.0
     _last_check: float = 0.0
     _local_calls: int = 0
+    _local_usage: dict[str, int] = field(default_factory=dict)
     _lock: Any = field(default_factory=threading.RLock)
 
     def __post_init__(self) -> None:
+        if self.requests_per_minute < 1 or self.requests_per_day < 1:
+            raise ValueError("model request limits must be positive")
+        if not 0 < self.safety_margin <= 1:
+            raise ValueError("model quota safety margin must be in (0, 1]")
         self._allowance = float(self.requests_per_minute)
         self._last_check = time.monotonic()
 
@@ -86,7 +93,7 @@ class RateLimiter:
     def remaining_today(self, day: str | None = None) -> int:
         key = day or quota_day()
         with self._lock:
-            used = self.store.llm_usage(key)[0] if self.store else self._local_calls
+            used = self.store.llm_usage(key)[0] if self.store else self._local_usage.get(key, 0)
             return max(0, self.daily_budget - used)
 
     def check_budget(self, day: str | None = None) -> None:
@@ -97,11 +104,32 @@ class RateLimiter:
             )
 
     # -- per-minute pacing ------------------------------------------------
-    def acquire(self, *, day: str | None = None, sleep=time.sleep) -> None:
-        """Block until a request may be sent, or raise if the day is spent."""
+    def _reserve_locked(self, key: str) -> None:
+        if self.store is not None:
+            reserved = self.store.reserve_llm_call(key, self.daily_budget)
+        else:
+            reserved = self._local_usage.get(key, 0) < self.daily_budget
+            if reserved:
+                self._local_usage[key] = self._local_usage.get(key, 0) + 1
+        if not reserved:
+            raise QuotaExceeded(
+                f"daily model request budget exhausted "
+                f"({self.daily_budget} of {self.requests_per_day} planned)"
+            )
+        self._local_calls += 1
+
+    def acquire(
+        self, *, day: str | None = None, sleep: Callable[[float], None] = time.sleep,
+    ) -> str:
+        """Reserve one attempt atomically, pace it, and return its quota day.
+
+        Reservations are conservative: an interrupted waiter still consumes its
+        slot. Never release one after an uncertain transport outcome.
+        """
+        key = day or quota_day()
         to_sleep = 0.0
         with self._lock:
-            self.check_budget(day)
+            self._reserve_locked(key)
             rate = max(1, self.requests_per_minute)
             now = time.monotonic()
             penalty = max(0.0, self._last_check - now)
@@ -115,13 +143,22 @@ class RateLimiter:
                 to_sleep += penalty
         if to_sleep > 0.0:
             sleep(to_sleep)
+        if day is None:
+            actual_day = quota_day()
+            if actual_day != key:
+                # A pacing wait can cross midnight. Keep the old reservation
+                # conservatively, but enforce the new day's budget before sending.
+                with self._lock:
+                    self._reserve_locked(actual_day)
+                key = actual_day
+        return key
 
     def record(self, *, tokens: int = 0, error: bool = False, day: str | None = None) -> None:
+        """Attach an outcome to an acquired request; do not spend another slot."""
         key = day or quota_day()
         with self._lock:
-            self._local_calls += 1
             if self.store is not None:
-                self.store.record_llm_call(key, tokens=tokens, error=error)
+                self.store.record_llm_result(key, tokens=tokens, error=error)
 
     def penalise(self, seconds: float) -> None:
         """Apply a provider-instructed backoff to the bucket."""

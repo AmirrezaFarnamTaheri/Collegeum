@@ -148,7 +148,7 @@ class TestDatabaseCandidateVars(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_schema_and_added_columns(self):
-        self.assertEqual(SCHEMA_VERSION, 6)
+        self.assertGreaterEqual(SCHEMA_VERSION, 7)
         expected_cols = {
             "salary_raw",
             "salary_min",

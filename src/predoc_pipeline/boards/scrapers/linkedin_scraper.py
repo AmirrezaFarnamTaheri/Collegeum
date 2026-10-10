@@ -38,8 +38,8 @@ def parse_cards(html: str) -> list[dict[str, Any]]:
     for card in soup.select("div.base-card, div.job-search-card, li > div[data-entity-urn]"):
         title_el = card.select_one(".base-search-card__title, h3")
         link_el = card.select_one("a.base-card__full-link, a[href*='/jobs/view/']")
-        urn = card.get("data-entity-urn", "")
-        href = link_el.get("href", "") if link_el else ""
+        urn = str(card.get("data-entity-urn") or "")
+        href = str(link_el.get("href") or "") if link_el else ""
         m = _ID.search(urn) or _ID.search(href)
         if not title_el or not m:
             continue
@@ -70,7 +70,7 @@ class LinkedInScraper(BaseScraper):
         if self.opt("backend", "guest") == "jobspy":
             return await asyncio.to_thread(self._jobspy)
         max_pages = int(self.opt("max_pages", 2))
-        raw: list[dict] = []
+        raw: list[dict[str, Any]] = []
         errors = consecutive = 0
         for kw in self.opt("keywords", ["predoc"]):
             for loc in self.opt("locations", ["European Union"]):
@@ -99,7 +99,7 @@ class LinkedInScraper(BaseScraper):
             raise RuntimeError(f"all {errors} LinkedIn requests failed (rate-limited?)")
         return raw
 
-    def _jobspy(self) -> list[dict]:
+    def _jobspy(self) -> list[dict[str, Any]]:
         from jobspy import scrape_jobs  # optional dependency
 
         out = []

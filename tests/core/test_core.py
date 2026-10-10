@@ -531,6 +531,16 @@ class TestDatabase(unittest.TestCase):
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.insert_listing(self._listing())
 
+    def test_web_publication_is_not_pending_without_telegram_id(self):
+        listing_id = self.db.insert_listing(self._listing(deadline=None))
+        self.db.mark_published(listing_id, None)
+        self.assertEqual(self.db.pending_listings(), [])
+        self.assertIsNone(self.db.listing(listing_id)["telegram_message_id"])
+
+    def test_unpublished_remains_pending_without_credentials(self):
+        listing_id = self.db.insert_listing(self._listing(status="unpublished", deadline=None))
+        self.assertEqual([r["id"] for r in self.db.pending_listings()], [listing_id])
+
     def test_alternate_sources_are_deduplicated(self):
         listing_id = self.db.insert_listing(self._listing())
         for url in ("https://a/1", "https://a/1", "https://a/2"):

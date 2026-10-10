@@ -1,0 +1,20 @@
+[
+  {
+    "name": "bruegel",
+    "url": "https://www.bruegel.org/careers",
+    "status": 200,
+    "final_url": "https://www.bruegel.org/careers"
+  },
+  {
+    "name": "cepr",
+    "url": "https://cepr.org/about/jobs",
+    "status": 403,
+    "final_url": "https://cepr.org/about/jobs"
+  },
+  {
+    "name": "cgd",
+    "url": "https://www.cgdev.org/page/job-opportunities",
+    "status": 403,
+    "final_url": "https://www.cgdev.org/page/job-opportunities"
+  }
+]

@@ -19,6 +19,14 @@ class SourceSkipped(Exception):
     """Raised when a source cannot run for a benign reason (e.g. missing optional credentials)."""
 
 
+class DiscoveryFetchError(RuntimeError):
+    """Source discovery could not obtain its payload."""
+
+
+class DiscoveryParseError(RuntimeError):
+    """A source payload could not be parsed into postings."""
+
+
 def register(cls: type[BaseScraper]) -> type[BaseScraper]:
     SCRAPERS[cls.type_name] = cls
     return cls
@@ -32,6 +40,9 @@ class BaseScraper(ABC):
     def __init__(self, cfg: SourceConfig, http: HttpClient):
         self.cfg = cfg
         self.http = http
+        self.discovery_fetch_errors: list[str] = []
+        self.discovery_parse_errors: list[str] = []
+        self.discovery_limits: list[str] = []
         if cfg.min_interval is not None:
             for u in self.urls():
                 http.set_host_interval(u, cfg.min_interval)
@@ -56,6 +67,7 @@ class BaseScraper(ABC):
                 out.append(await fn(u))
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"{u}: {exc}")
+                self.discovery_fetch_errors.append(type(exc).__name__)
                 log.warning("%s: %s failed: %s", self.name, u, exc)
         if errors and not out:
             raise RuntimeError("; ".join(errors)[:500])
@@ -64,13 +76,17 @@ class BaseScraper(ABC):
     def make(self, **kw: Any) -> JobPostSchema:
         """Build a JobPostSchema with source-level defaults applied."""
         kw.setdefault("source", self.name)
+        extra = kw.setdefault("extra", {})
         if not kw.get("institution") and self.cfg.institution:
             kw["institution"] = self.cfg.institution
+            extra["source_institution_default"] = True
         if not kw.get("country") and self.cfg.country:
             kw["country"] = self.cfg.country
+            # Flag so detail-page heuristics can override with actual job location (F03).
+            extra["source_country_default"] = True
         kw.setdefault("field_implied", self.cfg.field_implied)
         if self.opt("employer_required"):
-            kw.setdefault("extra", {})["employer_required"] = True
+            extra["employer_required"] = True
         return JobPostSchema(**kw)
 
     # -- contract ------------------------------------------------------------------------
@@ -83,8 +99,19 @@ class BaseScraper(ABC):
         """Pure parsing: raw payloads -> normalised postings."""
 
     async def run(self) -> tuple[list[JobPostSchema], int]:
-        raw = await self.fetch_raw_postings()
-        posts = self.parse_postings(raw)
+        self.discovery_fetch_errors.clear()
+        self.discovery_parse_errors.clear()
+        self.discovery_limits.clear()
+        try:
+            raw = await self.fetch_raw_postings()
+        except SourceSkipped:
+            raise
+        except Exception as exc:
+            raise DiscoveryFetchError(str(exc)) from exc
+        try:
+            posts = self.parse_postings(raw)
+        except Exception as exc:
+            raise DiscoveryParseError(str(exc)) from exc
         # de-duplicate within a single source run
         seen, unique = set(), []
         for p in posts:

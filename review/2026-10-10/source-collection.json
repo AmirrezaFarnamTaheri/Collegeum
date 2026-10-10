@@ -1,0 +1,54 @@
+{
+  "sources": {
+    "nuffield_jobs": {
+      "kind": "board",
+      "items": 1,
+      "raw": 1,
+      "relevant": 0,
+      "new": 0,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 1.7,
+      "messages": [],
+      "failure_stage": null
+    },
+    "crest_jobs": {
+      "kind": "board",
+      "items": 3,
+      "raw": 3,
+      "relevant": 1,
+      "new": 1,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 1.6,
+      "messages": [],
+      "failure_stage": null
+    },
+    "essec_jobs": {
+      "kind": "board",
+      "items": 14,
+      "raw": 14,
+      "relevant": 0,
+      "new": 0,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 0.6,
+      "messages": [],
+      "failure_stage": null
+    }
+  },
+  "eligible_items": 1,
+  "rejected_items": {
+    "no-role-term": 17
+  },
+  "deferred": 0
+}

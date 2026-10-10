@@ -19,9 +19,10 @@ probably wrong" from a hidden liability into a thirty-second checklist.
 
 from __future__ import annotations
 
-import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from .registry import read_registry
 
 __all__ = ["Source", "load_sources", "DEFAULT_SOURCES_TOML"]
 
@@ -43,28 +44,23 @@ class Source:
 
 def load_sources(path: str | Path) -> list[Source]:
     """Read the registry. A missing file yields an empty list, not a crash."""
-    file = Path(path)
-    if not file.exists():
-        return []
-    data = tomllib.loads(file.read_text(encoding="utf-8"))
+    data = read_registry(path)
     out: list[Source] = []
     for kind in ("feed", "portal"):
-        for entry in data.get(kind, []) or []:
-            if not entry.get("url") or not entry.get("name"):
-                continue
+        for entry in data.get(kind, []):
             out.append(
                 Source(
-                    name=str(entry["name"]),
+                    name=entry["name"],
                     kind=kind,
-                    url=str(entry["url"]),
-                    enabled=bool(entry.get("enabled", True)),
-                    verified=bool(entry.get("verified", False)),
+                    url=entry["url"],
+                    enabled=entry.get("enabled", True),
+                    verified=entry.get("verified", False),
                     country=str(entry.get("country", "")),
                     note=str(entry.get("note", "")),
                     max_items=entry.get("max_items"),
-                    follow_links=bool(entry.get("follow_links", False)),
+                    follow_links=entry.get("follow_links", False),
                     link_pattern=str(entry.get("link_pattern", "")),
-                    tags=[str(t) for t in entry.get("tags", []) or []],
+                    tags=entry.get("tags", []),
                 )
             )
     return out

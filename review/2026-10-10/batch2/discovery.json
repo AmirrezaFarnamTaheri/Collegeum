@@ -1,0 +1,464 @@
+[
+  {
+    "source": "warwick_jobs",
+    "stats": {
+      "kind": "board",
+      "items": 48,
+      "raw": 48,
+      "relevant": 0,
+      "new": 0,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 1.2,
+      "messages": [],
+      "failure_stage": null
+    },
+    "posts": [
+      {
+        "title": "Research Assistant",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Assistant-CV4-7AL/1443391233",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Fellow",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1437467533",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Finance Coordinator",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Finance-Coordinator-CV4-7AL/1443881433",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Campus Cleaning Services Supervisor",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Campus-Cleaning-Services-Supervisor-CV4-7AL/1442358133",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Assistant Campus Cleaning Services Manager",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Assistant-Campus-Cleaning-Services-Manager-CV4-7AL/1435711533",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Zone Assistant",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Zone-Assistant-CV4-7AL/1444421633",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Carpenter (Fire Compartment Team) x5",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Carpenter-%28Fire-Compartment-Team%29-x5-CV4-7AL/1435337233",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Mechanical Maintenance Manager",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Mechanical-Maintenance-Manager-CV4-7AL/1445290933",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Programme Coordinator - Team Work Virtual International Employer Projects",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Programme-Coordinator-Team-Work-Virtual-International-Employer-Projects-CV4-7AL/1441363833",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Campus Cleaning Services Supervisor",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Campus-Cleaning-Services-Supervisor-CV4-7AL/1435390833",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Short Term Mobility Coordinator (FTC)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Short-Term-Mobility-Coordinator-%28FTC%29-CV4-7AL/1441913133",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Student Records - Senior Assistant",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Student-Records-Senior-Assistant-CV4-7AL/1437939033",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Electrical Services Officer",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Electrical-Services-Officer-CV4-7AL/1434731833",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Senior Research Technician",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Senior-Research-Technician-CV4-7AL/1437620733",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Live Streaming Production Co-ordinator",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Live-Streaming-Production-Co-ordinator-CV4-7AL/1442002933",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Executive Officer",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Executive-Officer-CV4-7AL/1440632433",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Student Discipline Adviser",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Student-Discipline-Adviser-CV4-7AL/1442196733",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Assistant Clinical Professor",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Assistant-Clinical-Professor-CV4-7AL/1445322833",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Community Safety Officer",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Community-Safety-Officer-CV4-7AL/1436099433",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Assistant Professor in Extended Reality",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Assistant-Professor-in-Extended-Reality-CV4-7AL/1443855033",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Administrative Coordinator",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Administrative-Coordinator-CV4-7AL/1442905333",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Fellow (Brazil)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28Brazil%29-CV4-7AL/1442021533",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Principal Engineer - Defence and Emerging Opportunities",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Principal-Engineer-Defence-and-Emerging-Opportunities-CV4-7AL/1440024033",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Software Engineer",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Software-Engineer-CV4-7AL/1443116333",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Recruitment and Admissions Coordinator",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Recruitment-and-Admissions-Coordinator-CV4-7AL/1445518833",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Senior Research Technician (112163)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Senior-Research-Technician-%28112163%29-CV4-7AL/1438039433",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Associate Professor (Human-AI Teaming)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Associate-Professor-%28Human-AI-Teaming%29-CV4-7AL/1446140533",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Management Accountant",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Management-Accountant-CV4-7AL/1440973633",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Senior Administrative Assistant",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Senior-Administrative-Assistant-CV4-7AL/1442217233",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Precision Engineer",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Precision-Engineer-CV4-7AL/1442418733",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Assistant (110938)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Assistant-%28110938%29-CV4-7AL/1443248233",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Associate Professor (Physical AI Sensing)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Associate-Professor-%28Physical-AI-Sensing%29-CV4-7AL/1446150833",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Fellow (USA)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28USA%29-CV4-7AL/1442020233",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Assistant",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Assistant-CV4-7AL/1443706033",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Fellow",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1436691733",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Fellow",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1445547933",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Programmes Administrator",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Programmes-Administrator-CV4-7AL/1445077733",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Digital Communications Executive (Content)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Digital-Communications-Executive-%28Content%29-CV4-7AL/1443403633",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Marketing Assistant",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Marketing-Assistant-CV4-7AL/1441450333",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Fellow",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1440409933",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Senior Research Technician",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Senior-Research-Technician-CV4-7AL/1443373033",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Programmes Assistant (DA)",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Programmes-Assistant-%28DA%29-CV4-7AL/1443639233",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Development and Communications Coordinator",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Development-and-Communications-Coordinator-CV4-7AL/1445616733",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Fellow",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1443896633",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Technical Services Manager",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Technical-Services-Manager-CV4-7AL/1444626133",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Senior Research Technician",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Senior-Research-Technician-CV4-7AL/1443620233",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Marie Curie Early Stage Researcher",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Marie-Curie-Early-Stage-Researcher-CV4-7AL/1445269133",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Research Fellow",
+        "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1436263733",
+        "deadline": null,
+        "deadline_text": null
+      }
+    ]
+  },
+  {
+    "source": "bank_canada_jobs",
+    "stats": {
+      "kind": "board",
+      "items": 16,
+      "raw": 16,
+      "relevant": 0,
+      "new": 0,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 1.3,
+      "messages": [],
+      "failure_stage": null
+    },
+    "posts": [
+      {
+        "title": "Solutions Architect",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-or-Calgary-Solutions-Architect-AB/606922517",
+        "deadline": "2026-10-25",
+        "deadline_text": "deadline: October 25, 2026 23:59 EST"
+      },
+      {
+        "title": "Developer/Senior Developer - Payments and Tokenization",
+        "url": "https://careers.bankofcanada.ca/job/Toronto-DeveloperSenior-Developer-Payments-and-Tokenization-ON/606826117",
+        "deadline": "2026-10-25",
+        "deadline_text": "deadline: October 25, 2026 23:59 EST"
+      },
+      {
+        "title": "Developer",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-or-Toronto-Developer-ON/601282017",
+        "deadline": "2026-10-25",
+        "deadline_text": "deadline: October 25, 2026 23:59 EST"
+      },
+      {
+        "title": "Director, Facilities Services",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Director%2C-Facilities-Services-ON/606749417",
+        "deadline": "2026-10-18",
+        "deadline_text": "deadline: October 18, 2026 23:59 EST"
+      },
+      {
+        "title": "Cyber Third-Party Risk Specialist",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Cyber-Third-Party-Risk-Specialist-ON/603511617",
+        "deadline": "2026-10-18",
+        "deadline_text": "deadline: October 18, 2026 23:59 EST"
+      },
+      {
+        "title": "Senior Editor",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Senior-Editor-ON/606684617",
+        "deadline": "2026-10-20",
+        "deadline_text": "deadline: October 20, 2026 23:59 EST"
+      },
+      {
+        "title": "Analyst, Screening Clearances",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Analyst%2C-Screening-Clearances-ON/606704317",
+        "deadline": "2026-10-14",
+        "deadline_text": "deadline: October 14, 2026 23:59 EST"
+      },
+      {
+        "title": "Student, Library Science",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Student%2C-Library-Science-ON/606652617",
+        "deadline": "2026-10-15",
+        "deadline_text": "deadline: October 15, 2026 23:59 EST"
+      },
+      {
+        "title": "PhD Researcher (2026-2027 PhD Job Market)",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617",
+        "deadline": "2027-04-30",
+        "deadline_text": "deadline: April 30, 2027"
+      },
+      {
+        "title": "Financial Sector Specialist Analyst",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-or-Calgary-Financial-Sector-Specialist-Analyst-ON/606595817",
+        "deadline": "2026-10-18",
+        "deadline_text": "deadline: October 18, 2026 23:59 EST"
+      },
+      {
+        "title": "Senior Data Scientist, AI Solutions",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Senior-Data-Scientist%2C-AI-Solutions-ON/606525417",
+        "deadline": "2026-10-11",
+        "deadline_text": "deadline: October 11, 2026 23:59 EST"
+      },
+      {
+        "title": "Economist, Canadian Economic Analysis Department Rotation Program",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Economist%2C-Canadian-Economic-Analysis-Department-Rotation-Program-ON/606539717",
+        "deadline": "2026-10-18",
+        "deadline_text": "deadline: October 18, 2026 23:59 EST"
+      },
+      {
+        "title": "Benefits Program Specialist",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Benefits-Program-Specialist-ON/606518017",
+        "deadline": "2026-10-12",
+        "deadline_text": "deadline: October 12, 2026 11:59 EST"
+      },
+      {
+        "title": "Assistant Director, Endpoint Management",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Assistant-Director%2C-Endpoint-Management-ON/606461017",
+        "deadline": "2026-10-12",
+        "deadline_text": "deadline: October 12, 2026 23:59 EST"
+      },
+      {
+        "title": "IT Security Assessment Specialist",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-IT-Security-Assessment-Specialist-ON/606477317",
+        "deadline": "2026-10-15",
+        "deadline_text": "deadline: October 15, 2026 23:59 EST"
+      },
+      {
+        "title": "Analyst, Cyber Assurance",
+        "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-Analyst%2C-Cyber-Assurance-ON/606444117",
+        "deadline": "2026-10-15",
+        "deadline_text": "deadline: October 15, 2026 23:59 EST"
+      }
+    ]
+  },
+  {
+    "source": "sciencespo_jobs",
+    "stats": {
+      "kind": "board",
+      "items": 3,
+      "raw": 3,
+      "relevant": 0,
+      "new": 0,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 0.7,
+      "messages": [],
+      "failure_stage": null
+    },
+    "posts": [
+      {
+        "title": "Chargé(e) de communication et de valorisation scientifique (LIEPP)",
+        "url": "https://www.sciencespo.fr/liepp/fr/actualites/charge-e-de-communication-et-de-valorisation-scientifique",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Appel à candidatures Contrat post-doctoral de 24 mois",
+        "url": "https://www.sciencespo.fr/liepp/fr/actualites/appel-a-candidatures-contrat-post-doctoral-de-24-mois",
+        "deadline": null,
+        "deadline_text": null
+      },
+      {
+        "title": "Appel à candidatures : deux postes de recherche (CRIS)",
+        "url": "https://www.sciencespo.fr/cris/fr/actualites/appel-a-candidatures-deux-postes-de-recherche",
+        "deadline": null,
+        "deadline_text": null
+      }
+    ]
+  }
+]

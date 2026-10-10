@@ -1,0 +1,226 @@
+{
+  "stats": {
+    "warwick_jobs": {
+      "kind": "board",
+      "items": 48,
+      "raw": 48,
+      "relevant": 6,
+      "new": 4,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 0.9,
+      "messages": [],
+      "failure_stage": null
+    },
+    "bank_canada_jobs": {
+      "kind": "board",
+      "items": 16,
+      "raw": 16,
+      "relevant": 1,
+      "new": 1,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 0.5,
+      "messages": [],
+      "failure_stage": null
+    },
+    "sciencespo_jobs": {
+      "kind": "board",
+      "items": 3,
+      "raw": 3,
+      "relevant": 1,
+      "new": 1,
+      "fetched": 1,
+      "errors": 0,
+      "ok": true,
+      "skipped": false,
+      "may_be_empty": true,
+      "seconds": 0.3,
+      "messages": [],
+      "failure_stage": null
+    }
+  },
+  "rejected": {
+    "no-role-term": 43,
+    "excluded-title": 4,
+    "wrong-field-context": 12,
+    "wrong-field-detail": 2
+  },
+  "known": 0,
+  "deferred": 0,
+  "emitted": 8,
+  "items": [
+    {
+      "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Assistant-CV4-7AL/1443391233",
+      "title": "Research Assistant",
+      "hints": {
+        "board": true,
+        "institution": "University of Warwick",
+        "country": "United Kingdom",
+        "region": "UK",
+        "deadline": "2026-10-15",
+        "deadline_text": "Closing Date: Thursday 15 October 2026, 11:59PM (UK) Full time Salary Range: £31,236.00 - £34,610.00 per",
+        "field_implied": false,
+        "employer_required": false,
+        "strong": false,
+        "score": 40,
+        "summary": "Title Research Assistant Salary Range £30,000 - £40,000 Staff Category Academic Contract Type Fixed-term contract Department Economics University Department Economics Title Research Assistant Title Research Assistant Select with space bar to view the full contents of the job information.",
+        "final_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Assistant-CV4-7AL/1443391233",
+        "enriched": true
+      },
+      "detail_characters": 6000
+    },
+    {
+      "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28Brazil%29-CV4-7AL/1442021533",
+      "title": "Research Fellow (Brazil)",
+      "hints": {
+        "board": true,
+        "institution": "University of Warwick",
+        "country": "United Kingdom",
+        "region": "UK",
+        "deadline": "2026-11-05",
+        "deadline_text": "Closing Date: Thursday 5 November 2026 Full time Salary Range: £35,608.00 - £46,049.00 per annum About t",
+        "pi": "Claire Blencowe",
+        "field_implied": false,
+        "employer_required": false,
+        "strong": false,
+        "score": 40,
+        "summary": "Title Research Fellow (Brazil) Salary Range £40,000 - £50,000 Staff Category Academic Contract Type Fixed-term contract Department Sociology University Department Sociology Title Research Fellow (Brazil) Title Research Fellow (Brazil) Select with space bar to view the full contents of the job information.",
+        "final_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28Brazil%29-CV4-7AL/1442021533",
+        "enriched": true
+      },
+      "detail_characters": 6000
+    },
+    {
+      "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28USA%29-CV4-7AL/1442020233",
+      "title": "Research Fellow (USA)",
+      "hints": {
+        "board": true,
+        "institution": "University of Warwick",
+        "country": "United Kingdom",
+        "region": "UK",
+        "deadline": "2026-11-05",
+        "deadline_text": "Closing Date: Thursday 5 November 2026 Full time Salary Range: £35,608.00 - £46,049.00 per annum About t",
+        "pi": "Claire Blencowe",
+        "field_implied": false,
+        "employer_required": false,
+        "strong": false,
+        "score": 40,
+        "summary": "Title Research Fellow (USA) Salary Range £40,000 - £50,000 Staff Category Research Focused Contract Type Fixed-term contract Department Sociology University Department Sociology Title Research Fellow (USA) Title Research Fellow (USA) Select with space bar to view the full contents of the job information.",
+        "final_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28USA%29-CV4-7AL/1442020233",
+        "enriched": true
+      },
+      "detail_characters": 6000
+    },
+    {
+      "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1437467533",
+      "title": "Research Fellow",
+      "hints": {
+        "board": true,
+        "institution": "University of Warwick",
+        "country": "United Kingdom",
+        "region": "UK",
+        "deadline": "2026-11-01",
+        "deadline_text": "Closing Date: Sunday 1st November 2026 Full time Salary Range: £35,608.00 - £46,049.00 per annum About Y",
+        "field_implied": false,
+        "employer_required": false,
+        "strong": false,
+        "score": 30,
+        "summary": "Title Research Fellow Salary Range £40,000 - £50,000 Staff Category Academic Contract Type Indefinite Department Institute for Employment Research Title Research Fellow Title Research Fellow Select with space bar to view the full contents of the job information.",
+        "final_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1437467533",
+        "enriched": true
+      },
+      "detail_characters": 6000
+    },
+    {
+      "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Assistant-%28110938%29-CV4-7AL/1443248233",
+      "title": "Research Assistant (110938)",
+      "hints": {
+        "board": true,
+        "institution": "University of Warwick",
+        "country": "United Kingdom",
+        "region": "UK",
+        "deadline": "2026-10-15",
+        "deadline_text": "Closing Date: Thursday 15 October 2026, 11:59pm (UK) Full time Salary Range: £31,236.00 - £34,610.00 per",
+        "field_implied": false,
+        "employer_required": false,
+        "strong": false,
+        "score": 30,
+        "summary": "Title Research Assistant (110938) Salary Range £30,000 - £40,000 Staff Category Academic Contract Type Fixed-term contract Department Life Sciences University Department Life Sciences Title Research Assistant (110938) Title Research Assistant (110938) Select with space bar to view the full contents of the job information.",
+        "final_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Assistant-%28110938%29-CV4-7AL/1443248233",
+        "enriched": true,
+        "reject": "wrong-field-detail"
+      },
+      "detail_characters": 6000
+    },
+    {
+      "url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1443896633",
+      "title": "Research Fellow",
+      "hints": {
+        "board": true,
+        "institution": "University of Warwick",
+        "country": "United Kingdom",
+        "region": "UK",
+        "deadline": "2026-11-08",
+        "deadline_text": "Closing Date: Sunday 8 November 2026, 11:59pm (UK) Full time Salary Range: £35,608.00 - £46,049.00 per a",
+        "field_implied": false,
+        "employer_required": false,
+        "strong": false,
+        "score": 30,
+        "summary": "Title Research Fellow Salary Range £40,000 - £50,000 Staff Category Research Focused Contract Type Fixed-term contract Department Life Sciences University Department Life Sciences Title Research Fellow Title Research Fellow Select with space bar to view the full contents of the job information.",
+        "final_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1443896633",
+        "enriched": true,
+        "reject": "wrong-field-detail"
+      },
+      "detail_characters": 6000
+    },
+    {
+      "url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617",
+      "title": "PhD Researcher (2026-2027 PhD Job Market)",
+      "hints": {
+        "board": true,
+        "institution": "Bank of Canada",
+        "country": "Canada",
+        "region": "Canada",
+        "location": "Ottawa (Downtown), ON, CA",
+        "deadline": "2027-04-30",
+        "deadline_text": "deadline: April 30, 2027",
+        "visa_note": "Priority to citizens/residents (“Priority will be given to Canadian”); Relocation assistance mentioned; sponsorship unstated (“Relocation assistance”)",
+        "field_implied": false,
+        "employer_required": false,
+        "strong": false,
+        "score": 30,
+        "summary": "Skip to main content Careers Working Here Students and Recent Grads Job Opportunities Recruitment Process A great deal to consider Careers Working Here Students and Recent Grads Job Opportunities Recruitment Process A great deal to consider Language English Français My Profile Select how often (in days) to receive an alert: Create Alert Apply now » Requisition Number: 11803 Position Type: Permanent Position Length: Indeterminate Location: Ottawa (Downtown), ON, CA Remote Work: Hybrid Model Closing Date: April 30, 2027 Equity, Diversity & Inclusion The Bank is committed to achieving a...",
+        "final_url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617",
+        "enriched": true
+      },
+      "detail_characters": 6000
+    },
+    {
+      "url": "https://www.sciencespo.fr/liepp/fr/actualites/appel-a-candidatures-contrat-post-doctoral-de-24-mois",
+      "title": "Appel à candidatures Contrat post-doctoral de 24 mois",
+      "hints": {
+        "board": true,
+        "institution": "Sciences Po",
+        "country": "France",
+        "region": "Europe",
+        "deadline": "2026-11-30",
+        "deadline_text": "date limite d’envoi des candidatures 30 novembre 2026 : entretiens des candidat.e.s présélectionné.e.s",
+        "field_implied": false,
+        "employer_required": false,
+        "strong": false,
+        "score": 30,
+        "summary": "Accueil > Appel à candidatures Contrat post-doctoral de 24 mois 17 septembre 2026 Appel à candidatures Contrat post-doctoral de 24 mois Poste : CDD (contrat à durée déterminée) Durée : du 1er février 2027 au 30 janvier 2029. Temps plein Rémunération : 3400€ brut/mois Lieu et modalités de travail : LIEPP (Sciences Po) – 199 Boulevard Saint Germain, 75007 PARIS, télétravail possible Le Laboratoire interdisciplinaire d’évaluation des politiques publiques (LIEPP) lance un appel à candidatures pour le recrutement d’un.e chercheur.se postdoctoral.e (CDD de 24 mois) dans le cadre du projet...",
+        "final_url": "https://www.sciencespo.fr/liepp/fr/actualites/appel-a-candidatures-contrat-post-doctoral-de-24-mois/",
+        "enriched": true
+      },
+      "detail_characters": 6000
+    }
+  ]
+}

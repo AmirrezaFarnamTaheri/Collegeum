@@ -56,21 +56,22 @@ def write_journal(db: Any, path: str | Path) -> int:
 
 
 def read_journal(path: str | Path) -> list[dict[str, Any]]:
-    """Read the journal, skipping malformed lines rather than failing."""
+    """Read a complete journal; malformed records must not become partial recovery."""
     file = Path(path)
     if not file.exists():
         return []
     out: list[dict[str, Any]] = []
-    for line in file.read_text(encoding="utf-8").splitlines():
+    for number, line in enumerate(file.read_text(encoding="utf-8").splitlines(), 1):
         line = line.strip()
         if not line:
             continue
         try:
             record = json.loads(line)
-        except ValueError:
-            continue
-        if isinstance(record, dict):
-            out.append(record)
+        except ValueError as exc:
+            raise ValueError(f"invalid journal {file} at line {number}") from exc
+        if not isinstance(record, dict):
+            raise ValueError(f"journal {file} line {number} must be an object")
+        out.append(record)
     return out
 
 
@@ -97,37 +98,45 @@ def write_seen(db: Any, path: str | Path) -> int:
 
 
 def restore_if_needed(db: Any, path: str | Path, seen_path: str | Path | None = None) -> int:
-    """Rebuild an empty database from the committed journal.
+    """Reconcile the derived database with complete committed journals.
 
     This is what makes the derived-cache model safe: a fresh clone, a cleared
     runner, or a corrupted file all recover by replaying the journal.
     """
     restored = 0
-    if seen_path and db.seen_count() == 0:
-        seen = read_journal(seen_path)
+    with db.transaction():
+        seen = read_journal(seen_path) if seen_path else []
+        records = read_journal(path)
+        if records:
+            restored = db.import_rows(records)
         if seen:
             db.import_seen(seen)
-    if db.counts()["listings"] > 0:
-        return 0
-    records = read_journal(path)
-    if records:
-        restored = db.import_rows(records)
     return restored
 
 
 def restore_runs(db: Any, health_path: str | Path) -> int:
     """Rebuild the run log from docs/data/health.json when the database is fresh."""
-    if db.counts()["runs"] > 1:  # the current run is already in there
-        return 0
     file = Path(health_path)
     if not file.exists():
         return 0
     try:
         payload = json.loads(file.read_text(encoding="utf-8"))
-    except ValueError:
-        return 0
-    runs = [r for r in payload.get("runs", []) if r.get("finished_at")]
-    return db.import_runs(runs) if runs else 0
+    except ValueError as exc:
+        raise ValueError(f"invalid health state in {file}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"health state must be an object: {file}")
+    usage = payload.get("llm_usage", [])
+    if not isinstance(usage, list):
+        raise ValueError(f"quota usage must be a list: {file}")
+    history = payload.get("runs", [])
+    if not isinstance(history, list) or any(not isinstance(run, dict) for run in history):
+        raise ValueError(f"run history must be a list of objects: {file}")
+    runs = [run for run in history if run.get("finished_at")]
+    with db.transaction():
+        db.import_llm_usage(usage)
+        if db.counts()["runs"] > 1:  # the current run is already in there
+            return 0
+        return db.import_runs(runs) if runs else 0
 
 
 # --------------------------------------------------------------------------
@@ -146,7 +155,7 @@ def _public_record(row: Any) -> dict[str, Any]:
     get = row.__getitem__ if hasattr(row, "keys") else row.get
     deadline = get("deadline")
     parsed = parse_datetime(deadline)
-    days_left = (parsed - utcnow()).days if parsed else None
+    days_left = (parsed.date() - utcnow().date()).days if parsed else None
 
     tools_req: list[str] = []
     try:
@@ -232,26 +241,46 @@ def export_dashboard(
     return len(records)
 
 
-def export_health(db: Any, path: str | Path, *, stats: dict[str, Any]) -> None:
+def export_health(
+    db: Any, path: str | Path, *, stats: dict[str, Any], preserve_existing: bool = False
+) -> None:
     """Write run history and per-source yield, so failures are visible.
 
     A dashboard that only shows listings cannot distinguish "a quiet week" from
     "every scraper has been broken since the portal redesign". This file is
     what makes that difference legible without reading workflow logs.
     """
+    from .core.health import public_source_stats, source_status, source_summary
+
+    target = Path(path)
+    previous = json.loads(target.read_text(encoding="utf-8")) if target.exists() else {}
+    if not isinstance(previous, dict):
+        raise ValueError(f"health state must be an object: {target}")
+
     runs = []
+    sources: dict[str, Any] = {}
     for row in db.recent_runs(limit=30):
         try:
             source_stats = json.loads(row["source_stats"] or "{}")
         except ValueError:
             source_stats = {}
+        public_stats = public_source_stats(source_stats)
+        for name, data in public_stats.items():
+            if name.startswith("_") or not row["finished_at"]:
+                continue
+            status = source_status(data)
+            entry = sources.setdefault(name, {
+                "status": status, "last_attempt_at": row["finished_at"],
+                "last_successful_at": None, "messages": data["messages"],
+            })
+            if entry["last_successful_at"] is None and status in {"successful", "empty"} and (
+                data.get("fetched") or data.get("unchanged") or data.get("ok") is True
+            ):
+                entry["last_successful_at"] = row["finished_at"]
         runs.append(
             {
-                "source_stats": {
-                    name: {k: v for k, v in data.items() if k != "messages"}
-                    for name, data in source_stats.items()
-                    if isinstance(data, dict)
-                },
+                "source_stats": public_stats,
+                "source_summary": source_summary(source_stats),
                 "run_id": row["run_id"],
                 "started_at": row["started_at"],
                 "finished_at": row["finished_at"],
@@ -265,15 +294,53 @@ def export_health(db: Any, path: str | Path, *, stats: dict[str, Any]) -> None:
                 "outcome": row["outcome"],
             }
         )
+    latest = runs[0] if runs else {}
+    summary = latest.get("source_summary") or source_summary({})
+    outcome = stats.get("outcome") or latest.get("outcome") or "unknown"
+    status = "degraded" if outcome == "partial" or (
+        outcome == "ok" and (summary["failed"] or stats.get("errors"))
+    ) else outcome
+    # Retain known successful times after they age out of the 30-run history.
+    # Validate the timestamp before carrying it forward from the prior export.
+    def previous_success(value: Any) -> str | None:
+        moment = parse_datetime(value) if isinstance(value, str) else None
+        return value if moment is not None and moment <= utcnow() else None
+
+    previous_sources = previous.get("sources") or {}
+    if isinstance(previous_sources, dict):
+        for name, entry in sources.items():
+            old = previous_sources.get(name)
+            if entry["last_successful_at"] is None and isinstance(old, dict):
+                entry["last_successful_at"] = previous_success(old.get("last_successful_at"))
+    last_success = next((run["finished_at"] for run in runs if run["outcome"] == "ok"
+                         and not run["source_summary"]["failed"]), None)
     payload = {
         "generated_at": format_ts(),
         "counts": db.counts(),
         "last_run": stats,
         "runs": runs,
+        "status": status,
+        "source_summary": summary,
+        "sources": sources,
+        "llm_usage": db.export_llm_usage(),
+        "last_successful_run_at": last_success or previous_success(
+            previous.get("last_successful_run_at")
+        ),
     }
-    target = Path(path)
+    if preserve_existing:
+        # Restoration failed before this DB became authoritative. Report the
+        # failed run without replacing durable quota usage or prior inventory.
+        # A malformed existing JSON file raises above and stays untouched.
+        payload = {
+            **previous,
+            "generated_at": format_ts(), "status": stats.get("outcome", "fatal"),
+            "last_run": stats, "source_summary": summary,
+            "runs": (runs + (previous.get("runs") or []))[:30],
+        }
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(target)
 
 
 # --------------------------------------------------------------------------
@@ -284,7 +351,10 @@ _RSS_ESCAPES = {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}
 
 
 def _xml_escape(value: str) -> str:
-    return "".join(_RSS_ESCAPES.get(c, c) for c in str(value or ""))
+    return "".join(_RSS_ESCAPES.get(c, c) for c in str(value or "") if (
+        c in "\t\n\r" or 0x20 <= ord(c) <= 0xD7FF
+        or 0xE000 <= ord(c) <= 0xFFFD or 0x10000 <= ord(c) <= 0x10FFFF
+    ))
 
 
 def export_feed(
@@ -348,5 +418,7 @@ def export_feed(
     parts += ["</channel>", "</rss>"]
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text("\n".join(parts), encoding="utf-8")
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_text("\n".join(parts), encoding="utf-8")
+    tmp.replace(target)
     return len(rows)

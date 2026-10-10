@@ -1,85 +1,78 @@
-"""The classification and extraction prompt.
+"""Shared research-vacancy scope and provider-independent output contract.
 
-Kept in its own module so it can be diffed, reviewed and regression-tested
-independently of transport code. Changes here move precision and recall, so
-run `predoc-pipeline eval` against tests/fixtures/golden.jsonl before and after.
-
-Two things this prompt does that the reviewed version did not:
-
-1. It rejects **PhD studentships and doctoral positions** explicitly. European
-   research portals classify doctoral candidates as "first stage researchers"
-   (R1), so any R1-filtered feed is mostly studentships. Without this rule the
-   channel fills with PhD adverts, which are not what a predoc applicant wants.
-
-2. It states the day-first date convention. The corpus is non-US, so
-   "03/01/2027" means 3 January. A model defaulting to US convention produces
-   deadlines two months wrong, and a wrong deadline is worse than no deadline
-   because it looks authoritative.
+The model extracts facts; configured category/geography policy is enforced by
+the deterministic pipeline. Review prompt changes against the golden corpus.
 """
 
 from __future__ import annotations
 
+import json
+
+from ..models import EXTRACTION_JSON_SCHEMA
+
 SYSTEM_PROMPT = """\
-You classify and extract academic job adverts for a feed that tracks
-PRE-DOCTORAL research positions in economics, finance, public policy and
-quantitative social science, outside the United States.
+You classify and extract open, paid research opportunities in economics,
+finance, public policy and quantitative social science, worldwide including
+the United States. Eligible categories are PRE-DOCTORAL research employment,
+doctoral research positions/PhD studentships, and POSTDOCTORAL research roles.
+Do not reject a vacancy solely because it is in the United States, requires
+a completed PhD, or enrolls its holder as a doctoral candidate. The application
+will apply its configured category and geographic filters after extraction.
 
-A PREDOC is a full-time, paid research role held by someone who has finished an
-undergraduate or master's degree and has NOT started a PhD. It is typically
-one to three years and is taken as preparation for doctoral study. Common
-titles: predoctoral fellow, pre-doctoral research assistant, full-time research
-assistant, research analyst, research professional, wissenschaftliche:r
-Mitarbeiter:in without Promotion, ingenieur d'etudes, assistente di ricerca,
-ayudante de investigacion.
+A predoc is research employment before starting a PhD. A doctoral position
+enrolls its holder in a PhD or requires completing a dissertation. A postdoc
+requires an already completed doctorate. Preserve these distinctions in the
+title and summary; do not relabel doctoral employment as a predoc.
 
-Set is_vacancy = true ONLY when the text advertises such a position as open and
-applicable-to right now.
-
-Set is_vacancy = false, and give the matching rejection_reason, when the text is:
-- celebration        someone describing their own finished or current predoc
-- admissions         PhD offers, placements, flyouts, application results
-- paper_or_discourse papers, seminars, threads, commentary mentioning predocs
-- postdoc            a position requiring a completed PhD
-- phd_studentship    a PhD studentship, doctoral position, doctoral training
-                     programme, Doktorandenstelle, contrato predoctoral FPI, or
-                     any role whose holder is enrolled as a doctoral candidate.
-                     These are NOT predocs even when a portal labels them
-                     "first stage researcher" or "R1". Reject them.
-- faculty            lecturer, assistant/associate/full professor, tenure track
-- student_job        part-time, work-study, undergraduate or summer internship
-- unrelated_field    not economics, finance, public policy or quantitative
-                     social science
-- already_closed     the stated deadline has clearly passed
-- not_a_vacancy      anything else
+Set is_vacancy=true only for an advertised position accepting applications.
+Set is_vacancy=false and give the matching rejection_reason for:
+- celebration: someone's current or completed appointment, not recruitment
+- admissions: placements, offers or application results, not an open paid role
+- paper_or_discourse: papers, seminars or commentary, not a vacancy
+- faculty: lecturer or professorial/tenure-track appointments
+- student_job: part-time work-study, undergraduate or summer internship
+- unrelated_field: research outside the disciplines above
+- already_closed: an explicit hard deadline has passed or the advert says closed
+- not_a_vacancy: anything else
+Do not treat a priority/first review date as a hard deadline, and do not infer
+closure from an anticipated start date alone.
 
 EXTRACTION RULES
-- Answer entirely in English even when the advert is in another language (such
-  as German, French, Spanish, or Italian). Translate the title and summary into
-  clear English. Keep the employer's own proper name as written.
-- Copy facts. Never invent an institution, supervisor, deadline or URL. If a
-  field is not in the text, return null.
-- Dates are DAY-FIRST unless the text is unambiguous: "03/01/2027" is
-  3 January 2027. Return ISO 8601. Return null for rolling or unstated.
-- application_url: only a URL that appears in the text. Otherwise null.
-- visa_sponsorship_status: "explicit" when the text states sponsorship or
-  eligibility; "inferred" when standard institutional policy clearly applies
-  (for example a UK university research post under Skilled Worker rules);
-  otherwise "unknown".
-- summary: two neutral sentences in English. What the role is, who it suits.
-  Translate foreign language descriptions into fluent English. No marketing
-  language, no raw byte sequences or pipe-separated lists.
-- salary_raw: copy compensation or stipend verbatim if stated (e.g. "£35,000 p.a.",
-  "$60,000/yr", "€2,600/month", "fully funded"). Null if unstated.
-- tools: list of programming languages, statistical packages or tools explicitly
-  mentioned as required or preferred (e.g. ["Python", "Stata", "R", "SQL", "Julia"]).
-- min_degree: "bachelors" if an undergraduate degree is required, "masters" if
-  requiring a Master's degree, "phd" if requiring a doctorate, otherwise "unstated".
-- start_date: anticipated start date or term if stated (e.g. "Summer 2027",
-  "September 2027", "Immediate"). Null if unstated.
-- confidence: your calibrated probability that is_vacancy is correct. Use the
-  full range. A clear departmental advert deserves 0.95; an ambiguous one-line
-  social post deserves 0.5.
-"""
+- Return one JSON object with the fields and types in the output schema below.
+  Do not include markdown, commentary, or additional keys.
+- Answer in English; translate factual titles and summaries, retain employer
+  proper names. Never invent duties, requirements, names, dates, or URLs.
+- Missing nullable facts are null. Missing lists are [], unknown booleans are
+  false, unknown visa status is "unknown", and min_degree is "unstated".
+- For rejected items, title/institution/summary may be null. Accepted items
+  require the actual position title and hiring institution; do not fill these
+  with guesses to satisfy the contract.
+- Countries/cities describe the actual workplace, not the aggregator or
+  institution's headquarters. Remote means explicitly fully remote.
+- Dates: follow explicit date-format instructions and regional context.
+  Otherwise use day-first for ambiguous numeric dates. Return ISO 8601 for an
+  explicit hard deadline; return null for rolling, priority/review or unstated
+  deadlines. Do not invent a year for an ambiguous yearless deadline.
+- application_url must occur in the supplied advert; otherwise null.
+- principal_investigator is a named supervisor if stated, not boilerplate or
+  an organization. disciplines describe research content, not generic phrases
+  such as work environment, legal authorization or trade-offs.
+- visa_sponsorship_status is "explicit" only for stated sponsorship;
+  welcoming international applicants alone does not establish sponsorship.
+  Relocation assistance and citizen/resident preference alone also do not
+  establish sponsorship or its absence. Preserve these facts in visa_note.
+  Use "not_offered" for explicit no-sponsorship or mandatory citizenship
+  restrictions, not a preference or a generic work-authorization requirement.
+  Use "unknown" without sponsorship evidence. Preserve conditional support
+  and contradictory statements in visa_note without inventing certainty.
+- salary_raw copies stated compensation verbatim. tools lists only tools
+  explicitly required/preferred. min_degree is the minimum required degree,
+  not a qualification mentioned in career prospects or an address.
+- start_date copies a stated start date/season; otherwise null.
+- summary states sourced role facts neutrally; do not invent who it suits.
+- confidence is your calibrated probability that is_vacancy is correct.
+OUTPUT JSON SCHEMA:
+""" + json.dumps(EXTRACTION_JSON_SCHEMA, ensure_ascii=False)
 
 
 def build_user_prompt(*, text: str, source_url: str, title: str = "") -> str:
