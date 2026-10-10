@@ -27,7 +27,6 @@ import base64
 import hashlib
 import lzma
 import sys
-from datetime import UTC
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -139,7 +138,7 @@ After materializing, follow README.md: create a virtualenv, install with
 COMPLIANCE.md before enabling any optional source.
 
 Build info:
-    generated_at   = {generated_at!r}
+    provenance     = 'reproducible-from-source-manifest'
     file_count     = {file_count}
     manifest_sha256 = {manifest_hash!r}
 """
@@ -235,10 +234,7 @@ def main() -> None:
     payload_b64 = base64.b64encode(compressed).decode("ascii")
     wrapped = "\n".join(payload_b64[i : i + 100] for i in range(0, len(payload_b64), 100))
 
-    from datetime import datetime
-
     output = MATERIALIZER_TEMPLATE.format(
-        generated_at=datetime.now(UTC).isoformat(),
         file_count=len(files),
         manifest_hash=manifest_hash,
         payload_b64=wrapped,
