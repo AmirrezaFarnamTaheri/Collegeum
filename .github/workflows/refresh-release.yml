@@ -11,7 +11,7 @@ on:
       - .github/workflows/refresh-release.yml
   workflow_dispatch:
 
-# Refresh checkpoint: schema migration, Telegram reconciliation and callback retention.
+# Refresh checkpoint: report exact artifact differences in full CI.
 
 permissions:
   contents: write
