@@ -638,11 +638,11 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
 
     home, markup = menu(None)
     assert "Academic roles: 0/3" in home
-    assert len(markup["inline_keyboard"]) == 7  # delivery, sources and language rows
+    assert len(markup["inline_keyboard"]) == 8  # includes life-sciences category
     assert "sub:p:academic" in str(markup)
     assert "sub:p:careers" in str(markup)
     assert "sub:p:markets" in str(markup)
-    for page in ("academic", "careers", "markets", "delivery", "privacy", "help", "stop"):
+    for page in ("academic", "life_sciences", "careers", "markets", "delivery", "privacy", "help", "stop"):
         text, keyboard = menu(None, page)
         assert text
         assert len(text) < 4096
@@ -1553,3 +1553,42 @@ def test_unavailable_admin_cache_never_blocks_later_unsubscribe(tmp_path, monkey
         "temporarily unavailable" in str(message["text"])
         for message in api.sent(99)
     )
+
+
+def test_life_sciences_bot_category_is_independent_of_career_markets(tmp_path):
+    cfg = settings(tmp_path)
+    api = API([
+        message(1, 101, "/lifesciences"),
+        tap(2, 101, "sub:t:life_sciences_phd"),
+        message(3, 101, "/settings"),
+        tap(4, 101, "sub:p:life_sciences"),
+    ])
+    summary = run(cfg, api)
+    assert summary["failed"] == 0
+    member = FeedbackStore.from_settings(cfg).subscriber(101)
+    assert member is not None
+    assert "life_sciences_phd" in member["topics"]
+    assert member["scopes"] == {}
+    assert FeedbackStore.from_settings(cfg).wants_life_sciences()
+    assert any("Life Sciences PhD" in msg["text"] for msg in api.sent(101))
+    assert any(
+        "Life Sciences PhD" in body["text"]
+        for method, body in api.calls if method == "editMessageText"
+    )
+    assert load_chat_state(cfg.telegram_state_path)["offset"] == 5
+
+
+def test_life_sciences_opt_in_respects_unsubscribe_and_pausing(tmp_path):
+    cfg = settings(tmp_path)
+    api = API([
+        tap(1, 101, "sub:t:life_sciences_phd"),
+        message(2, 101, "/pause"),
+    ])
+    assert run(cfg, api)["failed"] == 0
+    store = FeedbackStore.from_settings(cfg)
+    assert store.wants_life_sciences()  # Pausing delivery does not halt discovery.
+    assert store.subscriber(101)["paused"]
+    assert run(cfg, API([
+        message(3, 101, "/stop"), tap(4, 101, "sub:stop:yes"),
+    ]))["failed"] == 0
+    assert not FeedbackStore.from_settings(cfg).wants_life_sciences()
