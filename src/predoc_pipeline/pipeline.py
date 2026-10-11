@@ -325,18 +325,50 @@ def _pre_extract(
          "hints": item.hints},
         sort_keys=True, ensure_ascii=False, default=str,
     )
-    digest = "candidate-v3:" + hashlib.sha256(evidence.encode("utf-8")).hexdigest()
+    evidence_hash = hashlib.sha256(evidence.encode("utf-8")).hexdigest()
+    # A rejected vacancy must be eligible for reconsideration when the rules
+    # change. Previous candidate-v3 hashes covered only scraped evidence,
+    # making old PhD/postdoc/discipline rejections effectively permanent.
+    policy_config = (
+        policy.prefs.filters.model_dump(mode="json") if policy is not None else {}
+    )
+    policy_fingerprint = hashlib.sha256(json.dumps(
+        policy_config, sort_keys=True, ensure_ascii=False
+    ).encode("utf-8")).hexdigest()[:16]
+    digest = f"candidate-v4:{policy_fingerprint}:{evidence_hash}"
     board = bool(item.hints.get("board"))
 
     seen = db.seen(source_key)
-    # A recurring board URL may change its deadline, cohort, or vacancy status.
-    # Only unchanged candidate evidence can reuse its prior verdict.
-    if seen is not None and seen["content_hash"] == digest:
-        # Same URL, same body: we already decided about this one.
-        stats.already_seen += 1
-        if seen["listing_id"]:
-            db.touch_listing(int(seen["listing_id"]))
-        return None
+    prior = (seen["content_hash"] or "") if seen is not None else ""
+    same_candidate = prior == f"candidate-v3:{evidence_hash}" or (
+        prior.startswith("candidate-v4:") and prior.endswith(f":{evidence_hash}")
+    )
+    if seen is not None and (prior == digest or same_candidate):
+        legacy_role_reject = prior.startswith("candidate-v3:") and bool(re.search(
+            r"phd.studentship|postdoc|post.doc|outside_US|requires.phd",
+            (seen["reason"] or ""), re.I
+        ))
+        # A policy change reopens *rejections*, never already accepted listings.
+        # Old PhD/postdoc rejections get one explicit eligibility migration.
+        reconsider = seen["decision"] == "rejected" and (
+            legacy_role_reject or (prior.startswith("candidate-v4:") and prior != digest)
+        )
+        if not reconsider:
+            stats.already_seen += 1
+            listing_id = seen["listing_id"]
+            if listing_id is None:
+                # Safe provenance recovery only for an exact URL identity.
+                original = db.listing_by_url_hash(source_key)
+                listing_id = int(original["id"]) if original is not None else None
+            if prior != digest:
+                db.mark_seen(
+                    source_key, source=item.source, decision=seen["decision"],
+                    reason=seen["reason"] or "", content_hash=digest,
+                    listing_id=listing_id,
+                )
+            if listing_id:
+                db.touch_listing(int(listing_id))
+            return None
 
     if item.hints.get("reject"):
         # The board collector already read the job page and found a reason

@@ -125,3 +125,77 @@ def test_board_collector_emits_known_adverts_for_reconsideration(monkeypatch):
     result = asyncio.run(collector._collect([config], prefs, lambda _: True, None))
     assert result.known == 1
     assert len(result.items) == 1 and result.items[0].source_url == post.url
+
+
+def test_legacy_phd_and_postdoc_rejections_are_reconsidered_once(tmp_path):
+    import hashlib
+    import json
+
+    from predoc_pipeline.boards.config import load_preferences
+    from predoc_pipeline.core.urls import url_hash
+    from predoc_pipeline.pipeline import RunStats, _pre_extract
+    from predoc_pipeline.policy import Policy
+
+    preferences = load_preferences("config/preferences.toml")
+    assert not preferences.filters.exclude_phd_positions
+    policy = Policy(preferences)
+    db_path = tmp_path / "reconsider.db"
+    init(db_path)
+    for i, reason in enumerate((
+        "not a vacancy: phd_studentship", "not a vacancy: postdoc",
+    )):
+        item = RawItem(
+            source="test", source_url=f"https://example.org/job/{i}",
+            title="Research Assistant in Economics",
+            text="Paid research assistant in economics, research and data analysis.",
+            hints={"board": True},
+        )
+        evidence = json.dumps({
+            "text": item.text, "title": item.title,
+            "apply_url_hint": item.apply_url_hint, "hints": item.hints,
+        }, sort_keys=True, ensure_ascii=False, default=str)
+        legacy = "candidate-v3:" + hashlib.sha256(evidence.encode()).hexdigest()
+        with Database(db_path) as db:
+            db.mark_seen(url_hash(item.source_url), source="test", decision="rejected",
+                         reason=reason, content_hash=legacy)
+            first = _pre_extract(item, db=db, stats=RunStats(), policy=policy)
+            assert first is not None
+            _, key, new_digest = first
+            assert new_digest.startswith("candidate-v4:")
+            db.mark_seen(key, source="test", decision="rejected", reason=reason,
+                         content_hash=new_digest)
+            stats = RunStats()
+            assert _pre_extract(item, db=db, stats=stats, policy=policy) is None
+            assert stats.already_seen == 1
+
+
+def test_filter_edit_reconsiders_rejected_but_not_accepted_decisions(tmp_path):
+    from predoc_pipeline.boards.config import load_preferences
+    from predoc_pipeline.core.urls import url_hash
+    from predoc_pipeline.pipeline import RunStats, _pre_extract
+    from predoc_pipeline.policy import Policy
+
+    preferences = load_preferences("config/preferences.toml")
+    item = RawItem(
+        source="test", source_url="https://example.org/renewable-eligibility",
+        title="Research Assistant in Economics", hints={"board": True},
+        text="We are hiring a paid research assistant in applied economics.",
+    )
+    path = tmp_path / "policy.db"
+    init(path)
+    with Database(path) as db:
+        old = _pre_extract(item, db=db, stats=RunStats(), policy=Policy(preferences))
+        assert old is not None
+        _, key, prior = old
+        db.mark_seen(key, source="test", decision="rejected", reason="wrong-field",
+                     content_hash=prior)
+        changed = preferences.model_copy(deep=True)
+        changed.filters.field_terms.append("genomics")
+        reconsider = _pre_extract(item, db=db, stats=RunStats(), policy=Policy(changed))
+        assert reconsider is not None and reconsider[2] != prior
+        db.mark_seen(key, source="test", decision="accepted",
+                     content_hash=prior)
+        skipped = RunStats()
+        assert _pre_extract(item, db=db, stats=skipped, policy=Policy(changed)) is None
+        assert skipped.already_seen == 1
+        assert db.seen(url_hash(item.source_url))["content_hash"] == reconsider[2]
