@@ -135,7 +135,29 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
     callbacks = data.get("callbacks", [])
     if not isinstance(callbacks, list) or not all(isinstance(c, str) for c in callbacks):
         raise _corrupt(path, "'callbacks' is not a list of strings")
-    data["marks"], data["callbacks"] = marks, callbacks
+    subscribers = data.get("subscribers", {})
+    if not isinstance(subscribers, dict):
+        raise _corrupt(path, "'subscribers' must be an object")
+    for chat_id, member in subscribers.items():
+        if (not isinstance(chat_id, str) or not chat_id.isascii() or
+                not chat_id.isdecimal() or int(chat_id) <= 0 or
+                not isinstance(member, dict)):
+            raise _corrupt(path, "invalid subscriber identity")
+        for field in ("topics", "scopes", "deliveries"):
+            value = member.get(field, {})
+            if not isinstance(value, dict):
+                raise _corrupt(path, f"subscriber {chat_id}: {field} is not an object")
+            member.setdefault(field, {})
+        for field in ("topics", "scopes"):
+            if not all(isinstance(k, str) and isinstance(v, str)
+                       for k, v in member[field].items()):
+                raise _corrupt(path, f"subscriber {chat_id}: invalid {field}")
+        for delivery in member["deliveries"].values():
+            if not isinstance(delivery, dict) or delivery.get("state") not in (
+                "sending", "sent", "uncertain",
+            ) or not isinstance(delivery.get("at"), str):
+                raise _corrupt(path, f"subscriber {chat_id}: invalid delivery journal")
+    data["marks"], data["callbacks"], data["subscribers"] = marks, callbacks, subscribers
     return data
 
 
@@ -173,6 +195,96 @@ class FeedbackStore:
     @property
     def marks(self) -> dict[str, dict[str, Any]]:
         return cast(dict[str, dict[str, Any]], self.data["marks"])
+
+    @property
+    def subscribers(self) -> dict[str, dict[str, Any]]:
+        return cast(dict[str, dict[str, Any]], self.data["subscribers"])
+
+    def subscriber(self, chat_id: int | str) -> dict[str, Any] | None:
+        return self.subscribers.get(str(chat_id))
+
+    def toggle_subscription(self, chat_id: int, kind: str, option: str) -> bool:
+        """Explicit private-chat opt-in. Return whether option is enabled."""
+        from .subscriptions import CAREER_SCOPES, TOPICS
+
+        if chat_id <= 0 or kind not in ("topics", "scopes"):
+            raise ValueError("invalid subscription operation")
+        if option not in (TOPICS if kind == "topics" else CAREER_SCOPES):
+            raise ValueError("unknown subscription option")
+        member = self.subscribers.setdefault(
+            str(chat_id), {"topics": {}, "scopes": {}, "deliveries": {}},
+        )
+        selections: dict[str, str] = member[kind]
+        if option in selections:
+            del selections[option]
+            enabled = False
+        else:
+            selections[option] = _now()
+            enabled = True
+        self._dirty = True
+        return enabled
+
+    def remove_subscriber(self, chat_id: int) -> bool:
+        if self.subscribers.pop(str(chat_id), None) is None:
+            return False
+        self._dirty = True
+        return True
+
+    def reserve_delivery(self, chat_id: int, key: str) -> bool:
+        """Write a send intent before network I/O to suppress crash replays."""
+        member = self.subscriber(chat_id)
+        if member is None or key in member["deliveries"]:
+            return False
+        member["deliveries"][key] = {"state": "sending", "at": _now()}
+        self._dirty = True
+        return True
+
+    def finish_delivery(
+        self, chat_id: int, key: str, *,
+        message_id: int | None = None, uncertain: bool = False,
+    ) -> None:
+        member = self.subscriber(chat_id)
+        if member is None or key not in member["deliveries"]:
+            raise ValueError("delivery intent not found")
+        member["deliveries"][key] = {
+            "state": "uncertain" if uncertain else "sent",
+            "at": _now(),
+            **({"message_id": message_id} if message_id is not None else {}),
+        }
+        self._dirty = True
+
+    def cancel_delivery(self, chat_id: int, key: str) -> None:
+        """Only call when an explicit API response proves no message was sent."""
+        member = self.subscriber(chat_id)
+        if member is not None and key in member["deliveries"]:
+            del member["deliveries"][key]
+            self._dirty = True
+
+    def resolve_delivery(
+        self, chat_id: int, key: str, *,
+        confirmed_sent: bool = False, confirmed_absent: bool = False,
+    ) -> None:
+        if confirmed_sent == confirmed_absent:
+            raise ValueError("Exactly one verified delivery outcome is required")
+        member = self.subscriber(chat_id)
+        if member is None or key not in member["deliveries"]:
+            raise ValueError("Unknown subscriber delivery")
+        if member["deliveries"][key]["state"] == "sent":
+            if confirmed_sent:
+                return
+            raise ValueError("Cannot erase a confirmed delivery")
+        if confirmed_sent:
+            self.finish_delivery(chat_id, key)
+        else:
+            self.cancel_delivery(chat_id, key)
+
+    def wants_career(self, scope: str) -> bool:
+        from .subscriptions import CAREER_TOPICS
+        return any(
+            scope in member["scopes"] and
+            any(topic in member["topics"] for topic in CAREER_TOPICS)
+            for member in self.subscribers.values()
+        )
 
     def status(self, url_hash: str) -> str | None:
         return (self.marks.get(url_hash) or {}).get("status")
