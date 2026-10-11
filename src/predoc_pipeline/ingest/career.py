@@ -22,6 +22,7 @@ from bs4 import BeautifulSoup
 from ..core.textproc import truncate
 from ..logging_setup import get_logger
 from .http import PoliteClient
+from .rotation import SCHEDULE_INTERVAL_HOURS
 
 log = get_logger(__name__)
 
@@ -216,7 +217,7 @@ def poll_career(
     path: str | Path, *, client: PoliteClient, needs_iran: bool,
     needs_remote: bool, slot: int | None = None,
 ) -> tuple[int, list[str]]:
-    """Maximum two HTTP fetches per 3-hour run, without extra model calls."""
+    """Maximum two HTTP fetches per 4-hour run, without extra model calls."""
     previous = load_career(path)
     fresh: list[dict[str, str]] = []
     errors: list[str] = []
@@ -233,7 +234,7 @@ def poll_career(
         else:
             errors.append(f"Jobicy fetch: {res.error or res.status}")
     if needs_iran:
-        slot = slot if slot is not None else int(datetime.now(UTC).timestamp()) // 10800
+        slot = slot if slot is not None else int(datetime.now(UTC).timestamp()) // (SCHEDULE_INTERVAL_HOURS * 3600)
         res = client.get(iran_search_url(slot))
         if res.ok:
             parsed = parse_iran_jobs(res.text)

@@ -1,6 +1,7 @@
 """End-to-end private subscriber and admin flows against a fake Telegram API."""
 
 import json
+from pathlib import Path
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
@@ -13,7 +14,7 @@ from predoc_pipeline.ingest.career import (
     parse_remote_jobs,
     save_career,
 )
-from predoc_pipeline.ingest.rotation import scheduled_sources
+from predoc_pipeline.ingest.rotation import SCHEDULE_INTERVAL_HOURS, scheduled_sources
 from predoc_pipeline.publish.admin import admin_id
 from predoc_pipeline.publish.bot import telegram_sync
 from predoc_pipeline.publish.feedback import FeedbackStore, generate_key
@@ -197,11 +198,19 @@ def test_career_parsers_and_journal_do_not_conflate_geographies(tmp_path):
     assert len(load_career(state_path)) == 2
 
 
-def test_three_hour_rotation_covers_every_source_with_two_complementary_slots():
+def test_four_hour_rotation_covers_every_source_with_two_complementary_slots():
     sources = [SimpleNamespace(name=f"source-{i}", enabled=True) for i in range(9)]
     sources.append(SimpleNamespace(name="disabled", enabled=False))
     a = scheduled_sources(sources, timestamp=datetime(2026, 10, 11, 0, tzinfo=UTC))
-    b = scheduled_sources(sources, timestamp=datetime(2026, 10, 11, 3, tzinfo=UTC))
+    b = scheduled_sources(sources, timestamp=datetime(2026, 10, 11, 4, tzinfo=UTC))
     assert not (a & b)
     assert a | b == {f"source-{i}" for i in range(9)}
     assert abs(len(a) - len(b)) <= 1
+
+
+def test_pipeline_schedule_matches_source_rotation_interval():
+    """Prevent cron and cohort rotation from drifting apart."""
+    root = Path(__file__).resolve().parents[2]
+    workflow = (root / ".github/workflows/pipeline.yml").read_text(encoding="utf-8")
+    assert SCHEDULE_INTERVAL_HOURS == 4
+    assert 'cron: "0 */4 * * *"' in workflow

@@ -46,8 +46,8 @@ The private admin can open `/admin` for run, cache and queue health.
 Both require the existing `FEEDBACK_ENCRYPTION_KEY`; configure a positive
 `TELEGRAM_ADMIN_CHAT_ID` for the admin surface.
 
-The scheduled pipeline checks alternating source cohorts every **3 hours**;
-each academic board is checked once per 6 hours and runs have halved budgets.
+The scheduled pipeline checks alternating source cohorts every **4 hours**;
+each academic board is checked once per 8 hours and runs have halved budgets.
 See [Telegram subscriptions and operations](docs/TELEGRAM_OPERATIONS.md)
 for data flow, delivery recovery, source constraints, and setup.
 
@@ -80,8 +80,8 @@ predoc-pipeline vacuum           # prune dead-letter/seen rows and compact the d
 
 For a scheduled, hosted setup add `TELEGRAM_BOT_TOKEN` and
 `TELEGRAM_PUBLIC_CHANNEL_ID` (your own chat id, for a personal bot) as
-repository secrets. `.github/workflows/pipeline.yml` runs every six hours
-(00:00, 06:00, 12:00 and 18:00 UTC),
+repository secrets. `.github/workflows/pipeline.yml` runs every four hours
+(00:00, 04:00, 08:00, 12:00, 16:00 and 20:00 UTC),
 and `.github/workflows/telegram.yml` checks commands at its configured half-hour
 slots. Both workflows share a serial queue with multiple waiting runs enabled;
 [GitHub permits up to 100 waiting runs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)

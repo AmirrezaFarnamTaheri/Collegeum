@@ -59,7 +59,7 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
             f"{header}\n\n"
             f"👥 Subscribers: {len(subs)}\n"
             f"⚠️ Uncertain private sends: {total_uncertain}\n"
-            "⏱ Pipeline: every 3 hours · Telegram sync: ~30 minutes\n"
+            "⏱ Pipeline: every 4 hours · Telegram sync: ~30 minutes\n"
             "⚙️ Publication scheduling and retry are managed in GitHub Actions.\n"
             "Pause affects private alerts only, not public channel or ingestion."
         )

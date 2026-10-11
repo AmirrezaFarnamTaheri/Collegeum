@@ -35,7 +35,7 @@ gate/model, public dashboard, channel broadcast or X:
 
 | Market | Source | Selection and limits |
 |---|---|---|
-| Remote | [Jobicy public API](https://jobicy.com/jobs-rss-feed) | Only jobs explicitly marked Anywhere/Worldwide/Global/Iran in `jobGeo`; title matched to role; one request per three-hour cycle |
+| Remote | [Jobicy public API](https://jobicy.com/jobs-rss-feed) | Only jobs explicitly marked Anywhere/Worldwide/Global/Iran in `jobGeo`; title matched to role; one request per four-hour cycle |
 | Iran-based | [Jobinja](https://jobinja.ir) | Conservative HTML job-link parser for Iranian employer listings; rotate one of four Persian queries per cycle; at most 30 cards. Does not call an unofficial paid API. |
 
 Role categories: data scientist, data analyst/BI, economics/management
@@ -57,7 +57,7 @@ repeat alerts. Scheduled pipeline workflow commits this journal.
 ## Message lifecycle and recovery
 
 ```text
-Scheduled 3h collection (rotating source cohorts)
+Scheduled 4h collection (rotating source cohorts)
   -> existing academic gate/extraction/deduplication -> academic listings journal
   -> small opt-in career feeds (max 2 HTTP fetches) -> career jobs journal
 
@@ -94,16 +94,16 @@ notification pause does not block collection or the legacy public channel.
 
 ## Cadence, cache and failure semantics
 
-- The previous 6-hour pipeline cron is now **every 3 hours**. Automated
+- The previous 6-hour pipeline cron is now **every 4 hours**. Automated
   scheduled executions poll alternating deterministic halves of enabled
   academic boards, syndicated feeds and portals: every enabled source remains
-  eligible once per 6 hours.
+  eligible once per 8 hours.
   Manual pipeline runs and `--only` overrides still scan selected/all sources.
 - Per-run `max_details_per_run` and `recheck_max_per_run` were halved.
   The pipeline and Telegram jobs share a single serialized workflow
   concurrency group to avoid racing on committed state.
 - Jobicy requests follow its public API fair-use guidance (not more than one
-  pass per hour); this project polls at most once per 3 hours. Conditional
+  pass per hour); this project polls at most once per 4 hours. Conditional
   requests use the ordinary polite HTTP cache when a reusable response body
   exists. The SQLite cache is ephemeral on hosted runners; persistent
   deduplication relies on NDJSON journals and encrypted delivery receipts.
