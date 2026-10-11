@@ -48,7 +48,9 @@ from .feedback import (
     load_chat_state,
     save_state,
 )
+from .interactions import private_callback, private_message
 from .keyboards import LEGEND, feedback_row, parse_callback, rebuild
+from .subscriptions import dispatch
 from .telegram import TelegramClient, TelegramError, deadline_label, pack_html_blocks
 
 log = get_logger(__name__)
@@ -61,8 +63,13 @@ COMMANDS = [
     ("valid", "Positions you marked ✅ interested"),
     ("hidden", "Positions you marked ❌ (to restore one)"),
     ("help", "How the buttons work"),
+    ("start", "Start personal job alerts"),
+    ("settings", "Choose jobs and alerts"),
+    ("latest", "Preview matching positions"),
+    ("stop", "Unsubscribe from private alerts"),
+    ("admin", "Private operations and run health"),
 ]
-COMMANDS_VERSION = 1
+COMMANDS_VERSION = 2
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
@@ -223,10 +230,10 @@ def telegram_sync(
     max_items = max(1, max_items or tg_prefs.list_max)
     summary = {"received": 0, "commands": 0, "taps": 0, "ignored": 0, "failed": 0, "dropped": 0}
     owners = settings.owner_ids
-    if not settings.telegram_bot_token or not owners:
+    if not settings.telegram_bot_token or not (owners or settings.feedback_encryption_key):
         log.warning("telegram_sync_skipped",
-                    reason="set TELEGRAM_BOT_TOKEN and your own chat id "
-                           "(TELEGRAM_PUBLIC_CHANNEL_ID or TELEGRAM_ADMIN_CHAT_ID)")
+                    reason="set TELEGRAM_BOT_TOKEN and encrypted private subscriptions "
+                           "or an owner Telegram chat ID")
         return summary
 
     tg = TelegramClient(bot_token=settings.telegram_bot_token, client=http_client)
@@ -267,6 +274,7 @@ def telegram_sync(
                     chat_state["exports_pending"] = False
                 else:
                     summary["failed"] += 1
+            _dispatch_private(settings, tg, store, sleep, summary)
             save_state(settings.telegram_state_path, chat_state)
             return summary
 
@@ -281,12 +289,16 @@ def telegram_sync(
             update_id = int(update["update_id"])
             try:
                 if "callback_query" in update:
-                    changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,
-                                           owners, summary)
+                    if not private_callback(bot, update["callback_query"], store,
+                                            settings, summary):
+                        changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,
+                                               owners, summary)
                 elif "message" in update:
-                    _handle_message(bot, update["message"], rows, store, owners, summary,
-                                    page_size=page_size, max_items=max_items,
-                                    site_url=settings.site_url)
+                    if not private_message(bot, update["message"], store, settings,
+                                           rows, summary):
+                        _handle_message(bot, update["message"], rows, store, owners,
+                                        summary, page_size=page_size,
+                                        max_items=max_items, site_url=settings.site_url)
             except Exception as exc:  # noqa: BLE001
                 if _is_retryable(exc):
                     # Do not acknowledge: this update (and everything after it) is
@@ -310,10 +322,30 @@ def telegram_sync(
                 save_state(settings.telegram_state_path, chat_state)
             else:
                 summary["failed"] += 1
+        _dispatch_private(settings, tg, store, sleep, summary)
         log.info("telegram_sync", **summary)
         return summary
     finally:
         tg.close()
+
+
+def _dispatch_private(
+    settings: Settings, telegram: TelegramClient, store: FeedbackStore,
+    sleep: Callable[[float], None], summary: dict[str, int],
+) -> None:
+    """Load only the bounded public job journal, then fan out from encrypted state."""
+    if not store.key or not store.subscribers:
+        return
+    from ..ingest.career import load_career
+
+    init_db(settings.db_path)
+    with Database(settings.db_path) as db:
+        state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
+        academic = list(db.published_listings())
+    career = load_career(settings.career_state_path)
+    deliveries = dispatch(store, telegram, academic, career, sleep=sleep)
+    for key, value in deliveries.items():
+        summary[key] = value
 
 
 def _is_retryable(exc: BaseException) -> bool:
