@@ -43,38 +43,13 @@ def private_user_id(message: dict[str, Any]) -> int | None:
     return None
 
 
-def menu(member: dict[str, Any] | None) -> tuple[str, dict[str, Any]]:
-    topics = member.get("topics", {}) if member else {}
-    scopes = member.get("scopes", {}) if member else {}
-    lines = [
-        "<b>Collegeum · Your alerts</b>",
-        "Choose interests below. Your choices apply only to your private chat.",
-        "Alerts start from the time you opt in. /latest previews matched jobs.",
-        "",
-        "<b>Roles</b>",
-    ]
-    buttons: list[list[dict[str, str]]] = []
-    for key, label in TOPIC_LABELS.items():
-        active = key in topics
-        lines.append(f"{'✅' if active else '▫️'} {escape(label)}")
-        buttons.append([{
-            "text": f"{'✅' if active else '▫️'} {label}",
-            "callback_data": f"sub:t:{key}",
-        }])
-    lines += ["", "<b>Job markets</b>"]
-    for key, label in CAREER_SCOPES.items():
-        active = key in scopes
-        lines.append(f"{'✅' if active else '▫️'} {escape(label)}")
-        buttons.append([{
-            "text": f"{'✅' if active else '▫️'} {label}",
-            "callback_data": f"sub:g:{key}",
-        }])
-    lines += [
-        "", "Job markets are independent: Iran-based ≠ globally remote.",
-        "Remote alerts include only roles explicitly available worldwide.",
-        "Use /stop to unsubscribe and remove your active alert records.",
-    ]
-    return "\n".join(lines), {"inline_keyboard": buttons}
+def menu(
+    member: dict[str, Any] | None, page: str = "home",
+) -> tuple[str, dict[str, Any]]:
+    """Compatibility entrypoint for the native Telegram UI renderer."""
+    from .ui import menu as render_menu
+
+    return render_menu(member, page)
 
 
 def parse_toggle(raw: str | None) -> tuple[str, str] | None:

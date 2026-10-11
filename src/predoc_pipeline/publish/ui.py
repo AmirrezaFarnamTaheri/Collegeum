@@ -11,7 +11,7 @@ from html import escape
 from typing import Any
 from urllib.parse import urlsplit
 
-from .subscriptions import CAREER_SCOPES, CAREER_TOPICS, TOPIC_LABELS
+from .subscriptions import CAREER_SCOPES, TOPIC_LABELS
 
 ACADEMIC = ("predoc", "phd", "postdoc")
 CAREERS = ("data_scientist", "data_analyst", "econ_consulting", "research_analyst")

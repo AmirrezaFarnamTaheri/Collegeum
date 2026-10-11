@@ -119,10 +119,14 @@ def test_admin_confirmation_is_private_and_replay_safe(tmp_path):
     assert not api.sent(101)
 
 
-def test_stop_erases_subscriber_and_prevents_later_alerts(tmp_path):
+def test_stop_requires_confirmation_and_prevents_later_alerts(tmp_path):
     cfg = settings(tmp_path)
     api = API([tap(1, 101, "sub:t:predoc"), message(2, 101, "/stop")])
     run(cfg, api)
+    assert FeedbackStore.from_settings(cfg).subscriber(101) is not None
+    assert "Unsubscribe?" in api.sent(101)[-1]["text"]
+    confirming = API([tap(3, 101, "sub:stop:yes")])
+    run(cfg, confirming)
     assert FeedbackStore.from_settings(cfg).subscriber(101) is None
 
 
@@ -407,8 +411,9 @@ def test_polling_writes_source_health_without_personal_details(tmp_path):
         health_path=health, slot=0,
     )
     assert count == 0
-    assert len(errors) == 1
+    assert len(errors) == 2
     data = json.loads(health.read_text("utf-8"))
+    assert data["sources"]["irantalent"]["fetched"] == 1
     assert data["sources"]["jobinja"]["fetched"] == 1
     assert data["sources"]["jobinja"]["accepted"] == 0
     assert data["sources"]["jobicy"]["requested"] is False
