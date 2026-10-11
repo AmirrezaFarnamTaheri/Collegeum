@@ -39,6 +39,8 @@ VALID, INVALID, APPLIED = "valid", "invalid", "applied"
 STATUS_BY_CODE = {"v": VALID, "x": INVALID, "a": APPLIED}
 CODE_BY_STATUS = {v: k for k, v in STATUS_BY_CODE.items()}
 ID_PREFIX = 16  # characters of url_hash carried in a button (Telegram allows 64 bytes)
+DELIVERY_ZONES = ("UTC", "Asia/Tehran", "Europe/London", "America/New_York")
+DAILY_LIMITS = (3, 6, 10)
 MAX_SUBSCRIBERS = 1000
 MAX_CALLBACK_IDS = 65536  # above the maximum ordinary updates processed in 24h
 
@@ -160,6 +162,26 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
             raise _corrupt(path, f"subscriber {chat_id}: invalid language")
         member.setdefault("paused", False)
         member.setdefault("language", "en")
+        if member.get("delivery_mode", "instant") not in ("instant", "digest"):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid delivery mode")
+        if type(member.get("daily_limit", 6)) is not int or (
+            member.get("daily_limit", 6) not in DAILY_LIMITS
+        ):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid daily limit")
+        if type(member.get("quiet_hours", False)) is not bool:
+            raise _corrupt(path, f"subscriber {chat_id}: invalid quiet hours")
+        if member.get("timezone", "UTC") not in DELIVERY_ZONES:
+            raise _corrupt(path, f"subscriber {chat_id}: invalid time zone")
+        last_digest = member.get("digest_day", "")
+        if not isinstance(last_digest, str) or (
+            last_digest and len(last_digest) != 10
+        ):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid digest day")
+        member.setdefault("delivery_mode", "instant")
+        member.setdefault("daily_limit", 6)
+        member.setdefault("quiet_hours", False)
+        member.setdefault("timezone", "UTC")
+        member.setdefault("digest_day", "")
         for delivery in member["deliveries"].values():
             if not isinstance(delivery, dict) or delivery.get("state") not in (
                 "sending", "sent", "uncertain", "rejected",
@@ -235,6 +257,8 @@ class FeedbackStore:
         return self.subscribers.setdefault(str(chat_id), {
             "topics": {}, "scopes": {}, "deliveries": {},
             "paused": False, "language": "en",
+            "delivery_mode": "instant", "daily_limit": 6,
+            "quiet_hours": False, "timezone": "UTC", "digest_day": "",
         })
 
     def toggle_subscription(self, chat_id: int, kind: str, option: str) -> bool:
@@ -292,6 +316,30 @@ class FeedbackStore:
         if member["language"] == language:
             return False
         member["language"] = language
+        self._dirty = True
+        return True
+
+    def set_delivery_preference(self, chat_id: int, field: str, value: Any) -> bool:
+        """Typed user-controlled delivery preferences; no implicit opt-in."""
+        allowed = {
+            "delivery_mode": ("instant", "digest"),
+            "daily_limit": DAILY_LIMITS,
+            "quiet_hours": (True, False),
+            "timezone": DELIVERY_ZONES,
+        }
+        if field not in allowed or type(value) not in (str, int, bool):
+            raise ValueError("invalid delivery preference")
+        if field == "daily_limit" and type(value) is not int:
+            raise ValueError("daily limit must be an integer")
+        if field == "quiet_hours" and type(value) is not bool:
+            raise ValueError("quiet hours must be a boolean")
+        if value not in allowed[field]:
+            raise ValueError("unsupported delivery preference")
+        member = self._member(chat_id)
+        if member[field] == value:
+            return False
+        member[field] = value
+        # A changed digest mode does not reset already reserved/ambiguous sends.
         self._dirty = True
         return True
 

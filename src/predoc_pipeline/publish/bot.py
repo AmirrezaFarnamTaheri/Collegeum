@@ -61,6 +61,7 @@ COMMANDS = [
     ("settings", "Choose jobs and markets"),
     ("latest", "Browse matching opportunities"),
     ("sources", "See current job sources"),
+    ("delivery", "Digest and notification hours"),
     ("pause", "Pause notifications"),
     ("resume", "Resume notifications"),
     ("guide", "Help with job alerts"),
@@ -81,6 +82,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "settings": "تنظیم موضوع‌ها و محدوده",
     "latest": "مرور تازه‌ترین فرصت‌ها",
     "sources": "وضعیت منابع آگهی",
+    "delivery": "تنظیمات دریافت اعلان",
     "pause": "توقف اعلان‌ها",
     "resume": "ازسرگیری اعلان‌ها",
     "guide": "راهنمای استفاده",
@@ -88,7 +90,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "stop": "لغو عضویت با تأیید",
     "delete": "حذف داده‌های فعال اشتراک",
 }
-COMMANDS_VERSION = 6
+COMMANDS_VERSION = 7
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",

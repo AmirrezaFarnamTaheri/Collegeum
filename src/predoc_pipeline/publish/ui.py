@@ -117,6 +117,47 @@ def menu(
         )])
         buttons.append(_back(lang))
         body = f"{title}\n\n{caption}"
+    elif page == "delivery":
+        mode = member.get("delivery_mode", "instant") if member else "instant"
+        limit = member.get("daily_limit", 6) if member else 6
+        quiet = bool(member and member.get("quiet_hours"))
+        zone = member.get("timezone", "UTC") if member else "UTC"
+        body = (
+            "🔔 <b>تنظیمات ارسال اعلان‌ها</b>\n\n"
+            f"روش: {'خلاصه روزانه' if mode == 'digest' else 'اعلان جداگانه'}\n"
+            f"حد روزانه: {limit} فرصت\n"
+            f"ساعات آرام: {'۲۲ تا ۸' if quiet else 'خاموش'}\n"
+            f"منطقه زمانی: {escape(zone)}"
+            if fa else
+            "🔔 <b>Notification delivery</b>\n\n"
+            f"Mode: {'Daily digest' if mode == 'digest' else 'Individual alerts'}\n"
+            f"Daily maximum: {limit} opportunities\n"
+            f"Quiet hours: {'22:00–08:00' if quiet else 'Off'}\n"
+            f"Time zone: {escape(zone)}"
+        )
+        buttons = [
+            [_button(
+                "📬 اعلان تکی" if fa and mode == "digest" else
+                "📬 خلاصه روزانه" if fa else
+                "📬 Switch to individual" if mode == "digest" else
+                "📬 Switch to daily digest",
+                "sub:d:mode",
+            )],
+            [_button(
+                (f"حد روزانه: {limit}" if fa else f"Daily maximum: {limit}")
+                + " →", "sub:d:limit",
+            )],
+            [_button(
+                "ساعات آرام: " + ("روشن" if quiet else "خاموش") if fa else
+                "Quiet hours: " + ("On" if quiet else "Off"),
+                "sub:d:quiet",
+            )],
+            [_button(
+                ("منطقه زمانی: " if fa else "Time zone: ") + zone,
+                "sub:d:zone",
+            )],
+            _back(lang),
+        ]
     elif page == "help":
         body = (
             "ℹ️ <b>راهنما</b>\n\n"
@@ -190,8 +231,9 @@ def menu(
                 "▶ Resume alerts" if paused else "⏸ Pause alerts",
                 "sub:a:resume" if paused else "sub:a:pause",
             )],
-            [_button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources"),
+            [_button("🔔 تنظیم ارسال" if fa else "🔔 Delivery", "sub:p:delivery"),
              _button("ℹ️ راهنما" if fa else "ℹ️ Help", "sub:p:help")],
+            [_button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources")],
             [_button("🇬🇧 English" if fa else "🇮🇷 فارسی",
                      "sub:l:en" if fa else "sub:l:fa")],
             [_button("لغو عضویت" if fa else "Unsubscribe", "sub:p:stop")],

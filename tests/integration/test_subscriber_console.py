@@ -1107,3 +1107,77 @@ def test_source_status_distinguishes_idle_error_and_stale(tmp_path):
     report.write_text(json.dumps(damaged), encoding="utf-8")
     text, _ = sources_panel(report)
     assert "Stale" in text
+
+
+def test_daily_digest_reserves_multiple_jobs_as_one_checkpointed_message(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    store.set_delivery_preference(101, "delivery_mode", "digest")
+    store.set_delivery_preference(101, "daily_limit", 3)
+    member = store.subscriber(101)
+    prior = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    member["topics"]["data_analyst"] = prior
+    member["scopes"]["remote"] = prior
+    store.save()
+    jobs = [{
+        "key": f"career:digest{i}", "category": "data_analyst", "scope": "remote",
+        "title": "Data Analyst", "url": f"https://jobicy.com/jobs/digest{i}",
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    } for i in range(5)]
+    save_career(cfg.career_state_path, [], jobs)
+    at = datetime.now(UTC).replace(hour=12, minute=0, second=0)
+    batch = tmp_path / "digest-batch.json"
+    assert plan_batch(cfg, path=batch, now=at) == 1
+    records = json.loads(batch.read_text("utf-8"))
+    assert len(records[0]["keys"]) == 3
+    assert "Daily Collegeum" in records[0]["text"]
+    api = API()
+    with httpx.Client(transport=httpx.MockTransport(api.handler)) as client:
+        counts = send_batch(cfg, path=batch, client=client, sleep=lambda _: None)
+    assert counts["sent"] == 3
+    assert len(api.sent(101)) == 1
+    member = FeedbackStore.from_settings(cfg).subscriber(101)
+    assert all(member["deliveries"][key]["state"] == "sent" for key in records[0]["keys"])
+    assert plan_batch(cfg, path=batch, now=at) == 0
+
+
+def test_quiet_hours_prevent_new_intents_without_discarding_jobs(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    store.set_delivery_preference(101, "quiet_hours", True)
+    previous = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_analyst"] = previous
+    store.subscriber(101)["scopes"]["remote"] = previous
+    store.save()
+    save_career(cfg.career_state_path, [], [{
+        "key": "career:quiet", "category": "data_analyst", "scope": "remote",
+        "title": "Data Analyst", "url": "https://jobicy.com/jobs/quiet",
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    }])
+    batch = tmp_path / "quiet-batch.json"
+    at = datetime.now(UTC).replace(hour=23, minute=0, second=0)
+    assert plan_batch(cfg, path=batch, now=at) == 0
+    assert FeedbackStore.from_settings(cfg).subscriber(101)["deliveries"] == {}
+    assert plan_batch(cfg, path=batch, now=at.replace(hour=12)) == 1
+
+
+def test_delivery_preferences_are_persistent_and_idempotent(tmp_path):
+    cfg = settings(tmp_path)
+    api = API([
+        tap(1, 101, "sub:d:mode"), tap(2, 101, "sub:d:quiet"),
+        tap(3, 101, "sub:d:limit"), tap(4, 101, "sub:p:delivery"),
+    ])
+    result = run(cfg, api)
+    assert result["failed"] == 0
+    member = FeedbackStore.from_settings(cfg).subscriber(101)
+    assert member["delivery_mode"] == "digest"
+    assert member["quiet_hours"] is True
+    assert member["daily_limit"] == 10
+    assert any(
+        "Daily digest" in body["text"]
+        for method, body in api.calls if method == "editMessageText"
+    )

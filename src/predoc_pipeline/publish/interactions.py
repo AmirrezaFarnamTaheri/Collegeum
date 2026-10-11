@@ -90,7 +90,7 @@ def private_message(
         "/status": "home", "/academic": "academic",
         "/careers": "careers", "/markets": "markets", "/guide": "help",
         "/stop": "stop", "/delete": "stop", "/help": "help",
-        "/sources": "sources",
+        "/sources": "sources", "/delivery": "delivery",
     }
     if command not in pages and command not in {
         "/latest", "/admin", "/pause", "/resume",
@@ -142,7 +142,7 @@ def _page(
     target = raw[6:]
     if target == "sources":
         return sources_panel(settings.career_health_path, lang=language(member))
-    if target in ("home", "academic", "careers", "markets", "help", "stop"):
+    if target in ("home", "academic", "careers", "markets", "delivery", "help", "stop"):
         return menu(member, target)
     return None
 
@@ -241,6 +241,30 @@ def private_callback(
                     store.set_language(user_id, raw[-2:])
                     mutation = True
                 target = "home"
+            elif raw in ("sub:d:mode", "sub:d:limit", "sub:d:quiet", "sub:d:zone"):
+                member = store.subscriber(user_id)
+                if not store.callback_seen(callback_id):
+                    if raw == "sub:d:mode":
+                        old = member.get("delivery_mode", "instant") if member else "instant"
+                        value = "digest" if old == "instant" else "instant"
+                        store.set_delivery_preference(user_id, "delivery_mode", value)
+                    elif raw == "sub:d:limit":
+                        from .feedback import DAILY_LIMITS
+                        old = member.get("daily_limit", 6) if member else 6
+                        value = DAILY_LIMITS[(DAILY_LIMITS.index(old) + 1) % len(DAILY_LIMITS)]
+                        store.set_delivery_preference(user_id, "daily_limit", value)
+                    elif raw == "sub:d:quiet":
+                        old = bool(member and member.get("quiet_hours"))
+                        store.set_delivery_preference(user_id, "quiet_hours", not old)
+                    else:
+                        from .feedback import DELIVERY_ZONES
+                        old = member.get("timezone", "UTC") if member else "UTC"
+                        value = DELIVERY_ZONES[
+                            (DELIVERY_ZONES.index(old) + 1) % len(DELIVERY_ZONES)
+                        ]
+                        store.set_delivery_preference(user_id, "timezone", value)
+                    mutation = True
+                target = "delivery"
             elif raw.startswith("sub:b:"):
                 parts = raw.split(":")
                 if (len(parts) != 4 or parts[2] not in ("academic", "careers")
