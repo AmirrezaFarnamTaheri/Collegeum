@@ -207,13 +207,14 @@ note = "Disabled: candidate institution or programme page, not a proven individu
 name = "life_nordic_helsinki_main"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://www.helsinki.fi/en/about-us/careers/open-positions"
-link_pattern = '^$'
+enabled = true
+url = "https://jobs.helsinki.fi/go/Teaching-and-research-positions/8703802/"
+link_pattern = 'jobs\.helsinki\.fi/job/[^/?#]+/\d+/?'
 country = "Finland"
 institution = "University of Helsinki"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official SuccessFactors vacancies, 2026 biomedical doctoral positions and stable /job/title/ID links."
 
 [[board]]
 name = "life_nordic_turku"

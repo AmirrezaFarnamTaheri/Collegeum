@@ -45,13 +45,14 @@ note = "Disabled: candidate institution or programme page, not a proven individu
 name = "life_dach_bern"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://www.unibe.ch/university/working_at_the_university/job_offers/"
-link_pattern = '^$'
+enabled = true
+url = "https://karriere.unibe.ch/offene_stellen/index_ger.html"
+link_pattern = 'jobs\.unibe\.ch/job-vacancies/[^/?#]+/[0-9a-f]{8}-[0-9a-f-]{27,36}'
 country = "Switzerland"
 institution = "University of Bern"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official UniBE job portal links to /job-vacancies/title/UUID doctoral recruitment."
 
 [[board]]
 name = "life_dach_eth_central"

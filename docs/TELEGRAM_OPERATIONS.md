@@ -324,3 +324,32 @@ and a known continental-European workplace, with no expired deadline or
 explicitly self-funded terms. Programme pages alone are not jobs.
 Funding, salary and tuition remain **unverified** unless an individual
 advert provides evidence.
+
+
+### Wider research catalogue and live verification (11 October 2026)
+
+The Life Sciences catalogue now includes **225 provider identities**:
+**37 enabled feeds**, and **188 disabled discovery candidates**.
+A candidate is *not* a working source. Disabled candidates have
+`link_pattern='^$'` and remain unreachable to scheduled fetching until
+someone verifies a real doctoral vacancy URL, employment location, active
+application deadline, and the site's permitted access pattern.
+
+Two new enabled official feeds are **University of Helsinki** (Finland,
+SuccessFactors research vacancies, including doctoral researchers in
+biomedicine) and **University of Bern** (Switzerland, UniBE title/UUID
+vacancy pages). The other added candidates span molecular neuroscience,
+functional genomics, cell biology, developmental biology, academic medical
+centres, research networks, and cohort-based PhD schools across Eastern and
+Southern Europe. They live in three independent catalogues:
+`eastern_balkans.toml`, `specialist_institutes.toml` and
+`doctoral_programmes.toml`. Research-programme pages are treated as
+recruitment *leads*, not live job postings; no automatic admission alerts
+are emitted from those disabled catalogues.
+
+With 37 active providers, 12 are visited per four-hour pipeline run
+(oldest last-attempt first), covering every provider in four successful
+runs, assuming normal GitHub scheduling. Each aggregator topic shard has
+2–4 search pages, preventing a single large portal from exhausting the
+scheduler on its own. This is a coverage and resource bound, not a claim
+that all sources contain live postings at every check.

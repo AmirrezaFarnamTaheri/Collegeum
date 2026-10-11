@@ -1,0 +1,522 @@
+# Life Sciences PhD east research-candidate directory (11 Oct 2026).
+# NONE of these entries is an enabled vacancy feed. Host roots identify
+# institutions, not verified listing endpoints or live doctoral calls.
+# Manual verification must establish robots access, dated vacancies,
+# individual link pattern, field and European workplace before activation.
+
+[[board]]
+name = "life_east_pl_warsaw_uni"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uw.edu.pl/"
+link_pattern = '^$'
+country = "Poland"
+institution = "University of Warsaw"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_pl_warsaw_med"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.wum.edu.pl/"
+link_pattern = '^$'
+country = "Poland"
+institution = "Medical University of Warsaw"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_pl_wroclaw_uni"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://uwr.edu.pl/"
+link_pattern = '^$'
+country = "Poland"
+institution = "University of Wroclaw"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_pl_poznan_amu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://amu.edu.pl/"
+link_pattern = '^$'
+country = "Poland"
+institution = "Adam Mickiewicz University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_pl_gdansk_tech"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://pg.edu.pl/"
+link_pattern = '^$'
+country = "Poland"
+institution = "Gdansk University of Technology"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_pl_lodz_uni"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uni.lodz.pl/"
+link_pattern = '^$'
+country = "Poland"
+institution = "University of Lodz"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_pl_lodz_med"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://umed.pl/"
+link_pattern = '^$'
+country = "Poland"
+institution = "Medical University of Lodz"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_pl_wroclaw_med"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://umw.edu.pl/"
+link_pattern = '^$'
+country = "Poland"
+institution = "Wroclaw Medical University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_cz_charles"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://cuni.cz/"
+link_pattern = '^$'
+country = "Czechia"
+institution = "Charles University Prague"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_cz_biocev"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.biocev.eu/"
+link_pattern = '^$'
+country = "Czechia"
+institution = "BIOCEV"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_cz_img"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.img.cas.cz/"
+link_pattern = '^$'
+country = "Czechia"
+institution = "Institute of Molecular Genetics CAS"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_cz_biology_center"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.bc.cas.cz/"
+link_pattern = '^$'
+country = "Czechia"
+institution = "Biology Centre Czech Academy of Sciences"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_cz_palacky"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.upol.cz/"
+link_pattern = '^$'
+country = "Czechia"
+institution = "Palacky University Olomouc"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_sk_comenius"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://uniba.sk/"
+link_pattern = '^$'
+country = "Slovakia"
+institution = "Comenius University Bratislava"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_sk_academy"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.sav.sk/"
+link_pattern = '^$'
+country = "Slovakia"
+institution = "Slovak Academy of Sciences"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_sk_biomed"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://biomedcentrum.sav.sk/"
+link_pattern = '^$'
+country = "Slovakia"
+institution = "Biomedical Research Center Slovak Academy of Sciences"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_hu_elte"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.elte.hu/"
+link_pattern = '^$'
+country = "Hungary"
+institution = "Eotvos Lorand University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_hu_szeged"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://u-szeged.hu/"
+link_pattern = '^$'
+country = "Hungary"
+institution = "University of Szeged"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_hu_debrecen"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://unideb.hu/"
+link_pattern = '^$'
+country = "Hungary"
+institution = "University of Debrecen"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_hu_hunren"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://hun-ren.hu/"
+link_pattern = '^$'
+country = "Hungary"
+institution = "HUN-REN Hungarian Research Network"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_ee_taltech"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://taltech.ee/"
+link_pattern = '^$'
+country = "Estonia"
+institution = "Tallinn University of Technology"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_ee_nicpb"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.kbfi.ee/"
+link_pattern = '^$'
+country = "Estonia"
+institution = "National Institute of Chemical Physics and Biophysics"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_lv_rsu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.rsu.lv/"
+link_pattern = '^$'
+country = "Latvia"
+institution = "Riga Stradins University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_lv_university"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.lu.lv/"
+link_pattern = '^$'
+country = "Latvia"
+institution = "University of Latvia"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_lt_vilnius"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.vu.lt/"
+link_pattern = '^$'
+country = "Lithuania"
+institution = "Vilnius University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_lt_health"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://lsmu.lt/"
+link_pattern = '^$'
+country = "Lithuania"
+institution = "Lithuanian University of Health Sciences"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_lt_kaunas_tech"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://ktu.edu/"
+link_pattern = '^$'
+country = "Lithuania"
+institution = "Kaunas University of Technology"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_si_ljubljana"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uni-lj.si/"
+link_pattern = '^$'
+country = "Slovenia"
+institution = "University of Ljubljana"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_si_nib"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.nib.si/"
+link_pattern = '^$'
+country = "Slovenia"
+institution = "National Institute of Biology Slovenia"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_si_maribor"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.um.si/"
+link_pattern = '^$'
+country = "Slovenia"
+institution = "University of Maribor"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_hr_zagreb"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unizg.hr/"
+link_pattern = '^$'
+country = "Croatia"
+institution = "University of Zagreb"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_hr_rudjer"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.irb.hr/"
+link_pattern = '^$'
+country = "Croatia"
+institution = "Ruder Boskovic Institute"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_hr_ri_med"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://medri.uniri.hr/"
+link_pattern = '^$'
+country = "Croatia"
+institution = "University of Rijeka Faculty of Medicine"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_ro_bucharest_uni"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://unibuc.ro/"
+link_pattern = '^$'
+country = "Romania"
+institution = "University of Bucharest"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_ro_babes"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ubbcluj.ro/"
+link_pattern = '^$'
+country = "Romania"
+institution = "Babes-Bolyai University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_gr_forth"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.forth.gr/"
+link_pattern = '^$'
+country = "Greece"
+institution = "Foundation for Research and Technology Hellas"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_gr_fleming"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.fleming.gr/"
+link_pattern = '^$'
+country = "Greece"
+institution = "Fleming Biomedical Sciences Research Center"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_gr_athens"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://en.uoa.gr/"
+link_pattern = '^$'
+country = "Greece"
+institution = "National and Kapodistrian University of Athens"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_gr_crete"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uoc.gr/"
+link_pattern = '^$'
+country = "Greece"
+institution = "University of Crete"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_bg_sofia"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uni-sofia.bg/"
+link_pattern = '^$'
+country = "Bulgaria"
+institution = "Sofia University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_bg_academy"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.bas.bg/"
+link_pattern = '^$'
+country = "Bulgaria"
+institution = "Bulgarian Academy of Sciences"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_cy_cyprus_uni"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ucy.ac.cy/"
+link_pattern = '^$'
+country = "Cyprus"
+institution = "University of Cyprus"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_east_cy_cing"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.cing.ac.cy/"
+link_pattern = '^$'
+country = "Cyprus"
+institution = "Cyprus Institute of Neurology and Genetics"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+

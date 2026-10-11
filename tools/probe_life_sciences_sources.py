@@ -26,7 +26,8 @@ MAX_PROBE_SOURCES = 16
 MAX_PARSE_CHARS = 650_000
 REGIONS = frozenset((
     "all", "core", "nordics", "dach", "benelux", "france_iberia",
-    "central_south", "aggregator_topics",
+    "central_south", "aggregator_topics", "eastern_balkans",
+    "specialist_institutes", "doctoral_programmes",
 ))
 PROBE_USER_AGENT = (
     "Collegeum-LSSourceProbe/1.0 "
