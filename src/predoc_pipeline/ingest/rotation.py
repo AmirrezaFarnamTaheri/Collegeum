@@ -5,12 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 SCHEDULE_INTERVAL_HOURS = 4
-RECHECK_AFTER = timedelta(hours=8)
 MAX_HISTORY = 500
 
 
@@ -69,7 +68,10 @@ def scheduled_sources(
             try:
                 previous = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
                 if previous.tzinfo is not None:
-                    if now - previous.astimezone(UTC) < RECHECK_AFTER:
+                    # Compare slots: a slow/late collection must not
+                    # postpone the same cohort's next 8-hour eligibility.
+                    elapsed_slots = slot - _slot(previous.astimezone(UTC))
+                    if 0 <= elapsed_slots < 2:
                         continue
                     selected.add(name)
                     continue

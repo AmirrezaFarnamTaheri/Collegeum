@@ -1103,9 +1103,12 @@ def run(
         feedback = FeedbackStore.from_settings(settings)
         sources = load_sources(settings.sources_config)
         scheduled_registry: set[str] | None = None
+        rotation_at = None
         if settings.source_rotation_enabled and only_sources is None and not dry_run:
+            rotation_at = utcnow()  # checkpoint the selection slot, not gather finish
             scheduled_registry = scheduled_sources(
                 [*sources, *load_board_sources(settings.sources_config)],
+                timestamp=rotation_at,
                 history=load_rotation(settings.source_rotation_path),
             )
             log.info("source_cohort_selected", count=len(scheduled_registry))
@@ -1132,7 +1135,9 @@ def run(
             )
 
         if scheduled_registry is not None:
-            save_rotation(settings.source_rotation_path, scheduled_registry)
+            save_rotation(
+                settings.source_rotation_path, scheduled_registry, timestamp=rotation_at,
+            )
         stats.ingested = len(items)
         stats.sources = source_summary(source_stats)
         stats.source_errors = source_error_count(source_stats)

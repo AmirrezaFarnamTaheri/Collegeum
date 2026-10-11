@@ -1381,3 +1381,36 @@ def test_provider_probe_separates_empty_match_from_broken_schema():
         for row in result["sources"].values()
     )
     assert all(row["matched"] == 0 for row in result["sources"].values())
+
+
+def test_source_rotation_keeps_eight_hour_cadence_after_delayed_collection(tmp_path):
+    from predoc_pipeline.ingest.rotation import load_rotation, save_rotation
+
+    feeds = [SimpleNamespace(name=f"source-{i}", enabled=True) for i in range(14)]
+    journal = tmp_path / "rotation.json"
+    origin = datetime(2026, 10, 11, 0, 15, tzinfo=UTC)
+    selections = []
+    for period in range(7):
+        selected_at = origin + timedelta(hours=4 * period)
+        chosen = scheduled_sources(
+            feeds, timestamp=selected_at, history=load_rotation(journal),
+        )
+        selections.append(chosen)
+        # A two-hour collection must not push the next cohort back one slot.
+        save_rotation(journal, chosen, timestamp=selected_at)
+    enabled = {feed.name for feed in feeds}
+    assert selections[0] | selections[1] == enabled
+    for period in range(5):
+        assert selections[period] == selections[period + 2]
+        assert not (selections[period] & selections[period + 1])
+
+
+def test_source_rotation_handles_future_checkpoint_without_long_starvation():
+    sources = [SimpleNamespace(name="a", enabled=True),
+               SimpleNamespace(name="b", enabled=True)]
+    now = datetime(2026, 10, 11, 8, tzinfo=UTC)
+    future = (now + timedelta(days=30)).isoformat()
+    chosen = scheduled_sources(
+        sources, timestamp=now, history={"attempts": {"a": future, "b": future}},
+    )
+    assert chosen == {"a", "b"}
