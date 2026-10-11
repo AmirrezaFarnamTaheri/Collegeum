@@ -7,6 +7,8 @@ TELEGRAM_ADMIN_CHAT_ID may access the admin menu.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from datetime import UTC, datetime
 from html import escape
 from typing import TYPE_CHECKING, Any
@@ -104,12 +106,30 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
 
     careers = load_career(settings.career_state_path)
     recent = max((j["first_seen_at"] for j in careers), default="none")
+    source_health = "No career-source checks recorded."
+    health_path = Path(settings.career_health_path)
+    if health_path.exists():
+        try:
+            data = json.loads(health_path.read_text(encoding="utf-8"))
+            checks = data["sources"]
+            check_lines = [
+                f"{name}: {info['accepted']} matches, {info['fetched']} requests"
+                for name, info in checks.items() if info.get("requested")
+            ]
+            source_health = (
+                f"Checked {str(data['checked_at'])[:19]} UTC\n"
+                + ("\n".join(check_lines) if check_lines else "No career feeds requested.")
+                + f"\nFeed errors: {len(data.get('errors', []))}"
+            )
+        except (ValueError, KeyError, TypeError):
+            source_health = "Career-source health record is invalid."
     return (
         f"{header}\n\n<b>Storage and cache</b>\n"
         f"HTTP cache entries: {cache} ({current} replayable)\n"
         f"Previously encountered URLs: {sources}\n"
         f"Career feed records: {len(careers)}\n"
         f"Newest career record: {escape(recent[:19])}\n"
+        f"{escape(source_health)}\n"
         "Runtime HTTP cache is ephemeral on CI; durable journals prevent "
         "repeat private notifications across scheduled runs."
     )

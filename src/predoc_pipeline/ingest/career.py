@@ -248,11 +248,17 @@ def save_career(path: str | Path, previous: list[dict[str, str]],
 def poll_career(
     path: str | Path, *, client: PoliteClient, needs_iran: bool,
     needs_remote: bool, slot: int | None = None,
+    health_path: str | Path | None = None,
 ) -> tuple[int, list[str]]:
-    """Maximum two HTTP fetches per 4-hour run, without extra model calls."""
+    """Bounded public-source polling with separately persisted source health."""
     previous = load_career(path)
     fresh: list[dict[str, str]] = []
     errors: list[str] = []
+    started = datetime.now(UTC).isoformat()
+    sources: dict[str, dict[str, Any]] = {
+        "jobicy": {"requested": needs_remote, "fetched": 0, "accepted": 0},
+        "jobinja": {"requested": needs_iran, "fetched": 0, "accepted": 0},
+    }
     if needs_remote:
         cursor: str | None = None
         visited: set[str] = set()
@@ -261,6 +267,7 @@ def poll_career(
             if cursor:
                 url += "&" + urlencode({"cursor": cursor})
             res = client.get(url)
+            sources["jobicy"]["fetched"] += 1
             if not res.ok:
                 errors.append(f"Jobicy fetch: {res.error or res.status}")
                 break
@@ -268,7 +275,9 @@ def poll_career(
                 payload = json.loads(res.text)
                 if not isinstance(payload, dict) or payload.get("success") is False:
                     raise ValueError("invalid or failed Jobicy response")
-                fresh.extend(parse_remote_jobs(payload))
+                parsed = parse_remote_jobs(payload)
+                fresh.extend(parsed)
+                sources["jobicy"]["accepted"] += len(parsed)
                 following = payload.get("nextCursor")
                 if not isinstance(following, str) or not following:
                     break
@@ -284,8 +293,10 @@ def poll_career(
     if needs_iran:
         slot = slot if slot is not None else int(datetime.now(UTC).timestamp()) // (SCHEDULE_INTERVAL_HOURS * 3600)
         res = client.get(iran_search_url(slot))
+        sources["jobinja"]["fetched"] += 1
         if res.ok:
             parsed = parse_iran_jobs(res.text)
+            sources["jobinja"]["accepted"] += len(parsed)
             if not parsed:
                 errors.append("Jobinja produced zero matching job cards; verify markup")
             fresh.extend(parsed)
@@ -294,4 +305,17 @@ def poll_career(
     new_count = save_career(path, previous, fresh)
     for error in errors:
         log.warning("career_source_failed", error=truncate(error, 200))
+    if health_path is not None:
+        data = {
+            "checked_at": started, "added": new_count,
+            "sources": sources, "errors": [truncate(error, 200) for error in errors[:8]],
+        }
+        destination = Path(health_path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        temp = destination.with_name(destination.name + ".tmp")
+        with temp.open("w", encoding="utf-8") as handle:
+            handle.write(json.dumps(data, ensure_ascii=False, sort_keys=True) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        temp.replace(destination)
     return new_count, errors

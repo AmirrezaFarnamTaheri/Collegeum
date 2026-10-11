@@ -122,6 +122,7 @@ class Settings(BaseSettings):
     telegram_state_path: str = "data/telegram_state.json"
     # Separate durable record of external career feeds (no subscriber data).
     career_state_path: str = "data/career_jobs.ndjson"
+    career_health_path: str = "data/career_health.json"
     enable_career_feeds: bool = True
     # Production scheduled runs use alternating source cohorts, 4h apart.
     # Manual runs and local tests retain full source coverage.

@@ -1174,6 +1174,7 @@ def run(
                         count, errors = poll_career(
                             settings.career_state_path, client=career_client,
                             needs_iran=needs_iran, needs_remote=needs_remote,
+                            health_path=settings.career_health_path,
                         )
                     log.info("career_sources_polled", added=count, errors=len(errors))
                     for error in errors:

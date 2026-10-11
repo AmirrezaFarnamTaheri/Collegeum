@@ -125,7 +125,8 @@ jobs:
           # One file at a time: `git add a b` stages nothing if one is missing
           # (feedback.enc only exists once you have tapped a button).
           for f in data/listings.ndjson data/seen.ndjson data/x_threads.ndjson data/feedback.enc \
-                   data/career_jobs.ndjson data/telegram_state.json docs/data/listings.json docs/data/health.json \
+                   data/career_jobs.ndjson data/career_health.json data/telegram_state.json \
+                   docs/data/listings.json docs/data/health.json \
                    docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
