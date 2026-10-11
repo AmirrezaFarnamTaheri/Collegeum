@@ -253,7 +253,9 @@ def telegram_sync(
             except TelegramError as exc:
                 log.warning("set_commands_failed", error=str(exc))
 
-        payload: dict[str, Any] = {"timeout": 0,
+        # Bound interactive processing so a command storm cannot monopolize
+        # the ten-minute scheduled sync window. Unprocessed updates keep offset.
+        payload: dict[str, Any] = {"timeout": 0, "limit": 30,
                                    "allowed_updates": ["message", "callback_query"]}
         if chat_state.get("offset"):
             payload["offset"] = chat_state["offset"]

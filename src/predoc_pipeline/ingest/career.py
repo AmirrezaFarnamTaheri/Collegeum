@@ -25,7 +25,7 @@ from .http import PoliteClient
 
 log = get_logger(__name__)
 
-REMOTE_API = "https://jobicy.com/api/v2/remote-jobs?count=100&geo=anywhere"
+REMOTE_API = "https://jobicy.com/api/v2/remote-jobs?count=200&geo=anywhere"
 IRAN_SEARCH_TERMS = (
     "تحلیلگر داده", "دانشمند داده", "تحلیل اقتصادی", "مشاور مدیریت",
 )

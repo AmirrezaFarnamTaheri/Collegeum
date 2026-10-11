@@ -461,7 +461,7 @@ class TelegramClient:
                 # The server may have accepted the message before the response
                 # was lost. Replaying it here can create duplicate broadcasts.
                 raise TelegramError(
-                    f"sendMessage outcome unknown after transport error: {exc}",
+                    f"sendMessage outcome unknown ({type(exc).__name__})",
                     uncertain=True,
                 ) from exc
 
@@ -525,7 +525,7 @@ class TelegramClient:
             try:
                 response = self.client.post(url, json=payload)  # type: ignore[union-attr]
             except httpx.RequestError as exc:
-                last = TelegramError(f"transport error: {exc}")
+                last = TelegramError(f"transport error: {type(exc).__name__}")
                 sleep(min(2**attempt, 15))
                 continue
             try:
