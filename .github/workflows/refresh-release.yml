@@ -8,6 +8,7 @@ name: refresh-release
 # workflow also refreshes it automatically, with no feature-branch hardcoding.
 # Preserve the current main source/config when refreshing after upstream merges.
 # Keep generated manifests synchronized after workflow regression-test fixes.
+# Refresh checked-in distribution for the four-hour source/pipeline schedule.
 on:
   push:
     branches: ['**']
