@@ -1,0 +1,223 @@
+# Life Sciences PhD source catalogue - france_iberia
+# Indexed sites were checked against public vacancy examples as of 2026-10-11.
+# enabled=true means an official listing and link shape were inspected, NOT guaranteed live scraping.
+# Candidate portals are disabled until individual listing anchors and site access rules are verified.
+
+[[board]]
+name = "life_inria"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://recrutement.inria.fr/public/classic/en/offres"
+link_pattern = 'recrutement\.inria\.fr/public/classic/en/offres/\d{4}-\d+'
+country = "France"
+institution = "Inria"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "French national digital research institute: official paged vacancy list and /offres/YYYY-ID detail links."
+
+[[board]]
+name = "life_ibec_barcelona"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://ibecbarcelona.eu/careers-at-ibec/jobs/jobs-scientific-and-technical-job-opportunities/"
+link_pattern = 'ibecbarcelona\.eu/(?:phd|ph-d|predoctoral)[a-z0-9-]*/?'
+country = "Spain"
+institution = "Institute for Bioengineering of Catalonia"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official IBEC jobs link to biomedical doctoral adverts; listing anchors often show vacancy reference instead of role title."
+
+[[board]]
+name = "life_fr_cnrs"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://emploi.cnrs.fr/Offres/Doctorant/Default.aspx?lang=FR"
+link_pattern = '^$'
+country = "France"
+institution = "CNRS"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_fr_institut_pasteur"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.pasteur.fr/en/jobs"
+link_pattern = '^$'
+country = "France"
+institution = "Institut Pasteur"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_fr_institut_curie"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://institut-curie.org/jobs"
+link_pattern = '^$'
+country = "France"
+institution = "Institut Curie"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_fr_inserm"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.inserm.fr/en/"
+link_pattern = '^$'
+country = "France"
+institution = "Inserm"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_fr_igbmc"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.igbmc.fr/en/"
+link_pattern = '^$'
+country = "France"
+institution = "IGBMC Strasbourg"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_fr_paris_saclay"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.universite-paris-saclay.fr/en"
+link_pattern = '^$'
+country = "France"
+institution = "Université Paris-Saclay"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_es_irb"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.irbbarcelona.org/en/careers/job-openings"
+link_pattern = '^$'
+country = "Spain"
+institution = "IRB Barcelona"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_es_bist"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://bist.eu/jobs/"
+link_pattern = '^$'
+country = "Spain"
+institution = "Barcelona Institute of Science and Technology"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_es_cnio"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.cnio.es/en/employment-and-training/job-offers/"
+link_pattern = '^$'
+country = "Spain"
+institution = "Spanish National Cancer Research Centre"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_es_cnic"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.cnic.es/en/empleo"
+link_pattern = '^$'
+country = "Spain"
+institution = "Spanish National Centre for Cardiovascular Research"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_es_ibec"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://ibecbarcelona.eu/careers-at-ibec/jobs/"
+link_pattern = '^$'
+country = "Spain"
+institution = "IBEC research institute"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_es_upf"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.upf.edu/en/web/treballar-a-la-upf/"
+link_pattern = '^$'
+country = "Spain"
+institution = "Pompeu Fabra University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_pt_gimm"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://gimm.pt/careers/"
+link_pattern = '^$'
+country = "Portugal"
+institution = "Gulbenkian Institute for Molecular Medicine"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_pt_champalimaud"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://fchampalimaud.org/careers"
+link_pattern = '^$'
+country = "Portugal"
+institution = "Champalimaud Foundation"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_pt_itqb_nova"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.itqb.unl.pt/jobs"
+link_pattern = '^$'
+country = "Portugal"
+institution = "ITQB NOVA"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_pt_i3s"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.i3s.up.pt/"
+link_pattern = '^$'
+country = "Portugal"
+institution = "i3S Porto"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+

@@ -1,0 +1,221 @@
+# Life Sciences PhD source catalogue - central_south
+# Indexed sites were checked against public vacancy examples as of 2026-10-11.
+# enabled=true means an official listing and link shape were inspected, NOT guaranteed live scraping.
+# Candidate portals are disabled until individual listing anchors and site access rules are verified.
+
+[[board]]
+name = "life_it_human_technopole"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://humantechnopole.it/en/careers/"
+link_pattern = '^$'
+country = "Italy"
+institution = "Human Technopole"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_it_ifom"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ifom.eu/en/careers/"
+link_pattern = '^$'
+country = "Italy"
+institution = "IFOM"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_it_sissa"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.sissa.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "SISSA"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_it_iit"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.iit.it/careers"
+link_pattern = '^$'
+country = "Italy"
+institution = "Italian Institute of Technology"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_it_uni_padova"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unipd.it/en/phd-programmes"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Padua"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_it_unitn"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unitn.it/en"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Trento"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_ie_tcd"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://jobs.tcd.ie/"
+link_pattern = '^$'
+country = "Ireland"
+institution = "Trinity College Dublin"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_ie_ucd"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ucd.ie/workatucd/jobs/"
+link_pattern = '^$'
+country = "Ireland"
+institution = "University College Dublin"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_ie_ucc"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ucc.ie/en/hr/vacancies/"
+link_pattern = '^$'
+country = "Ireland"
+institution = "University College Cork"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_pl_nencki"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://nencki.edu.pl/recruitment/"
+link_pattern = '^$'
+country = "Poland"
+institution = "Nencki Institute of Experimental Biology"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_pl_iimcb"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.iimcb.gov.pl/en/jobs"
+link_pattern = '^$'
+country = "Poland"
+institution = "International Institute of Molecular and Cell Biology"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_pl_jagiellonian"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://en.uj.edu.pl/en_GB/jobs"
+link_pattern = '^$'
+country = "Poland"
+institution = "Jagiellonian University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_cz_ceitec"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ceitec.eu/career/"
+link_pattern = '^$'
+country = "Czechia"
+institution = "CEITEC"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_cz_iocb"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uochb.cz/en/call-for-phd-applications"
+link_pattern = '^$'
+country = "Czechia"
+institution = "IOCB Prague"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_cz_masaryk"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.muni.cz/en/about-us/careers/vacancies"
+link_pattern = '^$'
+country = "Czechia"
+institution = "Masaryk University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_ee_tartu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://ut.ee/en/jobs"
+link_pattern = '^$'
+country = "Estonia"
+institution = "University of Tartu"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_hu_semmelweis"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://semmelweis.hu/english/"
+link_pattern = '^$'
+country = "Hungary"
+institution = "Semmelweis University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_si_ijs"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ijs.si/ijsw/Employment"
+link_pattern = '^$'
+country = "Slovenia"
+institution = "Jožef Stefan Institute"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+

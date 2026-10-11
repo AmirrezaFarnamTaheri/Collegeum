@@ -1,0 +1,211 @@
+# Life Sciences PhD source catalogue - benelux
+# Indexed sites were checked against public vacancy examples as of 2026-10-11.
+# enabled=true means an official listing and link shape were inspected, NOT guaranteed live scraping.
+# Candidate portals are disabled until individual listing anchors and site access rules are verified.
+
+[[board]]
+name = "life_utrecht_university"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.uu.nl/en/organisation/working-at-utrecht-university/jobs"
+link_pattern = 'uu\.nl/en/organisation/working-at-utrecht-university/jobs/(?!kandidatenportal)[a-z0-9][a-z0-9-]+/?'
+country = "Netherlands"
+institution = "Utrecht University"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official Utrecht University vacancies have job-specific /jobs/slug links; RNA Huntington's PhD observed."
+
+[[board]]
+name = "life_radboud_university"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.ru.nl/en/working-at/job-opportunities"
+link_pattern = 'ru\.nl/en/working-at/job-opportunities/[a-z0-9][a-z0-9-]+/?'
+country = "Netherlands"
+institution = "Radboud University"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official Radboud job listing has detail URLs /job-opportunities/slug, including funded doctoral openings."
+
+[[board]]
+name = "life_benelux_ku_leuven"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.kuleuven.be/personeel/jobsite/jobs/phd"
+link_pattern = '^$'
+country = "Belgium"
+institution = "KU Leuven"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_ghent"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ugent.be/en/work/vacancies"
+link_pattern = '^$'
+country = "Belgium"
+institution = "Ghent University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_antwerp"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uantwerpen.be/en/jobs/vacancies/"
+link_pattern = '^$'
+country = "Belgium"
+institution = "University of Antwerp"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_uhasselt"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uhasselt.be/en/working-at-uhasselt/job-offers"
+link_pattern = '^$'
+country = "Belgium"
+institution = "Hasselt University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_uc_louvain"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://uclouvain.be/en/work"
+link_pattern = '^$'
+country = "Belgium"
+institution = "UCLouvain"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_leiden"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.universiteitleiden.nl/en/working-at/job-opportunities/vacancies"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Leiden University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_amsterdam"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uva.nl/en/about-the-uva/working-at-the-uva/vacancies/vacancies.html"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "University of Amsterdam"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_vu_amsterdam"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://workingat.vu.nl/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Vrije Universiteit Amsterdam"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_wageningen"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.wur.nl/en/jobs.htm"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Wageningen University & Research"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_groningen"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.rug.nl/about-ug/work-with-us/job-opportunities/?lang=en"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "University of Groningen"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_erasmus_mc"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.werkenbijerasmusmc.nl/en/vacancies/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Erasmus MC"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_hubrecht"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.hubrecht.eu/careers/vacancies/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Hubrecht Institute"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_nki"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.nki.nl/careers/vacancies/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Netherlands Cancer Institute"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_lcsb"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uni.lu/lcsb-en/join-us/"
+link_pattern = '^$'
+country = "Luxembourg"
+institution = "Luxembourg Centre for Systems Biomedicine"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_benelux_lih"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.lih.lu/en/careers/"
+link_pattern = '^$'
+country = "Luxembourg"
+institution = "Luxembourg Institute of Health"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
