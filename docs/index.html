@@ -1466,6 +1466,7 @@
             <option value="predoc">Pre-doctoral / RA</option>
             <option value="postdoc">Postdoctoral Fellow</option>
             <option value="phd">PhD Candidate</option>
+            <option value="research">Research Staff</option>
           </select>
           <select class="filter-select" id="filter-sector" aria-label="Filter by sector">
             <option value="">All Sectors</option>
@@ -1721,7 +1722,9 @@
     function enrichItem(item) {
       if (!item.kind) {
         const t = (item.title || '').toLowerCase();
-        if (/\bpre-?doc/i.test(t) || /\bresearch\s+(?:assistant|analyst|associate|professional|specialist)\b/i.test(t)) {
+        if (/\bph\.?d\.?\s+researcher\b.*\bph\.?d\.?\s+job\s+market\b/i.test(t)) {
+          item.kind = 'research';
+        } else if (/\bpre-?doc/i.test(t) || /\bresearch\s+(?:assistant|analyst|associate|professional|specialist)\b/i.test(t)) {
           item.kind = 'predoc';
         } else if (/\bpost-?\s?doc(toral)?\b/i.test(t)) {
           item.kind = 'postdoc';
@@ -1955,7 +1958,7 @@
         else if (r.visa === 'inferred') visaHtml = '<span class="tag-visa inf">Visa: Likely</span>';
         else if (r.visa === 'not_offered') visaHtml = '<span class="tag-visa none">No sponsorship / Restricted</span>';
 
-        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : 'Predoc / RA');
+        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : (r.kind === 'research' ? 'Research Staff' : 'Predoc / RA'));
         const sal = formatSalary(r);
         const salBadge = sal ? `<span class="tag-salary">${esc(sal)}</span>` : '';
 
@@ -2018,7 +2021,7 @@
       $('#grid-wrap').innerHTML = rows.map(r => {
         const b = deadlineBadge(r);
         const place = [r.city, r.country].filter(Boolean).join(', ') || 'Unstated';
-        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : 'Predoc / RA');
+        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : (r.kind === 'research' ? 'Research Staff' : 'Predoc / RA'));
         const sal = formatSalary(r);
         const salBadge = sal ? `<span class="tag-salary">${esc(sal)}</span>` : '';
 
@@ -2263,7 +2266,7 @@
       $('#modal-inst').textContent = item.institution + (item.principal_investigator ? ` · Prof. ${item.principal_investigator}` : '');
 
       const b = deadlineBadge(item);
-      const kindLabel = item.kind === 'postdoc' ? 'Postdoctoral Appointment' : (item.kind === 'phd' ? 'PhD Studentship' : 'Predoctoral Research Associate');
+      const kindLabel = item.kind === 'postdoc' ? 'Postdoctoral Appointment' : (item.kind === 'phd' ? 'PhD Studentship' : (item.kind === 'research' ? 'Research Staff Position' : 'Predoctoral Research Associate'));
       const sectorLabel = item.sector === 'institutional' ? 'Central Bank / Multilateral' : (item.sector === 'private' ? 'Private Sector / Consultancy' : 'Academic Institution');
       const sal = formatSalary(item);
 

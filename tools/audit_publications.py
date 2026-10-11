@@ -239,7 +239,7 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
             val = item.get(key)
             if not isinstance(val, list) or not all(isinstance(v, str) for v in val):
                 finding("error", "public-list-type", f"ID {uid}, field {key}")
-        if item.get("kind") not in {"predoc", "phd", "postdoc", None}:
+        if item.get("kind") not in {"predoc", "phd", "postdoc", "research", None}:
             finding("error", "invalid-position-kind", f"ID {uid}")
         if not isinstance(item.get("title"), str) or not item["title"].strip():
             finding("error", "missing-title", f"ID {uid}")

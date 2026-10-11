@@ -35,3 +35,23 @@ def test_broadcast_pending_reports_missing_credentials_without_import_error():
     assert result.exit_code == 1
     assert "Telegram credentials not configured" in result.output
     assert not isinstance(result.exception, ImportError)
+
+
+def test_completed_phd_job_market_is_not_a_doctoral_studentship():
+    router = Router(Preferences())
+    title = "PhD Researcher (2026-2027 PhD Job Market)"
+    summary = (
+        "A recent or forthcoming PhD in economics. Appointed as Senior Economist "
+        "or Senior Financial Sector Specialist Analyst."
+    )
+    assert router.position_kind(title, summary) == "research"
+    assert router.channel(
+        title=title, summary=summary, institution="Bank of Canada", country="Canada",
+    ) == Channel.WEB
+    assert router.position_kind(
+        "PhD Researcher in Development Economics",
+        "The holder will enroll as a doctoral candidate and write a PhD thesis.",
+    ) == "phd"
+    assert router.position_kind(
+        "Postdoctoral Fellow", "A completed PhD is required for the postdoc appointment.",
+    ) == "postdoc"

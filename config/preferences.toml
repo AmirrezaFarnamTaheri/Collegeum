@@ -144,7 +144,7 @@ max_age_days = 120           # ignore postings older than this (when a post date
 # (pre-doctoral roles outside the US at universities and research institutes)
 # goes to Telegram only.
 web_regions = ["US"]
-web_position_kinds = ["phd", "postdoc"]
+web_position_kinds = ["phd", "postdoc", "research"]
 # Central banks, international organizations, banks, consultancies. Employers that
 # match none of the academic lists above (companies) also go to the website.
 web_employer_patterns = [
