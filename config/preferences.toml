@@ -179,7 +179,7 @@ timeout = 30
 max_retries = 3
 default_min_interval = 1.5   # polite delay between requests to the same site (seconds)
 max_concurrent_sources = 12
-source_timeout = 120         # bound a hung source so all scheduled sources finish within the CI window
+source_timeout = 900         # allow slow sources enough time to finish before the workflow limit
 
 [telegram]
 list_page_size = 5           # positions per message for /positions, /applied...
