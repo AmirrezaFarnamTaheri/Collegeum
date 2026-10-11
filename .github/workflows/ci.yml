@@ -2,14 +2,19 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
-  # Refreshed artifacts are pushed with GITHUB_TOKEN, which does not
-  # trigger ordinary push/PR workflows. The refresh job dispatches CI.
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# Pushes to branches via GitHub API/connector do not necessarily emit a
+# pull_request synchronize event. Run the full checks on every branch push,
+# and collapse simultaneous push/PR checks for identical commit identities.
+concurrency:
+  group: collegeum-ci-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   test:
