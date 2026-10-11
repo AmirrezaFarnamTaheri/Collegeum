@@ -115,3 +115,40 @@ These gates remain to establish real-world correctness before merge/release:
 **Still unresolved:** verified field corrections to individual previously published vacancies; full vacancy-specific ATS URLs; appropriate reclassification of historically incorrect employer/degree fields; coverage of provider failures; actual live bot/X delivery; active life-sciences expansion on main. No merge, production overwrite or external correction is claimed.
 
 The evidence ledger at **review/2026-10-11/verified-output-findings.json** records each high-priority case and explicitly distinguishes parser fixes from data still awaiting source re-extraction. The durable publication logs must not be rewritten to hide previously incorrect output.
+
+
+## Final source-evidence reconciliation (11 October 2026)
+
+After consolidating PR #15 and PR #16, four historical entries were corrected
+against authoritative hiring pages while preserving original discovery URL
+hashes, publication receipts, first-seen timestamps and source identities:
+
+- **#46 Penn BCFG:** replaced Chicago Booth attribution with Penn/Wharton
+  Behavior Change for Good Initiative; linked the official Wharton Workday
+  requisition, recorded the advertised $50,000–$60,000 USD annual salary,
+  two-year term starting June 2027, and research supervisors Milkman/Duckworth.
+  Evidence: https://upenn.wd1.myworkdayjobs.com/en-US/Wharton/job/Pre-Doctoral-Research-Specialist_JR00127654-1
+- **#77 Bank of Canada:** added verified annual CAD 114,952.50–156,778
+  compensation, preserved the completed-doctorate requirement and changed
+  the public role from "PhD studentship" to permanent research staff.
+  Evidence: https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617/
+- **#139 St. Gallen:** corrected minimum degree to completed master's, marked
+  Stata/R/Python as *preferred* rather than required, removed unsupported
+  economics field categories and linked the university's own job page.
+  Evidence: https://jobs.unisg.ch/offene-stellen/research-and-teaching-associate-in-strategic-management-phd-student-m-f-d/af629a21-df7d-4783-9ddd-54b48564e108
+- **#173 Bern IFM:** replaced misleading "CAS Medication Safety" employer with
+  University of Bern Institute for Financial Management; corrected Finance
+  research duties, director/supervisor, uncertain minimum degree and direct
+  employer vacancy link.
+  Evidence: https://jobs.unibe.ch/offene-stellen/doktorand-in-und-assistent-in/6dd0d3c3-628b-45cf-993b-c3e7c3e1a7ee
+- **#28 UChicago Freedman Lab:** a general university Workday feed had
+  incorrectly classified neuroscience as economics. It is excluded from
+  actionable public/private feeds by its stable identity hash **without**
+  changing historical vacancy lifecycle or receipts. Its original state
+  remains intact for independent inspection.
+
+RSS entries #139/#173 were reconciled with amended dashboard titles, links,
+descriptions, category lists and original GUIDs. The public JSON count reflects
+the removed off-field record. The source-level tests require these corrections
+to survive future exports. Any future disappearance of a real vacancy must
+still be based on closure evidence, not a parser or eligibility disagreement.

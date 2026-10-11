@@ -98,3 +98,13 @@ def test_role_type_uses_explicit_holder_requirements(title, summary, kind):
 )
 def test_real_publication_salary_regressions(raw, country, expected):
     assert parse_salary(raw, country=country) == expected
+
+
+def test_bank_of_canada_verified_salary_range_remains_parseable():
+    amount = (
+        "Starting annual base salary CAD $114,952.50–$156,778.00 "
+        "per year (2026 scales)"
+    )
+    assert parse_salary(amount, country="Canada") == (
+        114952.5, 156778.0, "CAD", "year"
+    )

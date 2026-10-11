@@ -152,3 +152,37 @@ def test_output_audit_reports_coded_failures_without_exposing_query_secrets(
         "invalid-url", "generic-job-board-homepage",
     ) for value in report["invalid_rss_links"])
     assert "untrusted-secret-value" not in json.dumps(report)
+
+
+def test_confirmed_source_facts_survive_public_rebuild(tmp_path: Path):
+    """Durable source-reviewed corrections cannot regress on subsequent runs."""
+    from predoc_pipeline.core.output_quality import excluded_by_audit
+
+    root = Path(__file__).resolve().parents[2]
+    rows = {
+        entry["id"]: entry
+        for line in (root / "data/listings.ndjson").read_text("utf-8").splitlines()
+        if (entry := json.loads(line)) and entry["id"] in {28, 46, 77, 139, 173}
+    }
+    assert rows[46]["institution"].startswith("University of Pennsylvania")
+    assert "upenn.wd1.myworkdayjobs.com" in rows[46]["apply_url"]
+    assert rows[46]["salary_currency"] == "USD"
+    assert rows[77]["salary_currency"] == "CAD"
+    assert rows[77]["salary_min"] == 114952.5
+    assert rows[77]["salary_max"] == 156778
+    assert rows[139]["min_degree"] == "masters"
+    assert rows[139]["tools_required"] == "[]"
+    assert "jobs.unisg.ch" in rows[139]["apply_url"]
+    assert "Institute for Financial Management" in rows[173]["institution"]
+    assert "jobs.unibe.ch" in rows[173]["apply_url"]
+    assert rows[173]["min_degree"] == "unstated"
+    assert excluded_by_audit(rows[28]["url_hash"])
+    assert not excluded_by_audit(rows[77]["url_hash"])
+    public = json.loads((root / "docs/data/listings.json").read_text("utf-8"))
+    entries = {item["id"]: item for item in public["listings"]}
+    assert 28 not in entries
+    assert entries[46]["institution"] == rows[46]["institution"]
+    assert entries[77]["kind"] == "research"
+    assert entries[77]["salary_min"] == rows[77]["salary_min"]
+    assert entries[139]["min_degree"] == "masters"
+    assert entries[173]["institution"] == rows[173]["institution"]
