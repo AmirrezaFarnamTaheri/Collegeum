@@ -9,11 +9,13 @@ on:
 permissions:
   contents: read
 
-# Pushes to branches via GitHub API/connector do not necessarily emit a
-# pull_request synchronize event. Run the full checks on every branch push,
-# and collapse simultaneous push/PR checks for identical commit identities.
+# GitHub API pushes may not always emit pull_request synchronization;
+# validate both branch pushes and PR events. Isolate their cancellation keys:
+# sharing a single commit-SHA key cancels one event's matrix midway while the
+# other PR run can remain queued. Only supersede older runs of the same event
+# and PR (or branch), never the other event's check suite.
 concurrency:
-  group: collegeum-ci-${{ github.event.pull_request.head.sha || github.sha }}
+  group: collegeum-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:

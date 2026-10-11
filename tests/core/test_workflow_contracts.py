@@ -20,6 +20,8 @@ class WorkflowContractTests(unittest.TestCase):
         content = workflow("ci.yml")
         self.assertIn("contents: read", content)
         self.assertIn("workflow_dispatch:", content)
+        self.assertIn("github.event_name", content)
+        self.assertIn("github.event.pull_request.number || github.ref", content)
         self.assertIn("uv lock --check", content)
         self.assertIn("uv sync --locked", content)
         self.assertIn("uv build --out-dir build/release", content)
