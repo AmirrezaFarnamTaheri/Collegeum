@@ -67,6 +67,7 @@ COMMANDS = [
     ("academic", "Choose academic positions"),
     ("careers", "Choose specialist career roles"),
     ("markets", "Choose job markets"),
+    ("sources", "View job-source status"),
     ("latest", "Browse matching opportunities"),
     ("status", "Your alert overview"),
     ("pause", "Pause personal notifications"),
@@ -75,7 +76,7 @@ COMMANDS = [
     ("stop", "Unsubscribe with confirmation"),
 ]
 ADMIN_COMMAND = ("admin", "Operations and source health")
-COMMANDS_VERSION = 3
+COMMANDS_VERSION = 4
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
