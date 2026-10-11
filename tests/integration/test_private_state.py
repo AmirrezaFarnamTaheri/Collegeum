@@ -63,3 +63,26 @@ def test_private_state_checkpoint_is_remote_only_and_idempotent(tmp_path: Path) 
     _git("clone", str(bare), str(clone))
     assert (clone / "data/feedback.enc").read_bytes() == b"opaque-encrypted-state"
     assert (clone / "data/telegram_state.json").read_text("utf-8") == '{"offset":10}'
+
+
+def test_first_private_checkpoint_with_only_feedback_file(tmp_path: Path) -> None:
+    bare = tmp_path / "bare.git"
+    private = tmp_path / "private"
+    root = tmp_path / "public"
+    _git("init", "--bare", "--initial-branch=main", str(bare))
+    _git("clone", str(bare), str(private))
+    (private / "README.md").write_text("private state\n", encoding="utf-8")
+    _git("-C", str(private), "config", "user.name", "test")
+    _git("-C", str(private), "config", "user.email", "test@example.com")
+    _git("-C", str(private), "add", "README.md")
+    _git("-C", str(private), "commit", "-m", "bootstrap")
+    _git("-C", str(private), "push", "-u", "origin", "main")
+    (root / "data").mkdir(parents=True)
+    (root / "data/feedback.enc").write_bytes(b"opaque-ciphertext")
+    assert not (root / "data/telegram_state.json").exists()
+    assert checkpoint(private, root)
+    assert not checkpoint(private, root)
+    verifier = tmp_path / "verified"
+    _git("clone", str(bare), str(verifier))
+    assert (verifier / "data/feedback.enc").read_bytes() == b"opaque-ciphertext"
+    assert not (verifier / "data/telegram_state.json").exists()

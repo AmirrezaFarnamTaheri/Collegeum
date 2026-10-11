@@ -49,7 +49,7 @@ def checkpoint(repository: Path, root: Path) -> bool:
     """Persist encrypted files; abort on a conflicting writer, never force-push."""
     if not (repository / ".git").exists():
         raise ValueError("Private state checkout is not a Git working tree")
-    changed = False
+    changed_paths: list[str] = []
     for relative in PRIVATE_STATE_FILES:
         source = root / relative
         if not source.is_file():
@@ -71,8 +71,8 @@ def checkpoint(repository: Path, root: Path) -> bool:
             temp.replace(target)
         finally:
             temp.unlink(missing_ok=True)
-        changed = True
-    if not changed:
+        changed_paths.append(relative)
+    if not changed_paths:
         return False
     git = ["git", "-C", str(repository)]
     subprocess.run([*git, "config", "user.name", "collegeum-state-bot"], check=True)
@@ -80,7 +80,9 @@ def checkpoint(repository: Path, root: Path) -> bool:
         [*git, "config", "user.email", "actions@users.noreply.github.com"],
         check=True,
     )
-    subprocess.run([*git, "add", "--", *PRIVATE_STATE_FILES], check=True)
+    # Initial migration can have feedback.enc before the update cursor exists.
+    # Git would reject a pathspec for a missing file.
+    subprocess.run([*git, "add", "--", *changed_paths], check=True)
     subprocess.run(
         [*git, "commit", "-m", "checkpoint: private Telegram state"],
         check=True,
