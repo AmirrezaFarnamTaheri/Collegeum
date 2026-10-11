@@ -41,12 +41,13 @@ note = "Dutch academic jobs; title and card description must support the match."
 
 [[board]]
 name = "life_max_planck"
-type = "rss"
+type = "link_scan"
 group = "life_sciences"
 enabled = true
-url = "https://www.mpg.de/job-offers.rss"
+url = "https://www.mpg.de/jobboard"
+link_pattern = 'mpg\.de/\d{7,9}/[^/?#]+'
 institution = "Max Planck Society"
-note = "Global Max Planck feed: require an explicitly labelled European location in each ad."
+note = "Official Max Planck jobboard replaces retired RSS; require explicitly proven European location and biological field."
 
 # Official pages and actual vacancy href formats checked 2026-10-11.
 # Site structure and consent/robots behavior still need ongoing live checks.
