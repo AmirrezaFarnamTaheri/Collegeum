@@ -51,9 +51,10 @@ jobs:
           uv lock --check
           uv sync --locked
 
-      - name: Answer messages and save button taps
+      - name: Process private commands and reserve notification intents
         id: sync
-        # Partial cursor/feedback updates must survive if the API fails later.
+        # The runner cannot send private alerts until the encrypted intent
+        # checkpoint has been pushed to the repository in the next step.
         continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -62,15 +63,18 @@ jobs:
           FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
           SITE_URL: ${{ vars.SITE_URL }}
         run: |
-          # Marks are personal and this repository may be public: refuse to run
-          # (and so to commit) without the key that encrypts them.
+          set -e
           if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]; then
-            echo "FEEDBACK_ENCRYPTION_KEY is not configured; skipping Telegram sync."
+            echo "FEEDBACK_ENCRYPTION_KEY not configured; personal bot disabled."
+            echo "private_enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          echo "private_enabled=true" >> "$GITHUB_OUTPUT"
           PYTHONPATH=src python3 -m predoc_pipeline.cli telegram-sync
+          PYTHONPATH=src python3 -m predoc_pipeline.cli subscriber-plan
 
-      - name: Save marks and cursor
+      - name: Commit input cursor and untransmitted private intents
+        id: checkpoint
         if: ${{ always() && steps.sync.outcome != 'skipped' }}
         run: |
           git config user.name "predoc-pipeline-bot"
@@ -80,24 +84,63 @@ jobs:
             if [ -e "$f" ]; then git add "$f"; fi
           done
           if git diff --cached --quiet; then
-            echo "nothing new"
+            echo "no input state changes"
             exit 0
           fi
-          git commit -m "chore: save Telegram marks [skip ci]"
+          git commit -m "chore: checkpoint Telegram inbox and private intents [skip ci]"
           for attempt in 1 2 3; do
             if git pull --rebase --autostash && git push; then exit 0; fi
             git rebase --abort 2>/dev/null || true
             sleep 5
           done
-          echo "could not push the marks"
+          echo "could not persist private intents: refusing to send"
           exit 1
 
-      - name: Fail job if Telegram processing failed
+      - name: Send only the checkpointed private alert batch
+        id: delivery
+        if: >-
+          steps.sync.outcome == 'success' &&
+          steps.sync.outputs.private_enabled == 'true' &&
+          steps.checkpoint.outcome == 'success'
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
+        run: |
+          PYTHONPATH=src python3 -m predoc_pipeline.cli subscriber-send
+
+      - name: Commit acknowledgements and reconciliation state
+        id: acknowledgement
+        if: ${{ always() && steps.delivery.outcome != 'skipped' }}
+        run: |
+          git config user.name "predoc-pipeline-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if [ -e data/feedback.enc ]; then git add data/feedback.enc; fi
+          if git diff --cached --quiet; then
+            echo "no outgoing acknowledgements"
+            exit 0
+          fi
+          git commit -m "chore: record private delivery acknowledgements [skip ci]"
+          for attempt in 1 2 3; do
+            if git pull --rebase --autostash && git push; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep 5
+          done
+          echo "could not save private delivery outcomes"
+          exit 1
+
+      - name: Fail if inbox, persistence, or private delivery failed
         if: always()
         env:
           SYNC_OUTCOME: ${{ steps.sync.outcome }}
+          CHECKPOINT_OUTCOME: ${{ steps.checkpoint.outcome }}
+          DELIVERY_OUTCOME: ${{ steps.delivery.outcome }}
+          ACK_OUTCOME: ${{ steps.acknowledgement.outcome }}
         run: |
-          if [ "$SYNC_OUTCOME" != "success" ]; then
-            echo "Telegram sync failed; inspect the processing step and saved state."
+          if [ "$SYNC_OUTCOME" != "success" ] ||
+             [ "$CHECKPOINT_OUTCOME" != "success" ] ||
+             [ "$DELIVERY_OUTCOME" = "failure" ] ||
+             [ "$ACK_OUTCOME" = "failure" ]; then
+            echo "Telegram processing or checkpoint failed; inspect steps and state."
             exit 1
           fi
