@@ -62,13 +62,20 @@ COMMANDS = [
     ("valid", "Positions you marked ✅ interested"),
     ("hidden", "Positions you marked ❌ (to restore one)"),
     ("help", "How the buttons work"),
-    ("start", "Start personal job alerts"),
-    ("settings", "Choose jobs and alerts"),
-    ("latest", "Preview matching positions"),
-    ("stop", "Unsubscribe from private alerts"),
-    ("admin", "Private operations and run health"),
+    ("start", "Open personal alerts"),
+    ("settings", "Manage alert preferences"),
+    ("academic", "Choose academic positions"),
+    ("careers", "Choose specialist career roles"),
+    ("markets", "Choose job markets"),
+    ("latest", "Browse matching opportunities"),
+    ("status", "Your alert overview"),
+    ("pause", "Pause personal notifications"),
+    ("resume", "Resume personal notifications"),
+    ("guide", "Help with personal alerts"),
+    ("stop", "Unsubscribe with confirmation"),
 ]
-COMMANDS_VERSION = 2
+ADMIN_COMMAND = ("admin", "Operations and source health")
+COMMANDS_VERSION = 3
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
@@ -246,8 +253,21 @@ def telegram_sync(
     try:
         if chat_state.get("commands_version") != COMMANDS_VERSION:
             try:
-                bot.call("setMyCommands", {"commands": [
-                    {"command": c, "description": d} for c, d in COMMANDS]})
+                command_list = [
+                    {"command": c, "description": d} for c, d in COMMANDS
+                ]
+                bot.call("setMyCommands", {"commands": command_list})
+                # Do not advertise privileged /admin to every subscriber.
+                raw_admin = settings.telegram_admin_chat_id.strip()
+                if raw_admin.isascii() and raw_admin.isdecimal() and int(raw_admin) > 0:
+                    bot.call("setMyCommands", {
+                        "scope": {"type": "chat", "chat_id": int(raw_admin)},
+                        "commands": [
+                            *command_list,
+                            {"command": ADMIN_COMMAND[0],
+                             "description": ADMIN_COMMAND[1]},
+                        ],
+                    })
                 chat_state["commands_version"] = COMMANDS_VERSION
             except TelegramError as exc:
                 log.warning("set_commands_failed", error=str(exc))
@@ -294,7 +314,7 @@ def telegram_sync(
             try:
                 if "callback_query" in update:
                     if not private_callback(bot, update["callback_query"], store,
-                                            settings, summary):
+                                            settings, summary, rows):
                         changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,
                                                owners, summary)
                 elif "message" in update:
