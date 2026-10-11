@@ -50,6 +50,7 @@ from .feedback import (
 )
 from .interactions import private_callback, private_message
 from .keyboards import LEGEND, feedback_row, parse_callback, rebuild
+from .subscriptions import private_user_id
 from .telegram import TelegramClient, TelegramError, deadline_label, pack_html_blocks
 
 log = get_logger(__name__)
@@ -93,6 +94,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "delete": "حذف داده‌های فعال اشتراک",
 }
 COMMANDS_VERSION = 8
+MAX_COMMANDS_PER_SYNC = 20
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
@@ -252,7 +254,10 @@ def telegram_sync(
     tg_prefs = load_preferences(settings.preferences_config).telegram
     page_size = max(1, page_size or tg_prefs.list_page_size)
     max_items = max(1, max_items or tg_prefs.list_max)
-    summary = {"received": 0, "commands": 0, "taps": 0, "ignored": 0, "failed": 0, "dropped": 0}
+    summary = {
+        "received": 0, "commands": 0, "taps": 0, "ignored": 0,
+        "failed": 0, "dropped": 0, "throttled": 0,
+    }
     owners = settings.owner_ids
     if not settings.telegram_bot_token or not (owners or settings.feedback_encryption_key):
         log.warning("telegram_sync_skipped",
@@ -347,11 +352,41 @@ def telegram_sync(
             rows = list(db.published_listings())
         by_prefix = {r["url_hash"][:ID_PREFIX]: r for r in rows}
         changed = False
+        per_user_count: dict[int, int] = {}
 
         for update in updates:
             update_id = int(update["update_id"])
+            message = update.get("message") or {}
+            callback = update.get("callback_query") or {}
+            if "callback_query" in update:
+                user_id = private_user_id({
+                    "from": callback.get("from"),
+                    "chat": (callback.get("message") or {}).get("chat"),
+                })
+                raw = str(callback.get("data") or "")
+                essential = raw in ("sub:p:stop", "sub:stop:yes", "sub:a:pause")
+            else:
+                user_id = private_user_id(message)
+                raw = str(message.get("text") or "").strip().split(" ", 1)[0].lower()
+                essential = raw.split("@", 1)[0] in ("/stop", "/delete", "/pause")
+            if user_id is not None and user_id not in owners and not essential:
+                per_user_count[user_id] = per_user_count.get(user_id, 0) + 1
+            too_many = (
+                user_id is not None and user_id not in owners and not essential
+                and per_user_count[user_id] > MAX_COMMANDS_PER_SYNC
+            )
             try:
-                if "callback_query" in update:
+                if too_many:
+                    summary["throttled"] += 1
+                    if "callback_query" in update:
+                        try:
+                            bot.call("answerCallbackQuery", {
+                                "callback_query_id": callback["id"],
+                                "text": "Too many requests. Try again after the next sync.",
+                            })
+                        except (TelegramError, KeyError):
+                            pass
+                elif "callback_query" in update:
                     if not private_callback(bot, update["callback_query"], store,
                                             settings, summary, rows):
                         changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,

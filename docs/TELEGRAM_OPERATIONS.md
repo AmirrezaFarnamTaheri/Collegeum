@@ -61,6 +61,10 @@ up to 3,000 records for 21 days, saved by atomic replacement and fsync.
 Unchanged jobs retain first-seen dates, so regular polling does not trigger
 repeat alerts. Scheduled pipeline workflow commits this journal.
 
+Requests from a single non-owner subscriber are bounded to 20 interactive
+commands per scheduled sync to protect other subscribers from command floods.
+Critical stop, delete, and pause requests always bypass this limit.
+
 ## Message lifecycle and recovery
 
 ```text

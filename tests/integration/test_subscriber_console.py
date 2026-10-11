@@ -88,6 +88,26 @@ def tap(number, user, callback, callback_id=None):
     }}
 
 
+def test_command_storm_cannot_block_later_unsubscribe(tmp_path):
+    from predoc_pipeline.publish.bot import MAX_COMMANDS_PER_SYNC
+
+    cfg = settings(tmp_path)
+    updates = [
+        tap(1, 101, "sub:t:data_analyst"),
+        *[
+            message(index, 101, "/settings")
+            for index in range(2, MAX_COMMANDS_PER_SYNC + 18)
+        ],
+        message(MAX_COMMANDS_PER_SYNC + 18, 101, "/stop"),
+        tap(MAX_COMMANDS_PER_SYNC + 19, 101, "sub:stop:yes"),
+    ]
+    result = run(cfg, API(updates))
+    assert result["throttled"] > 0
+    assert result["failed"] == 0
+    assert FeedbackStore.from_settings(cfg).subscriber(101) is None
+    assert load_chat_state(cfg.telegram_state_path)["offset"] == MAX_COMMANDS_PER_SYNC + 20
+
+
 def test_private_subscription_and_replay_isolation(tmp_path):
     cfg = settings(tmp_path)
     api = API([message(1, 101, "/start"), tap(2, 101, "sub:t:predoc"),
