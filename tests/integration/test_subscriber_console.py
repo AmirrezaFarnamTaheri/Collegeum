@@ -268,7 +268,10 @@ def test_four_hour_rotation_covers_every_source_with_two_complementary_slots():
     b = scheduled_sources(sources, timestamp=datetime(2026, 10, 11, 4, tzinfo=UTC))
     assert not (a & b)
     assert a | b == {f"source-{i}" for i in range(9)}
-    assert abs(len(a) - len(b)) <= 1
+    # Hashing preserves cohort identities when the source registry changes.
+    augmented = [*sources, SimpleNamespace(name="aaa-new", enabled=True)]
+    a2 = scheduled_sources(augmented, timestamp=datetime(2026, 10, 11, 0, tzinfo=UTC))
+    assert a2 & {f"source-{i}" for i in range(9)} == a
 
 
 def test_pipeline_schedule_matches_source_rotation_interval():
@@ -442,7 +445,8 @@ def test_permanent_telegram_bad_request_is_quarantined_until_reconciled(tmp_path
         lambda req: httpx.Response(400, text="can't parse entities")
     )) as client:
         result = send_batch(cfg, path=batch, client=client, sleep=lambda _: None)
-    assert result["failed"] == 1
+    assert result["rejected"] == 1
+    assert result["failed"] == 0
     assert FeedbackStore.from_settings(cfg).subscriber(101)[
         "deliveries"]["career:bad"]["state"] == "rejected"
     assert plan_batch(cfg, path=batch) == 0
@@ -925,3 +929,59 @@ def test_forged_cross_user_callback_does_not_change_subscriptions(tmp_path):
     assert store.subscriber(101) is None
     assert store.subscriber(202) is None
     assert not api.sent()
+
+
+def test_poison_career_journal_does_not_block_later_unsubscribe(tmp_path):
+    cfg = settings(tmp_path, "99")
+    cfg_path = Path(cfg.career_state_path)
+    cfg_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg_path.write_text('{"category":"obsolete"}\\n', encoding="utf-8")
+    api = API([
+        tap(1, 101, "sub:t:data_analyst"),
+        message(2, 101, "/latest"),
+        message(3, 99, "/admin"),
+        tap(4, 99, "adm:cache"),
+        message(5, 101, "/stop"),
+        tap(6, 101, "sub:stop:yes"),
+    ])
+    result = run(cfg, api)
+    assert result["failed"] == 0
+    assert load_chat_state(cfg.telegram_state_path)["offset"] == 7
+    assert FeedbackStore.from_settings(cfg).subscriber(101) is None
+    assert any("unavailable" in str(m["text"]) for m in api.sent(101))
+    assert any("journal unreadable" in str(m["text"]) for m in api.sent(99))
+
+
+def test_blocked_bot_is_unsubscribed_without_delivery_failure(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    prior = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_analyst"] = prior
+    store.subscriber(101)["scopes"]["remote"] = prior
+    store.save()
+    save_career(cfg.career_state_path, [], [{
+        "key": "career:blocked", "category": "data_analyst", "scope": "remote",
+        "title": "Data Analyst", "url": "https://jobicy.com/jobs/blocked",
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    }])
+    batch = tmp_path / "batch.json"
+    assert plan_batch(cfg, path=batch) == 1
+    with httpx.Client(transport=httpx.MockTransport(
+        lambda req: httpx.Response(403, text="bot blocked by user")
+    )) as client:
+        result = send_batch(cfg, path=batch, client=client, sleep=lambda _: None)
+    assert result["unsubscribed"] == 1
+    assert result["failed"] == result["uncertain"] == 0
+    assert FeedbackStore.from_settings(cfg).subscriber(101) is None
+
+
+def test_paused_subscriber_still_requests_career_discovery(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    store.set_paused(101, True)
+    assert store.wants_career("remote")
+    assert not store.wants_career("iran")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from datetime import UTC, datetime
 from typing import Any
 
@@ -15,4 +16,8 @@ def scheduled_sources(sources: list[Any], *, timestamp: datetime | None = None) 
     enabled = sorted(s.name for s in sources if s.enabled)
     if len(enabled) < 2:
         return set(enabled)
-    return {name for index, name in enumerate(enabled) if index % 2 == slot % 2}
+    # Stable across new, renamed or disabled unrelated sources.
+    return {
+        name for name in enabled
+        if hashlib.sha256(name.encode("utf-8")).digest()[0] % 2 == slot % 2
+    }

@@ -39,6 +39,8 @@ VALID, INVALID, APPLIED = "valid", "invalid", "applied"
 STATUS_BY_CODE = {"v": VALID, "x": INVALID, "a": APPLIED}
 CODE_BY_STATUS = {v: k for k, v in STATUS_BY_CODE.items()}
 ID_PREFIX = 16  # characters of url_hash carried in a button (Telegram allows 64 bytes)
+MAX_SUBSCRIBERS = 1000
+MAX_CALLBACK_IDS = 65536  # above the maximum ordinary updates processed in 24h
 
 
 class StateCorruptError(RuntimeError):
@@ -227,6 +229,9 @@ class FeedbackStore:
     def _member(self, chat_id: int) -> dict[str, Any]:
         if type(chat_id) is not int or chat_id <= 0:
             raise ValueError("invalid private chat ID")
+        if (str(chat_id) not in self.subscribers
+                and len(self.subscribers) >= MAX_SUBSCRIBERS):
+            raise ValueError("subscriber capacity reached")
         return self.subscribers.setdefault(str(chat_id), {
             "topics": {}, "scopes": {}, "deliveries": {},
             "paused": False, "language": "en",
@@ -290,7 +295,7 @@ class FeedbackStore:
         self._dirty = True
         return True
 
-    def prune_deliveries(self, *, days: int = 45) -> int:
+    def prune_deliveries(self, *, days: int = 180) -> int:
         """Discard old confirmed receipts, never unresolved/uncertain sends.
 
         Incoming academic matches are bounded to fourteen days; career
@@ -395,7 +400,7 @@ class FeedbackStore:
     def wants_career(self, scope: str) -> bool:
         from .subscriptions import CAREER_TOPICS
         return any(
-            scope in member["scopes"] and not member.get("paused", False)
+            scope in member["scopes"]
             and any(topic in member["topics"] for topic in CAREER_TOPICS)
             for member in self.subscribers.values()
         )
@@ -433,6 +438,14 @@ class FeedbackStore:
         # count would allow that replay to toggle an existing mark again.
         # Retain processed IDs until an explicit audited state compaction.
         self.data["callbacks"].append(str(callback_id))
+        # Telegram only retains unconsumed updates for up to 24 hours. Keep
+        # ample replay headroom while bounding retained callback identifiers.
+        if len(self.data["callbacks"]) > MAX_CALLBACK_IDS:
+            del self.data["callbacks"][:-MAX_CALLBACK_IDS]
+        self._dirty = True
+
+    def mark_dirty(self) -> None:
+        """Mark mutations made to the admin operation record for persistence."""
         self._dirty = True
 
     def save(self) -> None:

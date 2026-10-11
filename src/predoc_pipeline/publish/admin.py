@@ -111,7 +111,13 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
         sources = db.conn.execute("SELECT COUNT(*) FROM seen_items").fetchone()[0]
     from ..ingest.career import load_career
 
-    careers = load_career(settings.career_state_path)
+    try:
+        careers = load_career(settings.career_state_path)
+    except (OSError, UnicodeError, ValueError):
+        careers = []
+        journal_status = "Career journal unreadable; collection needs attention."
+    else:
+        journal_status = ""
     recent = max((j["first_seen_at"] for j in careers), default="none")
     source_health = "No career-source checks recorded."
     health_path = Path(settings.career_health_path)
@@ -145,6 +151,7 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
         f"Previously encountered URLs: {sources}\n"
         f"Career feed records: {len(careers)}\n"
         f"Newest career record: {escape(recent[:19])}\n"
+        f"{escape(journal_status)}\n"
         f"{escape(source_health)}\n"
         "Runtime HTTP cache is ephemeral on CI; durable journals prevent "
         "repeat private notifications across scheduled runs."
@@ -159,4 +166,4 @@ def audit(store: FeedbackStore, actor: int, action: str) -> None:
     records = ops.setdefault("audit", [])
     records.append({"at": datetime.now(UTC).isoformat(), "actor": actor, "action": action})
     del records[:-100]
-    store._dirty = True
+    store.mark_dirty()

@@ -55,9 +55,22 @@ def _latest(
     member = store.subscriber(chat_id)
     if member is None or not member["topics"]:
         return menu(member, "home")
-    careers = load_career(settings.career_state_path)
+    try:
+        careers = load_career(settings.career_state_path)
+    except (OSError, UnicodeError, ValueError):
+        # A damaged external feed must never poison the Telegram update cursor.
+        careers = []
+        degraded = True
+    else:
+        degraded = False
     results = matching(member, academic, careers, preview=True)
-    return latest_panel(results, page=page, lang=language(member))
+    text, keyboard = latest_panel(results, page=page, lang=language(member))
+    if degraded:
+        notice = ("⚠️ منبع مشاغل موقتاً در دسترس نیست."
+                  if language(member) == "fa" else
+                  "⚠️ Career listings are temporarily unavailable.")
+        text += "\n\n" + notice
+    return text, keyboard
 
 
 def private_message(
@@ -76,7 +89,8 @@ def private_message(
         "/start": "home", "/settings": "home", "/subscribe": "home",
         "/status": "home", "/academic": "academic",
         "/careers": "careers", "/markets": "markets", "/guide": "help",
-        "/stop": "stop", "/sources": "sources",
+        "/stop": "stop", "/delete": "stop", "/help": "help",
+        "/sources": "sources",
     }
     if command not in pages and command not in {
         "/latest", "/admin", "/pause", "/resume",
@@ -195,6 +209,14 @@ def private_callback(
             return True
     else:
         member = store.subscriber(user_id)
+        # Never let an unauthenticated signup storm stall later /stop updates.
+        from .feedback import MAX_SUBSCRIBERS
+        if (member is None and len(store.subscribers) >= MAX_SUBSCRIBERS
+                and (parse_toggle(raw) is not None or raw.startswith(
+                    ("sub:b:", "sub:a:", "sub:l:")
+                ))):
+            _reply_callback(bot, callback_id, "Subscriptions are currently full.")
+            return True
         visible = _page(raw, member, store, user_id, settings, academic)
         if visible is not None:
             html, keyboard = visible

@@ -64,14 +64,16 @@ COMMANDS = [
     ("pause", "Pause notifications"),
     ("resume", "Resume notifications"),
     ("guide", "Help with job alerts"),
+    ("help", "Help with job alerts"),
     ("stop", "Unsubscribe with confirmation"),
+    ("delete", "Delete active subscriber data"),
 ]
 OWNER_COMMANDS = [
     ("positions", "All open published positions"),
     ("applied", "Your applied positions"),
     ("valid", "Your interested positions"),
     ("hidden", "Your hidden positions"),
-    ("help", "Help with owner feedback buttons"),
+    ("ownerhelp", "Help with owner feedback buttons"),
 ]
 ADMIN_COMMAND = ("admin", "Operations and source health")
 FA_COMMAND_DESCRIPTIONS = {
@@ -82,13 +84,16 @@ FA_COMMAND_DESCRIPTIONS = {
     "pause": "توقف اعلان‌ها",
     "resume": "ازسرگیری اعلان‌ها",
     "guide": "راهنمای استفاده",
+    "help": "راهنمای استفاده",
     "stop": "لغو عضویت با تأیید",
+    "delete": "حذف داده‌های فعال اشتراک",
 }
 COMMANDS_VERSION = 5
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
-    "saved": "valid", "hidden": "hidden", "invalid": "hidden", "help": "help", "start": "help",
+    "saved": "valid", "hidden": "hidden", "invalid": "hidden", "help": "help",
+    "ownerhelp": "help", "start": "help",
 }
 HELP = (
     "🤖 <b>Predoc bot</b>\n\n"

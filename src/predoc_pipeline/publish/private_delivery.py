@@ -83,8 +83,9 @@ def plan_batch(settings: Settings, *, path: Path = DEFAULT_BATCH) -> int:
                     "text": render_alert(job), "url": job.get("url", ""),
                 })
                 selected += 1
-            store.data["delivery_cursor"] = user_id
-            store._dirty = True
+            if store.data.get("delivery_cursor") != user_id:
+                store.data["delivery_cursor"] = user_id
+                store.mark_dirty()
     # Never persist reservations when batch-file creation fails; that would
     # strand the listings despite no network request being attempted.
     _save_batch(path, batch)
@@ -109,7 +110,10 @@ def send_batch(
     batch = json.loads(path.read_text("utf-8"))
     if not isinstance(batch, list) or len(batch) > MAX_TOTAL:
         raise ValueError("invalid private delivery batch size")
-    counts = {"sent": 0, "uncertain": 0, "failed": 0}
+    counts = {
+        "sent": 0, "uncertain": 0, "failed": 0,
+        "unsubscribed": 0, "rejected": 0, "deferred": 0,
+    }
     if not settings.telegram_bot_token:
         raise ValueError("TELEGRAM_BOT_TOKEN is required")
     with TelegramClient(bot_token=settings.telegram_bot_token, client=client) as telegram:
@@ -151,12 +155,13 @@ def send_batch(
                 if exc.permanent and exc.status in (400, 403):
                     if exc.status == 403:
                         store.remove_subscriber(int(chat_id))
+                        counts["unsubscribed"] += 1
                     else:
                         store.reject_delivery(int(chat_id), row["key"], status=400)
-                    counts["failed"] += 1
+                        counts["rejected"] += 1
                 elif exc.status == 429:
                     store.cancel_delivery(int(chat_id), row["key"])
-                    counts["failed"] += 1
+                    counts["deferred"] += 1
                     stop = True
                 else:
                     store.finish_delivery(int(chat_id), row["key"], uncertain=True)

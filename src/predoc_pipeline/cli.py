@@ -292,7 +292,9 @@ def subscriber_send(
         raise typer.Exit(1) from exc
     typer.echo(
         f"Private alerts: sent={counts['sent']} "
-        f"uncertain={counts['uncertain']} failed={counts['failed']}"
+        f"uncertain={counts['uncertain']} failed={counts['failed']} "
+        f"unsubscribed={counts['unsubscribed']} rejected={counts['rejected']} "
+        f"deferred={counts['deferred']}"
     )
     if counts["uncertain"] or counts["failed"]:
         raise typer.Exit(1)
