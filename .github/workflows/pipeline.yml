@@ -40,6 +40,34 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
 
+      - name: Check private state repository is private
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::PRIVATE_STATE_TOKEN is required for PRIVATE_STATE_REPO"
+            exit 1
+          fi
+          if [ "$(gh api "repos/$PRIVATE_STATE_REPO" --jq '.private')" != "true" ]; then
+            echo "::error::Refusing to store subscriber state in a public repository"
+            exit 1
+          fi
+
+      - name: Checkout authoritative private state
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ vars.PRIVATE_STATE_REPO }}
+          token: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          path: .private-state
+          fetch-depth: 1
+
+      - name: Restore authoritative private state
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        run: python tools/private_state.py restore
+
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -116,33 +144,36 @@ jobs:
       # committed. `git pull --rebase` first, in case you edited a file on
       # GitHub while the run was going.
       - name: Commit updated state
-        # Dry runs never push data, even if a command partially mutated files.
-        # For actual runs, preserve partial journal checkpoints on failure.
         if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' }}
+        env:
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
         run: |
+          set -euo pipefail
           git config user.name "predoc-pipeline-bot"
           git config user.email "actions@users.noreply.github.com"
-          # One file at a time: `git add a b` stages nothing if one is missing
-          # (feedback.enc only exists once you have tapped a button).
-          for f in data/listings.ndjson data/seen.ndjson data/x_threads.ndjson data/feedback.enc \
-                   data/career_jobs.ndjson data/career_health.json data/telegram_state.json \
-                   data/source_rotation.json \
-                   docs/data/listings.json docs/data/health.json \
-                   docs/feed.xml; do
+          for f in data/listings.ndjson data/seen.ndjson data/x_threads.ndjson \
+                   data/career_jobs.ndjson data/career_health.json \
+                   data/source_rotation.json docs/data/listings.json \
+                   docs/data/health.json docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
-          if git diff --cached --quiet; then
-            echo "no state changes to commit"
-            exit 0
+          if [ -z "$PRIVATE_STATE_REPO" ]; then
+            for f in data/feedback.enc data/telegram_state.json; do
+              if [ -e "$f" ]; then git add "$f"; fi
+            done
           fi
-          git commit -m "chore: update listings [skip ci]"
-          for attempt in 1 2 3; do
-            if git pull --rebase --autostash && git push; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep 5
-          done
-          echo "could not push the updated state"
-          exit 1
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update listings [skip ci]"
+            if ! (git pull --rebase --autostash && git push); then
+              git rebase --abort 2>/dev/null || true
+              echo "::error::Cannot persist pipeline journals without conflicts"
+              exit 1
+            fi
+          fi
+
+      - name: Commit private pipeline state
+        if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' && vars.PRIVATE_STATE_REPO != '' }}
+        run: python tools/private_state.py checkpoint
 
       - name: Upload dead-letter queue
         if: always()

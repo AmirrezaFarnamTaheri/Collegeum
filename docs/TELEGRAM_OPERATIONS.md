@@ -187,3 +187,32 @@ inspect counts and limited, escaped source error summaries.
 
 The source/job card UI can preview existing opportunities without marking
 them as delivered. Push notifications remain **new-after-opt-in** only.
+
+
+## Optional private repository for subscriber state
+
+Public Git stores only Fernet ciphertext, but past snapshots remain retrievable.
+For a stronger privacy boundary, configure a **different private GitHub
+repository** containing `data/feedback.enc` and `data/telegram_state.json`.
+Set the public Collegeum repository's Actions variable
+`PRIVATE_STATE_REPO=OWNER/PRIVATE_REPO` and the Actions secret
+`PRIVATE_STATE_TOKEN` to a narrowly scoped token with Contents write access
+to that private repository. Scheduled workflows check its GitHub `private`
+flag before accessing subscriber data; a public target is rejected.
+
+**Migrate before enabling the variable.** In a trusted checkout, copy the
+current encrypted state files into the private repository and commit/push them.
+A configured private backend refuses to start when a required private file is
+missing but an old public checkout still contains it. Never create a new
+empty private state over active subscribers. Confirm the private checkout
+succeeds and every checkpoint goes to the private repository before stopping
+public state commits. Once verified, remove the tracked current encrypted
+state and public offset files from the public repository's current tree;
+previous public Git versions remain accessible. Token rotation, legacy Git
+history removal, private-repository history retention, and actual subscriber
+erasure still require explicit operator procedures. No code can retroactively
+revoke copies of old Git commits.
+
+If `PRIVATE_STATE_REPO` is unset, the legacy encrypted-in-public-repository
+mode remains active for backwards compatibility. Production deployments with
+unrestricted subscriber enrollment should use private storage.

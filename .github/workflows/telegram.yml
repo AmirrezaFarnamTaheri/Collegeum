@@ -34,6 +34,34 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
 
+      - name: Check private state repository is private
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::PRIVATE_STATE_TOKEN is required for PRIVATE_STATE_REPO"
+            exit 1
+          fi
+          if [ "$(gh api "repos/$PRIVATE_STATE_REPO" --jq '.private')" != "true" ]; then
+            echo "::error::Refusing to store subscriber state in a public repository"
+            exit 1
+          fi
+
+      - name: Checkout authoritative private state
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ vars.PRIVATE_STATE_REPO }}
+          token: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          path: .private-state
+          fetch-depth: 1
+
+      - name: Restore authoritative private state
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        run: python tools/private_state.py restore
+
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -73,25 +101,31 @@ jobs:
       - name: Commit input cursor and untransmitted private intents
         id: checkpoint
         if: ${{ always() && steps.sync.outcome != 'skipped' }}
+        env:
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
         run: |
+          set -euo pipefail
           git config user.name "predoc-pipeline-bot"
           git config user.email "actions@users.noreply.github.com"
-          for f in data/feedback.enc data/telegram_state.json docs/data/listings.json \
-                   docs/feed.xml; do
+          for f in docs/data/listings.json docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
-          if git diff --cached --quiet; then
-            echo "no input state changes"
-            exit 0
+          if [ -z "$PRIVATE_STATE_REPO" ]; then
+            for f in data/feedback.enc data/telegram_state.json; do
+              if [ -e "$f" ]; then git add "$f"; fi
+            done
           fi
-          git commit -m "chore: checkpoint Telegram inbox and private intents [skip ci]"
-          for attempt in 1 2 3; do
-            if git pull --rebase --autostash && git push; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep 5
-          done
-          echo "could not persist private intents: refusing to send"
-          exit 1
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: checkpoint Telegram inbox and private intents [skip ci]"
+            if ! (git pull --rebase --autostash && git push); then
+              git rebase --abort 2>/dev/null || true
+              echo "::error::Public exports could not be persisted; refusing to send"
+              exit 1
+            fi
+          fi
+          if [ -n "$PRIVATE_STATE_REPO" ]; then
+            python tools/private_state.py checkpoint
+          fi
 
       - name: Send only the checkpointed private alert batch
         id: delivery
@@ -109,22 +143,25 @@ jobs:
       - name: Commit acknowledgements and reconciliation state
         id: acknowledgement
         if: ${{ always() && steps.delivery.outcome != 'skipped' }}
+        env:
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
         run: |
-          git config user.name "predoc-pipeline-bot"
-          git config user.email "actions@users.noreply.github.com"
-          if [ -e data/feedback.enc ]; then git add data/feedback.enc; fi
-          if git diff --cached --quiet; then
-            echo "no outgoing acknowledgements"
-            exit 0
+          set -euo pipefail
+          if [ -n "$PRIVATE_STATE_REPO" ]; then
+            python tools/private_state.py checkpoint
+          else
+            git config user.name "predoc-pipeline-bot"
+            git config user.email "actions@users.noreply.github.com"
+            if [ -e data/feedback.enc ]; then git add data/feedback.enc; fi
+            if ! git diff --cached --quiet; then
+              git commit -m "chore: record private delivery acknowledgements [skip ci]"
+              if ! (git pull --rebase --autostash && git push); then
+                git rebase --abort 2>/dev/null || true
+                echo "::error::Cannot commit acknowledgement without conflicts"
+                exit 1
+              fi
+            fi
           fi
-          git commit -m "chore: record private delivery acknowledgements [skip ci]"
-          for attempt in 1 2 3; do
-            if git pull --rebase --autostash && git push; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep 5
-          done
-          echo "could not save private delivery outcomes"
-          exit 1
 
       - name: Fail if inbox, persistence, or private delivery failed
         if: always()
