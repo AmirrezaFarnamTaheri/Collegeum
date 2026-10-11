@@ -206,7 +206,10 @@ def test_malformed_saved_health_is_not_overwritten_after_failed_restore(
 
 def test_source_health_empty_unexpected_and_disjoint_summary():
     from predoc_pipeline.core.health import (
-        public_source_stats, source_error_count, source_status, source_summary,
+        public_source_stats,
+        source_error_count,
+        source_status,
+        source_summary,
     )
 
     sample = {
