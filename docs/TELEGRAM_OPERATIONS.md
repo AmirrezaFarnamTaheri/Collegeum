@@ -36,7 +36,7 @@ gate/model, public dashboard, channel broadcast or X:
 
 | Market | Source | Selection and limits |
 |---|---|---|
-| Remote | [Jobicy public API](https://github.com/Jobicy/remote-jobs-api) | Only jobs explicitly marked Anywhere/Worldwide/Global/Iran in `jobGeo`, excluding Iran-restricted posts; title matched to role; max two cursor pages per four-hour cycle |
+| Remote | [Jobicy public API](https://github.com/Jobicy/remote-jobs-api) | Only jobs explicitly marked Anywhere/Worldwide/Global/Iran in `jobGeo`, excluding Iran-restricted posts; title matched to role; max two cursor pages plus one batch status check per four-hour cycle |
 | Iran-based | [Jobinja](https://jobinja.ir) | Conservative HTML job-link parser for Iranian employer listings; rotate one of four Persian queries per cycle; at most 30 cards. Does not call an unofficial paid API. |
 
 Role categories: data scientist, data analyst/BI, economics/management
@@ -60,7 +60,7 @@ repeat alerts. Scheduled pipeline workflow commits this journal.
 ```text
 Scheduled 4h collection (rotating source cohorts)
   -> existing academic gate/extraction/deduplication -> academic listings journal
-  -> opt-in career feeds (max two Jobicy pages + one Jobinja fetch)
+  -> opt-in career feeds (up to two Jobicy pages, one status check, one Jobinja fetch)
   -> deduplicated career jobs journal + data/career_health.json
 
 Telegram inbox job (~30 minutes during configured dayparts)
@@ -118,8 +118,10 @@ notification pause does not block collection or the legacy public channel.
   The pipeline and Telegram jobs share a single serialized workflow
   concurrency group to avoid racing on committed state.
 - Jobicy requests follow its public API fair-use guidance. This project uses
-  at most two cursor pages per four-hour cycle, plus one Jobinja keyword
-  request. Conditional requests use the ordinary polite HTTP cache when a
+  at most two cursor pages and one status check for up to 100 IDs per four-hour
+  cycle, plus one Jobinja keyword request. Only a verified `closed` result
+  suppresses a remote job; an `unknown` result or network failure does not
+  establish closure. Conditional requests use the ordinary polite HTTP cache when a
   reusable response body exists. The SQLite cache is ephemeral on hosted
   runners; persistent deduplication relies on NDJSON journals and encrypted
   delivery receipts. Successful private receipts are kept for 45 days;

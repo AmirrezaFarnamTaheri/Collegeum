@@ -27,6 +27,8 @@ from .rotation import SCHEDULE_INTERVAL_HOURS
 log = get_logger(__name__)
 
 REMOTE_API = "https://jobicy.com/api/v2/remote-jobs?count=200&geo=anywhere"
+REMOTE_STATUS_API = "https://jobicy.com/api/v2/remote-jobs/status"
+MAX_PROVIDER_ID = 9_007_199_254_740_991
 IRAN_SEARCH_TERMS = (
     "تحلیلگر داده", "دانشمند داده", "تحلیل اقتصادی", "مشاور مدیریت",
 )
@@ -120,6 +122,9 @@ def parse_remote_jobs(payload: dict[str, Any]) -> list[dict[str, str]]:
             location=geo, source="Jobicy", scope="remote",
         )
         if result:
+            job_id = data.get("id")
+            if type(job_id) is int and 0 < job_id <= MAX_PROVIDER_ID:
+                result["jobicy_id"] = str(job_id)
             output.append(result)
     return output
 
@@ -200,6 +205,15 @@ def load_career(path: str | Path) -> list[dict[str, str]]:
             data["title"]
         ) != data["category"]:
             raise ValueError(f"invalid career category or scope in {p}")
+        availability = data.get("availability", "unknown")
+        if availability not in ("active", "closed", "unknown"):
+            raise ValueError(f"invalid career availability in {p}")
+        provider_id = data.get("jobicy_id")
+        if provider_id is not None and (
+            not isinstance(provider_id, str) or not provider_id.isascii()
+            or not provider_id.isdecimal() or not 0 < int(provider_id) <= MAX_PROVIDER_ID
+        ):
+            raise ValueError(f"invalid Jobicy ID in {p}")
         if (not data["key"].startswith("career:") or
                 len(data["url"]) > 1024 or urlsplit(data["url"]).scheme != "https"):
             raise ValueError(f"invalid career URL or identity in {p}")
@@ -226,7 +240,10 @@ def save_career(path: str | Path, previous: list[dict[str, str]],
             added += 1
         else:
             old = existing[job["key"]]
-            existing[job["key"]] = {**job, "first_seen_at": old["first_seen_at"]}
+            current = {**old, **job, "first_seen_at": old["first_seen_at"]}
+            if old.get("availability") == "closed" and "availability" not in job:
+                current["availability"] = "closed"
+            existing[job["key"]] = current
     filtered: list[dict[str, str]] = []
     for job in existing.values():
         try:
@@ -246,6 +263,62 @@ def save_career(path: str | Path, previous: list[dict[str, str]],
         os.fsync(f.fileno())
     temp.replace(p)
     return added
+
+
+
+def _verify_remote_status(
+    client: PoliteClient,
+    previous: list[dict[str, str]],
+    fresh: list[dict[str, str]],
+    errors: list[str],
+    stats: dict[str, Any],
+) -> None:
+    """One optional Jobicy status request for at most 100 IDs per four-hour run.
+
+    Only explicit 'closed' proves closure. Missing/unknown/failed responses
+    never turn unknown listings into closed ones.
+    """
+    selected: list[str] = []
+    for job in [*fresh, *previous]:
+        identifier = job.get("jobicy_id")
+        if identifier and identifier not in selected:
+            selected.append(identifier)
+        if len(selected) == 100:
+            break
+    if not selected:
+        return
+    request_url = REMOTE_STATUS_API + "?" + urlencode({"ids": ",".join(selected)})
+    response = client.get(request_url)
+    stats["fetched"] += 1
+    if not response.ok:
+        errors.append(f"Jobicy status fetch: {response.error or response.status}")
+        return
+    try:
+        data = json.loads(response.text)
+        if not isinstance(data, dict) or data.get("success") is False:
+            raise ValueError("status response is invalid")
+        entries = data.get("jobs")
+        if not isinstance(entries, list):
+            raise ValueError("status result has no jobs array")
+        statuses: dict[str, str] = {}
+        for entry in entries[:100]:
+            if not isinstance(entry, dict):
+                continue
+            identifier = entry.get("id")
+            status = entry.get("status")
+            if (type(identifier) is int and str(identifier) in selected
+                    and status in ("active", "closed", "unknown")):
+                statuses[str(identifier)] = status
+        for job in [*previous, *fresh]:
+            state = statuses.get(job.get("jobicy_id", ""))
+            if state is None:
+                continue
+            if state == "unknown" and job.get("availability") == "closed":
+                continue
+            job["availability"] = state
+        stats["closed"] = sum(1 for state in statuses.values() if state == "closed")
+    except (ValueError, TypeError):
+        errors.append("Jobicy status response has an invalid schema")
 
 
 def poll_career(
@@ -293,6 +366,9 @@ def poll_career(
                 break
             if page == MAX_REMOTE_PAGES - 1:
                 log.info("career_remote_feed_page_cap", pages=MAX_REMOTE_PAGES)
+        _verify_remote_status(
+            client, previous, fresh, errors, sources["jobicy"],
+        )
     if needs_iran:
         if slot is None:
             slot = int(datetime.now(UTC).timestamp()) // (SCHEDULE_INTERVAL_HOURS * 3600)

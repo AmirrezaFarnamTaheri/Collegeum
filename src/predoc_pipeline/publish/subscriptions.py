@@ -146,6 +146,8 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
             "url": row["apply_url"],
         })
     for job in careers:
+        if job.get("availability") == "closed":
+            continue
         when = job["first_seen_at"]
         parsed = _instant(when)
         if parsed and parsed >= cutoff and selected(member, job["category"], job["scope"]):
