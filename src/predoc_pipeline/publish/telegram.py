@@ -539,9 +539,10 @@ class TelegramClient:
                 sleep(min(2**attempt, 15))
                 continue
             try:
-                data = response.json()
+                value = response.json()
             except ValueError:
-                data = {}
+                value = {}
+            data = value if isinstance(value, dict) else {}
             if response.status_code == 200 and data.get("ok"):
                 return data.get("result")
             detail = str(data.get("description") or response.text[:300])
