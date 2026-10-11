@@ -1,12 +1,12 @@
 name: predoc-pipeline
 
-# Runs every six hours: 00:00, 06:00, 12:00 and 18:00 UTC.
+# Runs every three hours: 00:00, 03:00, 06:00 ... 21:00 UTC.
 # GitHub may start scheduled runs 5-30 minutes late; that is normal.
 #
 # Runtime and Actions usage depend on collection and extraction volume.
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */3 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
