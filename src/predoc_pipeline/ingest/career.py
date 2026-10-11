@@ -73,7 +73,8 @@ def _job(
 ) -> dict[str, str] | None:
     kind = classify_career(title)
     parts = urlsplit(url)
-    if not kind or parts.scheme != "https" or not parts.hostname:
+    if (not kind or parts.scheme != "https" or not parts.hostname
+            or len(url) > 1024 or len(title) > 500):
         return None
     return {
         "key": _key(url), "title": title[:200], "employer": employer[:160],
@@ -177,16 +178,34 @@ def load_career(path: str | Path) -> list[dict[str, str]]:
     p = Path(path)
     if not p.exists():
         return []
+    if p.stat().st_size > 8_000_000:
+        raise ValueError("career journal exceeds its resource budget")
     result: list[dict[str, str]] = []
     for line in p.read_text("utf-8").splitlines():
         if not line.strip():
             continue
+        if len(result) >= MAX_STORED_JOBS:
+            raise ValueError("career journal exceeds its record budget")
         data = json.loads(line)
         if not isinstance(data, dict):
             raise ValueError(f"invalid job journal record in {p}")
-        required = {"key", "category", "scope", "url", "title", "first_seen_at"}
+        required = {
+            "key", "category", "scope", "url", "title",
+            "first_seen_at", "employer", "location", "source",
+        }
         if not required.issubset(data) or not all(isinstance(v, str) for v in data.values()):
             raise ValueError(f"corrupt job journal record in {p}")
+        if data["scope"] not in ("iran", "remote") or classify_career(
+            data["title"]
+        ) != data["category"]:
+            raise ValueError(f"invalid career category or scope in {p}")
+        if (not data["key"].startswith("career:") or
+                len(data["url"]) > 1024 or urlsplit(data["url"]).scheme != "https"):
+            raise ValueError(f"invalid career URL or identity in {p}")
+        try:
+            datetime.fromisoformat(data["first_seen_at"].replace("Z", "+00:00"))
+        except ValueError:
+            raise ValueError(f"invalid career timestamp in {p}") from None
         result.append(data)
     return result
 
