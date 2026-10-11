@@ -137,6 +137,7 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
             jobs.append(job)
     jobs.sort(key=lambda item: (
         _instant(item["first_seen_at"]) or datetime.min.replace(tzinfo=UTC),
+        item.get("research_priority") == "focus",
         item["key"],
     ), reverse=True)
     return jobs

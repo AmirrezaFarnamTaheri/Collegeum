@@ -221,3 +221,24 @@ def test_international_research_brand_does_not_imply_location() -> None:
         **baseline, description_snippet="Work location: Cambridge, UK",
     )
     assert life_sciences.classify_post(outside, today=TODAY) is None
+
+
+def test_primary_research_interests_rank_before_related_on_same_discovery() -> None:
+    stamp = datetime.now(UTC).isoformat()
+    related = life_sciences.classify_post(
+        post(title="PhD Student in Computational Biology"), today=TODAY,
+    )
+    focus = life_sciences.classify_post(
+        post(title="PhD Position in Epigenetic Regulation"), today=TODAY,
+    )
+    assert related is not None and focus is not None
+    related = {**related, "key": "career:related", "first_seen_at": stamp}
+    focus = {**focus, "key": "career:focus", "first_seen_at": stamp}
+    member = {
+        "topics": {"life_sciences_phd": (
+            datetime.now(UTC) - timedelta(hours=1)
+        ).isoformat()},
+        "scopes": {},
+    }
+    ranked = matching(member, [], [related, focus])
+    assert [job["key"] for job in ranked] == ["career:focus", "career:related"]
