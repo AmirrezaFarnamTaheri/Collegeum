@@ -31,6 +31,12 @@ REGIONAL_EXAMPLES = [
         "Doctoral fellow",
     ),
     (
+        "life_es_irb",
+        "https://www.irbbarcelona.org/en/careers/young-scientists/"
+        "irb-barcelona-international-phd-fellowships-extraordinary-call-2026",
+        "IRB Barcelona International PhD Fellowships - Extraordinary call 2026",
+    ),
+    (
         "life_lund_university",
         "https://lu.varbi.com/en/what:job/jobID:965334/type:job/where:4/apply:1",
         "PhD student in chromatin remodeling",
@@ -105,8 +111,8 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     assert len(names) == len(set(names))
     assert len(registered) == 112
     active = [source for source in registered if source.enabled]
-    assert len(active) == 21
-    assert len(registered) - len(active) == 91
+    assert len(active) == 22
+    assert len(registered) - len(active) == 90
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
     assert all(source.type in {"rss", "link_scan"} for source in active)
@@ -203,7 +209,7 @@ def test_duplicate_provider_name_across_catalogues_is_rejected(tmp_path: Path) -
 def test_source_round_robin_with_twenty_enabled_providers(tmp_path: Path) -> None:
     journal = tmp_path / "life_rotation.json"
     enabled = {s.name for s in life_sciences.load_life_sources(CATALOG) if s.enabled}
-    assert len(enabled) == 21
+    assert len(enabled) == 22
     seen: set[str] = set()
     for iteration in range(3):
         selected = life_sciences.select_sources(CATALOG, journal)
@@ -211,7 +217,7 @@ def test_source_round_robin_with_twenty_enabled_providers(tmp_path: Path) -> Non
         if iteration <= 1:
             assert not (selected & seen)
         else:
-            assert len(selected - seen) == 5
+            assert len(selected - seen) == 6
         seen.update(selected)
         save_rotation(
             journal, selected, timestamp=datetime.now(UTC) + timedelta(minutes=iteration),

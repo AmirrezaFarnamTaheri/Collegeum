@@ -106,13 +106,14 @@ note = "Disabled: candidate institution or programme page, not a proven individu
 name = "life_es_irb"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://www.irbbarcelona.org/en/careers/job-openings"
-link_pattern = '^$'
+enabled = true
+url = "https://www.irbbarcelona.org/en/careers/phd-predoctoral-programme-biomedicine"
+link_pattern = 'irbbarcelona\.org/en/careers/young-scientists/irb-barcelona-international-phd-fellowships-(?:extraordinary-call-)?\d{4}/?'
 country = "Spain"
 institution = "IRB Barcelona"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official IRB PhD programme indexes dated calls, including extraordinary 2026 FPI positions; fetch detail to verify current deadline."
 
 [[board]]
 name = "life_es_bist"
