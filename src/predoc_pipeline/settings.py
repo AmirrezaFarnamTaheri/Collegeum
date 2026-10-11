@@ -127,6 +127,7 @@ class Settings(BaseSettings):
     # Production scheduled runs use alternating source cohorts, 4h apart.
     # Manual runs and local tests retain full source coverage.
     source_rotation_enabled: bool = False
+    source_rotation_path: str = "data/source_rotation.json"
 
     # -- Classification ---------------------------------------------------
     confidence_threshold: float = Field(0.70, ge=0.0, le=1.0)

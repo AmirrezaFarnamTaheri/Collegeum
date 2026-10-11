@@ -3,21 +3,19 @@ name: refresh-release
 # Rebuild the checked-in single-file distribution and uv.lock on a working
 # branch. Production main is intentionally not mutated by this bot.
 # A maintainer may dispatch a refresh on any working branch.
-# Update the bundled runtime after adding Telegram subscription and admin modules.
-# Include stdlib workflow-contract tests in the reproducible manifest. Editing this
-# workflow also refreshes it automatically, with no feature-branch hardcoding.
-# Preserve the current main source/config when refreshing after upstream merges.
-# Keep generated manifests synchronized after workflow regression-test fixes.
-# Refresh after exact six-row subscriber navigation regression test correction.
-# Refresh generated distribution after the Telegram reliability and career feed fixes.
-# Refresh after reconciling 45-day delivery retention and admin-panel regression.
-# Refresh after adding market setup and more precise role patterns.
-# Rebuild after Ruff formatting of the admin interaction regression.
+# Refresh checked-in distribution when build inputs change, not by editing
+# workflow comments. Bot-generated commits do not recursively trigger CI.
 on:
   push:
     branches: ['**']
     paths:
       - .github/workflows/refresh-release.yml
+      - src/**
+      - tests/**
+      - tools/**
+      - config/**
+      - pyproject.toml
+      - uv.lock
   workflow_dispatch:
 
 permissions:
