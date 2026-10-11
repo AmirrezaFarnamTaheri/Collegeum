@@ -2,6 +2,7 @@
 
 import html
 import re
+from pathlib import Path
 from xml.etree import ElementTree as ET
 
 import pytest
@@ -313,3 +314,22 @@ def test_dashboard_snapshot_preserved_when_atomic_replace_fails(tmp_path, monkey
     with Database(path) as db, pytest.raises(OSError, match="blocked"):
         state.export_dashboard(db, target)
     assert target.read_text(encoding="utf-8") == saved
+
+
+def test_all_actual_state_journal_records_render_valid_telegram_cards(tmp_path):
+    """Check the complete committed real dataset, not only synthetic fixtures."""
+    target = tmp_path / "real-output.db"
+    init(target)
+    with Database(target) as db:
+        restored = state.restore_if_needed(
+            db, Path("data/listings.ndjson"), Path("data/seen.ndjson")
+        )
+        assert restored >= 100
+        all_rows = db.conn.execute("SELECT * FROM listings ORDER BY id").fetchall()
+        assert len(all_rows) >= 100
+        for row in all_rows:
+            item = pipeline._listing_from_row(row)
+            card = render_card(item)
+            parsed = assert_valid_message(card)
+            assert "Research" in " ".join(parsed.itertext()) or item.title
+            assert "\x00" not in card

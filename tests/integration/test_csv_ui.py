@@ -127,3 +127,33 @@ assert.equal(formatSalary({salary_min:100,salary_currency:null,salary_period:nul
 """
     subprocess.run([shutil.which("node"), "-e", script], check=True,
                    capture_output=True, text=True)
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="Node required for actual CSV serialization")
+def test_real_published_snapshot_csv_roundtrip():
+    """Exercise all current published listings through the exact JS CSV renderer."""
+    page = Path("docs/index.html").read_text(encoding="utf-8")
+    serializer = "function csvCell" + page.split(
+        "function csvCell", 1
+    )[1].split("$('#export-csv-btn').onclick", 1)[0]
+    salary = "function formatSalary" + page.split(
+        "function formatSalary", 1
+    )[1].split("function formatDegree", 1)[0]
+    payload = json.loads(Path("docs/data/listings.json").read_text(encoding="utf-8"))
+    script = salary + serializer + """
+const fs = require('node:fs');
+const data = JSON.parse(fs.readFileSync(0, 'utf8'));
+process.stdout.write(serializeListingsCsv(data.listings));
+"""
+    result = subprocess.run(
+        [shutil.which("node"), "-e", script],
+        input=json.dumps(payload, ensure_ascii=False),
+        capture_output=True, text=True, check=True, encoding="utf-8",
+    )
+    parsed = list(csv.reader(io.StringIO(result.stdout, newline="")))
+    assert len(parsed) == payload["count"] + 1
+    assert all(len(row) == 16 for row in parsed)
+    for entry, row in zip(payload["listings"], parsed[1:], strict=True):
+        expected = str(entry["title"] or "")
+        assert row[1] == expected or row[1] == "[text] " + expected
+        assert row[-1] == entry["apply_url"]
