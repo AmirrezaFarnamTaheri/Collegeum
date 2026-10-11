@@ -30,6 +30,9 @@ jobs:
       - name: Core tests (stdlib only, no dependencies installed)
         run: PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
 
+      - name: Validate committed dashboard, RSS and journal contracts (stdlib only)
+        run: python3 -S tools/audit_publications.py --strict
+
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           activate-environment: true
