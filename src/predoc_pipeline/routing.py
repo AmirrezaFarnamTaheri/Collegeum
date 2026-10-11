@@ -2,9 +2,9 @@
 
 Two destinations, never both:
 
-* ``web``: the website and X. US positions, PhD and postdoc positions, and
-  anything from a bank, international organization, consultancy or company
-  that is explicitly named in the routing config.
+* ``web``: the website and X. US positions; PhD, postdoctoral, and
+  PhD-qualified staff research positions; and institutional employers
+  explicitly included by routing configuration.
 * ``telegram``: pre-doctoral roles outside the US at universities and
   research institutes.
 
