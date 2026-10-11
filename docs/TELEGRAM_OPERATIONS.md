@@ -82,7 +82,7 @@ remote API accepts the message. Never replay an in-flight/uncertain item
 without checking the destination. Use:
 
 ```sh
-predoc-pipeline subscriber-reconcile CHAT_ID 'career:KEY' --confirmed-sent
+predoc-pipeline subscriber-reconcile CHAT_ID 'career:KEY' --confirmed-sent --message-id 123
 predoc-pipeline subscriber-reconcile CHAT_ID 'career:KEY' --confirmed-not-delivered
 # See counts without exposing identifiers:
 predoc-pipeline subscriber-pending

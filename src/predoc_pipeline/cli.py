@@ -338,6 +338,8 @@ def subscriber_reconcile(
         False, "--confirmed-sent", help="I verified the message exists in the private chat"),
     confirmed_absent: bool = typer.Option(
         False, "--confirmed-not-delivered", help="I verified the message was not delivered"),
+    message_id: int | None = typer.Option(
+        None, "--message-id", help="Telegram message ID of verified private delivery"),
 ) -> None:
     """Manually resolve an ambiguous private delivery. Never guess after a timeout."""
     from .publish.feedback import FeedbackStore
@@ -353,7 +355,7 @@ def subscriber_reconcile(
     try:
         store.resolve_delivery(
             chat_id, delivery_key, confirmed_sent=confirmed_sent,
-            confirmed_absent=confirmed_absent,
+            confirmed_absent=confirmed_absent, message_id=message_id,
         )
     except ValueError as exc:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)

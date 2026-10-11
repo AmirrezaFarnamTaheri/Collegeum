@@ -318,18 +318,26 @@ class FeedbackStore:
     def resolve_delivery(
         self, chat_id: int, key: str, *,
         confirmed_sent: bool = False, confirmed_absent: bool = False,
+        message_id: int | None = None,
     ) -> None:
         if confirmed_sent == confirmed_absent:
             raise ValueError("Exactly one verified delivery outcome is required")
+        if confirmed_sent and (type(message_id) is not int or message_id <= 0):
+            raise ValueError("A verified positive Telegram message ID is required")
+        if confirmed_absent and message_id is not None:
+            raise ValueError("Do not supply a message ID for confirmed non-delivery")
         member = self.subscriber(chat_id)
         if member is None or key not in member["deliveries"]:
             raise ValueError("Unknown subscriber delivery")
-        if member["deliveries"][key]["state"] == "sent":
-            if confirmed_sent:
+        existing = member["deliveries"][key]
+        if existing["state"] == "sent":
+            if confirmed_sent and existing.get("message_id") == message_id:
                 return
-            raise ValueError("Cannot erase a confirmed delivery")
+            raise ValueError("Cannot overwrite a confirmed delivery")
+        if confirmed_sent and existing["state"] == "rejected":
+            raise ValueError("Telegram explicitly rejected that delivery")
         if confirmed_sent:
-            self.finish_delivery(chat_id, key)
+            self.finish_delivery(chat_id, key, message_id=message_id)
         else:
             self.cancel_delivery(chat_id, key)
 
