@@ -77,7 +77,8 @@ def test_historical_repair_is_receipt_preserving_and_idempotent(tmp_path: Path):
     assert fixed["quarantined_ids"] == [2, 3]
     assert fixed["after"]["public_rows"] == 2
     assert fixed["after"]["rss_items"] == 2
-    assert fixed["after"]["journal_quarantine_candidates"] == []
+    # Invalid journal links remain auditable after removal from public exports.
+    assert [x["id"] for x in fixed["after"]["journal_quarantine_candidates"]] == [2, 3]
     assert fixed["after"]["pipeline_outcome"] == "partial"
 
     restored = [
@@ -92,8 +93,8 @@ def test_historical_repair_is_receipt_preserving_and_idempotent(tmp_path: Path):
         assert row["status"] == "published"
         assert row["telegram_message_id"] == original[identifier]["telegram_message_id"]
         assert row["published_at"] == original[identifier]["published_at"]
-        assert "output audit:" in row["closed_reason"]
-        assert row["closed_at"]
+        assert row == original[identifier]
+        assert row["closed_at"] is None
     assert (tmp_path / "data/seen.ndjson").read_text("utf-8") == "source-history\n"
     assert "xml-stylesheet" in (tmp_path / "docs/feed.xml").read_text("utf-8")
     assert len(ET.parse(tmp_path / "docs/feed.xml").findall("channel/item")) == 2
@@ -101,7 +102,7 @@ def test_historical_repair_is_receipt_preserving_and_idempotent(tmp_path: Path):
     health = json.loads((tmp_path / "docs/data/health.json").read_text("utf-8"))
     assert health["status"] == "degraded"
     assert health["last_run"]["run_id"] == "38139499012"
-    assert health["counts"]["closed"] == 2
+    assert health["counts"]["closed"] == 0
     assert health["output_audit"]["quarantined_ids"] == [2, 3]
 
     backup = list((tmp_path / "build").glob("output-audit-backup-*"))

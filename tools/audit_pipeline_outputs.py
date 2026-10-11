@@ -1,8 +1,8 @@
-"""Audit/repair historical Collegeum journals and static publication outputs.
+"""Audit historical Collegeum journals and quarantine invalid public output links.
 
 This is intentionally offline. Repair cannot prove a vacancy has closed:
-non-actionable application links are quarantined, while job identity and
-Telegram publication receipts remain in the original durable journal.
+non-actionable application links are excluded from public exports without
+changing vacancy lifecycle, job identity, or Telegram publication receipts.
 No live requests or Telegram sends are made. Run against a trusted checkout.
 """
 
@@ -144,14 +144,10 @@ def repair(root: Path, *, when: datetime | None = None) -> dict[str, Any]:
     dashboard = json.loads((root / DASHBOARD).read_text(encoding="utf-8"))
     health = json.loads((root / HEALTH).read_text(encoding="utf-8"))
     rss = (root / FEED).read_text(encoding="utf-8")
-    quarantined: list[int] = []
-    for row in records:
-        issue = record_issue(row)
-        if (issue and row.get("status") == "published"
-                and not row.get("closed_at") and not row.get("expired_at")):
-            row["closed_at"] = fixed_at
-            row["closed_reason"] = f"output audit: non-actionable application link ({issue})"
-            quarantined.append(row["id"])
+    # A broken application URL does NOT prove that the vacancy closed.
+    # Remove it from actionable public outputs while retaining the exact
+    # durable journal, delivery receipts, and source facts for remediation.
+    quarantined = sorted(set(original["invalid_public_ids"]))
     excluded = set(quarantined)
     # Include any previously quarantined/invalid output references even when
     # the journal already carried a closure marker from an earlier audit.
@@ -176,16 +172,14 @@ def repair(root: Path, *, when: datetime | None = None) -> dict[str, Any]:
         ) else match.group()
 
     rss = ITEM.sub(retain_item, rss)
-    if quarantined or original["invalid_public_ids"] or original["invalid_rss_links"]:
+    if quarantined or original["invalid_rss_links"]:
         dashboard["output_audited_at"] = fixed_at
-        counts = health.get("counts")
-        if isinstance(counts, dict):
-            counts["closed"] = sum(bool(x.get("closed_at")) for x in records)
-            counts["expired"] = sum(bool(x.get("expired_at")) for x in records)
+        # Do not modify closed/expired inventory counts: a bad link is
+        # a publication-quality problem, not an observed vacancy closure.
         health["output_audit"] = {
             "reviewed_at": fixed_at,
             "quarantined_ids": sorted(quarantined),
-            "reason": "invalid application links, not verified vacancy closures",
+            "reason": "suppressed invalid application links; vacancy status unchanged",
             "historical_run": original["last_pipeline_run"],
         }
 
@@ -195,17 +189,11 @@ def repair(root: Path, *, when: datetime | None = None) -> dict[str, Any]:
             saved = backup / relative
             saved.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(root / relative, saved)
-        _stage(
-            root / JOURNAL,
-            "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n"
-                    for row in records),
-        )
         _stage(root / DASHBOARD, json.dumps(dashboard, ensure_ascii=False, indent=1) + "\n")
         _stage(root / FEED, rss)
         _stage(root / HEALTH, json.dumps(health, ensure_ascii=False, indent=1) + "\n")
     updated = inspect(root)
-    if (updated["journal_quarantine_candidates"] or updated["invalid_public_ids"]
-            or updated["invalid_rss_links"]):
+    if updated["invalid_public_ids"] or updated["invalid_rss_links"]:
         raise RuntimeError("Output repair left unresolved non-actionable records")
     return {"before": original, "after": updated, "quarantined_ids": sorted(quarantined)}
 
@@ -223,7 +211,6 @@ def main() -> None:
         args.output.write_text(output, encoding="utf-8")
     print(output, end="")
     if not args.repair and any((
-        result["journal_quarantine_candidates"],
         result["invalid_public_ids"],
         result["invalid_rss_links"],
     )):

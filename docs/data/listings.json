@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-10-11T12:41:36Z",
- "count": 127,
+ "count": 126,
  "listings": [
   {
    "id": 175,
@@ -4409,48 +4409,6 @@
    "sector": "academic"
   },
   {
-   "id": 25,
-   "title": "Research Professional",
-   "institution": "Becker Friedman Institute, University of Chicago",
-   "principal_investigator": "Josh Gottlieb, Maggie Shi, Zarek Brot, Matt Notowidigdo",
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": null,
-   "days_left": null,
-   "disciplines": [
-    "Labor Economics",
-    "Health Economics",
-    "Public Policy"
-   ],
-   "visa": "unknown",
-   "summary": "Current openings in the Pre-Doctoral in Economics Program The Pre-Doctoral in Economics Program (PREP) at the Becker Friedman Institute for Economics. PREP works with the Chicago Economics community to turn its evidence-based research into real-world impact. BFI takes a unique approach to bridging the divide between academic researchers and decision-makers in the business community and government by translating and packaging the rigorous work of the Chicago Economics community into accessible formats, and proactively sharing those findings with relevant decision-makers and thought leaders...",
-   "language": "en",
-   "apply_url": "https://job-boards.greenhouse.io/bfiprep?error=true",
-   "source_url": "https://bit.ly/45CKBwU",
-   "confidence": 0.91,
-   "first_seen_at": "2026-10-03T20:55:14Z",
-   "deadline_note": "Rolling",
-   "visa_note": null,
-   "alternate_sources": [
-    "https://bit.ly/45CKBwU"
-   ],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
    "id": 26,
    "title": "Pre-Doctoral Technical Associate",
    "institution": "MIT Sloan School of Management",
@@ -5193,5 +5151,5 @@
    "sector": "academic"
   }
  ],
- "output_audited_at": "2026-10-11T18:00:00Z"
+ "output_audited_at": "2026-10-11T19:10:39Z"
 }
