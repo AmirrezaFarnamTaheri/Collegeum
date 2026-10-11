@@ -300,6 +300,48 @@ def subscriber_send(
         raise typer.Exit(1)
 
 
+
+@app.command("subscriber-rotate-key")
+def subscriber_rotate_key() -> None:
+    """Re-encrypt active private state using keys from environment variables.
+
+    Must be run on a trusted operator checkout while scheduled workers are
+    paused. No key is accepted as a command argument or printed to logs.
+    """
+    import os
+
+    from cryptography.fernet import Fernet
+
+    from .publish.feedback import FeedbackStore, _write_atomic
+
+    cfg = _settings()
+    old_key = cfg.feedback_encryption_key.strip()
+    new_key = os.environ.get("FEEDBACK_NEW_ENCRYPTION_KEY", "").strip()
+    if not old_key or not new_key or old_key == new_key:
+        typer.secho("Both distinct old/new Fernet environment keys are required.", err=True)
+        raise typer.Exit(2)
+    try:
+        Fernet(new_key.encode("ascii"))
+        store = FeedbackStore.from_settings(cfg)
+        previous = store.store_path.read_bytes()
+        if len(previous) > 16_000_000:
+            raise ValueError("feedback file exceeds rotation budget")
+        store.key = new_key
+        store.mark_dirty()
+        store.save()
+        FeedbackStore(cfg.feedback_path, key=new_key)
+    except (OSError, TypeError, ValueError) as exc:
+        if "previous" in locals():
+            _write_atomic(store.store_path, previous)
+        typer.secho("Private state rotation failed; original state retained.", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(
+        "Encrypted state re-keyed locally and verified. Checkpoint it, update "
+        "the Actions secret, then resume the scheduled workers. Old Git "
+        "snapshots remain decryptable with the old key."
+    )
+
+
 @app.command("subscriber-pending")
 def subscriber_pending(
     show_ids: bool = typer.Option(

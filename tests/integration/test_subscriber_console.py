@@ -1181,3 +1181,27 @@ def test_delivery_preferences_are_persistent_and_idempotent(tmp_path):
         "Daily digest" in body["text"]
         for method, body in api.calls if method == "editMessageText"
     )
+
+
+def test_rotate_key_reencrypts_without_logging_secrets(tmp_path, monkeypatch):
+    import pytest
+    from cryptography.fernet import Fernet
+    from typer.testing import CliRunner
+
+    from predoc_pipeline import cli
+
+    cfg = settings(tmp_path)
+    old_key = cfg.feedback_encryption_key
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    store.save()
+    new_key = Fernet.generate_key().decode("ascii")
+    monkeypatch.setenv("FEEDBACK_NEW_ENCRYPTION_KEY", new_key)
+    monkeypatch.setattr(cli, "_settings", lambda: cfg)
+    run_result = CliRunner().invoke(cli.app, ["subscriber-rotate-key"])
+    assert run_result.exit_code == 0
+    assert old_key not in run_result.output
+    assert new_key not in run_result.output
+    assert FeedbackStore(cfg.feedback_path, key=new_key).subscriber(101) is not None
+    with pytest.raises(Exception):
+        FeedbackStore(cfg.feedback_path, key=old_key)

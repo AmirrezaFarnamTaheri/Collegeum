@@ -216,3 +216,17 @@ revoke copies of old Git commits.
 If `PRIVATE_STATE_REPO` is unset, the legacy encrypted-in-public-repository
 mode remains active for backwards compatibility. Production deployments with
 unrestricted subscriber enrollment should use private storage.
+
+
+### Fernet key rotation
+
+On a trusted operator checkout (never in public CI logs), pause all scheduled
+state-writing jobs, load the current authoritative encrypted file, set the old
+`FEEDBACK_ENCRYPTION_KEY` and new `FEEDBACK_NEW_ENCRYPTION_KEY` in the local
+environment, and run `predoc-pipeline subscriber-rotate-key`. The command
+validates the new Fernet key, atomically re-encrypts the active file, verifies
+it can be decrypted, and prints neither key. Commit the rotated ciphertext
+to the configured state repository, update the Actions
+`FEEDBACK_ENCRYPTION_KEY` secret, then resume the jobs. Old Git commit
+snapshots remain decryptable using the old key; rotation does not erase those
+historical copies.
