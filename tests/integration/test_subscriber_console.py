@@ -391,3 +391,26 @@ def test_career_journal_rejects_untrusted_scope_and_oversized_urls(tmp_path):
     }) + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="invalid career category or scope"):
         load_career(path)
+
+
+def test_polling_writes_source_health_without_personal_details(tmp_path):
+    from types import SimpleNamespace
+
+    class FailJobinja:
+        def get(self, _url):
+            return SimpleNamespace(ok=False, error="HTTP 503", status=503)
+
+    journal = tmp_path / "career.ndjson"
+    health = tmp_path / "career_health.json"
+    count, errors = poll_career(
+        journal, client=FailJobinja(), needs_remote=False, needs_iran=True,
+        health_path=health, slot=0,
+    )
+    assert count == 0
+    assert len(errors) == 1
+    data = json.loads(health.read_text("utf-8"))
+    assert data["sources"]["jobinja"]["fetched"] == 1
+    assert data["sources"]["jobinja"]["accepted"] == 0
+    assert data["sources"]["jobicy"]["requested"] is False
+    assert "subscribers" not in data
+    assert "chat_id" not in health.read_text("utf-8")

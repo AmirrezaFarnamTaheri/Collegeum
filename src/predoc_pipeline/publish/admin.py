@@ -8,9 +8,9 @@ TELEGRAM_ADMIN_CHAT_ID may access the admin menu.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from datetime import UTC, datetime
 from html import escape
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .. import state

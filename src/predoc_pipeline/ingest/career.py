@@ -203,7 +203,9 @@ def load_career(path: str | Path) -> list[dict[str, str]]:
                 len(data["url"]) > 1024 or urlsplit(data["url"]).scheme != "https"):
             raise ValueError(f"invalid career URL or identity in {p}")
         try:
-            datetime.fromisoformat(data["first_seen_at"].replace("Z", "+00:00"))
+            timestamp = datetime.fromisoformat(data["first_seen_at"].replace("Z", "+00:00"))
+            if timestamp.tzinfo is None:
+                raise ValueError("timezone missing")
         except ValueError:
             raise ValueError(f"invalid career timestamp in {p}") from None
         result.append(data)
@@ -291,7 +293,8 @@ def poll_career(
             if page == MAX_REMOTE_PAGES - 1:
                 log.info("career_remote_feed_page_cap", pages=MAX_REMOTE_PAGES)
     if needs_iran:
-        slot = slot if slot is not None else int(datetime.now(UTC).timestamp()) // (SCHEDULE_INTERVAL_HOURS * 3600)
+        if slot is None:
+            slot = int(datetime.now(UTC).timestamp()) // (SCHEDULE_INTERVAL_HOURS * 3600)
         res = client.get(iran_search_url(slot))
         sources["jobinja"]["fetched"] += 1
         if res.ok:
