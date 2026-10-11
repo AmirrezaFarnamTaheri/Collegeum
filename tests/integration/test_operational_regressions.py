@@ -108,7 +108,10 @@ def test_failed_sources_degrade_run_without_inventing_item_errors(isolated_run, 
     assert stats.outcome == "partial" and stats.errors == 0
     assert stats.source_errors == 2
     assert stats.sources == {"total": 5, "successful": 1, "empty": 1,
-                             "failed": 2, "partial": 1, "skipped": 1}
+                             "failed": 1, "partial": 1, "skipped": 1}
+    assert sum(stats.sources[key] for key in (
+        "successful", "empty", "failed", "partial", "skipped"
+    )) == stats.sources["total"]
     health = json.loads(Path(isolated_run.health_json).read_text(encoding="utf-8"))
     assert health["status"] == "degraded"
     assert health["source_summary"] == stats.sources
@@ -199,3 +202,51 @@ def test_malformed_saved_health_is_not_overwritten_after_failed_restore(
     with pytest.raises(ValueError, match="invalid health state"):
         pipeline.run(isolated_run, sync_telegram=False)
     assert path.read_text(encoding="utf-8") == original
+
+
+def test_source_health_empty_unexpected_and_disjoint_summary():
+    from predoc_pipeline.core.health import (
+        public_source_stats, source_error_count, source_status, source_summary,
+    )
+
+    sample = {
+        "board:unexpected-empty": {"ok": True, "items": 0, "fetched": 1},
+        "board:expected-empty": {"ok": True, "items": 0, "fetched": 1,
+                                  "may_be_empty": True},
+        "board:partial": {"ok": False, "items": 3, "errors": 2},
+        "board:failed": {"ok": False, "items": 0, "errors": 1},
+        "board:successful": {"ok": True, "items": 5, "fetched": 1},
+    }
+    result = source_summary(sample)
+    assert result == {"total": 5, "successful": 1, "empty": 1,
+                      "failed": 2, "partial": 1, "skipped": 0}
+    assert sum(result[key] for key in (
+        "successful", "empty", "failed", "partial", "skipped"
+    )) == result["total"]
+    assert source_error_count(sample) == 4
+    assert source_status(sample["board:unexpected-empty"]) == "failed"
+    public = public_source_stats(sample)
+    assert public["board:unexpected-empty"]["messages"] == [
+        "Unexpected empty source result"
+    ]
+
+
+def test_historical_run_outcomes_recomputed_from_source_evidence(tmp_path):
+    path = tmp_path / "test.db"
+    init(path)
+    with Database(path) as db:
+        row = db.start_run("legacy-misclassified")
+        db.finish_run(row, {"outcome": "ok", "errors": 0}, {
+            "board:bad": {"ok": False, "items": 0, "errors": 1},
+            "board:partial": {"ok": False, "items": 2, "errors": 1},
+            "board:empty": {"ok": True, "items": 0, "fetched": 1},
+        })
+        export = tmp_path / "health.json"
+        state.export_health(db, export, stats={"outcome": "partial"})
+    health = json.loads(export.read_text(encoding="utf-8"))
+    assert health["runs"][0]["outcome"] == "partial"
+    assert health["runs"][0]["source_summary"] == {
+        "total": 3, "successful": 0, "empty": 0,
+        "failed": 2, "partial": 1, "skipped": 0,
+    }
+    assert health["last_successful_run_at"] is None
