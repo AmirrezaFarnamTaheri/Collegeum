@@ -45,7 +45,8 @@ def test_probe_distinguishes_robots_denials_and_vacancy_links() -> None:
             if "mpg.de" in url:
                 return SimpleNamespace(
                     ok=True, status=200,
-                    text="<rss><channel><item><title>PhD</title></item></channel></rss>",
+                    text='<a href="https://www.mpg.de/26905386/postdoc-position-'
+                         'ultrafast-x-ray">Postdoc position (m/f/d)</a>',
                     error="",
                 )
             return SimpleNamespace(
