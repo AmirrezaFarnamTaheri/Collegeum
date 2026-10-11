@@ -55,8 +55,8 @@ jobs:
           # Marks are personal and this repository may be public: refuse to run
           # (and so to commit) without the key that encrypts them.
           if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]; then
-            echo "Set the FEEDBACK_ENCRYPTION_KEY secret (python -m predoc_pipeline.cli feedback-key)."
-            exit 1
+            echo "FEEDBACK_ENCRYPTION_KEY is not configured; skipping Telegram sync."
+            exit 0
           fi
           PYTHONPATH=src python3 -m predoc_pipeline.cli telegram-sync
 
