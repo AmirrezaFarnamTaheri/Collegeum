@@ -11,6 +11,7 @@ name: refresh-release
 # Refresh after exact six-row subscriber navigation regression test correction.
 # Refresh generated distribution after the Telegram reliability and career feed fixes.
 # Refresh after reconciling 45-day delivery retention and admin-panel regression.
+# Refresh after adding market setup and more precise role patterns.
 on:
   push:
     branches: ['**']
