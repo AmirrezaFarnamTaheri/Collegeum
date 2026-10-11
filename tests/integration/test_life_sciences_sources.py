@@ -364,7 +364,7 @@ def test_new_candidate_catalogues_remain_explicitly_disabled() -> None:
     registry = life_sciences.load_life_sources(CATALOG)
     target = [
         entry for entry in registry
-        if entry.name.startswith(("life_east_", "life_special_", "life_programmes_"))
+        if entry.name.startswith(("life_east_", "life_special_", "life_programme_"))
     ]
     assert len(target) == 105
     assert all(not entry.enabled for entry in target)
