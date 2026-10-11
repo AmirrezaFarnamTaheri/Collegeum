@@ -7,7 +7,9 @@ embedded in any keyboard or callback.
 
 from __future__ import annotations
 
+import json
 from html import escape
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -180,8 +182,9 @@ def menu(
                 "▶ Resume alerts" if paused else "⏸ Pause alerts",
                 "sub:a:resume" if paused else "sub:a:pause",
             )],
-            [_button("ℹ️ راهنما" if fa else "ℹ️ Help", "sub:p:help"),
-             _button("🇬🇧 English" if fa else "🇮🇷 فارسی",
+            [_button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources"),
+             _button("ℹ️ راهنما" if fa else "ℹ️ Help", "sub:p:help")],
+            [_button("🇬🇧 English" if fa else "🇮🇷 فارسی",
                      "sub:l:en" if fa else "sub:l:fa")],
             [_button("لغو عضویت" if fa else "Unsubscribe", "sub:p:stop")],
         ]
@@ -223,3 +226,74 @@ def latest_panel(
         keyboard.append(nav)
     keyboard.append(_back(lang))
     return "\n\n".join(lines), {"inline_keyboard": keyboard}
+
+
+
+def sources_panel(
+    health_path: str | Path, *, lang: str = "en",
+) -> tuple[str, dict[str, Any]]:
+    """Status of the last job-source poll, without secret or user data.
+
+    Health is a small public-source-only JSON written by the collector.
+    Unknown provider names and raw server errors never reach subscribers.
+    """
+    fa = lang == "fa"
+    header = (
+        "🌐 <b>وضعیت منابع فرصت‌های شغلی</b>"
+        if fa else "🌐 <b>Job-source status</b>"
+    )
+    lines = [header]
+    path = Path(health_path)
+    health: dict[str, Any] | None = None
+    try:
+        if path.is_file() and path.stat().st_size <= 65536:
+            value = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(value, dict):
+                health = value
+    except (OSError, ValueError):
+        pass
+    if health is None:
+        lines.append(
+            "هنوز گزارش بررسی منابع در دسترس نیست."
+            if fa else "No source-check report is available yet."
+        )
+    else:
+        timestamp = str(health.get("checked_at", ""))[:16]
+        if timestamp:
+            lines.append(
+                f"آخرین بررسی: {escape(timestamp)} UTC"
+                if fa else f"Last check: {escape(timestamp)} UTC"
+            )
+        providers = {
+            "jobicy": ("Jobicy", "جهانی / دورکاری", "Worldwide remote"),
+            "jobinja": ("Jobinja", "داخل ایران", "Iran-based"),
+            "irantalent": ("IranTalent", "داخل ایران", "Iran-based"),
+        }
+        sources = health.get("sources", {})
+        if not isinstance(sources, dict):
+            sources = {}
+        for key, (name, fa_scope, en_scope) in providers.items():
+            info = sources.get(key, {})
+            if not isinstance(info, dict):
+                info = {}
+            enabled = info.get("requested") is True
+            fetched = info.get("fetched", 0)
+            accepted = info.get("accepted", 0)
+            valid = (
+                type(fetched) is int and type(accepted) is int
+                and 0 <= fetched <= 100 and 0 <= accepted <= 2000
+            )
+            status = ("○" if not enabled else "✓" if fetched and valid else "!")
+            count = str(accepted) if enabled and valid else "—"
+            lines.append(
+                f"{status} <b>{name}</b> · {fa_scope if fa else en_scope}"
+                f" · {count} {'مورد' if fa else 'matches'}"
+            )
+        lines.append(
+            "این اعداد پوشش کامل بازار کار را تضمین نمی‌کنند."
+            if fa else
+            "Source counts show observed matches, not full market coverage."
+        )
+    return "\n".join(lines), {
+        "inline_keyboard": [_back(lang)],
+    }
