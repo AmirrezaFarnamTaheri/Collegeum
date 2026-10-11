@@ -366,5 +366,8 @@ subscription controls.
 The standalone sources config lives in `config/life_sciences.toml`. New
 sources can be added there without changing the economics-only public
 publication path or importing unrelated life-sciences posts into the
-economics listing stream. Keep `min_interval` for host politeness and never
-turn off robots restrictions to make a broken site appear healthy.
+economics listing stream. Keep `min_interval` for host politeness and verify each provider's
+robots.txt and terms before enabling it. The legacy asynchronous board HTTP
+client rate-limits but does **not yet automatically enforce robots.txt**;
+the separate Jobicy/IranTalent poller has its own robots-aware client. Do not
+bypass technical access controls or treat blocked sites as healthy.
