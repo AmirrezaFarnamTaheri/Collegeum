@@ -5,26 +5,33 @@ preferences, public academic filters or unrelated career alerts.
 
 ## Coverage (11 October 2026)
 
-| Group | Enabled | Disabled | Examples |
+| Group | Enabled | Candidate (disabled) | Examples |
 | --- | ---: | ---: | --- |
-| Core | 10 | 10 | EURAXESS, AcademicTransfer, Max Planck, Uppsala, Karolinska, Copenhagen, VIB, EPFL, CRG, Vienna |
-| Nordics | 4 | 15 | Lund, Umeå, Gothenburg, Aalto |
-| DACH | 2 | 18 | University of Basel, Biozentrum Basel |
-| Benelux | 3 | 14 | Utrecht, Radboud, Ghent |
-| France and Iberia | 3 | 15 | Inria, IBEC, IRB Barcelona |
-| Central/South Europe | 0 | 18 | Polish, Italian, Irish, Czech and Baltic research institutions are pending |
-| **Total** | **22** | **90** | **112 registered sources** |
+| Core | 10 | 10 | EURAXESS, AcademicTransfer, Max Planck, Karolinska, Uppsala, Copenhagen, VIB, EPFL, CRG and Vienna |
+| Nordic universities | 9 | 10 | Lund, Umeå, Gothenburg, Aalto, Stockholm, KTH, Linköping, SLU and University of Helsinki |
+| DACH | 3 | 17 | University of Basel, Biozentrum Basel and University of Bern |
+| Benelux | 3 | 14 | Utrecht University, Radboud and Ghent |
+| France and Iberia | 4 | 14 | Inria, IBEC, IRB Barcelona and CNRS doctoral calls |
+| Central/South Europe | 0 | 18 | Existing Italian, Irish, Polish and Czech leads |
+| Aggregator topic shards | 8 | 0 | 5 EURAXESS and 3 AcademicTransfer independently rotated subject groups |
+| Eastern Europe and Balkans | 0 | 43 | Baltic/Balkan institutions, Poland, Hungary, Czechia, Slovakia, Romania and Greece |
+| Specialist research institutes | 0 | 50 | European molecular biology, neuroscience, genomics and medical research centres |
+| Doctoral programmes | 0 | 12 | Cohort-based programmes requiring explicit opening and deadline checks |
+| **Total** | **37** | **188** | **225 unique catalogue entries** |
 
-Enabled means an official job-listing page and one individual job URL shape
-were inspected. It does NOT prove that automated fetches succeed today or
-that a current, relevant, funded position exists. Disabled entries are a
-research backlog, intentionally configured with a never-matching ^$ pattern;
-they are not functioning scrapers. Never count them as active coverage.
+**Enabled does not mean end-to-end collection has been verified.** Enabled
+feeds have a supported listing format and sample vacancy link shape, but
+remote markup, robots.txt, access restrictions and vacancy availability may
+change. The 188 candidate sources have `enabled=false`, `link_pattern='^$'`
+and are **never automatically fetched or delivered**. Their institution
+homepages are deliberately not presented as functioning job scrapers.
 
-Core entries remain in config/life_sciences.toml. Five regionally organized
-catalogues live in config/life_sciences_sources/ (nordics.toml, dach.toml,
-benelux.toml, france_iberia.toml, central_south.toml). The source loader
-rejects duplicate IDs and oversized catalogues.
+Core entries remain in `config/life_sciences.toml`. Nine regional/topic
+catalogues are stored in `config/life_sciences_sources/`: `nordics.toml`,
+`dach.toml`, `benelux.toml`, `france_iberia.toml`, `central_south.toml`,
+`aggregator_topics.toml`, `eastern_balkans.toml`,
+`specialist_institutes.toml`, and `doctoral_programmes.toml`.
+The source loader enforces stable, unique identities and a bounded catalogue.
 
 ### Priority institutions
 
@@ -39,8 +46,9 @@ rejects duplicate IDs and oversized catalogues.
   chromatin, regulatory genomics and molecular biology. IRB's 2026
   extraordinary PhD fellowship call advertises a 28 October 2026 deadline.
   The dated individual advert, not a generic programme page, is authoritative.
-- EPFL, Vienna, Copenhagen and Inria expand Switzerland, Austria, Denmark
-  and France coverage.
+- EPFL, Vienna, Copenhagen, CNRS and Inria expand Switzerland, Austria,
+  Denmark and France coverage. Helsinki and Bern provide additional
+  Finnish and Swiss university PhD vacancies via supported detail-link shapes.
 
 Only listings for explicitly identified continental-European workplaces
 qualify. Country defaults are hints, not proof of a job's actual location.
@@ -51,10 +59,14 @@ individually examined.
 
 ## Runtime budget and fairness
 
-The new opt-in source feed polls at most 8 sources per pipeline run, rotating
-them by the last attempt recorded in data/life_sources_rotation.json. All 22
-can be visited within three successful scheduled runs, barring cron delays or
-failures. Limits are 60 candidate cards per source and 200 per run.
+The independent opt-in source feed checks at most **12 enabled sources**
+per four-hour pipeline run, rotating oldest last-attempt first using
+`data/life_sources_rotation.json`. With 37 enabled feeds, full coverage
+requires **four successful runs** (roughly 16 hours, subject to cron delays).
+The original 19 EURAXESS and 15 AcademicTransfer topical searches are intact,
+but each is now assigned to a smaller source shard of 2–4 queries rather than
+being fetched as a large all-at-once batch. Limits remain 60 candidate cards
+per source and 200 per run.
 Doctoral-looking cards are prioritized before capping and sources are
 interleaved. Sparse doctoral cards can receive at most 6 detail-page fetches
 per provider, 24 in total, each with an 18-second timeout.
@@ -67,9 +79,9 @@ public listing feed and does not require Iran/remote career-market selection.
 
 An optional manual GitHub Actions workflow
 (.github/workflows/verify-life-sciences-sources.yml) checks enabled source
-landing pages. Choose all or one regional group and a 4/8/16 request budget.
-The all setting checks up to 16 per run: use regional selections to inspect
-the remaining providers.
+landing pages. Choose core or one of nine regional/topic groups and a 4/8/16
+request budget. The all setting checks up to 16 per run: use regional
+selections to inspect the remaining 37 enabled feeds.
 
 The standalone probe (tools/probe_life_sciences_sources.py) uses the
 robots-aware PoliteClient, fetches at most one public landing page per
