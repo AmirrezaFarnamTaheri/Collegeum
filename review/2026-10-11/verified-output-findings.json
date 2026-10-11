@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "baseline_repo": "AmirrezaFarnamTaheri/Collegeum",
+  "snapshot": "2026-10-11T12:41:36Z",
+  "verified_at": "2026-10-11",
+  "policy": "This is an evidence ledger, not a replacement for production state. Only source-verified facts may be corrected automatically; uncertain items remain for inspection.",
+  "issues": [
+    {
+      "id": 77,
+      "severity": "high",
+      "field": "kind",
+      "observed": "phd",
+      "expected": "research (permanent PhD-qualified staff)",
+      "evidence": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617/",
+      "basis": "Permanent appointment as Senior Economist or Senior Financial Sector Specialist, not doctoral enrollment",
+      "disposition": "generic_classifier_fixed",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 77,
+      "severity": "high",
+      "field": "salary_raw; salary_min; salary_max; salary_currency; salary_period",
+      "observed": "null",
+      "expected": "CAD 114952.50-156778.00 per year (2026 scales)",
+      "evidence": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617/",
+      "basis": "Employer explicitly publishes a CAD annual base-salary range",
+      "disposition": "extract_from_source_pending",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 173,
+      "severity": "high",
+      "field": "institution",
+      "observed": "CAS in Medication Safety University of Bern",
+      "expected": "University of Bern, Institute for Financial Management",
+      "evidence": "https://jobs.unibe.ch/offene-stellen/doktorand-in-und-assistent-in/e819ecc1-afc0-4b98-9d48-fec4dbaa8090",
+      "basis": "University's own vacancy names institute, finance PhD work and Prof Philip Valta; LinkedIn organization label is unrelated",
+      "disposition": "source_identity_recheck_pending",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 46,
+      "severity": "high",
+      "field": "institution",
+      "observed": "The University of Chicago Booth School of Business",
+      "expected": "Behavior Change for Good Initiative, University of Pennsylvania (Wharton)",
+      "evidence": "https://bcfg.wharton.upenn.edu/opportunities/",
+      "basis": "BCFG directly advertises the research and communications coordinator role, supervised by Katherine Milkman and Angela Duckworth",
+      "disposition": "source_identity_recheck_pending",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 139,
+      "severity": "high",
+      "field": "min_degree",
+      "observed": "phd",
+      "expected": "masters (completed master's degree to enroll in PhD)",
+      "evidence": "https://jobs.unisg.ch/offene-stellen/research-and-teaching-associate-in-strategic-management-phd-student-m-f-d/af629a21-df7d-4783-9ddd-54b48564e108",
+      "basis": "Official vacancy eligibility expressly requires completed Master's degree; supervisor biography includes own PhD",
+      "disposition": "degree_evidence_recheck_pending",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 133,
+      "severity": "high",
+      "field": "salary_min; salary_max",
+      "observed": "GBP 6-31236/year",
+      "expected": "Two conditional ranges: Grade 6 GBP 31236-36636 or Grade 7 GBP 37694-43482 per annum",
+      "evidence": "https://www.jobs.ac.uk/job/DSY257/research-assistant-postdoctoral-research-associate-in-energy-transition-and-finance",
+      "basis": "Official pay table offers multiple job grades, not a single continuous range",
+      "disposition": "unsafe_amount_projection_fixed",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 131,
+      "severity": "high",
+      "field": "salary_currency",
+      "observed": "USD",
+      "expected": "AUD",
+      "evidence": "https://www.timeshighereducation.com/unijobs/listing/415881/postdoctoral-research-fellow-tax-and-transfer-policy-institute-",
+      "basis": "Role at ANU, Australia with $91,546-$141,317 plus 17% superannuation; location-context currency requires confirmation",
+      "disposition": "country_aware_projection_fixed",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 156,
+      "severity": "high",
+      "field": "salary_min; salary_max",
+      "observed": "13 (unlabeled as grade)",
+      "expected": "unknown amount; TV-L E13 pay grade only",
+      "evidence": "https://www.academics.de/jobs/post-doc-wissenschaftliche-r-mitarbeiter-in-m-w-d-im-promotionskolleg-arbeit-qualitaet-und-machtressourcen-hans-boeckler-stiftung-bamberg-1111214",
+      "basis": "TV-L E13 indicates German public pay classification, not 13 currency units",
+      "disposition": "numeric_projection_suppressed",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 118,
+      "severity": "high",
+      "field": "salary_min; salary_max",
+      "observed": "13",
+      "expected": "unknown monetary amount; salary scale TV-L 13",
+      "evidence": "https://www.uni-hannover.de/en/jobs/8794/",
+      "basis": "Grade code must not be treated as a cash amount",
+      "disposition": "numeric_projection_suppressed",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 148,
+      "severity": "high",
+      "field": "salary_min; salary_max",
+      "observed": "2026",
+      "expected": "unknown monetary amount; 2026 refers to rate year",
+      "evidence": "https://www.europeanjobmarketofeconomists.org/job-listing/postdoctoral-fellow/%5Bnid%5D",
+      "basis": "Raw salary text is an uplift note '2026 rates, uplifted from April 2027', no amount",
+      "disposition": "numeric_projection_suppressed",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 73,
+      "severity": "medium",
+      "field": "salary_period",
+      "observed": null,
+      "expected": "month",
+      "evidence": "https://www.sciencespo.fr/liepp/fr/actualites/appel-a-candidatures-contrat-post-doctoral-de-24-mois/",
+      "basis": "French phrase brut/mois denotes gross monthly compensation",
+      "disposition": "locale_period_parser_fixed",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 55,
+      "severity": "high",
+      "field": "summary; apply_url",
+      "observed": "Google account sign-in UI instead of job summary; authentication session URL",
+      "expected": "original vacancy evidence; direct verified Google Forms URL",
+      "evidence": "https://www.predoc.org/opportunities",
+      "basis": "Stored summary begins 'Sign in to continue to Google Forms'; not vacancy duties",
+      "disposition": "invalid_publication_quarantined",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 25,
+      "severity": "high",
+      "field": "apply_url",
+      "observed": "https://job-boards.greenhouse.io/bfiprep?error=true",
+      "expected": "a verified vacancy-specific, non-error ATS endpoint",
+      "evidence": "https://job-boards.greenhouse.io/bfiprep?error=true",
+      "basis": "Endpoint carries explicit error=true marker, cannot be treated as a verified application URL",
+      "disposition": "invalid_publication_quarantined",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 119,
+      "severity": "medium",
+      "field": "apply_url",
+      "observed": "http://www.econjobmarket.org/",
+      "expected": "verified specific job or application detail endpoint",
+      "evidence": "https://www.europeanjobmarketofeconomists.org/job-listing/post-doctoral-fellowship-econometrics/%5Bnid%5D",
+      "basis": "General EJM homepage is not a vacancy-specific application destination",
+      "disposition": "manual_url_resolution_pending",
+      "needs_live_refresh": true
+    },
+    {
+      "id": 28,
+      "severity": "high",
+      "field": "disciplines; position eligibility",
+      "observed": "Labor Economics; Behavioral/Experimental Economics / predoc",
+      "expected": "recheck neuroscience lab description and role eligibility; do not assume economics",
+      "evidence": "https://uchicago.wd5.myworkdayjobs.com/External/job/Chicago-IL/Research-Professional_JR35174-1",
+      "basis": "Stored full source description identifies University of Chicago BSD NRB Freedman Lab nervous-system research, not the inferred economics areas",
+      "disposition": "university_scope_guard_fixed; existing_record_recheck_pending",
+      "needs_live_refresh": true,
+      "certainty": "high-confidence local evidence, reverify exact live job ID"
+    },
+    {
+      "id": null,
+      "severity": "high",
+      "field": "seen.decision/content_hash",
+      "observed": "20 old rejected reasons postdoc/phd_studentship despite current eligibility",
+      "expected": "re-evaluate when rejection policy changes, respecting unchanged accepted candidates",
+      "evidence": "https://github.com/AmirrezaFarnamTaheri/Collegeum/blob/main/data/seen.ndjson",
+      "basis": "13 prior phd_studentship and 7 postdoc model rejections in committed verdict journal",
+      "disposition": "policy_revision_cache_fixed",
+      "needs_live_refresh": true
+    },
+    {
+      "id": null,
+      "severity": "high",
+      "field": "health.sources; source_summary",
+      "observed": "22 hard failed + 3 partial + 9 unexpected empty not diagnosed; categories overlap",
+      "expected": "44 successful + 3 expected empty +31 failed +3 partial (81 exclusive)",
+      "evidence": "https://github.com/AmirrezaFarnamTaheri/Collegeum/blob/main/docs/data/health.json",
+      "basis": "Recomputed by category from latest run per-source stats; excludes nine unflagged unexpected empty sources",
+      "disposition": "health_accounting_fixed",
+      "needs_live_refresh": true
+    }
+  ]
+}
