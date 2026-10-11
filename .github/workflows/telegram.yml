@@ -25,26 +25,36 @@ concurrency:
 
 jobs:
   sync:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       # ref: the branch, not the commit that triggered the run. A run that
       # waited in the queue behind the other workflow must start from the
       # newest data, not from the state before that run.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-          cache: pip
 
-      - name: Install
-        run: pip install -e .
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          activate-environment: true
+          enable-cache: true
+
+      - name: Install locked bot dependencies
+        run: |
+          uv lock --check
+          uv sync --locked
 
       - name: Answer messages and save button taps
+        id: sync
+        # Partial cursor/feedback updates must survive if the API fails later.
+        continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_PUBLIC_CHANNEL_ID: ${{ secrets.TELEGRAM_PUBLIC_CHANNEL_ID }}
@@ -60,7 +70,8 @@ jobs:
           fi
           PYTHONPATH=src python3 -m predoc_pipeline.cli telegram-sync
 
-      - name: Save marks
+      - name: Save marks and cursor
+        if: ${{ always() && steps.sync.outcome != 'skipped' }}
         run: |
           git config user.name "predoc-pipeline-bot"
           git config user.email "actions@users.noreply.github.com"
@@ -80,3 +91,13 @@ jobs:
           done
           echo "could not push the marks"
           exit 1
+
+      - name: Fail job if Telegram processing failed
+        if: always()
+        env:
+          SYNC_OUTCOME: ${{ steps.sync.outcome }}
+        run: |
+          if [ "$SYNC_OUTCOME" != "success" ]; then
+            echo "Telegram sync failed; inspect the processing step and saved state."
+            exit 1
+          fi
