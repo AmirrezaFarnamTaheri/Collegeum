@@ -152,6 +152,12 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
             if not all(isinstance(k, str) and isinstance(v, str)
                        for k, v in member[field].items()):
                 raise _corrupt(path, f"subscriber {chat_id}: invalid {field}")
+        if not isinstance(member.get("paused", False), bool):
+            raise _corrupt(path, f"subscriber {chat_id}: paused must be a boolean")
+        if member.get("language", "en") not in ("en", "fa"):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid language")
+        member.setdefault("paused", False)
+        member.setdefault("language", "en")
         for delivery in member["deliveries"].values():
             if not isinstance(delivery, dict) or delivery.get("state") not in (
                 "sending", "sent", "uncertain", "rejected",
@@ -218,18 +224,23 @@ class FeedbackStore:
     def subscriber(self, chat_id: int | str) -> dict[str, Any] | None:
         return self.subscribers.get(str(chat_id))
 
+    def _member(self, chat_id: int) -> dict[str, Any]:
+        if type(chat_id) is not int or chat_id <= 0:
+            raise ValueError("invalid private chat ID")
+        return self.subscribers.setdefault(str(chat_id), {
+            "topics": {}, "scopes": {}, "deliveries": {},
+            "paused": False, "language": "en",
+        })
+
     def toggle_subscription(self, chat_id: int, kind: str, option: str) -> bool:
         """Explicit private-chat opt-in. Return whether option is enabled."""
         from .subscriptions import CAREER_SCOPES, TOPICS
 
-        if chat_id <= 0 or kind not in ("topics", "scopes"):
+        if kind not in ("topics", "scopes"):
             raise ValueError("invalid subscription operation")
         if option not in (TOPICS if kind == "topics" else CAREER_SCOPES):
             raise ValueError("unknown subscription option")
-        member = self.subscribers.setdefault(
-            str(chat_id), {"topics": {}, "scopes": {}, "deliveries": {}},
-        )
-        selections: dict[str, str] = member[kind]
+        selections: dict[str, str] = self._member(chat_id)[kind]
         if option in selections:
             del selections[option]
             enabled = False
@@ -238,6 +249,46 @@ class FeedbackStore:
             enabled = True
         self._dirty = True
         return enabled
+
+    def set_topics_group(self, chat_id: int, group: str, enabled: bool) -> bool:
+        """Apply an explicitly tapped group action, preserving prior opt-in dates."""
+        from .ui import ACADEMIC, CAREERS
+
+        if type(enabled) is not bool or group not in ("academic", "careers"):
+            raise ValueError("invalid bulk subscription action")
+        topics = self._member(chat_id)["topics"]
+        selected = ACADEMIC if group == "academic" else CAREERS
+        changed = False
+        for key in selected:
+            if enabled and key not in topics:
+                topics[key] = _now()
+                changed = True
+            elif not enabled and key in topics:
+                del topics[key]
+                changed = True
+        if changed:
+            self._dirty = True
+        return changed
+
+    def set_paused(self, chat_id: int, paused: bool) -> bool:
+        if type(paused) is not bool:
+            raise ValueError("invalid pause state")
+        member = self._member(chat_id)
+        if member["paused"] == paused:
+            return False
+        member["paused"] = paused
+        self._dirty = True
+        return True
+
+    def set_language(self, chat_id: int, language: str) -> bool:
+        if language not in ("en", "fa"):
+            raise ValueError("unsupported language")
+        member = self._member(chat_id)
+        if member["language"] == language:
+            return False
+        member["language"] = language
+        self._dirty = True
+        return True
 
     def prune_deliveries(self, *, days: int = 45) -> int:
         """Discard old confirmed receipts, never unresolved/uncertain sends.
@@ -344,8 +395,8 @@ class FeedbackStore:
     def wants_career(self, scope: str) -> bool:
         from .subscriptions import CAREER_TOPICS
         return any(
-            scope in member["scopes"] and
-            any(topic in member["topics"] for topic in CAREER_TOPICS)
+            scope in member["scopes"] and not member.get("paused", False)
+            and any(topic in member["topics"] for topic in CAREER_TOPICS)
             for member in self.subscribers.values()
         )
 
