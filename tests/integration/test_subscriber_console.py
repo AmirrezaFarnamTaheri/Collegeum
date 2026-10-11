@@ -614,7 +614,7 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
 
     home, markup = menu(None)
     assert "Academic roles: 0/3" in home
-    assert len(markup["inline_keyboard"]) == 5
+    assert len(markup["inline_keyboard"]) == 6  # sources and language get separate rows
     assert "sub:p:academic" in str(markup)
     assert "sub:p:careers" in str(markup)
     assert "sub:p:markets" in str(markup)
