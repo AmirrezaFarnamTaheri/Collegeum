@@ -26,7 +26,6 @@ from predoc_pipeline.ingest.http import PoliteClient
 from predoc_pipeline.settings import Settings
 
 
-
 def _recognizes_jobicy(jobs: list[Any]) -> bool:
     """A filtered-out job may be healthy; a renamed schema is not."""
     from urllib.parse import urlsplit
@@ -69,11 +68,13 @@ def _recognizes_html(source: str, text: str) -> bool:
                 r"/companies/[^/]+/jobs/[^/]+(?:/[^/]*)?/?", address.path,
             ):
                 return True
-        elif address.hostname in ("irantalent.com", "www.irantalent.com"):
-            if re.fullmatch(
+        elif (
+            address.hostname in ("irantalent.com", "www.irantalent.com")
+            and re.fullmatch(
                 r"/(?:en|fa)/job/[^/]+/[1-9]\d{3,10}/?", address.path, re.I,
-            ):
-                return True
+            )
+        ):
+            return True
     # A true empty-search response is the only safe no-card success.
     empty_text = soup.get_text(" ", strip=True)
     return re.search(
