@@ -175,6 +175,15 @@ jobs:
         if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' && vars.PRIVATE_STATE_REPO != '' }}
         run: python tools/private_state.py checkpoint
 
+      - name: Preserve quarantined career journals
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: career-quarantine-${{ github.run_id }}
+          path: data/career_jobs.ndjson.corrupt-*
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Upload dead-letter queue
         if: always()
         uses: actions/upload-artifact@v7
