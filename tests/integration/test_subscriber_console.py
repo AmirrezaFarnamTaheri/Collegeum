@@ -605,3 +605,177 @@ def test_iran_only_remote_is_not_mislabelled_worldwide():
          "url": "https://jobicy.com/jobs/worldwide"},
     ]})
     assert [job["jobicy_id"] for job in jobs] == ["32"]
+
+
+
+def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
+    from predoc_pipeline.publish.ui import menu
+
+    home, markup = menu(None)
+    assert "Academic roles: 0/3" in home
+    assert len(markup["inline_keyboard"]) == 5
+    assert "sub:p:academic" in str(markup)
+    assert "sub:p:careers" in str(markup)
+    assert "sub:p:markets" in str(markup)
+    for page in ("academic", "careers", "markets", "help", "stop"):
+        text, keyboard = menu(None, page)
+        assert text
+        assert len(text) < 4096
+        assert any(
+            button.get("callback_data") == "sub:p:home"
+            for row in keyboard["inline_keyboard"] for button in row
+        ) or page == "stop"
+        for row in keyboard["inline_keyboard"]:
+            for button in row:
+                if "callback_data" in button:
+                    assert len(button["callback_data"].encode("utf-8")) <= 64
+
+
+def test_subscriber_language_pause_and_bulk_role_shortcuts(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    initial = store.subscriber(101)["topics"]["predoc"]
+    assert store.set_topics_group(101, "academic", True)
+    assert store.subscriber(101)["topics"]["predoc"] == initial
+    assert len(store.subscriber(101)["topics"]) == 3
+    assert store.set_paused(101, True)
+    assert store.set_language(101, "fa")
+    store.save()
+
+    api = API([message(1, 101, "/start")])
+    run(cfg, api)
+    assert "دانشگاهی" in api.sent(101)[0]["text"]
+    assert "متوقف" in api.sent(101)[0]["text"]
+
+    resumed = API([tap(2, 101, "sub:a:resume")])
+    run(cfg, resumed)
+    saved = FeedbackStore.from_settings(cfg)
+    assert not saved.subscriber(101)["paused"]
+    assert saved.subscriber(101)["language"] == "fa"
+
+    bulk_off = API([tap(3, 101, "sub:b:academic:off")])
+    run(cfg, bulk_off)
+    assert FeedbackStore.from_settings(cfg).subscriber(101)["topics"] == {}
+
+
+def test_paged_latest_uses_one_editable_message_and_no_auto_backfill(tmp_path):
+    cfg = settings(tmp_path)
+    now = datetime.now(UTC)
+    rows = [{
+        "key": f"career:paginated{i}", "title": "Data Analyst",
+        "employer": f"Company {i}", "location": "Worldwide",
+        "category": "data_analyst", "scope": "remote",
+        "source": "Jobicy", "url": f"https://jobicy.com/jobs/page-{i}",
+    } for i in range(7)]
+    assert save_career(cfg.career_state_path, [], rows) == 7
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    store.subscriber(101)["topics"]["data_analyst"] = (
+        now + timedelta(minutes=1)
+    ).isoformat()
+    store.save()
+
+    listing = API([message(1, 101, "/latest")])
+    run(cfg, listing)
+    sent = listing.sent(101)
+    assert len(sent) == 1
+    assert "1 / 2" in sent[0]["text"]
+    assert sent[0]["text"].count("jobicy.com/jobs/") == 4
+
+    nxt = API([tap(2, 101, "sub:p:latest:1")])
+    run(cfg, nxt)
+    edits = [body for method, body in nxt.calls if method == "editMessageText"]
+    assert len(edits) == 1
+    assert "2 / 2" in edits[0]["text"]
+    assert edits[0]["text"].count("jobicy.com/jobs/") == 3
+    assert FeedbackStore.from_settings(cfg).subscriber(101)["deliveries"] == {}
+
+
+def test_irantalent_public_cards_require_explicit_iran_location():
+    from predoc_pipeline.ingest.career import parse_irantalent_jobs
+
+    html = """
+    <a href="/en/job/data-analyst/184771">
+      <h3>Data Analyst</h3><div class="company">Pars Analytics</div>
+      <span class="location">Tehran</span>
+    </a>
+    <a href="/en/job/data-scientist/184772">
+      <h3>Data Scientist</h3><span>Dubai</span>
+    </a>
+    <a href="https://unrelated.example/en/job/data-scientist/184773">
+      <h3>Data Scientist</h3><span>Tehran</span>
+    </a>
+    <a href="/en/job/data-analyst/184774">
+      <h3>Data Analyst</h3><span>Outside of Iran</span>
+    </a>
+    <a href="/en/job/data-analyst/184771">Data Analyst Tehran</a>
+    """
+    parsed = parse_irantalent_jobs(html)
+    assert len(parsed) == 1
+    assert parsed[0]["source"] == "IranTalent"
+    assert parsed[0]["scope"] == "iran"
+    assert parsed[0]["employer"] == "Pars Analytics"
+    assert parsed[0]["location"] == "Tehran"
+    assert parsed[0]["url"].endswith("/184771")
+
+
+def test_iran_job_feed_polls_jobinja_and_irantalent_with_health_counts(tmp_path):
+    from types import SimpleNamespace
+
+    from predoc_pipeline.ingest.career import IRANTALENT_URL
+
+    class Client:
+        def __init__(self):
+            self.urls = []
+
+        def get(self, url):
+            self.urls.append(url)
+            if url == IRANTALENT_URL:
+                html = (
+                    '<a href="/en/job/data-scientist/184779">'
+                    '<h3>Data Scientist</h3><span>Isfahan</span></a>'
+                )
+            else:
+                html = (
+                    '<article><a href="/companies/example/jobs/234-data">'
+                    'تحلیلگر داده</a></article>'
+                )
+            return SimpleNamespace(ok=True, text=html, status=200, error=None)
+
+    client = Client()
+    journal = tmp_path / "career.ndjson"
+    health = tmp_path / "health.json"
+    added, errors = poll_career(
+        journal, client=client, needs_remote=False, needs_iran=True,
+        slot=0, health_path=health,
+    )
+    assert errors == []
+    assert added == 2
+    assert len(client.urls) == 2
+    providers = {j["source"] for j in load_career(journal)}
+    assert providers == {"IranTalent", "Jobinja"}
+    status = json.loads(health.read_text("utf-8"))["sources"]
+    assert status["irantalent"]["accepted"] == 1
+    assert status["jobinja"]["accepted"] == 1
+
+
+def test_paused_user_is_excluded_from_private_delivery_plan(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    old = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_analyst"] = old
+    store.subscriber(101)["scopes"]["remote"] = old
+    store.set_paused(101, True)
+    store.save()
+    save_career(cfg.career_state_path, [], [{
+        "key": "career:pause", "category": "data_analyst", "scope": "remote",
+        "title": "Data Analyst", "employer": "Example",
+        "location": "Anywhere", "url": "https://jobicy.com/jobs/pause",
+        "source": "Jobicy",
+    }])
+    assert plan_batch(cfg, path=tmp_path / "batch.json") == 0
+    assert FeedbackStore.from_settings(cfg).subscriber(101)["deliveries"] == {}
