@@ -12,7 +12,6 @@ from predoc_pipeline.core.output_quality import (
     application_url_issue,
     authentication_page_text,
 )
-
 from predoc_pipeline.core.textproc import telegram_visible_length
 from predoc_pipeline.core.urls import url_hash
 from predoc_pipeline.models import Discipline, Location, PredocListing, VisaStatus
