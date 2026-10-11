@@ -91,3 +91,38 @@ if __name__ == "__main__":
         tool = (ROOT / "tools/build_single_file.py").read_text(encoding="utf-8")
         for pattern in ('"docs/*.html"', '"docs/*.svg"', '"docs/*.xsl"', '"docs/*.png"'):
             self.assertIn(pattern, tool)
+
+
+    def test_rss_title_and_category_divergence_is_detected(self):
+        audit = _load()
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in audit.REQUIRED:
+                dest = root / name
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes((ROOT / name).read_bytes())
+            file = root / "docs/feed.xml"
+            text = file.read_text(encoding="utf-8")
+            self.assertIn("<item>\n<title>", text)
+            text = text.replace("<item>\n<title>", "<item>\n<title>Incorrect: ", 1)
+            text = text.replace("</category>", " INSPECT</category>", 1)
+            file.write_text(text, encoding="utf-8")
+            _, findings = audit.audit(root)
+            codes = {item["code"] for item in findings}
+            self.assertIn("rss-title-divergence", codes)
+            self.assertIn("rss-category-divergence", codes)
+
+    def test_invalid_javascript_json_constants_are_rejected(self):
+        audit = _load()
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in audit.REQUIRED:
+                dest = root / name
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes((ROOT / name).read_bytes())
+            dest = root / "docs/data/listings.json"
+            data = json.loads(dest.read_text(encoding="utf-8"))
+            data["count"] = float("nan")
+            dest.write_text(json.dumps(data), encoding="utf-8")
+            _, findings = audit.audit(root)
+            self.assertIn("unreadable-file", {item["code"] for item in findings})

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 from collections import Counter
@@ -56,6 +57,23 @@ def _web_url(value: Any) -> bool:
         return False
 
 
+def _strict_json(text: str) -> Any:
+    """Reject JSON values that JavaScript cannot parse or consumers interpret differently."""
+
+    def invalid_constant(value: str) -> None:
+        raise ValueError(f"non-finite JSON value {value}")
+
+    def unique_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        output: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in output:
+                raise ValueError(f"duplicate JSON field {key}")
+            output[key] = value
+        return output
+
+    return json.loads(text, parse_constant=invalid_constant, object_pairs_hook=unique_keys)
+
+
 def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
     """Return a summary and machine-readable defects, without changing files."""
     findings: list[dict[str, str]] = []
@@ -77,13 +95,13 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
                 for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
                     if not line.strip():
                         continue
-                    value = json.loads(line)
+                    value = _strict_json(line)
                     if not isinstance(value, dict):
                         raise ValueError(f"line {lineno} must be a JSON object")
                     rows.append(value)
                 loaded[name] = rows
             elif name.endswith(".json"):
-                loaded[name] = json.loads(path.read_text(encoding="utf-8"))
+                loaded[name] = _strict_json(path.read_text(encoding="utf-8"))
             else:
                 loaded[name] = ET.parse(path).getroot()
         except (OSError, UnicodeError, ValueError, ET.ParseError) as exc:
@@ -107,6 +125,8 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
     summary.update(state=len(state), seen=len(seen), dashboard=len(rows))
 
     state_by_id: dict[int, dict[str, Any]] = {}
+    state_by_hash: dict[str, dict[str, Any]] = {}
+    state_by_apply: dict[str, dict[str, Any]] = {}
     for item in state:
         uid = item.get("id")
         if type(uid) is not int or uid <= 0:
@@ -115,6 +135,13 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
         if uid in state_by_id:
             finding("error", "duplicate-state-id", f"ID {uid}")
         state_by_id[uid] = item
+        link_hash = item.get("url_hash")
+        if link_hash in state_by_hash:
+            finding("error", "duplicate-listing-identity", f"ID {uid}")
+        state_by_hash[link_hash] = item
+        if item.get("apply_url") in state_by_apply:
+            finding("error", "duplicate-listing-application", f"ID {uid}")
+        state_by_apply[item.get("apply_url")] = item
         if not HEX64.fullmatch(str(item.get("url_hash") or "")):
             finding("error", "bad-identity-hash", f"State ID {uid}")
         for field in ("apply_url", "source_url"):
@@ -136,6 +163,7 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
             finding("error", "pending-with-delivery", f"State ID {uid}")
 
     seen_hashes = set()
+    accepted_without_reference = 0
     for item in seen:
         key = item.get("url_hash")
         if not HEX64.fullmatch(str(key or "")):
@@ -143,6 +171,16 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
         if key in seen_hashes:
             finding("error", "duplicate-seen", "Repeated seen-item identity")
         seen_hashes.add(key)
+        reference = item.get("listing_url_hash")
+        if reference is not None and reference not in state_by_hash:
+            finding("error", "orphan-seen-listing-reference",
+                    "Seen record points to missing listing identity")
+        if item.get("decision") == "accepted" and not reference:
+            accepted_without_reference += 1
+    if accepted_without_reference:
+        finding("warning", "accepted-without-listing-reference",
+                f"{accepted_without_reference} historical accepted decisions lack back-references")
+    summary["unlinked_accepted"] = accepted_without_reference
 
     if public.get("count") != len(rows):
         finding("error", "count-mismatch", "Dashboard count disagrees with array length")
@@ -153,6 +191,7 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
     public_ids: set[int] = set()
     urls: set[str] = set()
     links: set[str] = set()
+    public_by_source: dict[str, dict[str, Any]] = {}
     suspicious_salary: list[int] = []
     for item in rows:
         if not isinstance(item, dict):
@@ -164,6 +203,11 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
             continue
         public_ids.add(uid)
         old = state_by_id.get(uid)
+        source_url = item.get("source_url")
+        if isinstance(source_url, str):
+            if source_url in public_by_source:
+                finding("error", "duplicate-public-source-url", f"ID {uid}")
+            public_by_source[source_url] = item
         if old is None:
             finding("error", "orphan-public-record", f"ID {uid}")
             continue
@@ -213,6 +257,17 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
         if amount is not None and (not isinstance(amount, (int, float))
                                    or isinstance(amount, bool) or amount < 0):
             finding("error", "invalid-salary-amount", f"ID {uid}")
+        maximum = item.get("salary_max")
+        if (isinstance(amount, (int, float)) and
+                (not math.isfinite(amount) or amount < 0)):
+            finding("error", "nonfinite-public-salary", f"ID {uid}")
+        if (isinstance(amount, (int, float)) and
+                isinstance(maximum, (int, float)) and maximum < amount):
+            finding("error", "inverted-salary-range", f"ID {uid}")
+        score = item.get("confidence")
+        if (type(score) not in (float, int) or
+                not math.isfinite(score) or not (0 <= score <= 1)):
+            finding("error", "invalid-confidence", f"ID {uid}")
         if isinstance(amount, (int, float)) and (
             not item.get("salary_currency") or
             (re.search(r"\b(?:TV-L|grade)\b", raw_salary, re.I) and amount < 1000)
@@ -247,6 +302,41 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
             if guid in guid_seen:
                 finding("error", "duplicate-rss-guid", f"RSS entry {i}")
             guid_seen.add(guid)
+            if i < len(rows) and isinstance(rows[i], dict) and (
+                rows[i].get("source_url") != guid
+            ):
+                finding("error", "rss-order-divergence", f"RSS entry {i}")
+            match = public_by_source.get(guid)
+            if match is None:
+                finding("error", "rss-source-absent-public", f"RSS entry {i}")
+            else:
+                expected_title = f"{match['title']} \u2014 {match['institution']}"
+                if title != expected_title:
+                    finding("error", "rss-title-divergence", f"RSS entry {i}")
+                if link != match.get("apply_url"):
+                    finding("error", "rss-application-divergence", f"RSS entry {i}")
+                expected_description = (
+                    f"{match['institution']} \u2014 "
+                    f"{match.get('city') or ''} {match.get('country') or ''}"
+                ).strip() + (
+                    f". Deadline: {match.get('deadline') or 'rolling'}. "
+                    + (match.get("summary") or "")
+                )
+                if record.findtext("description") != expected_description:
+                    finding("error", "rss-description-divergence", f"RSS entry {i}")
+                categories = [c.text or "" for c in record.findall("category")]
+                if categories != match.get("disciplines"):
+                    finding("error", "rss-category-divergence", f"RSS entry {i}")
+                original = _date(match.get("first_seen_at"))
+                if original is not None:
+                    try:
+                        in_feed = parsedate_to_datetime(published)
+                        if in_feed.tzinfo is None or (
+                            abs((in_feed.astimezone(UTC) - original).total_seconds()) > 1
+                        ):
+                            finding("error", "rss-publish-date-divergence", f"RSS entry {i}")
+                    except (TypeError, ValueError, IndexError):
+                        pass
             if link not in links:
                 finding("error", "rss-link-absent-public", f"RSS entry {i}")
             if not _web_url(link):
@@ -262,10 +352,28 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
             finding("error", "invalid-feed-site-url", "RSS channel homepage is not a URL")
         if atom is None or not _web_url(self_url):
             finding("error", "invalid-feed-self-url", "RSS self-link absent or invalid")
+        built = channel.findtext("lastBuildDate")
+        if stamp and built:
+            try:
+                rss_generated = parsedate_to_datetime(built)
+                if rss_generated.tzinfo is None or abs(
+                    (rss_generated.astimezone(UTC) - stamp).total_seconds()
+                ) > 300:
+                    finding("error", "rss-snapshot-clock-skew",
+                            "RSS lastBuildDate and dashboard generated_at differ")
+            except (TypeError, ValueError, IndexError):
+                finding("error", "invalid-rss-build-date", "RSS lastBuildDate invalid")
         if OLD_SITE in site or OLD_SITE in self_url:
             finding("warning", "obsolete-feed-origin", "RSS still advertises legacy host path")
         if EXPECTED_SITE not in site and OLD_SITE not in site:
             finding("warning", "unverified-feed-origin", "RSS is on a non-default site URL")
+
+    health_stamp = _date(health.get("generated_at"))
+    if not health_stamp:
+        finding("error", "invalid-health-timestamp", "Health generated_at missing or invalid")
+    elif stamp and abs((health_stamp - stamp).total_seconds()) > 300:
+        finding("error", "cross-snapshot-clock-skew",
+                "Dashboard and health snapshots appear to come from different runs")
 
     source = health.get("source_summary")
     if isinstance(source, dict):
