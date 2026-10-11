@@ -463,3 +463,82 @@ def test_cli_private_backlog_does_not_expose_identifiers_by_default(tmp_path, mo
     assert detailed.exit_code == 0
     assert "chat=101" in detailed.output
     assert "academic:secret-listing-key" in detailed.output
+
+
+def test_jobicy_batch_status_closes_only_confirmed_vacancies(tmp_path):
+    from types import SimpleNamespace
+
+    responses = [
+        {
+            "jobs": [
+                {"id": 123, "jobTitle": "Data Analyst", "jobGeo": "Anywhere",
+                 "url": "https://jobicy.com/jobs/123"},
+                {"id": 124, "jobTitle": "Data Scientist", "jobGeo": "Anywhere",
+                 "url": "https://jobicy.com/jobs/124"},
+            ], "nextCursor": None, "success": True,
+        },
+        {
+            "jobs": [
+                {"id": 123, "status": "closed"},
+                {"id": 124, "status": "unknown"},
+            ], "success": True,
+        },
+    ]
+
+    class Client:
+        def __init__(self):
+            self.calls = []
+
+        def get(self, url):
+            self.calls.append(url)
+            return SimpleNamespace(
+                ok=True, text=json.dumps(responses[len(self.calls) - 1]),
+            )
+
+    client = Client()
+    journal = tmp_path / "career.ndjson"
+    added, errors = poll_career(
+        journal, client=client, needs_remote=True, needs_iran=False,
+    )
+    assert added == 2 and errors == []
+    assert len(client.calls) == 2
+    assert "status?ids=123%2C124" in client.calls[1]
+    jobs = {job["jobicy_id"]: job for job in load_career(journal)}
+    assert jobs["123"]["availability"] == "closed"
+    assert jobs["124"]["availability"] == "unknown"
+    now = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    member = {
+        "topics": {"data_analyst": now, "data_scientist": now},
+        "scopes": {"remote": now}, "deliveries": {},
+    }
+    assert [job["jobicy_id"] for job in matching(
+        member, [], list(jobs.values()), preview=True,
+    )] == ["124"]
+
+
+def test_unknown_provider_result_never_reopens_confirmed_closed_vacancy(tmp_path):
+    from types import SimpleNamespace
+
+    from predoc_pipeline.ingest.career import _verify_remote_status
+
+    closed = {
+        "key": "career:closed", "title": "Data Analyst",
+        "category": "data_analyst", "scope": "remote",
+        "url": "https://jobicy.com/jobs/987", "employer": "Example",
+        "location": "Anywhere", "source": "Jobicy",
+        "jobicy_id": "987", "availability": "closed",
+        "first_seen_at": datetime.now(UTC).isoformat(),
+    }
+
+    class Client:
+        def get(self, _url):
+            return SimpleNamespace(ok=True, text=json.dumps({
+                "success": True, "jobs": [{"id": 987, "status": "unknown"}],
+            }))
+
+    stats = {"fetched": 0}
+    errors = []
+    _verify_remote_status(Client(), [closed], [], errors, stats)
+    assert errors == []
+    assert stats["fetched"] == 1
+    assert closed["availability"] == "closed"
