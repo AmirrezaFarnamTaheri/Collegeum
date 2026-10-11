@@ -574,3 +574,19 @@ def test_private_manual_reconciliation_requires_message_evidence(tmp_path):
         101, "academic:rejected", confirmed_absent=True,
     )
     assert "academic:rejected" not in store.subscriber(101)["deliveries"]
+
+
+def test_geo_exclusions_override_worldwide_eligibility():
+    jobs = parse_remote_jobs({"jobs": [
+        {"id": 21, "jobTitle": "Data Analyst",
+         "jobGeo": "Anywhere; Iran excluded",
+         "url": "https://jobicy.com/jobs/excluded"},
+        {"id": 22, "jobTitle": "Data Scientist",
+         "jobGeo": "Global, no Iran",
+         "url": "https://jobicy.com/jobs/no-iran"},
+        {"id": 23, "jobTitle": "Data Analyst",
+         "jobGeo": "Worldwide",
+         "url": "https://jobicy.com/jobs/allowed"},
+    ]})
+    assert len(jobs) == 1
+    assert jobs[0]["jobicy_id"] == "23"

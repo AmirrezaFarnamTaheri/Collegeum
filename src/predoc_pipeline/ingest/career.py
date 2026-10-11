@@ -92,8 +92,13 @@ def _remote_geo_allowed(geo: str) -> bool:
     Jobicy's jobGeo describes where a person is allowed to work. Explicit
     Iran exclusions override apparently worldwide phrases.
     """
-    if re.search(r"\b(?:excluding|except|excludes|not|outside)\b[^.;]{0,55}\biran\b",
-                 geo, re.I):
+    if (re.search(
+        r"\b(?:excluding|except|excludes|not|outside|no)\b[^.;]{0,55}\biran\b",
+        geo, re.I,
+    ) or re.search(
+        r"\biran\b[^.;]{0,50}\b(?:excluded|ineligible|not eligible)\b",
+        geo, re.I,
+    )):
         return False
     return bool(re.search(r"\b(?:anywhere|worldwide|global|iran)\b", geo, re.I))
 
