@@ -590,3 +590,13 @@ def test_geo_exclusions_override_worldwide_eligibility():
     ]})
     assert len(jobs) == 1
     assert jobs[0]["jobicy_id"] == "23"
+
+
+def test_iran_only_remote_is_not_mislabelled_worldwide():
+    jobs = parse_remote_jobs({"jobs": [
+        {"id": 31, "jobTitle": "Data Analyst", "jobGeo": "Iran",
+         "url": "https://jobicy.com/jobs/iran-only"},
+        {"id": 32, "jobTitle": "Data Analyst", "jobGeo": "Anywhere",
+         "url": "https://jobicy.com/jobs/worldwide"},
+    ]})
+    assert [job["jobicy_id"] for job in jobs] == ["32"]

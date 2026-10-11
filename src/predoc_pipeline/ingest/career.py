@@ -100,11 +100,13 @@ def _remote_geo_allowed(geo: str) -> bool:
         geo, re.I,
     )):
         return False
-    return bool(re.search(r"\b(?:anywhere|worldwide|global|iran)\b", geo, re.I))
+    # An Iran-only remote vacancy belongs to the Iran market, not to
+    # the independently selectable worldwide-remote topic.
+    return bool(re.search(r"\b(?:anywhere|worldwide|global)\b", geo, re.I))
 
 
 def parse_remote_jobs(payload: dict[str, Any]) -> list[dict[str, str]]:
-    """Accept only jobs explicitly open to applicants worldwide/Iran.
+    """Accept only jobs explicitly open to worldwide applicants.
 
     A 'remote US' job is not automatically accessible to someone in Iran.
     """

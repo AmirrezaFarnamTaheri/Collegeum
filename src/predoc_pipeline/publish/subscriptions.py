@@ -71,7 +71,7 @@ def menu(member: dict[str, Any] | None) -> tuple[str, dict[str, Any]]:
         }])
     lines += [
         "", "Job markets are independent: Iran-based ≠ globally remote.",
-        "Remote alerts include only roles explicitly available worldwide/Iran.",
+        "Remote alerts include only roles explicitly available worldwide.",
         "Use /stop to unsubscribe and remove your active alert records.",
     ]
     return "\n".join(lines), {"inline_keyboard": buttons}

@@ -36,7 +36,7 @@ gate/model, public dashboard, channel broadcast or X:
 
 | Market | Source | Selection and limits |
 |---|---|---|
-| Remote | [Jobicy public API](https://github.com/Jobicy/remote-jobs-api) | Only jobs explicitly marked Anywhere/Worldwide/Global/Iran in `jobGeo`, excluding Iran-restricted posts; title matched to role; max two cursor pages plus one batch status check per four-hour cycle |
+| Remote | [Jobicy public API](https://github.com/Jobicy/remote-jobs-api) | Only jobs explicitly marked Anywhere/Worldwide/Global in `jobGeo`, excluding Iran-restricted posts; title matched to role; max two cursor pages plus one batch status check per four-hour cycle |
 | Iran-based | [Jobinja](https://jobinja.ir) | Conservative HTML job-link parser for Iranian employer listings; rotate one of four Persian queries per cycle; at most 30 cards. Does not call an unofficial paid API. |
 
 Role categories: data scientist, data analyst/BI, economics/management
@@ -91,6 +91,10 @@ predoc-pipeline subscriber-pending --show-ids
 ```
 
 The second form only applies after independently verifying no message arrived.
+For a local operator checkout, the encrypted `data/feedback.enc` must then be
+committed and pushed to the scheduled workflow's `main` branch before the
+next run; editing a local file alone does not update the hosted worker. Never
+commit the decrypted state, outbox batch, bot tokens, or private terminal output.
 When a permanent Bot API 400 rejects invalid message markup, the delivery is
 quarantined as `rejected` and shown in the admin queue rather than retried
 every half hour. HTTP 429 is deferred, without holding the runner through
