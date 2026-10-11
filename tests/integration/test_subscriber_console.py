@@ -17,8 +17,9 @@ from predoc_pipeline.ingest.career import (
 from predoc_pipeline.ingest.rotation import SCHEDULE_INTERVAL_HOURS, scheduled_sources
 from predoc_pipeline.publish.admin import admin_id
 from predoc_pipeline.publish.bot import telegram_sync
-from predoc_pipeline.publish.feedback import FeedbackStore, generate_key
-from predoc_pipeline.publish.subscriptions import dispatch, eligible, matching
+from predoc_pipeline.publish.feedback import FeedbackStore, generate_key, load_chat_state
+from predoc_pipeline.publish.private_delivery import plan_batch, send_batch
+from predoc_pipeline.publish.subscriptions import eligible, matching
 from predoc_pipeline.settings import Settings
 
 
@@ -124,7 +125,7 @@ def test_stop_erases_subscriber_and_prevents_later_alerts(tmp_path):
     assert FeedbackStore.from_settings(cfg).subscriber(101) is None
 
 
-def test_delivery_intents_prevent_replay_after_unknown_acceptance(tmp_path):
+def test_two_phase_delivery_requires_checkpoint_and_reconciles_uncertain(tmp_path):
     cfg = settings(tmp_path)
     store = FeedbackStore.from_settings(cfg)
     store.toggle_subscription(101, "topics", "data_analyst")
@@ -139,27 +140,78 @@ def test_delivery_intents_prevent_replay_after_unknown_acceptance(tmp_path):
         "title": "Data Analyst", "url": "https://jobicy.com/jobs/123",
         "employer": "Example", "location": "Anywhere", "source": "Jobicy",
     }
+    save_career(cfg.career_state_path, [], [job])
+    batch = tmp_path / "private-batch.json"
+    assert plan_batch(cfg, path=batch) == 1
+    assert FeedbackStore.from_settings(cfg).subscriber(101)[
+        "deliveries"]["career:123"]["state"] == "sending"
+
     api = API()
     api.error = "lost response"
     with httpx.Client(transport=httpx.MockTransport(api.handler)) as client:
-        from predoc_pipeline.publish.telegram import TelegramClient
-
-        tg = TelegramClient(bot_token="test", client=client)
-        result = dispatch(store, tg, [], [job], sleep=lambda _: None)
+        result = send_batch(cfg, path=batch, client=client, sleep=lambda _: None)
         assert result["uncertain"] == 1
         assert len(api.sent(101)) == 1
-        assert dispatch(store, tg, [], [job])["sent"] == 0
+        assert send_batch(cfg, path=batch, client=client)["sent"] == 0
+
     saved = FeedbackStore.from_settings(cfg)
     assert saved.subscriber(101)["deliveries"]["career:123"]["state"] == "uncertain"
+    assert plan_batch(cfg, path=batch) == 0
     saved.resolve_delivery(101, "career:123", confirmed_absent=True)
     saved.save()
+    assert plan_batch(cfg, path=batch) == 1
     api.error = None
     with httpx.Client(transport=httpx.MockTransport(api.handler)) as client:
-        from predoc_pipeline.publish.telegram import TelegramClient
+        assert send_batch(cfg, path=batch, client=client, sleep=lambda _: None)["sent"] == 1
+        assert send_batch(cfg, path=batch, client=client, sleep=lambda _: None)["sent"] == 0
 
-        tg = TelegramClient(bot_token="test", client=client)
-        assert dispatch(saved, tg, [], [job], sleep=lambda _: None)["sent"] == 1
-        assert dispatch(saved, tg, [], [job], sleep=lambda _: None)["sent"] == 0
+
+def test_non_text_private_update_does_not_block_stop_command(tmp_path):
+    cfg = settings(tmp_path)
+    api = API([
+        {"update_id": 1, "message": {
+            "chat": {"id": 101, "type": "private"}, "from": {"id": 101},
+            "sticker": {"file_id": "ignored"},
+        }},
+        message(2, 101, "/stop"),
+    ])
+    result = run(cfg, api)
+    assert result["failed"] == 0
+    assert load_chat_state(cfg.telegram_state_path)["offset"] == 3
+
+
+def test_previews_existing_roles_without_backfilling_notifications():
+    now = datetime.now(UTC)
+    before = (now - timedelta(hours=2)).isoformat()
+    member = {
+        "topics": {"data_analyst": now.isoformat()},
+        "scopes": {"iran": now.isoformat()},
+        "deliveries": {},
+    }
+    job = {
+        "key": "career:old", "category": "data_analyst", "scope": "iran",
+        "first_seen_at": before, "url": "https://jobinja.ir/companies/x/jobs/y",
+        "title": "Data Analyst", "employer": "Example", "location": "Tehran",
+    }
+    assert matching(member, [], [job]) == []
+    assert len(matching(member, [], [job], preview=True)) == 1
+
+
+def test_sent_receipt_retention_never_prunes_ambiguous_records(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    old = (datetime.now(UTC) - timedelta(days=60)).isoformat()
+    store.subscriber(101)["deliveries"] = {
+        "academic:old": {"state": "sent", "at": old},
+        "academic:unknown": {"state": "uncertain", "at": old},
+        "academic:pending": {"state": "sending", "at": old},
+    }
+    assert store.prune_deliveries() == 1
+    assert set(store.subscriber(101)["deliveries"]) == {
+        "academic:unknown", "academic:pending",
+    }
+
 
 
 def test_scope_and_topic_both_needed_and_no_retrospective_delivery():
