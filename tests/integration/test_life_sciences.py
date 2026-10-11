@@ -266,6 +266,7 @@ def test_vib_recruitment_calls_are_real_phd_roles_not_generic_programme_pages() 
 
 def test_new_official_portal_patterns_parse_actual_vacancy_url_shapes() -> None:
     from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+    from predoc_pipeline.boards.utils.text import canonical_url
 
     sources = {
         item.name: item for item in load_board_sources(
@@ -301,7 +302,7 @@ def test_new_official_portal_patterns_parse_actual_vacancy_url_shapes() -> None:
         html = f"<li class='job-card'><a href='{url}'>{title}</a></li>"
         jobs = scraper.parse_postings([(scraper.urls()[0], html)])
         assert len(jobs) == 1, name
-        assert jobs[0].url == url, name
+        assert jobs[0].url == canonical_url(url), name
         assert jobs[0].country == sources[name].country, name
 
 
@@ -323,14 +324,18 @@ def test_rotated_source_budget_covers_nineteen_feeds_in_three_runs(
         ), encoding="utf-8",
     )
     checkpoint = tmp_path / "life-rotation.json"
+    all_sources = {f"life_source_{i:02d}" for i in range(19)}
     total: set[str] = set()
     for _ in range(3):
+        remaining = all_sources - total
         selected = life_sciences.select_sources(source_path, checkpoint)
-        assert len(selected) <= life_sciences.MAX_SOURCES
-        assert selected.isdisjoint(total)
+        assert len(selected) == life_sciences.MAX_SOURCES
+        # Sources not yet checked come before prior visits. During the last
+        # round, the remaining three share slots with five returning feeds.
+        assert len(selected & remaining) == min(len(remaining), len(selected))
         total.update(selected)
         save_rotation(checkpoint, selected)
-    assert total == {f"life_source_{i:02d}" for i in range(19)}
+    assert total == all_sources
 
 
 def test_detail_enrichment_is_reserved_for_incomplete_doctoral_cards() -> None:
