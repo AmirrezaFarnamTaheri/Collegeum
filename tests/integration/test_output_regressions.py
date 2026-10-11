@@ -168,3 +168,90 @@ def test_forbidden_xml_characters_cannot_corrupt_the_entire_feed(tmp_path, bad_c
     assert len(root.findall("channel/item")) == 1
     assert "Paid research" in root.findtext("channel/item/description")
     assert bad_character not in output.read_text(encoding="utf-8")
+
+from predoc_pipeline.core.output_quality import (
+    application_url_issue,
+    authentication_page_text,
+)
+
+
+@pytest.mark.parametrize("url,expected", [
+    ("https://www.europeanjobmarketofeconomists.org/job-listing/role/%5Bnid%5D",
+     "unresolved-url-template"),
+    ("https://www.europeanjobmarketofeconomists.org/job-listing/role/{nid}",
+     "unresolved-url-template"),
+    ("https://accounts.google.com/v3/signin/identifier?continue=https://docs.google.com",
+     "authentication-redirect"),
+    ("https://login.microsoftonline.com/common/oauth2/authorize", "authentication-redirect"),
+    ("http://www.econjobmarket.org/", "generic-job-board-homepage"),
+    ("http://jobs.hhs.se/en/job/stockholm/position-123.html", None),
+    ("https://www.uni-hannover.de/en/jobs/8794/", None),
+    ("https://jobs.ac.uk/job/ABC123?jobID=42", None),
+])
+def test_audited_historical_link_types_are_classified_conservatively(url, expected):
+    assert application_url_issue(url) == expected
+
+
+def test_authentication_boilerplate_is_not_accepted_as_a_job_description():
+    assert authentication_page_text(
+        "Sign in to continue to Google Forms Email or phone Forgot email? "
+        "Not your computer? Use Guest mode."
+    )
+    assert not authentication_page_text(
+        "A paid research fellowship; applicants will sign in to continue "
+        "through their university account."
+    )
+
+
+def test_invalid_historical_links_never_reappear_in_new_public_exports(tmp_path):
+    database = tmp_path / "audit-output.db"
+    init(database)
+    valid = listing(1)
+    broken = listing(
+        2,
+        apply_url="https://www.europeanjobmarketofeconomists.org/job-listing/a/%5Bnid%5D",
+    )
+    auth = listing(
+        3, apply_url="https://accounts.google.com/v3/signin/identifier",
+        summary="Sign in to continue. Email or phone. Forgot email?",
+    )
+    with Database(database) as db:
+        for item in (valid, broken, auth):
+            fields = pipeline._listing_row(item, source="test", signature=None)
+            fields["status"] = "published"
+            db.insert_listing(fields)
+        dashboard = tmp_path / "listings.json"
+        feed = tmp_path / "feed.xml"
+        assert state.export_dashboard(db, dashboard) == 1
+        assert state.export_feed(db, feed) == 1
+    import json
+
+    exported = json.loads(dashboard.read_text(encoding="utf-8"))
+    assert exported["count"] == 1
+    assert exported["listings"][0]["apply_url"] == valid.apply_url
+    assert len(ET.parse(feed).getroot().findall("channel/item")) == 1
+
+
+def test_link_scan_rejects_ejm_placeholders_before_model_extraction():
+    from predoc_pipeline.boards.config import SourceConfig
+    from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+    source = SourceConfig(
+        name="european_job_market", type="link_scan",
+        url="https://www.europeanjobmarketofeconomists.org/job-listings",
+        link_pattern=r"europeanjobmarketofeconomists\\.org/job-listing/",
+    )
+
+    class OfflineHttp:
+        def set_host_interval(self, *_args):
+            pass
+
+    scraper = LinkScanScraper(source, OfflineHttp())
+    html = (
+        '<a href="/job-listing/role/%5Bnid%5D">Postdoctoral Fellow in Economics</a>'
+        '<a href="/job-listing/role/98765">Postdoctoral Fellow in Economics</a>'
+    )
+    items = scraper.parse_postings([(source.url, html)])
+    assert len(items) == 1
+    assert items[0].url.endswith("/98765")
+    assert scraper.discovery_parse_errors

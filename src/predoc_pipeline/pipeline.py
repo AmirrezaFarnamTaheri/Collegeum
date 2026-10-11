@@ -47,6 +47,7 @@ from .core.db import Database
 from .core.db import init as init_db
 from .core.dedupe import Deduplicator
 from .core.health import source_error_count, source_summary
+from .core.output_quality import application_url_issue, authentication_page_text
 from .core.ratelimit import QuotaExceeded
 from .core.textproc import escape_telegram_html, truncate
 from .core.timeparse import format_ts, parse_datetime, utcnow
@@ -422,6 +423,19 @@ def _post_extract(
             decision="rejected",
             reason=str(exc)[:200],
             content_hash=digest,
+        )
+        return None
+
+    broken_link = application_url_issue(listing.apply_url)
+    if broken_link or authentication_page_text(listing.summary) or authentication_page_text(
+        item.text
+    ):
+        stats.gated += 1
+        reason = f"unusable-application-link:{broken_link or 'authentication-page-content'}"
+        stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
+        db.mark_seen(
+            source_key, source=item.source, decision="rejected",
+            reason=reason, content_hash=digest,
         )
         return None
 

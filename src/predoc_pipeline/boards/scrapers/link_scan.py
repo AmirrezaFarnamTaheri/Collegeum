@@ -23,6 +23,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup, Tag
 
+from ...core.output_quality import application_url_issue
 from ..models import JobPostSchema
 from ..utils.dates import extract_deadline, find_dates, parse_posted
 from ..utils.geo import detect_location
@@ -208,6 +209,12 @@ class LinkScanScraper(BaseScraper):
             href = absolutize(base, str(a["href"]))
             if not pattern.search(href) or href in seen or _EXCLUDED_URL_RX.search(href):
                 continue
+            if application_url_issue(href):
+                # A literal %5Bnid%5D is a template, not a unique vacancy.
+                # Surface parser degradation without leaking untrusted URLs.
+                if not self.discovery_parse_errors:
+                    self.discovery_parse_errors.append("Unresolved application URL in listing")
+                continue
             title = clean_ws(a.get_text(" "))
             if self.opt("prefer_card_heading"):
                 # Some research institutes label the clickable link with an
@@ -288,6 +295,10 @@ class LinkScanScraper(BaseScraper):
         for item in soup.select(sel["item"]):
             link_el = item.select_one(sel.get("link", "a[href]"))
             if not link_el or not link_el.get("href"):
+                continue
+            if application_url_issue(absolutize(base, str(link_el["href"]))):
+                if not self.discovery_parse_errors:
+                    self.discovery_parse_errors.append("Unresolved application URL in listing")
                 continue
             title = pick(item, "title") or clean_ws(link_el.get_text(" "))
             if not title:

@@ -23,6 +23,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .core.output_quality import application_url_issue, authentication_page_text
 from .core.timeparse import format_ts, parse_datetime, utcnow
 
 __all__ = [
@@ -211,6 +212,8 @@ def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
         row
         for row in db.active_listings()
         if row["url_hash"] not in hidden
+        and application_url_issue(row["apply_url"]) is None
+        and not authentication_page_text(row["summary"])
         and (router is None or router.channel_for_row(row) == "web")
     ]
 
