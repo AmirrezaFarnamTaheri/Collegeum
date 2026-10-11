@@ -11,6 +11,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Annotated
 
 import typer
 
@@ -260,9 +261,9 @@ def telegram_reconcile(
 
 @app.command("subscriber-plan")
 def subscriber_plan(
-    output: Path = typer.Option(
-        _DEFAULT_PRIVATE_BATCH, "--output",
-        help="Untracked per-run private delivery batch"),
+    output: Annotated[
+        Path, typer.Option("--output", help="Untracked per-run private delivery batch"),
+    ] = _DEFAULT_PRIVATE_BATCH,
 ) -> None:
     """Reserve private alerts without sending (commit encrypted intents first)."""
     from .publish.private_delivery import plan_batch
@@ -277,9 +278,9 @@ def subscriber_plan(
 
 @app.command("subscriber-send")
 def subscriber_send(
-    input_path: Path = typer.Option(
-        _DEFAULT_PRIVATE_BATCH, "--input",
-        help="Batch created by subscriber-plan on this GitHub runner"),
+    input_path: Annotated[
+        Path, typer.Option("--input", help="Batch created by subscriber-plan on this runner"),
+    ] = _DEFAULT_PRIVATE_BATCH,
 ) -> None:
     """Send pre-committed private alerts only, retaining unknown outcomes."""
     from .publish.private_delivery import send_batch
