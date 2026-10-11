@@ -642,7 +642,10 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
     assert "sub:p:academic" in str(markup)
     assert "sub:p:careers" in str(markup)
     assert "sub:p:markets" in str(markup)
-    for page in ("academic", "life_sciences", "careers", "markets", "delivery", "privacy", "help", "stop"):
+    for page in (
+        "academic", "life_sciences", "careers", "markets",
+        "delivery", "privacy", "help", "stop",
+    ):
         text, keyboard = menu(None, page)
         assert text
         assert len(text) < 4096

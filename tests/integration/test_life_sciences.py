@@ -17,7 +17,6 @@ from predoc_pipeline.publish.private_delivery import plan_batch
 from predoc_pipeline.publish.subscriptions import matching, render_alert
 from predoc_pipeline.settings import Settings
 
-
 TODAY = date(2026, 10, 11)
 
 
