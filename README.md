@@ -41,7 +41,13 @@ register, and `OPERATIONS.md` for production runbooks.
 Private chat subscriptions now support predocs, PhDs, postdocs, data science,
 data analytics, economics consulting, and research-analyst vacancies.
 Career alerts offer separate **Iran-based** and **worldwide-remote** switches.
-Use `/start`, `/settings`, `/latest`, and `/stop` inside the bot.
+Use `/start` for the compact home screen, then select academic roles, careers
+and job markets with inline buttons. Other shortcuts include `/settings`,
+`/latest` (paginated preview), `/sources` (provider-health summary),
+`/pause`, `/resume`, `/guide` and `/stop` (confirmed unsubscribe).
+The bot supports English and Persian menus without requiring a public web
+application. Users can select an entire role group at once, and new job cards
+include an Open vacancy and Manage alerts button.
 The private admin can open `/admin` for run, cache and queue health.
 Private notification sends use a checkpointed outbox: encrypted intents
 are committed before any Bot API send, and delivery outcomes are committed
@@ -52,7 +58,9 @@ Both require the existing `FEEDBACK_ENCRYPTION_KEY`; configure a positive
 The scheduled pipeline checks alternating source cohorts every **4 hours**;
 each academic board is checked once per 8 hours and runs have halved budgets.
 See [Telegram subscriptions and operations](docs/TELEGRAM_OPERATIONS.md)
-for data flow, delivery recovery, source constraints, and setup.
+for data flow, delivery recovery, source constraints, and setup. The
+[provider integration matrix](docs/IRAN_JOB_PROVIDERS.md) distinguishes
+public job feeds from undocumented/private ATS and candidate APIs.
 
 ## Quickstart
 

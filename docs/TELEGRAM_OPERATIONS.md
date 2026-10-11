@@ -5,10 +5,13 @@ It has two deliberately separate surfaces:
 
 - **Subscriber chat:** Each person privately selects role topics and independently
   opts into Iran-based and/or globally remote career feeds with `/start` or
-  `/settings`. Nothing is subscribed by default. `/latest` previews the
-  newest matching listings, and `/stop` removes active subscription and
-  delivery state (historical Git repository versions remain subject to their
-  own retention policy).
+  `/settings`. Nothing is subscribed by default. The native Telegram interface
+  provides a compact home overview, separate academic/career/market screens,
+  select-all or clear-all controls, English/Persian language selection,
+  personal pause/resume, `/sources` status, and a paginated `/latest`
+  preview of matching vacancies. `/stop` requires confirmation before
+  removing active subscription and delivery state (historical Git repository
+  versions remain subject to their own retention policy).
 - **Admin chat:** The exact positive private ID in `TELEGRAM_ADMIN_CHAT_ID` may
   use `/admin`. Telegram native inline menus provide overview, recent runs,
   queue/uncertain sends, cache/source counts, and a **confirmed** pause/resume
@@ -38,6 +41,7 @@ gate/model, public dashboard, channel broadcast or X:
 |---|---|---|
 | Remote | [Jobicy public API](https://github.com/Jobicy/remote-jobs-api) | Only jobs explicitly marked Anywhere/Worldwide/Global in `jobGeo`, excluding Iran-restricted posts; title matched to role; max two cursor pages plus one batch status check per four-hour cycle |
 | Iran-based | [Jobinja](https://jobinja.ir) | Conservative HTML job-link parser for Iranian employer listings; rotate one of four Persian queries per cycle; at most 30 cards. Does not call an unofficial paid API. |
+| Iran-based | [IranTalent](https://www.irantalent.com/en/jobs) | Public unfiltered listing page at `/en/jobs`; validate canonical detail paths and explicit Iranian location before accepting a matched role. At most one request per cycle. No undocumented private API. |
 
 Role categories: data scientist, data analyst/BI, economics/management
 consulting, and economic/research analyst. Do not classify a generic analytics
@@ -123,7 +127,8 @@ notification pause does not block collection or the legacy public channel.
   concurrency group to avoid racing on committed state.
 - Jobicy requests follow its public API fair-use guidance. This project uses
   at most two cursor pages and one status check for up to 100 IDs per four-hour
-  cycle, plus one Jobinja keyword request. Only a verified `closed` result
+  cycle, plus one Jobinja keyword request and one unfiltered IranTalent
+  listing request. Only a verified `closed` result
   suppresses a remote job; an `unknown` result or network failure does not
   establish closure. Conditional requests use the ordinary polite HTTP cache when a
   reusable response body exists. The SQLite cache is ephemeral on hosted
@@ -147,3 +152,29 @@ notification pause does not block collection or the legacy public channel.
 The admin panel intentionally does not run a publicly reachable web server:
 a static GitHub Pages admin surface could not safely authenticate writes or
 protect subscriber data without adding a separate trusted backend.
+
+
+## Bot interface and API choice
+
+Collegeum uses official Telegram Bot API features: short command menus,
+scoped administrator commands, an optional Persian command list, inline
+keyboards, callback acknowledgements, message edits for navigation,
+pagination, source-status screens, and URL buttons on delivered cards.
+See [Telegram's bot interface guidance](https://core.telegram.org/bots/features)
+and [Bot API reference](https://core.telegram.org/bots/api). The bot is not a
+Mini App and needs no additional HTML UI backend.
+
+Jobs from Iranian platforms use public listing pages when allowed. There is
+no verified official public job-search API for Jobinja, Jobvision, IranTalent,
+or e-estekhdam in this release. Jobvision's candidate-profile API is **not**
+used to collect vacancies. A separate provider comparison, access constraints,
+and the necessary verification gate for a future partner API are documented in
+[IRAN_JOB_PROVIDERS.md](IRAN_JOB_PROVIDERS.md).
+
+The subscriber `/sources` panel displays only the last checked time and
+allowlisted provider names/counts; it does not return arbitrary source errors,
+subscriber data, credentials, or full HTTP response bodies. The admin can
+inspect counts and limited, escaped source error summaries.
+
+The source/job card UI can preview existing opportunities without marking
+them as delivered. Push notifications remain **new-after-opt-in** only.
