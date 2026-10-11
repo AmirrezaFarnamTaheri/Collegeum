@@ -287,3 +287,22 @@ def test_doctoral_posts_are_prioritized_when_a_board_has_many_staff_jobs(
     counts = Counter(life_sciences._doctoral_title(row.title) for row in jobs)
     assert counts[True] == 2
     assert counts[False] == 58
+
+
+
+def test_aggregator_searches_cover_primary_and_related_biological_fields() -> None:
+    all_sources = {
+        s.name: s for s in life_sciences.load_life_sources(CATALOG)
+    }
+    euraxess = all_sources["life_euraxess"].opt("urls")
+    dutch = all_sources["life_academictransfer"].opt("urls")
+    assert len(euraxess) == 19
+    assert len(dutch) == 15
+    assert len(euraxess) == len(set(euraxess))
+    assert len(dutch) == len(set(dutch))
+    assert all("euraxess.ec.europa.eu/jobs/search?" in url for url in euraxess)
+    assert all("academictransfer.com/en/jobs/" in url for url in dutch)
+    for topic in ("epigenetics", "chromatin", "genomics", "neurodevelopment"):
+        assert any(topic in url for url in [*euraxess, *dutch])
+    for topic in ("RNA%20biology", "psychiatric%20genetics", "transcriptomics"):
+        assert any(topic in url for url in [*euraxess, *dutch])
