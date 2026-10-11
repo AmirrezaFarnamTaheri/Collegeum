@@ -1132,7 +1132,7 @@ def test_daily_digest_reserves_multiple_jobs_as_one_checkpointed_message(tmp_pat
     assert plan_batch(cfg, path=batch, now=at) == 1
     records = json.loads(batch.read_text("utf-8"))
     assert len(records[0]["keys"]) == 3
-    assert "Daily Collegeum" in records[0]["text"]
+    assert "daily Collegeum" in records[0]["text"]
     api = API()
     with httpx.Client(transport=httpx.MockTransport(api.handler)) as client:
         counts = send_batch(cfg, path=batch, client=client, sleep=lambda _: None)
