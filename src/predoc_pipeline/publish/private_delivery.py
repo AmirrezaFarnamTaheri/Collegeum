@@ -80,7 +80,8 @@ def plan_batch(settings: Settings, *, path: Path = DEFAULT_BATCH) -> int:
                     continue
                 batch.append({
                     "chat_id": user_id, "key": job["key"],
-                    "text": render_alert(job), "url": job.get("url", ""),
+                    "text": render_alert(job, lang=member.get("language", "en")),
+                    "url": job.get("url", ""),
                 })
                 selected += 1
             if store.data.get("delivery_cursor") != user_id:

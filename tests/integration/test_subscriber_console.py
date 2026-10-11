@@ -985,3 +985,34 @@ def test_paused_subscriber_still_requests_career_discovery(tmp_path):
     store.set_paused(101, True)
     assert store.wants_career("remote")
     assert not store.wants_career("iran")
+
+
+def test_worldwide_remote_must_not_contain_regional_restrictions():
+    from predoc_pipeline.ingest.career import _remote_geo_allowed
+    for text in ("Anywhere in the US", "Europe, anywhere in the EU",
+                 "Americas, anywhere", "Global - EU only", "Remote in USA"):
+        assert not _remote_geo_allowed(text), text
+    for text in ("Anywhere", "Worldwide", "Global", "Anywhere in the world"):
+        assert _remote_geo_allowed(text), text
+
+
+def test_persian_geo_boundaries_and_ambiguous_company_names():
+    from predoc_pipeline.ingest.career import _iran_location
+    assert _iran_location("رقم") is None
+    assert _iran_location("Sari Dewi, London") is None
+    assert _iran_location("Kish Group, Mumbai") is None
+    assert _iran_location("موقعیت: قم") == "قم"
+    assert _iran_location("Location: Sari") == "Sari"
+
+
+def test_paused_remote_feed_and_bilingual_alert_text(tmp_path):
+    from predoc_pipeline.publish.subscriptions import render_alert
+    job = {
+        "category": "data_analyst", "scope": "remote", "title": "Data Analyst",
+        "employer": "Example", "location": "Anywhere",
+        "source": "Jobicy", "url": "https://jobicy.com/example",
+    }
+    fa = render_alert(job, "fa")
+    assert "تحلیلگر" in fa and "دورکاری" in fa and "مشاهده فرصت" in fa
+    assert "View opportunity" in render_alert(job, "en")
+    assert '<a href=' not in render_alert({**job, "url": "javascript:alert(1)"})

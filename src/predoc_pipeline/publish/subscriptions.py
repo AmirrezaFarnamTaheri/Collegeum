@@ -134,20 +134,57 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
                 selected(member, job["category"], job["scope"]) and
                 (preview or eligible(member, job["category"], job["scope"], when))):
             jobs.append(job)
-    jobs.sort(key=lambda item: (item["first_seen_at"], item["key"]), reverse=True)
+    jobs.sort(key=lambda item: (
+        _instant(item["first_seen_at"]) or datetime.min.replace(tzinfo=UTC),
+        item["key"],
+    ), reverse=True)
     return jobs
 
 
-def render_alert(job: dict[str, str]) -> str:
+def render_alert(job: dict[str, str], lang: str = "en") -> str:
+    """Format a safe, localized HTML notification with optional verified link."""
+    from urllib.parse import urlsplit
+
+    fa = lang == "fa"
+    category = TOPIC_LABELS.get(job["category"], "Opportunity")
+    if fa:
+        category = {
+            "predoc": "پیشادکتری / دستیار پژوهشی",
+            "phd": "فرصت دکتری", "postdoc": "پسادکتری",
+            "data_scientist": "دانشمند داده",
+            "data_analyst": "تحلیلگر داده",
+            "econ_consulting": "مشاوره اقتصادی",
+            "research_analyst": "تحلیلگر پژوهش",
+        }.get(job["category"], "فرصت شغلی")
+    location = job.get("location") or ("مکان نامشخص" if fa else "Location not specified")
+    scope = (
+        ("دورکاری جهانی" if job["scope"] == "remote" else "داخل ایران")
+        if fa and job.get("scope") else
+        ("دانشگاهی" if fa else CAREER_SCOPES.get(job.get("scope", ""), "Academic"))
+    )
     parts = [
-        f"<b>{escape(TOPIC_LABELS.get(job['category'], 'Opportunity'))}</b>",
+        f"<b>{escape(category)}</b>",
         f"<b>{escape(job['title'][:175])}</b>",
         f"🏢 {escape(job['employer'][:140])}",
-        f"📍 {escape(job.get('location') or 'Location not specified')}",
-        f"📌 {escape(CAREER_SCOPES.get(job['scope'], 'Academic'))}",
-        f"via {escape(job.get('source', 'Collegeum'))}",
-        f'<a href="{escape(job["url"], quote=True)}">View opportunity</a>',
+        f"📍 {escape(location[:130])}",
+        f"📌 {escape(scope)}",
+        ("منبع: " if fa else "via ") + escape(job.get("source", "Collegeum")[:60]),
     ]
+    url = job.get("url", "")
+    try:
+        parsed = urlsplit(url)
+        valid = parsed.scheme == "https" and bool(parsed.hostname) and (
+            len(url) <= 1024
+        )
+    except ValueError:
+        valid = False
+    if valid:
+        parts.append(
+            f'<a href="{escape(url, quote=True)}">'
+            + ("مشاهده فرصت" if fa else "View opportunity") + "</a>"
+        )
     return "\n".join(parts)
 
+
+ 
 

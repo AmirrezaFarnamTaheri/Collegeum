@@ -54,7 +54,8 @@ ROLE_PATTERNS = (
         r"کارشناس\s+مشاوره\s+اقتصادی", re.I)),
     ("research_analyst", re.compile(
         r"\b(?:economic|economics|financial|market|quantitative|research)\s+analyst\b|"
-        r"\bresearch\s+associate\b|تحلیلگر\s+(?:اقتصادی|تحقیقات|بازار)|"
+        r"\b(?:industry|market|business)\s+research\s+associate\b|"
+        r"تحلیلگر\s+(?:اقتصادی|تحقیقات|بازار)|"
         r"کارشناس\s+(?:تحقیقات\s+بازار|پژوهش\s+اقتصادی)", re.I)),
 )
 
@@ -103,7 +104,13 @@ def _remote_geo_allowed(geo: str) -> bool:
         return False
     # An Iran-only remote vacancy belongs to the Iran market, not to
     # the independently selectable worldwide-remote topic.
-    return bool(re.search(r"\b(?:anywhere|worldwide|global)\b", geo, re.I))
+    # The provider's free-text geography is not an unrestricted keyword bag:
+    # "Anywhere in the US" and "Europe, anywhere" are NOT worldwide.
+    normalized = re.sub(r"\s+", " ", geo.strip().lower()).strip(" .")
+    return normalized in {
+        "anywhere", "worldwide", "global", "anywhere in the world",
+        "worldwide remote", "global remote", "remote worldwide",
+    }
 
 
 def parse_remote_jobs(payload: dict[str, Any]) -> list[dict[str, str]]:
@@ -211,9 +218,16 @@ def _iran_location(card_text: str) -> str | None:
     if re.search(r"\b(?:outside (?:of )?iran|abroad)\b", card_text, re.I):
         return None
     for place in _IRAN_CITIES_FA:
-        if place in card_text:
+        # Persian has no ASCII word boundaries; negative Unicode lookarounds
+        # avoid matching قم inside رقم and adjacent zero-width joiners.
+        if re.search(rf"(?<![\w\u200c]){re.escape(place)}(?![\w\u200c])", card_text):
             return place
     for place in _IRAN_CITIES_EN:
+        if place in {"sari", "kish", "arak"} and not re.search(
+            r"(?i)(?:location|city|شهر|موقعیت)\s*[:：]\s*" + re.escape(place) + r"\b",
+            card_text,
+        ):
+            continue
         if re.search(rf"\b{re.escape(place)}\b", card_text, re.I):
             return place.title()
     return None
@@ -285,9 +299,9 @@ def load_career(path: str | Path) -> list[dict[str, str]]:
         }
         if not required.issubset(data) or not all(isinstance(v, str) for v in data.values()):
             raise ValueError(f"corrupt job journal record in {p}")
-        if data["scope"] not in ("iran", "remote") or classify_career(
-            data["title"]
-        ) != data["category"]:
+        if data["scope"] not in ("iran", "remote") or data["category"] not in {
+            "data_scientist", "data_analyst", "econ_consulting", "research_analyst",
+        }:
             raise ValueError(f"invalid career category or scope in {p}")
         availability = data.get("availability", "unknown")
         if availability not in ("active", "closed", "unknown"):
@@ -316,22 +330,28 @@ def save_career(path: str | Path, previous: list[dict[str, str]],
     """Atomic upsert without losing first-seen times or re-alerting existing jobs."""
     p = Path(path)
     cutoff = datetime.now(UTC) - timedelta(days=MAX_AGE_DAYS)
+    now = datetime.now(UTC).isoformat()
     existing = {job["key"]: job for job in previous}
     added = 0
     for job in fresh:
         if job["key"] not in existing:
-            existing[job["key"]] = {**job, "first_seen_at": datetime.now(UTC).isoformat()}
+            existing[job["key"]] = {**job, "first_seen_at": now, "last_seen_at": now}
             added += 1
         else:
             old = existing[job["key"]]
-            current = {**old, **job, "first_seen_at": old["first_seen_at"]}
+            current = {
+                **old, **job, "first_seen_at": old["first_seen_at"],
+                "last_seen_at": now,
+            }
             if old.get("availability") == "closed" and "availability" not in job:
                 current["availability"] = "closed"
             existing[job["key"]] = current
     filtered: list[dict[str, str]] = []
     for job in existing.values():
         try:
-            if datetime.fromisoformat(job["first_seen_at"].replace("Z", "+00:00")) >= cutoff:
+            if datetime.fromisoformat(
+                job.get("last_seen_at", job["first_seen_at"]).replace("Z", "+00:00")
+            ) >= cutoff:
                 filtered.append(job)
         except ValueError:
             raise ValueError("invalid first_seen_at in job journal") from None
@@ -363,7 +383,9 @@ def _verify_remote_status(
     never turn unknown listings into closed ones.
     """
     selected: list[str] = []
-    for job in [*fresh, *previous]:
+    # Always check historical inventory first: otherwise new feed pages consume
+    # every status slot and stale previously delivered jobs remain open.
+    for job in [*previous, *fresh]:
         identifier = job.get("jobicy_id")
         if identifier and identifier not in selected:
             selected.append(identifier)

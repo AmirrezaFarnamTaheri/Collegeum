@@ -132,7 +132,8 @@ def menu(
             "3. Notifications cover new matches after you opt in.\n"
             "4. Browse latest to view existing positions on demand.\n"
             "5. Pausing keeps your preferences but stops new alerts.\n"
-            "Unsubscribe removes your active private alert records."
+            "Unsubscribe removes your active private alert records. "
+            "Encrypted snapshots may remain in the public repository history."
         )
         buttons = [_back(lang)]
     elif page == "stop":
@@ -141,7 +142,8 @@ def menu(
             "موضوع‌ها و سوابق ارسال شما از وضعیت فعال حذف می‌شوند."
             if fa else
             "🗑 <b>Unsubscribe?</b>\n\n"
-            "Your active topics, markets, and delivery records will be removed."
+            "Your active topics, markets, and delivery records will be removed. "
+            "Historic encrypted Git snapshots cannot be erased by this command."
         )
         buttons = [
             [_button("لغو عضویت" if fa else "Yes, unsubscribe", "sub:stop:yes")],

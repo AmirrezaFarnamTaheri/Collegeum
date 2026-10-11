@@ -145,8 +145,8 @@ class Settings(BaseSettings):
     max_items_per_source: int = 200
     http_timeout_seconds: float = 25.0
     http_user_agent: str = (
-        "predoc-pipeline/2.0 (+https://github.com/USER/predoc-pipeline; "
-        "academic job aggregation; contact: MAINTAINER@example.org)"
+        "Collegeum/2.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum; "
+        "academic and career job aggregation)"
     )
     respect_robots_txt: bool = True
     per_host_delay_seconds: float = 1.0
