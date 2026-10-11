@@ -29,6 +29,7 @@ failure mode rather than a style preference:
 from __future__ import annotations
 
 import json
+import math
 import re
 import time
 from collections.abc import Callable
@@ -490,7 +491,16 @@ class TelegramClient:
                             retry_after = float(params["retry_after"])
                 except (ValueError, TypeError, KeyError, AttributeError, json.JSONDecodeError):
                     pass
-                # The server told us how long to wait; local guesses lose.
+                # Honoring an hours-long wait inside a ten-minute Actions
+                # worker strands the encrypted outbox and blocks commands.
+                # Defer to a later scheduled run instead of retrying too soon.
+                if not math.isfinite(retry_after) or retry_after < 0:
+                    retry_after = 5.0
+                if retry_after > 30:
+                    raise TelegramError(
+                        "429: retry_after exceeds this worker's bounded wait",
+                        status=429,
+                    )
                 sleep(retry_after + 0.5)
                 self._last_send[chat_id] = time.monotonic()
                 last = TelegramError(f"429: {detail}", status=429)
@@ -536,8 +546,17 @@ class TelegramClient:
                 return data.get("result")
             detail = str(data.get("description") or response.text[:300])
             if response.status_code == 429:
-                retry_after = float((data.get("parameters") or {}).get("retry_after", 5))
-                sleep(min(retry_after, 60) + 0.5)
+                try:
+                    retry_after = float((data.get("parameters") or {}).get("retry_after", 5))
+                except (TypeError, ValueError):
+                    retry_after = 5.0
+                if not math.isfinite(retry_after) or retry_after < 0:
+                    retry_after = 5.0
+                if retry_after > 30:
+                    raise TelegramError(
+                        f"{method} 429: retry_after exceeds bounded wait", status=429,
+                    )
+                sleep(retry_after + 0.5)
                 last = TelegramError(f"429: {detail}", status=429)
                 continue
             if response.status_code not in _RETRYABLE_STATUS:
