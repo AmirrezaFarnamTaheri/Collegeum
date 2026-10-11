@@ -35,10 +35,15 @@ def private_user_id(message: dict[str, Any]) -> int | None:
     try:
         if chat.get("type") != "private":
             return None
-        chat_id = int(chat.get("id"))
-        if chat_id > 0 and int(sender.get("id")) == chat_id:
+        chat_value, sender_value = chat.get("id"), sender.get("id")
+        if (not isinstance(chat_value, (str, int))
+                or not isinstance(sender_value, (str, int))
+                or isinstance(chat_value, bool) or isinstance(sender_value, bool)):
+            return None
+        chat_id = int(chat_value)
+        if chat_id > 0 and int(sender_value) == chat_id:
             return chat_id
-    except (TypeError, ValueError):
+    except ValueError:
         pass
     return None
 
