@@ -39,6 +39,25 @@ class WorkflowContractTests(unittest.TestCase):
             "vars.ENABLE_TELEGRAM_SYNC != 'false'", workflow("telegram.yml"),
         )
 
+    def test_existing_github_environment_secrets_can_be_selected_without_rotation(self):
+        # A GitHub Environment secret is invisible to a job unless the job
+        # references its environment. The selector itself must be a repository
+        # or organization variable because the environment is not loaded yet.
+        for name, job in (("telegram.yml", "sync"), ("pipeline.yml", "run")):
+            with self.subTest(name=name):
+                body = workflow(name)
+                start = body.index("jobs:") + len("jobs:")
+                self.assertIn(f"  {job}:", body[start:])
+                self.assertIn(
+                    "environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}",
+                    body,
+                )
+                self.assertIn("github.ref == 'refs/heads/main'", body)
+        self.assertIn(
+            "FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}",
+            workflow("telegram.yml"),
+        )
+
     def test_private_telegram_requires_credentials_or_explicit_disable(self):
         content = workflow("telegram.yml")
         self.assertIn("vars.ENABLE_TELEGRAM_SYNC != 'false'", content)

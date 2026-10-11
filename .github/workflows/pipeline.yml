@@ -32,6 +32,9 @@ jobs:
     # Scheduled/manual publication must never execute unreviewed branch code.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Use the same optional secret scope as telegram-sync. An empty repository
+    # variable leaves default repository/organization secret access unchanged.
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
     timeout-minutes: 120
     steps:
       # ref: the branch, not the commit that triggered the run. A run that

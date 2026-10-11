@@ -25,6 +25,10 @@ jobs:
     # Opt out explicitly; absence of credentials is never a successful no-op.
     if: github.ref == 'refs/heads/main' && vars.ENABLE_TELEGRAM_SYNC != 'false'
     runs-on: ubuntu-latest
+    # When existing credentials are GitHub Environment secrets, set the
+    # REPOSITORY variable COLLEGEUM_SECRET_ENVIRONMENT to that environment's
+    # name. Unset/empty uses ordinary repository or organization secrets.
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
     timeout-minutes: 10
     steps:
       # ref: the branch, not the commit that triggered the run. A run that

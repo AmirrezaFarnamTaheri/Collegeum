@@ -422,9 +422,20 @@ would become undecryptable.
 Check the secret's scope under repository Settings > Secrets and variables >
 Actions (and any linked GitHub Environments). Repository secrets reach jobs
 through `secrets.FEEDBACK_ENCRYPTION_KEY`. Environment secrets are available
-only to jobs explicitly attached to the corresponding environment. Reuse
-the **same** key across the pipeline and private inbox jobs; never print
-its value or copy it to a public workflow file.
+only to jobs explicitly attached to the corresponding environment.
+
+For an **existing environment-scoped** `FEEDBACK_ENCRYPTION_KEY`, set the
+non-secret **repository-level Actions variable**
+`COLLEGEUM_SECRET_ENVIRONMENT` to the exact name of that existing GitHub
+Environment. Both `pipeline.yml` and `telegram.yml` then attach to that
+environment and can read its scoped secrets. This variable selects an
+environment; **do not place the key in it**. Leave it unset when the key is
+a repository/organization secret. Environment names must come from a
+repository/organization variable, not an environment-level variable, because
+the job chooses its environment before those variables become available.
+
+Reuse the **same existing** key across the pipeline and private inbox jobs;
+never print its value or copy it to a public workflow file.
 
 When the key is unavailable, the main pipeline **does not poll or acknowledge
 private updates**, and public cards do not display nonfunctional personal
