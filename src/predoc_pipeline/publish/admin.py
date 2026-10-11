@@ -50,6 +50,7 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
     status = "Paused" if paused else "Active"
     header = f"<b>Collegeum · Admin</b>\nPrivate alerts: <b>{status}</b>"
     subs = store.subscribers
+    active_subscribers = sum(1 for member in subs.values() if member["topics"])
     total_uncertain = sum(
         1 for item in subs.values() for rec in item["deliveries"].values()
         if rec["state"] in ("sending", "uncertain")
@@ -57,7 +58,7 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
     if page == "status":
         return (
             f"{header}\n\n"
-            f"👥 Subscribers: {len(subs)}\n"
+            f"👥 Active subscriptions: {active_subscribers}\n"
             f"⚠️ Uncertain private sends: {total_uncertain}\n"
             "⏱ Pipeline: every 4 hours · Telegram sync: ~30 minutes\n"
             "⚙️ Publication scheduling and retry are managed in GitHub Actions.\n"

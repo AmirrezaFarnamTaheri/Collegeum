@@ -330,3 +330,64 @@ def test_remote_feed_ignores_repeated_cursor(tmp_path):
     assert added == 0
     assert len(client.calls) == 2
     assert any("cursor" in e for e in errors)
+
+
+def test_planner_never_reserves_without_bot_credentials(tmp_path):
+    import pytest
+
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    store.save()
+    cfg.telegram_bot_token = ""
+    with pytest.raises(ValueError, match="TELEGRAM_BOT_TOKEN"):
+        plan_batch(cfg, path=tmp_path / "private-batch.json")
+    assert FeedbackStore.from_settings(cfg).subscriber(101)["deliveries"] == {}
+
+
+def test_batch_write_failure_cannot_persist_orphan_send_intents(tmp_path, monkeypatch):
+    import pytest
+    from predoc_pipeline.publish import private_delivery
+
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    before = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_analyst"] = before
+    store.subscriber(101)["scopes"]["remote"] = before
+    store.save()
+    save_career(cfg.career_state_path, [], [{
+        "key": "career:example", "title": "Data Analyst", "category": "data_analyst",
+        "scope": "remote", "url": "https://jobicy.com/jobs/example",
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    }])
+
+    def disk_failure(*_args, **_kwargs):
+        raise OSError("outbox storage unavailable")
+
+    monkeypatch.setattr(private_delivery, "_save_batch", disk_failure)
+    with pytest.raises(OSError, match="outbox storage"):
+        plan_batch(cfg, path=tmp_path / "batch.json")
+    assert FeedbackStore.from_settings(cfg).subscriber(101)["deliveries"] == {}
+
+
+def test_career_journal_rejects_untrusted_scope_and_oversized_urls(tmp_path):
+    import pytest
+
+    from predoc_pipeline.ingest.career import _job
+
+    assert _job(
+        url="https://jobicy.com/jobs/" + "x" * 1050, title="Data Analyst",
+        employer="Example", location="Anywhere", source="Jobicy", scope="remote",
+    ) is None
+    path = tmp_path / "jobs.ndjson"
+    path.write_text(json.dumps({
+        "key": "career:one", "category": "data_analyst", "scope": "arbitrary",
+        "url": "https://jobicy.com/jobs/one", "title": "Data Analyst",
+        "employer": "Example", "location": "Elsewhere", "source": "Test",
+        "first_seen_at": datetime.now(UTC).isoformat(),
+    }) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid career category or scope"):
+        load_career(path)

@@ -71,8 +71,8 @@ def private_message(
     elif text == "/stop":
         store.remove_subscriber(user_id)
         store.save()  # commit an opt-out before sending its acknowledgement
-        bot.send(str(user_id), "You are unsubscribed. Your saved preferences were erased. "
-                 "Use /start to subscribe again.")
+        bot.send(str(user_id), "You are unsubscribed. Your active preferences and "
+                 "delivery records were removed. Use /start to subscribe again.")
     elif text == "/latest":
         member = store.subscriber(user_id)
         if member is None or not member["topics"]:
