@@ -173,6 +173,11 @@ def menu(
             f"🔔 Alerts: {'Paused' if paused else 'On'}\n\n"
             "Choose a category to tailor your alerts."
         )
+        if careers and not selected_markets:
+            body += (
+                "\n\n⚠️ برای دریافت اعلان مشاغل، محدوده جستجو را انتخاب کنید."
+                if fa else "\n\n⚠️ Choose a job market to enable career alerts."
+            )
         buttons = [
             [_button("🎓 دانشگاهی" if fa else "🎓 Academic", "sub:p:academic"),
              _button("💼 مشاغل" if fa else "💼 Careers", "sub:p:careers")],

@@ -88,7 +88,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "stop": "لغو عضویت با تأیید",
     "delete": "حذف داده‌های فعال اشتراک",
 }
-COMMANDS_VERSION = 5
+COMMANDS_VERSION = 6
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
@@ -309,7 +309,7 @@ def telegram_sync(
 
         # Bound interactive processing so a command storm cannot monopolize
         # the ten-minute scheduled sync window. Unprocessed updates keep offset.
-        payload: dict[str, Any] = {"timeout": 0, "limit": 30,
+        payload: dict[str, Any] = {"timeout": 0, "limit": 100,
                                    "allowed_updates": ["message", "callback_query"]}
         if chat_state.get("offset"):
             payload["offset"] = chat_state["offset"]

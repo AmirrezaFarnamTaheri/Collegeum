@@ -1016,3 +1016,23 @@ def test_paused_remote_feed_and_bilingual_alert_text(tmp_path):
     assert "تحلیلگر" in fa and "دورکاری" in fa and "مشاهده فرصت" in fa
     assert "View opportunity" in render_alert(job, "en")
     assert '<a href=' not in render_alert({**job, "url": "javascript:alert(1)"})
+
+
+def test_career_titles_have_narrow_roles_and_plural_support():
+    assert classify_career("Data Analysts") == "data_analyst"
+    assert classify_career("Data Science Intern") == "data_scientist"
+    assert classify_career("Research Associate") is None
+    assert classify_career("Product Analyst") is None
+    assert classify_career("Management Consultant") == "econ_consulting"
+
+
+def test_home_warns_when_career_scopes_are_missing(tmp_path):
+    from predoc_pipeline.publish.ui import menu
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    home, _keyboard = menu(store.subscriber(101))
+    assert "Choose a job market" in home
+    store.toggle_subscription(101, "scopes", "iran")
+    home, _keyboard = menu(store.subscriber(101))
+    assert "Choose a job market" not in home

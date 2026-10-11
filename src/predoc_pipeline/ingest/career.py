@@ -41,19 +41,20 @@ MAX_REMOTE_PAGES = 2  # capped cursor traversal keeps four-hour runs light
 # because a generic page sidebar mentions Python or analytics.
 ROLE_PATTERNS = (
     ("data_scientist", re.compile(
-        r"\bdata\s+scientist\b|\bmachine\s+learning\s+(?:scientist|researcher)\b|"
+        r"\bdata\s+scientists?\b|\bdata\s+science\s+(?:intern|internship)\b|"
+        r"\bmachine\s+learning\s+(?:scientist|researcher)s?\b|"
         r"دانشمند\s+داده|متخصص\s+علم\s+داده", re.I)),
     ("data_analyst", re.compile(
-        r"\bdata\s+analyst\b|\b(?:product|business\s+intelligence|bi)\s+analyst\b|"
+        r"\bdata\s+analysts?\b|\b(?:business\s+intelligence|bi)\s+analysts?\b|"
         r"تحلیلگر[\s\u200c]*داده|تحلیل[\s\u200c]*گر[\s\u200c]*داده|"
         r"کارشناس[\s\u200c]+تحلیل[\s\u200c]+داده|"
         r"تحلیلگر\s+هوش\s+تجاری", re.I)),
     ("econ_consulting", re.compile(
         r"\b(?:economic|economics|econometric|policy)\s+(?:consultant|advisor)\b|"
-        r"\bmanagement\s+consultant\b|مشاور\s+(?:اقتصادی|مدیریت)|"
+        r"\bmanagement\s+consultants?\b|مشاور\s+(?:اقتصادی|مدیریت)|"
         r"کارشناس\s+مشاوره\s+اقتصادی", re.I)),
     ("research_analyst", re.compile(
-        r"\b(?:economic|economics|financial|market|quantitative|research)\s+analyst\b|"
+        r"\b(?:economic|economics|financial|market|quantitative|research)\s+analysts?\b|"
         r"\b(?:industry|market|business)\s+research\s+associate\b|"
         r"تحلیلگر\s+(?:اقتصادی|تحقیقات|بازار)|"
         r"کارشناس\s+(?:تحقیقات\s+بازار|پژوهش\s+اقتصادی)", re.I)),
