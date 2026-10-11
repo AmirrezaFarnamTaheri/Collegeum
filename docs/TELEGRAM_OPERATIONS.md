@@ -326,24 +326,24 @@ other career topics remain separate. No Iran/worldwide-remote job-market
 selection is required; subscriber opt-in, pause, digest, daily quotas, private
 delivery checkpoints and unsubscribe are respected.
 
-The current detailed source inventory, parser rules and activation procedure
-are maintained in LIFE_SCIENCES_SOURCES.md. As of 11 October 2026 the
-regional catalogue contains 112 source entries: 22 enabled and 90
-explicitly disabled candidates, across the core list and five regional
-registries. Sources include EURAXESS, AcademicTransfer, Max Planck,
-Karolinska, Uppsala, Lund, Umeå, Gothenburg, Aalto, Copenhagen, VIB, Ghent,
-Utrecht, Radboud, EPFL, Biozentrum Basel, University of Basel, CRG,
-IBEC, IRB Barcelona, Inria and the University of Vienna.
+The current source inventory, parser rules and activation procedure are
+maintained in LIFE_SCIENCES_SOURCES.md. The consolidated registry contains
+225 provider identities (37 enabled, 188 disabled discovery candidates).
+Enabled providers include EURAXESS, AcademicTransfer, Max Planck, Uppsala,
+Karolinska, Lund, Helsinki, VIB, Bern, Ghent, Utrecht, and other research
+institutions. A catalogue entry alone does not prove it supplies current
+eligible vacancies.
 
-The two large aggregators now include 34 targeted searches in total,
-including epigenomics, gene regulation, psychiatric genetics, neurobiology,
-RNA biology, organoids and single-cell research. At most eight enabled source
-entries run per pipeline invocation. Persistent oldest-attempt-first rotation,
+The two large aggregators include targeted searches for epigenomics,
+gene regulation, psychiatric genetics, neurobiology, RNA biology,
+organoids and single-cell research. At most 12 enabled sources are
+attempted per pipeline invocation. Persistent oldest-attempt-first rotation,
 doctoral-title prioritization, per-source candidate limits and bounded
 detail-page enrichment protect smaller sources from starvation and keep
-network usage bounded. The independent Life Sciences source journal is
-committed alongside public pipeline state; subscriber data is never
-included in that journal.
+network usage bounded. Life-sciences matches share the `data/career_jobs.ndjson` vacancy journal
+with career feeds, while provider attempt history uses the separate
+`data/life_sources_rotation.json` checkpoint. Neither contains
+subscriber preferences or private delivery receipts.
 
 A manual GitHub Actions workflow (verify-life-sciences-sources) can audit
 public landing-page link formats with a separate robots-aware client and
@@ -359,11 +359,9 @@ Funding, salary and tuition remain **unverified** unless an individual
 advert provides evidence.
 
 
-### Wider research catalogue and live verification (11 October 2026)
+### New research institutes and live verification (11 October 2026)
 
-The Life Sciences catalogue now includes **225 provider identities**:
-**37 enabled feeds**, and **188 disabled discovery candidates**.
-A candidate is *not* a working source. Disabled candidates have
+A disabled catalogue entry is not a working source. Disabled candidates have
 `link_pattern='^$'` and remain unreachable to scheduled fetching until
 someone verifies a real doctoral vacancy URL, employment location, active
 application deadline, and the site's permitted access pattern.
