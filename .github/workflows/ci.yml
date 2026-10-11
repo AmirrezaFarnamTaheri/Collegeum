@@ -53,6 +53,11 @@ jobs:
       - name: Offline smoke check
         run: PYTHONPATH=src python3 -m predoc_pipeline.cli smoke
 
+      - name: Audit committed publication outputs
+        run: |
+          PYTHONPATH=src python3 tools/audit_pipeline_outputs.py \
+            --output build/output-audit.json
+
       - name: Lint
         run: ruff check src tests tools
 

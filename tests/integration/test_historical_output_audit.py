@@ -131,3 +131,23 @@ def test_audit_does_not_accuse_specific_http_job_ad_of_being_nonactionable(
     _write_fixture(tmp_path)
     report = inspect(tmp_path)
     assert all(item["id"] != 4 for item in report["journal_quarantine_candidates"])
+
+
+def test_output_audit_reports_coded_failures_without_exposing_query_secrets(
+    tmp_path: Path,
+):
+    rows = _write_fixture(tmp_path)
+    rss = tmp_path / "docs/feed.xml"
+    original = rss.read_text("utf-8")
+    url = rows[2]["apply_url"] + "?token=untrusted-secret-value"
+    rss.write_text(
+        original.replace(rows[2]["apply_url"], url),
+        encoding="utf-8",
+    )
+    report = inspect(tmp_path)
+    assert report["invalid_rss_links"]
+    assert all(value in (
+        "unresolved-url-template", "authentication-redirect",
+        "invalid-url", "generic-job-board-homepage",
+    ) for value in report["invalid_rss_links"])
+    assert "untrusted-secret-value" not in json.dumps(report)

@@ -101,8 +101,11 @@ def inspect(root: Path) -> dict[str, Any]:
     invalid_feed = []
     for match in ITEM.finditer(xml):
         link = ITEM_LINK.search(match.group())
-        if link and application_url_issue(html.unescape(link.group(1))):
-            invalid_feed.append(html.unescape(link.group(1))[:120])
+        if link:
+            reason = application_url_issue(html.unescape(link.group(1)))
+            if reason:
+                # Never place URLs (which can contain access tokens) in CI logs.
+                invalid_feed.append(reason)
     return {
         "journal_rows": len(records),
         "public_rows": len(public),

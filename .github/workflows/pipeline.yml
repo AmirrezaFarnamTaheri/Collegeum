@@ -176,6 +176,46 @@ jobs:
         if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' && vars.PRIVATE_STATE_REPO != '' }}
         run: python tools/private_state.py checkpoint
 
+      # Check only after all side-effect checkpoint steps. A failed
+      # output audit must not prevent durable Telegram acknowledgements.
+      - name: Audit checkpointed outputs and summarize source health
+        if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python3 tools/audit_pipeline_outputs.py \
+            --output build/output-audit.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(Path("docs/data/health.json").read_text(encoding="utf-8"))
+          last = data.get("last_run") or {}
+          sources = last.get("sources") or data.get("source_summary") or {}
+          outcome = str(last.get("outcome", "unknown"))
+          failed = int(sources.get("failed", 0))
+          errors = int(last.get("source_errors", 0))
+          note = (
+              f"Pipeline application outcome: **{outcome}**. "
+              f"Failed source checks: **{failed}**. "
+              f"Source errors: **{errors}**."
+          )
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fh:
+              fh.write("### Collection health versus workflow status\n\n" + note + "\n")
+          if outcome != "ok" or failed or errors:
+              print(f"::warning title=Pipeline data degraded::{note}")
+          PY
+
+      - name: Preserve output audit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: output-audit-${{ github.run_id }}
+          path: build/output-audit.json
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Preserve quarantined career journals
         if: always()
         uses: actions/upload-artifact@v7
