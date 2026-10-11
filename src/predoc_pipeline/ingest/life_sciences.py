@@ -21,13 +21,19 @@ from ..boards.config import HttpConfig, load_board_sources
 from ..boards.filter import PHD_POSITION
 from ..boards.models import JobPostSchema
 from ..boards.scrapers import SCRAPERS
+from ..boards.utils.dates import extract_deadline
 from ..boards.utils.geo import detect_location
 from .career import load_career, save_career
+from .rotation import load_rotation, save_rotation
 
 CATEGORY = "life_sciences_phd"
-MAX_SOURCES = 8
+MAX_SOURCES = 8  # Sources attempted per scheduled run
+MAX_REGISTERED = 64
 MAX_PER_SOURCE = 60
 MAX_TOTAL = 200
+MAX_DETAIL_PER_SOURCE = 6
+MAX_DETAILS_TOTAL = 24
+DETAIL_TIMEOUT = 18
 
 # Primary research interests and nearby areas are separate so the alert can
 # communicate why a posting matched without pretending to verify funding.
@@ -57,6 +63,10 @@ WRONG_ROLE = re.compile(
     re.I,
 )
 COUNTRY_EXCLUDE = frozenset(("Europe", "United Kingdom", "United States", "Canada"))
+PHD_CALL = re.compile(
+    r"\b(?:international\s+)?ph\.?d\.?\s+(?:call|recruitment|admissions?)\b",
+    re.I,
+)
 EXPLICIT_LOCATION = re.compile(
     r"\b(?:location|workplace|place of work|work location|based in)"
     r"\s*[:\-]\s*([^;\n.]{2,90})", re.I,
@@ -65,7 +75,9 @@ EXPLICIT_LOCATION = re.compile(
 
 def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str, str] | None:
     """Fail closed on unknown geography, broad roles and unfunded adverts."""
-    if not PHD_POSITION.search(post.title) or WRONG_ROLE.search(post.title):
+    if not (PHD_POSITION.search(post.title) or PHD_CALL.search(post.title)):
+        return None
+    if WRONG_ROLE.search(post.title):
         return None
     context = " ".join(x for x in (
         post.title, post.department, post.fields_of_research,
@@ -111,24 +123,62 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     }
 
 
-async def discover(
-    sources_path: str | Path, http_config: HttpConfig,
-) -> tuple[list[JobPostSchema], list[str]]:
-    """Query independently configured, bounded academic sources.
+def select_sources(
+    sources_path: str | Path, rotation_path: str | Path | None = None,
+) -> set[str]:
+    """Pick oldest-attempt-first enabled providers; don't starve fresh sources."""
+    sources = [source for source in load_board_sources(sources_path) if source.enabled]
+    if len(sources) > MAX_REGISTERED:
+        raise ValueError("Too many enabled Life Sciences providers")
+    attempts = (
+        load_rotation(rotation_path).get("attempts", {})
+        if rotation_path is not None else {}
+    )
+    return {
+        source.name for source in sorted(
+            sources,
+            key=lambda source: (attempts.get(source.name, ""), source.name),
+        )[:MAX_SOURCES]
+    }
 
-    One scraper failure is logged as a source error without stopping others.
-    The adapters inherit normal host intervals, timeouts and HTTP behavior.
-    """
-    configs = [s for s in load_board_sources(sources_path) if s.enabled]
+
+def _needs_detail(post: JobPostSchema) -> bool:
+    """Only enrich a doctoral card if research field or location is incomplete."""
+    if not (PHD_POSITION.search(post.title) or PHD_CALL.search(post.title)):
+        return False
+    if PHD_CALL.search(post.title):
+        return True
+    text = " ".join(
+        value for value in (
+            post.title, post.fields_of_research, post.department,
+            post.description_snippet,
+        ) if value
+    )
+    missing_field = not (PRIMARY_FIELD.search(text) or RELATED_FIELD.search(text))
+    return missing_field or (not post.country and not post.location)
+
+
+async def discover(
+    sources_path: str | Path, http_config: HttpConfig, *,
+    selected_names: set[str] | None = None,
+) -> tuple[list[JobPostSchema], list[str]]:
+    """Discover bounded, fair interleaved candidates from selected boards."""
+    configs = [
+        source for source in load_board_sources(sources_path)
+        if source.enabled and (selected_names is None or source.name in selected_names)
+    ]
     if not configs:
         return [], ["No enabled life-sciences PhD providers"]
     if len(configs) > MAX_SOURCES:
-        raise ValueError("Too many enabled life-sciences sources")
+        raise ValueError("Run budget exceeded; call select_sources first")
     posts: list[JobPostSchema] = []
     errors: list[str] = []
     semaphore = asyncio.Semaphore(3)
+    detail_remaining = MAX_DETAILS_TOTAL
     async with build_http(http_config) as http:
+
         async def one(source: Any) -> tuple[list[JobPostSchema], list[str]]:
+            nonlocal detail_remaining
             if source.type not in ("rss", "link_scan"):
                 return [], [f"{source.name}: unsupported scraper type"]
             scraper = SCRAPERS[source.type](source, http)
@@ -139,36 +189,79 @@ async def discover(
                     )
                 except Exception as exc:  # noqa: BLE001 - isolate provider outages
                     return [], [f"{source.name}: {type(exc).__name__}"]
+                scoped = result[:MAX_PER_SOURCE]
+                detail_used = 0
+                for post in scoped:
+                    if detail_used >= MAX_DETAIL_PER_SOURCE or detail_remaining <= 0:
+                        break
+                    if not _needs_detail(post):
+                        continue
+                    detail_remaining -= 1
+                    detail_used += 1
+                    try:
+                        full_text = await asyncio.wait_for(
+                            scraper.fetch_detail(post), timeout=DETAIL_TIMEOUT,
+                        )
+                    except Exception:  # noqa: BLE001 - keep listing-only evidence
+                        continue
+                    if full_text:
+                        post.description_snippet = (
+                            post.description_snippet + " " + full_text[:3600]
+                        )[:4300]
+                        if post.deadline is None:
+                            deadline, deadline_text = extract_deadline(full_text)
+                            if deadline is not None:
+                                post.deadline = deadline
+                                post.deadline_text = deadline_text
             problems = (
                 len(scraper.discovery_fetch_errors) +
                 len(scraper.discovery_parse_errors) +
                 len(scraper.discovery_limits)
             )
             warnings = [f"{source.name}: {problems} discovery issues"] if problems else []
-            return result[:MAX_PER_SOURCE], warnings
+            return scoped, warnings
 
         results = await asyncio.gather(*(one(config) for config in configs))
-    for found, problems in results:
-        posts.extend(found)
+    # High-volume aggregators must not consume the whole candidate budget
+    # before smaller institutional PhD pages can contribute.
+    queues = [list(found) for found, _ in results]
+    while len(posts) < MAX_TOTAL and any(queues):
+        for queue in queues:
+            if queue and len(posts) < MAX_TOTAL:
+                posts.append(queue.pop(0))
+    for _, problems in results:
         errors.extend(problems)
-    return posts[:MAX_TOTAL], errors
+    return posts, errors
 
 
 def poll_life_sciences(
     journal_path: str | Path, *, sources_path: str | Path,
     http_config: HttpConfig,
+    rotation_path: str | Path | None = None,
 ) -> tuple[int, list[str]]:
     """Append vetted life-sciences PhDs to the existing durable career journal.
 
     Preserves economics/other career records and first-seen timestamps. Only
     posts first discovered after subscription are eligible for new alerts.
     """
-    posts, errors = asyncio.run(discover(sources_path, http_config))
+    started = datetime.now(UTC)
+    if rotation_path is None:
+        posts, errors = asyncio.run(discover(sources_path, http_config))
+        selected: set[str] = set()
+    else:
+        selected = select_sources(sources_path, rotation_path)
+        if not selected:
+            return 0, ["No enabled life-sciences PhD providers"]
+        posts, errors = asyncio.run(
+            discover(sources_path, http_config, selected_names=selected),
+        )
     matches: dict[str, dict[str, str]] = {}
     for post in posts:
         item = classify_post(post)
         if item:
             matches.setdefault(item["key"], item)
-    # A malformed non-life-sciences row cannot permanently block discovery.
     previous = load_career(journal_path, tolerant=True)
-    return save_career(journal_path, previous, list(matches.values())), errors
+    added = save_career(journal_path, previous, list(matches.values()))
+    if rotation_path is not None:
+        save_rotation(rotation_path, selected, timestamp=started)
+    return added, errors
