@@ -1205,3 +1205,59 @@ def test_rotate_key_reencrypts_without_logging_secrets(tmp_path, monkeypatch):
     assert FeedbackStore(cfg.feedback_path, key=new_key).subscriber(101) is not None
     with pytest.raises(Exception):
         FeedbackStore(cfg.feedback_path, key=old_key)
+
+
+def test_jobicy_status_rotation_does_not_starve_old_records():
+    from types import SimpleNamespace
+    from urllib.parse import parse_qs, urlsplit
+
+    from predoc_pipeline.ingest.career import _verify_remote_status
+
+    jobs = [{
+        "key": f"career:{i}", "jobicy_id": str(i + 100),
+        "first_seen_at": "2026-10-01T00:00:00+00:00",
+        "availability": "unknown",
+    } for i in range(105)]
+
+    class Client:
+        def __init__(self):
+            self.checked = []
+
+        def get(self, url):
+            ids = parse_qs(urlsplit(url).query)["ids"][0].split(",")
+            self.checked.append(ids)
+            return SimpleNamespace(
+                ok=True, status=200, text=json.dumps({
+                    "success": True,
+                    "jobs": [{"id": int(x), "status": "active"} for x in ids],
+                }),
+            )
+
+    client = Client()
+    _verify_remote_status(client, jobs, [], [], {"fetched": 0})
+    _verify_remote_status(client, jobs, [], [], {"fetched": 0})
+    assert len(client.checked[0]) == 100
+    assert set(client.checked[1][:5]) == {str(i + 100) for i in range(100, 105)}
+    assert all("status_checked_at" in job for job in jobs)
+
+
+def test_valid_jobinja_cards_with_irrelevant_titles_are_healthy_empty(tmp_path):
+    from types import SimpleNamespace
+
+    class Client:
+        def get(self, url):
+            if "jobinja.ir" in url:
+                html = '<a href="/companies/example/jobs/q123/accountant">Accountant</a>'
+            else:
+                html = '<a href="/en/job/accountant/12345">Accountant</a>'
+            return SimpleNamespace(ok=True, status=200, text=html, error=None)
+
+    report = tmp_path / "health.json"
+    count, errors = poll_career(
+        tmp_path / "jobs.ndjson", client=Client(), needs_remote=False,
+        needs_iran=True, health_path=report,
+    )
+    assert count == 0 and errors == []
+    sources = json.loads(report.read_text("utf-8"))["sources"]
+    assert sources["jobinja"]["status"] == "empty"
+    assert sources["irantalent"]["status"] == "empty"

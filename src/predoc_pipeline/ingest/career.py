@@ -403,9 +403,17 @@ def _verify_remote_status(
     never turn unknown listings into closed ones.
     """
     selected: list[str] = []
-    # Always check historical inventory first: otherwise new feed pages consume
-    # every status slot and stale previously delivered jobs remain open.
-    for job in [*previous, *fresh]:
+    # Older unchecked records go first. Each successful response records when
+    # a status was checked, so repeated runs advance fairly through the backlog.
+    ordered = sorted(
+        [*previous, *fresh],
+        key=lambda job: (
+            job.get("status_checked_at", ""),
+            job.get("first_seen_at", ""),
+            job.get("key", ""),
+        ),
+    )
+    for job in ordered:
         identifier = job.get("jobicy_id")
         if identifier and identifier not in selected:
             selected.append(identifier)
@@ -439,6 +447,7 @@ def _verify_remote_status(
             state = statuses.get(job.get("jobicy_id", ""))
             if state is None:
                 continue
+            job["status_checked_at"] = datetime.now(UTC).isoformat()
             if state == "unknown" and job.get("availability") == "closed":
                 continue
             job["availability"] = state
@@ -504,8 +513,13 @@ def poll_career(
         if res.ok:
             parsed = parse_iran_jobs(res.text)
             sources["jobinja"]["accepted"] += len(parsed)
-            if not parsed:
-                errors.append("Jobinja produced zero matching job cards; verify markup")
+            # Valid listings with irrelevant titles can legitimately produce
+            # zero career matches. Only missing recognizable job links signals
+            # a markup change; do not report ordinary empty results as outages.
+            if not parsed and not re.search(
+                r"/companies/[^/]+/jobs/[^/]+", res.text,
+            ):
+                errors.append("Jobinja returned no recognizable job cards; verify markup")
             fresh.extend(parsed)
         else:
             errors.append(f"Jobinja fetch: {res.error or res.status}")
