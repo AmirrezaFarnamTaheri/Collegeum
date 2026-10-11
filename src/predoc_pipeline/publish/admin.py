@@ -28,19 +28,18 @@ def admin_id(settings: Settings) -> int | None:
     return int(raw) if raw.isdecimal() and int(raw) > 0 else None
 
 
-def buttons(*, paused: bool = False) -> dict[str, Any]:
+def buttons(*, paused: bool = False, page: str = "status") -> dict[str, Any]:
+    def nav(label: str, target: str) -> dict[str, str]:
+        prefix = "● " if page == target else ""
+        return {"text": prefix + label, "callback_data": f"adm:{target}"}
+
     return {"inline_keyboard": [
-        [
-            {"text": "Overview", "callback_data": "adm:status"},
-            {"text": "Runs", "callback_data": "adm:runs"},
-        ],
-        [
-            {"text": "Delivery queue", "callback_data": "adm:queue"},
-            {"text": "Cache / sources", "callback_data": "adm:cache"},
-        ],
+        [nav("Overview", "status"), nav("Recent runs", "runs")],
+        [nav("Delivery queue", "queue"), nav("Sources & cache", "cache")],
+        [{"text": "↻ Refresh this view", "callback_data": f"adm:{page}"}],
         [{"text": "▶ Resume private alerts" if paused else "⏸ Pause private alerts",
           "callback_data": "adm:resume" if paused else "adm:pause"}],
-        [{"text": "Run pipeline in GitHub", "url": ACTIONS_URL}],
+        [{"text": "↗ Open scheduled pipeline", "url": ACTIONS_URL}],
     ]}
 
 
@@ -53,6 +52,7 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
     header = f"<b>Collegeum · Admin</b>\nPrivate alerts: <b>{status}</b>"
     subs = store.subscribers
     active_subscribers = sum(1 for member in subs.values() if member["topics"])
+    paused_subscribers = sum(1 for member in subs.values() if member.get("paused"))
     total_uncertain = sum(
         1 for item in subs.values() for rec in item["deliveries"].values()
         if rec["state"] in ("sending", "uncertain")
@@ -65,6 +65,7 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
         return (
             f"{header}\n\n"
             f"👥 Active subscriptions: {active_subscribers}\n"
+            f"⏸ Individually paused: {paused_subscribers}\n"
             f"⚠️ Uncertain private sends: {total_uncertain}\n"
             f"⛔ Rejected private sends: {total_rejected}\n"
             "⏱ Pipeline: every 4 hours · Telegram sync: ~30 minutes\n"
@@ -118,8 +119,14 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
         try:
             data = json.loads(health_path.read_text(encoding="utf-8"))
             checks = data["sources"]
+            display_names = {
+                "jobicy": "Jobicy · worldwide remote",
+                "jobinja": "Jobinja · Iran",
+                "irantalent": "IranTalent · Iran",
+            }
             check_lines = [
-                f"{name}: {info['accepted']} matches, {info['fetched']} requests"
+                f"• {display_names.get(name, name)}: "
+                f"{info['accepted']} matches / {info['fetched']} requests"
                 for name, info in checks.items() if info.get("requested")
             ]
             source_health = (
@@ -127,6 +134,9 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
                 + ("\n".join(check_lines) if check_lines else "No career feeds requested.")
                 + f"\nFeed errors: {len(data.get('errors', []))}"
             )
+            if data.get("errors"):
+                details = "; ".join(str(e)[:90] for e in data["errors"][:2])
+                source_health += f"\nLatest issues: {details}"
         except (ValueError, KeyError, TypeError):
             source_health = "Career-source health record is invalid."
     return (
