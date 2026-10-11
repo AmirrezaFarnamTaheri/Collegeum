@@ -49,7 +49,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertLess(private_checkout, sync)
         self.assertIn('if [ -z "$TELEGRAM_BOT_TOKEN" ]', content)
         self.assertIn('if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]', content)
-        self.assertIn("::error::FEEDBACK_ENCRYPTION_KEY is missing", content)
+        self.assertIn("::error::FEEDBACK_ENCRYPTION_KEY was not injected", content)
         self.assertIn("::error::TELEGRAM_BOT_TOKEN is missing", content)
         self.assertNotIn('echo "private_enabled=false"', content)
         self.assertNotIn("bot disabled.", content)
