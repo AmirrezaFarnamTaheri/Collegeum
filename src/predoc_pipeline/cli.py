@@ -36,6 +36,8 @@ app.add_typer(sources_app, name="sources")
 
 log = get_logger(__name__)
 
+_DEFAULT_PRIVATE_BATCH = Path("data/.private_delivery_batch.json")
+
 
 def _settings() -> Settings:
     configure_logging()
@@ -259,7 +261,7 @@ def telegram_reconcile(
 @app.command("subscriber-plan")
 def subscriber_plan(
     output: Path = typer.Option(
-        Path("data/.private_delivery_batch.json"), "--output",
+        _DEFAULT_PRIVATE_BATCH, "--output",
         help="Untracked per-run private delivery batch"),
 ) -> None:
     """Reserve private alerts without sending (commit encrypted intents first)."""
@@ -276,7 +278,7 @@ def subscriber_plan(
 @app.command("subscriber-send")
 def subscriber_send(
     input_path: Path = typer.Option(
-        Path("data/.private_delivery_batch.json"), "--input",
+        _DEFAULT_PRIVATE_BATCH, "--input",
         help="Batch created by subscriber-plan on this GitHub runner"),
 ) -> None:
     """Send pre-committed private alerts only, retaining unknown outcomes."""

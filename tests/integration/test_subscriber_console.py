@@ -10,9 +10,9 @@ import httpx
 from predoc_pipeline.ingest.career import (
     classify_career,
     load_career,
-    poll_career,
     parse_iran_jobs,
     parse_remote_jobs,
+    poll_career,
     save_career,
 )
 from predoc_pipeline.ingest.rotation import SCHEDULE_INTERVAL_HOURS, scheduled_sources
@@ -352,6 +352,7 @@ def test_planner_never_reserves_without_bot_credentials(tmp_path):
 
 def test_batch_write_failure_cannot_persist_orphan_send_intents(tmp_path, monkeypatch):
     import pytest
+
     from predoc_pipeline.publish import private_delivery
 
     cfg = settings(tmp_path)

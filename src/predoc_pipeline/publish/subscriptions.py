@@ -125,9 +125,10 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
             continue
         when = job["first_seen_at"]
         parsed = _instant(when)
-        if parsed and parsed >= cutoff and selected(member, job["category"], job["scope"]):
-            if preview or eligible(member, job["category"], job["scope"], when):
-                jobs.append(job)
+        if (parsed and parsed >= cutoff and
+                selected(member, job["category"], job["scope"]) and
+                (preview or eligible(member, job["category"], job["scope"], when))):
+            jobs.append(job)
     jobs.sort(key=lambda item: (item["first_seen_at"], item["key"]), reverse=True)
     return jobs
 

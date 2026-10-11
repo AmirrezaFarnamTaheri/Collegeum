@@ -347,12 +347,12 @@ def telegram_sync(
                                             settings, summary, rows):
                         changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,
                                                owners, summary)
-                elif "message" in update:
-                    if not private_message(bot, update["message"], store, settings,
-                                           rows, summary):
-                        _handle_message(bot, update["message"], rows, store, owners,
-                                        summary, page_size=page_size,
-                                        max_items=max_items, site_url=settings.site_url)
+                elif ("message" in update and
+                      not private_message(bot, update["message"], store,
+                                          settings, rows, summary)):
+                    _handle_message(bot, update["message"], rows, store, owners,
+                                    summary, page_size=page_size,
+                                    max_items=max_items, site_url=settings.site_url)
             except Exception as exc:  # noqa: BLE001
                 if _is_retryable(exc):
                     # Do not acknowledge: this update (and everything after it) is
