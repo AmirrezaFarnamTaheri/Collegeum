@@ -542,3 +542,35 @@ def test_unknown_provider_result_never_reopens_confirmed_closed_vacancy(tmp_path
     assert errors == []
     assert stats["fetched"] == 1
     assert closed["availability"] == "closed"
+
+
+def test_private_manual_reconciliation_requires_message_evidence(tmp_path):
+    import pytest
+
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    assert store.reserve_delivery(101, "academic:pending")
+    with pytest.raises(ValueError, match="message ID"):
+        store.resolve_delivery(101, "academic:pending", confirmed_sent=True)
+    store.resolve_delivery(
+        101, "academic:pending", confirmed_sent=True, message_id=456,
+    )
+    store.resolve_delivery(
+        101, "academic:pending", confirmed_sent=True, message_id=456,
+    )
+    assert store.subscriber(101)["deliveries"]["academic:pending"]["message_id"] == 456
+    with pytest.raises(ValueError, match="Cannot overwrite"):
+        store.resolve_delivery(
+            101, "academic:pending", confirmed_sent=True, message_id=789,
+        )
+    assert store.reserve_delivery(101, "academic:rejected")
+    store.reject_delivery(101, "academic:rejected", status=400)
+    with pytest.raises(ValueError, match="explicitly rejected"):
+        store.resolve_delivery(
+            101, "academic:rejected", confirmed_sent=True, message_id=789,
+        )
+    store.resolve_delivery(
+        101, "academic:rejected", confirmed_absent=True,
+    )
+    assert "academic:rejected" not in store.subscriber(101)["deliveries"]
