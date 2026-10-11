@@ -220,7 +220,8 @@ def test_publication_holds_auth_and_error_pages_and_unwraps_valid_forms(tmp_path
 def test_published_salary_projection_rechecks_ad_text_instead_of_model_numbers():
     item = listing(salary_raw="salary scale 13 TV-L, 100%", salary_min=13,
                    salary_max=13, salary_period="year")
-    record = state._public_record({"id": 1, **pipeline._listing_row(
+    record = state._public_record({"id": 1, "alternate_sources": "[]",
+                                   **pipeline._listing_row(
         item, source="test", signature=None,
     )})
     assert record["salary_raw"] == item.salary_raw
