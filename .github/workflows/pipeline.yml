@@ -131,7 +131,7 @@ jobs:
           set -o pipefail
           FLAG=""
           if [ "$DRY_RUN_INPUT" = "true" ]; then FLAG="--dry-run"; fi
-          PYTHONPATH=src python3 -m predoc_pipeline.cli run $FLAG 2>&1 | tee run.log
+          PYTHONPATH=src python3 -m predoc_pipeline.cli run $FLAG --no-private-sync 2>&1 | tee run.log
         continue-on-error: true
 
       # continue-on-error above means a pipeline failure would otherwise leave

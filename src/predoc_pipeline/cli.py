@@ -55,6 +55,10 @@ def run(
         help="Comma-separated collectors ('boards,feeds') or board sources ('cemfi,linkedin').",
     ),
     limit: int | None = typer.Option(None, help="Process at most this many ingested items."),
+    sync_private: bool = typer.Option(
+        False, "--sync-private/--no-private-sync",
+        help="Also poll private Telegram updates (normally handled by telegram-sync).",
+    ),
 ) -> None:
     """Run one full cycle: ingest, gate, extract, dedupe, publish."""
     from .pipeline import EXIT_FATAL, EXIT_OK
@@ -63,7 +67,10 @@ def run(
     settings = _settings()
     only_set = {s.strip() for s in only.split(",")} if only else None
     try:
-        stats = run_pipeline(settings, only_sources=only_set, dry_run=dry_run, limit=limit)
+        stats = run_pipeline(
+            settings, only_sources=only_set, dry_run=dry_run, limit=limit,
+            sync_telegram=sync_private,
+        )
     except Exception as exc:  # pragma: no cover - top-level safety net
         typer.secho(f"fatal: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(EXIT_FATAL) from exc

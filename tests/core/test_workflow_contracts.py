@@ -33,6 +33,9 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIn("uv sync --locked", content)
                 self.assertIn("queue: max", content)
         pipeline = workflow("pipeline.yml")
+        # Publication runs may not poll private updates; the dedicated
+        # telegram-sync job alone checkpoints subscriber update offsets.
+        self.assertIn("run $FLAG --no-private-sync", pipeline)
         self.assertIn("timeout-minutes: 120", pipeline)
         self.assertIn("github.event.inputs.dry_run != 'true'", pipeline)
         self.assertIn(

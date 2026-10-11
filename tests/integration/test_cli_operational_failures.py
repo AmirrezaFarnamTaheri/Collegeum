@@ -60,3 +60,26 @@ def test_completed_inbox_stays_successful():
     assert sync.call_count == 1
     assert result.exit_code == 0
     assert "2 command(s)" in result.output
+
+def test_general_run_never_polls_private_updates_without_explicit_opt_in():
+    from types import SimpleNamespace
+
+    fake = SimpleNamespace(
+        ingested=0, gated=0, extracted=0, duplicates=0, published=0,
+        errors=0, llm_calls=0, outcome="dry-run",
+    )
+    cfg = Settings(_env_file=None)
+    with (
+        patch("predoc_pipeline.cli._settings", return_value=cfg),
+        patch("predoc_pipeline.pipeline.run", return_value=fake) as mocked,
+    ):
+        ordinary = CliRunner().invoke(app, ["run", "--dry-run", "--no-private-sync"])
+        assert ordinary.exit_code == 0, ordinary.output
+        assert mocked.call_args.kwargs["sync_telegram"] is False
+        default = CliRunner().invoke(app, ["run", "--dry-run"])
+        assert default.exit_code == 0, default.output
+        assert mocked.call_args.kwargs["sync_telegram"] is False
+        explicitly_enabled = CliRunner().invoke(app, ["run", "--sync-private"])
+        assert explicitly_enabled.exit_code == 0, explicitly_enabled.output
+        assert mocked.call_args.kwargs["sync_telegram"] is True
+
