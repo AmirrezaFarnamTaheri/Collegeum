@@ -10,6 +10,7 @@ import httpx
 from predoc_pipeline.ingest.career import (
     classify_career,
     load_career,
+    poll_career,
     parse_iran_jobs,
     parse_remote_jobs,
     save_career,
@@ -232,6 +233,7 @@ def test_scope_and_topic_both_needed_and_no_retrospective_delivery():
 
 def test_career_parsers_and_journal_do_not_conflate_geographies(tmp_path):
     assert classify_career("تحلیلگر داده") == "data_analyst"
+    assert classify_career("تحلیل‌گر داده") == "data_analyst"
     assert classify_career("Data Scientist") == "data_scientist"
     assert classify_career("Assistant accountant") is None
     jobs = parse_remote_jobs({"jobs": [
@@ -240,6 +242,11 @@ def test_career_parsers_and_journal_do_not_conflate_geographies(tmp_path):
          "url": "https://jobicy.com/jobs/2", "companyName": "A"},
     ]})
     assert len(jobs) == 1 and jobs[0]["scope"] == "remote"
+    denied = parse_remote_jobs({"jobs": [
+        {"jobTitle": "Data Analyst", "jobGeo": "Anywhere excluding Iran",
+         "url": "https://jobicy.com/jobs/3"},
+    ]})
+    assert denied == []
     html = ('<article><a href="/companies/sample/jobs/123-data-analyst">'
             'تحلیلگر داده</a></article>')
     iran = parse_iran_jobs(html)
@@ -266,3 +273,60 @@ def test_pipeline_schedule_matches_source_rotation_interval():
     workflow = (root / ".github/workflows/pipeline.yml").read_text(encoding="utf-8")
     assert SCHEDULE_INTERVAL_HOURS == 4
     assert 'cron: "0 */4 * * *"' in workflow
+
+
+def test_remote_feed_follows_bounded_cursor_without_duplicate_alerts(tmp_path):
+    from types import SimpleNamespace
+
+    pages = [
+        {"jobs": [
+            {"jobTitle": "Data Analyst", "jobGeo": "Anywhere",
+             "url": "https://jobicy.com/jobs/first", "companyName": "A"},
+        ], "nextCursor": "opaque-token", "success": True},
+        {"jobs": [
+            {"jobTitle": "Data Scientist", "jobGeo": "Global",
+             "url": "https://jobicy.com/jobs/second", "companyName": "B"},
+        ], "nextCursor": None, "success": True},
+    ]
+
+    class Client:
+        def __init__(self):
+            self.calls = []
+
+        def get(self, url):
+            self.calls.append(url)
+            return SimpleNamespace(ok=True, text=json.dumps(pages[len(self.calls) - 1]))
+
+    client = Client()
+    saved = tmp_path / "careers.ndjson"
+    added, errors = poll_career(
+        saved, client=client, needs_iran=False, needs_remote=True,
+    )
+    assert not errors
+    assert added == 2
+    assert len(load_career(saved)) == 2
+    assert len(client.calls) == 2
+    assert "cursor=opaque-token" in client.calls[1]
+
+
+def test_remote_feed_ignores_repeated_cursor(tmp_path):
+    from types import SimpleNamespace
+
+    class Client:
+        def __init__(self):
+            self.calls = []
+
+        def get(self, url):
+            self.calls.append(url)
+            return SimpleNamespace(ok=True, text=json.dumps({
+                "success": True, "jobs": [], "nextCursor": "same-token",
+            }))
+
+    client = Client()
+    added, errors = poll_career(
+        tmp_path / "career.ndjson", client=client,
+        needs_iran=False, needs_remote=True,
+    )
+    assert added == 0
+    assert len(client.calls) == 2
+    assert any("cursor" in e for e in errors)
