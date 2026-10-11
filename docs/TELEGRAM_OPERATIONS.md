@@ -386,3 +386,18 @@ runs, assuming normal GitHub scheduling. Each aggregator topic shard has
 2–4 search pages, preventing a single large portal from exhausting the
 scheduler on its own. This is a coverage and resource bound, not a claim
 that all sources contain live postings at every check.
+
+### Scheduled collection delivery is best-effort
+
+The main collection cron is offset to minute **07** of every fourth UTC hour
+rather than the GitHub Actions peak-load minute 00. This reduces a documented
+source of scheduler delay, but GitHub can still delay or drop scheduled runs.
+The fixed UTC four-hour slot identifiers and persisted per-source attempt history
+catch up missed source cohorts without treating a missed run as a source closure.
+Do not assume that a green CI run proves the scheduled workflow has run recently.
+Monitor actual workflow-run creation times, `docs/data/health.json`, source
+attempt ages and the private Telegram input cursor. GitHub's schedule triggers
+have no exactly-once or maximum-latency guarantee, and Telegram updates are
+retained for a limited period. A sustained schedule gap requires manual
+`workflow_dispatch` recovery from reviewed `main` code and should be reported
+as an operational incident, not as an empty job market.

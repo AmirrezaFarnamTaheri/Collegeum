@@ -1,12 +1,14 @@
 name: predoc-pipeline
 
-# Runs every four hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC.
+# Runs every four hours: 00:07, 04:07, 08:07, 12:07, 16:07, 20:07 UTC.
+# Avoid the peak-load top-of-hour scheduler window; the four-hour
+# source-cohort slots remain anchored to the UTC four-hour boundaries.
 # GitHub may start scheduled runs 5-30 minutes late; that is normal.
 #
 # Runtime and Actions usage depend on collection and extraction volume.
 on:
   schedule:
-    - cron: "0 */4 * * *"
+    - cron: "7 */4 * * *"
   workflow_dispatch:
     inputs:
       dry_run:

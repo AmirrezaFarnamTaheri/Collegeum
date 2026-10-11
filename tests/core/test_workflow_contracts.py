@@ -81,7 +81,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_cadence_and_source_rotation_share_four_hour_slots(self):
         pipeline = workflow("pipeline.yml")
-        self.assertIn('cron: "0 */4 * * *"', pipeline)
+        self.assertIn('cron: "7 */4 * * *"', pipeline)
         self.assertIn("SOURCE_ROTATION_ENABLED", pipeline)
         self.assertIn("data/career_jobs.ndjson", pipeline)
         self.assertIn("data/career_health.json", pipeline)

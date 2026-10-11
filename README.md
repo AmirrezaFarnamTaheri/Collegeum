@@ -97,7 +97,7 @@ predoc-pipeline vacuum           # prune dead-letter/seen rows and compact the d
 For a scheduled, hosted setup add `TELEGRAM_BOT_TOKEN` and
 `TELEGRAM_PUBLIC_CHANNEL_ID` (your own chat id, for a personal bot) as
 repository secrets. `.github/workflows/pipeline.yml` runs every four hours
-(00:00, 04:00, 08:00, 12:00, 16:00 and 20:00 UTC),
+(00:07, 04:07, 08:07, 12:07, 16:07 and 20:07 UTC),
 and `.github/workflows/telegram.yml` checks commands at its configured half-hour
 slots. Both workflows share a serial queue with multiple waiting runs enabled;
 [GitHub permits up to 100 waiting runs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)

@@ -186,3 +186,58 @@ def test_confirmed_source_facts_survive_public_rebuild(tmp_path: Path):
     assert entries[77]["salary_min"] == rows[77]["salary_min"]
     assert entries[139]["min_degree"] == "masters"
     assert entries[173]["institution"] == rows[173]["institution"]
+
+
+def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
+    tmp_path: Path,
+):
+    """Rebuild both publication formats from the real journal, not snapshots."""
+    from predoc_pipeline import state
+    from predoc_pipeline.boards.config import load_preferences
+    from predoc_pipeline.core.db import Database, init
+    from predoc_pipeline.routing import Router
+
+    root = Path(__file__).resolve().parents[2]
+    db_path = tmp_path / "rebuild.db"
+    init(db_path)
+    router = Router(load_preferences(root / "config/preferences.toml"))
+    dashboard = tmp_path / "listings.json"
+    rss = tmp_path / "feed.xml"
+    with Database(db_path) as db:
+        restored = state.restore_if_needed(
+            db, root / "data/listings.ndjson", root / "data/seen.ndjson"
+        )
+        assert restored >= 100
+        state.export_dashboard(db, dashboard, router=router)
+        state.export_feed(db, rss, router=router, limit=500)
+    output = json.loads(dashboard.read_text(encoding="utf-8"))
+    published = {entry["id"]: entry for entry in output["listings"]}
+    assert output["count"] == len(published)
+    assert 28 not in published  # neuroscience is not economics
+    for identifier in (46, 77, 139, 173):
+        assert identifier in published
+    assert "University of Pennsylvania" in published[46]["institution"]
+    assert "upenn.wd1.myworkdayjobs.com" in published[46]["apply_url"]
+    assert published[46]["salary_min"] == 50000
+    assert published[46]["salary_max"] == 60000
+    assert published[77]["kind"] == "research"
+    assert published[77]["salary_min"] == 114952.5
+    assert published[77]["salary_max"] == 156778
+    assert published[77]["salary_currency"] == "CAD"
+    assert published[139]["min_degree"] == "masters"
+    assert "jobs.unisg.ch" in published[139]["apply_url"]
+    assert published[139]["tools_required"] == []
+    assert "University of Bern" in published[173]["institution"]
+    assert "jobs.unibe.ch" in published[173]["apply_url"]
+
+    items = ET.parse(rss).getroot().findall("channel/item")
+    feed_by_guid = {entry.findtext("guid"): entry for entry in items}
+    assert not any("Freedman Lab" in (item.findtext("description") or "")
+                   for item in items)
+    for identifier in (46, 77, 139, 173):
+        item = published[identifier]
+        guid = item["source_url"]
+        assert guid in feed_by_guid
+        xml_item = feed_by_guid[guid]
+        assert xml_item.findtext("link") == item["apply_url"]
+        assert item["institution"] in (xml_item.findtext("title") or "")
