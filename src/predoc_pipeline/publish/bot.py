@@ -57,26 +57,34 @@ log = get_logger(__name__)
 __all__ = ["COMMANDS", "telegram_sync", "select_rows", "build_pages", "command_of"]
 
 COMMANDS = [
-    ("positions", "All open positions, soonest deadline first"),
-    ("applied", "Positions you marked 📝 applied"),
-    ("valid", "Positions you marked ✅ interested"),
-    ("hidden", "Positions you marked ❌ (to restore one)"),
-    ("help", "How the buttons work"),
-    ("start", "Open personal alerts"),
-    ("settings", "Manage alert preferences"),
-    ("academic", "Choose academic positions"),
-    ("careers", "Choose specialist career roles"),
-    ("markets", "Choose job markets"),
-    ("sources", "View job-source status"),
+    ("start", "Open personal job alerts"),
+    ("settings", "Choose jobs and markets"),
     ("latest", "Browse matching opportunities"),
-    ("status", "Your alert overview"),
-    ("pause", "Pause personal notifications"),
-    ("resume", "Resume personal notifications"),
-    ("guide", "Help with personal alerts"),
+    ("sources", "See current job sources"),
+    ("pause", "Pause notifications"),
+    ("resume", "Resume notifications"),
+    ("guide", "Help with job alerts"),
     ("stop", "Unsubscribe with confirmation"),
 ]
+OWNER_COMMANDS = [
+    ("positions", "All open published positions"),
+    ("applied", "Your applied positions"),
+    ("valid", "Your interested positions"),
+    ("hidden", "Your hidden positions"),
+    ("help", "Help with owner feedback buttons"),
+]
 ADMIN_COMMAND = ("admin", "Operations and source health")
-COMMANDS_VERSION = 4
+FA_COMMAND_DESCRIPTIONS = {
+    "start": "صفحه اصلی اعلان فرصت‌ها",
+    "settings": "تنظیم موضوع‌ها و محدوده",
+    "latest": "مرور تازه‌ترین فرصت‌ها",
+    "sources": "وضعیت منابع آگهی",
+    "pause": "توقف اعلان‌ها",
+    "resume": "ازسرگیری اعلان‌ها",
+    "guide": "راهنمای استفاده",
+    "stop": "لغو عضویت با تأیید",
+}
+COMMANDS_VERSION = 5
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
@@ -258,16 +266,37 @@ def telegram_sync(
                     {"command": c, "description": d} for c, d in COMMANDS
                 ]
                 bot.call("setMyCommands", {"commands": command_list})
-                # Do not advertise privileged /admin to every subscriber.
+                # Persian labels for users whose Telegram locale is Persian.
+                bot.call("setMyCommands", {
+                    "scope": {"type": "all_private_chats"},
+                    "language_code": "fa",
+                    "commands": [
+                        {"command": c, "description": FA_COMMAND_DESCRIPTIONS[c]}
+                        for c, _ in COMMANDS
+                    ],
+                })
                 raw_admin = settings.telegram_admin_chat_id.strip()
-                if raw_admin.isascii() and raw_admin.isdecimal() and int(raw_admin) > 0:
-                    bot.call("setMyCommands", {
-                        "scope": {"type": "chat", "chat_id": int(raw_admin)},
-                        "commands": [
-                            *command_list,
-                            {"command": ADMIN_COMMAND[0],
-                             "description": ADMIN_COMMAND[1]},
+                admin_chat = (
+                    int(raw_admin) if raw_admin.isascii()
+                    and raw_admin.isdecimal() and int(raw_admin) > 0
+                    else None
+                )
+                for chat_id in sorted(owners):
+                    scoped = [
+                        *command_list,
+                        *[
+                            {"command": c, "description": desc}
+                            for c, desc in OWNER_COMMANDS
                         ],
+                    ]
+                    if chat_id == admin_chat:
+                        scoped.append({
+                            "command": ADMIN_COMMAND[0],
+                            "description": ADMIN_COMMAND[1],
+                        })
+                    bot.call("setMyCommands", {
+                        "scope": {"type": "chat", "chat_id": chat_id},
+                        "commands": scoped,
                     })
                 chat_state["commands_version"] = COMMANDS_VERSION
             except TelegramError as exc:
