@@ -86,6 +86,14 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("actions/configure-pages@v6", content)
         self.assertIn("actions/deploy-pages@v5", content)
 
+    def test_pages_excludes_operational_guides_from_artifact(self):
+        content = workflow("pages.yml")
+        self.assertIn("path: build/pages", content)
+        self.assertIn("Stage public dashboard assets", content)
+        self.assertIn("docs/data", content)
+        self.assertNotIn("path: docs\n", content)
+        self.assertNotIn("cp -r docs", content)
+
     def test_distribution_is_generated_without_mutating_branches(self):
         content = workflow("refresh-release.yml")
         self.assertIn("contents: read", content)

@@ -264,3 +264,13 @@ robots restrictions, changed response schemas and valid pages with no matching
 roles. Run it after a provider markup change; do not blindly treat a
 zero-match result as a broken parser. It is deliberately not a blocking CI
 test because external sites can be temporarily unavailable.
+
+
+### Public GitHub Pages deployment scope
+
+The Pages workflow stages only the dashboard HTML, architecture visualization,
+branding, RSS files, and public source/listing data under `build/pages`.
+Operational documentation such as `TELEGRAM_OPERATIONS.md`,
+`X_THREAD_RECOVERY.md` and provider notes is not uploaded to the website.
+These documents remain visible in the public GitHub source repository and
+must never contain tokens or confidential subscriber information.
