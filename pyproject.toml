@@ -92,7 +92,7 @@ include = [
     "review/**/*.md", "review/**/*.json", "review/**/*.py",
     "pyproject.toml", "uv.lock", "Makefile", "LICENSE", ".env.example", ".gitignore", ".gitattributes",
     "README.md", "ARCHITECTURE.md", "REVIEW.md", "COMPLIANCE.md", "OPERATIONS.md",
-    "CHANGES.md", "SETUP_GUIDE.md", "FINALIZATION.md", "compile_project.py",
+    "CHANGES.md", "SETUP_GUIDE.md", "FINALIZATION.md",
 ]
 
 [tool.pytest.ini_options]

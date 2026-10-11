@@ -86,12 +86,19 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("actions/configure-pages@v6", content)
         self.assertIn("actions/deploy-pages@v5", content)
 
-    def test_refresh_never_writes_main_and_rechecks_concurrent_updates(self):
+    def test_distribution_is_generated_without_mutating_branches(self):
         content = workflow("refresh-release.yml")
-        self.assertIn("github.ref != 'refs/heads/main'", content)
-        self.assertIn('git reset --hard FETCH_HEAD', content)
-        self.assertIn("python -S tools/verify_single_file.py", content)
-        self.assertIn('gh workflow run ci.yml --ref "$GITHUB_REF_NAME"', content)
+        self.assertIn("contents: read", content)
+        self.assertIn("tools/build_single_file.py", content)
+        self.assertIn("tools/verify_single_file.py", content)
+        self.assertIn("actions/upload-artifact@v7", content)
+        self.assertNotIn("git push", content)
+        self.assertNotIn("contents: write", content)
+        release = workflow("publish-distribution.yml")
+        self.assertIn("release:", release)
+        self.assertIn("gh release upload", release)
+        ci = workflow("ci.yml")
+        self.assertIn("python3 tools/build_single_file.py", ci)
 
 
 if __name__ == "__main__":

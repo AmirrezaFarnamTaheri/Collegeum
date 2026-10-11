@@ -47,8 +47,10 @@ htmlcov/
 .idea/
 .DS_Store
 
-# Never commit the auto-generated single-file materializer's scratch output.
+# Build products and mounted private state are never committed.
 /build/
+compile_project.py
+.private-state/
 
 # Plaintext personal marks (local use only; CI commits the encrypted data/feedback.enc)
 data/feedback.json

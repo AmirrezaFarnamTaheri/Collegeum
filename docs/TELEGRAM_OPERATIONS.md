@@ -234,3 +234,13 @@ to the configured state repository, update the Actions
 `FEEDBACK_ENCRYPTION_KEY` secret, then resume the jobs. Old Git commit
 snapshots remain decryptable using the old key; rotation does not erase those
 historical copies.
+
+## Standalone one-file distribution
+
+The generated `compile_project.py` is **not committed** to source control.
+Ordinary source pushes produce a verified, downloadable GitHub Actions artifact
+in `build-single-file` (retained for 14 days). Publishing a GitHub Release
+attaches the verified `compile_project.py` as a release asset. To generate and
+verify it locally, run `make verify-single-file`. The source archive and
+Python wheel contain the source and tooling rather than the giant generated
+materializer, which is obtainable separately.
