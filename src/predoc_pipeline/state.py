@@ -21,8 +21,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from urllib.parse import parse_qs, urlsplit
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 from .core.timeparse import format_ts, parse_datetime, utcnow
 from .models import parse_salary
