@@ -202,7 +202,7 @@ def menu(
     elif page == "help":
         body = (
             "ℹ️ <b>راهنما</b>\n\n"
-            "۱. در «تحصیلات» یا «مشاغل» موضوع دلخواه را روشن کنید.\n"
+            "۱. در «دانشگاهی»، «دکتری علوم زیستی» یا «مشاغل» موضوع دلخواه را انتخاب کنید.\n"
             "۲. برای مشاغل، ایران یا دورکاری جهانی را جداگانه انتخاب کنید.\n"
             "۳. اعلان‌ها فقط برای آگهی‌های جدید پس از عضویت هستند.\n"
             "۴. «تازه‌ترین‌ها» آگهی‌های قبلی را هم برای مرور نشان می‌دهد.\n"
@@ -211,7 +211,7 @@ def menu(
             "برای اطلاعات نگهداری داده‌ها، /privacy را باز کنید."
             if fa else
             "ℹ️ <b>How alerts work</b>\n\n"
-            "1. Choose academic or specialist roles.\n"
+            "1. Choose academic roles, Life Sciences PhD, or specialist careers.\n"
             "2. For careers, select Iran and/or worldwide remote.\n"
             "3. Notifications cover new matches after you opt in.\n"
             "4. Browse latest to view existing positions on demand.\n"
