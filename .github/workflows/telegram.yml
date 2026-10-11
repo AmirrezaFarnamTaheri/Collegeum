@@ -1,7 +1,7 @@
 name: telegram-sync
 
-# Answers /positions, /applied, /valid, /hidden, /help and saves the
-# interested / not-for-me / applied button taps to the encrypted data/feedback.enc.
+# Processes opt-in subscriptions, owner feedback, administrator recovery,
+# encrypted send intents, and verified delivery acknowledgements.
 #
 # There is no always-on server: this checks for new messages every 30 minutes
 # throughout the day, including overnight (subject to GitHub cron delays).

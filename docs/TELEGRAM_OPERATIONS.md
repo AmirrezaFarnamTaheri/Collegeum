@@ -78,16 +78,17 @@ Scheduled 4h collection (rotating source cohorts)
   -> opt-in career feeds (up to two Jobicy pages, one status check, one Jobinja fetch)
   -> deduplicated career jobs journal + data/career_health.json
 
-Telegram inbox job (~30 minutes during configured dayparts)
-  -> getUpdates(offset, limit=30)
+Telegram inbox job (~30 minutes throughout the day)
+  -> getUpdates(offset, limit=100)
   -> verify private chat ID == user ID
   -> save encrypted subscription + callback ID before advancing offset
   -> match new academic/career listings to each user's opt-in timestamp
   -> write untracked private batch and encrypted "sending" intents
-  -> GIT CHECKPOINT: commit encrypted feedback + Telegram offset on main
+  -> GIT CHECKPOINT: commit encrypted feedback + Telegram offset to the
+     configured authoritative state repository (private when configured)
   -> ONLY ON CHECKPOINT SUCCESS: sendMessage for reserved batch
   -> persist "sent" acknowledgement / "uncertain" / "rejected" disposition
-  -> GIT CHECKPOINT: commit encrypted acknowledgements on main
+  -> GIT CHECKPOINT: commit encrypted acknowledgements to the state backend
   -> fail run if stage or checkpoint failed; preserve recovery information
 ```
 

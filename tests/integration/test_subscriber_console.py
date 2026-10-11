@@ -1344,3 +1344,16 @@ def test_admin_reconciliation_does_not_automatically_replay_unknown(tmp_path):
     ]))
     saved = FeedbackStore.from_settings(cfg)
     assert saved.subscriber(101)["deliveries"]["academic:unknown"]["state"] == "uncertain"
+
+
+def test_admin_action_link_respects_repository_rename(monkeypatch):
+    from predoc_pipeline.publish import admin as admin_module
+
+    monkeypatch.setenv("GITHUB_REPOSITORY", "example-org/renamed-collegeum")
+    assert admin_module._actions_url().endswith(
+        "/example-org/renamed-collegeum/actions/workflows/pipeline.yml"
+    )
+    monkeypatch.setenv("GITHUB_REPOSITORY", "../hostile")
+    assert admin_module._actions_url().startswith(
+        "https://github.com/AmirrezaFarnamTaheri/Collegeum/"
+    )

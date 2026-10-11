@@ -1,14 +1,15 @@
 """Your own marks on positions (✅ interested, ❌ not for me, 📝 applied).
 
-Marks are keyed by the listing's ``url_hash`` (stable across journal restores,
-unlike the SQLite row id). Only the Telegram-sync job writes this state; the
-daily run only reads it, so the two workflows never overwrite each other's work.
+Marks are keyed by stable URL hashes, not transient SQLite row IDs. The
+pipeline and Telegram-sync jobs can each persist private state under one
+shared GitHub Actions concurrency group, avoiding overlapping writers.
 
-Privacy: the repository that runs the pipeline may be public, and an *applied*
-mark is personal. When ``FEEDBACK_ENCRYPTION_KEY`` is set the marks are stored
-only as a Fernet-encrypted file (``feedback.enc`` beside the configured path);
-no plaintext file is written. Without a key the plaintext file is written for
-local use and is gitignored; scheduled workflows stage only the encrypted file.
+Privacy: user marks, subscriptions and private delivery receipts are encrypted
+with Fernet when FEEDBACK_ENCRYPTION_KEY is present. Production jobs require
+encrypted state. Configuring PRIVATE_STATE_REPO stores new ciphertext outside
+the public source repository. Backward-compatible public-repository mode
+retains old encrypted revisions; key rotation cannot erase them.
+Plaintext is for local use only and is gitignored.
 
 Integrity: absent state is an empty store, but malformed or wrong-shaped state
 is never treated as empty. The damaged file is copied aside for inspection and

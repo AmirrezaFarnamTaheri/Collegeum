@@ -1,21 +1,14 @@
-"""Two-way Telegram: commands and ✅ ❌ 📝 buttons.
+"""Scheduled two-way Telegram subscriber, owner and administrator interactions.
 
-Commands you can send to the bot:
+General commands configure private opt-in alerts and browse job opportunities.
+The administrator has scoped /admin and /reconcile commands. Legacy
+feedback buttons remain owner-only. Shared GitHub Actions workflows serialize
+state writers and checkpoint delivery intents before sending. Ambiguous sends
+must be reconciled with verified evidence.
 
-    /positions  all open positions, soonest deadline first
-    /applied    positions you marked 📝 applied
-    /valid      positions you marked ✅
-    /hidden     positions you marked ❌ (tap ❌ again to bring one back)
-    /help       what the buttons mean
-
-There is no always-on server. GitHub Actions runs ``predoc-pipeline
-telegram-sync`` every 30 minutes during the day (and at the start of the daily
-run). Each run reads the messages and button taps that arrived since the last
-one (Telegram keeps them for 24 hours), answers them, and saves your marks to
-``data/feedback.json``.
-
-Only the owner (the private chat in TELEGRAM_PUBLIC_CHANNEL_ID or
-TELEGRAM_ADMIN_CHAT_ID) is answered; everybody else is ignored.
+The service polls approximately every 30 minutes throughout the day, subject
+to GitHub scheduler delays. It is not an always-online webhook server.
+Incoming updates expire at Telegram after at most 24 hours.
 """
 
 from __future__ import annotations

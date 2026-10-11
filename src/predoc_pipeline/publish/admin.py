@@ -20,7 +20,18 @@ from ..settings import Settings
 if TYPE_CHECKING:
     from .feedback import FeedbackStore
 
-ACTIONS_URL = "https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/workflows/pipeline.yml"
+def _actions_url() -> str:
+    """Use the current repository instead of a stale name after a rename."""
+    import os
+    import re
+
+    repository = os.environ.get("GITHUB_REPOSITORY", "")
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
+        repository = "AmirrezaFarnamTaheri/Collegeum"
+    return f"https://github.com/{repository}/actions/workflows/pipeline.yml"
+
+
+ACTIONS_URL = _actions_url()
 
 
 def admin_id(settings: Settings) -> int | None:
