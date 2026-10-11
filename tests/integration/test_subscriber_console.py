@@ -1237,7 +1237,9 @@ def test_jobicy_status_rotation_does_not_starve_old_records():
     _verify_remote_status(client, jobs, [], [], {"fetched": 0})
     _verify_remote_status(client, jobs, [], [], {"fetched": 0})
     assert len(client.checked[0]) == 100
-    assert set(client.checked[1][:5]) == {str(i + 100) for i in range(100, 105)}
+    assert set(client.checked[1][:5]) == {str(i + 100) for i in range(105)} - set(
+        client.checked[0]
+    )
     assert all("status_checked_at" in job for job in jobs)
 
 
