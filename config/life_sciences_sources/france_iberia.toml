@@ -34,13 +34,14 @@ note = "Official IBEC jobs link to biomedical doctoral adverts; use card heading
 name = "life_fr_cnrs"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://emploi.cnrs.fr/Offres/Doctorant/Default.aspx?lang=FR"
-link_pattern = '^$'
+enabled = true
+url = "https://emploi.cnrs.fr/Offres/Recherche.aspx?lang=EN"
+link_pattern = 'emploi\.cnrs\.fr/Offres/Doctorant/[A-Z0-9-]+/Default\.aspx(?:\?|$)'
 country = "France"
 institution = "CNRS"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official CNRS doctoral contract index, with Doctorant/UMR.../Default.aspx vacancies, Oct 2026."
 
 [[board]]
 name = "life_fr_institut_pasteur"

@@ -130,12 +130,22 @@ def test_poll_persists_life_phd_without_damaging_existing_economics(
     }
     save_career(journal, [], [economics])
 
-    async def fake_discover(_sources: object, _http: object):
+    sources = tmp_path / "life_sources.toml"
+    sources.write_text(
+        '[[board]]\nname="life_example"\ntype="link_scan"\n'
+        'url="https://example.org/jobs"\nlink_pattern="example.org"\n',
+        encoding="utf-8",
+    )
+
+    async def fake_discover(
+        _sources: object, _http: object, *, selected_names: set[str] | None = None,
+    ):
+        assert selected_names == {"life_example"}
         return [post(title="PhD Position in Gene Regulation")], []
 
     monkeypatch.setattr(life_sciences, "discover", fake_discover)
     count, errors = life_sciences.poll_life_sciences(
-        journal, sources_path="ignored", http_config=HttpConfig(),
+        journal, sources_path=sources, http_config=HttpConfig(),
     )
     assert count == 1 and errors == []
     records = load_career(journal)
@@ -147,7 +157,7 @@ def test_poll_persists_life_phd_without_damaging_existing_economics(
     assert life["scope"] == ""
     first_seen = life["first_seen_at"]
     assert life_sciences.poll_life_sciences(
-        journal, sources_path="ignored", http_config=HttpConfig(),
+        journal, sources_path=sources, http_config=HttpConfig(),
     )[0] == 0
     assert next(r for r in load_career(journal) if r["category"] == "life_sciences_phd")[
         "first_seen_at"
@@ -491,3 +501,36 @@ def test_programme_and_university_autumn_calls_require_deadline_detail() -> None
     crg.deadline = date(2026, 11, 22)
     assert life_sciences.classify_post(crg, today=TODAY) is not None
     assert life_sciences.classify_post(crg, today=date(2026, 11, 23)) is None
+
+
+def test_large_direct_poll_uses_bounded_selection_even_without_checkpoint(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sources = tmp_path / "sources.toml"
+    sources.write_text(
+        "".join(
+            '[[board]]\n'
+            f'name = "life_direct_{i:02d}"\n'
+            'type = "link_scan"\n'
+            'url = "https://example.org/jobs"\n'
+            'link_pattern = "example.org"\n'
+            for i in range(life_sciences.MAX_SOURCES + 5)
+        ), encoding="utf-8",
+    )
+    selected: list[set[str]] = []
+
+    async def fake_discover(
+        _path: object, _http: object, *, selected_names: set[str] | None = None,
+    ):
+        assert selected_names is not None
+        selected.append(selected_names)
+        return [], []
+
+    monkeypatch.setattr(life_sciences, "discover", fake_discover)
+    result = life_sciences.poll_life_sciences(
+        tmp_path / "jobs.ndjson", sources_path=sources, http_config=HttpConfig(),
+    )
+    assert result == (0, [])
+    assert len(selected) == 1
+    assert len(selected[0]) == life_sciences.MAX_SOURCES
+    assert not (tmp_path / "life_rotation.json").exists()

@@ -26,6 +26,34 @@ CATALOG = ROOT / "config/life_sciences.toml"
 
 REGIONAL_EXAMPLES = [
     (
+        "life_nordic_stockholm",
+        "https://su.varbi.com/en/what%3Ajob/jobID%3A938992/",
+        "PhD student in Molecular Biosciences",
+    ),
+    (
+        "life_nordic_kth",
+        "https://kth.varbi.com/en/what%3Ajob/jobID%3A971218/type%3Ajob/",
+        "Doctoral student in Machine Learning",
+    ),
+    (
+        "life_nordic_linkoping",
+        "https://liu.se/en/work-at-liu/vacancies/29467",
+        "PhD student in Medical Science",
+    ),
+    (
+        "life_nordic_slu",
+        "https://www.slu.se/en/about-slu/work-at-slu/jobs-and-vacancies/"
+        "doktorand-i-skogsskotsel",
+        "PhD student in silviculture of planted birch",
+    ),
+    (
+        "life_fr_cnrs",
+        "https://emploi.cnrs.fr/Offres/Doctorant/"
+        "UMR5237-ALECOP-012/Default.aspx?lang=EN",
+        "PhD student in cell biology",
+    ),
+
+    (
         "life_benelux_ghent",
         "https://www.ugent.be/en/work/scientific/doctoral-fellow-129",
         "Doctoral fellow",
@@ -102,6 +130,7 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     regional = ROOT / "config/life_sciences_sources"
     assert {p.name for p in regional.glob("*.toml")} == {
         "nordics.toml", "dach.toml", "benelux.toml",
+        "aggregator_topics.toml",
         "france_iberia.toml", "central_south.toml",
     }
     base = load_board_sources(CATALOG)
@@ -109,10 +138,10 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     registered = life_sciences.load_life_sources(CATALOG)
     names = [source.name for source in registered]
     assert len(names) == len(set(names))
-    assert len(registered) == 112
+    assert len(registered) == 120
     active = [source for source in registered if source.enabled]
-    assert len(active) == 22
-    assert len(registered) - len(active) == 90
+    assert len(active) == 35
+    assert len(registered) - len(active) == 85
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
     assert all(source.type in {"rss", "link_scan"} for source in active)
@@ -206,18 +235,17 @@ def test_duplicate_provider_name_across_catalogues_is_rejected(tmp_path: Path) -
         life_sciences.load_life_sources(original)
 
 
-def test_source_round_robin_with_twenty_enabled_providers(tmp_path: Path) -> None:
+def test_source_round_robin_covers_every_enabled_provider(tmp_path: Path) -> None:
     journal = tmp_path / "life_rotation.json"
     enabled = {s.name for s in life_sciences.load_life_sources(CATALOG) if s.enabled}
-    assert len(enabled) == 22
+    assert len(enabled) == 35
     seen: set[str] = set()
     for iteration in range(3):
         selected = life_sciences.select_sources(CATALOG, journal)
-        assert len(selected) == 8
-        if iteration <= 1:
-            assert not (selected & seen)
-        else:
-            assert len(selected - seen) == 6
+        assert len(selected) == life_sciences.MAX_SOURCES
+        # Newly enabled/unchecked feeds have priority until each gets a turn.
+        unseen = enabled - seen
+        assert len(selected & unseen) == min(len(unseen), len(selected))
         seen.update(selected)
         save_rotation(
             journal, selected, timestamp=datetime.now(UTC) + timedelta(minutes=iteration),
@@ -225,10 +253,7 @@ def test_source_round_robin_with_twenty_enabled_providers(tmp_path: Path) -> Non
     assert seen == enabled
     assert all(
         name not in enabled
-        for name in (
-            "life_benelux_ku_leuven", "life_nordic_stockholm",
-            "life_dach_mdc_jobs", "life_fr_cnrs",
-        )
+        for name in ("life_benelux_ku_leuven", "life_dach_mdc_jobs")
     )
 
 
@@ -291,17 +316,30 @@ def test_doctoral_posts_are_prioritized_when_a_board_has_many_staff_jobs(
 
 
 def test_aggregator_searches_cover_primary_and_related_biological_fields() -> None:
-    all_sources = {
+    registry = {
         s.name: s for s in life_sciences.load_life_sources(CATALOG)
     }
-    euraxess = all_sources["life_euraxess"].opt("urls")
-    dutch = all_sources["life_academictransfer"].opt("urls")
+    euraxess = [
+        url for s in registry.values()
+        if s.enabled and s.name.startswith("life_euraxess")
+        for url in s.opt("urls", [])
+    ]
+    dutch = [
+        url for s in registry.values()
+        if s.enabled and s.name.startswith("life_academictransfer")
+        for url in s.opt("urls", [])
+    ]
     assert len(euraxess) == 19
     assert len(dutch) == 15
     assert len(euraxess) == len(set(euraxess))
     assert len(dutch) == len(set(dutch))
     assert all("euraxess.ec.europa.eu/jobs/search?" in url for url in euraxess)
     assert all("academictransfer.com/en/jobs/" in url for url in dutch)
+    # Source-level request budgets are bounded instead of 19 pages in one task.
+    assert max(
+        len(s.opt("urls", [])) for s in registry.values()
+        if s.name.startswith(("life_euraxess", "life_academictransfer"))
+    ) <= 4
     for topic in ("epigenetics", "chromatin", "genomics", "neurodevelopment"):
         assert any(topic in url for url in [*euraxess, *dutch])
     for topic in ("RNA%20biology", "psychiatric%20genetics", "transcriptomics"):

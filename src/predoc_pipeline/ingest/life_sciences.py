@@ -27,7 +27,7 @@ from .career import load_career, save_career
 from .rotation import load_rotation, save_rotation
 
 CATEGORY = "life_sciences_phd"
-MAX_SOURCES = 8  # Sources attempted per scheduled run
+MAX_SOURCES = 12  # Sources attempted per scheduled run
 MAX_REGISTERED = 128
 MAX_CATALOG = 256
 MAX_PER_SOURCE = 60
@@ -298,16 +298,14 @@ def poll_life_sciences(
     posts first discovered after subscription are eligible for new alerts.
     """
     started = datetime.now(UTC)
-    if rotation_path is None:
-        posts, errors = asyncio.run(discover(sources_path, http_config))
-        selected: set[str] = set()
-    else:
-        selected = select_sources(sources_path, rotation_path)
-        if not selected:
-            return 0, ["No enabled life-sciences PhD providers"]
-        posts, errors = asyncio.run(
-            discover(sources_path, http_config, selected_names=selected),
-        )
+    # Always bound direct calls too; optional journaling must not disable
+    # selection when the catalogue exceeds the per-run budget.
+    selected = select_sources(sources_path, rotation_path)
+    if not selected:
+        return 0, ["No enabled life-sciences PhD providers"]
+    posts, errors = asyncio.run(
+        discover(sources_path, http_config, selected_names=selected),
+    )
     matches: dict[str, dict[str, str]] = {}
     for post in posts:
         item = classify_post(post)

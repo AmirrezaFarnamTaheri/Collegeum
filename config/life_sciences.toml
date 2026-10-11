@@ -1,7 +1,7 @@
 # Independent Life Sciences PhD sourcing for private Telegram subscribers.
 # These boards are NEVER passed through the economics publication pipeline.
 # Sources are only contacted if somebody opts in to "life_sciences_phd".
-# Each run checks at most 8 enabled sources (with oldest-first rotation when
+# Each run checks at most 12 enabled sources (with oldest-first rotation when
 # more are enabled), up to 60 rows each and 200 rows per run.
 #
 # All matching additionally requires an explicit doctoral role, an eligible
@@ -19,21 +19,6 @@ urls = [
   "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Achromatin",
   "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aneurodevelopment",
   "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Agenomics",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Abioinformatics",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Agene%20regulation",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aorganoids",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aepigenomics",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Ahistone",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Amethylation",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Asingle%20cell",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Astem%20cells",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Apsychiatric%20genetics",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Atranscriptomics",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3ARNA%20biology",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Acomputational%20biology",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3ACRISPR",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aneurogenetics",
-  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aregulatory%20genomics",
 ]
 link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
 institution_from_context = true
@@ -48,18 +33,6 @@ urls = [
   "https://www.academictransfer.com/en/jobs/?q=epigenetics",
   "https://www.academictransfer.com/en/jobs/?q=genomics",
   "https://www.academictransfer.com/en/jobs/?q=neuroscience",
-  "https://www.academictransfer.com/en/jobs/?q=chromatin",
-  "https://www.academictransfer.com/en/jobs/?q=epigenomics",
-  "https://www.academictransfer.com/en/jobs/?q=neurodevelopment",
-  "https://www.academictransfer.com/en/jobs/?q=stem%20cells",
-  "https://www.academictransfer.com/en/jobs/?q=single%20cell",
-  "https://www.academictransfer.com/en/jobs/?q=organoids",
-  "https://www.academictransfer.com/en/jobs/?q=transcriptomics",
-  "https://www.academictransfer.com/en/jobs/?q=CRISPR",
-  "https://www.academictransfer.com/en/jobs/?q=RNA%20biology",
-  "https://www.academictransfer.com/en/jobs/?q=bioinformatics",
-  "https://www.academictransfer.com/en/jobs/?q=psychiatric%20genetics",
-  "https://www.academictransfer.com/en/jobs/?q=regulatory%20genomics",
 ]
 link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
 institution_from_context = true

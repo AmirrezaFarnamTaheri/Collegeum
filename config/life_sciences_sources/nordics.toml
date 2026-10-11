@@ -59,49 +59,53 @@ note = "Official Aalto vacancies link to individual /en/open-positions/slug post
 name = "life_nordic_stockholm"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://www.su.se/english/about-the-university/work-at-su/jobs"
-link_pattern = '^$'
+enabled = true
+url = "https://su.varbi.com/en/"
+link_pattern = 'su\.varbi\.com/(?:en|se)/what(?::|%3A)job/jobID(?::|%3A)\d+'
 country = "Sweden"
 institution = "Stockholm University"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official university Varbi recruitment index and jobID detail links checked Oct 2026."
 
 [[board]]
 name = "life_nordic_linkoping"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://liu.se/en/work-at-liu/vacancies"
-link_pattern = '^$'
+enabled = true
+url = "https://liu.se/en/work-at-liu/vacancies?occupationarea=PhD+students"
+link_pattern = 'liu\.se/en/work-at-liu/vacancies/\d+(?:/|$)'
 country = "Sweden"
-institution = "Linköping University"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+institution = "Linkoping University"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official PhD-filtered university vacancies with numeric detail URLs verified."
 
 [[board]]
 name = "life_nordic_kth"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://www.kth.se/en/om/work-at-kth/lediga-jobb"
-link_pattern = '^$'
+enabled = true
+url = "https://kth.varbi.com/en/"
+link_pattern = 'kth\.varbi\.com/(?:en|se)/what(?::|%3A)job/jobID(?::|%3A)\d+'
 country = "Sweden"
 institution = "KTH Royal Institute of Technology"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official Varbi index and jobID detail links checked Oct 2026."
 
 [[board]]
 name = "life_nordic_slu"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://www.slu.se/en/about-slu/work-at-slu/jobs-vacancies/"
-link_pattern = '^$'
+enabled = true
+url = "https://www.slu.se/en/about-slu/work-at-slu/jobs-and-vacancies/"
+link_pattern = 'slu\.se/en/about-slu/work-at-slu/jobs-and-vacancies/(?:doktorand|phd)[a-z0-9-]*(?:/|\?|$)'
 country = "Sweden"
 institution = "Swedish University of Agricultural Sciences"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official 2026 doctoral listings link to named PhD job pages; ecology and genomics included."
 
 [[board]]
 name = "life_nordic_oslo"
