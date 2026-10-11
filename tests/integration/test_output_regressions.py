@@ -238,7 +238,7 @@ def test_link_scan_rejects_ejm_placeholders_before_model_extraction():
     source = SourceConfig(
         name="european_job_market", type="link_scan",
         url="https://www.europeanjobmarketofeconomists.org/job-listings",
-        link_pattern=r"europeanjobmarketofeconomists\\.org/job-listing/",
+        link_pattern=r"europeanjobmarketofeconomists\.org/job-listing/",
     )
 
     class OfflineHttp:
