@@ -77,3 +77,17 @@ class PublicationContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_site_links_and_rss_stylesheet_have_correct_destination(self):
+        page = (ROOT / "docs/index.html").read_text(encoding="utf-8")
+        style = (ROOT / "docs/rss.xsl").read_text(encoding="utf-8")
+        self.assertNotIn("github.com/amirrezafarnamtaheri/predoc-not-org", page)
+        self.assertIn("github.com/AmirrezaFarnamTaheri/Collegeum", page)
+        self.assertIn("atom:link[@rel='self']/@href", style)
+        self.assertNotIn('select="/rss/channel/link"/>/feed.xml', style)
+
+    def test_materializer_contains_all_static_dashboard_assets(self):
+        tool = (ROOT / "tools/build_single_file.py").read_text(encoding="utf-8")
+        for pattern in ('"docs/*.html"', '"docs/*.svg"', '"docs/*.xsl"', '"docs/*.png"'):
+            self.assertIn(pattern, tool)

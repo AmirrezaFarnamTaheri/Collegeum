@@ -422,6 +422,19 @@ def _post_extract(
         )
         return None
 
+    # The board date-only gate compares calendar days. An advertised cutoff
+    # can be earlier today; never send or persist a newly discovered listing
+    # once its exact UTC deadline has already passed.
+    if listing.deadline is not None and listing.deadline <= utcnow():
+        stats.gated += 1
+        reason = "expired-at-extraction"
+        stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
+        db.mark_seen(
+            source_key, source=item.source, decision="rejected",
+            reason=reason, content_hash=digest,
+        )
+        return None
+
     if (listing.apply_url and gating._EXCLUDED_URL_RX.search(listing.apply_url)) or (
         listing.source_url and gating._EXCLUDED_URL_RX.search(listing.source_url)
     ):

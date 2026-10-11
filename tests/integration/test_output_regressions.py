@@ -228,3 +228,88 @@ def test_published_salary_projection_rechecks_ad_text_instead_of_model_numbers()
     assert record["salary_min"] is None
     assert record["salary_max"] is None
     assert record["salary_period"] is None
+
+
+def test_cutoff_is_enforced_in_active_search_and_pending_retries(tmp_path):
+    from datetime import timedelta
+
+    from predoc_pipeline.core.timeparse import format_ts, utcnow
+
+    path = tmp_path / "cutoffs.db"
+    init(path)
+    old = format_ts(utcnow() - timedelta(minutes=15))
+    future = format_ts(utcnow() + timedelta(days=3))
+    with Database(path) as db:
+        ids = []
+        for i, (deadline, status) in enumerate([
+            (old, "published"), (future, "published"),
+            (None, "published"), (old, "pending"), (future, "pending"),
+        ]):
+            row = pipeline._listing_row(listing(i), source="test", signature=None)
+            row.update(deadline=deadline, status=status)
+            ids.append(db.insert_listing(row))
+        assert {r["id"] for r in db.active_listings()} == set(ids[1:3])
+        assert {r["id"] for r in db.search_listings("research", active_only=True)} == (
+            set(ids[1:3])
+        )
+        assert {r["id"] for r in db.pending_listings()} == {ids[4]}
+        # The raw audit trail preserves historical/expired rows.
+        assert len(db.search_listings("research", active_only=False)) == 5
+        target = tmp_path / "listings.json"
+        assert state.export_dashboard(db, target) == 2
+
+
+def test_pipeline_rejects_same_day_cutoff_that_passed_before_extraction(
+    tmp_path, monkeypatch,
+):
+    from datetime import UTC, datetime
+    from unittest.mock import Mock
+
+    from predoc_pipeline.core.dedupe import Deduplicator
+    from predoc_pipeline.models import ExtractionResult, RawItem
+
+    monkeypatch.setattr(
+        pipeline, "utcnow", lambda: datetime(2030, 1, 2, 12, 0, tzinfo=UTC)
+    )
+    path = tmp_path / "cutoff-extraction.db"
+    init(path)
+    item = RawItem(
+        source="test", source_url="https://example.org/job/expired",
+        title="Research Assistant in Economics",
+        text="We are hiring a paid research assistant in economics now.",
+        hints={"board": True},
+    )
+    extracted = ExtractionResult(
+        is_vacancy=True, title=item.title, institution="University of Oxford",
+        country="United Kingdom", application_url=item.source_url,
+        summary="Paid predoctoral research in applied microeconomics.",
+        deadline="2030-01-02T11:59:59Z", confidence=0.99,
+    )
+    extractor = Mock()
+    extractor.extract.return_value = extracted
+    stats = pipeline.RunStats()
+    with Database(path) as db:
+        result = pipeline._process(
+            item, db=db, extractor=extractor, deduper=Deduplicator(),
+            settings=Settings(_env_file=None, confidence_threshold=0.5),
+            stats=stats,
+        )
+        assert result is None
+        assert db.counts()["listings"] == 0
+        assert stats.gate_reasons == {"expired-at-extraction": 1}
+
+
+def test_dashboard_snapshot_preserved_when_atomic_replace_fails(tmp_path, monkeypatch):
+    path = tmp_path / "atomic.db"
+    init(path)
+    target = tmp_path / "listings.json"
+    saved = '{"count": 3, "listings": []}'
+    target.write_text(saved, encoding="utf-8")
+
+    def fails_replace(*args):
+        raise OSError("blocked")
+
+    monkeypatch.setattr(state.Path, "replace", fails_replace)
+    with Database(path) as db, pytest.raises(OSError, match="blocked"):
+        state.export_dashboard(db, target)
+    assert target.read_text(encoding="utf-8") == saved

@@ -45,7 +45,13 @@ INCLUDE_GLOBS = [
     "tests/fixtures/*.jsonl",
     "tests/fixtures/boards/**/*",
     "config/*.toml",
-    "docs/index.html",
+    # Include all site assets required for a materialized checkout to render.
+    # Exclude only mutable publication snapshots (docs/data and feed.xml).
+    "docs/*.html",
+    "docs/*.svg",
+    "docs/*.png",
+    "docs/*.xsl",
+    "docs/*.json",
     # docs/data/*.json and docs/feed.xml are mutable publications; the
     # pull-request merge checkout can contain newer website state than this branch.
     # Only versioned source and reproducible fixtures belong in this artifact.
