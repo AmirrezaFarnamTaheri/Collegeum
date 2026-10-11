@@ -290,7 +290,7 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
                 s = run.get("source_summary") or {}
                 if s.get("failed") or s.get("partial") or run.get("errors"):
                     finding("warning", "misclassified-run",
-                            f"Historical run {str(run.get('run_id'))[:32]} is marked ok despite failures")
+                            f"Run {str(run.get('run_id'))[:32]} marked ok despite failures")
     return summary, findings
 
 
