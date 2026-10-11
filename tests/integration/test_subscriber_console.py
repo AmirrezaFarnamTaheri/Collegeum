@@ -1203,7 +1203,9 @@ def test_rotate_key_reencrypts_without_logging_secrets(tmp_path, monkeypatch):
     assert old_key not in run_result.output
     assert new_key not in run_result.output
     assert FeedbackStore(cfg.feedback_path, key=new_key).subscriber(101) is not None
-    with pytest.raises(Exception):
+    from predoc_pipeline.publish.feedback import StateCorruptError
+
+    with pytest.raises(StateCorruptError):
         FeedbackStore(cfg.feedback_path, key=old_key)
 
 
