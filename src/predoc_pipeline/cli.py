@@ -529,6 +529,16 @@ def telegram_sync_cmd() -> None:
     from .publish.telegram import TelegramError
 
     settings = _settings()
+    for secret_name, configured in (
+        ("TELEGRAM_BOT_TOKEN", settings.telegram_bot_token),
+        ("FEEDBACK_ENCRYPTION_KEY", settings.feedback_encryption_key),
+    ):
+        if not configured:
+            typer.secho(
+                f"{secret_name} is required for private Telegram sync.",
+                fg=typer.colors.RED, err=True,
+            )
+            raise typer.Exit(1)
     try:
         summary = telegram_sync(settings)
     except TelegramError as exc:
@@ -538,6 +548,15 @@ def telegram_sync_cmd() -> None:
         f"answered {summary['commands']} command(s), saved {summary['taps']} button tap(s), "
         f"ignored {summary['ignored']} message(s) from other people"
     )
+    if summary.get("failed", 0):
+        # The inbox cursor was deliberately not advanced past retryable errors.
+        # A zero exit code here would let the workflow commit and publish as if
+        # every Telegram update had been processed successfully.
+        typer.secho(
+            f"Telegram inbox incomplete: {summary['failed']} deferred operation(s).",
+            fg=typer.colors.RED, err=True,
+        )
+        raise typer.Exit(1)
 
 
 @app.command("telegram-chat-id")
