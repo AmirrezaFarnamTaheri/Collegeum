@@ -8,7 +8,7 @@ name: refresh-release
 # workflow also refreshes it automatically, with no feature-branch hardcoding.
 # Preserve the current main source/config when refreshing after upstream merges.
 # Keep generated manifests synchronized after workflow regression-test fixes.
-# Rebuild the final four-hour Telegram subscription, career-status and recovery changes.
+# Final source refresh includes the worldwide-remote scope and recovery docs.
 on:
   push:
     branches: ['**']
