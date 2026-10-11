@@ -1,4 +1,9 @@
-"""Telegram private-chat interaction layer (subscriptions and admin tools)."""
+"""Private Telegram subscriber and admin navigation.
+
+No callback grants authority: a private-chat sender is revalidated on every
+button press. Mutating callbacks are stored with encrypted state so repeated
+updates never invert preferences twice.
+"""
 
 from __future__ import annotations
 
@@ -9,111 +14,144 @@ from ..ingest.career import load_career
 from ..settings import Settings
 from .admin import admin_id, audit, buttons, render
 from .feedback import FeedbackStore
-from .subscriptions import (
-    matching, menu, parse_toggle, private_user_id, render_alert,
-)
+from .subscriptions import matching, parse_toggle, private_user_id
 from .telegram import TelegramError
+from .ui import ACADEMIC, language, latest_panel, menu
 
 
-def _reply_callback(bot: Any, callback_id: str, text: str) -> None:
+def _reply_callback(bot: Any, callback_id: str, text: str = "") -> None:
     try:
-        bot.call("answerCallbackQuery", {"callback_query_id": callback_id, "text": text[:170]})
+        bot.call("answerCallbackQuery", {
+            "callback_query_id": callback_id, "text": text[:170],
+            "cache_time": 0,
+        })
     except TelegramError:
-        pass  # expired button acknowledgements do not invalidate stored preferences
+        pass  # Old buttons can expire; state is already committed.
 
 
 def _update_panel(
     bot: Any, cq: dict[str, Any], html: str, keyboard: dict[str, Any],
 ) -> None:
-    msg = cq.get("message") or {}
-    chat = msg.get("chat") or {}
-    message_id = msg.get("message_id")
-    if not message_id:
+    message = cq.get("message") or {}
+    chat = message.get("chat") or {}
+    identifier = message.get("message_id")
+    if type(identifier) is not int or type(chat.get("id")) is not int:
         return
     try:
         bot.call("editMessageText", {
-            "chat_id": chat["id"], "message_id": message_id,
+            "chat_id": chat["id"], "message_id": identifier,
             "text": html, "parse_mode": "HTML", "reply_markup": keyboard,
             "link_preview_options": {"is_disabled": True},
         })
     except TelegramError:
-        # Telegram can reject no-op edits, old messages or revoked permissions;
-        # the durable preference change already completed.
+        # A stale or already-identical panel must not roll back a saved change.
         pass
+
+
+def _latest(
+    store: FeedbackStore, chat_id: int, academic: list[sqlite3.Row],
+    settings: Settings, page: int = 0,
+) -> tuple[str, dict[str, Any]]:
+    member = store.subscriber(chat_id)
+    if member is None or not member["topics"]:
+        return menu(member, "home")
+    careers = load_career(settings.career_state_path)
+    results = matching(member, academic, careers, preview=True)
+    return latest_panel(results, page=page, lang=language(member))
 
 
 def private_message(
     bot: Any, msg: dict[str, Any], store: FeedbackStore, settings: Settings,
     academic: list[sqlite3.Row], summary: dict[str, int],
 ) -> bool:
-    """True if handled. Old owner-only mark/list commands remain a fallback."""
-    user_id = private_user_id(msg)
-    if user_id is None:
+    """Handle subscriber commands; preserve the existing owner-only /help."""
+    chat_id = private_user_id(msg)
+    if chat_id is None:
         return False
-    words = str(msg.get("text") or "").split(maxsplit=1)
-    if not words:  # stickers, photos and other non-text updates are not commands
+    tokens = str(msg.get("text") or "").split(maxsplit=1)
+    if not tokens:
         return False
-    text = words[0].lower().split("@")[0]
-    if text not in {"/start", "/settings", "/subscribe", "/stop", "/latest", "/admin"}:
+    command = tokens[0].lower().split("@")[0]
+    pages = {
+        "/start": "home", "/settings": "home", "/subscribe": "home",
+        "/status": "home", "/academic": "academic",
+        "/careers": "careers", "/markets": "markets", "/guide": "help",
+        "/stop": "stop",
+    }
+    if command not in pages and command not in {
+        "/latest", "/admin", "/pause", "/resume",
+    }:
         return False
     summary["received"] += 1
     if not store.key:
-        bot.send(str(user_id), "Personal alerts are unavailable until encrypted storage is set up.")
+        bot.send(str(chat_id), "Private alerts require encrypted storage.")
+        summary["commands"] += 1
         return True
-    if text == "/admin":
-        if user_id != admin_id(settings):
+
+    if command == "/admin":
+        if chat_id != admin_id(settings):
             summary["ignored"] += 1
             return True
         html = render(settings, store)
-        bot.send(str(user_id), html, buttons(
-            paused=bool(store.data.get("ops", {}).get("paused")),
-        ))
-    elif text == "/stop":
-        store.remove_subscriber(user_id)
-        store.save()  # commit an opt-out before sending its acknowledgement
-        bot.send(str(user_id), "You are unsubscribed. Your active preferences and "
-                 "delivery records were removed. Use /start to subscribe again.")
-    elif text == "/latest":
-        member = store.subscriber(user_id)
-        if member is None or not member["topics"]:
-            bot.send(str(user_id), "Choose interests with /settings first.")
-        else:
-            jobs = matching(
-                member, academic, load_career(settings.career_state_path),
-                preview=True,
-            )
-            if not jobs:
-                bot.send(str(user_id), "No recent matching vacancies yet. "
-                         "Your alerts remain active for future posts.")
-            else:
-                # Explicit user-requested previews need no send receipts.
-                for job in jobs[:5]:
-                    bot.send(str(user_id), render_alert(job))
+        keyboard = buttons(paused=bool(store.data["ops"]["paused"]))
+    elif command in ("/pause", "/resume"):
+        store.set_paused(chat_id, command == "/pause")
+        store.save()
+        html, keyboard = menu(store.subscriber(chat_id))
+    elif command == "/latest":
+        html, keyboard = _latest(store, chat_id, academic, settings)
     else:
-        html, keyboard = menu(store.subscriber(user_id))
-        bot.send(str(user_id), html, keyboard)
+        html, keyboard = menu(store.subscriber(chat_id), pages[command])
+    bot.send(str(chat_id), html, keyboard)
     summary["commands"] += 1
     return True
 
 
+def _page(
+    raw: str, member: dict[str, Any] | None, store: FeedbackStore,
+    user_id: int, settings: Settings, academic: list[sqlite3.Row],
+) -> tuple[str, dict[str, Any]] | None:
+    if raw.startswith("sub:p:latest"):
+        parts = raw.split(":")
+        if len(parts) == 3:
+            return _latest(store, user_id, academic, settings)
+        if (len(parts) == 4 and parts[3].isascii()
+                and parts[3].isdecimal() and 0 <= int(parts[3]) < 10):
+            return _latest(store, user_id, academic, settings, int(parts[3]))
+        return None
+    if not raw.startswith("sub:p:"):
+        return None
+    target = raw[6:]
+    if target in ("home", "academic", "careers", "markets", "help", "stop"):
+        return menu(member, target)
+    return None
+
+
 def private_callback(
     bot: Any, cq: dict[str, Any], store: FeedbackStore, settings: Settings,
-    summary: dict[str, int],
+    summary: dict[str, int], academic: list[sqlite3.Row] | None = None,
 ) -> bool:
+    """Process verified private callbacks; always acknowledge button presses."""
     raw = cq.get("data")
     if not isinstance(raw, str) or not raw.startswith(("sub:", "adm:")):
         return False
+    callback_id = str(cq.get("id") or "")
     user_id = private_user_id({
         "chat": (cq.get("message") or {}).get("chat"),
         "from": cq.get("from"),
     })
-    if user_id is None:
+    if user_id is None or not callback_id or not store.key:
+        summary["ignored"] += 1
+        if callback_id:
+            _reply_callback(bot, callback_id)
+        return True
+    if not 1 <= len(raw.encode("utf-8")) <= 64:
+        _reply_callback(bot, callback_id, "Invalid button")
         summary["ignored"] += 1
         return True
-    callback_id = str(cq.get("id") or "")
-    if not callback_id or not store.key:
-        summary["ignored"] += 1
-        return True
+    notification = ""
+    academic = academic or []
+
     if raw.startswith("adm:"):
         if user_id != admin_id(settings):
             summary["ignored"] += 1
@@ -124,13 +162,13 @@ def private_callback(
         if action in ("pause", "resume"):
             html = (
                 "<b>Confirm</b>\n"
-                + ("Pause private notifications? Collection and public "
-                   "publishing will continue." if action == "pause"
-                   else "Resume private notifications? Uncertain sends stay held.")
+                + ("Pause private alerts? Collection and public publication continue."
+                   if action == "pause"
+                   else "Resume private alerts? Uncertain sends remain held.")
             )
             keyboard = {"inline_keyboard": [
                 [{"text": "Confirm", "callback_data": "adm:confirm:" + action}],
-                [{"text": "Back", "callback_data": "adm:status"}],
+                [{"text": "Cancel", "callback_data": "adm:status"}],
             ]}
         elif len(parts) == 3 and parts[:2] == ["adm", "confirm"] and (
             parts[2] in ("pause", "resume")
@@ -139,27 +177,67 @@ def private_callback(
                 audit(store, user_id, parts[2])
                 store.remember_callback(callback_id)
                 store.save()
+                summary["taps"] += 1
             html = render(settings, store)
             keyboard = buttons(paused=bool(store.data["ops"]["paused"]))
-            summary["taps"] += 1
+            notification = "Saved"
         elif action in ("status", "runs", "queue", "cache"):
             html = render(settings, store, page=action)
-            keyboard = buttons(paused=bool(store.data.get("ops", {}).get("paused")))
+            keyboard = buttons(paused=bool(store.data["ops"]["paused"]))
         else:
-            _reply_callback(bot, callback_id, "Unknown admin action")
+            _reply_callback(bot, callback_id, "Button expired. Try /admin.")
             return True
     else:
-        parsed = parse_toggle(raw)
-        if parsed is None:
-            _reply_callback(bot, callback_id, "Unknown option")
-            return True
-        if not store.callback_seen(callback_id):
-            kind, choice = parsed
-            store.toggle_subscription(user_id, kind, choice)
-            store.remember_callback(callback_id)
-            store.save()  # preferences and callback ID are committed together
-            summary["taps"] += 1
-        html, keyboard = menu(store.subscriber(user_id))
-    _reply_callback(bot, callback_id, "Saved")
+        member = store.subscriber(user_id)
+        visible = _page(raw, member, store, user_id, settings, academic)
+        if visible is not None:
+            html, keyboard = visible
+        else:
+            parsed = parse_toggle(raw)
+            mutation = False
+            if parsed is not None:
+                kind, option = parsed
+                if not store.callback_seen(callback_id):
+                    store.toggle_subscription(user_id, kind, option)
+                    mutation = True
+                target = ("academic" if option in ACADEMIC else "careers") if (
+                    kind == "topics"
+                ) else "markets"
+            elif raw in ("sub:a:pause", "sub:a:resume"):
+                if not store.callback_seen(callback_id):
+                    store.set_paused(user_id, raw.endswith(":pause"))
+                    mutation = True
+                target = "home"
+            elif raw in ("sub:l:fa", "sub:l:en"):
+                if not store.callback_seen(callback_id):
+                    store.set_language(user_id, raw[-2:])
+                    mutation = True
+                target = "home"
+            elif raw.startswith("sub:b:"):
+                parts = raw.split(":")
+                if (len(parts) != 4 or parts[2] not in ("academic", "careers")
+                        or parts[3] not in ("on", "off")):
+                    _reply_callback(bot, callback_id, "Invalid choice")
+                    return True
+                if not store.callback_seen(callback_id):
+                    store.set_topics_group(user_id, parts[2], parts[3] == "on")
+                    mutation = True
+                target = parts[2]
+            elif raw == "sub:stop:yes":
+                if not store.callback_seen(callback_id):
+                    store.remove_subscriber(user_id)
+                    mutation = True
+                target = "home"
+            else:
+                _reply_callback(bot, callback_id, "Button expired. Use /settings.")
+                return True
+            if mutation:
+                store.remember_callback(callback_id)
+                store.save()
+                summary["taps"] += 1
+            html, keyboard = menu(store.subscriber(user_id), target)
+            notification = "Saved" if mutation else ""
+
+    _reply_callback(bot, callback_id, notification)
     _update_panel(bot, cq, html, keyboard)
     return True
