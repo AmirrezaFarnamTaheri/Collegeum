@@ -92,6 +92,7 @@ for (const [deadline, now, expected] of cases) {
 assert.equal(deadlineDays({deadline:'2026-10-06'},NaN),null);
 assert.equal(deadlineDays({deadline:'2026-10-06'},1e300),null);
 assert.equal(formatDate('2026-10-06'),'6 Oct 2026');
+assert.equal(formatDate(null),'Unstated');
 assert.equal(snapshotLabel('2026-10-04T12:00:00Z',Date.parse('2026-10-05T12:00:00Z')),
  'Listings snapshot: 1d old');
 assert.equal(snapshotLabel('bad'),'Snapshot age unavailable');

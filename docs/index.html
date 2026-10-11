@@ -1601,7 +1601,7 @@
   (() => {
     'use strict';
 
-    const GITHUB_REPO = 'amirrezafarnamtaheri/predoc-not-org';
+    const GITHUB_REPO = 'AmirrezaFarnamTaheri/Collegeum';
     const GITHUB_REPO_URL = `https://github.com/${GITHUB_REPO}`;
     const GITHUB_STARS_URL = `${GITHUB_REPO_URL}/stargazers`;
     const GITHUB_ISSUES_URL = `${GITHUB_REPO_URL}/issues`;
@@ -1746,7 +1746,7 @@
     }
 
     function formatDate(iso) {
-      if (!iso) return 'Rolling';
+      if (!iso) return 'Unstated';
       try {
         const d = new Date(iso);
         if (isNaN(d.getTime())) return iso;
@@ -2045,7 +2045,7 @@
             ` : ''}
             <p class="card-summary">${esc(r.summary || 'See the official posting for full requirements, stipend details, and application materials.')}</p>
             <div class="card-footer">
-              <span style="font-size:12px; color:var(--soft); font-family:var(--mono);">${r.deadline ? 'Closes ' + formatDate(r.deadline) : 'Rolling review'}</span>
+              <span style="font-size:12px; color:var(--soft); font-family:var(--mono);">${r.deadline ? 'Closes ' + formatDate(r.deadline) : (deadlineBadge(r).label === 'Rolling' ? 'Rolling review' : 'Deadline unstated')}</span>
               <span style="font-weight:600; color:var(--acc);">Details &rarr;</span>
             </div>
           </article>
