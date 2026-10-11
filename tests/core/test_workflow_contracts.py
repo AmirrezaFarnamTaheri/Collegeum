@@ -133,10 +133,6 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIn("Refusing to store subscriber state in a public", content)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
     def test_missing_private_key_does_not_disable_public_channel(self):
         pipeline_code = (ROOT / "src/predoc_pipeline/pipeline.py").read_text(
             encoding="utf-8"
@@ -150,3 +146,7 @@ if __name__ == "__main__":
         telegram = workflow("telegram.yml")
         self.assertIn("Public channel announcements use TELEGRAM_BOT_TOKEN", telegram)
         self.assertIn("FEEDBACK_ENCRYPTION_KEY was not injected", telegram)
+
+
+if __name__ == "__main__":
+    unittest.main()
