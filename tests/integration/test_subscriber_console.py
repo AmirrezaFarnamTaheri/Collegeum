@@ -1068,3 +1068,42 @@ def test_corrupt_rotation_checkpoint_recovers_without_failure(tmp_path):
     journal = tmp_path / "rotation.json"
     journal.write_text('{"attempts": ["wrong"]}', encoding="utf-8")
     assert load_rotation(journal)["attempts"] == {}
+
+
+def test_career_journal_tolerant_mode_preserves_invalid_original(tmp_path):
+    journal = tmp_path / "jobs.ndjson"
+    valid = {
+        "key": "career:good", "category": "data_analyst", "scope": "remote",
+        "url": "https://jobicy.com/jobs/good", "title": "Data Analyst",
+        "first_seen_at": datetime.now(UTC).isoformat(),
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    }
+    original = json.dumps(valid) + "\n" + '{"category":"invalid"}\n'
+    journal.write_text(original, encoding="utf-8")
+    loaded = load_career(journal, tolerant=True)
+    assert [item["key"] for item in loaded] == ["career:good"]
+    backups = list(tmp_path.glob("jobs.ndjson.corrupt-*"))
+    assert len(backups) == 1
+    assert backups[0].read_text("utf-8") == original
+    assert journal.read_text("utf-8") == original
+
+
+def test_source_status_distinguishes_idle_error_and_stale(tmp_path):
+    from predoc_pipeline.publish.ui import sources_panel
+    from predoc_pipeline.ingest.career import idle_career_health
+
+    report = tmp_path / "career-health.json"
+    idle_career_health(report)
+    text, _ = sources_panel(report)
+    assert "Not selected" in text
+    damaged = json.loads(report.read_text("utf-8"))
+    damaged["sources"]["jobinja"].update({
+        "requested": True, "fetched": 1, "accepted": 0, "status": "error",
+    })
+    report.write_text(json.dumps(damaged), encoding="utf-8")
+    text, _ = sources_panel(report)
+    assert "Jobinja" in text and "Source error" in text
+    damaged["checked_at"] = "2020-01-01T00:00:00+00:00"
+    report.write_text(json.dumps(damaged), encoding="utf-8")
+    text, _ = sources_panel(report)
+    assert "Stale" in text

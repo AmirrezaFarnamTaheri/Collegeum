@@ -8,6 +8,7 @@ embedded in any keyboard or callback.
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime, timedelta
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -202,6 +203,10 @@ def latest_panel(
     jobs: list[dict[str, str]], *, page: int, lang: str = "en",
 ) -> tuple[str, dict[str, Any]]:
     """A single bounded browse card, not five unsolicited Telegram messages."""
+    jobs = [
+        item for item in jobs
+        if _verified_https(item.get("url", ""))
+    ]
     count = min(len(jobs), PAGE_SIZE * MAX_LATEST_PAGES)
     pages = max(1, (count + PAGE_SIZE - 1) // PAGE_SIZE)
     current = max(0, min(page, pages - 1))
@@ -209,10 +214,7 @@ def latest_panel(
     title = "🔎 <b>فرصت‌های تازه</b>" if fa else "🔎 <b>Latest matches</b>"
     lines = [title, f"{current + 1} / {pages}", ""]
     for i, job in enumerate(jobs[current * PAGE_SIZE:(current + 1) * PAGE_SIZE], 1):
-        url = job.get("url", "")
-        parsed = urlsplit(url)
-        if parsed.scheme != "https" or not parsed.hostname:
-            continue
+        url = job["url"]
         label = escape(job.get("title", "Opportunity")[:110])
         source = escape(job.get("source", "")[:36])
         employer = escape(job.get("employer", "")[:70])
@@ -234,6 +236,14 @@ def latest_panel(
     keyboard.append(_back(lang))
     return "\n\n".join(lines), {"inline_keyboard": keyboard}
 
+
+
+def _verified_https(value: str) -> bool:
+    try:
+        parsed = urlsplit(value)
+        return parsed.scheme == "https" and bool(parsed.hostname) and len(value) <= 1024
+    except (TypeError, ValueError):
+        return False
 
 
 def sources_panel(
@@ -290,11 +300,36 @@ def sources_panel(
                 type(fetched) is int and type(accepted) is int
                 and 0 <= fetched <= 100 and 0 <= accepted <= 2000
             )
-            status = ("○" if not enabled else "✓" if fetched and valid else "!")
+            state = info.get("status")
+            if state not in ("ok", "empty", "error", "degraded", "idle"):
+                state = "ok" if enabled and fetched and valid else "error"
+            if not enabled:
+                state = "idle"
+            try:
+                last = datetime.fromisoformat(
+                    str(health.get("checked_at", "")).replace("Z", "+00:00")
+                )
+                if last.tzinfo is None:
+                    raise ValueError("naive health timestamp")
+                stale = datetime.now(UTC) - last.astimezone(UTC) > timedelta(hours=12)
+            except ValueError:
+                stale = True
+            if enabled and stale:
+                state = "stale"
+            marker = {"ok": "✓", "empty": "○", "idle": "○",
+                      "error": "!", "degraded": "!", "stale": "!"}[state]
+            summary = {
+                "ok": ("فعال", "Healthy"),
+                "empty": ("بدون مورد مرتبط", "No matching roles"),
+                "idle": ("درخواستی نیست", "Not selected"),
+                "error": ("خطا", "Source error"),
+                "degraded": ("اختلال", "Degraded"),
+                "stale": ("قدیمی", "Stale"),
+            }[state][0 if fa else 1]
             count = str(accepted) if enabled and valid else "—"
             lines.append(
-                f"{status} <b>{name}</b> · {fa_scope if fa else en_scope}"
-                f" · {count} {'مورد' if fa else 'matches'}"
+                f"{marker} <b>{name}</b> · {fa_scope if fa else en_scope}"
+                f" · {summary} · {count} {'مورد' if fa else 'matches'}"
             )
         lines.append(
             "این اعداد پوشش کامل بازار کار را تضمین نمی‌کنند."

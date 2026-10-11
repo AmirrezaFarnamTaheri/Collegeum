@@ -53,7 +53,7 @@ from .core.timeparse import format_ts, parse_datetime, utcnow
 from .core.urls import url_hash
 from .extract import ExtractionError, RateLimited, build_extractor
 from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor, _deadline_iso
-from .ingest.career import poll_career
+from .ingest.career import idle_career_health, poll_career
 from .ingest.collectors import gather
 from .ingest.http import PoliteClient
 from .ingest.rotation import load_rotation, save_rotation, scheduled_sources
@@ -1189,6 +1189,8 @@ def run(
                 except Exception:
                     stats.errors += 1
                     log.exception("career_feed_poll_failed")
+            else:
+                idle_career_health(settings.career_health_path)
 
         telegram = (
             TelegramClient(bot_token=settings.telegram_bot_token, client=telegram_client)

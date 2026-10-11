@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -279,50 +280,68 @@ def parse_irantalent_jobs(html: str) -> list[dict[str, str]]:
     return output
 
 
-def load_career(path: str | Path) -> list[dict[str, str]]:
+def load_career(
+    path: str | Path, *, tolerant: bool = False,
+) -> list[dict[str, str]]:
+    """Strictly validate stored jobs; optionally quarantine individual bad rows.
+
+    Tolerant reads preserve a byte-for-byte backup *before* omitting any
+    invalid row. This allows scheduled collection to recover without silently
+    losing forensic evidence. Direct callers remain strict by default.
+    """
     p = Path(path)
     if not p.exists():
         return []
     if p.stat().st_size > 8_000_000:
         raise ValueError("career journal exceeds its resource budget")
     result: list[dict[str, str]] = []
-    for line in p.read_text("utf-8").splitlines():
+    quarantined = 0
+    content = p.read_text("utf-8").splitlines()
+    if len(content) > MAX_STORED_JOBS:
+        raise ValueError("career journal exceeds its record budget")
+    for index, line in enumerate(content, 1):
         if not line.strip():
             continue
-        if len(result) >= MAX_STORED_JOBS:
-            raise ValueError("career journal exceeds its record budget")
-        data = json.loads(line)
-        if not isinstance(data, dict):
-            raise ValueError(f"invalid job journal record in {p}")
-        required = {
-            "key", "category", "scope", "url", "title",
-            "first_seen_at", "employer", "location", "source",
-        }
-        if not required.issubset(data) or not all(isinstance(v, str) for v in data.values()):
-            raise ValueError(f"corrupt job journal record in {p}")
-        if data["scope"] not in ("iran", "remote") or data["category"] not in {
-            "data_scientist", "data_analyst", "econ_consulting", "research_analyst",
-        }:
-            raise ValueError(f"invalid career category or scope in {p}")
-        availability = data.get("availability", "unknown")
-        if availability not in ("active", "closed", "unknown"):
-            raise ValueError(f"invalid career availability in {p}")
-        provider_id = data.get("jobicy_id")
-        if provider_id is not None and (
-            not isinstance(provider_id, str) or not provider_id.isascii()
-            or not provider_id.isdecimal() or not 0 < int(provider_id) <= MAX_PROVIDER_ID
-        ):
-            raise ValueError(f"invalid Jobicy ID in {p}")
-        if (not data["key"].startswith("career:") or
-                len(data["url"]) > 1024 or urlsplit(data["url"]).scheme != "https"):
-            raise ValueError(f"invalid career URL or identity in {p}")
         try:
+            data = json.loads(line)
+            if not isinstance(data, dict):
+                raise ValueError(f"invalid job journal record in {p}")
+            required = {
+                "key", "category", "scope", "url", "title",
+                "first_seen_at", "employer", "location", "source",
+            }
+            if (not required.issubset(data)
+                    or not all(isinstance(v, str) for v in data.values())):
+                raise ValueError(f"corrupt job journal record in {p}")
+            if data["scope"] not in ("iran", "remote") or data["category"] not in {
+                "data_scientist", "data_analyst", "econ_consulting", "research_analyst",
+            }:
+                raise ValueError(f"invalid career category or scope in {p}")
+            if data.get("availability", "unknown") not in ("active", "closed", "unknown"):
+                raise ValueError(f"invalid career availability in {p}")
+            provider_id = data.get("jobicy_id")
+            if provider_id is not None and (
+                not isinstance(provider_id, str) or not provider_id.isascii()
+                or not provider_id.isdecimal() or not 0 < int(provider_id) <= MAX_PROVIDER_ID
+            ):
+                raise ValueError(f"invalid Jobicy ID in {p}")
+            if (not data["key"].startswith("career:")
+                    or len(data["url"]) > 1024
+                    or urlsplit(data["url"]).scheme != "https"):
+                raise ValueError(f"invalid career URL or identity in {p}")
             timestamp = datetime.fromisoformat(data["first_seen_at"].replace("Z", "+00:00"))
             if timestamp.tzinfo is None:
-                raise ValueError("timezone missing")
-        except ValueError:
-            raise ValueError(f"invalid career timestamp in {p}") from None
-        result.append(data)
+                raise ValueError(f"invalid career timestamp in {p}")
+            result.append(data)
+        except (TypeError, ValueError, OverflowError) as exc:
+            if not tolerant:
+                raise
+            if quarantined == 0:
+                suffix = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+                backup = p.with_name(f"{p.name}.corrupt-{suffix}")
+                shutil.copy2(p, backup)
+            quarantined += 1
+            log.warning("career_record_quarantined", row=index, reason=str(exc)[:120])
     return result
 
 
@@ -434,7 +453,7 @@ def poll_career(
     health_path: str | Path | None = None,
 ) -> tuple[int, list[str]]:
     """Bounded public-source polling with separately persisted source health."""
-    previous = load_career(path)
+    previous = load_career(path, tolerant=True)
     fresh: list[dict[str, str]] = []
     errors: list[str] = []
     started = datetime.now(UTC).isoformat()
@@ -506,6 +525,32 @@ def poll_career(
     for error in errors:
         log.warning("career_source_failed", error=truncate(error, 200))
     if health_path is not None:
+        # A successful HTTP fetch with no relevant roles is different from a
+        # failed request, malformed HTML, or an unrequested source.
+        old_health = _read_career_health(health_path)
+        historical = old_health.get("sources", {})
+        for name, info in sources.items():
+            issues = [error for error in errors if error.lower().startswith(name)]
+            if name == "irantalent":
+                issues = [error for error in errors if error.startswith("IranTalent")]
+            if not info["requested"]:
+                info["status"] = "idle"
+            elif issues:
+                info["status"] = "degraded" if info["accepted"] else "error"
+            elif info["fetched"]:
+                info["status"] = "ok" if info["accepted"] else "empty"
+            else:
+                info["status"] = "error"
+            info["error_count"] = len(issues)
+            previous_info = historical.get(name, {}) if isinstance(historical, dict) else {}
+            last_success = (
+                previous_info.get("last_success_at")
+                if isinstance(previous_info, dict) else None
+            )
+            if info["status"] in ("ok", "empty"):
+                last_success = started
+            if isinstance(last_success, str) and len(last_success) <= 40:
+                info["last_success_at"] = last_success
         data = {
             "checked_at": started, "added": new_count,
             "sources": sources, "errors": [truncate(error, 200) for error in errors[:8]],
@@ -519,3 +564,47 @@ def poll_career(
             os.fsync(handle.fileno())
         temp.replace(destination)
     return new_count, errors
+
+
+def _read_career_health(path: str | Path) -> dict[str, Any]:
+    """Read only a small allowlisted public-source health payload."""
+    target = Path(path)
+    try:
+        if not target.exists() or target.stat().st_size > 65536:
+            return {}
+        data = json.loads(target.read_text("utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, UnicodeError, ValueError):
+        return {}
+
+
+def idle_career_health(path: str | Path) -> None:
+    """Report sources as not requested without claiming a successful fetch."""
+    previous = _read_career_health(path)
+    old = previous.get("sources", {})
+    current = {}
+    for name in ("jobicy", "jobinja", "irantalent"):
+        past = old.get(name, {}) if isinstance(old, dict) else {}
+        success = past.get("last_success_at") if isinstance(past, dict) else None
+        info: dict[str, Any] = {
+            "requested": False, "fetched": 0, "accepted": 0,
+            "status": "idle", "error_count": 0,
+        }
+        if isinstance(success, str) and len(success) <= 40:
+            info["last_success_at"] = success
+        current[name] = info
+    dest = Path(path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    temp = dest.with_name(dest.name + ".tmp")
+    try:
+        with temp.open("w", encoding="utf-8") as handle:
+            json.dump({
+                "checked_at": datetime.now(UTC).isoformat(),
+                "sources": current, "errors": [],
+            }, handle, ensure_ascii=False, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        temp.replace(dest)
+    finally:
+        temp.unlink(missing_ok=True)
