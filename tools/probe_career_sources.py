@@ -26,6 +26,62 @@ from predoc_pipeline.ingest.http import PoliteClient
 from predoc_pipeline.settings import Settings
 
 
+
+def _recognizes_jobicy(jobs: list[Any]) -> bool:
+    """A filtered-out job may be healthy; a renamed schema is not."""
+    from urllib.parse import urlsplit
+
+    if not jobs:
+        return True
+    for row in jobs[:200]:
+        if not isinstance(row, dict):
+            continue
+        title, geo, link = (row.get("jobTitle"), row.get("jobGeo"), row.get("url"))
+        if not all(isinstance(v, str) and v.strip() for v in (title, geo, link)):
+            continue
+        try:
+            url = urlsplit(link)
+        except ValueError:
+            continue
+        if url.scheme == "https" and url.hostname in ("jobicy.com", "www.jobicy.com"):
+            return True
+    return False
+
+
+def _recognizes_html(source: str, text: str) -> bool:
+    """Require visible, parseable job anchors (not bare URLs in scripts)."""
+    from urllib.parse import urljoin, urlsplit
+
+    from bs4 import BeautifulSoup
+
+    base = ("https://jobinja.ir/jobs" if source == "jobinja"
+            else "https://www.irantalent.com/en/jobs")
+    soup = BeautifulSoup(text, "lxml")
+    for anchor in soup.select("a[href]")[:500]:
+        title = anchor.get_text(" ", strip=True)
+        if not 5 <= len(title) <= 200:
+            continue
+        address = urlsplit(urljoin(base, str(anchor.get("href") or "")))
+        if address.scheme != "https":
+            continue
+        if source == "jobinja":
+            if address.hostname in ("jobinja.ir", "www.jobinja.ir") and re.fullmatch(
+                r"/companies/[^/]+/jobs/[^/]+(?:/[^/]*)?/?", address.path,
+            ):
+                return True
+        elif address.hostname in ("irantalent.com", "www.irantalent.com"):
+            if re.fullmatch(
+                r"/(?:en|fa)/job/[^/]+/[1-9]\d{3,10}/?", address.path, re.I,
+            ):
+                return True
+    # A true empty-search response is the only safe no-card success.
+    empty_text = soup.get_text(" ", strip=True)
+    return re.search(
+        r"\b(?:no jobs found|no results found|no matching jobs)\b|"
+        r"نتیجه[\s\u200c]*ای یافت نشد", empty_text, re.I,
+    ) is not None
+
+
 def probe_sources(client: Any, *, slot: int = 0) -> dict[str, Any]:
     """Check the published endpoint and basic parsing of all three providers."""
     urls = {
@@ -52,20 +108,17 @@ def probe_sources(client: Any, *, slot: int = 0) -> dict[str, Any]:
             try:
                 if source == "jobicy":
                     parsed = json.loads(text)
-                    if not isinstance(parsed, dict) or not isinstance(parsed.get("jobs"), list):
+                    if (not isinstance(parsed, dict)
+                            or parsed.get("success") is False
+                            or not isinstance(parsed.get("jobs"), list)):
                         raise ValueError("Unexpected Jobicy payload")
-                    recognized = True
+                    recognized = _recognizes_jobicy(parsed["jobs"])
                     matches = parse_remote_jobs(parsed)
                 elif source == "jobinja":
-                    recognized = bool(re.search(
-                        r"/companies/[^/\"'\s]+/jobs/[^/\"'\s]+", text,
-                    ))
+                    recognized = _recognizes_html("jobinja", text)
                     matches = parse_iran_jobs(text)
                 else:
-                    recognized = bool(re.search(
-                        r"/(?:en|fa)/job/[^/\"'\s]+/[1-9]\d{3,10}",
-                        text,
-                    ))
+                    recognized = _recognizes_html("irantalent", text)
                     matches = parse_irantalent_jobs(text)
                 entry["recognized"] = recognized
                 entry["matched"] = len(matches)
