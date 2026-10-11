@@ -55,6 +55,7 @@ ROLE_PATTERNS = (
         r"کارشناس\s+(?:تحقیقات\s+بازار|پژوهش\s+اقتصادی)", re.I)),
 )
 
+
 def classify_career(title: str) -> str | None:
     """Return a supported occupation, or None for irrelevant roles."""
     for kind, pattern in ROLE_PATTERNS:

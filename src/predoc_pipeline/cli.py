@@ -295,6 +295,41 @@ def subscriber_send(
         raise typer.Exit(1)
 
 
+@app.command("subscriber-pending")
+def subscriber_pending(
+    show_ids: bool = typer.Option(
+        False, "--show-ids",
+        help="Show private chat IDs and full delivery keys on this trusted terminal"),
+) -> None:
+    """Inspect private delivery recovery backlog without sending any messages."""
+    from collections import Counter
+
+    from .publish.feedback import FeedbackStore
+
+    cfg = _settings()
+    if not cfg.feedback_encryption_key:
+        typer.secho("FEEDBACK_ENCRYPTION_KEY is required.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    store = FeedbackStore.from_settings(cfg)
+    pending = [
+        (identifier, key, record)
+        for identifier, member in sorted(store.subscribers.items())
+        for key, record in member["deliveries"].items()
+        if record["state"] in ("sending", "uncertain", "rejected")
+    ]
+    counts = Counter(record["state"] for _, _, record in pending)
+    typer.echo(
+        f"Unresolved private alerts: sending={counts['sending']} "
+        f"uncertain={counts['uncertain']} rejected={counts['rejected']}"
+    )
+    if show_ids:
+        typer.echo("Private identifiers below: do not paste this output into public logs.")
+        for identifier, key, record in pending[:200]:
+            typer.echo(f"chat={identifier} key={key} state={record['state']}")
+        if len(pending) > 200:
+            typer.echo(f"{len(pending) - 200} additional records omitted")
+
+
 @app.command("subscriber-reconcile")
 def subscriber_reconcile(
     chat_id: int = typer.Argument(..., help="Private subscriber Telegram chat ID"),

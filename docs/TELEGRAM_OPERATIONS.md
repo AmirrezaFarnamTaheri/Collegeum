@@ -84,6 +84,10 @@ without checking the destination. Use:
 ```sh
 predoc-pipeline subscriber-reconcile CHAT_ID 'career:KEY' --confirmed-sent
 predoc-pipeline subscriber-reconcile CHAT_ID 'career:KEY' --confirmed-not-delivered
+# See counts without exposing identifiers:
+predoc-pipeline subscriber-pending
+# On a trusted private operator terminal only, show full recovery keys:
+predoc-pipeline subscriber-pending --show-ids
 ```
 
 The second form only applies after independently verifying no message arrived.

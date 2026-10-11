@@ -440,3 +440,26 @@ def test_permanent_telegram_bad_request_is_quarantined_until_reconciled(tmp_path
     assert FeedbackStore.from_settings(cfg).subscriber(101)[
         "deliveries"]["career:bad"]["state"] == "rejected"
     assert plan_batch(cfg, path=batch) == 0
+
+
+def test_cli_private_backlog_does_not_expose_identifiers_by_default(tmp_path, monkeypatch):
+    from typer.testing import CliRunner
+
+    from predoc_pipeline import cli
+
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    assert store.reserve_delivery(101, "academic:secret-listing-key")
+    store.save()
+    monkeypatch.setattr(cli, "_settings", lambda: cfg)
+    runner = CliRunner()
+    safe = runner.invoke(cli.app, ["subscriber-pending"])
+    assert safe.exit_code == 0
+    assert "sending=1" in safe.output
+    assert "secret-listing-key" not in safe.output
+    assert "101" not in safe.output
+    detailed = runner.invoke(cli.app, ["subscriber-pending", "--show-ids"])
+    assert detailed.exit_code == 0
+    assert "chat=101" in detailed.output
+    assert "academic:secret-listing-key" in detailed.output
