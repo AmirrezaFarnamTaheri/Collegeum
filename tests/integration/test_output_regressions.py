@@ -333,3 +333,20 @@ def test_all_actual_state_journal_records_render_valid_telegram_cards(tmp_path):
             parsed = assert_valid_message(card)
             assert "Research" in " ".join(parsed.itertext()) or item.title
             assert "\x00" not in card
+
+
+def test_telegram_card_and_digest_label_phd_staff_not_predoc():
+    position = listing(
+        title="PhD Researcher (2026-2027 PhD Job Market)",
+        institution="Bank of Canada",
+        location=Location(country="Canada", city="Ottawa"),
+        summary="Permanent research position, appointment to Senior Economist.",
+    )
+    card = render_card(position)
+    assert_valid_message(card)
+    assert "#ResearchStaff" in card
+    assert "#Predoc" not in card
+    summary = render_digest([position])
+    assert_valid_message(summary)
+    assert "new research positions" in summary
+    assert "new predoc listings" not in summary

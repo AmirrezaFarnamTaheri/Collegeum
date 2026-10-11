@@ -46,6 +46,7 @@ from ..core.textproc import (
     truncate_utf16,
 )
 from ..models import PredocListing
+from ..routing import Router
 from .keyboards import LEGEND, feedback_row
 
 __all__ = [
@@ -266,10 +267,14 @@ def render_card(listing: PredocListing) -> str:
     if other:
         lines.append(f"Other: {_field(other, 140)}")
 
+    role_tag = {
+        "predoc": "Predoc", "phd": "PhD", "postdoc": "Postdoc",
+        "research": "ResearchStaff",
+    }[Router.position_kind(listing.title, listing.summary)]
     tags = [
         hashtag(listing.disciplines[0].value) if listing.disciplines else "",
         hashtag(listing.location.country),
-        "Predoc",
+        role_tag,
     ]
     tag_line = " ".join(f"#{t}" for t in tags if t)
 
@@ -317,7 +322,7 @@ def render_keyboard(
 
 def render_digest(listings: list[PredocListing], *, site_url: str = "") -> str:
     """Compact multi-listing message for high-volume runs and backfills."""
-    header = f"\U0001f393 <b>{len(listings)} new predoc listings</b>"
+    header = f"\U0001f393 <b>{len(listings)} new research positions</b>"
     footer = (
         f'\n\n<a href="{escape_attribute(site_url, quote=True)}">Browse and filter all listings</a>'
         if site_url else ""
@@ -367,7 +372,7 @@ def render_digest_batches(
             f"📅 {_field(deadline_label(listing.deadline, listing.deadline_note), 120)}"
             f' · <a href="{escape_attribute(listing.apply_url, quote=True)}">open ad</a>'
         )
-    head = f"🎓 <b>{total} new predoc listing{'s' if total != 1 else ''}</b>\n\n"
+    head = f"🎓 <b>{total} new research position{'s' if total != 1 else ''}</b>\n\n"
     footer = ""
     if site_url:
         footer += (f'\n\n<a href="{escape_attribute(site_url, quote=True)}">'
