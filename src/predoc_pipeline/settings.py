@@ -120,6 +120,12 @@ class Settings(BaseSettings):
     # as data/feedback.enc, which is safe to commit; without it they stay local.
     feedback_encryption_key: str = ""
     telegram_state_path: str = "data/telegram_state.json"
+    # Separate durable record of external career feeds (no subscriber data).
+    career_state_path: str = "data/career_jobs.ndjson"
+    enable_career_feeds: bool = True
+    # Production scheduled runs use alternating source cohorts, 3h apart.
+    # Manual runs and local tests retain full source coverage.
+    source_rotation_enabled: bool = False
 
     # -- Classification ---------------------------------------------------
     confidence_threshold: float = Field(0.70, ge=0.0, le=1.0)

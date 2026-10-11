@@ -157,6 +157,21 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
                 "sending", "sent", "uncertain",
             ) or not isinstance(delivery.get("at"), str):
                 raise _corrupt(path, f"subscriber {chat_id}: invalid delivery journal")
+    ops = data.get("ops", {"paused": False, "audit": []})
+    if not isinstance(ops, dict) or not isinstance(ops.get("paused", False), bool):
+        raise _corrupt(path, "'ops' must include a boolean paused flag")
+    audit = ops.get("audit", [])
+    if not isinstance(audit, list) or not all(
+        isinstance(event, dict) and isinstance(event.get("action"), str)
+        for event in audit
+    ):
+        raise _corrupt(path, "invalid operation audit history")
+    ops.setdefault("paused", False)
+    ops.setdefault("audit", [])
+    cursor = data.get("delivery_cursor", "")
+    if not isinstance(cursor, str):
+        raise _corrupt(path, "invalid private delivery cursor")
+    data["ops"], data["delivery_cursor"] = ops, cursor
     data["marks"], data["callbacks"], data["subscribers"] = marks, callbacks, subscribers
     return data
 
