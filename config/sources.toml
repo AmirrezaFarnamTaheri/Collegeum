@@ -86,8 +86,7 @@ urls = [
   "https://www.academics.de/stellenanzeigen/position-wissenschaftlicher-mitarbeiter/VQ==",
 ]
 link_pattern = 'academics\.de/jobs/'
-pagination_param = "page"
-max_pages = 3
+max_pages = 1
 institution_from_context = true
 note = "Academics.de - DACH clearinghouse for academic positions (Germany, Austria, Switzerland)."
 
@@ -97,8 +96,7 @@ type = "link_scan"
 group = "aggregator"
 url = "https://www.academics.com/jobsearch/field-subject-economics-management-business-administration/Nw=="
 link_pattern = 'academics\.com/jobs/'
-pagination_param = "page"
-max_pages = 3
+max_pages = 1
 institution_from_context = true
 note = "Academics.com - English portal for DACH predoctoral and research assistant positions."
 
@@ -548,8 +546,10 @@ note = "NIESR UK oldest independent economic research institute (macro, public p
 name = "eui_florence"
 type = "link_scan"
 group = "research_institute"
-url = "https://www.eui.eu/About/Working-at-the-EUI/Academic-vacancies"
-link_pattern = 'eui\.eu/.*vacancies/'
+url = "https://www.eui.eu/About/JobOpportunities/Open-competitions-for-academic-posts"
+link_pattern = 'eui\.eu/Documents/ServicesAdmin/AcademicService/JobOpportunities/\d{4}/[^/]+\.pdf'
+heading_titles = true
+may_be_empty = true
 institution = "European University Institute"
 country = "Italy"
 field_implied = true
@@ -557,12 +557,14 @@ note = "EUI Florence academic and research assistant vacancies in economics and 
 
 [[board]]
 name = "max_planck_econ"
-type = "rss"
+type = "link_scan"
 group = "research_institute"
-url = "https://www.mpg.de/job-offers.rss"
+url = "https://www.mpg.de/jobboard"
+link_pattern = 'mpg\.de/\d{7,9}/[^/?#]+'
 institution = "Max Planck Society"
-country = "Germany"
-note = "Max Planck Society RSS feed across research institutes including Tax Law & Public Finance."
+field_implied = false
+may_be_empty = true
+note = "Official Max Planck jobboard replaced the retired 404 RSS; eligibility is checked per vacancy."
 
 [[board]]
 name = "jpal_global"
@@ -783,7 +785,7 @@ note = "Innocenzo Gasparini Institute for Economic Research (IGIER) at Bocconi U
 name = "fed_board"
 type = "link_scan"
 group = "central_bank"
-url = "https://www.federalreserve.gov/careers-research-assistant.htm"
+url = "https://www.federalreserve.gov/careers-research-assistants.htm"
 link_pattern = 'federalreserve\.gov/|taleo\.net'
 institution = "Federal Reserve Board of Governors"
 country = "United States"
