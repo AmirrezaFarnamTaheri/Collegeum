@@ -8,8 +8,10 @@ It has two deliberately separate surfaces:
   `/settings`. Nothing is subscribed by default. The native Telegram interface
   provides a compact home overview, separate academic/career/market screens,
   select-all or clear-all controls, English/Persian language selection,
-  personal pause/resume, `/sources` status, and a paginated `/latest`
-  preview of matching vacancies. `/stop` requires confirmation before
+  personal pause/resume, `/delivery` settings (individual alerts or a daily
+  digest, limits of 3/6/10 opportunities per day, optional 22:00-08:00 quiet
+  hours, and explicitly selected time zone), `/sources` health status and
+  paginated `/latest` previews. `/stop` and `/delete` require confirmation before
   removing active subscription and delivery state (historical Git repository
   versions remain subject to their own retention policy).
 - **Admin chat:** The exact positive private ID in `TELEGRAM_ADMIN_CHAT_ID` may
@@ -110,17 +112,23 @@ guarantee. A newly subscribed role/scope never backfills notifications first
 published before opt-in. `/latest` is an explicit user-requested preview of
 current matching opportunities, including positions published before opt-in.
 
-Budget is at most 4 attempted notifications per user and 24 across users per
-sync; the next run continues unmatched items. A rotating last-recipient
-cursor avoids always servicing the first users first. User-specific
-notification pause does not block collection or the legacy public channel.
+Individual delivery is bounded to 4 attempted messages per user per sync and
+24 Telegram messages across users per sync. Per-user daily limits of 3, 6 or
+10 opportunities (default 6) count sent and ambiguous receipts. Daily
+digest mode groups up to four jobs in one checkpointed message after 09:00
+local time, with durable per-job receipts. Optional quiet hours suppress
+new planning between 22:00 and 08:00 in the chosen time zone. A rotating
+last-recipient cursor avoids always serving the first users first.
+Personal pause does not block source collection or public publication.
 
 ## Cadence, cache and failure semantics
 
 - The previous 6-hour pipeline cron is now **every 4 hours**. Automated
   scheduled executions poll alternating deterministic halves of enabled
   academic boards, syndicated feeds and portals: every enabled source remains
-  eligible once per 8 hours.
+  eligible once per 8 hours. Public source-attempt timestamps are stored in
+  `data/source_rotation.json` to catch up missed cron slots and avoid
+  immediate duplicate polling when a scheduled run is delayed.
   Manual pipeline runs and `--only` overrides still scan selected/all sources.
 - Per-run `max_details_per_run` and `recheck_max_per_run` were halved.
   The pipeline and Telegram jobs share a single serialized workflow
@@ -171,7 +179,8 @@ used to collect vacancies. A separate provider comparison, access constraints,
 and the necessary verification gate for a future partner API are documented in
 [IRAN_JOB_PROVIDERS.md](IRAN_JOB_PROVIDERS.md).
 
-The subscriber `/sources` panel displays only the last checked time and
+The subscriber `/sources` panel distinguishes healthy, empty, error,
+degraded, idle and stale (>12 hours) statuses and displays only
 allowlisted provider names/counts; it does not return arbitrary source errors,
 subscriber data, credentials, or full HTTP response bodies. The admin can
 inspect counts and limited, escaped source error summaries.

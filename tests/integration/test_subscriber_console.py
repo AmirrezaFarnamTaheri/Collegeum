@@ -618,11 +618,11 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
 
     home, markup = menu(None)
     assert "Academic roles: 0/3" in home
-    assert len(markup["inline_keyboard"]) == 6  # sources and language get separate rows
+    assert len(markup["inline_keyboard"]) == 7  # delivery, sources and language rows
     assert "sub:p:academic" in str(markup)
     assert "sub:p:careers" in str(markup)
     assert "sub:p:markets" in str(markup)
-    for page in ("academic", "careers", "markets", "help", "stop"):
+    for page in ("academic", "careers", "markets", "delivery", "help", "stop"):
         text, keyboard = menu(None, page)
         assert text
         assert len(text) < 4096
