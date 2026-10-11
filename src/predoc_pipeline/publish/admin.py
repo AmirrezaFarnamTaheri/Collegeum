@@ -26,7 +26,8 @@ def _actions_url() -> str:
     import re
 
     repository = os.environ.get("GITHUB_REPOSITORY", "")
-    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
+    if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository)
+            or any(part in (".", "..") for part in repository.split("/"))):
         repository = "AmirrezaFarnamTaheri/Collegeum"
     return f"https://github.com/{repository}/actions/workflows/pipeline.yml"
 
