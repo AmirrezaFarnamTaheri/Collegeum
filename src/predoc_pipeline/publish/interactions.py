@@ -91,6 +91,7 @@ def private_message(
         "/careers": "careers", "/markets": "markets", "/guide": "help",
         "/stop": "stop", "/delete": "stop", "/help": "help",
         "/sources": "sources", "/delivery": "delivery",
+        "/privacy": "privacy",
     }
     if command not in pages and command not in {
         "/latest", "/admin", "/pause", "/resume",
@@ -142,7 +143,9 @@ def _page(
     target = raw[6:]
     if target == "sources":
         return sources_panel(settings.career_health_path, lang=language(member))
-    if target in ("home", "academic", "careers", "markets", "delivery", "help", "stop"):
+    if target in (
+        "home", "academic", "careers", "markets", "delivery", "privacy", "help", "stop",
+    ):
         return menu(member, target)
     return None
 

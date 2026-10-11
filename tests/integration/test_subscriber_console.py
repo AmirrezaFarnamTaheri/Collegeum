@@ -622,7 +622,7 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
     assert "sub:p:academic" in str(markup)
     assert "sub:p:careers" in str(markup)
     assert "sub:p:markets" in str(markup)
-    for page in ("academic", "careers", "markets", "delivery", "help", "stop"):
+    for page in ("academic", "careers", "markets", "delivery", "privacy", "help", "stop"):
         text, keyboard = menu(None, page)
         assert text
         assert len(text) < 4096
@@ -1265,3 +1265,16 @@ def test_valid_jobinja_cards_with_irrelevant_titles_are_healthy_empty(tmp_path):
     sources = json.loads(report.read_text("utf-8"))["sources"]
     assert sources["jobinja"]["status"] == "empty"
     assert sources["irantalent"]["status"] == "empty"
+
+
+def test_privacy_notice_is_available_in_both_languages():
+    from predoc_pipeline.publish.ui import menu
+
+    english, _ = menu(None, "privacy")
+    persian, _ = menu({"language": "fa"}, "privacy")
+    assert "Fernet-encrypted" in english
+    assert "/delete" in english and "historical" in english
+    assert "حریم خصوصی" in persian and "/delete" in persian
+    home, keyboard = menu(None)
+    assert "/privacy" in home
+    assert "sub:p:privacy" in str(keyboard)

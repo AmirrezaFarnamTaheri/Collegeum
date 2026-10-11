@@ -158,6 +158,21 @@ def menu(
             )],
             _back(lang),
         ]
+    elif page == "privacy":
+        body = (
+            "🔒 <b>حریم خصوصی</b>\n\n"
+            "شناسه گفت‌وگو، موضوع‌های انتخابی و سوابق ارسال با رمزنگاری "
+            "Fernet ذخیره می‌شوند. در حالت قدیمی، نسخه‌های رمزگذاری‌شده در "
+            "تاریخچه مخزن عمومی باقی می‌مانند. /delete اشتراک فعال را حذف "
+            "می‌کند، نه نسخه‌های تاریخی را."
+            if fa else
+            "🔒 <b>Privacy</b>\n\n"
+            "Your chat ID, topics and delivery records are Fernet-encrypted. "
+            "In legacy public-repository mode, old encrypted revisions remain "
+            "accessible in Git history. /delete removes active subscription "
+            "records, not historical repository revisions."
+        )
+        buttons = [_back(lang)]
     elif page == "help":
         body = (
             "ℹ️ <b>راهنما</b>\n\n"
@@ -166,7 +181,8 @@ def menu(
             "۳. اعلان‌ها فقط برای آگهی‌های جدید پس از عضویت هستند.\n"
             "۴. «تازه‌ترین‌ها» آگهی‌های قبلی را هم برای مرور نشان می‌دهد.\n"
             "۵. توقف اعلان‌ها اشتراک را نگه می‌دارد.\n"
-            "برای حذف اشتراک، «لغو عضویت» را انتخاب کنید."
+            "برای حذف اشتراک، «لغو عضویت» را انتخاب کنید.\n"
+            "برای اطلاعات نگهداری داده‌ها، /privacy را باز کنید."
             if fa else
             "ℹ️ <b>How alerts work</b>\n\n"
             "1. Choose academic or specialist roles.\n"
@@ -175,7 +191,8 @@ def menu(
             "4. Browse latest to view existing positions on demand.\n"
             "5. Pausing keeps your preferences but stops new alerts.\n"
             "Unsubscribe removes your active private alert records. "
-            "Encrypted snapshots may remain in the public repository history."
+            "Encrypted snapshots may remain in the public repository history. "
+            "See /privacy for storage details."
         )
         buttons = [_back(lang)]
     elif page == "stop":
@@ -215,6 +232,11 @@ def menu(
             f"🔔 Alerts: {'Paused' if paused else 'On'}\n\n"
             "Choose a category to tailor your alerts."
         )
+        body += (
+            "\n\n🔒 داده‌های اشتراک رمزگذاری می‌شوند؛ /privacy"
+            if fa else
+            "\n\n🔒 Preferences are encrypted · /privacy"
+        )
         if careers and not selected_markets:
             body += (
                 "\n\n⚠️ برای دریافت اعلان مشاغل، محدوده جستجو را انتخاب کنید."
@@ -233,7 +255,8 @@ def menu(
             )],
             [_button("🔔 تنظیم ارسال" if fa else "🔔 Delivery", "sub:p:delivery"),
              _button("ℹ️ راهنما" if fa else "ℹ️ Help", "sub:p:help")],
-            [_button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources")],
+            [_button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources"),
+             _button("🔒 حریم خصوصی" if fa else "🔒 Privacy", "sub:p:privacy")],
             [_button("🇬🇧 English" if fa else "🇮🇷 فارسی",
                      "sub:l:en" if fa else "sub:l:fa")],
             [_button("لغو عضویت" if fa else "Unsubscribe", "sub:p:stop")],
