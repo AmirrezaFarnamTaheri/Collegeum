@@ -50,6 +50,8 @@ def _save_batch(path: Path, batch: list[dict[str, str]]) -> None:
 def plan_batch(settings: Settings, *, path: Path = DEFAULT_BATCH) -> int:
     """Stage <=24 new intents and a private batch file; send nothing yet."""
     store = _store(settings)
+    if store.subscribers and not settings.telegram_bot_token:
+        raise ValueError("TELEGRAM_BOT_TOKEN is required before reserving alerts")
     store.prune_deliveries()
     batch: list[dict[str, str]] = []
     if store.subscribers and not store.data["ops"]["paused"]:
@@ -82,10 +84,11 @@ def plan_batch(settings: Settings, *, path: Path = DEFAULT_BATCH) -> int:
                 selected += 1
             store.data["delivery_cursor"] = user_id
             store._dirty = True
-    # Both files remain on this runner until checkpointing. The workflow
-    # commits feedback.enc BEFORE any sendMessage network request.
-    store.save()
+    # Never persist reservations when batch-file creation fails; that would
+    # strand the listings despite no network request being attempted.
     _save_batch(path, batch)
+    store.save()
+    # Both files remain local until the workflow's commit barrier.
     return len(batch)
 
 

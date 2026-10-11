@@ -463,7 +463,7 @@ class TelegramClient:
                 raise TelegramError(
                     f"sendMessage outcome unknown ({type(exc).__name__})",
                     uncertain=True,
-                ) from exc
+                ) from None
 
             if response.status_code == 200:
                 self._last_send[chat_id] = time.monotonic()

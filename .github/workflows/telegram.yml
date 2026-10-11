@@ -64,8 +64,8 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}
         run: |
           set -e
-          if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]; then
-            echo "FEEDBACK_ENCRYPTION_KEY not configured; personal bot disabled."
+          if [ -z "$FEEDBACK_ENCRYPTION_KEY" ] || [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "Encrypted storage or Telegram token not configured; bot disabled."
             echo "private_enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi

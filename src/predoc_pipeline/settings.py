@@ -123,7 +123,7 @@ class Settings(BaseSettings):
     # Separate durable record of external career feeds (no subscriber data).
     career_state_path: str = "data/career_jobs.ndjson"
     enable_career_feeds: bool = True
-    # Production scheduled runs use alternating source cohorts, 3h apart.
+    # Production scheduled runs use alternating source cohorts, 4h apart.
     # Manual runs and local tests retain full source coverage.
     source_rotation_enabled: bool = False
 
