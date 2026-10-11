@@ -36,9 +36,24 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("timeout-minutes: 120", pipeline)
         self.assertIn("github.event.inputs.dry_run != 'true'", pipeline)
         self.assertIn(
-            "Encrypted storage or Telegram token not configured; bot disabled.",
-            workflow("telegram.yml"),
+            "vars.ENABLE_TELEGRAM_SYNC != 'false'", workflow("telegram.yml"),
         )
+
+    def test_private_telegram_requires_credentials_or_explicit_disable(self):
+        content = workflow("telegram.yml")
+        self.assertIn("vars.ENABLE_TELEGRAM_SYNC != 'false'", content)
+        guard = content.index("name: Require live private Telegram credentials")
+        private_checkout = content.index("name: Checkout authoritative private state")
+        sync = content.index("name: Process private commands")
+        self.assertLess(guard, private_checkout)
+        self.assertLess(private_checkout, sync)
+        self.assertIn('if [ -z "$TELEGRAM_BOT_TOKEN" ]', content)
+        self.assertIn('if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]', content)
+        self.assertIn("::error::FEEDBACK_ENCRYPTION_KEY is missing", content)
+        self.assertIn("::error::TELEGRAM_BOT_TOKEN is missing", content)
+        self.assertNotIn('echo "private_enabled=false"', content)
+        self.assertNotIn("bot disabled.", content)
+        self.assertIn('if [ "$SYNC_OUTCOME" != "success" ]', content)
 
     def test_failed_sync_keeps_recovery_and_failing_status(self):
         telegram = workflow("telegram.yml")

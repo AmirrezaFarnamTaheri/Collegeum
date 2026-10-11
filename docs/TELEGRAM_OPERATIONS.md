@@ -167,7 +167,8 @@ Personal pause does not block source collection or public publication.
 - Per-source errors land in dead-letter records and raise partial-run
   telemetry; inaccessible Jobinja pages are not equivalent to empty job
   markets. Enabling a workflow on `main` without `FEEDBACK_ENCRYPTION_KEY`
-  leaves subscriber handling inactive.
+  is a configuration failure: the job fails instead of reporting an empty,
+  successful inbox poll.
 
 The admin panel intentionally does not run a publicly reachable web server:
 a static GitHub Pages admin surface could not safely authenticate writes or
@@ -284,6 +285,38 @@ the message was not delivered before marking every key absent. The original
 digest date is released for same-day replanning **only when every reserved key
 has been explicitly canceled or verified absent**. A single confirmed sent or
 unresolved key keeps the digest reserved to prevent duplicate notifications.
+
+## Required production credentials and fail-closed behavior
+
+**Observed blocker on 11 October 2026:** The latest successful `telegram-sync`
+run on the deployed `main` branch logged that
+`FEEDBACK_ENCRYPTION_KEY` was not configured, then returned success without
+processing updates. The consolidated workflow corrects the false-green result.
+
+When `telegram-sync` is enabled on `main`, the credential preflight must
+find both `TELEGRAM_BOT_TOKEN` and `FEEDBACK_ENCRYPTION_KEY` in
+**Settings → Secrets and variables → Actions → Secrets**. Missing either value
+terminates the workflow with a descriptive *secret-name-only* error before
+processing private updates. Do not place secret values in code, repository
+variables, logs, documentation, or PR comments. Use the existing
+`predoc-pipeline feedback-key` command on a trusted machine to generate a
+new Fernet key, then save its output directly as the Actions secret.
+
+For an intentionally inactive private bot, set the Actions **repository
+variable** `ENABLE_TELEGRAM_SYNC=false`. That explicitly skips the job,
+instead of displaying green processing despite missing credentials. Unset
+the variable (or set any value other than `false`) after configuring both
+secrets. Existing ciphertext requires its **original** encryption key; a
+newly generated key cannot decrypt old `data/feedback.enc`. Restore the
+original key from trusted backup, or perform a documented migration while
+preserving prior encrypted state and receipts.
+
+After activation, inspect the first completed `telegram-sync` run for a
+non-skipped inbox step, successful checkpointing, and an independently
+confirmed private-chat interaction. GitHub CI alone does not prove the
+Telegram API accepted or delivered messages. Verify
+`PRIVATE_STATE_REPO` points to a private repository and has a valid
+`PRIVATE_STATE_TOKEN` when using external storage.
 
 ## Life Sciences PhD — independent private category
 

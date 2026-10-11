@@ -53,7 +53,12 @@ Private notification sends use a checkpointed outbox: encrypted intents
 are committed before any Bot API send, and delivery outcomes are committed
 afterward. Failed and ambiguous sends remain visible for reconciliation.
 Both require the existing `FEEDBACK_ENCRYPTION_KEY`; configure a positive
-`TELEGRAM_ADMIN_CHAT_ID` for the admin surface.
+`TELEGRAM_ADMIN_CHAT_ID` for the admin surface. Scheduled private-sync
+runs now **fail** when `TELEGRAM_BOT_TOKEN` or `FEEDBACK_ENCRYPTION_KEY`
+is missing; a deliberately inactive bot must be explicitly disabled with
+the Actions repository variable `ENABLE_TELEGRAM_SYNC=false`. A previous
+production run appeared green after silently skipping due to a missing
+encryption key. See the operations guide for safe restoration and validation.
 
 The scheduled pipeline checks alternating source cohorts every **4 hours**;
 each academic board is checked once per 8 hours and runs have halved budgets.

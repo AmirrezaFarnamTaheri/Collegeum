@@ -22,7 +22,8 @@ concurrency:
 
 jobs:
   sync:
-    if: github.ref == 'refs/heads/main'
+    # Opt out explicitly; absence of credentials is never a successful no-op.
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_TELEGRAM_SYNC != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -33,6 +34,21 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
+
+      - name: Require live private Telegram credentials
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "::error::TELEGRAM_BOT_TOKEN is missing; private sync not started"
+            exit 1
+          fi
+          if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]; then
+            echo "::error::FEEDBACK_ENCRYPTION_KEY is missing; private sync not started"
+            exit 1
+          fi
 
       - name: Check private state repository is private
         if: ${{ vars.PRIVATE_STATE_REPO != '' }}
@@ -90,9 +106,8 @@ jobs:
         run: |
           set -e
           if [ -z "$FEEDBACK_ENCRYPTION_KEY" ] || [ -z "$TELEGRAM_BOT_TOKEN" ]; then
-            echo "Encrypted storage or Telegram token not configured; bot disabled."
-            echo "private_enabled=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            echo "::error::Required private Telegram credentials are missing"
+            exit 1
           fi
           echo "private_enabled=true" >> "$GITHUB_OUTPUT"
           PYTHONPATH=src python3 -m predoc_pipeline.cli telegram-sync
