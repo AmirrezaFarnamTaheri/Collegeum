@@ -77,7 +77,10 @@ jobs:
           CUSTOM_LLM_API_KEY: ${{ secrets.CUSTOM_LLM_API_KEY }}
           CUSTOM_LLM_BASE_URL: ${{ vars.CUSTOM_LLM_BASE_URL || secrets.CUSTOM_LLM_BASE_URL }}
           EXTRACTION_BACKEND: ${{ vars.EXTRACTION_BACKEND || 'auto' }}
-          SITE_URL: ${{ vars.SITE_URL }}
+          # Explicitly scoped to Collegeum. The legacy SITE_URL repository
+          # variable still points at /predoc-not-org and corrupts RSS links.
+          # Set COLLEGEUM_SITE_URL only when using a verified custom domain.
+          SITE_URL: ${{ vars.COLLEGEUM_SITE_URL || 'https://amirrezafarnamtaheri.github.io/Collegeum/' }}
           ENABLE_JOBSPY: ${{ vars.ENABLE_JOBSPY || 'false' }}
           ENABLE_TWITTER: ${{ vars.ENABLE_TWITTER || 'false' }}
           TWSCRAPE_ACCOUNTS: ${{ secrets.TWSCRAPE_ACCOUNTS }}

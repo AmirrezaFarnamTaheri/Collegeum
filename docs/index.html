@@ -1756,13 +1756,899 @@
 
     function formatSalary(r) {
       if (!r) return '';
-      if (r.salary_min != null) {
-        const sym = r.salary_currency === 'USD' ? '$' : (r.salary_currency === 'GBP' ? '£' : (r.salary_currency === 'EUR' ? '€' : (r.salary_currency ? r.salary_currency + ' ' : '$')));
-        const periodStr = r.salary_period && r.salary_period !== 'year' ? `/${r.salary_period}` : '/yr';
-        if (r.salary_max != null && r.salary_max !== r.salary_min) {
-          return `${sym}${Number(r.salary_min).toLocaleString()}–${sym}${Number(r.salary_max).toLocaleString()} ${periodStr}`;
+      if (r.salary_min != null && Number.isFinite(Number(r.salary_min)) && Number(r.salary_min) > 0) {
+        // A missing currency/period is unknown, not an implied USD/year.
+        if (r.salary_raw && (!r.salary_currency || !r.salary_period)) return r.salary_raw;
+        const sym = r.salary_currency === 'USD' ? '      return r.salary_raw || '';
+    }
+
+    function formatDegree(code) {
+      if (code === 'bachelors') return "Bachelor's degree";
+      if (code === 'masters') return "Master's degree";
+      if (code === 'phd') return "Doctorate (PhD)";
+      return code || 'Unstated';
+    }
+
+    function deadlineBadge(item) {
+      if (!item.deadline || item.days_left == null) {
+        const label = item.deadline ? 'Check deadline' :
+          (/rolling|until filled/i.test(item.deadline_note || '') ? 'Rolling' : 'Unstated');
+        return { cls: 'r', label, days: 999, pip: '○' };
+      }
+      const days = item.days_left;
+      if (days < 0) return { cls: 'r', label: 'Closed', days: 1000, pip: '✕' };
+      if (days === 0) return { cls: 'u', label: 'Today', days: 0, pip: '●' };
+      if (days <= 7) return { cls: 'u', label: `${days}d left`, days, pip: '●' };
+      if (days <= 30) return { cls: 'soon', label: `${days}d left`, days, pip: '◔' };
+      return { cls: '', label: formatDate(item.deadline), days, pip: '○' };
+    }
+
+    // Dynamic Filter Chip Counts
+    function updateChipCounts() {
+      const countAll = $('#count-all');
+      if (countAll) countAll.textContent = listings.length;
+      const countUs = $('#count-us');
+      if (countUs) countUs.textContent = listings.filter(l => (l.country === 'United States' || (l.country || '').includes('United States')) && l.kind === 'predoc').length;
+      const countPostdoc = $('#count-postdoc');
+      if (countPostdoc) countPostdoc.textContent = listings.filter(l => l.kind === 'postdoc' || l.kind === 'phd').length;
+      const countInst = $('#count-inst');
+      if (countInst) countInst.textContent = listings.filter(l => l.sector === 'institutional').length;
+      const countSoon = $('#count-soon');
+      if (countSoon) countSoon.textContent = listings.filter(l => l.days_left != null && l.days_left <= 7 && l.days_left >= 0).length;
+    }
+
+    // Populate dropdowns from listings data
+    function populateFilters() {
+      const disciplines = new Set();
+      const countries = new Set();
+      listings.forEach(l => {
+        (l.disciplines || []).forEach(d => { if (d && d !== 'Other') disciplines.add(d); });
+        if (l.country) countries.add(l.country);
+      });
+
+      const discSel = $('#filter-discipline');
+      const curDisc = discSel.value;
+      discSel.innerHTML = '<option value="">All Disciplines</option>';
+      [...disciplines].sort().forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        discSel.appendChild(opt);
+      });
+      discSel.value = curDisc;
+
+      const cSel = $('#filter-country');
+      const curC = cSel.value;
+      cSel.innerHTML = '<option value="">All Countries</option>';
+      [...countries].sort().forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        cSel.appendChild(opt);
+      });
+      cSel.value = curC;
+    }
+
+    // Shared selection for the board and downloaded exports.
+    function activeListingFilters() {
+      return {
+        q: $('#q').value.trim().toLowerCase(),
+        disc: $('#filter-discipline').value,
+        kindSel: $('#filter-kind').value,
+        sector: $('#filter-sector').value,
+        country: $('#filter-country').value,
+        visa: $('#filter-visa').value,
+        sort: $('#filter-sort').value,
+        category: currentKind
+      };
+    }
+
+    function selectListingRows(data, filters) {
+      const {q, disc, kindSel, sector, country, visa, sort, category} = filters;
+      const rows = data.filter(r => {
+        if (category === 'us') {
+          const isUS = (r.country || '').toLowerCase().includes('united states');
+          if (!isUS || r.kind !== 'predoc') return false;
         }
-        return `${sym}${Number(r.salary_min).toLocaleString()} ${periodStr}`;
+        if (category === 'postdoc-phd' && !['postdoc', 'phd'].includes(r.kind)) return false;
+        if (category === 'institutional' && r.sector !== 'institutional') return false;
+        if (category === 'closing-soon' &&
+            (r.days_left == null || r.days_left > 7 || r.days_left < 0)) return false;
+        if (disc && !(r.disciplines || []).includes(disc)) return false;
+        if (kindSel && r.kind !== kindSel) return false;
+        if (sector && r.sector !== sector) return false;
+        if (country && r.country !== country) return false;
+        if (visa && r.visa !== visa) return false;
+        const hay = [r.title, r.institution, r.principal_investigator, r.city, r.country, r.summary]
+          .filter(Boolean).join(' ').toLowerCase();
+        return !q || hay.includes(q);
+      });
+      rows.sort((a, b) => {
+        if (sort === 'i') return (a.institution || '').localeCompare(b.institution || '');
+        if (sort === 't') return (a.title || '').localeCompare(b.title || '');
+        if (sort === 'newest') return (b.first_seen_at || '').localeCompare(a.first_seen_at || '');
+        return (a.days_left ?? 9999) - (b.days_left ?? 9999);
+      });
+      return rows;
+    }
+
+    // Board Filter & Render Engine
+    function draw() {
+      const now = Date.now();
+      refreshDeadlineState(now);
+      deadlineRenderDay = Math.floor(now / 86400000);
+      updateChipCounts();
+      const q = $('#q').value.trim().toLowerCase();
+      const disc = $('#filter-discipline').value;
+      const kindSel = $('#filter-kind').value;
+      const sector = $('#filter-sector').value;
+      const country = $('#filter-country').value;
+      const visa = $('#filter-visa').value;
+      const sort = $('#filter-sort').value;
+
+      const activeFilters = [q, disc, kindSel, sector, country, visa, currentKind !== 'all' ? currentKind : ''].filter(Boolean);
+      const hasFilters = activeFilters.length > 0;
+      const resetBtn = $('#reset-btn');
+      resetBtn.style.display = hasFilters ? 'inline-block' : 'none';
+      if (hasFilters) resetBtn.textContent = `Reset filters (${activeFilters.length} active)`;
+      $('#search-clear-btn').style.display = q ? 'flex' : 'none';
+
+      $('#filter-discipline').classList.toggle('active', !!disc);
+      $('#filter-kind').classList.toggle('active', !!kindSel);
+      $('#filter-sector').classList.toggle('active', !!sector);
+      $('#filter-country').classList.toggle('active', !!country);
+      $('#filter-visa').classList.toggle('active', !!visa);
+      $('#filter-sort').classList.toggle('active', sort !== 'd');
+
+      const rows = selectListingRows(listings, activeListingFilters());
+
+      $('#cnt').textContent = `${rows.length} of ${listings.length} positions`;
+
+      if (rows.length === 0) {
+        $('#ledger-wrap').style.display = 'block';
+        $('#grid-wrap').style.display = 'none';
+        $('#analytics-wrap').style.display = 'none';
+        $('#list').innerHTML = '<div class="empty-state">No positions match these criteria.</div>';
+        return;
+      }
+
+      if (viewMode === 'grid') {
+        $('#ledger-wrap').style.display = 'none';
+        $('#grid-wrap').style.display = 'grid';
+        $('#analytics-wrap').style.display = 'none';
+        renderGrid(rows);
+      } else if (viewMode === 'stats') {
+        $('#ledger-wrap').style.display = 'none';
+        $('#grid-wrap').style.display = 'none';
+        $('#analytics-wrap').style.display = 'block';
+        renderAnalytics(rows);
+      } else {
+        $('#ledger-wrap').style.display = 'block';
+        $('#grid-wrap').style.display = 'none';
+        $('#analytics-wrap').style.display = 'none';
+        renderLedger(rows);
+      }
+    }
+
+    // Render Ledger Rows
+    function renderLedger(rows) {
+      $('#list').innerHTML = rows.map((r, i) => {
+        const b = deadlineBadge(r);
+        const place = [r.city, r.country].filter(Boolean).join(', ') || 'Unstated';
+        
+        let visaHtml = '';
+        if (r.visa === 'explicit') visaHtml = '<span class="tag-visa exp">Visa: Stated</span>';
+        else if (r.visa === 'inferred') visaHtml = '<span class="tag-visa inf">Visa: Likely</span>';
+        else if (r.visa === 'not_offered') visaHtml = '<span class="tag-visa none">No sponsorship / Restricted</span>';
+
+        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : 'Predoc / RA');
+        const sal = formatSalary(r);
+        const salBadge = sal ? `<span class="tag-salary">${esc(sal)}</span>` : '';
+
+        return `
+          <div class="row" data-id="${r.id}" style="animation-delay:${Math.min(i * 30, 300)}ms">
+            <div class="row-main" tabindex="0" role="button" aria-expanded="false">
+              <span class="dl ${b.cls}"><span class="pip">${b.pip}</span>${esc(b.label)}</span>
+              <div>
+                <h4>${esc(r.title)}</h4>
+                <p>${esc(r.institution)}${r.principal_investigator ? ' &middot; Prof. ' + esc(r.principal_investigator) : ''} &middot; ${esc(place)}</p>
+              </div>
+              <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
+                <span class="tag">${esc(kindLabel)}</span>
+                ${visaHtml}
+                ${r.is_remote ? '<span class="tag-remote">Remote</span>' : ''}
+                ${salBadge}
+              </div>
+              <i class="chev"></i>
+            </div>
+            <div class="more">
+              <div class="more-inner">
+                <p style="margin-bottom:8px;">${esc(r.summary || 'See the official posting for full requirements, stipend details, and application materials.')}</p>
+                ${(r.tools_required && r.tools_required.length) || r.start_term || r.start_date || (r.min_degree && r.min_degree !== 'unstated') ? `
+                  <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:12px; font-size:12px;">
+                    ${(r.tools_required || []).map(t => `<span class="tag-tool">⚙ ${esc(t)}</span>`).join('')}
+                    ${r.min_degree && r.min_degree !== 'unstated' ? `<span class="tag">🎓 ${esc(formatDegree(r.min_degree))}</span>` : ''}
+                    ${r.start_term ? `<span class="tag">📅 Starts ${esc(r.start_term)}</span>` : (r.start_date ? `<span class="tag">📅 Starts ${esc(formatDate(r.start_date))}</span>` : '')}
+                  </div>
+                ` : ''}
+                <div class="more-actions">
+                  <button class="more-btn" data-open="${r.id}">Full details &amp; apply &rarr;</button>
+                  ${r.apply_url ? `<a class="more-btn alt" href="${esc(r.apply_url)}" target="_blank" rel="noopener">Direct link ↗</a>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Wire row accordion and actions
+      $$('.row-main').forEach(btn => {
+        btn.onclick = () => {
+          const row = btn.closest('.row');
+          const isOpen = row.classList.toggle('open');
+          btn.setAttribute('aria-expanded', isOpen);
+        };
+        wireKeyboardActivation(btn);
+      });
+
+      $$('[data-open]').forEach(btn => {
+        btn.onclick = () => {
+          const item = listings.find(l => l.id === Number(btn.dataset.open));
+          if (item) openModal(item);
+        };
+      });
+    }
+
+    // Render Grid Cards
+    function renderGrid(rows) {
+      $('#grid-wrap').innerHTML = rows.map(r => {
+        const b = deadlineBadge(r);
+        const place = [r.city, r.country].filter(Boolean).join(', ') || 'Unstated';
+        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : 'Predoc / RA');
+        const sal = formatSalary(r);
+        const salBadge = sal ? `<span class="tag-salary">${esc(sal)}</span>` : '';
+
+        return `
+          <article class="job-card" data-open="${r.id}" tabindex="0" role="button" aria-label="Open details: ${esc(r.title)}">
+            <div class="card-head">
+              <span class="card-inst">${esc(r.institution)}</span>
+            </div>
+            <h3 class="card-title">${esc(r.title)}</h3>
+            <div style="font-size:13px; color:var(--soft); margin-bottom:10px;">
+              ${r.principal_investigator ? `Prof. ${esc(r.principal_investigator)} &middot; ` : ''}
+              <span>${esc(place)}</span>
+            </div>
+            <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+              <span class="dl ${b.cls}"><span class="pip">${b.pip}</span>${esc(b.label)}</span>
+              <span class="tag">${esc(kindLabel)}</span>
+              ${r.is_remote ? '<span class="tag-remote">Remote</span>' : ''}
+              ${salBadge}
+            </div>
+            ${(r.tools_required && r.tools_required.length) ? `
+              <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;">
+                ${(r.tools_required).slice(0, 4).map(t => `<span class="tag-tool">⚙ ${esc(t)}</span>`).join('')}
+              </div>
+            ` : ''}
+            <p class="card-summary">${esc(r.summary || 'See the official posting for full requirements, stipend details, and application materials.')}</p>
+            <div class="card-footer">
+              <span style="font-size:12px; color:var(--soft); font-family:var(--mono);">${r.deadline ? 'Closes ' + formatDate(r.deadline) : 'Rolling review'}</span>
+              <span style="font-weight:600; color:var(--acc);">Details &rarr;</span>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      $$('.job-card').forEach(c => {
+        c.onclick = () => {
+          const item = listings.find(l => l.id === Number(c.dataset.open));
+          if (item) openModal(item);
+        };
+        wireKeyboardActivation(c);
+      });
+    }
+
+    function wireKeyboardActivation(element) {
+      element.onkeydown = event => {
+        if (event.target !== element || !['Enter', ' '].includes(event.key)) return;
+        event.preventDefault();
+        if (!event.repeat) element.click();
+      };
+    }
+
+    // Render Analytics Dashboard (Collegiate Bulletin Style)
+    function renderAnalytics(rows) {
+      const total = rows.length;
+      if (!total) {
+        $('#analytics-wrap').innerHTML = '<div class="empty-state">No data available for these criteria.</div>';
+        return;
+      }
+
+      // 1. Ratio Computations
+      const institutionNames = new Set(rows.map(r => (r.institution || '').trim())
+        .filter(name => name && !/^(unknown(?: institution)?|unstated)$/i.test(name))
+        .map(name => name.normalize('NFKC').toLocaleLowerCase('en')));
+      const visaExplicit = rows.filter(r => r.visa === 'explicit').length;
+      const visaLikely = rows.filter(r => r.visa === 'inferred').length;
+      const visaTotal = visaExplicit + visaLikely;
+      const visaPct = Math.round((visaTotal / total) * 100);
+
+      const remoteCount = rows.filter(r => r.is_remote).length;
+      const remotePct = Math.round((remoteCount / total) * 100);
+
+      const rollingCount = rows.filter(r => deadlineBadge(r).label === 'Rolling').length;
+      const rollingPct = Math.round((rollingCount / total) * 100);
+      const unknownDeadlineCount = rows.filter(r => ['Unstated', 'Check deadline'].includes(deadlineBadge(r).label)).length;
+      const closedCount = rows.filter(r => r.days_left != null && r.days_left < 0).length;
+      const visaUnknown = rows.filter(r => !['explicit', 'inferred', 'not_offered'].includes(r.visa)).length;
+
+      const urgentCount = rows.filter(r => r.days_left != null && r.days_left >= 0 && r.days_left <= 7).length;
+      const urgentPct = Math.round((urgentCount / total) * 100);
+
+      const soonCount = rows.filter(r => r.days_left != null && r.days_left > 7 && r.days_left <= 30).length;
+      const soonPct = Math.round((soonCount / total) * 100);
+
+      const laterCount = rows.filter(r => r.days_left != null && r.days_left > 30).length;
+      const laterPct = Math.round((laterCount / total) * 100);
+
+      // 2. Geographic Distribution
+      const countryMap = Object.create(null);
+      rows.forEach(r => {
+        const c = r.country || 'Unstated';
+        countryMap[c] = (countryMap[c] || 0) + 1;
+      });
+      const topCountries = Object.entries(countryMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+
+      // 3. Institutional Volume
+      const instMap = Object.create(null);
+      rows.forEach(r => {
+        const inst = r.institution || 'Unstated';
+        instMap[inst] = (instMap[inst] || 0) + 1;
+      });
+      const topInsts = Object.entries(instMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+      const maxInstCount = topInsts.length ? topInsts[0][1] : 1;
+
+      // Scope Banner Text
+      const isFiltered = total < listings.length;
+      const scopeHtml = `
+        <div class="analytics-scope-bar">
+          <div>
+            <strong>Market Scope:</strong>
+            ${isFiltered 
+              ? `Analyzing <b>${total}</b> of ${listings.length} positions matching active criteria.` 
+              : `Analyzing all <b>${total}</b> indexed appointments with ${institutionNames.size} distinct reported institution names. This is listing coverage, not a count of healthy monitors.`}
+          </div>
+          ${isFiltered ? '<button class="analytics-scope-reset" id="analytics-reset-scope">Reset all filters</button>' : ''}
+        </div>
+      `;
+
+      // Render Modules
+      $('#analytics-wrap').innerHTML = `
+        ${scopeHtml}
+
+        <div class="analytics-metrics-grid">
+          <div class="metric-card">
+            <span class="stat-val">${total}</span>
+            <span class="stat-lbl">Active Roles</span>
+            <span class="stat-sub">${isFiltered ? `${Math.round((total / listings.length) * 100)}% of board` : '100% of index'}</span>
+          </div>
+          <div class="metric-card">
+            <span class="stat-val">${visaPct}%</span>
+            <span class="stat-lbl">Visa Support Signals</span>
+            <span class="stat-sub">${visaExplicit} stated, ${visaLikely} inferred; ${visaUnknown} unknown. Share of all roles.</span>
+          </div>
+          <div class="metric-card">
+            <span class="stat-val">${remotePct}%</span>
+            <span class="stat-lbl">Remote Eligible</span>
+            <span class="stat-sub">${remoteCount} roles marked remote; other roles may be unstated. Share of all roles.</span>
+          </div>
+          <div class="metric-card">
+            <span class="stat-val">${rollingPct}%</span>
+            <span class="stat-lbl">Rolling Review</span>
+            <span class="stat-sub">${rollingCount} roles open-ended</span>
+          </div>
+        </div>
+
+        <div class="analytics-two-col">
+          <div class="analytics-panel">
+            <h3 class="analytics-panel-title">Geographic Distribution</h3>
+            <div class="analytics-panel-sub">Top research appointment locations</div>
+            <div class="analytics-bar-list">
+              ${topCountries.map(([c, count]) => {
+                const pct = Math.round((count / total) * 100);
+                return `
+                  <div class="bar-row">
+                    <div class="bar-meta">
+                      <span>${esc(c)}</span>
+                      <span class="bar-count">${count} <span style="color:var(--faint);font-weight:400;">(${pct}%)</span></span>
+                    </div>
+                    <div class="bar-track">
+                      <div class="bar-fill" style="width:${Math.max(pct, 4)}%"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="analytics-panel">
+            <h3 class="analytics-panel-title">Institutional Hubs</h3>
+            <div class="analytics-panel-sub">Top recruiting institutions in view</div>
+            <div class="analytics-bar-list">
+              ${topInsts.map(([inst, count]) => {
+                const relPct = Math.round((count / maxInstCount) * 100);
+                return `
+                  <div class="bar-row">
+                    <div class="bar-meta">
+                      <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70%;">${esc(inst)}</span>
+                      <span class="bar-count">${count} role${count > 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="bar-track">
+                      <div class="bar-fill alt" style="width:${Math.max(relPct, 6)}%"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="horizon-panel">
+          <h3 class="analytics-panel-title">Application &amp; Deadline Horizon</h3>
+          <div class="analytics-panel-sub">Review windows: ${unknownDeadlineCount} unstated or unverified; ${closedCount} past deadline. Shares use all roles in view.</div>
+          
+          <div class="horizon-stacked-bar">
+            ${urgentCount ? `<div class="horizon-seg urgent" style="width:${(urgentCount / total) * 100}%" title="Urgent: ${urgentCount}"></div>` : ''}
+            ${soonCount ? `<div class="horizon-seg soon" style="width:${(soonCount / total) * 100}%" title="Closing soon: ${soonCount}"></div>` : ''}
+            ${laterCount ? `<div class="horizon-seg later" style="width:${(laterCount / total) * 100}%" title="Extended: ${laterCount}"></div>` : ''}
+            ${rollingCount ? `<div class="horizon-seg rolling" style="width:${(rollingCount / total) * 100}%" title="Rolling: ${rollingCount}"></div>` : ''}
+            ${unknownDeadlineCount ? `<div class="horizon-seg" style="width:${(unknownDeadlineCount / total) * 100}%;background:var(--faint)" title="Unstated or unverified: ${unknownDeadlineCount}"></div>` : ''}
+            ${closedCount ? `<div class="horizon-seg" style="width:${(closedCount / total) * 100}%;background:var(--warn)" title="Past deadline: ${closedCount}"></div>` : ''}
+          </div>
+
+          <div class="horizon-legend">
+            <div class="legend-item">
+              <span class="legend-tag"><span class="legend-pip" style="background:var(--acc);"></span> &le; 7 days left</span>
+              <span class="legend-val">${urgentCount} <span style="font-size:11px;font-weight:400;color:var(--faint);">(${urgentPct}%)</span></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-tag"><span class="legend-pip" style="background:var(--warn);"></span> 8–30 days left</span>
+              <span class="legend-val">${soonCount} <span style="font-size:11px;font-weight:400;color:var(--faint);">(${soonPct}%)</span></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-tag"><span class="legend-pip" style="background:var(--rule-strong);"></span> &gt; 30 days left</span>
+              <span class="legend-val">${laterCount} <span style="font-size:11px;font-weight:400;color:var(--faint);">(${laterPct}%)</span></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-tag"><span class="legend-pip" style="background:var(--ok);"></span> Rolling review</span>
+              <span class="legend-val">${rollingCount} <span style="font-size:11px;font-weight:400;color:var(--faint);">(${rollingPct}%)</span></span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const resetScopeBtn = $('#analytics-reset-scope');
+      if (resetScopeBtn) {
+        resetScopeBtn.onclick = resetAll;
+      }
+    }
+
+    // Modal Dossier
+    const modal = $('#detail-modal');
+    function openModal(item, { updateUrl = true } = {}) {
+      currentModalListing = item;
+      $('#modal-copy-fallback').hidden = true;
+      if (updateUrl && window.location.hash !== `#listing-${item.id}`) {
+        window.location.hash = `listing-${item.id}`;
+      }
+
+      $('#modal-title').textContent = item.title;
+      $('#modal-inst').textContent = item.institution + (item.principal_investigator ? ` · Prof. ${item.principal_investigator}` : '');
+
+      const b = deadlineBadge(item);
+      const kindLabel = item.kind === 'postdoc' ? 'Postdoctoral Appointment' : (item.kind === 'phd' ? 'PhD Studentship' : 'Predoctoral Research Associate');
+      const sectorLabel = item.sector === 'institutional' ? 'Central Bank / Multilateral' : (item.sector === 'private' ? 'Private Sector / Consultancy' : 'Academic Institution');
+      const sal = formatSalary(item);
+
+      $('#modal-badges').innerHTML = `
+        <span id="modal-deadline-badge" class="dl ${b.cls}"><span class="pip">${b.pip}</span>${esc(b.label)}</span>
+        <span class="tag">${esc(kindLabel)}</span>
+        <span class="tag">${esc(sectorLabel)}</span>
+        ${item.is_remote ? '<span class="tag-remote">Remote</span>' : ''}
+        ${sal ? `<span class="tag-salary">💰 ${esc(sal)}</span>` : ''}
+      `;
+
+      const timelineEl = $('#modal-timeline');
+      if (timelineEl) {
+        timelineEl.innerHTML = `
+          <span>First Indexed: <b>${formatDate(item.first_seen_at)}</b></span>
+          <span class="timeline-arrow" aria-hidden="true">──────▶</span>
+          <span>Review Status: <b id="modal-deadline-status">${esc(b.label)}</b></span>
+        `;
+      }
+
+      const place = [item.city, item.country].filter(Boolean).join(', ') || 'Unstated';
+      const visaText = item.visa === 'explicit' 
+        ? 'Stated in advert' 
+        : (item.visa === 'inferred' ? 'Likely (institutional policy)' : (item.visa === 'not_offered' ? 'Sponsorship unavailable or eligibility restricted; check advert' : 'Unstated'));
+
+      const degreeStr = (item.min_degree && item.min_degree !== 'unstated')
+        ? formatDegree(item.min_degree) + (item.degree_note ? ` (${item.degree_note})` : '')
+        : (item.degree_note || 'Unstated');
+      const startStr = item.start_term || (item.start_date ? formatDate(item.start_date) : 'Unstated');
+
+      const reqTools = (item.tools_required || []).join(', ');
+      const prefTools = (item.tools_preferred || []).join(', ');
+      let toolsStr = reqTools;
+      if (prefTools) {
+        toolsStr = toolsStr ? `${toolsStr} (Preferred: ${prefTools})` : `Preferred: ${prefTools}`;
+      }
+      if (!toolsStr) toolsStr = 'Unstated';
+
+      const gridData = [
+        ['Location', place + (item.is_remote ? ' (Remote option)' : '')],
+        ['Deadline', b.label + (item.deadline ? ` (${formatDate(item.deadline)})` : '')],
+        ['Duration', item.duration_years ? `${item.duration_years} year(s)` : 'Unstated'],
+        ['Compensation', sal || 'Unstated'],
+        ['Degree Requirement', degreeStr],
+        ['Start Date / Term', startStr],
+        ['Technical Stack', toolsStr],
+        ['Visa Terms', visaText + (item.visa_note ? ` — ${item.visa_note}` : '')],
+        ['Disciplines', (item.disciplines || []).join(', ') || 'Unstated'],
+        ['Sector', sectorLabel],
+      ];
+
+      $('#modal-grid').innerHTML = gridData.map(([k, v]) => `
+        <div>
+          <dt>${esc(k)}</dt>
+          <dd${k === 'Deadline' ? ' id="modal-deadline-value"' : ''}>${esc(v)}</dd>
+        </div>
+      `).join('');
+
+      $('#modal-summary').textContent = item.summary || 'Full requirements, responsibilities, and application details are available directly on the official institution page.';
+
+      const applyUrl = item.apply_url || item.source_url;
+      $('#modal-apply-link').href = applyUrl;
+      $('#modal-src-link').href = item.source_url || applyUrl;
+      if (item.source_url && item.source_url !== item.apply_url) {
+        $('#modal-src-link').style.display = 'inline-flex';
+      } else {
+        $('#modal-src-link').style.display = 'none';
+      }
+
+      if (!modal.open && typeof modal.showModal === 'function') modal.showModal();
+    }
+
+    function closeModal({ updateUrl = true } = {}) {
+      if (modal.open) modal.close();
+      currentModalListing = null;
+      if (updateUrl && window.location.hash.startsWith('#listing-')) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+
+    function syncModalWithUrl() {
+      const match = window.location.hash.match(/^#listing-(\d+)$/);
+      const item = match && listings.find(l => l.id === Number(match[1]));
+      if (!item) {
+        closeModal({ updateUrl: false });
+      } else if (!modal.open || currentModalListing?.id !== item.id) {
+        openModal(item, { updateUrl: false });
+      }
+    }
+    window.addEventListener('hashchange', syncModalWithUrl);
+    window.addEventListener('popstate', syncModalWithUrl);
+
+    $('#modal-close').onclick = closeModal;
+    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+    $('#modal-copy-btn').onclick = async () => {
+      if (!currentModalListing) return;
+      const id = currentModalListing.id;
+      const url = `${window.location.origin}${window.location.pathname}#listing-${id}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast('Link copied to clipboard');
+      } catch (_) {
+        toast('Could not copy automatically. Copy the link manually.');
+        if (currentModalListing?.id === id) {
+          const input = $('#modal-copy-text');
+          input.value = url;
+          $('#modal-copy-fallback').hidden = false;
+          input.focus();
+          input.select();
+        }
+      }
+    };
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== $('#q') && !modal.open) {
+        e.preventDefault();
+        $('#q').focus();
+        $('#q').select();
+      }
+      if (e.key === 'Escape' && modal.open) {
+        closeModal();
+      }
+    });
+
+    // Event listeners
+    $('#q').oninput = draw;
+    $('#search-clear-btn').onclick = () => {
+      $('#q').value = '';
+      draw();
+      $('#q').focus();
+    };
+
+    ['#filter-discipline', '#filter-kind', '#filter-sector', '#filter-country', '#filter-visa', '#filter-sort'].forEach(sel => {
+      $(sel).onchange = draw;
+    });
+
+    // Chips
+    $$('.chip').forEach(c => {
+      c.onclick = () => {
+        $$('.chip').forEach(x => x.setAttribute('aria-pressed', x === c));
+        currentKind = c.dataset.k;
+        draw();
+      };
+    });
+
+    // Reset
+    function resetAll() {
+      $('#q').value = '';
+      $('#filter-discipline').value = '';
+      $('#filter-kind').value = '';
+      $('#filter-sector').value = '';
+      $('#filter-country').value = '';
+      $('#filter-visa').value = '';
+      $('#filter-sort').value = 'd';
+      currentKind = 'all';
+      $$('.chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.k === 'all'));
+      draw();
+    }
+    $('#reset-btn').onclick = resetAll;
+
+    // View toggles
+    function setViewMode(mode) {
+      viewMode = ['ledger', 'grid', 'stats'].includes(mode) ? mode : 'ledger';
+      try { localStorage.setItem('collegeum-view', viewMode); } catch (_) {}
+      $('#view-ledger-btn').classList.toggle('active', viewMode === 'ledger');
+      $('#view-ledger-btn').setAttribute('aria-pressed', viewMode === 'ledger');
+      $('#view-grid-btn').classList.toggle('active', viewMode === 'grid');
+      $('#view-grid-btn').setAttribute('aria-pressed', viewMode === 'grid');
+      $('#view-stats-btn').classList.toggle('active', viewMode === 'stats');
+      $('#view-stats-btn').setAttribute('aria-pressed', viewMode === 'stats');
+      draw();
+    }
+    $('#view-ledger-btn').onclick = () => setViewMode('ledger');
+    $('#view-grid-btn').onclick = () => setViewMode('grid');
+    $('#view-stats-btn').onclick = () => setViewMode('stats');
+    if (viewMode === 'grid') {
+      $('#view-grid-btn').classList.add('active');
+      $('#view-grid-btn').setAttribute('aria-pressed', 'true');
+      $('#view-ledger-btn').classList.remove('active');
+      $('#view-ledger-btn').setAttribute('aria-pressed', 'false');
+    } else if (viewMode === 'stats') {
+      $('#view-stats-btn').classList.add('active');
+      $('#view-stats-btn').setAttribute('aria-pressed', 'true');
+      $('#view-ledger-btn').classList.remove('active');
+      $('#view-ledger-btn').setAttribute('aria-pressed', 'false');
+    }
+
+    // CSV Export
+    function csvCell(value) {
+      let text = String(value ?? '');
+      // A visible text prefix survives spreadsheet save/reopen operations,
+      // unlike apostrophes that some spreadsheet programs remove.
+      const normalized = text.normalize('NFKC');
+      if (/^[\s\uFEFF]*[=+\-@]/u.test(normalized) || /^[\t\r\n]/u.test(normalized)) {
+        text = '[text] ' + text;
+      }
+      return '"' + text.replace(/"/g, '""') + '"';
+    }
+
+    function serializeListingsCsv(rows) {
+      const headers = [
+        'ID', 'Title', 'Institution', 'PI', 'Country', 'City', 'Kind', 'Sector',
+        'Deadline', 'Visa', 'Salary', 'Tools Required', 'Tools Preferred', 'Degree', 'Start Date', 'Apply URL'
+      ];
+      const dataRows = rows.map(l => [
+        l.id, l.title, l.institution, l.principal_investigator, l.country, l.city,
+        l.kind, l.sector, l.deadline, l.visa, formatSalary(l) || l.salary_raw,
+        (l.tools_required || []).join(', '), (l.tools_preferred || []).join(', '),
+        l.min_degree, l.start_term || l.start_date, l.apply_url || l.source_url
+      ]);
+      return [headers, ...dataRows].map(row => row.map(csvCell).join(',')).join('\r\n');
+    }
+
+    $('#export-csv-btn').onclick = () => {
+      draw();
+      const rows = selectListingRows(listings, activeListingFilters());
+
+      if (!rows.length) {
+        toast('No positions to export');
+        return;
+      }
+
+      const csv = serializeListingsCsv(rows);
+      const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `collegeum-positions-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast(`Exported ${rows.length} positions to CSV`);
+    };
+
+    // Load Listings Data from pipeline
+    fetch('data/listings.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(payload => {
+        listingsGeneratedAt = payload.generated_at || '';
+        listings = (payload.listings || []).map(enrichItem);
+        const srcEl = $('#src');
+        if (srcEl) srcEl.textContent = `${snapshotLabel(listingsGeneratedAt)} · Deadline dates use UTC`;
+        populateFilters();
+        updateChipCounts();
+        draw();
+
+        syncModalWithUrl();
+      })
+      .catch(() => {
+        listingsGeneratedAt = null;
+        listings = [];
+        const srcEl = $('#src');
+        if (srcEl) srcEl.textContent = 'The listings file could not be loaded. Please reload the page.';
+        draw();
+      });
+
+    // Refresh a page left open across UTC midnight, and after sleep/backgrounding.
+    function deadlineRefreshDelay(now = Date.now()) {
+      if (!Number.isFinite(now)) return 60000;
+      return Math.max(1000, 86400000 - ((now % 86400000) + 86400000) % 86400000);
+    }
+    let deadlineRefreshTimer;
+    function refreshDeadlineViews() {
+      if (deadlineRenderDay !== null) draw();
+      else refreshDeadlineState();
+      refreshHealthDisplay();
+      if (currentModalListing) {
+        const badge = deadlineBadge(currentModalListing);
+        const element = $('#modal-deadline-badge');
+        if (element) {
+          element.className = `dl ${badge.cls}`;
+          element.innerHTML = `<span class="pip">${badge.pip}</span>${esc(badge.label)}`;
+        }
+        const status = $('#modal-deadline-status');
+        if (status) status.textContent = badge.label;
+        const value = $('#modal-deadline-value');
+        if (value) value.textContent = badge.label + (currentModalListing.deadline ? ` (${formatDate(currentModalListing.deadline)})` : '');
+      }
+      clearTimeout(deadlineRefreshTimer);
+      deadlineRefreshTimer = setTimeout(refreshDeadlineViews, deadlineRefreshDelay());
+    }
+    deadlineRefreshTimer = setTimeout(refreshDeadlineViews, deadlineRefreshDelay());
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshDeadlineViews();
+    });
+    window.addEventListener('focus', refreshDeadlineViews);
+    setInterval(() => {
+      if (deadlineRenderDay !== null && deadlineRenderDay !== Math.floor(Date.now() / 86400000)) {
+        refreshDeadlineViews();
+      } else {
+        refreshDeadlineState();
+        refreshHealthDisplay();
+      }
+    }, 60000);
+
+    function healthPresentation(data, now = Date.now()) {
+      const latest = data.runs?.[0] || {};
+      const timestamp = latest.finished_at || data.generated_at;
+      const diffH = (now - new Date(timestamp).getTime()) / 36e5;
+      if (!Number.isFinite(diffH) || diffH < -1) {
+        return { cls: 'stale', label: 'Pipeline status unavailable' };
+      }
+      const failed = data.source_summary?.failed ?? Object.entries(latest.source_stats || {})
+        .filter(([name, source]) => !name.startsWith('_') && !source.skipped &&
+          (source.ok === false || source.errors > 0)).length;
+      const outcome = data.status || data.last_run?.outcome || latest.outcome || 'unknown';
+      const age = diffH >= 48 ? `${Math.floor(diffH / 24)}d ago` : `${Math.max(0, Math.floor(diffH))}h ago`;
+      if (outcome === 'fatal') return { cls: 'dead', label: `Pipeline failed · ${age}` };
+      if (outcome === 'quota-stopped') return { cls: 'stale', label: `Pipeline stopped at request limit · ${age}` };
+      if (failed || outcome === 'partial' || outcome === 'degraded' || data.last_run?.errors > 0) {
+        return { cls: 'stale', label: `Pipeline incomplete${failed ? ` · ${failed} source checks failed` : ''} · ${age}` };
+      }
+      if (outcome !== 'ok') return { cls: 'stale', label: `Pipeline status unavailable · ${age}` };
+      if (diffH >= 72) return { cls: 'dead', label: `Pipeline delayed · ${age}` };
+      if (diffH >= 24) return { cls: 'stale', label: `Pipeline run · ${age}` };
+      return { cls: '', label: `Pipeline active · updated ${age}` };
+    }
+
+    function refreshHealthDisplay() {
+      const display = healthPresentation(pipelineHealth || {});
+      const dot = $('#health-dot'), label = $('#health-label');
+      const className = `health-dot ${display.cls}`;
+      if (dot.className !== className) dot.className = className;
+      if (label.textContent !== display.label) label.textContent = display.label;
+    }
+
+    // Health Telemetry
+    fetch('data/health.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        pipelineHealth = data;
+        refreshHealthDisplay();
+        const list = $('#health-sources');
+        list.replaceChildren();
+        for (const [name, source] of Object.entries(data.sources || {})) {
+          const li = document.createElement('li');
+          const success = source.last_successful_at
+            ? new Date(source.last_successful_at).toLocaleString() : 'unavailable in recorded history';
+          li.textContent = `${name}: ${source.status}${source.messages?.length ? ` · ${source.messages.join('; ')}` : ''} · last successful check: ${success}`;
+          list.append(li);
+        }
+        $('#health-details').hidden = list.children.length === 0;
+      })
+      .catch(() => {
+        pipelineHealth = null;
+        refreshHealthDisplay();
+      });
+
+    // Floating back-to-top handler
+    const backTop = $('#back-top');
+    window.addEventListener('scroll', () => {
+      if (backTop) backTop.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+    if (backTop) backTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Render compact donation addresses in footer
+    const walEl = $('#wal');
+    if (walEl) {
+      walEl.innerHTML = Object.entries(DONATION_WALLETS).map(([k, a]) => `
+        <div class="w-row">
+          <b>${k.toUpperCase()}</b>
+          <code>${a}</code>
+          <button data-addr="${a}">Copy</button>
+        </div>
+      `).join('');
+
+      walEl.querySelectorAll('button').forEach(b => {
+        b.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(b.dataset.addr);
+          } catch (_) {
+            const r = document.createRange();
+            r.selectNodeContents(b.previousElementSibling);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(r);
+            toast('Select and copy address');
+            return;
+          }
+          b.textContent = 'Copied';
+          b.classList.add('ok');
+          toast('Address copied');
+          setTimeout(() => {
+            b.textContent = 'Copy';
+            b.classList.remove('ok');
+          }, 1600);
+        };
+      });
+    }
+
+  })();
+  </script>
+</body>
+</html>
+ : (r.salary_currency === 'GBP' ? '£' : (r.salary_currency === 'EUR' ? '€' : (r.salary_currency ? r.salary_currency + ' ' : '')));
+        const periodStr = r.salary_period ? ` /${r.salary_period}` : '';
+        if (r.salary_max != null && Number.isFinite(Number(r.salary_max)) && r.salary_max !== r.salary_min) {
+          return `${sym}${Number(r.salary_min).toLocaleString()}–${sym}${Number(r.salary_max).toLocaleString()}${periodStr}`;
+        }
+        return `${sym}${Number(r.salary_min).toLocaleString()}${periodStr}`;
       }
       return r.salary_raw || '';
     }

@@ -21,9 +21,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 from typing import Any
 
 from .core.timeparse import format_ts, parse_datetime, utcnow
+from .models import parse_salary
 
 __all__ = [
     "write_journal",
@@ -151,8 +153,57 @@ def _row_value(row: Any, key: str) -> Any:
         return None
 
 
+def _public_application_url(value: str | None) -> str | None:
+    """Do not leak Google authentication-session URLs as application links.
+
+    Only unwrap the known Google Forms redirect, and only when the target
+    remains on the expected Google Forms origin. Other redirects are untouched.
+    """
+    if not value:
+        return value
+    try:
+        parts = urlsplit(value)
+        if parts.hostname == "accounts.google.com" and "/signin/" in parts.path:
+            target = parse_qs(parts.query).get("continue", [""])[0]
+            dest = urlsplit(target)
+            if (dest.scheme == "https" and dest.hostname == "docs.google.com"
+                    and dest.path.startswith("/forms/")):
+                return target
+    except ValueError:
+        pass
+    return value
+
+
+def _publication_unusable(row: Any) -> bool:
+    """Hold unverified login/error-page artifacts out of public exports."""
+    summary = str(row["summary"] or "").strip().lower()
+    if summary.startswith((
+        "sign in to continue", "verify you are human", "access denied",
+        "403 forbidden", "you need to enable javascript to run this app",
+    )):
+        return True
+    link = str(row["apply_url"] or "")
+    try:
+        parts = urlsplit(link)
+        if parts.hostname == "job-boards.greenhouse.io":
+            return "true" in [v.lower() for v in parse_qs(parts.query).get("error", [])]
+    except ValueError:
+        pass
+    return False
+
+
 def _public_record(row: Any) -> dict[str, Any]:
     get = row.__getitem__ if hasattr(row, "keys") else row.get
+    s_raw = _row_value(row, "salary_raw")
+    if s_raw:
+        salary_min, salary_max, salary_currency, salary_period = parse_salary(
+            s_raw, country=get("country")
+        )
+    else:
+        salary_min = _row_value(row, "salary_min")
+        salary_max = _row_value(row, "salary_max")
+        salary_currency = _row_value(row, "salary_currency")
+        salary_period = _row_value(row, "salary_period")
     deadline = get("deadline")
     parsed = parse_datetime(deadline)
     days_left = (parsed.date() - utcnow().date()).days if parsed else None
@@ -184,18 +235,18 @@ def _public_record(row: Any) -> dict[str, Any]:
         "visa": get("visa_sponsorship_status"),
         "summary": get("summary") or "",
         "language": get("language") or "en",
-        "apply_url": get("apply_url"),
+        "apply_url": _public_application_url(get("apply_url")),
         "source_url": get("source_url"),
         "confidence": round(float(get("confidence") or 0), 3),
         "first_seen_at": get("first_seen_at"),
         "deadline_note": _row_value(row, "deadline_note"),
         "visa_note": _row_value(row, "visa_note"),
         "alternate_sources": json.loads(get("alternate_sources") or "[]"),
-        "salary_min": _row_value(row, "salary_min"),
-        "salary_max": _row_value(row, "salary_max"),
-        "salary_currency": _row_value(row, "salary_currency"),
-        "salary_period": _row_value(row, "salary_period"),
-        "salary_raw": _row_value(row, "salary_raw"),
+        "salary_min": salary_min,
+        "salary_max": salary_max,
+        "salary_currency": salary_currency,
+        "salary_period": salary_period,
+        "salary_raw": s_raw,
         "tools_required": tools_req,
         "tools_preferred": tools_pref,
         "min_degree": _row_value(row, "min_degree"),
@@ -211,6 +262,7 @@ def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
         row
         for row in db.active_listings()
         if row["url_hash"] not in hidden
+        and not _publication_unusable(row)
         and (router is None or router.channel_for_row(row) == "web")
     ]
 
@@ -391,12 +443,14 @@ def export_feed(
         '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
         "<channel>",
         f"<title>{_xml_escape(title)}</title>",
-        f"<link>{_xml_escape(site_url or 'https://example.invalid')}</link>",
+        f"<link>{_xml_escape(site_url or 'https://amirrezafarnamtaheri.github.io/Collegeum/')}</link>",
         "<description>US research positions, PhD and postdoc posts, and openings at "
         "central banks, international organizations and firms.</description>",
         "<language>en</language>",
         f"<lastBuildDate>{now}</lastBuildDate>",
     ]
+    if not site_url:
+        site_url = "https://amirrezafarnamtaheri.github.io/Collegeum/"
     if site_url:
         parts.append(
             f'<atom:link href="{_xml_escape(site_url.rstrip("/"))}/feed.xml" '

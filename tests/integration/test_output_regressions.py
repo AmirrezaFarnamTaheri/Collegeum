@@ -168,3 +168,62 @@ def test_forbidden_xml_characters_cannot_corrupt_the_entire_feed(tmp_path, bad_c
     assert len(root.findall("channel/item")) == 1
     assert "Paid research" in root.findtext("channel/item/description")
     assert bad_character not in output.read_text(encoding="utf-8")
+
+
+def test_rss_defaults_to_collegeum_not_invalid_or_legacy_host(tmp_path):
+    path = tmp_path / "output.db"
+    init(path)
+    with Database(path) as db:
+        item = listing()
+        row = pipeline._listing_row(item, source="test", signature=None)
+        row["status"] = "published"
+        db.insert_listing(row)
+        output = tmp_path / "feed.xml"
+        assert state.export_feed(db, output) == 1
+    channel = ET.parse(output).getroot().find("channel")
+    assert channel is not None
+    assert channel.findtext("link") == (
+        "https://amirrezafarnamtaheri.github.io/Collegeum/"
+    )
+    atom = channel.find("{http://www.w3.org/2005/Atom}link")
+    assert atom is not None
+    assert atom.attrib["href"].endswith("/Collegeum/feed.xml")
+
+
+def test_publication_holds_auth_and_error_pages_and_unwraps_valid_forms(tmp_path):
+    path = tmp_path / "output.db"
+    init(path)
+    with Database(path) as db:
+        rows = [
+            ("https://example.org/vacancy/1", "Research methods position."),
+            ("https://accounts.google.com/v3/signin/identifier?"
+             "continue=https%3A%2F%2Fdocs.google.com%2Fforms%2Fd%2Fe%2Fabc%2Fviewform",
+             "Research assistant position."),
+            ("https://accounts.google.com/v3/signin/identifier?"
+             "continue=https%3A%2F%2Fevil.example%2Fsteal",
+             "Sign in to continue to Google Forms Email or phone."),
+            ("https://job-boards.greenhouse.io/bfiprep?error=true", "Research role."),
+        ]
+        for i, (link, summary) in enumerate(rows):
+            row = pipeline._listing_row(listing(i), source="test", signature=None)
+            row.update(status="published", summary=summary, apply_url=link)
+            db.insert_listing(row)
+        output = tmp_path / "listings.json"
+        assert state.export_dashboard(db, output) == 2
+    payload = __import__("json").loads(output.read_text(encoding="utf-8"))
+    assert len(payload["listings"]) == 2
+    assert payload["listings"][1]["apply_url"] == (
+        "https://docs.google.com/forms/d/e/abc/viewform"
+    )
+
+
+def test_published_salary_projection_rechecks_ad_text_instead_of_model_numbers():
+    item = listing(salary_raw="salary scale 13 TV-L, 100%", salary_min=13,
+                   salary_max=13, salary_period="year")
+    record = state._public_record({"id": 1, **pipeline._listing_row(
+        item, source="test", signature=None,
+    )})
+    assert record["salary_raw"] == item.salary_raw
+    assert record["salary_min"] is None
+    assert record["salary_max"] is None
+    assert record["salary_period"] is None

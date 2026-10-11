@@ -60,7 +60,10 @@ jobs:
           TELEGRAM_PUBLIC_CHANNEL_ID: ${{ secrets.TELEGRAM_PUBLIC_CHANNEL_ID }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
           FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
-          SITE_URL: ${{ vars.SITE_URL }}
+          # Explicitly scoped to Collegeum. The legacy SITE_URL repository
+          # variable still points at /predoc-not-org and corrupts RSS links.
+          # Set COLLEGEUM_SITE_URL only when using a verified custom domain.
+          SITE_URL: ${{ vars.COLLEGEUM_SITE_URL || 'https://amirrezafarnamtaheri.github.io/Collegeum/' }}
         run: |
           # Marks are personal and this repository may be public: refuse to run
           # (and so to commit) without the key that encrypts them.

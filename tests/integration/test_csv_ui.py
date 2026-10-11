@@ -106,3 +106,24 @@ console.log(JSON.stringify([serializeListingsCsv([]),serializeListingsCsv([{id:0
     assert len(list(csv.reader(io.StringIO(result[0])))) == 1
     parsed = list(csv.reader(io.StringIO(result[1])))
     assert parsed[1] == ['0'] + [''] * 15
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="Node required for salary view checks")
+def test_salary_ui_does_not_fabricate_currency_or_annual_period():
+    page = Path("docs/index.html").read_text(encoding="utf-8")
+    fn = "function formatSalary" + page.split("function formatSalary", 1)[1].split(
+        "function formatDegree", 1
+    )[0]
+    script = fn + """
+const assert = require('node:assert/strict');
+assert.equal(formatSalary({salary_min:13,salary_raw:'TV-L E 13'}),'TV-L E 13');
+assert.equal(formatSalary({salary_min:59000,salary_max:62000,salary_currency:'USD',
+ salary_period:null,salary_raw:'$59,000 - $62,000'}),'$59,000 - $62,000');
+assert.equal(formatSalary({salary_min:91546,salary_max:141317,salary_currency:'AUD',
+ salary_period:'year',salary_raw:'$91,546 - $141,317 per annum'}),
+ 'AUD 91,546–AUD 141,317 /year');
+assert.equal(formatSalary({salary_min:100,salary_currency:null,salary_period:null}),
+ '100');
+"""
+    subprocess.run([shutil.which("node"), "-e", script], check=True,
+                   capture_output=True, text=True)

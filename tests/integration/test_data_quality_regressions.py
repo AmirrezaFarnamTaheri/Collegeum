@@ -80,3 +80,21 @@ def test_structured_summary_preserves_explicit_role_category(summary):
 )
 def test_role_type_uses_explicit_holder_requirements(title, summary, kind):
     assert Router.position_kind(title, summary) == kind
+
+
+@pytest.mark.parametrize(
+    "raw,country,expected",
+    [
+        ("Vergütungsgruppe TV-L E 13", "Germany", (None, None, None, None)),
+        ("salary scale 13 TV-L, 100%", "Germany", (None, None, None, None)),
+        ("2026 rates, uplifted from April 2027", "United Kingdom",
+         (None, None, None, None)),
+        ("Grade 6 - £31,236 - £36,636 / Grade 7, £37,694 - £43,482 per annum",
+         "United Kingdom", (None, None, "GBP", "year")),
+        ("$91,546 - $141,317 per annum plus 17 % superannuation",
+         "Australia", (91546, 141317, "AUD", "year")),
+        ("3400€ brut/mois", "France", (3400, 3400, "EUR", "month")),
+    ],
+)
+def test_real_publication_salary_regressions(raw, country, expected):
+    assert parse_salary(raw, country=country) == expected
