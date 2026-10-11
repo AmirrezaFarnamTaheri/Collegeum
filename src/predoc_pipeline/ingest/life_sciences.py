@@ -28,7 +28,8 @@ from .rotation import load_rotation, save_rotation
 
 CATEGORY = "life_sciences_phd"
 MAX_SOURCES = 8  # Sources attempted per scheduled run
-MAX_REGISTERED = 64
+MAX_REGISTERED = 128
+MAX_CATALOG = 256
 MAX_PER_SOURCE = 60
 MAX_TOTAL = 200
 MAX_DETAIL_PER_SOURCE = 6
@@ -123,11 +124,34 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     }
 
 
+def load_life_sources(sources_path: str | Path) -> list[Any]:
+    """Load core plus regional catalogues, rejecting duplicate provider names.
+
+    A custom test/third-party TOML is standalone unless its sibling
+    life_sciences_sources/ directory exists. Disabled candidates stay visible
+    in the registry but are never fetched.
+    """
+    base = Path(sources_path)
+    entries = load_board_sources(base)
+    directory = base.parent / "life_sciences_sources"
+    if directory.is_dir():
+        for filename in sorted(directory.glob("*.toml")):
+            entries.extend(load_board_sources(filename))
+    if len(entries) > MAX_CATALOG:
+        raise ValueError("Life Sciences source catalogue exceeds safe limit")
+    seen: set[str] = set()
+    for entry in entries:
+        if entry.name in seen:
+            raise ValueError(f"Duplicate Life Sciences source: {entry.name}")
+        seen.add(entry.name)
+    return entries
+
+
 def select_sources(
     sources_path: str | Path, rotation_path: str | Path | None = None,
 ) -> set[str]:
     """Pick oldest-attempt-first enabled providers; don't starve fresh sources."""
-    sources = [source for source in load_board_sources(sources_path) if source.enabled]
+    sources = [source for source in load_life_sources(sources_path) if source.enabled]
     if len(sources) > MAX_REGISTERED:
         raise ValueError("Too many enabled Life Sciences providers")
     attempts = (
@@ -168,7 +192,7 @@ async def discover(
 ) -> tuple[list[JobPostSchema], list[str]]:
     """Discover bounded, fair interleaved candidates from selected boards."""
     configs = [
-        source for source in load_board_sources(sources_path)
+        source for source in load_life_sources(sources_path)
         if source.enabled and (selected_names is None or source.name in selected_names)
     ]
     if not configs:
