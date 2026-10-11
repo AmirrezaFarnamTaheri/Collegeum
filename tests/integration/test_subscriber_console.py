@@ -1089,8 +1089,8 @@ def test_career_journal_tolerant_mode_preserves_invalid_original(tmp_path):
 
 
 def test_source_status_distinguishes_idle_error_and_stale(tmp_path):
-    from predoc_pipeline.publish.ui import sources_panel
     from predoc_pipeline.ingest.career import idle_career_health
+    from predoc_pipeline.publish.ui import sources_panel
 
     report = tmp_path / "career-health.json"
     idle_career_health(report)
