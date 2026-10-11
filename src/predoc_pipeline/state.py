@@ -265,6 +265,14 @@ def export_health(
         except ValueError:
             source_stats = {}
         public_stats = public_source_stats(source_stats)
+        run_summary = source_summary(source_stats)
+        # Historical run rows precede source-health accounting. Never keep an
+        # "ok" label when the contemporaneous source evidence contradicts it.
+        derived_outcome = row["outcome"]
+        if derived_outcome == "ok" and (
+            run_summary["failed"] or run_summary["partial"] or row["errors"]
+        ):
+            derived_outcome = "partial"
         for name, data in public_stats.items():
             if name.startswith("_") or not row["finished_at"]:
                 continue
@@ -280,7 +288,7 @@ def export_health(
         runs.append(
             {
                 "source_stats": public_stats,
-                "source_summary": source_summary(source_stats),
+                "source_summary": run_summary,
                 "run_id": row["run_id"],
                 "started_at": row["started_at"],
                 "finished_at": row["finished_at"],
@@ -291,14 +299,14 @@ def export_health(
                 "published": row["published"],
                 "errors": row["errors"],
                 "llm_calls": row["llm_calls"],
-                "outcome": row["outcome"],
+                "outcome": derived_outcome,
             }
         )
     latest = runs[0] if runs else {}
     summary = latest.get("source_summary") or source_summary({})
     outcome = stats.get("outcome") or latest.get("outcome") or "unknown"
     status = "degraded" if outcome == "partial" or (
-        outcome == "ok" and (summary["failed"] or stats.get("errors"))
+        outcome == "ok" and (summary["failed"] or summary["partial"] or stats.get("errors"))
     ) else outcome
     # Retain known successful times after they age out of the 30-run history.
     # Validate the timestamp before carrying it forward from the prior export.
@@ -312,8 +320,11 @@ def export_health(
             old = previous_sources.get(name)
             if entry["last_successful_at"] is None and isinstance(old, dict):
                 entry["last_successful_at"] = previous_success(old.get("last_successful_at"))
-    last_success = next((run["finished_at"] for run in runs if run["outcome"] == "ok"
-                         and not run["source_summary"]["failed"]), None)
+    last_success = next((
+        run["finished_at"] for run in runs
+        if run["outcome"] == "ok" and run["finished_at"]
+        and not (run["source_summary"]["failed"] or run["source_summary"]["partial"])
+    ), None)
     payload = {
         "generated_at": format_ts(),
         "counts": db.counts(),
