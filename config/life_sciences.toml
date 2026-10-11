@@ -145,16 +145,6 @@ institution = "ETH Zurich, D-BSSE"
 country = "Switzerland"
 note = "OFF: validate vacancy URL markup and external recruitment links first."
 
-[[board]]
-name = "life_epfl"
-type = "link_scan"
-group = "life_sciences"
-enabled = false
-url = "https://www.epfl.ch/about/working/working-at-epfl/job-openings/phd-student/"
-link_pattern = 'careers\.epfl\.ch/'
-institution = "EPFL"
-country = "Switzerland"
-note = "OFF: recruitment tool is external; validate individual vacancy links first."
 
 
 # Official high-value discovery targets without a verified end-to-end scraper.
