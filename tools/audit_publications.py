@@ -407,9 +407,19 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--strict", action="store_true",
                         help="Exit nonzero for structural errors, never for semantic warnings")
+    parser.add_argument("--json-report", type=Path,
+                        help="Write complete findings as a GitHub Actions artifact")
     args = parser.parse_args()
     summary, findings = audit(args.root)
     counts = Counter(item["severity"] for item in findings)
+    if args.json_report:
+        target = args.json_report
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_suffix(target.suffix + ".tmp")
+        tmp.write_text(json.dumps({
+            "summary": summary, "counts": dict(counts), "findings": findings,
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(target)
     print("Publication snapshot:", json.dumps(summary, sort_keys=True))
     print(f"Integrity issues: {counts['error']} errors, {counts['warning']} warnings")
     for item in findings[:60]:

@@ -126,3 +126,21 @@ if __name__ == "__main__":
             dest.write_text(json.dumps(data), encoding="utf-8")
             _, findings = audit.audit(root)
             self.assertIn("unreadable-file", {item["code"] for item in findings})
+
+
+    def test_complete_json_quality_report_can_be_archived(self):
+        with TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "outputs" / "publication-audit.json"
+            result = subprocess.run(
+                [sys.executable, "-S", str(SCRIPT), "--strict",
+                 "--json-report", str(artifact)],
+                cwd=ROOT, capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            data = json.loads(artifact.read_text(encoding="utf-8"))
+            self.assertGreater(data["summary"]["dashboard"], 0)
+            self.assertIsInstance(data["findings"], list)
+            self.assertEqual(
+                data["counts"].get("error", 0),
+                sum(f["severity"] == "error" for f in data["findings"]),
+            )

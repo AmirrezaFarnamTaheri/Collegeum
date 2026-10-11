@@ -81,7 +81,7 @@ INCLUDE_GLOBS = [
 EXCLUDE_SUFFIXES = (".pyc", ".pyo")
 EXCLUDE_DIR_PARTS = {"__pycache__", ".git", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 TEXT_SUFFIXES = {
-    '.py', '.toml', '.md', '.yml', '.html', '.json', '.xml', '.jsonl', '.lock', '.example',
+    '.py', '.toml', '.md', '.yml', '.html', '.svg', '.xsl', '.json', '.xml', '.jsonl', '.lock', '.example',
 }
 TEXT_NAMES = {'Makefile', '.gitignore', '.gitattributes'}
 

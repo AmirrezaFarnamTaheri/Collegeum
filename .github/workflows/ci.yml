@@ -31,7 +31,15 @@ jobs:
         run: PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
 
       - name: Validate committed dashboard, RSS and journal contracts (stdlib only)
-        run: python3 -S tools/audit_publications.py --strict
+        run: python3 -S tools/audit_publications.py --strict --json-report build/publication-audit.json
+
+      - name: Preserve complete output-quality diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: publication-audit-py${{ matrix.python-version }}
+          path: build/publication-audit.json
+          if-no-files-found: ignore
 
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:

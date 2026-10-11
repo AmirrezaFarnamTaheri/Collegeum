@@ -631,7 +631,9 @@ url = "https://uchicago.wd5.myworkdayjobs.com/External"
 search_terms = ["research professional", "research assistant economics", "pre-doctoral"]
 institution = "University of Chicago"
 country = "United States"
-field_implied = true
+field_implied = false
+# University-wide Workday tenants include unrelated research disciplines.
+# Require vacancy-level field evidence, not the configured source name.
 note = "Becker Friedman Institute (BFI) and UChicago predoctoral research professionals."
 
 [[board]]
@@ -642,7 +644,9 @@ url = "https://brown.wd5.myworkdayjobs.com/staff-careers-brown"
 search_terms = ["research assistant economics", "predoctoral", "research analyst"]
 institution = "Brown University"
 country = "United States"
-field_implied = true
+field_implied = false
+# University-wide Workday tenants include unrelated research disciplines.
+# Require vacancy-level field evidence, not the configured source name.
 note = "Brown University economics and social sciences research assistants."
 
 [[board]]

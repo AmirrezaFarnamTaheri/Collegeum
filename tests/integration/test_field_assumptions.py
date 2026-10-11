@@ -27,3 +27,11 @@ def test_implied_field_can_fill_missing_evidence():
     post = JobPostSchema(title='Research Assistant', url='https://example.org/job',
                          source='test', field_implied=True)
     assert flt.evaluate(post).keep
+
+
+def test_university_wide_workday_sources_do_not_imply_economics():
+    from predoc_pipeline.boards.config import load_board_sources
+
+    sources = {s.name: s for s in load_board_sources("config/sources.toml")}
+    for name in ("uchicago_bfi", "brown_econ"):
+        assert not sources[name].field_implied, name
