@@ -11,12 +11,29 @@ on:
   push:
     branches: ['**']
     paths:
+      # Keep this path filter in sync with build_single_file.INCLUDE_GLOBS.
       - .github/workflows/refresh-release.yml
+      - .github/workflows/**
+      - .github/dependabot.yml
       - src/**
       - tests/**
       - tools/**
       - config/**
-      - .github/workflows/**
+      - review/**
+      - docs/*.html
+      - docs/*.svg
+      - docs/*.png
+      - docs/*.xsl
+      - docs/*.json
+      - docs/X_THREAD_RECOVERY.md
+      - pyproject.toml
+      - uv.lock
+      - .gitignore
+      - .gitattributes
+      - .env.example
+      - Makefile
+      - LICENSE
+      - '*.md'
   workflow_dispatch:
 
 permissions:

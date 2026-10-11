@@ -69,6 +69,12 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn('git reset --hard FETCH_HEAD', content)
         self.assertIn("python -S tools/verify_single_file.py", content)
         self.assertIn('gh workflow run ci.yml --ref "$GITHUB_REF_NAME"', content)
+        # Every versioned manifest input must trigger regeneration; generated
+        # snapshots and compile_project.py must not trigger it recursively.
+        for glob in ("review/**", "docs/*.html", "docs/*.svg", "docs/*.xsl",
+                     "pyproject.toml", "uv.lock", "'*.md'"):
+            self.assertIn(glob, content)
+        self.assertNotIn("      - compile_project.py", content)
 
 
 if __name__ == "__main__":
