@@ -3,6 +3,7 @@ name: refresh-release
 # Rebuild the checked-in single-file distribution and uv.lock on a working
 # branch. Production main is intentionally not mutated by this bot.
 # A maintainer may dispatch a refresh on any working branch.
+# Update the bundled runtime after adding Telegram subscription and admin modules.
 # Include stdlib workflow-contract tests in the reproducible manifest. Editing this
 # workflow also refreshes it automatically, with no feature-branch hardcoding.
 # Preserve the current main source/config when refreshing after upstream merges.
