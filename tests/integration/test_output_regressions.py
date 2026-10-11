@@ -8,6 +8,11 @@ import pytest
 
 from predoc_pipeline import pipeline, state
 from predoc_pipeline.core.db import Database, init
+from predoc_pipeline.core.output_quality import (
+    application_url_issue,
+    authentication_page_text,
+)
+
 from predoc_pipeline.core.textproc import telegram_visible_length
 from predoc_pipeline.core.urls import url_hash
 from predoc_pipeline.models import Discipline, Location, PredocListing, VisaStatus
@@ -168,11 +173,6 @@ def test_forbidden_xml_characters_cannot_corrupt_the_entire_feed(tmp_path, bad_c
     assert len(root.findall("channel/item")) == 1
     assert "Paid research" in root.findtext("channel/item/description")
     assert bad_character not in output.read_text(encoding="utf-8")
-
-from predoc_pipeline.core.output_quality import (
-    application_url_issue,
-    authentication_page_text,
-)
 
 
 @pytest.mark.parametrize("url,expected", [
