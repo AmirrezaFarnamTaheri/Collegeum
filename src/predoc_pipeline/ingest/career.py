@@ -32,6 +32,7 @@ IRAN_SEARCH_TERMS = (
 )
 MAX_STORED_JOBS = 3000
 MAX_AGE_DAYS = 21
+MAX_REMOTE_PAGES = 2  # capped cursor traversal keeps four-hour runs light
 
 # Match actual role descriptions in the title. Do not classify unrelated ads
 # because a generic page sidebar mentions Python or analytics.
@@ -41,7 +42,8 @@ ROLE_PATTERNS = (
         r"دانشمند\s+داده|متخصص\s+علم\s+داده", re.I)),
     ("data_analyst", re.compile(
         r"\bdata\s+analyst\b|\b(?:product|business\s+intelligence|bi)\s+analyst\b|"
-        r"تحلیلگر\s+داده|تحلیل\s*گر\s+داده|کارشناس\s+تحلیل\s+داده|"
+        r"تحلیلگر[\s\u200c]*داده|تحلیل[\s\u200c]*گر[\s\u200c]*داده|"
+        r"کارشناس[\s\u200c]+تحلیل[\s\u200c]+داده|"
         r"تحلیلگر\s+هوش\s+تجاری", re.I)),
     ("econ_consulting", re.compile(
         r"\b(?:economic|economics|econometric|policy)\s+(?:consultant|advisor)\b|"
@@ -80,6 +82,18 @@ def _job(
     }
 
 
+def _remote_geo_allowed(geo: str) -> bool:
+    """Follow positive provider eligibility, never infer eligibility from 'remote'.
+
+    Jobicy's jobGeo describes where a person is allowed to work. Explicit
+    Iran exclusions override apparently worldwide phrases.
+    """
+    if re.search(r"\b(?:excluding|except|excludes|not|outside)\b[^.;]{0,55}\biran\b",
+                 geo, re.I):
+        return False
+    return bool(re.search(r"\b(?:anywhere|worldwide|global|iran)\b", geo, re.I))
+
+
 def parse_remote_jobs(payload: dict[str, Any]) -> list[dict[str, str]]:
     """Accept only jobs explicitly open to applicants worldwide/Iran.
 
@@ -93,8 +107,7 @@ def parse_remote_jobs(payload: dict[str, Any]) -> list[dict[str, str]]:
         if not isinstance(data, dict):
             continue
         geo = str(data.get("jobGeo") or "").strip()
-        allowed = re.search(r"\b(anywhere|worldwide|world|global|iran)\b", geo, re.I)
-        if not allowed:
+        if not _remote_geo_allowed(geo):
             continue
         title = str(data.get("jobTitle") or "")
         url = str(data.get("url") or "")
@@ -222,17 +235,33 @@ def poll_career(
     fresh: list[dict[str, str]] = []
     errors: list[str] = []
     if needs_remote:
-        res = client.get(REMOTE_API)
-        if res.ok:
+        cursor: str | None = None
+        visited: set[str] = set()
+        for page in range(MAX_REMOTE_PAGES):
+            url = REMOTE_API
+            if cursor:
+                url += "&" + urlencode({"cursor": cursor})
+            res = client.get(url)
+            if not res.ok:
+                errors.append(f"Jobicy fetch: {res.error or res.status}")
+                break
             try:
                 payload = json.loads(res.text)
-                if not isinstance(payload, dict):
-                    raise ValueError("invalid Jobicy response")
+                if not isinstance(payload, dict) or payload.get("success") is False:
+                    raise ValueError("invalid or failed Jobicy response")
                 fresh.extend(parse_remote_jobs(payload))
+                following = payload.get("nextCursor")
+                if not isinstance(following, str) or not following:
+                    break
+                if len(following) > 512 or following in visited:
+                    raise ValueError("Jobicy cursor invalid or repeated")
+                visited.add(following)
+                cursor = following
             except (ValueError, TypeError) as exc:
                 errors.append(f"Jobicy parse: {exc}")
-        else:
-            errors.append(f"Jobicy fetch: {res.error or res.status}")
+                break
+            if page == MAX_REMOTE_PAGES - 1:
+                log.info("career_remote_feed_page_cap", pages=MAX_REMOTE_PAGES)
     if needs_iran:
         slot = slot if slot is not None else int(datetime.now(UTC).timestamp()) // (SCHEDULE_INTERVAL_HOURS * 3600)
         res = client.get(iran_search_url(slot))
