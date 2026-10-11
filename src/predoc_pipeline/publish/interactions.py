@@ -10,6 +10,8 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
+from ..logging_setup import get_logger
+
 from ..ingest.career import load_career
 from ..settings import Settings
 from .admin import admin_id, audit, buttons, render
@@ -17,6 +19,23 @@ from .feedback import FeedbackStore
 from .subscriptions import matching, parse_toggle, private_user_id
 from .telegram import TelegramError
 from .ui import ACADEMIC, language, latest_panel, menu, sources_panel
+
+log = get_logger(__name__)
+
+
+def _safe_admin_render(
+    settings: Settings, store: FeedbackStore, page: str = "status",
+) -> str:
+    """Display-only cache failures must not stall the global update cursor."""
+    try:
+        return render(settings, store, page=page)
+    except (OSError, RuntimeError, ValueError, sqlite3.DatabaseError) as exc:
+        log.warning("telegram_admin_snapshot_unavailable", error=type(exc).__name__)
+        return (
+            "<b>Collegeum · Admin</b>\\n"
+            "Status is temporarily unavailable. Inspect pipeline logs or "
+            "restore the local cache. Subscriber commands remain active."
+        )
 
 
 def _reply_callback(bot: Any, callback_id: str, text: str = "") -> None:
@@ -150,7 +169,7 @@ def private_message(
         if chat_id != admin_id(settings):
             summary["ignored"] += 1
             return True
-        html = render(settings, store)
+        html = _safe_admin_render(settings, store)
         keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page="status")
     elif command in ("/pause", "/resume"):
         member = store.subscriber(chat_id)
@@ -249,11 +268,11 @@ def private_callback(
                 store.remember_callback(callback_id)
                 store.save()
                 summary["taps"] += 1
-            html = render(settings, store)
+            html = _safe_admin_render(settings, store)
             keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page="status")
             notification = "Saved"
         elif action in ("status", "runs", "queue", "cache", "recovery"):
-            html = render(settings, store, page=action)
+            html = _safe_admin_render(settings, store, page=action)
             keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page=action)
         else:
             _reply_callback(bot, callback_id, "Button expired. Try /admin.")

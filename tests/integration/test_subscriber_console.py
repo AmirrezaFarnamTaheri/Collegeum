@@ -1523,3 +1523,33 @@ def test_verified_sent_digest_member_still_blocks_second_same_day_batch(tmp_path
         store.resolve_delivery(101, key, confirmed_absent=True)
     store.save()
     assert plan_batch(cfg, path=batch, now=now) == 0
+
+
+def test_unavailable_admin_cache_never_blocks_later_unsubscribe(tmp_path, monkeypatch):
+    import sqlite3
+
+    from predoc_pipeline.publish import interactions
+
+    cfg = settings(tmp_path, "99")
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    store.save()
+
+    def broken_admin_cache(*_args, **_kwargs):
+        raise sqlite3.DatabaseError("local DB corrupt")
+
+    monkeypatch.setattr(interactions, "render", broken_admin_cache)
+    api = API([
+        message(1, 99, "/admin"),
+        tap(2, 99, "adm:cache"),
+        message(3, 101, "/stop"),
+        tap(4, 101, "sub:stop:yes"),
+    ])
+    result = run(cfg, api)
+    assert result["failed"] == 0
+    assert load_chat_state(cfg.telegram_state_path)["offset"] == 5
+    assert FeedbackStore.from_settings(cfg).subscriber(101) is None
+    assert any(
+        "temporarily unavailable" in str(message["text"])
+        for message in api.sent(99)
+    )
