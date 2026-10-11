@@ -47,6 +47,7 @@ from ..core.textproc import (
     truncate_utf16,
 )
 from ..models import PredocListing
+from ..routing import Router
 from .keyboards import LEGEND, feedback_row
 
 __all__ = [
@@ -267,10 +268,16 @@ def render_card(listing: PredocListing) -> str:
     if other:
         lines.append(f"Other: {_field(other, 140)}")
 
+    role_tag = {
+        "predoc": "Predoc",
+        "phd": "PhD",
+        "postdoc": "Postdoc",
+        "research": "ResearchStaff",
+    }[Router.position_kind(listing.title, listing.summary)]
     tags = [
         hashtag(listing.disciplines[0].value) if listing.disciplines else "",
         hashtag(listing.location.country),
-        "Predoc",
+        role_tag,
     ]
     tag_line = " ".join(f"#{t}" for t in tags if t)
 
