@@ -1172,6 +1172,12 @@ def run(
                             needs_iran=needs_iran, needs_remote=needs_remote,
                         )
                     log.info("career_sources_polled", added=count, errors=len(errors))
+                    for error in errors:
+                        stats.errors += 1
+                        db.log_dlq(
+                            run_id=stats.run_id, stage="career-poll", source="career",
+                            source_url="", payload="", error=error,
+                        )
                 except Exception:
                     stats.errors += 1
                     log.exception("career_feed_poll_failed")

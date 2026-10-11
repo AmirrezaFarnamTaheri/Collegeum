@@ -14,7 +14,7 @@ from predoc_pipeline.ingest.career import (
     save_career,
 )
 from predoc_pipeline.ingest.rotation import scheduled_sources
-from predoc_pipeline.publish.admin import admin_id, audit
+from predoc_pipeline.publish.admin import admin_id
 from predoc_pipeline.publish.bot import telegram_sync
 from predoc_pipeline.publish.feedback import FeedbackStore, generate_key
 from predoc_pipeline.publish.subscriptions import dispatch, eligible, matching

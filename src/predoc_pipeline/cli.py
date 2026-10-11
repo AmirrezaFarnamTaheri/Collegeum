@@ -28,7 +28,7 @@ from .settings import Settings
 
 app = typer.Typer(
     name="predoc-pipeline",
-    help="Discover, deduplicate and broadcast non-US predoctoral research positions.",
+    help="Discover academic and career opportunities and publish personalized alerts.",
     no_args_is_help=True,
 )
 sources_app = typer.Typer(help="Manage the source registry (config/sources.toml).")
@@ -254,6 +254,38 @@ def telegram_reconcile(
         + (f"confirmed message {message_id}" if message_id is not None
            else "confirmed not delivered, pending retry")
     )
+
+
+@app.command("subscriber-reconcile")
+def subscriber_reconcile(
+    chat_id: int = typer.Argument(..., help="Private subscriber Telegram chat ID"),
+    delivery_key: str = typer.Argument(..., help="Full academic: or career: delivery key"),
+    confirmed_sent: bool = typer.Option(
+        False, "--confirmed-sent", help="I verified the message exists in the private chat"),
+    confirmed_absent: bool = typer.Option(
+        False, "--confirmed-not-delivered", help="I verified the message was not delivered"),
+) -> None:
+    """Manually resolve an ambiguous private delivery. Never guess after a timeout."""
+    from .publish.feedback import FeedbackStore
+
+    if confirmed_sent == confirmed_absent:
+        typer.secho("Provide exactly one verified outcome.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    cfg = _settings()
+    if not cfg.feedback_encryption_key:
+        typer.secho("FEEDBACK_ENCRYPTION_KEY is required.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    store = FeedbackStore.from_settings(cfg)
+    try:
+        store.resolve_delivery(
+            chat_id, delivery_key, confirmed_sent=confirmed_sent,
+            confirmed_absent=confirmed_absent,
+        )
+    except ValueError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(1) from exc
+    store.save()
+    typer.echo("Verified private delivery outcome persisted in encrypted state.")
 
 
 @app.command()

@@ -7,7 +7,6 @@ TELEGRAM_ADMIN_CHAT_ID may access the admin menu.
 
 from __future__ import annotations
 
-import sqlite3
 from datetime import UTC, datetime
 from html import escape
 from typing import TYPE_CHECKING, Any
