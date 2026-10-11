@@ -474,7 +474,7 @@ def poll_career(
         if other.ok:
             parsed = parse_irantalent_jobs(other.text)
             sources["irantalent"]["accepted"] += len(parsed)
-            if not re.search(r"/(?:en|fa)/job/[^"' ]+", other.text, re.I):
+            if "/en/job/" not in other.text and "/fa/job/" not in other.text:
                 errors.append("IranTalent returned no job links; verify page markup")
             fresh.extend(parsed)
         else:
