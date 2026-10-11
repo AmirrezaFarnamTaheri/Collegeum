@@ -68,6 +68,20 @@ PHD_CALL = re.compile(
     r"\b(?:international\s+)?ph\.?d\.?\s+(?:call|recruitment|admissions?)\b",
     re.I,
 )
+ADDITIONAL_DOCTORAL_ROLE = re.compile(
+    r"\b(?:predoctoral|pre-doctoral)\s+(?:researcher|fellow|student)\b|"
+    r"\b(?:offre\s+de\s+th[eè]se|doctorand[oa]|dottorand[oa]|"
+    r"doktorgradsstipendiat|väitöskirjatutkija|"
+    r"tes[iie]\s+de\s+doutoramento|promotionsstelle)\b",
+    re.I,
+)
+
+
+def _doctoral_title(title: str) -> bool:
+    return bool(
+        PHD_POSITION.search(title) or PHD_CALL.search(title)
+        or ADDITIONAL_DOCTORAL_ROLE.search(title)
+    )
 EXPLICIT_LOCATION = re.compile(
     r"\b(?:location|workplace|place of work|work location|based in)"
     r"\s*[:\-]\s*([^;\n.]{2,90})", re.I,
@@ -76,7 +90,7 @@ EXPLICIT_LOCATION = re.compile(
 
 def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str, str] | None:
     """Fail closed on unknown geography, broad roles and unfunded adverts."""
-    if not (PHD_POSITION.search(post.title) or PHD_CALL.search(post.title)):
+    if not _doctoral_title(post.title):
         return None
     if WRONG_ROLE.search(post.title):
         return None
@@ -168,7 +182,7 @@ def select_sources(
 
 def _needs_detail(post: JobPostSchema) -> bool:
     """Only enrich a doctoral card if research field or location is incomplete."""
-    if not (PHD_POSITION.search(post.title) or PHD_CALL.search(post.title)):
+    if not _doctoral_title(post.title):
         return False
     if PHD_CALL.search(post.title) or re.search(
         r"\b(?:autumn|spring|winter)\s+call\b", post.title, re.I,
@@ -217,6 +231,16 @@ async def discover(
                     )
                 except Exception as exc:  # noqa: BLE001 - isolate provider outages
                     return [], [f"{source.name}: {type(exc).__name__}"]
+                # Indexes can contain hundreds of unrelated staff jobs.
+                # Give actual doctoral listings first access to the per-source
+                # budget before applying the cap.
+                result.sort(
+                    key=lambda post: (
+                        not _doctoral_title(post.title),
+                        not bool(PRIMARY_FIELD.search(post.haystack())
+                                 or RELATED_FIELD.search(post.haystack())),
+                    ),
+                )
                 scoped = result[:MAX_PER_SOURCE]
                 detail_used = 0
                 for post in scoped:

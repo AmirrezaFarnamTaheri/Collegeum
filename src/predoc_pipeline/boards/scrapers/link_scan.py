@@ -209,6 +209,17 @@ class LinkScanScraper(BaseScraper):
             if not pattern.search(href) or href in seen or _EXCLUDED_URL_RX.search(href):
                 continue
             title = clean_ws(a.get_text(" "))
+            if self.opt("prefer_card_heading"):
+                # Some research institutes label the clickable link with an
+                # internal vacancy code while the actual position title is
+                # the nearby H2/H3. Only use a heading within the same card
+                # to avoid borrowing the preceding vacancy's title.
+                card = find_card(a)
+                heading = card.select_one("h2, h3, h4")
+                if heading is not None:
+                    heading_text = clean_ws(heading.get_text(" "))
+                    if min_len <= len(heading_text) <= 300:
+                        title = heading_text
             if title.lower() in GENERIC_ANCHORS or len(title) < min_len:
                 title = clean_ws(str(a.get("title") or a.get("aria-label") or ""))
             if (title.lower() in GENERIC_ANCHORS or len(title) < min_len) and self.opt("heading_titles"):

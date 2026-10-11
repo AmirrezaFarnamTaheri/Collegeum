@@ -27,7 +27,8 @@ country = "Spain"
 institution = "Institute for Bioengineering of Catalonia"
 min_interval = 3.0
 verification = "listing_and_vacancy_url"
-note = "Official IBEC jobs link to biomedical doctoral adverts; listing anchors often show vacancy reference instead of role title."
+prefer_card_heading = true
+note = "Official IBEC jobs link to biomedical doctoral adverts; use card heading because clickable link labels may be vacancy codes."
 
 [[board]]
 name = "life_fr_cnrs"
