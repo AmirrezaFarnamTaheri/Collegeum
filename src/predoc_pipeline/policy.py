@@ -17,6 +17,8 @@ All of it is configured in ``config/preferences.toml``.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sqlite3
 from typing import Any
 
@@ -41,6 +43,11 @@ __all__ = ["Policy"]
 class Policy:
     def __init__(self, prefs: Preferences, *, trust_model_fields: bool = False) -> None:
         self.prefs = prefs
+        # Eligibility preferences are immutable during one pipeline execution;
+        # compute the rejection cache version once rather than per candidate.
+        self.decision_fingerprint = hashlib.sha256(json.dumps(
+            prefs.filters.model_dump(mode="json"), sort_keys=True, ensure_ascii=False
+        ).encode("utf-8")).hexdigest()[:16]
         self.flt = RelevanceFilter(prefs.filters)
         # With a language model, its discipline labels count as evidence of the
         # field; with the heuristic backend they are keyword guesses and don't.

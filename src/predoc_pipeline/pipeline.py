@@ -329,12 +329,7 @@ def _pre_extract(
     # A rejected vacancy must be eligible for reconsideration when the rules
     # change. Previous candidate-v3 hashes covered only scraped evidence,
     # making old PhD/postdoc/discipline rejections effectively permanent.
-    policy_config = (
-        policy.prefs.filters.model_dump(mode="json") if policy is not None else {}
-    )
-    policy_fingerprint = hashlib.sha256(json.dumps(
-        policy_config, sort_keys=True, ensure_ascii=False
-    ).encode("utf-8")).hexdigest()[:16]
+    policy_fingerprint = policy.decision_fingerprint if policy else "no-policy"
     digest = f"candidate-v4:{policy_fingerprint}:{evidence_hash}"
     board = bool(item.hints.get("board"))
 
