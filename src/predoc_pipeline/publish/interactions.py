@@ -16,7 +16,7 @@ from .admin import admin_id, audit, buttons, render
 from .feedback import FeedbackStore
 from .subscriptions import matching, parse_toggle, private_user_id
 from .telegram import TelegramError
-from .ui import ACADEMIC, language, latest_panel, menu
+from .ui import ACADEMIC, language, latest_panel, menu, sources_panel
 
 
 def _reply_callback(bot: Any, callback_id: str, text: str = "") -> None:
@@ -76,7 +76,7 @@ def private_message(
         "/start": "home", "/settings": "home", "/subscribe": "home",
         "/status": "home", "/academic": "academic",
         "/careers": "careers", "/markets": "markets", "/guide": "help",
-        "/stop": "stop",
+        "/stop": "stop", "/sources": "sources",
     }
     if command not in pages and command not in {
         "/latest", "/admin", "/pause", "/resume",
@@ -93,13 +93,17 @@ def private_message(
             summary["ignored"] += 1
             return True
         html = render(settings, store)
-        keyboard = buttons(paused=bool(store.data["ops"]["paused"]))
+        keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page="status")
     elif command in ("/pause", "/resume"):
         store.set_paused(chat_id, command == "/pause")
         store.save()
         html, keyboard = menu(store.subscriber(chat_id))
     elif command == "/latest":
         html, keyboard = _latest(store, chat_id, academic, settings)
+    elif command == "/sources":
+        html, keyboard = sources_panel(
+            settings.career_health_path, lang=language(store.subscriber(chat_id)),
+        )
     else:
         html, keyboard = menu(store.subscriber(chat_id), pages[command])
     bot.send(str(chat_id), html, keyboard)
@@ -122,6 +126,8 @@ def _page(
     if not raw.startswith("sub:p:"):
         return None
     target = raw[6:]
+    if target == "sources":
+        return sources_panel(settings.career_health_path, lang=language(member))
     if target in ("home", "academic", "careers", "markets", "help", "stop"):
         return menu(member, target)
     return None
@@ -179,11 +185,11 @@ def private_callback(
                 store.save()
                 summary["taps"] += 1
             html = render(settings, store)
-            keyboard = buttons(paused=bool(store.data["ops"]["paused"]))
+            keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page="status")
             notification = "Saved"
         elif action in ("status", "runs", "queue", "cache"):
             html = render(settings, store, page=action)
-            keyboard = buttons(paused=bool(store.data["ops"]["paused"]))
+            keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page=action)
         else:
             _reply_callback(bot, callback_id, "Button expired. Try /admin.")
             return True
