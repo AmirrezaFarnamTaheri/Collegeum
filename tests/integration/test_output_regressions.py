@@ -255,3 +255,32 @@ def test_link_scan_rejects_ejm_placeholders_before_model_extraction():
     assert len(items) == 1
     assert items[0].url.endswith("/98765")
     assert scraper.discovery_parse_errors
+
+
+def test_failed_source_discovery_is_recoverable_from_dlq_without_secret_leak():
+    class Recorder:
+        rows = []
+
+        def log_dlq(self, **kwargs):
+            self.rows.append(kwargs)
+
+    db = Recorder()
+    entries = {
+        "board:ok": {"ok": True, "items": 2, "messages": []},
+        "board:broken": {
+            "ok": False, "items": 0, "errors": 1,
+            "messages": ["HTTP 403 at https://private.example/?token=secret"],
+        },
+        "board:degraded": {
+            "ok": False, "items": 1, "errors": 1,
+            "messages": ["timed out at https://site.example/key=secret"],
+        },
+        "board:skipped": {"skipped": True, "errors": 1},
+    }
+    assert pipeline._record_discovery_failures(db, "run123", entries) == 2
+    assert {entry["source"] for entry in db.rows} == {
+        "board:broken", "board:degraded",
+    }
+    assert all(entry["stage"] == "discovery" for entry in db.rows)
+    assert all("secret" not in entry["error"] for entry in db.rows)
+    assert all(entry["source_url"] == "" and entry["payload"] == "" for entry in db.rows)

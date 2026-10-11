@@ -46,7 +46,7 @@ from .core import gating
 from .core.db import Database
 from .core.db import init as init_db
 from .core.dedupe import Deduplicator
-from .core.health import source_error_count, source_summary
+from .core.health import public_failure, source_error_count, source_status, source_summary
 from .core.output_quality import application_url_issue, authentication_page_text
 from .core.ratelimit import QuotaExceeded
 from .core.textproc import escape_telegram_html, truncate
@@ -1182,6 +1182,13 @@ def run(
                 )
             return stats
 
+        failures = _record_discovery_failures(db, stats.run_id, source_stats)
+        if failures:
+            log.warning(
+                "discovery_failures_recorded",
+                failing_sources=failures, source_errors=stats.source_errors,
+            )
+
         if settings.enable_career_feeds and feedback.key:
             needs_iran = feedback.wants_career("iran")
             needs_remote = feedback.wants_career("remote")
@@ -1491,6 +1498,31 @@ def run(
             except Exception:  # pragma: no cover - never mask the real outcome
                 log.exception("health_export_failed")
         db.close()
+
+
+def _record_discovery_failures(
+    db: Database, run_id: str, source_stats: dict[str, Any],
+) -> int:
+    """Keep bounded, sanitized source failures in the run's DLQ artifact.
+
+    A broken scraper is a genuine operational failure even when the accepted
+    job pipeline finishes. Do not copy arbitrary HTTP bodies, response URLs,
+    or credentials to durable/public diagnostics.
+    """
+    count = 0
+    for name, info in source_stats.items():
+        if name.startswith("_") or not isinstance(info, dict):
+            continue
+        if source_status(info) not in ("failed", "partial"):
+            continue
+        messages = info.get("messages") or []
+        reason = public_failure(messages[0] if messages else "Source request failed")
+        db.log_dlq(
+            run_id=run_id, stage="discovery", source=str(name)[:100],
+            source_url="", payload="", error=reason,
+        )
+        count += 1
+    return count
 
 
 def _maybe_alert(
