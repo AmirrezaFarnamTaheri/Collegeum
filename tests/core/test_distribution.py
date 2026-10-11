@@ -37,8 +37,8 @@ class DistributionTests(unittest.TestCase):
             with patch.object(build_single_file, 'REPO_ROOT', root):
                 for suffix in ('.svg', '.xsl'):
                     path = root / ('asset' + suffix)
-                    path.write_bytes(b'<root>\\r\\n<child/>\\r\\n</root>\\r\\n')
+                    path.write_bytes(b'<root>\r\n<child/>\r\n</root>\r\n')
                     on_windows = build_single_file.build_manifest([path])
-                    path.write_bytes(b'<root>\\n<child/>\\n</root>\\n')
+                    path.write_bytes(b'<root>\n<child/>\n</root>\n')
                     on_linux = build_single_file.build_manifest([path])
                     self.assertEqual(on_windows, on_linux)
