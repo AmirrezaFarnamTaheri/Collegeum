@@ -371,3 +371,28 @@ robots.txt and terms before enabling it. The legacy asynchronous board HTTP
 client rate-limits but does **not yet automatically enforce robots.txt**;
 the separate Jobicy/IranTalent poller has its own robots-aware client. Do not
 bypass technical access controls or treat blocked sites as healthy.
+
+
+### CRG Barcelona and University of Vienna (October 2026)
+
+Two additional verified **enabled** sources are now included:
+
+- **Centre for Genomic Regulation, Barcelona:** the official open-calls
+  listing links to the 2027 International PhD call, covering chromatin,
+  genome regulation, single-cell genomics, RNA biology and more. The
+  published application deadline is **22 November 2026**. The institution
+  explicitly advertises four-year employment contracts and a competitive
+  salary. These are facts about this named call, not guarantees for other
+  postings or the absence of tuition costs.
+- **University of Vienna:** the official predoctoral listings include
+  doctoral-school calls in cognition, behaviour and neuroscience. Examples
+  have an application deadline of **15 October 2026**. The collector
+  requests the individual call detail when an autumn/spring/winter call
+  appears, even if the research area is already visible in its title.
+
+The enabled registry now has **10 sources**, rotating 8 per scheduled run.
+Four additional candidates are configured disabled: Vienna BioCenter's
+multi-institution campus board, University of Helsinki's dynamically embedded
+SAP jobs, ISTA graduate recruitment, and Max Delbrück Center's cyclical PhD
+programme. Do not turn on these templates until individual vacancy links,
+scope and recruitment dates can be validated.

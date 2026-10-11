@@ -107,11 +107,13 @@ def test_separate_life_sciences_source_registry_keeps_economics_sources() -> Non
     assert enabled == {
         "life_euraxess", "life_academictransfer", "life_max_planck",
         "life_uppsala", "life_karolinska", "life_copenhagen",
-        "life_vib", "life_epfl",
+        "life_vib", "life_epfl", "life_crg_phd",
+        "life_vienna_doctoral",
     }
     assert {
         "life_embl", "life_eth_bsse", "life_eth_jobs",
         "life_dkfz", "life_fmi_programme", "life_embl_phd_programme",
+        "life_vienna_biocenter", "life_helsinki", "life_ista", "life_mdc",
     }.issubset({row.name for row in new_sources if not row.enabled})
     assert "euraxess" in {row.name for row in default_sources}
     assert "academictransfer" in {row.name for row in default_sources}
@@ -291,6 +293,16 @@ def test_new_official_portal_patterns_parse_actual_vacancy_url_shapes() -> None:
         ("life_epfl",
          "https://careers.epfl.ch/job/Lausanne-PhD-position/1165576555/",
          "PhD Student Position in Epigenomics"),
+        ("life_crg_phd",
+         "https://www.crg.eu/en/content/training-phd-students/"
+         "crg-international-phd-fellowships-programme-2027",
+         "CRG International PhD Call 2027"),
+        ("life_vienna_doctoral",
+         "https://jobs.univie.ac.at/job/Vienna-Doctoral-School-in-Cognition%2C-"
+         "Behavior%2C-and-Neuroscience-Doctoral-Positions-%28AUTUMN-CALL-20/"
+         "1431139533/",
+         "Vienna Doctoral School in Cognition, Behavior, and Neuroscience "
+         "- Doctoral Positions (AUTUMN CALL 2026)"),
     ]
 
     class StubHttp:
@@ -458,3 +470,24 @@ def test_high_volume_sources_cannot_monopolize_discovery_candidates(
     assert errors == []
     assert len(jobs) == life_sciences.MAX_TOTAL
     assert set(Counter(job.source for job in jobs).values()) == {25}
+
+
+
+def test_programme_and_university_autumn_calls_require_deadline_detail() -> None:
+    """Doctoral calls with a field-labelled title still need closing date proof."""
+    crg = post(
+        title="CRG International PhD Call 2027", country="Spain",
+        location="Barcelona",
+        description="CRG PhD fellowship in gene regulation and chromatin",
+    )
+    vienna = post(
+        title="Vienna Doctoral School in Cognition, Behavior, and Neuroscience "
+        "- Doctoral Positions (AUTUMN CALL 2026)",
+        country="Austria", location="Vienna",
+    )
+    assert life_sciences._needs_detail(crg)
+    assert life_sciences._needs_detail(vienna)
+    assert life_sciences.classify_post(vienna, today=TODAY) is not None
+    crg.deadline = date(2026, 11, 22)
+    assert life_sciences.classify_post(crg, today=TODAY) is not None
+    assert life_sciences.classify_post(crg, today=date(2026, 11, 23)) is None

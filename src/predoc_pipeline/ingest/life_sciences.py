@@ -146,7 +146,11 @@ def _needs_detail(post: JobPostSchema) -> bool:
     """Only enrich a doctoral card if research field or location is incomplete."""
     if not (PHD_POSITION.search(post.title) or PHD_CALL.search(post.title)):
         return False
-    if PHD_CALL.search(post.title):
+    if PHD_CALL.search(post.title) or re.search(
+        r"\b(?:autumn|spring|winter)\s+call\b", post.title, re.I,
+    ):
+        # Doctoral school calls often put the closing date on the detail page,
+        # not on the searchable index, even when the field is in the title.
         return True
     text = " ".join(
         value for value in (

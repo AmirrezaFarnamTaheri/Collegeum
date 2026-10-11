@@ -122,6 +122,33 @@ country = "Switzerland"
 min_interval = 3.0
 note = "Official EPFL PhD category; successfactors-style /job/slug/ID detail links."
 
+
+# Independent, verified 2026 doctoral recruitment portals. Each posting must
+# still pass the same country, doctoral-role and field relevance checks.
+[[board]]
+name = "life_crg_phd"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.crg.eu/en/content/jobs/jobs"
+link_pattern = 'crg\.eu/en/content/training-phd-students/crg-international-phd-fellowships-programme-\d+/?'
+institution = "Centre for Genomic Regulation"
+country = "Spain"
+min_interval = 3.0
+note = "CRG Barcelona International PhD Call 2027: deadline 22 Nov 2026, four-year salaried contracts. Details must be checked for dates/fields."
+
+[[board]]
+name = "life_vienna_doctoral"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://jobs.univie.ac.at/go/predoctoral/8877801/"
+link_pattern = 'jobs\.univie\.ac\.at/job/[^/?#]+/\d+/?'
+institution = "University of Vienna"
+country = "Austria"
+min_interval = 3.0
+note = "University of Vienna predoctoral/doctoral-school vacancies; explicit life-science field and current deadline required."
+
 # Official institutions to verify before enabling: their doctoral programmes
 # and recruitment links change and some listings are JavaScript-rendered.
 [[board]]
@@ -191,4 +218,50 @@ url = "https://www.embl.org/about/info/embl-international-phd-programme/applicat
 link_pattern = 'embl\.org/about/info/embl-international-phd-programme/'
 institution = "EMBL"
 note = "OFF: programme recruits across six European sites with recurring cycles."
+
+
+# Wider institution-level discovery candidates. These are OFF until an actual
+# recurring doctoral link pattern is verified; a campus/programme index by
+# itself is not a current vacancy.
+[[board]]
+name = "life_vienna_biocenter"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.viennabiocenter.org/career/open-positions/"
+link_pattern = '(?:maxperutzlabs\.ac\.at|imp\.ac\.at|imba\.ac\.at)/.+'
+note = "OFF: multi-organization campus page with mixed university/industry roles; PhD card detection needs validation."
+
+[[board]]
+name = "life_helsinki"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.helsinki.fi/en/about-us/careers/open-positions"
+link_pattern = '(?:jobs\.helsinki\.fi|jobs\.sap\.com)/.+'
+institution = "University of Helsinki"
+country = "Finland"
+note = "OFF: dynamic SAP recruitment embedded feed currently reports zero positions."
+
+[[board]]
+name = "life_ista"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://ista.ac.at/en/jobs/open-positions/"
+link_pattern = 'phd\.pages\.ist\.ac\.at/phd-application-admission/'
+institution = "Institute of Science and Technology Austria"
+country = "Austria"
+note = "OFF: graduate-school admission portal requires call-date-aware dedicated parsing."
+
+[[board]]
+name = "life_mdc"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.mdc-berlin.de/phd"
+link_pattern = 'mdc-berlin\.de/phd/.+'
+institution = "Max Delbrück Center"
+country = "Germany"
+note = "OFF: central fully funded PhD application is cyclical, not a live job listing index."
 
