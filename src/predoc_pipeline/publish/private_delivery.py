@@ -14,6 +14,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from .. import state
 from ..core.db import Database, init
@@ -69,7 +70,7 @@ def plan_batch(settings: Settings, *, path: Path = DEFAULT_BATCH) -> int:
             if len(batch) >= MAX_TOTAL:
                 break
             member = store.subscriber(user_id)
-            if member is None:
+            if member is None or member.get("paused"):
                 continue
             selected = 0
             for job in matching(member, academic, careers):
@@ -79,7 +80,7 @@ def plan_batch(settings: Settings, *, path: Path = DEFAULT_BATCH) -> int:
                     continue
                 batch.append({
                     "chat_id": user_id, "key": job["key"],
-                    "text": render_alert(job),
+                    "text": render_alert(job), "url": job.get("url", ""),
                 })
                 selected += 1
             store.data["delivery_cursor"] = user_id
@@ -125,13 +126,26 @@ def send_batch(
             member = store.subscriber(chat_id)
             if member is None:
                 continue  # deleted subscription must never be reactivated
+            if member.get("paused") or store.data["ops"]["paused"]:
+                store.cancel_delivery(int(chat_id), row["key"])
+                store.save()
+                continue
             intent = member["deliveries"].get(row["key"])
             if not isinstance(intent, dict) or intent.get("state") != "sending":
                 continue
+            url = row.get("url", "")
+            link = urlsplit(url) if isinstance(url, str) else urlsplit("")
+            buttons = []
+            if link.scheme == "https" and link.hostname and len(url) <= 1024:
+                buttons.append([{"text": "🔗 Open vacancy", "url": url}])
+            buttons.append([{
+                "text": "⚙️ Manage alerts", "callback_data": "sub:p:home",
+            }])
             stop = False
             try:
                 message_id = telegram.send_message(
-                    chat_id=chat_id, html=row["text"], sleep=sleep,
+                    chat_id=chat_id, html=row["text"],
+                    keyboard={"inline_keyboard": buttons}, sleep=sleep,
                 )
             except TelegramError as exc:
                 if exc.permanent and exc.status in (400, 403):
