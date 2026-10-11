@@ -50,7 +50,6 @@ from .feedback import (
 )
 from .interactions import private_callback, private_message
 from .keyboards import LEGEND, feedback_row, parse_callback, rebuild
-from .subscriptions import dispatch
 from .telegram import TelegramClient, TelegramError, deadline_label, pack_html_blocks
 
 log = get_logger(__name__)
@@ -276,7 +275,6 @@ def telegram_sync(
                     chat_state["exports_pending"] = False
                 else:
                     summary["failed"] += 1
-            _dispatch_private(settings, tg, store, sleep, summary)
             save_state(settings.telegram_state_path, chat_state)
             return summary
 
@@ -324,30 +322,10 @@ def telegram_sync(
                 save_state(settings.telegram_state_path, chat_state)
             else:
                 summary["failed"] += 1
-        _dispatch_private(settings, tg, store, sleep, summary)
         log.info("telegram_sync", **summary)
         return summary
     finally:
         tg.close()
-
-
-def _dispatch_private(
-    settings: Settings, telegram: TelegramClient, store: FeedbackStore,
-    sleep: Callable[[float], None], summary: dict[str, int],
-) -> None:
-    """Load only the bounded public job journal, then fan out from encrypted state."""
-    if not store.key or not store.subscribers:
-        return
-    from ..ingest.career import load_career
-
-    init_db(settings.db_path)
-    with Database(settings.db_path) as db:
-        state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
-        academic = list(db.published_listings())
-    career = load_career(settings.career_state_path)
-    deliveries = dispatch(store, telegram, academic, career, sleep=sleep)
-    for key, value in deliveries.items():
-        summary[key] = value
 
 
 def _is_retryable(exc: BaseException) -> bool:
