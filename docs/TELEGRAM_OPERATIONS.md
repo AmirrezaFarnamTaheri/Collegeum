@@ -6,8 +6,9 @@ It has two deliberately separate surfaces:
 - **Subscriber chat:** Each person privately selects role topics and independently
   opts into Iran-based and/or globally remote career feeds with `/start` or
   `/settings`. Nothing is subscribed by default. `/latest` previews the
-  newest matching listings, and `/stop` erases personal subscription and
-  delivery state.
+  newest matching listings, and `/stop` removes active subscription and
+  delivery state (historical Git repository versions remain subject to their
+  own retention policy).
 - **Admin chat:** The exact positive private ID in `TELEGRAM_ADMIN_CHAT_ID` may
   use `/admin`. Telegram native inline menus provide overview, recent runs,
   queue/uncertain sends, cache/source counts, and a **confirmed** pause/resume
@@ -35,7 +36,7 @@ gate/model, public dashboard, channel broadcast or X:
 
 | Market | Source | Selection and limits |
 |---|---|---|
-| Remote | [Jobicy public API](https://jobicy.com/jobs-rss-feed) | Only jobs explicitly marked Anywhere/Worldwide/Global/Iran in `jobGeo`; title matched to role; one request per four-hour cycle |
+| Remote | [Jobicy public API](https://github.com/Jobicy/remote-jobs-api) | Only jobs explicitly marked Anywhere/Worldwide/Global/Iran in `jobGeo`, excluding Iran-restricted posts; title matched to role; max two cursor pages per four-hour cycle |
 | Iran-based | [Jobinja](https://jobinja.ir) | Conservative HTML job-link parser for Iranian employer listings; rotate one of four Persian queries per cycle; at most 30 cards. Does not call an unofficial paid API. |
 
 Role categories: data scientist, data analyst/BI, economics/management
@@ -59,18 +60,20 @@ repeat alerts. Scheduled pipeline workflow commits this journal.
 ```text
 Scheduled 4h collection (rotating source cohorts)
   -> existing academic gate/extraction/deduplication -> academic listings journal
-  -> small opt-in career feeds (max 2 HTTP fetches) -> career jobs journal
+  -> opt-in career feeds (max two Jobicy pages + one Jobinja fetch)
+  -> deduplicated career jobs journal + data/career_health.json
 
-Telegram sync (~30 minutes while scheduled)
-  -> getUpdates(offset)
-  -> verify one-to-one private chat/user identity
-  -> save encrypted subscription + callback ID atomically
-  -> advance offset only after state persistence
-  -> match published listings to each subscriber's topic/scope timestamps
-  -> persist "sending" intent BEFORE sendMessage
-  -> sendMessage -> persist "sent" acknowledgement (message ID)
-                   or "uncertain" after ambiguous network outcome
-  -> commit encrypted file and Telegram cursor to main
+Telegram inbox job (~30 minutes during configured dayparts)
+  -> getUpdates(offset, limit=30)
+  -> verify private chat ID == user ID
+  -> save encrypted subscription + callback ID before advancing offset
+  -> match new academic/career listings to each user's opt-in timestamp
+  -> write untracked private batch and encrypted "sending" intents
+  -> GIT CHECKPOINT: commit encrypted feedback + Telegram offset on main
+  -> ONLY ON CHECKPOINT SUCCESS: sendMessage for reserved batch
+  -> persist "sent" acknowledgement / "uncertain" / "rejected" disposition
+  -> GIT CHECKPOINT: commit encrypted acknowledgements on main
+  -> fail run if stage or checkpoint failed; preserve recovery information
 ```
 
 This is an **at-most-once automatic retry policy** for uncertain delivery, not
@@ -84,8 +87,16 @@ predoc-pipeline subscriber-reconcile CHAT_ID 'career:KEY' --confirmed-not-delive
 ```
 
 The second form only applies after independently verifying no message arrived.
-`/stop` removes the subscriber's saved choices and receipt history. A newly
-subscribed role/scope never backfills postings first published before opt-in.
+When a permanent Bot API 400 rejects invalid message markup, the delivery is
+quarantined as `rejected` and shown in the admin queue rather than retried
+every half hour. HTTP 429 is deferred, without holding the runner through
+unbounded `retry_after` waits. `sending` and `uncertain` records require
+remote verification before resetting them. `/stop` removes the subscriber's
+active choices and receipts from the current encrypted file, but previous Git
+commit snapshots remain in repository history; this is not a historical erasure
+guarantee. A newly subscribed role/scope never backfills notifications first
+published before opt-in. `/latest` is an explicit user-requested preview of
+current matching opportunities, including positions published before opt-in.
 
 Budget is at most 4 attempted notifications per user and 24 across users per
 sync; the next run continues unmatched items. A rotating last-recipient
@@ -102,11 +113,15 @@ notification pause does not block collection or the legacy public channel.
 - Per-run `max_details_per_run` and `recheck_max_per_run` were halved.
   The pipeline and Telegram jobs share a single serialized workflow
   concurrency group to avoid racing on committed state.
-- Jobicy requests follow its public API fair-use guidance (not more than one
-  pass per hour); this project polls at most once per 4 hours. Conditional
-  requests use the ordinary polite HTTP cache when a reusable response body
-  exists. The SQLite cache is ephemeral on hosted runners; persistent
-  deduplication relies on NDJSON journals and encrypted delivery receipts.
+- Jobicy requests follow its public API fair-use guidance. This project uses
+  at most two cursor pages per four-hour cycle, plus one Jobinja keyword
+  request. Conditional requests use the ordinary polite HTTP cache when a
+  reusable response body exists. The SQLite cache is ephemeral on hosted
+  runners; persistent deduplication relies on NDJSON journals and encrypted
+  delivery receipts. Successful private receipts are kept for 45 days;
+  uncertain/rejected/sending records remain until reviewed. Source polling
+  counts, retrieval timestamps and errors are saved in
+  `data/career_health.json` for the private admin panel.
 - Telegram update cursors and subscriber state are written and committed
   together. If a write fails, the update is replayed and callbacks are
   idempotently recognized. Partial publishing never erases prior receipts.

@@ -43,6 +43,9 @@ data analytics, economics consulting, and research-analyst vacancies.
 Career alerts offer separate **Iran-based** and **worldwide-remote** switches.
 Use `/start`, `/settings`, `/latest`, and `/stop` inside the bot.
 The private admin can open `/admin` for run, cache and queue health.
+Private notification sends use a checkpointed outbox: encrypted intents
+are committed before any Bot API send, and delivery outcomes are committed
+afterward. Failed and ambiguous sends remain visible for reconciliation.
 Both require the existing `FEEDBACK_ENCRYPTION_KEY`; configure a positive
 `TELEGRAM_ADMIN_CHAT_ID` for the admin surface.
 

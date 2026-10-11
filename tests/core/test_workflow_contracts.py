@@ -36,7 +36,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("timeout-minutes: 120", pipeline)
         self.assertIn("github.event.inputs.dry_run != 'true'", pipeline)
         self.assertIn(
-            "FEEDBACK_ENCRYPTION_KEY is not configured; skipping Telegram sync.",
+            "Encrypted storage or Telegram token not configured; bot disabled.",
             workflow("telegram.yml"),
         )
 
@@ -48,6 +48,28 @@ class WorkflowContractTests(unittest.TestCase):
         pipeline = workflow("pipeline.yml")
         self.assertIn('if [ "$PIPELINE_OUTCOME" != "success" ]', pipeline)
         self.assertIn("always() && steps.pipeline.outcome != 'skipped'", pipeline)
+
+    def test_private_sends_require_a_persisted_outbox(self):
+        workflow_text = workflow("telegram.yml")
+        stages = (
+            "id: sync", "subscriber-plan", "id: checkpoint",
+            'git commit -m "chore: checkpoint Telegram inbox',
+            "id: delivery", "subscriber-send",
+            "id: acknowledgement", 'git commit -m "chore: record private delivery',
+        )
+        positions = [workflow_text.index(stage) for stage in stages]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("steps.checkpoint.outcome == 'success'", workflow_text)
+        self.assertIn("steps.sync.outputs.private_enabled == 'true'", workflow_text)
+        self.assertIn("steps.delivery.outcome != 'skipped'", workflow_text)
+        self.assertIn('if [ "$SYNC_OUTCOME" != "success" ]', workflow_text)
+
+    def test_cadence_and_source_rotation_share_four_hour_slots(self):
+        pipeline = workflow("pipeline.yml")
+        self.assertIn('cron: "0 */4 * * *"', pipeline)
+        self.assertIn("SOURCE_ROTATION_ENABLED", pipeline)
+        self.assertIn("data/career_jobs.ndjson", pipeline)
+        self.assertIn("data/career_health.json", pipeline)
 
     def test_pages_never_deploys_failed_or_cross_branch_run(self):
         content = workflow("pages.yml")
