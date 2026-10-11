@@ -16,7 +16,7 @@ from urllib.parse import urlsplit
 
 from .subscriptions import CAREER_SCOPES, TOPIC_LABELS
 
-ACADEMIC = ("predoc", "phd", "postdoc")
+ACADEMIC = ("predoc", "phd", "postdoc", "research")
 LIFE_SCIENCES = "life_sciences_phd"
 CAREERS = ("data_scientist", "data_analyst", "econ_consulting", "research_analyst")
 PAGE_SIZE = 4
@@ -27,6 +27,7 @@ PERSIAN_LABELS = {
     "phd": "فرصت دکتری",
     "life_sciences_phd": "دکتری علوم زیستی · اروپا",
     "postdoc": "پسادکتری",
+    "research": "پژوهشگر حرفه‌ای دارای دکتری",
     "data_scientist": "دانشمند داده",
     "data_analyst": "تحلیلگر داده و BI",
     "econ_consulting": "مشاوره اقتصادی",

@@ -666,7 +666,7 @@ def test_subscriber_language_pause_and_bulk_role_shortcuts(tmp_path):
     initial = store.subscriber(101)["topics"]["predoc"]
     assert store.set_topics_group(101, "academic", True)
     assert store.subscriber(101)["topics"]["predoc"] == initial
-    assert len(store.subscriber(101)["topics"]) == 3
+    assert len(store.subscriber(101)["topics"]) == 4
     assert store.set_paused(101, True)
     assert store.set_language(101, "fa")
     store.save()
@@ -1595,3 +1595,55 @@ def test_life_sciences_opt_in_respects_unsubscribe_and_pausing(tmp_path):
         message(3, 101, "/stop"), tap(4, 101, "sub:stop:yes"),
     ]))["failed"] == 0
     assert not FeedbackStore.from_settings(cfg).wants_life_sciences()
+
+
+def test_research_staff_private_opt_in_and_quarantined_link_exclusion():
+    import sqlite3
+
+    from predoc_pipeline.publish.subscriptions import (
+        parse_toggle,
+        render_alert,
+    )
+    from predoc_pipeline.publish.ui import menu as render_menu
+
+    assert parse_toggle("sub:t:research") == ("topics", "research")
+    now = datetime.now(UTC)
+    member = {
+        "language": "fa",
+        "topics": {"research": (now - timedelta(minutes=5)).isoformat()},
+        "scopes": {},
+        "deliveries": {},
+    }
+    _, markup = render_menu(member, "academic")
+    choices = [
+        b["callback_data"]
+        for row in markup["inline_keyboard"]
+        for b in row if "callback_data" in b
+    ]
+    assert "sub:t:research" in choices
+
+    db = sqlite3.connect(":memory:")
+    db.row_factory = sqlite3.Row
+    def row(key, apply_url, summary):
+        return db.execute(
+            "SELECT ? AS url_hash, 'published' AS status, "
+            "NULL AS closed_at, NULL AS expired_at, NULL AS deadline, "
+            "? AS published_at, "
+            "'PhD Researcher (2026-2027 PhD Job Market)' AS title, "
+            "? AS summary, 'Bank of Canada' AS institution, "
+            "'Ottawa' AS city, 'Canada' AS country, ? AS apply_url",
+            (key, now.isoformat(), summary, apply_url),
+        ).fetchone()
+    positions = [
+        row("ok", "https://careers.bankofcanada.ca/job/123",
+            "Permanent researcher appointed as Senior Economist."),
+        row("bad", "https://job-boards.greenhouse.io/bfiprep?error=true",
+            "Permanent researcher appointed as Senior Economist."),
+        row("auth", "https://example.org/job/567",
+            "Sign in to continue Email or phone Forgot email?"),
+    ]
+    matches = matching(member, positions, [], preview=False)
+    assert [job["key"] for job in matches] == ["academic:ok"]
+    assert matches[0]["category"] == "research"
+    assert "پژوهشگر حرفه‌ای" in render_alert(matches[0], lang="fa")
+    db.close()

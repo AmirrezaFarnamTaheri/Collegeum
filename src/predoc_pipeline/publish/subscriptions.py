@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from html import escape
 from typing import Any
 
+from ..core.output_quality import application_url_issue, authentication_page_text
 from ..core.timeparse import parse_datetime, utcnow
 from ..routing import Router
 
@@ -15,6 +16,7 @@ TOPIC_LABELS = {
     "phd": "📚 PhD positions",
     "life_sciences_phd": "🧬 Life Sciences PhD · Europe",
     "postdoc": "🔬 Postdocs",
+    "research": "🔎 Research staff (PhD-qualified)",
     "data_scientist": "🧠 Data science",
     "data_analyst": "📊 Data analyst / BI",
     "econ_consulting": "📈 Economics consulting",
@@ -109,6 +111,10 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
     for row in academic:
         if row["status"] != "published" or row["closed_at"] or row["expired_at"]:
             continue
+        # Do not privately send a record quarantined from public publication.
+        if (application_url_issue(row["apply_url"]) is not None
+                or authentication_page_text(row["summary"])):
+            continue
         deadline = parse_datetime(row["deadline"])
         if deadline and deadline < utcnow():
             continue
@@ -153,6 +159,7 @@ def render_alert(job: dict[str, str], lang: str = "en") -> str:
         category = {
             "predoc": "پیشادکتری / دستیار پژوهشی",
             "phd": "فرصت دکتری", "postdoc": "پسادکتری",
+            "research": "پژوهشگر حرفه‌ای (دارای دکتری)",
             "life_sciences_phd": "دکتری علوم زیستی · اروپا",
             "data_scientist": "دانشمند داده",
             "data_analyst": "تحلیلگر داده",
