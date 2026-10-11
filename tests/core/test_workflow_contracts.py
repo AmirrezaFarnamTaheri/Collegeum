@@ -70,6 +70,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("SOURCE_ROTATION_ENABLED", pipeline)
         self.assertIn("data/career_jobs.ndjson", pipeline)
         self.assertIn("data/career_health.json", pipeline)
+        self.assertIn("data/source_rotation.json", pipeline)
 
     def test_pages_never_deploys_failed_or_cross_branch_run(self):
         content = workflow("pages.yml")

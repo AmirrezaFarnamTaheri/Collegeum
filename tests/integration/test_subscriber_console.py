@@ -1039,3 +1039,32 @@ def test_home_warns_when_career_scopes_are_missing(tmp_path):
     store.toggle_subscription(101, "scopes", "iran")
     home, _keyboard = menu(store.subscriber(101))
     assert "Choose a job market" not in home
+
+
+def test_missed_rotation_slot_catches_up_and_prevents_repeat(tmp_path):
+    from predoc_pipeline.ingest.rotation import load_rotation, save_rotation
+
+    sources = [SimpleNamespace(name=f"feed-{i}", enabled=True) for i in range(8)]
+    initial = datetime(2026, 10, 11, 0, tzinfo=UTC)
+    early = scheduled_sources(sources, timestamp=initial)
+    journal = tmp_path / "rotation.json"
+    save_rotation(journal, early, timestamp=initial)
+    missed = scheduled_sources(
+        sources, timestamp=initial + timedelta(hours=8),
+        history=load_rotation(journal),
+    )
+    assert missed == {s.name for s in sources}
+    save_rotation(journal, missed, timestamp=initial + timedelta(hours=8))
+    repeated = scheduled_sources(
+        sources, timestamp=initial + timedelta(hours=8, minutes=5),
+        history=load_rotation(journal),
+    )
+    assert repeated == set()
+
+
+def test_corrupt_rotation_checkpoint_recovers_without_failure(tmp_path):
+    from predoc_pipeline.ingest.rotation import load_rotation
+
+    journal = tmp_path / "rotation.json"
+    journal.write_text('{"attempts": ["wrong"]}', encoding="utf-8")
+    assert load_rotation(journal)["attempts"] == {}

@@ -56,7 +56,7 @@ from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor, _deadlin
 from .ingest.career import poll_career
 from .ingest.collectors import gather
 from .ingest.http import PoliteClient
-from .ingest.rotation import scheduled_sources
+from .ingest.rotation import load_rotation, save_rotation, scheduled_sources
 from .ingest.sources import load_sources
 from .logging_setup import get_logger
 from .models import CoercionError, ExtractionResult, PredocListing, RawItem, coerce
@@ -1105,7 +1105,8 @@ def run(
         scheduled_registry: set[str] | None = None
         if settings.source_rotation_enabled and only_sources is None and not dry_run:
             scheduled_registry = scheduled_sources(
-                [*sources, *load_board_sources(settings.sources_config)]
+                [*sources, *load_board_sources(settings.sources_config)],
+                history=load_rotation(settings.source_rotation_path),
             )
             log.info("source_cohort_selected", count=len(scheduled_registry))
         unverified = [s.name for s in sources if s.enabled and not s.verified]
@@ -1130,6 +1131,8 @@ def run(
                 board_transport=board_transport,
             )
 
+        if scheduled_registry is not None:
+            save_rotation(settings.source_rotation_path, scheduled_registry)
         stats.ingested = len(items)
         stats.sources = source_summary(source_stats)
         stats.source_errors = source_error_count(source_stats)
