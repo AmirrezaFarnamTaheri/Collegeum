@@ -256,7 +256,7 @@ def telegram_sync(
     max_items = max(1, max_items or tg_prefs.list_max)
     summary = {
         "received": 0, "commands": 0, "taps": 0, "ignored": 0,
-        "failed": 0, "dropped": 0, "throttled": 0,
+        "failed": 0, "dropped": 0,
     }
     owners = settings.owner_ids
     if not settings.telegram_bot_token or not (owners or settings.feedback_encryption_key):
@@ -377,7 +377,7 @@ def telegram_sync(
             )
             try:
                 if too_many:
-                    summary["throttled"] += 1
+                    summary["throttled"] = summary.get("throttled", 0) + 1
                     if "callback_query" in update:
                         try:
                             bot.call("answerCallbackQuery", {
