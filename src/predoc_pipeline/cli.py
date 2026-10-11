@@ -256,6 +256,45 @@ def telegram_reconcile(
     )
 
 
+@app.command("subscriber-plan")
+def subscriber_plan(
+    output: Path = typer.Option(
+        Path("data/.private_delivery_batch.json"), "--output",
+        help="Untracked per-run private delivery batch"),
+) -> None:
+    """Reserve private alerts without sending (commit encrypted intents first)."""
+    from .publish.private_delivery import plan_batch
+
+    try:
+        n = plan_batch(_settings(), path=output)
+    except Exception as exc:
+        typer.secho(f"private plan failed: {type(exc).__name__}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Reserved {n} private alerts for checkpointed delivery")
+
+
+@app.command("subscriber-send")
+def subscriber_send(
+    input_path: Path = typer.Option(
+        Path("data/.private_delivery_batch.json"), "--input",
+        help="Batch created by subscriber-plan on this GitHub runner"),
+) -> None:
+    """Send pre-committed private alerts only, retaining unknown outcomes."""
+    from .publish.private_delivery import send_batch
+
+    try:
+        counts = send_batch(_settings(), path=input_path)
+    except Exception as exc:
+        typer.secho(f"private delivery failed: {type(exc).__name__}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(
+        f"Private alerts: sent={counts['sent']} "
+        f"uncertain={counts['uncertain']} failed={counts['failed']}"
+    )
+    if counts["uncertain"] or counts["failed"]:
+        raise typer.Exit(1)
+
+
 @app.command("subscriber-reconcile")
 def subscriber_reconcile(
     chat_id: int = typer.Argument(..., help="Private subscriber Telegram chat ID"),
