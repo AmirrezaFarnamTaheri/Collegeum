@@ -320,3 +320,51 @@ prevent automatic backfilling of older listings.
 
 New network sources must be tested with the existing board verification
 tools and real provider pages before the disabled templates are enabled.
+
+### Expanded official PhD discovery (11 October 2026)
+
+The eight enabled source families and their current, official listing pages are:
+
+| Source | Geographic scope | Listing source |
+| --- | --- | --- |
+| EURAXESS | Eligible mainland European countries; each post verified | https://euraxess.ec.europa.eu/jobs/search |
+| AcademicTransfer | Netherlands | https://www.academictransfer.com/en/jobs/ |
+| Max Planck Society | Explicitly located European posts only | https://www.mpg.de/job-offers.rss |
+| Uppsala University | Sweden | https://www.uu.se/en/about-uu/join-us/jobs-and-vacancies?varbiCategory=PhD+positions |
+| Karolinska Institutet | Sweden | https://ki.se/en/about-ki/jobs-at-ki/available-positions-at-ki |
+| University of Copenhagen | Denmark | https://employment.ku.dk/phd/ |
+| VIB | Belgium | https://jobs.vib.be/ |
+| EPFL | Switzerland | https://careers.epfl.ch/go/PhD-Student/505174/ |
+
+The five newly enabled institutional sources have their **individual vacancy URL
+patterns** matched against verified publicly accessible posting links, including
+KI Varbi posts, Uppsala job-details IDs, Copenhagen show IDs, VIB Jobsoid
+calls, and EPFL recruitment slugs. Each source remains fallible as pages
+change, and source availability is **not** a promise of vacancies or scrape
+success. No UK, unknown-country, or remotely located non-European position
+should become eligible just because its publisher is European.
+
+The registry includes disabled candidates for ETH Zurich, DKFZ, FMI's
+twice-yearly biomedical PhD programme, EMBL's International PhD Programme,
+ETH D-BSSE, and multi-site EMBL general jobs. Research the real detail-link
+structure and recruitment cycle before enabling a candidate; programme
+information pages are not individual vacancies.
+
+**Operational budgets and fairness:** each run attempts at most 8 enabled
+sources (at most 64 may be configured). The next source batch is selected by
+the least recently attempted source first. The public checkpoint
+`data/life_sources_rotation.json` is committed with the ordinary pipeline
+journals. An unvisited source is scheduled before previously visited sources;
+skipped runs do not permanently starve it. Up to 60 postings per source and
+200 postings total are sampled fairly across sources. When a likely doctoral
+card lacks sufficient research or workplace context, the collector may read
+the corresponding *individual job detail page*: at most 6 per source and 24
+in total, with an 18-second per-page timeout. Detail text is only used as
+evidence and never bypasses the country, degree-level, deadline, funding, or
+subscription controls.
+
+The standalone sources config lives in `config/life_sciences.toml`. New
+sources can be added there without changing the economics-only public
+publication path or importing unrelated life-sciences posts into the
+economics listing stream. Keep `min_interval` for host politeness and never
+turn off robots restrictions to make a broken site appear healthy.
