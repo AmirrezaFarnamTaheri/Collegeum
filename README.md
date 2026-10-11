@@ -36,6 +36,21 @@ changes, source coverage and the requirements still blocking full acceptance.
 `COMPLIANCE.md` before enabling external scrapers, `REVIEW.md` for the defect
 register, and `OPERATIONS.md` for production runbooks.
 
+## Personal Telegram alerts and admin console
+
+Private chat subscriptions now support predocs, PhDs, postdocs, data science,
+data analytics, economics consulting, and research-analyst vacancies.
+Career alerts offer separate **Iran-based** and **worldwide-remote** switches.
+Use `/start`, `/settings`, `/latest`, and `/stop` inside the bot.
+The private admin can open `/admin` for run, cache and queue health.
+Both require the existing `FEEDBACK_ENCRYPTION_KEY`; configure a positive
+`TELEGRAM_ADMIN_CHAT_ID` for the admin surface.
+
+The scheduled pipeline checks alternating source cohorts every **3 hours**;
+each academic board is checked once per 6 hours and runs have halved budgets.
+See [Telegram subscriptions and operations](docs/TELEGRAM_OPERATIONS.md)
+for data flow, delivery recovery, source constraints, and setup.
+
 ## Quickstart
 
 ```bash
