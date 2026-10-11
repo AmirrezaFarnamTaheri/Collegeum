@@ -123,6 +123,7 @@ class Settings(BaseSettings):
     # Separate durable record of external career feeds (no subscriber data).
     career_state_path: str = "data/career_jobs.ndjson"
     career_health_path: str = "data/career_health.json"
+    life_sciences_sources_config: str = "config/life_sciences.toml"
     enable_career_feeds: bool = True
     # Production scheduled runs use alternating source cohorts, 4h apart.
     # Manual runs and local tests retain full source coverage.

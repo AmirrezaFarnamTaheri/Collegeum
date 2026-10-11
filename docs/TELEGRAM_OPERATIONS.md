@@ -284,3 +284,36 @@ the message was not delivered before marking every key absent. The original
 digest date is released for same-day replanning **only when every reserved key
 has been explicitly canceled or verified absent**. A single confirmed sent or
 unresolved key keeps the digest reserved to prevent duplicate notifications.
+
+## 🧬 Life Sciences PhD — independent private category
+
+The /lifesciences Telegram screen independently opts a subscriber in to
+`life_sciences_phd`. It does **not** change the economics/public academic
+filter, older subscriber topics, or the global `config/preferences.toml`.
+Life-sciences discovery bypasses the economics-only field filter and uses
+`config/life_sciences.toml` with the same bounded RSS/link-scan adapters.
+
+The enabled starting feeds are targeted EURAXESS searches, Dutch
+AcademicTransfer searches, and the official Max Planck vacancy RSS.
+EMBL, ETH Zurich D-BSSE and EPFL are recorded as disabled candidate sources
+pending verification of detail URL selectors and site terms; these must not
+be reported as functioning sources until they are tested.
+
+**Strict match:** an actual PhD/doctoral role, explicit life-science research
+(epigenetics, chromatin, gene regulation, functional genomics,
+neurodevelopment and psychiatric genetics are prioritized; related cell/molecular
+biology, bioinformatics, RNA biology, CRISPR, iPSCs and organoids qualify),
+an identified European country outside the UK, a valid HTTPS vacancy URL,
+and no expired deadline or explicit self-funded requirement. Jobs with unknown
+geography are not automatically treated as European. A listing may mention
+funding or research grants without establishing a salary or tuition waiver;
+the bot does not claim that funding/salary/tuition has been verified.
+
+Jobs are stored in `data/career_jobs.ndjson` using stable per-vacancy keys
+and delivered through the same checkpointed, replay-safe private outbox as
+other subscriptions. Their scope is empty, so *no Iran/worldwide-remote
+market selection is required*. The private opt-in timestamp continues to
+prevent automatic backfilling of older listings.
+
+New network sources must be tested with the existing board verification
+tools and real provider pages before the disabled templates are enabled.

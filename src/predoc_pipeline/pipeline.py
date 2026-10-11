@@ -54,6 +54,7 @@ from .core.urls import url_hash
 from .extract import ExtractionError, RateLimited, build_extractor
 from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor, _deadline_iso
 from .ingest.career import idle_career_health, poll_career
+from .ingest.life_sciences import poll_life_sciences
 from .ingest.collectors import gather
 from .ingest.http import PoliteClient
 from .ingest.rotation import load_rotation, save_rotation, scheduled_sources
@@ -1196,6 +1197,28 @@ def run(
                     log.exception("career_feed_poll_failed")
             else:
                 idle_career_health(settings.career_health_path)
+
+            if feedback.wants_life_sciences():
+                try:
+                    added, life_errors = poll_life_sciences(
+                        settings.career_state_path,
+                        sources_path=settings.life_sciences_sources_config,
+                        http_config=prefs.http,
+                    )
+                    log.info(
+                        "life_sciences_sources_polled",
+                        added=added, errors=len(life_errors),
+                    )
+                    for error in life_errors:
+                        stats.errors += 1
+                        db.log_dlq(
+                            run_id=stats.run_id, stage="life-sciences-poll",
+                            source="life_sciences", source_url="",
+                            payload="", error=error,
+                        )
+                except Exception:
+                    stats.errors += 1
+                    log.exception("life_sciences_feed_poll_failed")
 
         telegram = (
             TelegramClient(bot_token=settings.telegram_bot_token, client=telegram_client)

@@ -1,0 +1,82 @@
+# Independent Life Sciences PhD sourcing for private Telegram subscribers.
+# These boards are NEVER passed through the economics publication pipeline.
+# Sources are only contacted if somebody opts in to "life_sciences_phd".
+# Discovery is capped to 8 sources, 60 rows each and 200 rows per run.
+#
+# All matching additionally requires an explicit doctoral role, an eligible
+# biological research field and a concrete continental-European country.
+# Unknown location, UK/US/Canada, postdoc and explicitly self-funded adverts
+# are excluded. Salaries, fee waivers and full funding are NOT assumed.
+
+[[board]]
+name = "life_euraxess"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aepigenetics",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Achromatin",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aneurodevelopment",
+]
+link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
+institution_from_context = true
+note = "EU careers; individual job cards must establish a European country."
+
+[[board]]
+name = "life_academictransfer"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://www.academictransfer.com/en/jobs/?q=epigenetics",
+  "https://www.academictransfer.com/en/jobs/?q=genomics",
+  "https://www.academictransfer.com/en/jobs/?q=neuroscience",
+]
+link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
+institution_from_context = true
+country = "Netherlands"
+note = "Dutch academic jobs; title and card description must support the match."
+
+[[board]]
+name = "life_max_planck"
+type = "rss"
+group = "life_sciences"
+enabled = true
+url = "https://www.mpg.de/job-offers.rss"
+institution = "Max Planck Society"
+country = "Germany"
+note = "Max Planck official vacancies feed; role and life-science field are checked."
+
+# Official institutions to verify before enabling: their doctoral programmes
+# and recruitment links change and some listings are JavaScript-rendered.
+[[board]]
+name = "life_embl"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.embl.org/careers/"
+link_pattern = 'embl\.org/(?:jobs|careers)/'
+country = "Germany"
+note = "OFF: EMBL recruits across several countries; single-country inference would be unsafe."
+
+[[board]]
+name = "life_eth_bsse"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://bsse.ethz.ch/department/open-positions.html"
+link_pattern = '(?:jobs\.ethz\.ch|ethz\.ch/.+/(?:open-positions|jobs)/)'
+institution = "ETH Zurich, D-BSSE"
+country = "Switzerland"
+note = "OFF: validate vacancy URL markup and external recruitment links first."
+
+[[board]]
+name = "life_epfl"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.epfl.ch/about/working/working-at-epfl/job-openings/phd-student/"
+link_pattern = 'careers\.epfl\.ch/'
+institution = "EPFL"
+country = "Switzerland"
+note = "OFF: recruitment tool is external; validate individual vacancy links first."

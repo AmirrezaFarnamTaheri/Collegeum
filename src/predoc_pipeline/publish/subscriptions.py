@@ -180,9 +180,19 @@ def render_alert(job: dict[str, str], lang: str = "en") -> str:
         )
     except ValueError:
         valid = False
+    if job["category"] == "life_sciences_phd":
+        if job.get("research_priority") == "focus":
+            parts.append("🎯 " + (
+                "مطالعهٔ بسیار مرتبط با علایق پژوهشی" if fa
+                else "Priority research-interest match"
+            ))
+        parts.append("ℹ️ " + (
+            "تأمین مالی، حقوق و شهریه تأیید نشده‌اند."
+            if fa else "Funding, salary and tuition are not verified."
+        ))
     if valid:
         parts.append(
-            f'<a href="{escape(url, quote=True)}">'
+            f'<a href="{escape(url, quote=True)}">
             + ("مشاهده فرصت" if fa else "View opportunity") + "</a>"
         )
     return "\n".join(parts)
