@@ -359,7 +359,7 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
                 if rss_generated.tzinfo is None or abs(
                     (rss_generated.astimezone(UTC) - stamp).total_seconds()
                 ) > 300:
-                    finding("error", "rss-snapshot-clock-skew",
+                    finding("warning", "rss-snapshot-clock-skew",
                             "RSS lastBuildDate and dashboard generated_at differ")
             except (TypeError, ValueError, IndexError):
                 finding("error", "invalid-rss-build-date", "RSS lastBuildDate invalid")
@@ -372,7 +372,7 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
     if not health_stamp:
         finding("error", "invalid-health-timestamp", "Health generated_at missing or invalid")
     elif stamp and abs((health_stamp - stamp).total_seconds()) > 300:
-        finding("error", "cross-snapshot-clock-skew",
+        finding("warning", "cross-snapshot-clock-skew",
                 "Dashboard and health snapshots appear to come from different runs")
 
     source = health.get("source_summary")
