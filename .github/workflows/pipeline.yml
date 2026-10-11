@@ -153,7 +153,8 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           for f in data/listings.ndjson data/seen.ndjson data/x_threads.ndjson \
                    data/career_jobs.ndjson data/career_health.json \
-                   data/source_rotation.json docs/data/listings.json \
+                   data/source_rotation.json data/life_sources_rotation.json \
+                   docs/data/listings.json \
                    docs/data/health.json docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
           done

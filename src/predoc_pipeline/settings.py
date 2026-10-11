@@ -124,6 +124,7 @@ class Settings(BaseSettings):
     career_state_path: str = "data/career_jobs.ndjson"
     career_health_path: str = "data/career_health.json"
     life_sciences_sources_config: str = "config/life_sciences.toml"
+    life_sciences_rotation_path: str = "data/life_sources_rotation.json"
     enable_career_feeds: bool = True
     # Production scheduled runs use alternating source cohorts, 4h apart.
     # Manual runs and local tests retain full source coverage.

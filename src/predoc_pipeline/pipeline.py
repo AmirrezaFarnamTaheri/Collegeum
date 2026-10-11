@@ -1204,6 +1204,7 @@ def run(
                         settings.career_state_path,
                         sources_path=settings.life_sciences_sources_config,
                         http_config=prefs.http,
+                        rotation_path=settings.life_sciences_rotation_path,
                     )
                     log.info(
                         "life_sciences_sources_polled",
