@@ -168,11 +168,11 @@ web_employer_names = [
 
 [enrich]
 fetch_details = true         # read every new posting's page (field, region, filled?) before sending
-max_details_per_run = 2500   # the rest wait for the next run
+max_details_per_run = 1250   # the rest wait for the next run
 detail_concurrency = 25
 recheck_open_jobs = true     # revisit sent jobs so filled ones drop off /positions and the dashboard
 recheck_every_days = 3
-recheck_max_per_run = 500
+recheck_max_per_run = 250
 
 [http]
 timeout = 30

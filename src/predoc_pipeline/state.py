@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
+from .core.output_quality import application_url_issue, authentication_page_text
 from .core.timeparse import format_ts, parse_datetime, utcnow
 from .models import parse_salary
 
@@ -154,11 +155,7 @@ def _row_value(row: Any, key: str) -> Any:
 
 
 def _public_application_url(value: str | None) -> str | None:
-    """Do not leak Google authentication-session URLs as application links.
-
-    Only unwrap the known Google Forms redirect, and only when the target
-    remains on the expected Google Forms origin. Other redirects are untouched.
-    """
+    """Unwrap only a verified HTTPS Google Forms target from Google login."""
     if not value:
         return value
     try:
@@ -174,30 +171,12 @@ def _public_application_url(value: str | None) -> str | None:
     return value
 
 
-def _publication_unusable(row: Any) -> bool:
-    """Hold unverified login/error-page artifacts out of public exports."""
-    summary = str(row["summary"] or "").strip().lower()
-    if summary.startswith((
-        "sign in to continue", "verify you are human", "access denied",
-        "403 forbidden", "you need to enable javascript to run this app",
-    )):
-        return True
-    link = str(row["apply_url"] or "")
-    try:
-        parts = urlsplit(link)
-        if parts.hostname == "job-boards.greenhouse.io":
-            return "true" in [v.lower() for v in parse_qs(parts.query).get("error", [])]
-    except ValueError:
-        pass
-    return False
-
-
 def _public_record(row: Any) -> dict[str, Any]:
     get = row.__getitem__ if hasattr(row, "keys") else row.get
-    s_raw = _row_value(row, "salary_raw")
-    if s_raw:
+    salary_raw = _row_value(row, "salary_raw")
+    if salary_raw:
         salary_min, salary_max, salary_currency, salary_period = parse_salary(
-            s_raw, country=get("country")
+            salary_raw, country=get("country")
         )
     else:
         salary_min = _row_value(row, "salary_min")
@@ -246,7 +225,7 @@ def _public_record(row: Any) -> dict[str, Any]:
         "salary_max": salary_max,
         "salary_currency": salary_currency,
         "salary_period": salary_period,
-        "salary_raw": s_raw,
+        "salary_raw": salary_raw,
         "tools_required": tools_req,
         "tools_preferred": tools_pref,
         "min_degree": _row_value(row, "min_degree"),
@@ -262,7 +241,8 @@ def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
         row
         for row in db.active_listings()
         if row["url_hash"] not in hidden
-        and not _publication_unusable(row)
+        and application_url_issue(_public_application_url(row["apply_url"])) is None
+        and not authentication_page_text(row["summary"])
         and (router is None or router.channel_for_row(row) == "web")
     ]
 
@@ -289,7 +269,6 @@ def export_dashboard(
     }
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    # A cancelled run must not leave a truncated yet valid-looking snapshot.
     tmp = target.with_suffix(target.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(target)
@@ -321,8 +300,6 @@ def export_health(
             source_stats = {}
         public_stats = public_source_stats(source_stats)
         run_summary = source_summary(source_stats)
-        # Historical run rows precede source-health accounting. Never keep an
-        # "ok" label when the contemporaneous source evidence contradicts it.
         derived_outcome = row["outcome"]
         if derived_outcome == "ok" and (
             run_summary["failed"] or run_summary["partial"] or row["errors"]
@@ -438,6 +415,7 @@ def export_feed(
     Removes any single channel as the only way in: anyone can subscribe in a
     reader, and the data stays usable if a bot token is ever revoked.
     """
+    site_url = site_url or "https://amirrezafarnamtaheri.github.io/Collegeum/"
     rows = _web_rows(db, hidden or set(), router)[:limit]
     now = utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
     parts = [
@@ -446,14 +424,12 @@ def export_feed(
         '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
         "<channel>",
         f"<title>{_xml_escape(title)}</title>",
-        f"<link>{_xml_escape(site_url or 'https://amirrezafarnamtaheri.github.io/Collegeum/')}</link>",
+        f"<link>{_xml_escape(site_url)}</link>",
         "<description>US research positions, PhD and postdoc posts, and openings at "
         "central banks, international organizations and firms.</description>",
         "<language>en</language>",
         f"<lastBuildDate>{now}</lastBuildDate>",
     ]
-    if not site_url:
-        site_url = "https://amirrezafarnamtaheri.github.io/Collegeum/"
     if site_url:
         parts.append(
             f'<atom:link href="{_xml_escape(site_url.rstrip("/"))}/feed.xml" '

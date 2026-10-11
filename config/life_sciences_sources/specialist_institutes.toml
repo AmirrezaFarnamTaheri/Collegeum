@@ -1,0 +1,606 @@
+# Life Sciences PhD special research-candidate directory (11 Oct 2026).
+# NONE of these entries is an enabled vacancy feed. Host roots identify
+# institutions, not verified listing endpoints or live doctoral calls.
+# Manual verification must establish robots access, dated vacancies,
+# individual link pattern, field and European workplace before activation.
+
+[[board]]
+name = "life_special_de_mpi_cbg"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.mpi-cbg.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Max Planck Institute of Molecular Cell Biology and Genetics"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_mpi_immuno"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ie-freiburg.mpg.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Max Planck Institute of Immunobiology and Epigenetics"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_mpi_brain"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://brain.mpg.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Max Planck Institute for Brain Research"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_mpi_biochem"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.biochem.mpg.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Max Planck Institute of Biochemistry"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_mpi_molgen"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.molgen.mpg.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Max Planck Institute for Molecular Genetics"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_dzne"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.dzne.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "German Center for Neurodegenerative Diseases"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_helmholtz_munich"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.helmholtz-munich.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Helmholtz Munich"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_leibniz_age"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.leibniz-fli.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Leibniz Institute on Aging Fritz Lipmann Institute"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_charite"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.charite.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Charite University Medicine Berlin"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_tuebingen"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://uni-tuebingen.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "University of Tubingen"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_freiburg"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://uni-freiburg.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "University of Freiburg"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_de_jena"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uni-jena.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Friedrich Schiller University Jena"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fr_sorbonne"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.sorbonne-universite.fr/"
+link_pattern = '^$'
+country = "France"
+institution = "Sorbonne University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fr_paris_cite"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://u-paris.fr/"
+link_pattern = '^$'
+country = "France"
+institution = "Universite Paris Cite"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fr_grenoble"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.univ-grenoble-alpes.fr/"
+link_pattern = '^$'
+country = "France"
+institution = "Universite Grenoble Alpes"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fr_bordeaux"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.u-bordeaux.fr/"
+link_pattern = '^$'
+country = "France"
+institution = "University of Bordeaux"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fr_imagine"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.institutimagine.org/"
+link_pattern = '^$'
+country = "France"
+institution = "Institut Imagine"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fr_genopole"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.genopole.fr/"
+link_pattern = '^$'
+country = "France"
+institution = "Genopole"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fr_neuroschool"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.univ-amu.fr/"
+link_pattern = '^$'
+country = "France"
+institution = "Aix-Marseille University Neuroschool"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_ch_sib"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.sib.swiss/"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "Swiss Institute of Bioinformatics"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_ch_iob"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.iob.ch/"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "Institute of Molecular and Clinical Ophthalmology Basel"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_ch_lausanne_uni"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unil.ch/"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "University of Lausanne"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_ch_geneva_uni"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unige.ch/"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "University of Geneva"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_ch_fribourg_uni"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unifr.ch/"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "University of Fribourg"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_nl_nin"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://nin.nl/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Netherlands Institute for Neuroscience"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_nl_lumc"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.lumc.nl/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Leiden University Medical Center"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_nl_amsterdam_umc"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.amsterdamumc.nl/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Amsterdam University Medical Centers"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_nl_delft"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.tudelft.nl/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Delft University of Technology"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_nl_maastricht"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.maastrichtuniversity.nl/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Maastricht University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_be_vub"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.vub.be/"
+link_pattern = '^$'
+country = "Belgium"
+institution = "Vrije Universiteit Brussel"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_be_sciensano"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.sciensano.be/"
+link_pattern = '^$'
+country = "Belgium"
+institution = "Sciensano Belgian Institute for Health"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_es_vhir"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://vhir.vallhebron.com/"
+link_pattern = '^$'
+country = "Spain"
+institution = "Vall d'Hebron Research Institute"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_es_isglobal"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.isglobal.org/"
+link_pattern = '^$'
+country = "Spain"
+institution = "Barcelona Institute for Global Health"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_es_cicbiogune"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.cicbiogune.es/"
+link_pattern = '^$'
+country = "Spain"
+institution = "CIC bioGUNE"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_unimi"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unimi.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Milan"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_bologna"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unibo.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Bologna"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_turin"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unito.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Turin"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_sapienza"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uniroma1.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "Sapienza University of Rome"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_pisa"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unipi.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Pisa"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_pavia"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://web.unipv.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Pavia"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_naples"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unina.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Naples Federico II"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_trieste"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.units.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "University of Trieste"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_it_san_raffaele"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unisr.it/"
+link_pattern = '^$'
+country = "Italy"
+institution = "Vita-Salute San Raffaele University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_se_scilifelab"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.scilifelab.se/"
+link_pattern = '^$'
+country = "Sweden"
+institution = "SciLifeLab Sweden"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_se_orebro"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.oru.se/"
+link_pattern = '^$'
+country = "Sweden"
+institution = "Orebro University"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_no_nmbu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.nmbu.no/"
+link_pattern = '^$'
+country = "Norway"
+institution = "Norwegian University of Life Sciences"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fi_eastern"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uef.fi/"
+link_pattern = '^$'
+country = "Finland"
+institution = "University of Eastern Finland"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_fi_jyvaskyla"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.jyu.fi/"
+link_pattern = '^$'
+country = "Finland"
+institution = "University of Jyvaskyla"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_ie_rcsi"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.rcsi.com/"
+link_pattern = '^$'
+country = "Ireland"
+institution = "RCSI University of Medicine and Health Sciences"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_special_ie_galway"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.universityofgalway.ie/"
+link_pattern = '^$'
+country = "Ireland"
+institution = "University of Galway"
+verification = "candidate_unverified"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+

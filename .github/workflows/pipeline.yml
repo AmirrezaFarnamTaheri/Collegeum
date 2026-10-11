@@ -1,12 +1,12 @@
 name: predoc-pipeline
 
-# Runs every six hours: 00:00, 06:00, 12:00 and 18:00 UTC.
+# Runs every four hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC.
 # GitHub may start scheduled runs 5-30 minutes late; that is normal.
 #
 # Runtime and Actions usage depend on collection and extraction volume.
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */4 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -39,6 +39,34 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
+
+      - name: Check private state repository is private
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::PRIVATE_STATE_TOKEN is required for PRIVATE_STATE_REPO"
+            exit 1
+          fi
+          if [ "$(gh api "repos/$PRIVATE_STATE_REPO" --jq '.private')" != "true" ]; then
+            echo "::error::Refusing to store subscriber state in a public repository"
+            exit 1
+          fi
+
+      - name: Checkout authoritative private state
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ vars.PRIVATE_STATE_REPO }}
+          token: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          path: .private-state
+          fetch-depth: 1
+
+      - name: Restore authoritative private state
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        run: python tools/private_state.py restore
 
       - uses: actions/setup-python@v7
         with:
@@ -92,6 +120,8 @@ jobs:
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
           XQUIK_API_KEY: ${{ secrets.XQUIK_API_KEY }}
           DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+          SOURCE_ROTATION_ENABLED: ${{ github.event_name == 'schedule' }}
+          ENABLE_CAREER_FEEDS: 'true'
         run: |
           set -o pipefail
           FLAG=""
@@ -117,31 +147,86 @@ jobs:
       # committed. `git pull --rebase` first, in case you edited a file on
       # GitHub while the run was going.
       - name: Commit updated state
-        # Dry runs never push data, even if a command partially mutated files.
-        # For actual runs, preserve partial journal checkpoints on failure.
         if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' }}
+        env:
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
         run: |
+          set -euo pipefail
           git config user.name "predoc-pipeline-bot"
           git config user.email "actions@users.noreply.github.com"
-          # One file at a time: `git add a b` stages nothing if one is missing
-          # (feedback.enc only exists once you have tapped a button).
-          for f in data/listings.ndjson data/seen.ndjson data/x_threads.ndjson data/feedback.enc \
-                   data/telegram_state.json docs/data/listings.json docs/data/health.json \
-                   docs/feed.xml; do
+          for f in data/listings.ndjson data/seen.ndjson data/x_threads.ndjson \
+                   data/career_jobs.ndjson data/career_health.json \
+                   data/source_rotation.json data/life_sources_rotation.json \
+                   docs/data/listings.json \
+                   docs/data/health.json docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
-          if git diff --cached --quiet; then
-            echo "no state changes to commit"
-            exit 0
+          if [ -z "$PRIVATE_STATE_REPO" ]; then
+            for f in data/feedback.enc data/telegram_state.json; do
+              if [ -e "$f" ]; then git add "$f"; fi
+            done
           fi
-          git commit -m "chore: update listings [skip ci]"
-          for attempt in 1 2 3; do
-            if git pull --rebase --autostash && git push; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep 5
-          done
-          echo "could not push the updated state"
-          exit 1
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update listings [skip ci]"
+            if ! (git pull --rebase --autostash && git push); then
+              git rebase --abort 2>/dev/null || true
+              echo "::error::Cannot persist pipeline journals without conflicts"
+              exit 1
+            fi
+          fi
+
+      - name: Commit private pipeline state
+        if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' && vars.PRIVATE_STATE_REPO != '' }}
+        run: python tools/private_state.py checkpoint
+
+      # Check only after all side-effect checkpoint steps. A failed
+      # output audit must not prevent durable Telegram acknowledgements.
+      - name: Audit checkpointed outputs and summarize source health
+        if: ${{ always() && steps.pipeline.outcome != 'skipped' && github.event.inputs.dry_run != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python3 tools/audit_pipeline_outputs.py \
+            --output build/output-audit.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(Path("docs/data/health.json").read_text(encoding="utf-8"))
+          last = data.get("last_run") or {}
+          sources = last.get("sources") or data.get("source_summary") or {}
+          outcome = str(last.get("outcome", "unknown"))
+          failed = int(sources.get("failed", 0))
+          errors = int(last.get("source_errors", 0))
+          note = (
+              f"Pipeline application outcome: **{outcome}**. "
+              f"Failed source checks: **{failed}**. "
+              f"Source errors: **{errors}**."
+          )
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fh:
+              fh.write("### Collection health versus workflow status\n\n" + note + "\n")
+          if outcome != "ok" or failed or errors:
+              print(f"::warning title=Pipeline data degraded::{note}")
+          PY
+
+      - name: Preserve output audit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: output-audit-${{ github.run_id }}
+          path: build/output-audit.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Preserve quarantined career journals
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: career-quarantine-${{ github.run_id }}
+          path: data/career_jobs.ndjson.corrupt-*
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload dead-letter queue
         if: always()

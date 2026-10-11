@@ -5,7 +5,7 @@
   "published": 174,
   "pending": 1,
   "expired": 4,
-  "closed": 5,
+  "closed": 15,
   "seen_items": 498,
   "dlq": 0,
   "runs": 27
@@ -26702,5 +26702,22 @@
    "errors": 40
   }
  ],
- "last_successful_run_at": null
+ "last_successful_run_at": null,
+ "output_audit": {
+  "reviewed_at": "2026-10-11T18:00:00Z",
+  "quarantined_ids": [
+   55,
+   115,
+   117,
+   119,
+   120,
+   121,
+   122,
+   145,
+   148,
+   162
+  ],
+  "source_run_id": "38139499012",
+  "reason": "unusable application link (not confirmed vacancy closure)"
+ }
 }

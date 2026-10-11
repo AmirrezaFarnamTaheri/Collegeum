@@ -11,6 +11,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Annotated
 
 import typer
 
@@ -28,13 +29,15 @@ from .settings import Settings
 
 app = typer.Typer(
     name="predoc-pipeline",
-    help="Discover, deduplicate and broadcast non-US predoctoral research positions.",
+    help="Discover academic and career opportunities and publish personalized alerts.",
     no_args_is_help=True,
 )
 sources_app = typer.Typer(help="Manage the source registry (config/sources.toml).")
 app.add_typer(sources_app, name="sources")
 
 log = get_logger(__name__)
+
+_DEFAULT_PRIVATE_BATCH = Path("data/.private_delivery_batch.json")
 
 
 def _settings() -> Settings:
@@ -254,6 +257,158 @@ def telegram_reconcile(
         + (f"confirmed message {message_id}" if message_id is not None
            else "confirmed not delivered, pending retry")
     )
+
+
+@app.command("subscriber-plan")
+def subscriber_plan(
+    output: Annotated[
+        Path, typer.Option("--output", help="Untracked per-run private delivery batch"),
+    ] = _DEFAULT_PRIVATE_BATCH,
+) -> None:
+    """Reserve private alerts without sending (commit encrypted intents first)."""
+    from .publish.private_delivery import plan_batch
+
+    try:
+        n = plan_batch(_settings(), path=output)
+    except Exception as exc:
+        typer.secho(f"private plan failed: {type(exc).__name__}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Reserved {n} private alerts for checkpointed delivery")
+
+
+@app.command("subscriber-send")
+def subscriber_send(
+    input_path: Annotated[
+        Path, typer.Option("--input", help="Batch created by subscriber-plan on this runner"),
+    ] = _DEFAULT_PRIVATE_BATCH,
+) -> None:
+    """Send pre-committed private alerts only, retaining unknown outcomes."""
+    from .publish.private_delivery import send_batch
+
+    try:
+        counts = send_batch(_settings(), path=input_path)
+    except Exception as exc:
+        typer.secho(f"private delivery failed: {type(exc).__name__}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(
+        f"Private alerts: sent={counts['sent']} "
+        f"uncertain={counts['uncertain']} failed={counts['failed']} "
+        f"unsubscribed={counts['unsubscribed']} rejected={counts['rejected']} "
+        f"deferred={counts['deferred']}"
+    )
+    if counts["uncertain"] or counts["failed"]:
+        raise typer.Exit(1)
+
+
+
+@app.command("subscriber-rotate-key")
+def subscriber_rotate_key() -> None:
+    """Re-encrypt active private state using keys from environment variables.
+
+    Must be run on a trusted operator checkout while scheduled workers are
+    paused. No key is accepted as a command argument or printed to logs.
+    """
+    import os
+
+    from cryptography.fernet import Fernet
+
+    from .publish.feedback import FeedbackStore, _write_atomic
+
+    cfg = _settings()
+    old_key = cfg.feedback_encryption_key.strip()
+    new_key = os.environ.get("FEEDBACK_NEW_ENCRYPTION_KEY", "").strip()
+    if not old_key or not new_key or old_key == new_key:
+        typer.secho("Both distinct old/new Fernet environment keys are required.", err=True)
+        raise typer.Exit(2)
+    try:
+        Fernet(new_key.encode("ascii"))
+        store = FeedbackStore.from_settings(cfg)
+        previous = store.store_path.read_bytes()
+        if len(previous) > 16_000_000:
+            raise ValueError("feedback file exceeds rotation budget")
+        store.key = new_key
+        store.mark_dirty()
+        store.save()
+        FeedbackStore(cfg.feedback_path, key=new_key)
+    except (OSError, TypeError, ValueError) as exc:
+        if "previous" in locals():
+            _write_atomic(store.store_path, previous)
+        typer.secho("Private state rotation failed; original state retained.", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(
+        "Encrypted state re-keyed locally and verified. Checkpoint it, update "
+        "the Actions secret, then resume the scheduled workers. Old Git "
+        "snapshots remain decryptable with the old key."
+    )
+
+
+@app.command("subscriber-pending")
+def subscriber_pending(
+    show_ids: bool = typer.Option(
+        False, "--show-ids",
+        help="Show private chat IDs and full delivery keys on this trusted terminal"),
+) -> None:
+    """Inspect private delivery recovery backlog without sending any messages."""
+    from collections import Counter
+
+    from .publish.feedback import FeedbackStore
+
+    cfg = _settings()
+    if not cfg.feedback_encryption_key:
+        typer.secho("FEEDBACK_ENCRYPTION_KEY is required.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    store = FeedbackStore.from_settings(cfg)
+    pending = [
+        (identifier, key, record)
+        for identifier, member in sorted(store.subscribers.items())
+        for key, record in member["deliveries"].items()
+        if record["state"] in ("sending", "uncertain", "rejected")
+    ]
+    counts = Counter(record["state"] for _, _, record in pending)
+    typer.echo(
+        f"Unresolved private alerts: sending={counts['sending']} "
+        f"uncertain={counts['uncertain']} rejected={counts['rejected']}"
+    )
+    if show_ids:
+        typer.echo("Private identifiers below: do not paste this output into public logs.")
+        for identifier, key, record in pending[:200]:
+            typer.echo(f"chat={identifier} key={key} state={record['state']}")
+        if len(pending) > 200:
+            typer.echo(f"{len(pending) - 200} additional records omitted")
+
+
+@app.command("subscriber-reconcile")
+def subscriber_reconcile(
+    chat_id: int = typer.Argument(..., help="Private subscriber Telegram chat ID"),
+    delivery_key: str = typer.Argument(..., help="Full academic: or career: delivery key"),
+    confirmed_sent: bool = typer.Option(
+        False, "--confirmed-sent", help="I verified the message exists in the private chat"),
+    confirmed_absent: bool = typer.Option(
+        False, "--confirmed-not-delivered", help="I verified the message was not delivered"),
+    message_id: int | None = typer.Option(
+        None, "--message-id", help="Telegram message ID of verified private delivery"),
+) -> None:
+    """Manually resolve an ambiguous private delivery. Never guess after a timeout."""
+    from .publish.feedback import FeedbackStore
+
+    if confirmed_sent == confirmed_absent:
+        typer.secho("Provide exactly one verified outcome.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    cfg = _settings()
+    if not cfg.feedback_encryption_key:
+        typer.secho("FEEDBACK_ENCRYPTION_KEY is required.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    store = FeedbackStore.from_settings(cfg)
+    try:
+        store.resolve_delivery(
+            chat_id, delivery_key, confirmed_sent=confirmed_sent,
+            confirmed_absent=confirmed_absent, message_id=message_id,
+        )
+    except ValueError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(1) from exc
+    store.save()
+    typer.echo("Verified private delivery outcome persisted in encrypted state.")
 
 
 @app.command()

@@ -812,6 +812,7 @@ def gather(
     client: PoliteClient,
     *,
     only: set[str] | None = None,
+    scheduled_registry: set[str] | None = None,
     on_progress: Callable[[str, SourceStats], None] | None = None,
     prefs: Any | None = None,
     known: Callable[[str], bool] | None = None,
@@ -830,8 +831,19 @@ def gather(
         return (only is None or name in only) and getattr(settings, f"enable_{name}", False)
 
     board_names = set(only or ()) - set(COLLECTORS)
-    if getattr(settings, "enable_boards", False) and (only is None or "boards" in only
-                                                      or board_names):
+    if scheduled_registry is not None and only is None:
+        from ..boards.config import load_board_sources
+
+        board_names = {
+            s.name for s in load_board_sources(settings.sources_config)
+            if s.enabled and s.name in scheduled_registry
+        }
+    should_run_boards = (
+        (only is None and scheduled_registry is None)
+        or (only is not None and "boards" in only)
+        or bool(board_names)
+    )
+    if getattr(settings, "enable_boards", False) and should_run_boards:
         from ..boards.collector import collect_boards
         from ..boards.config import load_preferences
 
@@ -852,7 +864,10 @@ def gather(
                                 "deferred": run.deferred, "rejected": run.rejected}
 
     if wanted("feeds"):
-        feed_sources = [s for s in sources if s.kind == "feed" and s.enabled]
+        feed_sources = [
+            s for s in sources if s.kind == "feed" and s.enabled
+            and (scheduled_registry is None or s.name in scheduled_registry)
+        ]
         got, per_source = collect_feeds(
             feed_sources, client, max_items=settings.max_items_per_source
         )
@@ -863,7 +878,10 @@ def gather(
                 on_progress("feeds", stat)
 
     if wanted("portals"):
-        portal_sources = [s for s in sources if s.kind == "portal" and s.enabled]
+        portal_sources = [
+            s for s in sources if s.kind == "portal" and s.enabled
+            and (scheduled_registry is None or s.name in scheduled_registry)
+        ]
         got, per_source = collect_portals(
             portal_sources, client, max_items=settings.max_items_per_source
         )

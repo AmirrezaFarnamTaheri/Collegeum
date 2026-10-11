@@ -36,7 +36,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("timeout-minutes: 120", pipeline)
         self.assertIn("github.event.inputs.dry_run != 'true'", pipeline)
         self.assertIn(
-            "FEEDBACK_ENCRYPTION_KEY is not configured; skipping Telegram sync.",
+            "Encrypted storage or Telegram token not configured; bot disabled.",
             workflow("telegram.yml"),
         )
 
@@ -48,6 +48,29 @@ class WorkflowContractTests(unittest.TestCase):
         pipeline = workflow("pipeline.yml")
         self.assertIn('if [ "$PIPELINE_OUTCOME" != "success" ]', pipeline)
         self.assertIn("always() && steps.pipeline.outcome != 'skipped'", pipeline)
+
+    def test_private_sends_require_a_persisted_outbox(self):
+        workflow_text = workflow("telegram.yml")
+        stages = (
+            "id: sync", "subscriber-plan", "id: checkpoint",
+            'git commit -m "chore: checkpoint Telegram inbox',
+            "id: delivery", "subscriber-send",
+            "id: acknowledgement", 'git commit -m "chore: record private delivery',
+        )
+        positions = [workflow_text.index(stage) for stage in stages]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("steps.checkpoint.outcome == 'success'", workflow_text)
+        self.assertIn("steps.sync.outputs.private_enabled == 'true'", workflow_text)
+        self.assertIn("steps.delivery.outcome != 'skipped'", workflow_text)
+        self.assertIn('if [ "$SYNC_OUTCOME" != "success" ]', workflow_text)
+
+    def test_cadence_and_source_rotation_share_four_hour_slots(self):
+        pipeline = workflow("pipeline.yml")
+        self.assertIn('cron: "0 */4 * * *"', pipeline)
+        self.assertIn("SOURCE_ROTATION_ENABLED", pipeline)
+        self.assertIn("data/career_jobs.ndjson", pipeline)
+        self.assertIn("data/career_health.json", pipeline)
+        self.assertIn("data/source_rotation.json", pipeline)
 
     def test_pages_never_deploys_failed_or_cross_branch_run(self):
         content = workflow("pages.yml")
@@ -63,18 +86,36 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("actions/configure-pages@v6", content)
         self.assertIn("actions/deploy-pages@v5", content)
 
-    def test_refresh_never_writes_main_and_rechecks_concurrent_updates(self):
+    def test_pages_excludes_operational_guides_from_artifact(self):
+        content = workflow("pages.yml")
+        self.assertIn("path: build/pages", content)
+        self.assertIn("Stage public dashboard assets", content)
+        self.assertIn("docs/data", content)
+        self.assertNotIn("path: docs\n", content)
+        self.assertNotIn("cp -r docs", content)
+
+    def test_distribution_is_generated_without_mutating_branches(self):
         content = workflow("refresh-release.yml")
-        self.assertIn("github.ref != 'refs/heads/main'", content)
-        self.assertIn('git reset --hard FETCH_HEAD', content)
-        self.assertIn("python -S tools/verify_single_file.py", content)
-        self.assertIn('gh workflow run ci.yml --ref "$GITHUB_REF_NAME"', content)
-        # Every versioned manifest input must trigger regeneration; generated
-        # snapshots and compile_project.py must not trigger it recursively.
-        for glob in ("review/**", "docs/*.html", "docs/*.svg", "docs/*.xsl",
-                     "pyproject.toml", "uv.lock", "'*.md'"):
-            self.assertIn(glob, content)
-        self.assertNotIn("      - compile_project.py", content)
+        self.assertIn("contents: read", content)
+        self.assertIn("tools/build_single_file.py", content)
+        self.assertIn("tools/verify_single_file.py", content)
+        self.assertIn("actions/upload-artifact@v7", content)
+        self.assertNotIn("git push", content)
+        self.assertNotIn("contents: write", content)
+        release = workflow("publish-distribution.yml")
+        self.assertIn("release:", release)
+        self.assertIn("gh release upload", release)
+        ci = workflow("ci.yml")
+        self.assertIn("python3 tools/build_single_file.py", ci)
+
+    def test_private_state_backend_rejects_public_state_writes(self):
+        for workflow_name in ("telegram.yml", "pipeline.yml"):
+            with self.subTest(workflow=workflow_name):
+                content = workflow(workflow_name)
+                self.assertIn("PRIVATE_STATE_REPO", content)
+                self.assertIn("private_state.py checkpoint", content)
+                self.assertIn("private_state.py restore", content)
+                self.assertIn("Refusing to store subscriber state in a public", content)
 
 
 if __name__ == "__main__":

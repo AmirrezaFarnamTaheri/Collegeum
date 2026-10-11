@@ -1,0 +1,242 @@
+# Life Sciences PhD source catalogue - nordics
+# Indexed sites were checked against public vacancy examples as of 2026-10-11.
+# enabled=true means an official listing and link shape were inspected, NOT guaranteed live scraping.
+# Candidate portals are disabled until individual listing anchors and site access rules are verified.
+
+[[board]]
+name = "life_lund_university"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.lunduniversity.lu.se/vacancies"
+link_pattern = 'lu\.varbi\.com/(?:en|se)/what(?::|%3A)job/jobID(?::|%3A)\d+'
+country = "Sweden"
+institution = "Lund University"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official Lund vacancies link to Varbi jobID pages; genomic and neurogenetics PhDs observed."
+
+[[board]]
+name = "life_umea_university"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.umu.se/en/work-with-us/open-positions/"
+link_pattern = 'umu\.se/en/work-with-us/open-positions/[^/?#]+_\d+/?'
+country = "Sweden"
+institution = "Umeå University"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official university listing with /open-positions/title_NUMBER detail pages."
+
+[[board]]
+name = "life_gothenburg_university"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.gu.se/en/work-at-the-university-of-gothenburg/vacancies"
+link_pattern = 'web103\.reachmee\.com/ext/I005/1035/(?:main|job)\?(?=[^#]*(?:rmjob|job_id)=\d+)'
+country = "Sweden"
+institution = "University of Gothenburg"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official table links to ReachMee job IDs; medical-science doctoral posts observed."
+
+[[board]]
+name = "life_aalto_university"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.aalto.fi/en/open-positions"
+link_pattern = 'aalto\.fi/en/open-positions/[a-z][a-z0-9-]+/?(?:\?|$)'
+country = "Finland"
+institution = "Aalto University"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official Aalto vacancies link to individual /en/open-positions/slug posts; relevant life-sciences ads are less frequent."
+
+[[board]]
+name = "life_nordic_stockholm"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://su.varbi.com/en/"
+link_pattern = 'su\.varbi\.com/(?:en|se)/what(?::|%3A)job/jobID(?::|%3A)\d+'
+country = "Sweden"
+institution = "Stockholm University"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official university Varbi recruitment index and jobID detail links checked Oct 2026."
+
+[[board]]
+name = "life_nordic_linkoping"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://liu.se/en/work-at-liu/vacancies?occupationarea=PhD+students"
+link_pattern = 'liu\.se/en/work-at-liu/vacancies/\d+(?:/|$)'
+country = "Sweden"
+institution = "Linkoping University"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official PhD-filtered university vacancies with numeric detail URLs verified."
+
+[[board]]
+name = "life_nordic_kth"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://kth.varbi.com/en/"
+link_pattern = 'kth\.varbi\.com/(?:en|se)/what(?::|%3A)job/jobID(?::|%3A)\d+'
+country = "Sweden"
+institution = "KTH Royal Institute of Technology"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official Varbi index and jobID detail links checked Oct 2026."
+
+[[board]]
+name = "life_nordic_slu"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.slu.se/en/about-slu/work-at-slu/jobs-and-vacancies/"
+link_pattern = 'slu\.se/en/about-slu/work-at-slu/jobs-and-vacancies/(?:doktorand|phd)[a-z0-9-]*(?:/|\?|$)'
+country = "Sweden"
+institution = "Swedish University of Agricultural Sciences"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official 2026 doctoral listings link to named PhD job pages; ecology and genomics included."
+
+[[board]]
+name = "life_nordic_oslo"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uio.no/english/about/jobs/"
+link_pattern = '^$'
+country = "Norway"
+institution = "University of Oslo"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_ntnu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.ntnu.edu/vacancies"
+link_pattern = '^$'
+country = "Norway"
+institution = "NTNU"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_bergen"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uib.no/en/about/84777/vacancies"
+link_pattern = '^$'
+country = "Norway"
+institution = "University of Bergen"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_tromso"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://uit.no/om/ledigestillinger"
+link_pattern = '^$'
+country = "Norway"
+institution = "UiT Arctic University of Norway"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_dtu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.dtu.dk/english/about/job-and-career/vacant-positions"
+link_pattern = '^$'
+country = "Denmark"
+institution = "Technical University of Denmark"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_aarhus"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://international.au.dk/about/profile/vacant-positions/"
+link_pattern = '^$'
+country = "Denmark"
+institution = "Aarhus University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_sdu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.sdu.dk/en/om-sdu/job-sdu"
+link_pattern = '^$'
+country = "Denmark"
+institution = "University of Southern Denmark"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_tampere"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.tuni.fi/en/about-us/working-at-tampere-universities/open-positions"
+link_pattern = '^$'
+country = "Finland"
+institution = "Tampere University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_helsinki_main"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://jobs.helsinki.fi/go/Teaching-and-research-positions/8703802/"
+link_pattern = 'jobs\.helsinki\.fi/job/[^/?#]+/\d+/?'
+country = "Finland"
+institution = "University of Helsinki"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official SuccessFactors vacancies, 2026 biomedical doctoral positions and stable /job/title/ID links."
+
+[[board]]
+name = "life_nordic_turku"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.utu.fi/en/university/come-work-with-us/open-vacancies"
+link_pattern = '^$'
+country = "Finland"
+institution = "University of Turku"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_nordic_oulu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.oulu.fi/en/university/careers"
+link_pattern = '^$'
+country = "Finland"
+institution = "University of Oulu"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+

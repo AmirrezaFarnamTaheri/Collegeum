@@ -120,6 +120,16 @@ class Settings(BaseSettings):
     # as data/feedback.enc, which is safe to commit; without it they stay local.
     feedback_encryption_key: str = ""
     telegram_state_path: str = "data/telegram_state.json"
+    # Separate durable record of external career feeds (no subscriber data).
+    career_state_path: str = "data/career_jobs.ndjson"
+    career_health_path: str = "data/career_health.json"
+    life_sciences_sources_config: str = "config/life_sciences.toml"
+    life_sciences_rotation_path: str = "data/life_sources_rotation.json"
+    enable_career_feeds: bool = True
+    # Production scheduled runs use alternating source cohorts, 4h apart.
+    # Manual runs and local tests retain full source coverage.
+    source_rotation_enabled: bool = False
+    source_rotation_path: str = "data/source_rotation.json"
 
     # -- Classification ---------------------------------------------------
     confidence_threshold: float = Field(0.70, ge=0.0, le=1.0)
@@ -135,11 +145,11 @@ class Settings(BaseSettings):
     sources_config: str = "config/sources.toml"
     # Fields, region, employer type, excluded employers... (see the file).
     preferences_config: str = "config/preferences.toml"
-    max_items_per_source: int = 400
+    max_items_per_source: int = 200
     http_timeout_seconds: float = 25.0
     http_user_agent: str = (
-        "predoc-pipeline/2.0 (+https://github.com/USER/predoc-pipeline; "
-        "academic job aggregation; contact: MAINTAINER@example.org)"
+        "Collegeum/2.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum; "
+        "academic and career job aggregation)"
     )
     respect_robots_txt: bool = True
     per_host_delay_seconds: float = 1.0

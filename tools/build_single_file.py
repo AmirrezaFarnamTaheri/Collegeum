@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Regenerate compile_project.py: a single-file materializer of this project.
 
-Run this any time src/, tests/, config/, docs/, or the top-level project
-files change, and commit the regenerated output alongside your edit.
+The single-file distribution is a generated CI artifact and GitHub release
+asset, not a tracked source file. Local runs create an ignored copy.
 
     python3 tools/build_single_file.py
 

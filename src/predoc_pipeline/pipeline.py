@@ -41,20 +41,24 @@ from pathlib import Path
 from typing import Any, cast
 
 from . import state
-from .boards.config import Preferences, load_preferences
+from .boards.config import Preferences, load_board_sources, load_preferences
 from .core import gating
 from .core.db import Database
 from .core.db import init as init_db
 from .core.dedupe import Deduplicator
-from .core.health import source_error_count, source_summary
+from .core.health import public_failure, source_error_count, source_status, source_summary
+from .core.output_quality import application_url_issue, authentication_page_text
 from .core.ratelimit import QuotaExceeded
 from .core.textproc import escape_telegram_html, truncate
 from .core.timeparse import format_ts, parse_datetime, utcnow
 from .core.urls import url_hash
 from .extract import ExtractionError, RateLimited, build_extractor
 from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor, _deadline_iso
+from .ingest.career import idle_career_health, poll_career
 from .ingest.collectors import gather
 from .ingest.http import PoliteClient
+from .ingest.life_sciences import poll_life_sciences
+from .ingest.rotation import load_rotation, save_rotation, scheduled_sources
 from .ingest.sources import load_sources
 from .logging_setup import get_logger
 from .models import CoercionError, ExtractionResult, PredocListing, RawItem, coerce
@@ -446,6 +450,19 @@ def _post_extract(
             decision="rejected",
             reason=str(exc)[:200],
             content_hash=digest,
+        )
+        return None
+
+    broken_link = application_url_issue(listing.apply_url)
+    if broken_link or authentication_page_text(listing.summary) or authentication_page_text(
+        item.text
+    ):
+        stats.gated += 1
+        reason = f"unusable-application-link:{broken_link or 'authentication-page-content'}"
+        stats.gate_reasons[reason] = stats.gate_reasons.get(reason, 0) + 1
+        db.mark_seen(
+            source_key, source=item.source, decision="rejected",
+            reason=reason, content_hash=digest,
         )
         return None
 
@@ -1140,6 +1157,16 @@ def run(
         prefs = load_preferences(settings.preferences_config)
         feedback = FeedbackStore.from_settings(settings)
         sources = load_sources(settings.sources_config)
+        scheduled_registry: set[str] | None = None
+        rotation_at = None
+        if settings.source_rotation_enabled and only_sources is None and not dry_run:
+            rotation_at = utcnow()  # checkpoint the selection slot, not gather finish
+            scheduled_registry = scheduled_sources(
+                [*sources, *load_board_sources(settings.sources_config)],
+                timestamp=rotation_at,
+                history=load_rotation(settings.source_rotation_path),
+            )
+            log.info("source_cohort_selected", count=len(scheduled_registry))
         unverified = [s.name for s in sources if s.enabled and not s.verified]
         if unverified:
             log.warning("unverified_sources", names=unverified[:10])
@@ -1156,11 +1183,16 @@ def run(
                 sources,
                 client,
                 only=only_sources,
+                scheduled_registry=scheduled_registry,
                 prefs=prefs,
                 known=lambda url: db.knows_url(url_hash(url)),
                 board_transport=board_transport,
             )
 
+        if scheduled_registry is not None:
+            save_rotation(
+                settings.source_rotation_path, scheduled_registry, timestamp=rotation_at,
+            )
         stats.ingested = len(items)
         stats.sources = source_summary(source_stats)
         stats.source_errors = source_error_count(source_stats)
@@ -1189,6 +1221,66 @@ def run(
                     score=gate.score,
                 )
             return stats
+
+        failures = _record_discovery_failures(db, stats.run_id, source_stats)
+        if failures:
+            log.warning(
+                "discovery_failures_recorded",
+                failing_sources=failures, source_errors=stats.source_errors,
+            )
+
+        if settings.enable_career_feeds and feedback.key:
+            needs_iran = feedback.wants_career("iran")
+            needs_remote = feedback.wants_career("remote")
+            if needs_iran or needs_remote:
+                try:
+                    with PoliteClient(
+                        user_agent=settings.http_user_agent,
+                        timeout=settings.http_timeout_seconds,
+                        per_host_delay=settings.per_host_delay_seconds,
+                        respect_robots=settings.respect_robots_txt,
+                        store=db,
+                    ) as career_client:
+                        count, errors = poll_career(
+                            settings.career_state_path, client=career_client,
+                            needs_iran=needs_iran, needs_remote=needs_remote,
+                            health_path=settings.career_health_path,
+                        )
+                    log.info("career_sources_polled", added=count, errors=len(errors))
+                    for error in errors:
+                        stats.errors += 1
+                        db.log_dlq(
+                            run_id=stats.run_id, stage="career-poll", source="career",
+                            source_url="", payload="", error=error,
+                        )
+                except Exception:
+                    stats.errors += 1
+                    log.exception("career_feed_poll_failed")
+            else:
+                idle_career_health(settings.career_health_path)
+
+            if feedback.wants_life_sciences():
+                try:
+                    added, life_errors = poll_life_sciences(
+                        settings.career_state_path,
+                        sources_path=settings.life_sciences_sources_config,
+                        http_config=prefs.http,
+                        rotation_path=settings.life_sciences_rotation_path,
+                    )
+                    log.info(
+                        "life_sciences_sources_polled",
+                        added=added, errors=len(life_errors),
+                    )
+                    for error in life_errors:
+                        stats.errors += 1
+                        db.log_dlq(
+                            run_id=stats.run_id, stage="life-sciences-poll",
+                            source="life_sciences", source_url="",
+                            payload="", error=error,
+                        )
+                except Exception:
+                    stats.errors += 1
+                    log.exception("life_sciences_feed_poll_failed")
 
         telegram = (
             TelegramClient(bot_token=settings.telegram_bot_token, client=telegram_client)
@@ -1446,6 +1538,31 @@ def run(
             except Exception:  # pragma: no cover - never mask the real outcome
                 log.exception("health_export_failed")
         db.close()
+
+
+def _record_discovery_failures(
+    db: Database, run_id: str, source_stats: dict[str, Any],
+) -> int:
+    """Keep bounded, sanitized source failures in the run's DLQ artifact.
+
+    A broken scraper is a genuine operational failure even when the accepted
+    job pipeline finishes. Do not copy arbitrary HTTP bodies, response URLs,
+    or credentials to durable/public diagnostics.
+    """
+    count = 0
+    for name, info in source_stats.items():
+        if name.startswith("_") or not isinstance(info, dict):
+            continue
+        if source_status(info) not in ("failed", "partial"):
+            continue
+        messages = info.get("messages") or []
+        reason = public_failure(messages[0] if messages else "Source request failed")
+        db.log_dlq(
+            run_id=run_id, stage="discovery", source=str(name)[:100],
+            source_url="", payload="", error=reason,
+        )
+        count += 1
+    return count
 
 
 def _maybe_alert(
