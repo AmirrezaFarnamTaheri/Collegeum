@@ -79,6 +79,7 @@ OWNER_COMMANDS = [
     ("ownerhelp", "Help with owner feedback buttons"),
 ]
 ADMIN_COMMAND = ("admin", "Operations and source health")
+RECONCILE_COMMAND = ("reconcile", "Verify a private delivery outcome")
 FA_COMMAND_DESCRIPTIONS = {
     "start": "صفحه اصلی اعلان فرصت‌ها",
     "settings": "تنظیم موضوع‌ها و محدوده",
@@ -93,7 +94,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "stop": "لغو عضویت با تأیید",
     "delete": "حذف داده‌های فعال اشتراک",
 }
-COMMANDS_VERSION = 8
+COMMANDS_VERSION = 9
 MAX_COMMANDS_PER_SYNC = 20
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
@@ -304,10 +305,13 @@ def telegram_sync(
                         ],
                     ]
                     if chat_id == admin_chat:
-                        scoped.append({
-                            "command": ADMIN_COMMAND[0],
-                            "description": ADMIN_COMMAND[1],
-                        })
+                        scoped.extend([
+                            {"command": ADMIN_COMMAND[0], "description": ADMIN_COMMAND[1]},
+                            {
+                                "command": RECONCILE_COMMAND[0],
+                                "description": RECONCILE_COMMAND[1],
+                            },
+                        ])
                     bot.call("setMyCommands", {
                         "scope": {"type": "chat", "chat_id": chat_id},
                         "commands": scoped,

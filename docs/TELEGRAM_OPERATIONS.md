@@ -17,7 +17,12 @@ It has two deliberately separate surfaces:
 - **Admin chat:** The exact positive private ID in `TELEGRAM_ADMIN_CHAT_ID` may
   use `/admin`. Telegram native inline menus provide overview, recent runs,
   queue/uncertain sends, cache/source counts, and a **confirmed** pause/resume
-  switch for private notifications only. The "Run pipeline in GitHub" link
+  switch for private notifications only. The admin-only Recovery view shows
+  unresolved private keys and subscriber IDs in the authorized private chat.
+  After independently verifying an outcome, the admin can send
+  `/reconcile CHAT_ID KEY sent MESSAGE_ID` or
+  `/reconcile CHAT_ID KEY absent CONFIRM_NOT_DELIVERED` to commit the
+  verified result. There is no automatic replay of ambiguous sends. The "Run pipeline in GitHub" link
   opens the authenticated GitHub Actions workflow; the bot does not carry an
   additional GitHub PAT or allow arbitrary shell commands.
 
@@ -152,7 +157,9 @@ Personal pause does not block source collection or public publication.
 - Telegram update cursors and subscriber state are written and committed
   together. If a write fails, the update is replayed and callbacks are
   idempotently recognized. Partial publishing never erases prior receipts.
-- Admin views show only aggregate subscriber/outbox counts and run summaries.
+- Admin overview pages show only aggregate subscriber/outbox counts and run summaries.
+  The Recovery view intentionally displays private identifiers only to the
+  authenticated administrator, never on Pages or in public logs.
   The queue view distinguishes pending academic records, uncertain public
   channel deliveries, uncertain private deliveries and dead-letter events.
   It does **not** silently clear or replay ambiguous messages.

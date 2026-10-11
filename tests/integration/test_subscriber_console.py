@@ -1298,3 +1298,49 @@ def test_privacy_notice_is_available_in_both_languages():
     home, keyboard = menu(None)
     assert "/privacy" in home
     assert "sub:p:privacy" in str(keyboard)
+
+
+def test_admin_reconciliation_requires_verified_evidence(tmp_path):
+    cfg = settings(tmp_path, "99")
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    assert store.reserve_delivery(101, "academic:pending")
+    store.finish_delivery(101, "academic:pending", uncertain=True)
+    assert store.reserve_delivery(101, "academic:arrived")
+    store.finish_delivery(101, "academic:arrived", uncertain=True)
+    store.save()
+    api = API([
+        message(1, 101, "/reconcile 101 academic:pending absent CONFIRM_NOT_DELIVERED"),
+        message(2, 99, "/admin"),
+        tap(3, 99, "adm:recovery"),
+        message(4, 99, "/reconcile 101 academic:pending absent NOT_VERIFIED"),
+        message(5, 99, "/reconcile 101 academic:pending absent CONFIRM_NOT_DELIVERED"),
+        message(6, 99, "/reconcile 101 academic:arrived sent 2345"),
+        message(7, 101, "/stop"),
+        tap(8, 101, "sub:stop:yes"),
+    ])
+    result = run(cfg, api)
+    assert result["failed"] == 0
+    assert result["ignored"] >= 1  # A subscriber cannot invoke admin reconciliation.
+    assert load_chat_state(cfg.telegram_state_path)["offset"] == 9
+    assert any(
+        "Private delivery recovery" in body["text"]
+        for method, body in api.calls if method == "editMessageText"
+    )
+    assert any("Verified private delivery outcome" in row["text"] for row in api.sent(99))
+    # User-controlled deletion still works after the admin recovery sequence.
+    assert FeedbackStore.from_settings(cfg).subscriber(101) is None
+
+
+def test_admin_reconciliation_does_not_automatically_replay_unknown(tmp_path):
+    cfg = settings(tmp_path, "99")
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    assert store.reserve_delivery(101, "academic:unknown")
+    store.finish_delivery(101, "academic:unknown", uncertain=True)
+    store.save()
+    run(cfg, API([
+        message(1, 99, "/reconcile 101 academic:unknown absent UNVERIFIED"),
+    ]))
+    saved = FeedbackStore.from_settings(cfg)
+    assert saved.subscriber(101)["deliveries"]["academic:unknown"]["state"] == "uncertain"

@@ -25,7 +25,7 @@ ACTIONS_URL = "https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/workflo
 
 def admin_id(settings: Settings) -> int | None:
     raw = settings.telegram_admin_chat_id.strip()
-    return int(raw) if raw.isdecimal() and int(raw) > 0 else None
+    return int(raw) if raw.isascii() and raw.isdecimal() and int(raw) > 0 else None
 
 
 def buttons(*, paused: bool = False, page: str = "status") -> dict[str, Any]:
@@ -36,6 +36,7 @@ def buttons(*, paused: bool = False, page: str = "status") -> dict[str, Any]:
     return {"inline_keyboard": [
         [nav("Overview", "status"), nav("Recent runs", "runs")],
         [nav("Delivery queue", "queue"), nav("Sources & cache", "cache")],
+        [nav("Recovery cases", "recovery")],
         [{"text": "↻ Refresh this view", "callback_data": f"adm:{page}"}],
         [{"text": "▶ Resume private alerts" if paused else "⏸ Pause private alerts",
           "callback_data": "adm:resume" if paused else "adm:pause"}],
@@ -45,7 +46,7 @@ def buttons(*, paused: bool = False, page: str = "status") -> dict[str, Any]:
 
 def render(settings: Settings, store: FeedbackStore, page: str = "status") -> str:
     """Administrative snapshots contain counts, never identifying details."""
-    if page not in {"status", "runs", "queue", "cache"}:
+    if page not in {"status", "runs", "queue", "cache", "recovery"}:
         page = "status"
     paused = bool(store.data.get("ops", {}).get("paused"))
     status = "Paused" if paused else "Active"
@@ -61,6 +62,31 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
         1 for item in subs.values() for rec in item["deliveries"].values()
         if rec["state"] == "rejected"
     )
+    if page == "recovery":
+        records = [
+            (chat_id, key, data)
+            for chat_id, member in subs.items()
+            for key, data in member["deliveries"].items()
+            if data["state"] in ("sending", "uncertain", "rejected")
+        ]
+        records.sort(key=lambda entry: (entry[2].get("at", ""), entry[0], entry[1]))
+        shown = records[:6]
+        rows = [
+            f"{index}. chat={escape(chat_id)} "
+            f"key=<code>{escape(key[:220])}</code> "
+            f"({escape(str(rec['state']))})"
+            for index, (chat_id, key, rec) in enumerate(shown, 1)
+        ]
+        return (
+            f"{header}\n\n<b>Private delivery recovery</b>\n"
+            + ("\n".join(rows) if rows else "No unresolved private deliveries.")
+            + (f"\n…plus {len(records) - len(shown)} more" if len(records) > len(shown) else "")
+            + "\n\nVerify the destination chat independently first. "
+            "After proof of arrival, send /reconcile CHAT_ID KEY sent MESSAGE_ID. "
+            "After proof of absence, send /reconcile CHAT_ID KEY absent "
+            "CONFIRM_NOT_DELIVERED. These commands are admin-only; no uncertain "
+            "delivery is replayed without explicit verification."
+        )
     if page == "status":
         return (
             f"{header}\n\n"

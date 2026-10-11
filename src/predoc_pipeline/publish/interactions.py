@@ -94,12 +94,55 @@ def private_message(
         "/privacy": "privacy",
     }
     if command not in pages and command not in {
-        "/latest", "/admin", "/pause", "/resume",
+        "/latest", "/admin", "/reconcile", "/pause", "/resume",
     }:
         return False
     summary["received"] += 1
     if not store.key:
         bot.send(str(chat_id), "Private alerts require encrypted storage.")
+        summary["commands"] += 1
+        return True
+
+    if command == "/reconcile":
+        if chat_id != admin_id(settings):
+            summary["ignored"] += 1
+            return True
+        args = tokens[1].split() if len(tokens) > 1 else []
+        usage = (
+            "Use /reconcile CHAT_ID KEY sent MESSAGE_ID, or "
+            "/reconcile CHAT_ID KEY absent CONFIRM_NOT_DELIVERED. "
+            "Verify the chat independently before recording an outcome."
+        )
+        if len(args) != 4:
+            bot.send(str(chat_id), usage)
+            summary["commands"] += 1
+            return True
+        chat, key, outcome, evidence = args
+        if not chat.isascii() or not chat.isdecimal() or int(chat) <= 0:
+            bot.send(str(chat_id), usage)
+            summary["commands"] += 1
+            return True
+        if len(key) > 256 or not key.startswith(("academic:", "career:")):
+            bot.send(str(chat_id), usage)
+            summary["commands"] += 1
+            return True
+        try:
+            if outcome == "sent" and evidence.isascii() and evidence.isdecimal():
+                store.resolve_delivery(
+                    int(chat), key, confirmed_sent=True, message_id=int(evidence),
+                )
+            elif outcome == "absent" and evidence == "CONFIRM_NOT_DELIVERED":
+                store.resolve_delivery(int(chat), key, confirmed_absent=True)
+            else:
+                raise ValueError("Invalid reconciliation evidence")
+            store.save()
+        except ValueError:
+            bot.send(
+                str(chat_id),
+                "Reconciliation refused: check the delivery key, state and evidence.",
+            )
+        else:
+            bot.send(str(chat_id), "Verified private delivery outcome saved.")
         summary["commands"] += 1
         return True
 
@@ -204,7 +247,7 @@ def private_callback(
             html = render(settings, store)
             keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page="status")
             notification = "Saved"
-        elif action in ("status", "runs", "queue", "cache"):
+        elif action in ("status", "runs", "queue", "cache", "recovery"):
             html = render(settings, store, page=action)
             keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page=action)
         else:
