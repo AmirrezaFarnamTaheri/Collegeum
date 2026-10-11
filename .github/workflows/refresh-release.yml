@@ -9,6 +9,7 @@ name: refresh-release
 # Preserve the current main source/config when refreshing after upstream merges.
 # Keep generated manifests synchronized after workflow regression-test fixes.
 # Refresh after exact six-row subscriber navigation regression test correction.
+# Refresh generated distribution after the Telegram reliability and career feed fixes.
 on:
   push:
     branches: ['**']
