@@ -299,7 +299,7 @@ def test_pipeline_schedule_matches_source_rotation_interval():
     root = Path(__file__).resolve().parents[2]
     workflow = (root / ".github/workflows/pipeline.yml").read_text(encoding="utf-8")
     assert SCHEDULE_INTERVAL_HOURS == 4
-    assert 'cron: "0 */4 * * *"' in workflow
+    assert 'cron: "7 */4 * * *"' in workflow
 
 
 def test_remote_feed_follows_bounded_cursor_without_duplicate_alerts(tmp_path):
