@@ -54,6 +54,7 @@ COMMANDS = [
     ("start", "Open personal job alerts"),
     ("settings", "Choose jobs and markets"),
     ("latest", "Browse matching opportunities"),
+    ("lifesciences", "European Life Sciences PhD alerts"),
     ("sources", "See current job sources"),
     ("delivery", "Digest and notification hours"),
     ("privacy", "Understand private data retention"),
@@ -77,6 +78,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "start": "صفحه اصلی اعلان فرصت‌ها",
     "settings": "تنظیم موضوع‌ها و محدوده",
     "latest": "مرور تازه‌ترین فرصت‌ها",
+    "lifesciences": "دکتری علوم زیستی در اروپا",
     "sources": "وضعیت منابع آگهی",
     "delivery": "تنظیمات دریافت اعلان",
     "privacy": "حریم خصوصی و نگهداری داده",
@@ -87,7 +89,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "stop": "لغو عضویت با تأیید",
     "delete": "حذف داده‌های فعال اشتراک",
 }
-COMMANDS_VERSION = 9
+COMMANDS_VERSION = 10
 MAX_COMMANDS_PER_SYNC = 20
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",

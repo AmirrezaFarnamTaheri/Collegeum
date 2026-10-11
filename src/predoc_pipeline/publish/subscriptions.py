@@ -13,6 +13,7 @@ from ..routing import Router
 TOPIC_LABELS = {
     "predoc": "🎓 Predoc / research assistant",
     "phd": "📚 PhD positions",
+    "life_sciences_phd": "🧬 Life Sciences PhD · Europe",
     "postdoc": "🔬 Postdocs",
     "data_scientist": "🧠 Data science",
     "data_analyst": "📊 Data analyst / BI",
@@ -151,6 +152,7 @@ def render_alert(job: dict[str, str], lang: str = "en") -> str:
         category = {
             "predoc": "پیشادکتری / دستیار پژوهشی",
             "phd": "فرصت دکتری", "postdoc": "پسادکتری",
+            "life_sciences_phd": "دکتری علوم زیستی · اروپا",
             "data_scientist": "دانشمند داده",
             "data_analyst": "تحلیلگر داده",
             "econ_consulting": "مشاوره اقتصادی",

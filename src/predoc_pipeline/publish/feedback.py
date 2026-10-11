@@ -467,6 +467,13 @@ class FeedbackStore:
         else:
             self.cancel_delivery(chat_id, key)
 
+    def wants_life_sciences(self) -> bool:
+        """Collect independent life-science PhD sources only for opted-in users."""
+        return any(
+            "life_sciences_phd" in member["topics"]
+            for member in self.subscribers.values()
+        )
+
     def wants_career(self, scope: str) -> bool:
         from .subscriptions import CAREER_TOPICS
         return any(

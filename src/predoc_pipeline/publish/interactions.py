@@ -17,7 +17,7 @@ from .admin import admin_id, audit, buttons, render
 from .feedback import FeedbackStore
 from .subscriptions import matching, parse_toggle, private_user_id
 from .telegram import TelegramError
-from .ui import ACADEMIC, language, latest_panel, menu, sources_panel
+from .ui import ACADEMIC, LIFE_SCIENCES, language, latest_panel, menu, sources_panel
 
 log = get_logger(__name__)
 
@@ -107,6 +107,7 @@ def private_message(
         "/start": "home", "/settings": "home", "/subscribe": "home",
         "/status": "home", "/academic": "academic",
         "/careers": "careers", "/markets": "markets", "/guide": "help",
+        "/lifesciences": "life_sciences",
         "/stop": "stop", "/delete": "stop", "/help": "help",
         "/sources": "sources", "/delivery": "delivery",
         "/privacy": "privacy",
@@ -210,7 +211,8 @@ def _page(
     if target == "sources":
         return sources_panel(settings.career_health_path, lang=language(member))
     if target in (
-        "home", "academic", "careers", "markets", "delivery", "privacy", "help", "stop",
+        "home", "academic", "life_sciences", "careers", "markets",
+        "delivery", "privacy", "help", "stop",
     ):
         return menu(member, target)
     return None
@@ -304,9 +306,10 @@ def private_callback(
                 if not store.callback_seen(callback_id):
                     store.toggle_subscription(user_id, kind, option)
                     mutation = True
-                target = ("academic" if option in ACADEMIC else "careers") if (
-                    kind == "topics"
-                ) else "markets"
+                target = (
+                    "life_sciences" if option == LIFE_SCIENCES else
+                    "academic" if option in ACADEMIC else "careers"
+                ) if kind == "topics" else "markets"
             elif raw in ("sub:a:pause", "sub:a:resume"):
                 if not store.callback_seen(callback_id):
                     store.set_paused(user_id, raw.endswith(":pause"))

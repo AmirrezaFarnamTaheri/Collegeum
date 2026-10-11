@@ -313,9 +313,14 @@ def load_career(
             if (not required.issubset(data)
                     or not all(isinstance(v, str) for v in data.values())):
                 raise ValueError(f"corrupt job journal record in {p}")
-            if data["scope"] not in ("iran", "remote") or data["category"] not in {
+            life = data["category"] == "life_sciences_phd"
+            valid_scopes = (
+                data["scope"] == "" if life
+                else data["scope"] in ("iran", "remote")
+            )
+            if not valid_scopes or (not life and data["category"] not in {
                 "data_scientist", "data_analyst", "econ_consulting", "research_analyst",
-            }:
+            }):
                 raise ValueError(f"invalid career category or scope in {p}")
             if data.get("availability", "unknown") not in ("active", "closed", "unknown"):
                 raise ValueError(f"invalid career availability in {p}")

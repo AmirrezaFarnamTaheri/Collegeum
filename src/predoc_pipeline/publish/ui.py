@@ -17,6 +17,7 @@ from urllib.parse import urlsplit
 from .subscriptions import CAREER_SCOPES, TOPIC_LABELS
 
 ACADEMIC = ("predoc", "phd", "postdoc")
+LIFE_SCIENCES = "life_sciences_phd"
 CAREERS = ("data_scientist", "data_analyst", "econ_consulting", "research_analyst")
 PAGE_SIZE = 4
 MAX_LATEST_PAGES = 10
@@ -24,6 +25,7 @@ MAX_LATEST_PAGES = 10
 PERSIAN_LABELS = {
     "predoc": "دستیار پژوهشی / پیشادکتری",
     "phd": "فرصت دکتری",
+    "life_sciences_phd": "دکتری علوم زیستی · اروپا",
     "postdoc": "پسادکتری",
     "data_scientist": "دانشمند داده",
     "data_analyst": "تحلیلگر داده و BI",
@@ -84,6 +86,30 @@ def menu(
             f"sub:b:academic:{'off' if all_set else 'on'}",
         )])
         buttons.append(_back(lang))
+        body = f"{title}\n\n{caption}"
+    elif page == "life_sciences":
+        title = (
+            "🧬 <b>دکتری علوم زیستی · اروپا</b>" if fa
+            else "🧬 <b>Life Sciences PhD · Europe</b>"
+        )
+        caption = (
+            "دکتری در ژنتیک، اپی‌ژنتیک، کروماتین، تنظیم ژن، زیست‌شناسی "
+            "مولکولی، ژنومیک و علوم اعصاب. فقط اروپای قاره‌ای با مکان "
+            "مشخص (بدون بریتانیا). بورسیه، حقوق و شهریه باید جداگانه بررسی شوند."
+            if fa else
+            "Doctoral positions in epigenetics, chromatin, gene regulation, "
+            "genomics, molecular biology, bioinformatics and neuroscience. "
+            "Continental Europe only, with a known location (not the UK). "
+            "Funding, salary and tuition must be verified in each advert."
+        )
+        buttons = [
+            [_button(
+                ("✓ " if LIFE_SCIENCES in topics else "○ ") +
+                _label(LIFE_SCIENCES, lang),
+                "sub:t:life_sciences_phd",
+            )],
+            _back(lang),
+        ]
         body = f"{title}\n\n{caption}"
     elif page == "careers":
         title = "💼 <b>مشاغل تخصصی</b>" if fa else "💼 <b>Specialist careers</b>"
@@ -211,6 +237,7 @@ def menu(
     else:
         academic = sum(key in topics for key in ACADEMIC)
         careers = sum(key in topics for key in CAREERS)
+        life_active = LIFE_SCIENCES in topics
         selected_markets = [
             _label(key, lang) for key in CAREER_SCOPES if key in scopes
         ]
@@ -221,6 +248,7 @@ def menu(
             "🧭 <b>Collegeum | اعلان فرصت‌ها</b>\n\n"
             f"🎓 دانشگاهی: {academic}/3\n"
             f"💼 شغلی: {careers}/4\n"
+            f"🧬 زیست‌شناسی: {'فعال' if life_active else 'غیرفعال'}\n"
             f"🌍 محدوده: {escape(market_line)}\n"
             f"🔔 وضعیت: {'متوقف' if paused else 'فعال'}\n\n"
             "برای تنظیم، یکی از دسته‌ها را انتخاب کنید."
@@ -228,6 +256,7 @@ def menu(
             "🧭 <b>Collegeum | Job alerts</b>\n\n"
             f"🎓 Academic roles: {academic}/3\n"
             f"💼 Career roles: {careers}/4\n"
+            f"🧬 Life Sciences PhD: {'On' if life_active else 'Off'}\n"
             f"🌍 Markets: {escape(market_line)}\n"
             f"🔔 Alerts: {'Paused' if paused else 'On'}\n\n"
             "Choose a category to tailor your alerts."
@@ -245,6 +274,10 @@ def menu(
         buttons = [
             [_button("🎓 دانشگاهی" if fa else "🎓 Academic", "sub:p:academic"),
              _button("💼 مشاغل" if fa else "💼 Careers", "sub:p:careers")],
+            [_button(
+                "🧬 دکتری علوم زیستی" if fa else "🧬 Life Sciences PhD",
+                "sub:p:life_sciences",
+            )],
             [_button("🌍 محدوده" if fa else "🌍 Job markets", "sub:p:markets"),
              _button("🔎 تازه‌ترین‌ها" if fa else "🔎 Latest", "sub:p:latest")],
             [_button(
