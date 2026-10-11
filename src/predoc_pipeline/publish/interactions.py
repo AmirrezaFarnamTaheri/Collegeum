@@ -251,8 +251,10 @@ def private_callback(
                     elif raw == "sub:d:limit":
                         from .feedback import DAILY_LIMITS
                         old = member.get("daily_limit", 6) if member else 6
-                        value = DAILY_LIMITS[(DAILY_LIMITS.index(old) + 1) % len(DAILY_LIMITS)]
-                        store.set_delivery_preference(user_id, "daily_limit", value)
+                        next_limit = DAILY_LIMITS[
+                            (DAILY_LIMITS.index(old) + 1) % len(DAILY_LIMITS)
+                        ]
+                        store.set_delivery_preference(user_id, "daily_limit", next_limit)
                     elif raw == "sub:d:quiet":
                         old = bool(member and member.get("quiet_hours"))
                         store.set_delivery_preference(user_id, "quiet_hours", not old)
