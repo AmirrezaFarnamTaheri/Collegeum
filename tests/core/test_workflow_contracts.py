@@ -100,14 +100,15 @@ class WorkflowContractTests(unittest.TestCase):
         ci = workflow("ci.yml")
         self.assertIn("python3 tools/build_single_file.py", ci)
 
+    def test_private_state_backend_rejects_public_state_writes(self):
+        for workflow_name in ("telegram.yml", "pipeline.yml"):
+            with self.subTest(workflow=workflow_name):
+                content = workflow(workflow_name)
+                self.assertIn("PRIVATE_STATE_REPO", content)
+                self.assertIn("private_state.py checkpoint", content)
+                self.assertIn("private_state.py restore", content)
+                self.assertIn("Refusing to store subscriber state in a public", content)
+
 
 if __name__ == "__main__":
     unittest.main()
-
-    def test_private_state_backend_never_allows_unconditional_public_writes(self):
-        for workflow_name in ("telegram.yml", "pipeline.yml"):
-            text = workflow(workflow_name)
-            self.assertIn("PRIVATE_STATE_REPO", text)
-            self.assertIn("private_state.py checkpoint", text)
-            self.assertIn("private_state.py restore", text)
-            self.assertIn("Refusing to store subscriber state in a public", text)
