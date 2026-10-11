@@ -1357,3 +1357,27 @@ def test_admin_action_link_respects_repository_rename(monkeypatch):
     assert admin_module._actions_url().startswith(
         "https://github.com/AmirrezaFarnamTaheri/Collegeum/"
     )
+
+
+def test_provider_probe_separates_empty_match_from_broken_schema():
+    from types import SimpleNamespace
+
+    from tools.probe_career_sources import probe_sources
+
+    class Client:
+        def get(self, url, **_kwargs):
+            if "jobicy.com" in url:
+                body = json.dumps({"jobs": [], "success": True})
+            elif "jobinja.ir" in url:
+                body = '<a href="/companies/example/jobs/1/accountant">Accountant</a>'
+            else:
+                body = '<a href="/en/job/accountant/12345">Accountant</a>'
+            return SimpleNamespace(ok=True, status=200, text=body)
+
+    result = probe_sources(Client())
+    assert result["healthy"]
+    assert all(
+        row["status"] == "healthy_empty"
+        for row in result["sources"].values()
+    )
+    assert all(row["matched"] == 0 for row in result["sources"].values())

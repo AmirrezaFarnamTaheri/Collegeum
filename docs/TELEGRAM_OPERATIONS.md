@@ -252,3 +252,15 @@ attaches the verified `compile_project.py` as a release asset. To generate and
 verify it locally, run `make verify-single-file`. The source archive and
 Python wheel contain the source and tooling rather than the giant generated
 materializer, which is obtainable separately.
+
+
+### Live provider schema probe
+
+After merging, dispatch the `verify-career-providers` workflow manually
+from GitHub Actions. It performs at most one bounded public request each to
+Jobicy, Jobinja and IranTalent using the same robots-aware HTTP client as
+the pipeline. The structured artifact distinguishes inaccessible sources,
+robots restrictions, changed response schemas and valid pages with no matching
+roles. Run it after a provider markup change; do not blindly treat a
+zero-match result as a broken parser. It is deliberately not a blocking CI
+test because external sites can be temporarily unavailable.
