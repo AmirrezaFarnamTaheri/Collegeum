@@ -57,6 +57,10 @@ WRONG_ROLE = re.compile(
     re.I,
 )
 COUNTRY_EXCLUDE = frozenset(("Europe", "United Kingdom", "United States", "Canada"))
+EXPLICIT_LOCATION = re.compile(
+    r"\b(?:location|workplace|place of work|work location|based in)"
+    r"\s*[:\-]\s*([^;\n.]{2,90})", re.I,
+)
 
 
 def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str, str] | None:
@@ -73,6 +77,13 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     if UNFUNDED.search(context):
         return None
     country, region = detect_location(post.country, post.location)
+    if not country and not post.country and not post.location:
+        # A broad European research organization can recruit internationally.
+        # Only a labelled location in the vacancy itself is evidence of where
+        # the position is based; collaborator addresses do not qualify.
+        match = EXPLICIT_LOCATION.search(post.description_snippet)
+        if match:
+            country, region = detect_location(match.group(1))
     if region != "Europe" or not country or country in COUNTRY_EXCLUDE:
         return None
     current = today or datetime.now(UTC).date()

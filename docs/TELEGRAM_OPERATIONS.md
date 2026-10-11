@@ -295,6 +295,9 @@ Life-sciences discovery bypasses the economics-only field filter and uses
 
 The enabled starting feeds are targeted EURAXESS searches, Dutch
 AcademicTransfer searches, and the official Max Planck vacancy RSS.
+Max Planck's international branding does not establish the location of each
+vacancy: items from that feed require an explicitly labelled European workplace
+or equivalent direct location field.
 EMBL, ETH Zurich D-BSSE and EPFL are recorded as disabled candidate sources
 pending verification of detail URL selectors and site terms; these must not
 be reported as functioning sources until they are tested.

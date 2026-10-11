@@ -196,3 +196,28 @@ def test_other_users_do_not_receive_life_sciences_phds() -> None:
     life_member = {"topics": {"life_sciences_phd": before}, "scopes": {}}
     assert matching(economics_member, [], [job]) == []
     assert len(matching(life_member, [], [job])) == 1
+
+
+def test_international_research_brand_does_not_imply_location() -> None:
+    from predoc_pipeline.boards.models import JobPostSchema
+
+    baseline = {
+        "title": "PhD Position in Epigenetics",
+        "url": "https://www.mpg.de/jobs/example",
+        "source": "life_max_planck",
+        "institution": "Max Planck Society",
+    }
+    ambiguous = JobPostSchema(
+        **baseline, description_snippet="Collaborators at the University of Berlin.",
+    )
+    assert life_sciences.classify_post(ambiguous, today=TODAY) is None
+    verified = JobPostSchema(
+        **baseline, description_snippet="Location: Munich, Germany",
+    )
+    match = life_sciences.classify_post(verified, today=TODAY)
+    assert match is not None
+    assert match["location"] == "Germany"
+    outside = JobPostSchema(
+        **baseline, description_snippet="Work location: Cambridge, UK",
+    )
+    assert life_sciences.classify_post(outside, today=TODAY) is None

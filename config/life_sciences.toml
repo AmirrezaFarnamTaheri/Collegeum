@@ -44,8 +44,7 @@ group = "life_sciences"
 enabled = true
 url = "https://www.mpg.de/job-offers.rss"
 institution = "Max Planck Society"
-country = "Germany"
-note = "Max Planck official vacancies feed; role and life-science field are checked."
+note = "Global Max Planck feed: require an explicitly labelled European location in each ad."
 
 # Official institutions to verify before enabling: their doctoral programmes
 # and recruitment links change and some listings are JavaScript-rendered.
