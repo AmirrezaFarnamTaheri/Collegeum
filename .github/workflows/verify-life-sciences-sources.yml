@@ -10,13 +10,19 @@ on:
         type: choice
         required: true
         default: all
-        options: [all, core, nordics, dach, benelux, france_iberia, central_south]
+        options: [all, core, nordics, dach, benelux, france_iberia, central_south, aggregator_topics, eastern_balkans, specialist_institutes, doctoral_programmes]
       limit:
         description: "Maximum landing pages to check (1-16)"
         type: choice
         required: true
         default: '16'
         options: ['4', '8', '16']
+      offset:
+        description: "Skip this many enabled sources; use 0, 16 and 32 to cover the whole current catalogue"
+        type: choice
+        required: true
+        default: '0'
+        options: ['0', '16', '32', '48', '64', '80', '96']
 
 permissions:
   contents: read
@@ -40,9 +46,10 @@ jobs:
         env:
           REGION: ${{ inputs.region }}
           LIMIT: ${{ inputs.limit }}
+          OFFSET: ${{ inputs.offset }}
         run: |
           PYTHONPATH=src python3 tools/probe_life_sciences_sources.py \
-            --region "$REGION" --limit "$LIMIT" \
+            --region "$REGION" --limit "$LIMIT" --offset "$OFFSET" \
             --output build/life-sciences-sources.json
       - name: Preserve provider observations
         if: always()

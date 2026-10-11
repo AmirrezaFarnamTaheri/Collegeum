@@ -90,3 +90,29 @@ def test_probe_rejects_unknown_regions(region: str) -> None:
 def test_probe_rejects_unbounded_requests(limit: int) -> None:
     with pytest.raises(ValueError, match="limit must be between"):
         check_sources(None, CATALOG, limit=limit)
+
+
+def test_probe_all_enabled_sources_across_disjoint_offset_pages() -> None:
+    class Client:
+        def get(self, _url: str, **_kwargs):
+            return SimpleNamespace(
+                ok=False, status=999, text="", error="blocked by robots.txt",
+            )
+
+    ids: set[str] = set()
+    offset = 0
+    while True:
+        report = check_sources(Client(), CATALOG, limit=16, offset=offset)
+        assert report["offset"] == offset
+        assert len(set(report["sources"]) & ids) == 0
+        ids.update(report["sources"])
+        if report["next_offset"] is None:
+            break
+        offset = report["next_offset"]
+    assert len(ids) == 37
+
+
+@pytest.mark.parametrize("offset", [-1, 257, 999])
+def test_probe_rejects_unbounded_offsets(offset: int) -> None:
+    with pytest.raises(ValueError, match="offset must be between"):
+        check_sources(None, CATALOG, offset=offset)

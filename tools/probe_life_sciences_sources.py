@@ -65,11 +65,13 @@ def feed_entries(content: str) -> int:
 
 def check_sources(
     client: Any, config: str | Path, *, region: str = "all",
-    limit: int = MAX_PROBE_SOURCES,
+    limit: int = MAX_PROBE_SOURCES, offset: int = 0,
 ) -> dict[str, Any]:
     """Produce public counts without downloading individual vacancy details."""
     if not 1 <= limit <= MAX_PROBE_SOURCES:
         raise ValueError("limit must be between 1 and 16")
+    if not 0 <= offset <= 256:
+        raise ValueError("offset must be between 0 and 256")
     if region not in REGIONS:
         raise ValueError("unknown source region")
     sources = [s for s in load_life_sources(config) if s.enabled]
@@ -87,10 +89,15 @@ def check_sources(
         "checked_at": datetime.now(UTC).isoformat(),
         "region": region,
         "enabled_in_scope": len(sources),
+        "offset": offset, "limit": limit,
+        "next_offset": (
+            min(offset + limit, len(sources))
+            if offset + limit < len(sources) else None
+        ),
         "checked": 0,
         "sources": {},
     }
-    for source in sources[:limit]:
+    for source in sources[offset:offset + limit]:
         urls = source.opt("urls") or (
             [source.opt("url")] if source.opt("url") else []
         )
@@ -132,6 +139,7 @@ def main() -> None:
     parser.add_argument("--config", default="config/life_sciences.toml")
     parser.add_argument("--region", default="all", choices=sorted(REGIONS))
     parser.add_argument("--limit", type=int, default=MAX_PROBE_SOURCES)
+    parser.add_argument("--offset", type=int, default=0)
     parser.add_argument(
         "--output", type=Path, default=Path("build/life-sciences-sources.json"),
     )
@@ -142,6 +150,7 @@ def main() -> None:
     ) as client:
         report = check_sources(
             client, args.config, region=args.region, limit=args.limit,
+            offset=args.offset,
         )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(

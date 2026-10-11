@@ -80,8 +80,10 @@ public listing feed and does not require Iran/remote career-market selection.
 An optional manual GitHub Actions workflow
 (.github/workflows/verify-life-sciences-sources.yml) checks enabled source
 landing pages. Choose core or one of nine regional/topic groups and a 4/8/16
-request budget. The all setting checks up to 16 per run: use regional
-selections to inspect the remaining 37 enabled feeds.
+request budget. To inspect all 37 enabled feeds, dispatch the manual
+workflow three times with region=all, limit=16, and offsets **0, 16, 32**.
+Reports expose checked count and next_offset so no provider is skipped.
+Disabled candidate homepages are never fetched by this probe.
 
 The standalone probe (tools/probe_life_sciences_sources.py) uses the
 robots-aware PoliteClient, fetches at most one public landing page per
