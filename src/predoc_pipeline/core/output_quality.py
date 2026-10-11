@@ -64,6 +64,20 @@ def application_url_issue(url: object) -> str | None:
     return None
 
 
+# One evidence-reviewed, out-of-scope historical vacancy. The original journal
+# and delivery receipts are retained; do not invent a vacancy closure. This
+# University of Chicago general-ATS requisition describes Freedman Lab
+# neuroscience, not economics. Identity is stable across dashboard rebuilds.
+_REVIEWED_WRONG_FIELD_URL_HASHES = frozenset({
+    "b35dfeb8c8a0c10d4d2c9f95a273b4e8a614087f943840bdc8dcbb20444cdc5f",
+})
+
+
+def excluded_by_audit(url_hash: object) -> bool:
+    """Apply explicit, source-evidenced field exclusions by durable URL key."""
+    return isinstance(url_hash, str) and url_hash in _REVIEWED_WRONG_FIELD_URL_HASHES
+
+
 def authentication_page_text(text: object) -> bool:
     """Recognize login boilerplate only when multiple independent cues occur."""
     if not isinstance(text, str):

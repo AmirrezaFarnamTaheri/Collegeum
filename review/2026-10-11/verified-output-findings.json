@@ -13,8 +13,9 @@
       "expected": "research (permanent PhD-qualified staff)",
       "evidence": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617/",
       "basis": "Permanent appointment as Senior Economist or Senior Financial Sector Specialist, not doctoral enrollment",
-      "disposition": "generic_classifier_fixed",
-      "needs_live_refresh": true
+      "disposition": "corrected_in_durable_journal_and_publication",
+      "needs_live_refresh": true,
+      "corrected_at": "2026-10-11"
     },
     {
       "id": 77,
@@ -24,8 +25,9 @@
       "expected": "CAD 114952.50-156778.00 per year (2026 scales)",
       "evidence": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617/",
       "basis": "Employer explicitly publishes a CAD annual base-salary range",
-      "disposition": "extract_from_source_pending",
-      "needs_live_refresh": true
+      "disposition": "corrected_in_durable_journal_and_publication",
+      "needs_live_refresh": true,
+      "corrected_at": "2026-10-11"
     },
     {
       "id": 173,
@@ -35,8 +37,9 @@
       "expected": "University of Bern, Institute for Financial Management",
       "evidence": "https://jobs.unibe.ch/offene-stellen/doktorand-in-und-assistent-in/e819ecc1-afc0-4b98-9d48-fec4dbaa8090",
       "basis": "University's own vacancy names institute, finance PhD work and Prof Philip Valta; LinkedIn organization label is unrelated",
-      "disposition": "source_identity_recheck_pending",
-      "needs_live_refresh": true
+      "disposition": "corrected_in_durable_journal_and_publication",
+      "needs_live_refresh": true,
+      "corrected_at": "2026-10-11"
     },
     {
       "id": 46,
@@ -46,8 +49,9 @@
       "expected": "Behavior Change for Good Initiative, University of Pennsylvania (Wharton)",
       "evidence": "https://bcfg.wharton.upenn.edu/opportunities/",
       "basis": "BCFG directly advertises the research and communications coordinator role, supervised by Katherine Milkman and Angela Duckworth",
-      "disposition": "source_identity_recheck_pending",
-      "needs_live_refresh": true
+      "disposition": "corrected_in_durable_journal_and_publication",
+      "needs_live_refresh": true,
+      "corrected_at": "2026-10-11"
     },
     {
       "id": 139,
@@ -57,8 +61,9 @@
       "expected": "masters (completed master's degree to enroll in PhD)",
       "evidence": "https://jobs.unisg.ch/offene-stellen/research-and-teaching-associate-in-strategic-management-phd-student-m-f-d/af629a21-df7d-4783-9ddd-54b48564e108",
       "basis": "Official vacancy eligibility expressly requires completed Master's degree; supervisor biography includes own PhD",
-      "disposition": "degree_evidence_recheck_pending",
-      "needs_live_refresh": true
+      "disposition": "corrected_in_durable_journal_and_publication",
+      "needs_live_refresh": true,
+      "corrected_at": "2026-10-11"
     },
     {
       "id": 133,
@@ -167,9 +172,10 @@
       "expected": "recheck neuroscience lab description and role eligibility; do not assume economics",
       "evidence": "https://uchicago.wd5.myworkdayjobs.com/External/job/Chicago-IL/Research-Professional_JR35174-1",
       "basis": "Stored full source description identifies University of Chicago BSD NRB Freedman Lab nervous-system research, not the inferred economics areas",
-      "disposition": "university_scope_guard_fixed; existing_record_recheck_pending",
+      "disposition": "audited_publication_exclusion_preserves_state",
       "needs_live_refresh": true,
-      "certainty": "high-confidence local evidence, reverify exact live job ID"
+      "certainty": "high-confidence local evidence, reverify exact live job ID",
+      "corrected_at": "2026-10-11"
     },
     {
       "id": null,

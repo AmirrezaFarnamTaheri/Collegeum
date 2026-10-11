@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
-from .core.output_quality import application_url_issue, authentication_page_text
+from .core.output_quality import application_url_issue, authentication_page_text, excluded_by_audit
 from .core.timeparse import format_ts, parse_datetime, utcnow
 from .models import parse_salary
 
@@ -241,6 +241,7 @@ def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
         row
         for row in db.active_listings()
         if row["url_hash"] not in hidden
+        and not excluded_by_audit(row["url_hash"])
         and application_url_issue(_public_application_url(row["apply_url"])) is None
         and not authentication_page_text(row["summary"])
         and (router is None or router.channel_for_row(row) == "web")

@@ -7,7 +7,11 @@ from datetime import UTC, datetime, timedelta
 from html import escape
 from typing import Any
 
-from ..core.output_quality import application_url_issue, authentication_page_text
+from ..core.output_quality import (
+    application_url_issue,
+    authentication_page_text,
+    excluded_by_audit,
+)
 from ..core.timeparse import parse_datetime, utcnow
 from ..routing import Router
 
@@ -112,7 +116,8 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
         if row["status"] != "published" or row["closed_at"] or row["expired_at"]:
             continue
         # Do not privately send a record quarantined from public publication.
-        if (application_url_issue(row["apply_url"]) is not None
+        if (excluded_by_audit(row["url_hash"])
+                or application_url_issue(row["apply_url"]) is not None
                 or authentication_page_text(row["summary"])):
             continue
         deadline = parse_datetime(row["deadline"])
