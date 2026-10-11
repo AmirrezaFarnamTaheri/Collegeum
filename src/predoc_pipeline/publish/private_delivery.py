@@ -147,6 +147,7 @@ def plan_batch(
                         "digest_day": today,
                     })
                     member["digest_day"] = today
+                    member["digest_keys"] = keys
                     store.mark_dirty()
             else:
                 sent = 0

@@ -274,3 +274,13 @@ Operational documentation such as `TELEGRAM_OPERATIONS.md`,
 `X_THREAD_RECOVERY.md` and provider notes is not uploaded to the website.
 These documents remain visible in the public GitHub source repository and
 must never contain tokens or confidential subscriber information.
+
+
+### Recovering a partly confirmed digest
+
+A daily digest records the exact keys reserved for its single Telegram message.
+If an API response was ambiguous, the operator must independently verify that
+the message was not delivered before marking every key absent. The original
+digest date is released for same-day replanning **only when every reserved key
+has been explicitly canceled or verified absent**. A single confirmed sent or
+unresolved key keeps the digest reserved to prevent duplicate notifications.

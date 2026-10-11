@@ -178,6 +178,12 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
             last_digest and len(last_digest) != 10
         ):
             raise _corrupt(path, f"subscriber {chat_id}: invalid digest day")
+        keys = member.get("digest_keys", [])
+        if (not isinstance(keys, list) or len(keys) > 4
+                or not all(isinstance(k, str) and 1 <= len(k) <= 256 for k in keys)
+                or len(keys) != len(set(keys))):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid digest key group")
+        member.setdefault("digest_keys", [])
         member.setdefault("delivery_mode", "instant")
         member.setdefault("daily_limit", 6)
         member.setdefault("quiet_hours", False)
@@ -260,6 +266,7 @@ class FeedbackStore:
             "paused": False, "language": "en",
             "delivery_mode": "instant", "daily_limit": 6,
             "quiet_hours": False, "timezone": "UTC", "digest_day": "",
+            "digest_keys": [],
         })
 
     def toggle_subscription(self, chat_id: int, kind: str, option: str) -> bool:
@@ -416,11 +423,23 @@ class FeedbackStore:
         self._dirty = True
 
     def cancel_delivery(self, chat_id: int, key: str) -> None:
-        """Only call when an explicit API response proves no message was sent."""
+        """Cancel a proved-absent send; unlock a digest only after all keys clear.
+
+        The digest marker is persisted before send for crash safety. Simply
+        removing the final confirmed-absent receipt without clearing the marker
+        would suppress all alerts until the next day. Never clear the marker
+        while any key in the group might have been delivered.
+        """
         member = self.subscriber(chat_id)
         if member is not None and key in member["deliveries"]:
             del member["deliveries"][key]
             self._dirty = True
+            digest_keys = member.get("digest_keys", [])
+            if digest_keys and not any(
+                item in member["deliveries"] for item in digest_keys
+            ):
+                member["digest_day"] = ""
+                member["digest_keys"] = []
 
     def resolve_delivery(
         self, chat_id: int, key: str, *,

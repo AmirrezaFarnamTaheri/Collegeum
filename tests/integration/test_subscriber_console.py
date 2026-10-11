@@ -1457,3 +1457,69 @@ def test_delivery_settings_and_pause_do_not_create_empty_members(tmp_path):
     with pytest.raises(ValueError, match="Choose a topic"):
         store.set_delivery_preference(202, "daily_limit", 3)
     assert store.subscribers == {}
+
+
+def test_digest_reconciliation_retries_only_after_all_jobs_proven_absent(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    store.set_delivery_preference(101, "delivery_mode", "digest")
+    selected_at = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_analyst"] = selected_at
+    store.subscriber(101)["scopes"]["remote"] = selected_at
+    store.save()
+    jobs = [{
+        "key": f"career:recovery{i}", "category": "data_analyst", "scope": "remote",
+        "title": "Data Analyst", "url": f"https://jobicy.com/jobs/recovery{i}",
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    } for i in range(3)]
+    save_career(cfg.career_state_path, [], jobs)
+    today_at_noon = datetime.now(UTC).replace(hour=12, minute=0, second=0)
+    batch = tmp_path / "digest.json"
+    assert plan_batch(cfg, path=batch, now=today_at_noon) == 1
+    keys = json.loads(batch.read_text("utf-8"))[0]["keys"]
+    assert len(keys) == 3
+    store = FeedbackStore.from_settings(cfg)
+    for key in keys:
+        store.finish_delivery(101, key, uncertain=True)
+    store.save()
+    for key in keys[:-1]:
+        store.resolve_delivery(101, key, confirmed_absent=True)
+    store.save()
+    assert store.subscriber(101)["digest_day"] == today_at_noon.date().isoformat()
+    assert plan_batch(cfg, path=batch, now=today_at_noon) == 0
+    store = FeedbackStore.from_settings(cfg)
+    store.resolve_delivery(101, keys[-1], confirmed_absent=True)
+    assert store.subscriber(101)["digest_day"] == ""
+    assert store.subscriber(101)["digest_keys"] == []
+    store.save()
+    assert plan_batch(cfg, path=batch, now=today_at_noon) == 1
+
+
+def test_verified_sent_digest_member_still_blocks_second_same_day_batch(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    store.set_delivery_preference(101, "delivery_mode", "digest")
+    at = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_analyst"] = at
+    store.subscriber(101)["scopes"]["remote"] = at
+    store.save()
+    save_career(cfg.career_state_path, [], [{
+        "key": f"career:one{i}", "category": "data_analyst", "scope": "remote",
+        "title": "Data Analyst", "url": f"https://jobicy.com/jobs/one{i}",
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    } for i in range(3)])
+    now = datetime.now(UTC).replace(hour=12, minute=0, second=0)
+    batch = tmp_path / "digest.json"
+    assert plan_batch(cfg, path=batch, now=now) == 1
+    keys = json.loads(batch.read_text("utf-8"))[0]["keys"]
+    store = FeedbackStore.from_settings(cfg)
+    store.finish_delivery(101, keys[0], message_id=12)
+    for key in keys[1:]:
+        store.finish_delivery(101, key, uncertain=True)
+        store.resolve_delivery(101, key, confirmed_absent=True)
+    store.save()
+    assert plan_batch(cfg, path=batch, now=now) == 0
