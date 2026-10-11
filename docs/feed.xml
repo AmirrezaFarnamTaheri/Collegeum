@@ -3,11 +3,11 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
 <title>Collegeum — Research Positions</title>
-<link>https://amirrezafarnamtaheri.github.io/predoc-not-org</link>
+<link>https://amirrezafarnamtaheri.github.io/Collegeum/</link>
 <description>US research positions, PhD and postdoc posts, and openings at central banks, international organizations and firms.</description>
 <language>en</language>
-<lastBuildDate>Sun, 11 Oct 2026 12:41:36 +0000</lastBuildDate>
-<atom:link href="https://amirrezafarnamtaheri.github.io/predoc-not-org/feed.xml" rel="self" type="application/rss+xml" />
+<lastBuildDate>Sun, 11 Oct 2026 21:55:30 +0000</lastBuildDate>
+<atom:link href="https://amirrezafarnamtaheri.github.io/Collegeum/feed.xml" rel="self" type="application/rss+xml" />
 <item>
 <title>Public Health Research Analyst — University of Chicago</title>
 <link>https://uchicago.wd5.myworkdayjobs.com/External/job/Illinois-Chicago/Public-Health-Research-Analyst_JR33866</link>
@@ -204,8 +204,8 @@
 <link>https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing</link>
 <guid isPermaLink="false">https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing</guid>
 <pubDate>Sun, 11 Oct 2026 10:10:23 +0000</pubDate>
-<description>NEW YORK UNIVERSITY ABU DHABI — Abu Dhabi United Arab Emirates. Deadline: 2027-01-15T00:00:00Z. This is a fixed-term postdoctoral associate position at NYU Abu Dhabi focusing on educational inequalities and social stratification in the Global South using large-scale assessment data. Applicants must hold a PhD within five years of graduation and demonstrate expertise in data analysis with skills in R, Stata, Python, and GIS.</description>
-<category>Econometrics</category>
+<description>NEW YORK UNIVERSITY ABU DHABI — Abu Dhabi United Arab Emirates. Deadline: 2027-01-15T23:59:59Z. The Post-doctoral Associate will conduct independent and collaborative research on educational inequalities and social stratification in the Global South, focusing on learning and school segregation. The position suits candidates with a recent Ph.D. in sociology, demography, international development, public policy, economics or a related field and expertise in large-scale assessment data and quantitative analysis.</description>
+<category>Applied Microeconomics</category>
 <category>Public Policy</category>
 <category>Quantitative Social Sciences</category>
 </item>
@@ -270,16 +270,7 @@
 <description>Heriot-Watt University - Edinburgh Business School — Edinburgh United Kingdom. Deadline: 2026-10-18T00:00:00Z. A Postdoctoral Research Associate position in Energy Transition and Finance at Heriot-Watt University's Business School, focusing on the SOLIS project for long-duration heat storage. The role seeks researchers with a PhD in sustainable finance, energy economics, or related fields to conduct research on energy transition and sustainable finance.</description>
 <category>Finance</category>
 </item>
-<item>
-<title>Postdoctoral/Research Fellow, Tax and Transfer Policy Institute — Australian National University (ANU)</title>
-<link>https://www.timeshighereducation.com/unijobs/listing/415881/postdoctoral-research-fellow-tax-and-transfer-policy-institute-?LinkSource=PremiumListing</link>
-<guid isPermaLink="false">https://www.timeshighereducation.com/unijobs/listing/415881/postdoctoral-research-fellow-tax-and-transfer-policy-institute-?LinkSource=PremiumListing</guid>
-<pubDate>Sun, 11 Oct 2026 10:09:56 +0000</pubDate>
-<description>Australian National University (ANU) — Canberra Australia. Deadline: 2026-10-11T13:55:00Z. The role is a postdoctoral research fellowship at the Tax and Transfer Policy Institute, Australian National University, conducting research on tax and transfer policy. It is intended for candidates with a doctoral degree or equivalent research experience in economics, econometrics or public policy who can publish in peer‑reviewed journals and work with government stakeholders.</description>
-<category>Public Policy</category>
-<category>Econometrics</category>
-<category>Applied Microeconomics</category>
-</item>
+
 <item>
 <title>Post-doc position at the Center for Migration and Integration at the Stockholm School of Economics (SSE) — Stockholm School of Economics</title>
 <link>http://jobs.hhs.se/en/job/stockholm/post_doc_position_at_the_center_for_migration_and_integration_at_the_stockholm_school_of_economics_sse__-973026.html</link>
@@ -554,9 +545,9 @@
 <link>https://bit.ly/4qcK8eb</link>
 <guid isPermaLink="false">https://bit.ly/4qcK8eb</guid>
 <pubDate>Sun, 11 Oct 2026 09:52:51 +0000</pubDate>
-<description>Global Poverty Research Lab, Northwestern University —  United States. Deadline: rolling. This is a full-time predoctoral research role at the Global Poverty Research Lab, Northwestern University, working with supervisor Dean Karlan. It is suitable for candidates pursuing predoctoral research experience in statistics, econometrics, data science, and meta-analysis.</description>
+<description>Global Poverty Research Lab, Northwestern University —  United States. Deadline: rolling. This is a full-time predoctoral research position at the Global Poverty Research Lab at Northwestern University, supervised by Dean Karlan. The role involves evidence aggregation, data science, and meta-analysis tasks, and is suitable for candidates with interests in statistics, econometrics, AI, and computational methods.</description>
 <category>Econometrics</category>
-<category>Quantitative Social Sciences</category>
+<category>Other</category>
 </item>
 <item>
 <title>Pre-Doctoral Technical Associate Position — MIT Sloan School of Management</title>
