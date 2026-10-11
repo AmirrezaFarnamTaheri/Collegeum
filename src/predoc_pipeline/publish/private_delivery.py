@@ -50,6 +50,7 @@ def _save_batch(path: Path, batch: list[dict[str, str]]) -> None:
 def plan_batch(settings: Settings, *, path: Path = DEFAULT_BATCH) -> int:
     """Stage <=24 new intents and a private batch file; send nothing yet."""
     store = _store(settings)
+    store.prune_deliveries()
     batch: list[dict[str, str]] = []
     if store.subscribers and not store.data["ops"]["paused"]:
         init(settings.db_path)

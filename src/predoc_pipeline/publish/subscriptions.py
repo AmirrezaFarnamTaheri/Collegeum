@@ -5,14 +5,10 @@ from __future__ import annotations
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from html import escape
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from ..core.timeparse import parse_datetime, utcnow
 from ..routing import Router
-from .telegram import TelegramClient, TelegramError
-
-if TYPE_CHECKING:
-    from .feedback import FeedbackStore
 
 TOPIC_LABELS = {
     "predoc": "🎓 Predoc / research assistant",
@@ -116,8 +112,16 @@ def eligible(member: dict[str, Any], category: str, scope: str,
     return posted_at >= choice_at
 
 
+def selected(member: dict[str, Any], category: str, scope: str) -> bool:
+    """Preview still enforces selected topics/markets, just not the opt-in date."""
+    return category in member.get("topics", {}) and (
+        not scope or scope in member.get("scopes", {})
+    )
+
+
 def matching(member: dict[str, Any], academic: list[sqlite3.Row],
-             careers: list[dict[str, str]]) -> list[dict[str, str]]:
+             careers: list[dict[str, str]], *, preview: bool = False,
+             ) -> list[dict[str, str]]:
     """Select recent published academic positions and explicit-market career jobs."""
     cutoff = datetime.now(UTC) - timedelta(days=14)
     jobs: list[dict[str, str]] = []
@@ -130,7 +134,9 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
         when = str(row["published_at"] or "")
         parsed = _instant(when)
         kind = Router.position_kind(row["title"], row["summary"] or "")
-        if parsed is None or parsed < cutoff or not eligible(member, kind, "", when):
+        if parsed is None or parsed < cutoff or not selected(member, kind, ""):
+            continue
+        if not preview and not eligible(member, kind, "", when):
             continue
         jobs.append({
             "key": "academic:" + row["url_hash"], "category": kind,
@@ -142,10 +148,9 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
     for job in careers:
         when = job["first_seen_at"]
         parsed = _instant(when)
-        if parsed and parsed >= cutoff and eligible(
-            member, job["category"], job["scope"], when,
-        ):
-            jobs.append(job)
+        if parsed and parsed >= cutoff and selected(member, job["category"], job["scope"]):
+            if preview or eligible(member, job["category"], job["scope"], when):
+                jobs.append(job)
     jobs.sort(key=lambda item: (item["first_seen_at"], item["key"]), reverse=True)
     return jobs
 
@@ -163,71 +168,3 @@ def render_alert(job: dict[str, str]) -> str:
     return "\n".join(parts)
 
 
-def dispatch(store: FeedbackStore, telegram: TelegramClient,
-             academic: list[sqlite3.Row], careers: list[dict[str, str]],
-             *, per_user: int = MAX_PER_USER, total: int = MAX_TOTAL,
-             sleep: Any = None) -> dict[str, int]:
-    """Enqueue before network IO. An ambiguous request is never replayed."""
-    counters = {"sent": 0, "uncertain": 0, "failed": 0}
-    if not store.key or not store.subscribers:
-        return counters
-    if store.data.get("ops", {}).get("paused"):
-        return counters
-    options: dict[str, Any] = {"sleep": sleep} if sleep is not None else {}
-    ids = sorted(store.subscribers)
-    cursor = store.data.get("delivery_cursor", "")
-    if cursor in ids:
-        pivot = ids.index(cursor) + 1
-        ids = ids[pivot:] + ids[:pivot]
-    for identifier in ids:
-        if sum(counters.values()) >= total:
-            break
-        chat_id = int(identifier)
-        member = store.subscriber(chat_id)
-        if member is None:
-            continue
-        attempted = 0
-        for job in matching(member, academic, careers):
-            if attempted >= per_user or sum(counters.values()) >= total:
-                break
-            key = job["key"]
-            if not store.reserve_delivery(chat_id, key):
-                continue
-            # Persist the send intent before the remote request. If this fails
-            # no network request occurs, and the update cursor is unchanged.
-            store.save()
-            attempted += 1
-            try:
-                message_id = telegram.send_message(
-                    chat_id=identifier, html=render_alert(job), **options,
-                )
-            except TelegramError as exc:
-                if exc.permanent and exc.status in (400, 403):
-                    # Telegram explicitly refused creation of this message.
-                    store.cancel_delivery(chat_id, key)
-                    if exc.status == 403:
-                        store.remove_subscriber(chat_id)
-                    store.save()
-                    counters["failed"] += 1
-                    break
-                if exc.status == 429:
-                    store.cancel_delivery(chat_id, key)
-                    store.save()
-                    counters["failed"] += 1
-                    break
-                store.finish_delivery(chat_id, key, uncertain=True)
-                store.save()
-                counters["uncertain"] += 1
-                break
-            except Exception:
-                store.finish_delivery(chat_id, key, uncertain=True)
-                store.save()
-                counters["uncertain"] += 1
-                raise
-            store.finish_delivery(chat_id, key, message_id=message_id)
-            store.save()
-            counters["sent"] += 1
-        store.data["delivery_cursor"] = identifier
-        store._dirty = True
-        store.save()
-    return counters

@@ -50,7 +50,10 @@ def private_message(
     user_id = private_user_id(msg)
     if user_id is None:
         return False
-    text = str(msg.get("text") or "").split(maxsplit=1)[0].lower().split("@")[0]
+    words = str(msg.get("text") or "").split(maxsplit=1)
+    if not words:  # stickers, photos and other non-text updates are not commands
+        return False
+    text = words[0].lower().split("@")[0]
     if text not in {"/start", "/settings", "/subscribe", "/stop", "/latest", "/admin"}:
         return False
     summary["received"] += 1
@@ -75,7 +78,10 @@ def private_message(
         if member is None or not member["topics"]:
             bot.send(str(user_id), "Choose interests with /settings first.")
         else:
-            jobs = matching(member, academic, load_career(settings.career_state_path))
+            jobs = matching(
+                member, academic, load_career(settings.career_state_path),
+                preview=True,
+            )
             if not jobs:
                 bot.send(str(user_id), "No recent matching vacancies yet. "
                          "Your alerts remain active for future posts.")

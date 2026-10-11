@@ -54,3 +54,7 @@ htmlcov/
 data/feedback.json
 data/feedback.json.tmp
 data/*.corrupt-*
+# Ephemeral private notifications contain subscriber IDs and message text.
+# They are never part of the committed encrypted state or release artifact.
+data/.private_delivery_batch.json
+data/.private_delivery_batch.json.tmp

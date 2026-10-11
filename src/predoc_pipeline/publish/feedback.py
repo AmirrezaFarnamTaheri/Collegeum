@@ -22,7 +22,7 @@ import builtins
 import json
 import os
 import shutil
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -238,6 +238,33 @@ class FeedbackStore:
             enabled = True
         self._dirty = True
         return enabled
+
+    def prune_deliveries(self, *, days: int = 45) -> int:
+        """Discard old confirmed receipts, never unresolved/uncertain sends.
+
+        Incoming academic matches are bounded to fourteen days; career
+        records are bounded to twenty-one. Keeping 45 days of successful
+        receipts prevents duplicate sends without unbounded growth.
+        """
+        threshold = datetime.now(UTC) - timedelta(days=days)
+        removed = 0
+        for member in self.subscribers.values():
+            receipts = member["deliveries"]
+            for key, record in list(receipts.items()):
+                if record["state"] != "sent":
+                    continue
+                try:
+                    when = datetime.fromisoformat(record["at"].replace("Z", "+00:00"))
+                    if when.tzinfo is None:
+                        when = when.replace(tzinfo=UTC)
+                except (ValueError, TypeError):
+                    continue  # never delete an invalid/unknown receipt automatically
+                if when < threshold:
+                    del receipts[key]
+                    removed += 1
+        if removed:
+            self._dirty = True
+        return removed
 
     def remove_subscriber(self, chat_id: int) -> bool:
         if self.subscribers.pop(str(chat_id), None) is None:
