@@ -54,9 +54,9 @@ from .core.urls import url_hash
 from .extract import ExtractionError, RateLimited, build_extractor
 from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor, _deadline_iso
 from .ingest.career import idle_career_health, poll_career
-from .ingest.life_sciences import poll_life_sciences
 from .ingest.collectors import gather
 from .ingest.http import PoliteClient
+from .ingest.life_sciences import poll_life_sciences
 from .ingest.rotation import load_rotation, save_rotation, scheduled_sources
 from .ingest.sources import load_sources
 from .logging_setup import get_logger

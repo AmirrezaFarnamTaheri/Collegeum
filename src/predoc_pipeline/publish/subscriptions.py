@@ -192,7 +192,7 @@ def render_alert(job: dict[str, str], lang: str = "en") -> str:
         ))
     if valid:
         parts.append(
-            f'<a href="{escape(url, quote=True)}">
+            f'<a href="{escape(url, quote=True)}">'
             + ("مشاهده فرصت" if fa else "View opportunity") + "</a>"
         )
     return "\n".join(parts)
