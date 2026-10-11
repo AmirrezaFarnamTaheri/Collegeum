@@ -283,3 +283,46 @@ def test_failed_source_discovery_is_recoverable_from_dlq_without_secret_leak():
     assert all(entry["stage"] == "discovery" for entry in db.rows)
     assert all("secret" not in entry["error"] for entry in db.rows)
     assert all(entry["source_url"] == "" and entry["payload"] == "" for entry in db.rows)
+
+
+def test_fixed_eui_max_planck_and_fed_sources_use_live_official_entrypoints():
+    from pathlib import Path
+
+    from predoc_pipeline.boards.config import load_board_sources
+    from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+    repo = Path(__file__).resolve().parents[2]
+    economics = {s.name: s for s in load_board_sources(repo / "config/sources.toml")}
+    biology = {s.name: s for s in load_board_sources(repo / "config/life_sciences.toml")}
+    for src in (economics["max_planck_econ"], biology["life_max_planck"]):
+        assert src.type == "link_scan"
+        assert src.opt("url") == "https://www.mpg.de/jobboard"
+        assert src.country is None
+    assert "careers-research-assistants.htm" in economics["fed_board"].opt("url")
+    assert "Open-competitions-for-academic-posts" in economics["eui_florence"].opt("url")
+    assert economics["academics_com"].opt("max_pages") == 1
+    assert economics["academics_de"].opt("max_pages") == 1
+
+    class StubHttp:
+        def set_host_interval(self, *_args):
+            pass
+
+    scraper = LinkScanScraper(economics["max_planck_econ"], StubHttp())
+    jobs = scraper.parse_postings([(
+        "https://www.mpg.de/jobboard",
+        '<li class="job-card"><a href="/26905386/postdoc-position-ultrafast-x-ray">'
+        'Postdoc position (m/f/d) at the Fritz Haber Institute</a></li>',
+    )])
+    assert len(jobs) == 1
+    assert jobs[0].url.startswith("https://www.mpg.de/26905386/")
+
+    eui = LinkScanScraper(economics["eui_florence"], StubHttp())
+    html = (
+        '<article><h3>Research Assistant in Economics</h3>'
+        '<a href="/Documents/ServicesAdmin/AcademicService/JobOpportunities/'
+        '2026/PRE-2-2026.pdf">Vacancy notice</a>'
+        '<p>Deadline: 21 October 2026</p></article>'
+    )
+    vacancies = eui.parse_postings([(eui.urls()[0], html)])
+    assert len(vacancies) == 1
+    assert vacancies[0].title == "Research Assistant in Economics"

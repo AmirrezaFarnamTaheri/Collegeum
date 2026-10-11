@@ -38,6 +38,7 @@ GENERIC_ANCHORS = {
     "job details", "show more", "next", "previous", "login", "sign in", "share",
     "link for job posting", "link to job posting", "link for job", "link to job",
     "apply here", "apply online", "view posting", "job posting", "full posting",
+    "vacancy notice", "further particulars",
 }
 _CARD_CLASS = re.compile(r"card|job|result|vacanc|listing|item|teaser|views-row|posting|position|opening",
                          re.IGNORECASE)
