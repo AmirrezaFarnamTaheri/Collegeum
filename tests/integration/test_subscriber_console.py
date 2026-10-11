@@ -779,3 +779,57 @@ def test_paused_user_is_excluded_from_private_delivery_plan(tmp_path):
     }])
     assert plan_batch(cfg, path=tmp_path / "batch.json") == 0
     assert FeedbackStore.from_settings(cfg).subscriber(101)["deliveries"] == {}
+
+
+
+def test_source_status_panel_shows_only_allowlisted_provider_counts(tmp_path):
+    from predoc_pipeline.publish.ui import sources_panel
+
+    missing, keyboard = sources_panel(tmp_path / "missing.json")
+    assert "No source-check report" in missing
+    assert keyboard["inline_keyboard"][0][0]["callback_data"] == "sub:p:home"
+
+    health = tmp_path / "health.json"
+    health.write_text(json.dumps({
+        "checked_at": "2026-10-11T12:00:00+00:00",
+        "sources": {
+            "jobicy": {"requested": True, "fetched": 3, "accepted": 4},
+            "jobinja": {"requested": True, "fetched": 1, "accepted": 1},
+            "irantalent": {"requested": True, "fetched": 1, "accepted": 2},
+            "unexpected_sensitive_key": {
+                "requested": True, "fetched": 1, "accepted": 99,
+            },
+        },
+        "errors": ["untrusted error contains a fake password"],
+    }), encoding="utf-8")
+    text, markup = sources_panel(health)
+    assert "Jobicy" in text and "IranTalent" in text and "Jobinja" in text
+    assert "unexpected_sensitive_key" not in text
+    assert "fake password" not in text
+    assert "4 matches" in text
+    assert markup["inline_keyboard"][0][0]["callback_data"] == "sub:p:home"
+    fa, _ = sources_panel(health, lang="fa")
+    assert "وضعیت منابع" in fa
+
+
+def test_sources_command_and_inline_navigation_share_same_panel(tmp_path):
+    cfg = settings(tmp_path)
+    health = tmp_path / "health.json"
+    health.write_text(json.dumps({
+        "checked_at": datetime.now(UTC).isoformat(),
+        "sources": {
+            "jobicy": {"requested": False, "fetched": 0, "accepted": 0},
+            "jobinja": {"requested": True, "fetched": 1, "accepted": 2},
+            "irantalent": {"requested": True, "fetched": 1, "accepted": 4},
+        },
+        "errors": [],
+    }), encoding="utf-8")
+    cfg.career_health_path = str(health)
+
+    api = API([message(1, 101, "/sources"), tap(2, 101, "sub:p:sources")])
+    run(cfg, api)
+    assert len(api.sent(101)) == 1
+    assert "IranTalent" in api.sent(101)[0]["text"]
+    edits = [p for m, p in api.calls if m == "editMessageText"]
+    assert len(edits) == 1
+    assert "IranTalent" in edits[0]["text"]
