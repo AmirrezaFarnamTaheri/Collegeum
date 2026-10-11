@@ -154,7 +154,7 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
                 raise _corrupt(path, f"subscriber {chat_id}: invalid {field}")
         for delivery in member["deliveries"].values():
             if not isinstance(delivery, dict) or delivery.get("state") not in (
-                "sending", "sent", "uncertain",
+                "sending", "sent", "uncertain", "rejected",
             ) or not isinstance(delivery.get("at"), str):
                 raise _corrupt(path, f"subscriber {chat_id}: invalid delivery journal")
     ops = data.get("ops", {"paused": False, "audit": []})
@@ -292,6 +292,19 @@ class FeedbackStore:
             "state": "uncertain" if uncertain else "sent",
             "at": _now(),
             **({"message_id": message_id} if message_id is not None else {}),
+        }
+        self._dirty = True
+
+    def reject_delivery(self, chat_id: int, key: str, *, status: int) -> None:
+        """Remember permanent API validation failures until reviewed.
+
+        Replaying a known 400 every half hour cannot repair malformed HTML.
+        """
+        member = self.subscriber(chat_id)
+        if member is None or key not in member["deliveries"]:
+            raise ValueError("delivery intent not found")
+        member["deliveries"][key] = {
+            "state": "rejected", "at": _now(), "status": status,
         }
         self._dirty = True
 

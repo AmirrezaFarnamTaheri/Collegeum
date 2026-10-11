@@ -57,11 +57,16 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
         1 for item in subs.values() for rec in item["deliveries"].values()
         if rec["state"] in ("sending", "uncertain")
     )
+    total_rejected = sum(
+        1 for item in subs.values() for rec in item["deliveries"].values()
+        if rec["state"] == "rejected"
+    )
     if page == "status":
         return (
             f"{header}\n\n"
             f"👥 Active subscriptions: {active_subscribers}\n"
             f"⚠️ Uncertain private sends: {total_uncertain}\n"
+            f"⛔ Rejected private sends: {total_rejected}\n"
             "⏱ Pipeline: every 4 hours · Telegram sync: ~30 minutes\n"
             "⚙️ Publication scheduling and retry are managed in GitHub Actions.\n"
             "Pause affects private alerts only, not public channel or ingestion."
@@ -93,6 +98,7 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
                 f"Pending academic publications: {pending}\n"
                 f"Uncertain channel sends: {unsure}\n"
                 f"Uncertain private sends: {total_uncertain}\n"
+                f"Rejected private sends: {total_rejected}\n"
                 f"Dead-letter events: {dlq}\n"
                 "Uncertain deliveries require verification in Telegram "
                 "before any manual retry."

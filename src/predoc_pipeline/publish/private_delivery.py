@@ -135,9 +135,10 @@ def send_batch(
                 )
             except TelegramError as exc:
                 if exc.permanent and exc.status in (400, 403):
-                    store.cancel_delivery(int(chat_id), row["key"])
                     if exc.status == 403:
                         store.remove_subscriber(int(chat_id))
+                    else:
+                        store.reject_delivery(int(chat_id), row["key"], status=400)
                     counts["failed"] += 1
                 elif exc.status == 429:
                     store.cancel_delivery(int(chat_id), row["key"])
