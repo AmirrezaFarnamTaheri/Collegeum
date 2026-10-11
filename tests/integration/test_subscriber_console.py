@@ -414,3 +414,29 @@ def test_polling_writes_source_health_without_personal_details(tmp_path):
     assert data["sources"]["jobicy"]["requested"] is False
     assert "subscribers" not in data
     assert "chat_id" not in health.read_text("utf-8")
+
+
+def test_permanent_telegram_bad_request_is_quarantined_until_reconciled(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "remote")
+    prior = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_analyst"] = prior
+    store.subscriber(101)["scopes"]["remote"] = prior
+    store.save()
+    save_career(cfg.career_state_path, [], [{
+        "key": "career:bad", "category": "data_analyst", "scope": "remote",
+        "title": "Data Analyst", "url": "https://jobicy.com/jobs/bad",
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    }])
+    batch = tmp_path / "batch.json"
+    assert plan_batch(cfg, path=batch) == 1
+    with httpx.Client(transport=httpx.MockTransport(
+        lambda req: httpx.Response(400, text="can't parse entities")
+    )) as client:
+        result = send_batch(cfg, path=batch, client=client, sleep=lambda _: None)
+    assert result["failed"] == 1
+    assert FeedbackStore.from_settings(cfg).subscriber(101)[
+        "deliveries"]["career:bad"]["state"] == "rejected"
+    assert plan_batch(cfg, path=batch) == 0
