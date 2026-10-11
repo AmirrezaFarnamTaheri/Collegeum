@@ -1,0 +1,138 @@
+# Rotated topic cohorts of official EURAXESS and AcademicTransfer search pages.
+# No new third-party domains; URLs migrated 1:1 from the former 19/15-URL sources.
+# Individual postings must still pass doctoral, research and explicit country checks.
+
+[[board]]
+name = "life_euraxess_gene_regulation"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Agene%20regulation",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Ahistone",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Amethylation",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aregulatory%20genomics",
+]
+link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
+institution_from_context = true
+min_interval = 3.0
+verification = "official_aggregator_search_partition"
+note = "Partition of original EURAXESS discovery keywords: regulation, histones and methylation."
+
+[[board]]
+name = "life_euraxess_neuroepigenomics"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aepigenomics",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Apsychiatric%20genetics",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aneurogenetics",
+]
+link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
+institution_from_context = true
+min_interval = 3.0
+verification = "official_aggregator_search_partition"
+note = "Partition of EURAXESS queries: psychiatric genetics, neurogenetics, epigenomics."
+
+[[board]]
+name = "life_euraxess_transcriptomics"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Asingle%20cell",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Atranscriptomics",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3ARNA%20biology",
+]
+link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
+institution_from_context = true
+min_interval = 3.0
+verification = "official_aggregator_search_partition"
+note = "Partition of EURAXESS queries: RNA, transcriptomics, single cell."
+
+[[board]]
+name = "life_euraxess_cell_models"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aorganoids",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Astem%20cells",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3ACRISPR",
+]
+link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
+institution_from_context = true
+min_interval = 3.0
+verification = "official_aggregator_search_partition"
+note = "Partition of EURAXESS queries: organoids, iPSC stem cells and CRISPR."
+
+[[board]]
+name = "life_euraxess_computational"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Abioinformatics",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Acomputational%20biology",
+]
+link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
+institution_from_context = true
+min_interval = 3.0
+verification = "official_aggregator_search_partition"
+note = "Partition of EURAXESS queries: bioinformatics and computational biology."
+
+[[board]]
+name = "life_academictransfer_epigenomics"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://www.academictransfer.com/en/jobs/?q=chromatin",
+  "https://www.academictransfer.com/en/jobs/?q=epigenomics",
+  "https://www.academictransfer.com/en/jobs/?q=psychiatric%20genetics",
+  "https://www.academictransfer.com/en/jobs/?q=regulatory%20genomics",
+]
+link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
+country = "Netherlands"
+institution_from_context = true
+min_interval = 3.0
+verification = "official_aggregator_search_partition"
+note = "Partition of AcademicTransfer queries: chromatin, epigenomics, regulatory and psychiatric genetics."
+
+[[board]]
+name = "life_academictransfer_cell_models"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://www.academictransfer.com/en/jobs/?q=stem%20cells",
+  "https://www.academictransfer.com/en/jobs/?q=single%20cell",
+  "https://www.academictransfer.com/en/jobs/?q=organoids",
+  "https://www.academictransfer.com/en/jobs/?q=CRISPR",
+]
+link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
+country = "Netherlands"
+institution_from_context = true
+min_interval = 3.0
+verification = "official_aggregator_search_partition"
+note = "Partition of AcademicTransfer queries: CRISPR, stem cells, organoids and single-cell biology."
+
+[[board]]
+name = "life_academictransfer_rna"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://www.academictransfer.com/en/jobs/?q=neurodevelopment",
+  "https://www.academictransfer.com/en/jobs/?q=transcriptomics",
+  "https://www.academictransfer.com/en/jobs/?q=RNA%20biology",
+  "https://www.academictransfer.com/en/jobs/?q=bioinformatics",
+]
+link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
+country = "Netherlands"
+institution_from_context = true
+min_interval = 3.0
+verification = "official_aggregator_search_partition"
+note = "Partition of AcademicTransfer queries: RNA, transcriptomics, bioinformatics and neurodevelopment."
+

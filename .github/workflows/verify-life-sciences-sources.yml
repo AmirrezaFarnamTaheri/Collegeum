@@ -1,0 +1,61 @@
+name: verify-life-sciences-sources
+
+# Read-only, bounded and robots-aware on-demand inspection.
+# Does not load Telegram/private-state credentials.
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "Which enabled Life Sciences source group to inspect"
+        type: choice
+        required: true
+        default: all
+        options: [all, core, nordics, dach, benelux, france_iberia, central_south, aggregator_topics, eastern_balkans, specialist_institutes, doctoral_programmes]
+      limit:
+        description: "Maximum landing pages to check (1-16)"
+        type: choice
+        required: true
+        default: '16'
+        options: ['4', '8', '16']
+      offset:
+        description: "Skip this many enabled sources; use 0, 16 and 32 to cover the whole current catalogue"
+        type: choice
+        required: true
+        default: '0'
+        options: ['0', '16', '32', '48', '64', '80', '96']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          activate-environment: true
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Inspect public vacancy link formats
+        env:
+          REGION: ${{ inputs.region }}
+          LIMIT: ${{ inputs.limit }}
+          OFFSET: ${{ inputs.offset }}
+        run: |
+          PYTHONPATH=src python3 tools/probe_life_sciences_sources.py \
+            --region "$REGION" --limit "$LIMIT" --offset "$OFFSET" \
+            --output build/life-sciences-sources.json
+      - name: Preserve provider observations
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: life-sciences-sources-${{ github.run_id }}
+          path: build/life-sciences-sources.json
+          if-no-files-found: warn
+          retention-days: 14

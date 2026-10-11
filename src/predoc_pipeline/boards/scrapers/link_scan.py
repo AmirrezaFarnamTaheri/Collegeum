@@ -23,6 +23,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup, Tag
 
+from ...core.output_quality import application_url_issue
 from ..models import JobPostSchema
 from ..utils.dates import extract_deadline, find_dates, parse_posted
 from ..utils.geo import detect_location
@@ -37,6 +38,7 @@ GENERIC_ANCHORS = {
     "job details", "show more", "next", "previous", "login", "sign in", "share",
     "link for job posting", "link to job posting", "link for job", "link to job",
     "apply here", "apply online", "view posting", "job posting", "full posting",
+    "vacancy notice", "further particulars",
 }
 _CARD_CLASS = re.compile(r"card|job|result|vacanc|listing|item|teaser|views-row|posting|position|opening",
                          re.IGNORECASE)
@@ -208,7 +210,24 @@ class LinkScanScraper(BaseScraper):
             href = absolutize(base, str(a["href"]))
             if not pattern.search(href) or href in seen or _EXCLUDED_URL_RX.search(href):
                 continue
+            if application_url_issue(href):
+                # A literal %5Bnid%5D is a template, not a unique vacancy.
+                # Surface parser degradation without leaking untrusted URLs.
+                if not self.discovery_parse_errors:
+                    self.discovery_parse_errors.append("Unresolved application URL in listing")
+                continue
             title = clean_ws(a.get_text(" "))
+            if self.opt("prefer_card_heading"):
+                # Some research institutes label the clickable link with an
+                # internal vacancy code while the actual position title is
+                # the nearby H2/H3. Only use a heading within the same card
+                # to avoid borrowing the preceding vacancy's title.
+                card = find_card(a)
+                heading = card.select_one("h2, h3, h4")
+                if heading is not None:
+                    heading_text = clean_ws(heading.get_text(" "))
+                    if min_len <= len(heading_text) <= 300:
+                        title = heading_text
             if title.lower() in GENERIC_ANCHORS or len(title) < min_len:
                 title = clean_ws(str(a.get("title") or a.get("aria-label") or ""))
             if (title.lower() in GENERIC_ANCHORS or len(title) < min_len) and self.opt("heading_titles"):
@@ -277,6 +296,10 @@ class LinkScanScraper(BaseScraper):
         for item in soup.select(sel["item"]):
             link_el = item.select_one(sel.get("link", "a[href]"))
             if not link_el or not link_el.get("href"):
+                continue
+            if application_url_issue(absolutize(base, str(link_el["href"]))):
+                if not self.discovery_parse_errors:
+                    self.discovery_parse_errors.append("Unresolved application URL in listing")
                 continue
             title = pick(item, "title") or clean_ws(link_el.get_text(" "))
             if not title:

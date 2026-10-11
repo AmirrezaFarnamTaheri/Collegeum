@@ -1403,7 +1403,7 @@
       <nav>
         <a href="#board">Board</a>
         <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
-        <a href="https://github.com/amirrezafarnamtaheri/predoc-not-org" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/AmirrezaFarnamTaheri/Collegeum" target="_blank" rel="noopener">GitHub</a>
       </nav>
 
       <button id="theme" aria-label="Toggle theme">◐</button>
@@ -1466,6 +1466,7 @@
             <option value="predoc">Pre-doctoral / RA</option>
             <option value="postdoc">Postdoctoral Fellow</option>
             <option value="phd">PhD Candidate</option>
+            <option value="research">Research Staff</option>
           </select>
           <select class="filter-select" id="filter-sector" aria-label="Filter by sector">
             <option value="">All Sectors</option>
@@ -1584,7 +1585,7 @@
 
       <div class="footer-col-right">
         <nav class="footer-nav" aria-label="Footer navigation">
-          <a href="https://github.com/amirrezafarnamtaheri/predoc-not-org" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/AmirrezaFarnamTaheri/Collegeum" target="_blank" rel="noopener">GitHub</a>
           <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
           <a href="architecture.html">Architecture</a>
           <a href="mailto:taherifarnam@gmail.com">Contact</a>
@@ -1601,7 +1602,7 @@
   (() => {
     'use strict';
 
-    const GITHUB_REPO = 'amirrezafarnamtaheri/predoc-not-org';
+    const GITHUB_REPO = 'AmirrezaFarnamTaheri/Collegeum';
     const GITHUB_REPO_URL = `https://github.com/${GITHUB_REPO}`;
     const GITHUB_STARS_URL = `${GITHUB_REPO_URL}/stargazers`;
     const GITHUB_ISSUES_URL = `${GITHUB_REPO_URL}/issues`;
@@ -1721,7 +1722,9 @@
     function enrichItem(item) {
       if (!item.kind) {
         const t = (item.title || '').toLowerCase();
-        if (/\bpre-?doc/i.test(t) || /\bresearch\s+(?:assistant|analyst|associate|professional|specialist)\b/i.test(t)) {
+        if (/\bph\.?d\.?\s+researcher\b.*\bph\.?d\.?\s+job\s+market\b/i.test(t)) {
+          item.kind = 'research';
+        } else if (/\bpre-?doc/i.test(t) || /\bresearch\s+(?:assistant|analyst|associate|professional|specialist)\b/i.test(t)) {
           item.kind = 'predoc';
         } else if (/\bpost-?\s?doc(toral)?\b/i.test(t)) {
           item.kind = 'postdoc';
@@ -1746,7 +1749,7 @@
     }
 
     function formatDate(iso) {
-      if (!iso) return 'Rolling';
+      if (!iso) return 'Unstated';
       try {
         const d = new Date(iso);
         if (isNaN(d.getTime())) return iso;
@@ -1756,13 +1759,22 @@
 
     function formatSalary(r) {
       if (!r) return '';
-      if (r.salary_min != null) {
-        const sym = r.salary_currency === 'USD' ? '$' : (r.salary_currency === 'GBP' ? '£' : (r.salary_currency === 'EUR' ? '€' : (r.salary_currency ? r.salary_currency + ' ' : '$')));
-        const periodStr = r.salary_period && r.salary_period !== 'year' ? `/${r.salary_period}` : '/yr';
-        if (r.salary_max != null && r.salary_max !== r.salary_min) {
-          return `${sym}${Number(r.salary_min).toLocaleString()}–${sym}${Number(r.salary_max).toLocaleString()} ${periodStr}`;
+      if (r.salary_min != null && Number.isFinite(Number(r.salary_min)) && Number(r.salary_min) > 0) {
+        // Never invent USD or an annual period if the advert does not specify one.
+        if (r.salary_raw && (!r.salary_currency || !r.salary_period)) return r.salary_raw;
+        const sym = r.salary_currency === 'USD' ? '$' : (
+          r.salary_currency === 'GBP' ? '£' : (
+            r.salary_currency === 'EUR' ? '€' :
+              (r.salary_currency ? r.salary_currency + ' ' : '')
+          )
+        );
+        const periodStr = r.salary_period ? '/' + r.salary_period : '';
+        if (r.salary_max != null && Number.isFinite(Number(r.salary_max)) && r.salary_max !== r.salary_min) {
+          return sym + Number(r.salary_min).toLocaleString() + '–' +
+            sym + Number(r.salary_max).toLocaleString() + ' ' + periodStr;
         }
-        return `${sym}${Number(r.salary_min).toLocaleString()} ${periodStr}`;
+        return sym + Number(r.salary_min).toLocaleString() +
+          (periodStr ? ' ' + periodStr : '');
       }
       return r.salary_raw || '';
     }
@@ -1946,7 +1958,7 @@
         else if (r.visa === 'inferred') visaHtml = '<span class="tag-visa inf">Visa: Likely</span>';
         else if (r.visa === 'not_offered') visaHtml = '<span class="tag-visa none">No sponsorship / Restricted</span>';
 
-        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : 'Predoc / RA');
+        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : (r.kind === 'research' ? 'Research Staff' : 'Predoc / RA'));
         const sal = formatSalary(r);
         const salBadge = sal ? `<span class="tag-salary">${esc(sal)}</span>` : '';
 
@@ -2009,7 +2021,7 @@
       $('#grid-wrap').innerHTML = rows.map(r => {
         const b = deadlineBadge(r);
         const place = [r.city, r.country].filter(Boolean).join(', ') || 'Unstated';
-        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : 'Predoc / RA');
+        const kindLabel = r.kind === 'postdoc' ? 'Postdoc' : (r.kind === 'phd' ? 'PhD' : (r.kind === 'research' ? 'Research Staff' : 'Predoc / RA'));
         const sal = formatSalary(r);
         const salBadge = sal ? `<span class="tag-salary">${esc(sal)}</span>` : '';
 
@@ -2036,7 +2048,7 @@
             ` : ''}
             <p class="card-summary">${esc(r.summary || 'See the official posting for full requirements, stipend details, and application materials.')}</p>
             <div class="card-footer">
-              <span style="font-size:12px; color:var(--soft); font-family:var(--mono);">${r.deadline ? 'Closes ' + formatDate(r.deadline) : 'Rolling review'}</span>
+              <span style="font-size:12px; color:var(--soft); font-family:var(--mono);">${r.deadline ? 'Closes ' + formatDate(r.deadline) : (deadlineBadge(r).label === 'Rolling' ? 'Rolling review' : 'Deadline unstated')}</span>
               <span style="font-weight:600; color:var(--acc);">Details &rarr;</span>
             </div>
           </article>
@@ -2254,7 +2266,7 @@
       $('#modal-inst').textContent = item.institution + (item.principal_investigator ? ` · Prof. ${item.principal_investigator}` : '');
 
       const b = deadlineBadge(item);
-      const kindLabel = item.kind === 'postdoc' ? 'Postdoctoral Appointment' : (item.kind === 'phd' ? 'PhD Studentship' : 'Predoctoral Research Associate');
+      const kindLabel = item.kind === 'postdoc' ? 'Postdoctoral Appointment' : (item.kind === 'phd' ? 'PhD Studentship' : (item.kind === 'research' ? 'Research Staff Position' : 'Predoctoral Research Associate'));
       const sectorLabel = item.sector === 'institutional' ? 'Central Bank / Multilateral' : (item.sector === 'private' ? 'Private Sector / Consultancy' : 'Academic Institution');
       const sal = formatSalary(item);
 

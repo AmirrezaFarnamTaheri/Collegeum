@@ -1,14 +1,15 @@
 """Your own marks on positions (✅ interested, ❌ not for me, 📝 applied).
 
-Marks are keyed by the listing's ``url_hash`` (stable across journal restores,
-unlike the SQLite row id). Only the Telegram-sync job writes this state; the
-daily run only reads it, so the two workflows never overwrite each other's work.
+Marks are keyed by stable URL hashes, not transient SQLite row IDs. The
+pipeline and Telegram-sync jobs can each persist private state under one
+shared GitHub Actions concurrency group, avoiding overlapping writers.
 
-Privacy: the repository that runs the pipeline may be public, and an *applied*
-mark is personal. When ``FEEDBACK_ENCRYPTION_KEY`` is set the marks are stored
-only as a Fernet-encrypted file (``feedback.enc`` beside the configured path);
-no plaintext file is written. Without a key the plaintext file is written for
-local use and is gitignored; scheduled workflows stage only the encrypted file.
+Privacy: user marks, subscriptions and private delivery receipts are encrypted
+with Fernet when FEEDBACK_ENCRYPTION_KEY is present. Production jobs require
+encrypted state. Configuring PRIVATE_STATE_REPO stores new ciphertext outside
+the public source repository. Backward-compatible public-repository mode
+retains old encrypted revisions; key rotation cannot erase them.
+Plaintext is for local use only and is gitignored.
 
 Integrity: absent state is an empty store, but malformed or wrong-shaped state
 is never treated as empty. The damaged file is copied aside for inspection and
@@ -22,7 +23,7 @@ import builtins
 import json
 import os
 import shutil
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -39,6 +40,10 @@ VALID, INVALID, APPLIED = "valid", "invalid", "applied"
 STATUS_BY_CODE = {"v": VALID, "x": INVALID, "a": APPLIED}
 CODE_BY_STATUS = {v: k for k, v in STATUS_BY_CODE.items()}
 ID_PREFIX = 16  # characters of url_hash carried in a button (Telegram allows 64 bytes)
+DELIVERY_ZONES = ("UTC", "Asia/Tehran", "Europe/London", "America/New_York")
+DAILY_LIMITS = (3, 6, 10)
+MAX_SUBSCRIBERS = 1000
+MAX_CALLBACK_IDS = 65536  # above the maximum ordinary updates processed in 24h
 
 
 class StateCorruptError(RuntimeError):
@@ -135,7 +140,76 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
     callbacks = data.get("callbacks", [])
     if not isinstance(callbacks, list) or not all(isinstance(c, str) for c in callbacks):
         raise _corrupt(path, "'callbacks' is not a list of strings")
-    data["marks"], data["callbacks"] = marks, callbacks
+    subscribers = data.get("subscribers", {})
+    if not isinstance(subscribers, dict):
+        raise _corrupt(path, "'subscribers' must be an object")
+    for chat_id, member in subscribers.items():
+        if (not isinstance(chat_id, str) or not chat_id.isascii() or
+                not chat_id.isdecimal() or int(chat_id) <= 0 or
+                not isinstance(member, dict)):
+            raise _corrupt(path, "invalid subscriber identity")
+        for field in ("topics", "scopes", "deliveries"):
+            value = member.get(field, {})
+            if not isinstance(value, dict):
+                raise _corrupt(path, f"subscriber {chat_id}: {field} is not an object")
+            member.setdefault(field, {})
+        for field in ("topics", "scopes"):
+            if not all(isinstance(k, str) and isinstance(v, str)
+                       for k, v in member[field].items()):
+                raise _corrupt(path, f"subscriber {chat_id}: invalid {field}")
+        if not isinstance(member.get("paused", False), bool):
+            raise _corrupt(path, f"subscriber {chat_id}: paused must be a boolean")
+        if member.get("language", "en") not in ("en", "fa"):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid language")
+        member.setdefault("paused", False)
+        member.setdefault("language", "en")
+        if member.get("delivery_mode", "instant") not in ("instant", "digest"):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid delivery mode")
+        if type(member.get("daily_limit", 6)) is not int or (
+            member.get("daily_limit", 6) not in DAILY_LIMITS
+        ):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid daily limit")
+        if type(member.get("quiet_hours", False)) is not bool:
+            raise _corrupt(path, f"subscriber {chat_id}: invalid quiet hours")
+        if member.get("timezone", "UTC") not in DELIVERY_ZONES:
+            raise _corrupt(path, f"subscriber {chat_id}: invalid time zone")
+        last_digest = member.get("digest_day", "")
+        if not isinstance(last_digest, str) or (
+            last_digest and len(last_digest) != 10
+        ):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid digest day")
+        keys = member.get("digest_keys", [])
+        if (not isinstance(keys, list) or len(keys) > 4
+                or not all(isinstance(k, str) and 1 <= len(k) <= 256 for k in keys)
+                or len(keys) != len(set(keys))):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid digest key group")
+        member.setdefault("digest_keys", [])
+        member.setdefault("delivery_mode", "instant")
+        member.setdefault("daily_limit", 6)
+        member.setdefault("quiet_hours", False)
+        member.setdefault("timezone", "UTC")
+        member.setdefault("digest_day", "")
+        for delivery in member["deliveries"].values():
+            if not isinstance(delivery, dict) or delivery.get("state") not in (
+                "sending", "sent", "uncertain", "rejected",
+            ) or not isinstance(delivery.get("at"), str):
+                raise _corrupt(path, f"subscriber {chat_id}: invalid delivery journal")
+    ops = data.get("ops", {"paused": False, "audit": []})
+    if not isinstance(ops, dict) or not isinstance(ops.get("paused", False), bool):
+        raise _corrupt(path, "'ops' must include a boolean paused flag")
+    audit = ops.get("audit", [])
+    if not isinstance(audit, list) or not all(
+        isinstance(event, dict) and isinstance(event.get("action"), str)
+        for event in audit
+    ):
+        raise _corrupt(path, "invalid operation audit history")
+    ops.setdefault("paused", False)
+    ops.setdefault("audit", [])
+    cursor = data.get("delivery_cursor", "")
+    if not isinstance(cursor, str):
+        raise _corrupt(path, "invalid private delivery cursor")
+    data["ops"], data["delivery_cursor"] = ops, cursor
+    data["marks"], data["callbacks"], data["subscribers"] = marks, callbacks, subscribers
     return data
 
 
@@ -174,6 +248,240 @@ class FeedbackStore:
     def marks(self) -> dict[str, dict[str, Any]]:
         return cast(dict[str, dict[str, Any]], self.data["marks"])
 
+    @property
+    def subscribers(self) -> dict[str, dict[str, Any]]:
+        return cast(dict[str, dict[str, Any]], self.data["subscribers"])
+
+    def subscriber(self, chat_id: int | str) -> dict[str, Any] | None:
+        return self.subscribers.get(str(chat_id))
+
+    def _member(self, chat_id: int) -> dict[str, Any]:
+        if type(chat_id) is not int or chat_id <= 0:
+            raise ValueError("invalid private chat ID")
+        if (str(chat_id) not in self.subscribers
+                and len(self.subscribers) >= MAX_SUBSCRIBERS):
+            raise ValueError("subscriber capacity reached")
+        return self.subscribers.setdefault(str(chat_id), {
+            "topics": {}, "scopes": {}, "deliveries": {},
+            "paused": False, "language": "en",
+            "delivery_mode": "instant", "daily_limit": 6,
+            "quiet_hours": False, "timezone": "UTC", "digest_day": "",
+            "digest_keys": [],
+        })
+
+    def toggle_subscription(self, chat_id: int, kind: str, option: str) -> bool:
+        """Explicit private-chat opt-in. Return whether option is enabled."""
+        from .subscriptions import CAREER_SCOPES, TOPICS
+
+        if kind not in ("topics", "scopes"):
+            raise ValueError("invalid subscription operation")
+        if option not in (TOPICS if kind == "topics" else CAREER_SCOPES):
+            raise ValueError("unknown subscription option")
+        selections: dict[str, str] = self._member(chat_id)[kind]
+        if option in selections:
+            del selections[option]
+            enabled = False
+        else:
+            selections[option] = _now()
+            enabled = True
+        self._dirty = True
+        return enabled
+
+    def set_topics_group(self, chat_id: int, group: str, enabled: bool) -> bool:
+        """Apply an explicitly tapped group action, preserving prior opt-in dates."""
+        from .ui import ACADEMIC, CAREERS
+
+        if type(enabled) is not bool or group not in ("academic", "careers"):
+            raise ValueError("invalid bulk subscription action")
+        topics = self._member(chat_id)["topics"]
+        selected = ACADEMIC if group == "academic" else CAREERS
+        changed = False
+        for key in selected:
+            if enabled and key not in topics:
+                topics[key] = _now()
+                changed = True
+            elif not enabled and key in topics:
+                del topics[key]
+                changed = True
+        if changed:
+            self._dirty = True
+        return changed
+
+    def set_paused(self, chat_id: int, paused: bool) -> bool:
+        if type(paused) is not bool:
+            raise ValueError("invalid pause state")
+        member = self.subscriber(chat_id)
+        if member is None or member["paused"] == paused:
+            return False
+        member["paused"] = paused
+        self._dirty = True
+        return True
+
+    def set_language(self, chat_id: int, language: str) -> bool:
+        if language not in ("en", "fa"):
+            raise ValueError("unsupported language")
+        member = self._member(chat_id)
+        if member["language"] == language:
+            return False
+        member["language"] = language
+        self._dirty = True
+        return True
+
+    def set_delivery_preference(self, chat_id: int, field: str, value: Any) -> bool:
+        """Typed user-controlled delivery preferences; no implicit opt-in."""
+        allowed = {
+            "delivery_mode": ("instant", "digest"),
+            "daily_limit": DAILY_LIMITS,
+            "quiet_hours": (True, False),
+            "timezone": DELIVERY_ZONES,
+        }
+        if field not in allowed or type(value) not in (str, int, bool):
+            raise ValueError("invalid delivery preference")
+        if field == "daily_limit" and type(value) is not int:
+            raise ValueError("daily limit must be an integer")
+        if field == "quiet_hours" and type(value) is not bool:
+            raise ValueError("quiet hours must be a boolean")
+        if value not in allowed[field]:
+            raise ValueError("unsupported delivery preference")
+        member = self.subscriber(chat_id)
+        if member is None:
+            raise ValueError("Choose a topic before setting delivery preferences")
+        if member[field] == value:
+            return False
+        member[field] = value
+        # A changed digest mode does not reset already reserved/ambiguous sends.
+        self._dirty = True
+        return True
+
+    def prune_deliveries(self, *, days: int = 45) -> int:
+        """Discard old confirmed receipts, never unresolved/uncertain sends.
+
+        Incoming academic matches are bounded to fourteen days; career
+        records are bounded to twenty-one. Keeping 45 days of successful
+        receipts prevents duplicate sends without unbounded growth.
+        """
+        threshold = datetime.now(UTC) - timedelta(days=days)
+        removed = 0
+        for member in self.subscribers.values():
+            receipts = member["deliveries"]
+            for key, record in list(receipts.items()):
+                if record["state"] != "sent":
+                    continue
+                try:
+                    when = datetime.fromisoformat(record["at"].replace("Z", "+00:00"))
+                    if when.tzinfo is None:
+                        when = when.replace(tzinfo=UTC)
+                except (ValueError, TypeError):
+                    continue  # never delete an invalid/unknown receipt automatically
+                if when < threshold:
+                    del receipts[key]
+                    removed += 1
+        if removed:
+            self._dirty = True
+        return removed
+
+    def remove_subscriber(self, chat_id: int) -> bool:
+        if self.subscribers.pop(str(chat_id), None) is None:
+            return False
+        self._dirty = True
+        return True
+
+    def reserve_delivery(self, chat_id: int, key: str) -> bool:
+        """Write a send intent before network I/O to suppress crash replays."""
+        member = self.subscriber(chat_id)
+        if member is None or key in member["deliveries"]:
+            return False
+        member["deliveries"][key] = {"state": "sending", "at": _now()}
+        self._dirty = True
+        return True
+
+    def finish_delivery(
+        self, chat_id: int, key: str, *,
+        message_id: int | None = None, uncertain: bool = False,
+    ) -> None:
+        member = self.subscriber(chat_id)
+        if member is None or key not in member["deliveries"]:
+            raise ValueError("delivery intent not found")
+        member["deliveries"][key] = {
+            "state": "uncertain" if uncertain else "sent",
+            "at": _now(),
+            **({"message_id": message_id} if message_id is not None else {}),
+        }
+        self._dirty = True
+
+    def reject_delivery(self, chat_id: int, key: str, *, status: int) -> None:
+        """Remember permanent API validation failures until reviewed.
+
+        Replaying a known 400 every half hour cannot repair malformed HTML.
+        """
+        member = self.subscriber(chat_id)
+        if member is None or key not in member["deliveries"]:
+            raise ValueError("delivery intent not found")
+        member["deliveries"][key] = {
+            "state": "rejected", "at": _now(), "status": status,
+        }
+        self._dirty = True
+
+    def cancel_delivery(self, chat_id: int, key: str) -> None:
+        """Cancel a proved-absent send; unlock a digest only after all keys clear.
+
+        The digest marker is persisted before send for crash safety. Simply
+        removing the final confirmed-absent receipt without clearing the marker
+        would suppress all alerts until the next day. Never clear the marker
+        while any key in the group might have been delivered.
+        """
+        member = self.subscriber(chat_id)
+        if member is not None and key in member["deliveries"]:
+            del member["deliveries"][key]
+            self._dirty = True
+            digest_keys = member.get("digest_keys", [])
+            if digest_keys and not any(
+                item in member["deliveries"] for item in digest_keys
+            ):
+                member["digest_day"] = ""
+                member["digest_keys"] = []
+
+    def resolve_delivery(
+        self, chat_id: int, key: str, *,
+        confirmed_sent: bool = False, confirmed_absent: bool = False,
+        message_id: int | None = None,
+    ) -> None:
+        if confirmed_sent == confirmed_absent:
+            raise ValueError("Exactly one verified delivery outcome is required")
+        if confirmed_sent and (type(message_id) is not int or message_id <= 0):
+            raise ValueError("A verified positive Telegram message ID is required")
+        if confirmed_absent and message_id is not None:
+            raise ValueError("Do not supply a message ID for confirmed non-delivery")
+        member = self.subscriber(chat_id)
+        if member is None or key not in member["deliveries"]:
+            raise ValueError("Unknown subscriber delivery")
+        existing = member["deliveries"][key]
+        if existing["state"] == "sent":
+            if confirmed_sent and existing.get("message_id") == message_id:
+                return
+            raise ValueError("Cannot overwrite a confirmed delivery")
+        if confirmed_sent and existing["state"] == "rejected":
+            raise ValueError("Telegram explicitly rejected that delivery")
+        if confirmed_sent:
+            self.finish_delivery(chat_id, key, message_id=message_id)
+        else:
+            self.cancel_delivery(chat_id, key)
+
+    def wants_life_sciences(self) -> bool:
+        """Collect independent life-science PhD sources only for opted-in users."""
+        return any(
+            "life_sciences_phd" in member["topics"]
+            for member in self.subscribers.values()
+        )
+
+    def wants_career(self, scope: str) -> bool:
+        from .subscriptions import CAREER_TOPICS
+        return any(
+            scope in member["scopes"]
+            and any(topic in member["topics"] for topic in CAREER_TOPICS)
+            for member in self.subscribers.values()
+        )
+
     def status(self, url_hash: str) -> str | None:
         return (self.marks.get(url_hash) or {}).get("status")
 
@@ -207,6 +515,14 @@ class FeedbackStore:
         # count would allow that replay to toggle an existing mark again.
         # Retain processed IDs until an explicit audited state compaction.
         self.data["callbacks"].append(str(callback_id))
+        # Telegram only retains unconsumed updates for up to 24 hours. Keep
+        # ample replay headroom while bounding retained callback identifiers.
+        if len(self.data["callbacks"]) > MAX_CALLBACK_IDS:
+            del self.data["callbacks"][:-MAX_CALLBACK_IDS]
+        self._dirty = True
+
+    def mark_dirty(self) -> None:
+        """Mark mutations made to the admin operation record for persistence."""
         self._dirty = True
 
     def save(self) -> None:

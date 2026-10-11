@@ -627,7 +627,7 @@ class Database:
             "SELECT * FROM listings WHERE status IN ('pending', 'unpublished') "
             "AND closed_at IS NULL AND expired_at IS NULL "
             "AND (deadline IS NULL OR deadline = '' OR "
-            "     deadline >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-1 day')) ORDER BY id"
+            "     deadline >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) ORDER BY id"
         ).fetchall()
 
     def recent_listings(self, days: int) -> list[sqlite3.Row]:
@@ -648,7 +648,10 @@ class Database:
         if active_only:
             return self.conn.execute(
                 "SELECT * FROM listings WHERE status='published' AND expired_at IS NULL "
-                "AND closed_at IS NULL AND (LOWER(title) LIKE ? OR LOWER(institution) LIKE ? "
+                "AND closed_at IS NULL "
+                "AND (deadline IS NULL OR deadline = '' OR "
+                "     deadline >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) "
+                "AND (LOWER(title) LIKE ? OR LOWER(institution) LIKE ? "
                 "OR LOWER(department) LIKE ? OR LOWER(summary) LIKE ?) "
                 "ORDER BY first_seen_at DESC LIMIT ?",
                 (pattern, pattern, pattern, pattern, limit),
@@ -664,7 +667,10 @@ class Database:
         """Published, deadline not passed, not found filled/closed."""
         return self.conn.execute(
             "SELECT * FROM listings WHERE status='published' AND expired_at IS NULL "
-            "AND closed_at IS NULL ORDER BY first_seen_at DESC"
+            "AND closed_at IS NULL "
+            "AND (deadline IS NULL OR deadline = '' OR "
+            "     deadline >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) "
+            "ORDER BY first_seen_at DESC"
         ).fetchall()
 
     def published_listings(self) -> list[sqlite3.Row]:

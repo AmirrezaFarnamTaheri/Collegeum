@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Regenerate compile_project.py: a single-file materializer of this project.
 
-Run this any time src/, tests/, config/, docs/, or the top-level project
-files change, and commit the regenerated output alongside your edit.
+The single-file distribution is a generated CI artifact and GitHub release
+asset, not a tracked source file. Local runs create an ignored copy.
 
     python3 tools/build_single_file.py
 
@@ -45,7 +45,13 @@ INCLUDE_GLOBS = [
     "tests/fixtures/*.jsonl",
     "tests/fixtures/boards/**/*",
     "config/*.toml",
-    "docs/index.html",
+    # Include all site assets required for a materialized checkout to render.
+    # Exclude only mutable publication snapshots (docs/data and feed.xml).
+    "docs/*.html",
+    "docs/*.svg",
+    "docs/*.png",
+    "docs/*.xsl",
+    "docs/*.json",
     # docs/data/*.json and docs/feed.xml are mutable publications; the
     # pull-request merge checkout can contain newer website state than this branch.
     # Only versioned source and reproducible fixtures belong in this artifact.
@@ -75,7 +81,8 @@ INCLUDE_GLOBS = [
 EXCLUDE_SUFFIXES = (".pyc", ".pyo")
 EXCLUDE_DIR_PARTS = {"__pycache__", ".git", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 TEXT_SUFFIXES = {
-    '.py', '.toml', '.md', '.yml', '.html', '.json', '.xml', '.jsonl', '.lock', '.example',
+    '.py', '.toml', '.md', '.yml', '.html', '.svg', '.xsl',
+    '.json', '.xml', '.jsonl', '.lock', '.example',
 }
 TEXT_NAMES = {'Makefile', '.gitignore', '.gitattributes'}
 

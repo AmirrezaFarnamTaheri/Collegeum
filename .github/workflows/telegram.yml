@@ -1,18 +1,15 @@
 name: telegram-sync
 
-# Answers /positions, /applied, /valid, /hidden, /help and saves the
-# interested / not-for-me / applied button taps to the encrypted data/feedback.enc.
+# Processes opt-in subscriptions, owner feedback, administrator recovery,
+# encrypted send intents, and verified delivery acknowledgements.
 #
 # There is no always-on server: this checks for new messages every 30 minutes
-# from 03:15 to 20:45 UTC (06:45-00:15 in Tehran), so a reply can take up to
-# half an hour. Telegram keeps unread messages for 24 hours, so nothing is lost
-# overnight. The 04:xx slots are omitted by this schedule. Pipeline runs also
-# answer messages, and the two jobs share one queue. About 34 short runs a day
-# (~1,000 of the 2,000 free minutes a month on a private repository); widen
-# the interval below to use fewer.
+# throughout the day, including overnight (subject to GitHub cron delays).
+# Telegram only retains unconsumed updates for at most 24 hours, so prolonged
+# runner outages can still lose updates. Source and inbox jobs are serialized.
 on:
   schedule:
-    - cron: "15,45 3,5-20 * * *"
+    - cron: "15,45 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -25,8 +22,14 @@ concurrency:
 
 jobs:
   sync:
-    if: github.ref == 'refs/heads/main'
+    # Private subscriptions require explicit opt-in after validating state and key.
+    # Public Telegram broadcasts remain controlled independently by pipeline.yml.
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_TELEGRAM_SYNC == 'true'
     runs-on: ubuntu-latest
+    # When existing credentials are GitHub Environment secrets, set the
+    # REPOSITORY variable COLLEGEUM_SECRET_ENVIRONMENT to that environment's
+    # name. Unset/empty uses ordinary repository or organization secrets.
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
     timeout-minutes: 10
     steps:
       # ref: the branch, not the commit that triggered the run. A run that
@@ -36,6 +39,51 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
+
+      - name: Require live private Telegram credentials
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "::error::TELEGRAM_BOT_TOKEN is missing; private sync not started"
+            exit 1
+          fi
+          if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]; then
+            echo "::error::FEEDBACK_ENCRYPTION_KEY was not injected into this job; private sync cannot preserve subscriptions"
+            echo "::notice::Public channel announcements use TELEGRAM_BOT_TOKEN independently and may still work"
+            echo "::notice::Check the scope/name of the EXISTING encryption secret (repository versus environment); do not replace a key protecting saved ciphertext"
+            exit 1
+          fi
+
+      - name: Check private state repository is private
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::PRIVATE_STATE_TOKEN is required for PRIVATE_STATE_REPO"
+            exit 1
+          fi
+          if [ "$(gh api "repos/$PRIVATE_STATE_REPO" --jq '.private')" != "true" ]; then
+            echo "::error::Refusing to store subscriber state in a public repository"
+            exit 1
+          fi
+
+      - name: Checkout authoritative private state
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ vars.PRIVATE_STATE_REPO }}
+          token: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          path: .private-state
+          fetch-depth: 1
+
+      - name: Restore authoritative private state
+        if: ${{ vars.PRIVATE_STATE_REPO != '' }}
+        run: python tools/private_state.py restore
 
       - uses: actions/setup-python@v7
         with:
@@ -51,53 +99,104 @@ jobs:
           uv lock --check
           uv sync --locked
 
-      - name: Answer messages and save button taps
+      - name: Process private commands and reserve notification intents
         id: sync
-        # Partial cursor/feedback updates must survive if the API fails later.
+        # The runner cannot send private alerts until the encrypted intent
+        # checkpoint has been pushed to the repository in the next step.
         continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_PUBLIC_CHANNEL_ID: ${{ secrets.TELEGRAM_PUBLIC_CHANNEL_ID }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
           FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
-          SITE_URL: ${{ vars.SITE_URL }}
+          SITE_URL: ${{ vars.COLLEGEUM_SITE_URL || 'https://amirrezafarnamtaheri.github.io/Collegeum/' }}
         run: |
-          # Marks are personal and this repository may be public: refuse to run
-          # (and so to commit) without the key that encrypts them.
-          if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]; then
-            echo "FEEDBACK_ENCRYPTION_KEY is not configured; skipping Telegram sync."
-            exit 0
+          set -e
+          if [ -z "$FEEDBACK_ENCRYPTION_KEY" ] || [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "::error::Required private Telegram credentials are missing"
+            exit 1
           fi
+          echo "private_enabled=true" >> "$GITHUB_OUTPUT"
           PYTHONPATH=src python3 -m predoc_pipeline.cli telegram-sync
+          PYTHONPATH=src python3 -m predoc_pipeline.cli subscriber-plan
 
-      - name: Save marks and cursor
+      - name: Commit input cursor and untransmitted private intents
+        id: checkpoint
         if: ${{ always() && steps.sync.outcome != 'skipped' }}
+        env:
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
         run: |
+          set -euo pipefail
           git config user.name "predoc-pipeline-bot"
           git config user.email "actions@users.noreply.github.com"
-          for f in data/feedback.enc data/telegram_state.json docs/data/listings.json \
-                   docs/feed.xml; do
+          for f in docs/data/listings.json docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
-          if git diff --cached --quiet; then
-            echo "nothing new"
-            exit 0
+          if [ -z "$PRIVATE_STATE_REPO" ]; then
+            for f in data/feedback.enc data/telegram_state.json; do
+              if [ -e "$f" ]; then git add "$f"; fi
+            done
           fi
-          git commit -m "chore: save Telegram marks [skip ci]"
-          for attempt in 1 2 3; do
-            if git pull --rebase --autostash && git push; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep 5
-          done
-          echo "could not push the marks"
-          exit 1
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: checkpoint Telegram inbox and private intents [skip ci]"
+            if ! (git pull --rebase --autostash && git push); then
+              git rebase --abort 2>/dev/null || true
+              echo "::error::Public exports could not be persisted; refusing to send"
+              exit 1
+            fi
+          fi
+          if [ -n "$PRIVATE_STATE_REPO" ]; then
+            python tools/private_state.py checkpoint
+          fi
 
-      - name: Fail job if Telegram processing failed
+      - name: Send only the checkpointed private alert batch
+        id: delivery
+        if: >-
+          steps.sync.outcome == 'success' &&
+          steps.sync.outputs.private_enabled == 'true' &&
+          steps.checkpoint.outcome == 'success'
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
+        run: |
+          PYTHONPATH=src python3 -m predoc_pipeline.cli subscriber-send
+
+      - name: Commit acknowledgements and reconciliation state
+        id: acknowledgement
+        if: ${{ always() && steps.delivery.outcome != 'skipped' }}
+        env:
+          PRIVATE_STATE_REPO: ${{ vars.PRIVATE_STATE_REPO }}
+        run: |
+          set -euo pipefail
+          if [ -n "$PRIVATE_STATE_REPO" ]; then
+            python tools/private_state.py checkpoint
+          else
+            git config user.name "predoc-pipeline-bot"
+            git config user.email "actions@users.noreply.github.com"
+            if [ -e data/feedback.enc ]; then git add data/feedback.enc; fi
+            if ! git diff --cached --quiet; then
+              git commit -m "chore: record private delivery acknowledgements [skip ci]"
+              if ! (git pull --rebase --autostash && git push); then
+                git rebase --abort 2>/dev/null || true
+                echo "::error::Cannot commit acknowledgement without conflicts"
+                exit 1
+              fi
+            fi
+          fi
+
+      - name: Fail if inbox, persistence, or private delivery failed
         if: always()
         env:
           SYNC_OUTCOME: ${{ steps.sync.outcome }}
+          CHECKPOINT_OUTCOME: ${{ steps.checkpoint.outcome }}
+          DELIVERY_OUTCOME: ${{ steps.delivery.outcome }}
+          ACK_OUTCOME: ${{ steps.acknowledgement.outcome }}
         run: |
-          if [ "$SYNC_OUTCOME" != "success" ]; then
-            echo "Telegram sync failed; inspect the processing step and saved state."
+          if [ "$SYNC_OUTCOME" != "success" ] ||
+             [ "$CHECKPOINT_OUTCOME" != "success" ] ||
+             [ "$DELIVERY_OUTCOME" = "failure" ] ||
+             [ "$ACK_OUTCOME" = "failure" ]; then
+            echo "Telegram processing or checkpoint failed; inspect steps and state."
             exit 1
           fi

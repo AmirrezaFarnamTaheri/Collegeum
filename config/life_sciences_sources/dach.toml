@@ -1,0 +1,248 @@
+# Life Sciences PhD source catalogue - dach
+# Indexed sites were checked against public vacancy examples as of 2026-10-11.
+# enabled=true means an official listing and link shape were inspected, NOT guaranteed live scraping.
+# Candidate portals are disabled until individual listing anchors and site access rules are verified.
+
+[[board]]
+name = "life_basel_university"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://jobs.unibas.ch/?lang=en"
+link_pattern = 'jobs\.unibas\.ch/offene-stellen/[^/?#]+/[0-9a-f]{8}-[0-9a-f-]{27,36}'
+country = "Switzerland"
+institution = "University of Basel"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official University of Basel jobs include funded biomedical PhD roles; detail href is slug/UUID."
+
+[[board]]
+name = "life_basel_biozentrum"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.biozentrum.unibas.ch/open-positions"
+link_pattern = 'biozentrum\.unibas\.ch/open-positions/detail/[^/?#]+'
+country = "Switzerland"
+institution = "Biozentrum, University of Basel"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official Biozentrum open positions include current molecular biology PhD detail pages."
+
+[[board]]
+name = "life_dach_zurich_uzh"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uzh.ch/en/explore/work/jobs.html"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "University of Zurich"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_bern"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://karriere.unibe.ch/offene_stellen/index_ger.html"
+link_pattern = 'jobs\.unibe\.ch/job-vacancies/[^/?#]+/[0-9a-f]{8}-[0-9a-f-]{27,36}'
+country = "Switzerland"
+institution = "University of Bern"
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official UniBE job portal links to /job-vacancies/title/UUID doctoral recruitment."
+
+[[board]]
+name = "life_dach_eth_central"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.jobs.ethz.ch/site/index"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "ETH Zurich"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_emp"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.empa.ch/web/empa/jobs"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "Empa"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_psi"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.psi.ch/en/hr/job-opportunities"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "Paul Scherrer Institute"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_fmi"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.fmi.ch/education-careers/programs/"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "Friedrich Miescher Institute"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_mpi_psychiatry"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.psych.mpg.de/en"
+link_pattern = '^$'
+country = "Germany"
+institution = "Max Planck Institute of Psychiatry"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_mpi_ageing"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.age.mpg.de/career"
+link_pattern = '^$'
+country = "Germany"
+institution = "Max Planck Institute for Biology of Ageing"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_helmholtz"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.helmholtz.de/en/career/job-offers/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Helmholtz Association"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_mdc_jobs"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.mdc-berlin.de/career/jobs"
+link_pattern = '^$'
+country = "Germany"
+institution = "Max Delbrück Center"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_dkfz_jobs"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://jobs.dkfz.de/en/jobs/iframe"
+link_pattern = '^$'
+country = "Germany"
+institution = "German Cancer Research Center"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_tum"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://portal.mytum.de/jobs/wissenschaftler/NewsBoard"
+link_pattern = '^$'
+country = "Germany"
+institution = "Technical University of Munich"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_lmu"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.lmu.de/en/about-lmu/working-at-lmu/job-portal/"
+link_pattern = '^$'
+country = "Germany"
+institution = "LMU Munich"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_university_heidelberg"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uni-heidelberg.de/en/jobs-and-careers/jobs"
+link_pattern = '^$'
+country = "Germany"
+institution = "Heidelberg University"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_oeaw"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.oeaw.ac.at/en/jobs"
+link_pattern = '^$'
+country = "Austria"
+institution = "Austrian Academy of Sciences"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_meduni_vienna"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.meduniwien.ac.at/web/en/about-us/career/"
+link_pattern = '^$'
+country = "Austria"
+institution = "Medical University of Vienna"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_cemm"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://cemm.at/career"
+link_pattern = '^$'
+country = "Austria"
+institution = "CeMM"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+
+[[board]]
+name = "life_dach_innsbruck"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uibk.ac.at/en/career/"
+link_pattern = '^$'
+country = "Austria"
+institution = "University of Innsbruck"
+verification = "candidate_unverified"
+note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+

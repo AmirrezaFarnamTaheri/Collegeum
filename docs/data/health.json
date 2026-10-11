@@ -5,7 +5,7 @@
   "published": 174,
   "pending": 2,
   "expired": 4,
-  "closed": 6,
+  "closed": 16,
   "seen_items": 498,
   "dlq": 0,
   "runs": 28
@@ -910,7 +910,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 16.0,
+     "seconds": 16,
      "skipped": false,
      "messages": [
       "HTTP 403"
@@ -1044,7 +1044,7 @@
      "ok": true,
      "raw": 30,
      "relevant": 12,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -1404,7 +1404,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": [
       "HTTP 404"
@@ -1476,7 +1476,7 @@
      "ok": true,
      "raw": 5,
      "relevant": 4,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -1638,7 +1638,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -1828,7 +1828,7 @@
      "ok": true,
      "raw": 1,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -1888,7 +1888,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": [
       "HTTP 404"
@@ -2212,7 +2212,7 @@
      "ok": true,
      "raw": 3,
      "relevant": 1,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -2226,7 +2226,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -2792,7 +2792,7 @@
      "ok": true,
      "raw": 19,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -2820,7 +2820,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 19.0,
+     "seconds": 19,
      "skipped": false,
      "messages": [
       "HTTP 403"
@@ -2866,7 +2866,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -2938,7 +2938,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": [
       "HTTP 404"
@@ -2998,7 +2998,7 @@
      "ok": true,
      "raw": 61,
      "relevant": 13,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -3040,7 +3040,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 19.0,
+     "seconds": 19,
      "skipped": false,
      "messages": [
       "HTTP 403"
@@ -3100,7 +3100,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 17.0,
+     "seconds": 17,
      "skipped": false,
      "messages": [
       "HTTP 403"
@@ -3248,7 +3248,7 @@
      "ok": true,
      "raw": 22,
      "relevant": 3,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -3426,7 +3426,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -3853,7 +3853,7 @@
      "ok": true,
      "raw": 23,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -3909,7 +3909,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -3923,7 +3923,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -3951,7 +3951,7 @@
      "ok": true,
      "raw": 96,
      "relevant": 14,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -4035,7 +4035,7 @@
      "ok": true,
      "raw": 79,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -4161,7 +4161,7 @@
      "ok": true,
      "raw": 1,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -4357,7 +4357,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -4455,7 +4455,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -4581,7 +4581,7 @@
      "ok": true,
      "raw": 60,
      "relevant": 0,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -4760,7 +4760,7 @@
      "ok": true,
      "raw": 186,
      "relevant": 17,
-     "seconds": 10.0,
+     "seconds": 10,
      "skipped": false,
      "messages": []
     },
@@ -4816,7 +4816,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -4914,7 +4914,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -4984,7 +4984,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 18.0,
+     "seconds": 18,
      "skipped": false,
      "messages": []
     },
@@ -4998,7 +4998,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -5068,7 +5068,7 @@
      "ok": true,
      "raw": 10,
      "relevant": 1,
-     "seconds": 6.0,
+     "seconds": 6,
      "skipped": false,
      "messages": []
     },
@@ -5530,7 +5530,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -5558,7 +5558,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 18.0,
+     "seconds": 18,
      "skipped": false,
      "messages": []
     },
@@ -5572,7 +5572,7 @@
      "ok": true,
      "raw": 60,
      "relevant": 0,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -5738,7 +5738,7 @@
      "ok": true,
      "raw": 14,
      "relevant": 2,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -5752,7 +5752,7 @@
      "ok": true,
      "raw": 182,
      "relevant": 17,
-     "seconds": 11.0,
+     "seconds": 11,
      "skipped": false,
      "messages": []
     },
@@ -5822,7 +5822,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -5906,7 +5906,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -5920,7 +5920,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 18.0,
+     "seconds": 18,
      "skipped": false,
      "messages": []
     },
@@ -6214,7 +6214,7 @@
      "ok": true,
      "raw": 106,
      "relevant": 28,
-     "seconds": 18.0,
+     "seconds": 18,
      "skipped": false,
      "messages": []
     },
@@ -6368,7 +6368,7 @@
      "ok": true,
      "raw": 15,
      "relevant": 1,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -6508,7 +6508,7 @@
      "ok": true,
      "raw": 10,
      "relevant": 2,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -6536,7 +6536,7 @@
      "ok": true,
      "raw": 21,
      "relevant": 6,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -6648,7 +6648,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -6662,7 +6662,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 23.0,
+     "seconds": 23,
      "skipped": false,
      "messages": []
     },
@@ -6676,7 +6676,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     }
@@ -6758,7 +6758,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -6926,7 +6926,7 @@
      "ok": true,
      "raw": 98,
      "relevant": 16,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -7094,7 +7094,7 @@
      "ok": true,
      "raw": 11,
      "relevant": 2,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -7458,7 +7458,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -7472,7 +7472,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -7528,7 +7528,7 @@
      "ok": true,
      "raw": 21,
      "relevant": 6,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -7749,7 +7749,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -7903,7 +7903,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 20.0,
+     "seconds": 20,
      "skipped": false,
      "messages": []
     },
@@ -7973,7 +7973,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -8085,7 +8085,7 @@
      "ok": true,
      "raw": 11,
      "relevant": 2,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -8784,7 +8784,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -8854,7 +8854,7 @@
      "ok": true,
      "raw": 5,
      "relevant": 4,
-     "seconds": 5.0,
+     "seconds": 5,
      "skipped": false,
      "messages": []
     },
@@ -8882,7 +8882,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -8910,7 +8910,7 @@
      "ok": true,
      "raw": 94,
      "relevant": 16,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -8980,7 +8980,7 @@
      "ok": true,
      "raw": 10,
      "relevant": 6,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -9274,7 +9274,7 @@
      "ok": true,
      "raw": 64,
      "relevant": 3,
-     "seconds": 10.0,
+     "seconds": 10,
      "skipped": false,
      "messages": []
     },
@@ -9456,7 +9456,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -9484,7 +9484,7 @@
      "ok": true,
      "raw": 11,
      "relevant": 2,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -9526,7 +9526,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 18.0,
+     "seconds": 18,
      "skipped": false,
      "messages": []
     },
@@ -9554,7 +9554,7 @@
      "ok": true,
      "raw": 177,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -9734,7 +9734,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -9902,7 +9902,7 @@
      "ok": true,
      "raw": 95,
      "relevant": 16,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -9958,7 +9958,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -10014,7 +10014,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -10042,7 +10042,7 @@
      "ok": true,
      "raw": 48,
      "relevant": 14,
-     "seconds": 8.0,
+     "seconds": 8,
      "skipped": false,
      "messages": []
     },
@@ -10112,7 +10112,7 @@
      "ok": true,
      "raw": 1,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -10238,7 +10238,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 7.0,
+     "seconds": 7,
      "skipped": false,
      "messages": []
     },
@@ -10434,7 +10434,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -10448,7 +10448,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -10588,7 +10588,7 @@
      "ok": true,
      "raw": 73,
      "relevant": 15,
-     "seconds": 8.0,
+     "seconds": 8,
      "skipped": false,
      "messages": []
     },
@@ -10696,7 +10696,7 @@
      "ok": true,
      "raw": 14,
      "relevant": 2,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -10724,7 +10724,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -10738,7 +10738,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -11158,7 +11158,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -11298,7 +11298,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -11410,7 +11410,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -11522,7 +11522,7 @@
      "ok": true,
      "raw": 63,
      "relevant": 2,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -11592,7 +11592,7 @@
      "ok": true,
      "raw": 83,
      "relevant": 8,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -11855,7 +11855,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -11911,7 +11911,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 20.0,
+     "seconds": 20,
      "skipped": false,
      "messages": []
     },
@@ -12121,7 +12121,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 2,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -12401,7 +12401,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -12471,7 +12471,7 @@
      "ok": true,
      "raw": 31,
      "relevant": 12,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -12708,7 +12708,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -12750,7 +12750,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -12820,7 +12820,7 @@
      "ok": true,
      "raw": 5,
      "relevant": 4,
-     "seconds": 5.0,
+     "seconds": 5,
      "skipped": false,
      "messages": []
     },
@@ -12834,7 +12834,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -12890,7 +12890,7 @@
      "ok": true,
      "raw": 19,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -13685,7 +13685,7 @@
      "ok": true,
      "raw": 171,
      "relevant": 20,
-     "seconds": 10.0,
+     "seconds": 10,
      "skipped": false,
      "messages": []
     },
@@ -13839,7 +13839,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -13923,7 +13923,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -14077,7 +14077,7 @@
      "ok": true,
      "raw": 1,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -14147,7 +14147,7 @@
      "ok": true,
      "raw": 102,
      "relevant": 28,
-     "seconds": 15.0,
+     "seconds": 15,
      "skipped": false,
      "messages": []
     },
@@ -14413,7 +14413,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -14497,7 +14497,7 @@
      "ok": true,
      "raw": 63,
      "relevant": 3,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -14595,7 +14595,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 20.0,
+     "seconds": 20,
      "skipped": false,
      "messages": []
     },
@@ -14692,7 +14692,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -14790,7 +14790,7 @@
      "ok": true,
      "raw": 3,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -15126,7 +15126,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -15392,7 +15392,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -15490,7 +15490,7 @@
      "ok": true,
      "raw": 63,
      "relevant": 4,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -15560,7 +15560,7 @@
      "ok": true,
      "raw": 81,
      "relevant": 8,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -15754,7 +15754,7 @@
      "ok": true,
      "raw": 23,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -15810,7 +15810,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -15936,7 +15936,7 @@
      "ok": true,
      "raw": 77,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -15978,7 +15978,7 @@
      "ok": true,
      "raw": 10,
      "relevant": 6,
-     "seconds": 6.0,
+     "seconds": 6,
      "skipped": false,
      "messages": []
     },
@@ -16244,7 +16244,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 19.0,
+     "seconds": 19,
      "skipped": false,
      "messages": []
     },
@@ -16384,7 +16384,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -16440,7 +16440,7 @@
      "ok": true,
      "raw": 32,
      "relevant": 13,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -16454,7 +16454,7 @@
      "ok": true,
      "raw": 21,
      "relevant": 6,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -16956,7 +16956,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -17040,7 +17040,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 18.0,
+     "seconds": 18,
      "skipped": false,
      "messages": []
     },
@@ -17320,7 +17320,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 17.0,
+     "seconds": 17,
      "skipped": false,
      "messages": []
     },
@@ -17390,7 +17390,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -17404,7 +17404,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -17418,7 +17418,7 @@
      "ok": true,
      "raw": 12,
      "relevant": 2,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -17668,7 +17668,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -17682,7 +17682,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -17920,7 +17920,7 @@
      "ok": true,
      "raw": 77,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -17962,7 +17962,7 @@
      "ok": true,
      "raw": 10,
      "relevant": 2,
-     "seconds": 6.0,
+     "seconds": 6,
      "skipped": false,
      "messages": []
     },
@@ -18102,7 +18102,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -18158,7 +18158,7 @@
      "ok": true,
      "raw": 76,
      "relevant": 7,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -18214,7 +18214,7 @@
      "ok": true,
      "raw": 22,
      "relevant": 3,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -18368,7 +18368,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -18452,7 +18452,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 17.0,
+     "seconds": 17,
      "skipped": false,
      "messages": []
     },
@@ -18564,7 +18564,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 21.0,
+     "seconds": 21,
      "skipped": false,
      "messages": []
     },
@@ -18658,7 +18658,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -18868,7 +18868,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 15.0,
+     "seconds": 15,
      "skipped": false,
      "messages": []
     },
@@ -18938,7 +18938,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -18952,7 +18952,7 @@
      "ok": true,
      "raw": 10,
      "relevant": 3,
-     "seconds": 6.0,
+     "seconds": 6,
      "skipped": false,
      "messages": []
     },
@@ -19106,7 +19106,7 @@
      "ok": true,
      "raw": 104,
      "relevant": 23,
-     "seconds": 15.0,
+     "seconds": 15,
      "skipped": false,
      "messages": []
     },
@@ -19162,7 +19162,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -19232,7 +19232,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -19470,7 +19470,7 @@
      "ok": true,
      "raw": 176,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -19635,7 +19635,7 @@
      "ok": true,
      "raw": 179,
      "relevant": 20,
-     "seconds": 10.0,
+     "seconds": 10,
      "skipped": false,
      "messages": []
     },
@@ -19649,7 +19649,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -19691,7 +19691,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -19943,7 +19943,7 @@
      "ok": true,
      "raw": 10,
      "relevant": 3,
-     "seconds": 6.0,
+     "seconds": 6,
      "skipped": false,
      "messages": []
     },
@@ -20027,7 +20027,7 @@
      "ok": true,
      "raw": 1,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -20461,7 +20461,7 @@
      "ok": true,
      "raw": 176,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -20681,7 +20681,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -21339,7 +21339,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -21423,7 +21423,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 18.0,
+     "seconds": 18,
      "skipped": false,
      "messages": []
     },
@@ -21521,7 +21521,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -21657,7 +21657,7 @@
      "ok": true,
      "raw": 14,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -21741,7 +21741,7 @@
      "ok": true,
      "raw": 7,
      "relevant": 4,
-     "seconds": 5.0,
+     "seconds": 5,
      "skipped": false,
      "messages": []
     },
@@ -21769,7 +21769,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -21783,7 +21783,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 20.0,
+     "seconds": 20,
      "skipped": false,
      "messages": []
     },
@@ -22063,7 +22063,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -22077,7 +22077,7 @@
      "ok": true,
      "raw": 105,
      "relevant": 25,
-     "seconds": 16.0,
+     "seconds": 16,
      "skipped": false,
      "messages": []
     },
@@ -22634,7 +22634,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -22760,7 +22760,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -22872,7 +22872,7 @@
      "ok": true,
      "raw": 77,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -23124,7 +23124,7 @@
      "ok": true,
      "raw": 1,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -23194,7 +23194,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -23376,7 +23376,7 @@
      "ok": true,
      "raw": 33,
      "relevant": 13,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -23404,7 +23404,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 18.0,
+     "seconds": 18,
      "skipped": false,
      "messages": []
     },
@@ -23530,7 +23530,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     }
@@ -23624,7 +23624,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -23750,7 +23750,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -24100,7 +24100,7 @@
      "ok": true,
      "raw": 74,
      "relevant": 7,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -24114,7 +24114,7 @@
      "ok": true,
      "raw": 1,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -24520,7 +24520,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     }
@@ -24782,7 +24782,7 @@
      "ok": true,
      "raw": 19,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -24824,7 +24824,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -25356,7 +25356,7 @@
      "ok": true,
      "raw": 33,
      "relevant": 13,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -25454,7 +25454,7 @@
      "ok": true,
      "raw": 72,
      "relevant": 17,
-     "seconds": 8.0,
+     "seconds": 8,
      "skipped": false,
      "messages": []
     },
@@ -25468,7 +25468,7 @@
      "ok": true,
      "raw": 81,
      "relevant": 7,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -25635,7 +25635,7 @@
      "ok": false,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -25649,7 +25649,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -25663,7 +25663,7 @@
      "ok": true,
      "raw": 24,
      "relevant": 0,
-     "seconds": 2.0,
+     "seconds": 2,
      "skipped": false,
      "messages": []
     },
@@ -25705,7 +25705,7 @@
      "ok": true,
      "raw": 7,
      "relevant": 4,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -26041,7 +26041,7 @@
      "ok": true,
      "raw": 105,
      "relevant": 25,
-     "seconds": 16.0,
+     "seconds": 16,
      "skipped": false,
      "messages": []
     },
@@ -26069,7 +26069,7 @@
      "ok": true,
      "raw": 206,
      "relevant": 26,
-     "seconds": 133.0,
+     "seconds": 133,
      "skipped": false,
      "messages": []
     },
@@ -26181,7 +26181,7 @@
      "ok": true,
      "raw": 0,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -26405,7 +26405,7 @@
      "ok": true,
      "raw": 178,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -26447,7 +26447,7 @@
      "ok": true,
      "raw": 72,
      "relevant": 17,
-     "seconds": 8.0,
+     "seconds": 8,
      "skipped": false,
      "messages": []
     },
@@ -26631,7 +26631,7 @@
      "ok": true,
      "raw": 4,
      "relevant": 0,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -26659,7 +26659,7 @@
      "ok": true,
      "raw": 9,
      "relevant": 0,
-     "seconds": 6.0,
+     "seconds": 6,
      "skipped": false,
      "messages": []
     },
@@ -26743,7 +26743,7 @@
      "ok": true,
      "raw": 73,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -26785,7 +26785,7 @@
      "ok": true,
      "raw": 146,
      "relevant": 8,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -26827,7 +26827,7 @@
      "ok": true,
      "raw": 12,
      "relevant": 1,
-     "seconds": 3.0,
+     "seconds": 3,
      "skipped": false,
      "messages": []
     },
@@ -26841,7 +26841,7 @@
      "ok": true,
      "raw": 33,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -26911,7 +26911,7 @@
      "ok": true,
      "raw": 81,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -27013,7 +27013,7 @@
      "ok": true,
      "raw": 74,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -27069,7 +27069,7 @@
      "ok": true,
      "raw": 12,
      "relevant": 1,
-     "seconds": 4.0,
+     "seconds": 4,
      "skipped": false,
      "messages": []
     },
@@ -27181,7 +27181,7 @@
      "ok": true,
      "raw": 1,
      "relevant": 0,
-     "seconds": 1.0,
+     "seconds": 1,
      "skipped": false,
      "messages": []
     },
@@ -27932,5 +27932,23 @@
    "errors": 42
   }
  ],
- "last_successful_run_at": null
+ "last_successful_run_at": null,
+ "output_audit": {
+  "reviewed_at": "2026-10-11T19:10:39Z",
+  "quarantined_ids": [
+   25,
+   55,
+   115,
+   117,
+   119,
+   120,
+   121,
+   122,
+   145,
+   148,
+   162
+  ],
+  "source_run_id": "38139499012",
+  "reason": "Non-actionable public application URLs quarantined; historical vacancy status and receipts are unchanged"
+ }
 }

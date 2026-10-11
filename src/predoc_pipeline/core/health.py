@@ -12,6 +12,10 @@ def source_status(data: dict[str, Any]) -> str:
     if data.get("ok") is False or data.get("errors"):
         return "partial" if data.get("items") else "failed"
     if not data.get("items") and not data.get("unchanged"):
+        # A completed fetch which unexpectedly yields zero vacancies is not
+        # evidence that the feed is healthy. Small/seasonal boards may opt out.
+        if data.get("fetched") and not data.get("may_be_empty", False):
+            return "failed"
         return "empty"
     return "successful"
 
@@ -24,8 +28,8 @@ def source_summary(stats: dict[str, Any]) -> dict[str, int]:
         status = source_status(data)
         summary["total"] += 1
         summary[status] += 1
-        if status == "partial":
-            summary["failed"] += 1
+        # Categories are mutually exclusive: partial sources are reported in
+        # "partial", not also in "failed".
     return summary
 
 
@@ -75,5 +79,12 @@ def public_source_stats(stats: dict[str, Any]) -> dict[str, Any]:
         public["messages"] = list(dict.fromkeys(
             public_failure(message) for message in (data.get("messages") or [])[:5]
         ))
+        if (
+            source_status(public) == "failed"
+            and not public["messages"]
+            and public.get("fetched")
+            and not public.get("items")
+        ):
+            public["messages"] = ["Unexpected empty source result"]
         out[name] = public
     return out
