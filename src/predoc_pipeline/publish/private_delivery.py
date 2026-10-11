@@ -108,7 +108,7 @@ def send_batch(
     if not settings.telegram_bot_token:
         raise ValueError("TELEGRAM_BOT_TOKEN is required")
     with TelegramClient(bot_token=settings.telegram_bot_token, client=client) as telegram:
-        for row in batch:
+        for index, row in enumerate(batch):
             if not isinstance(row, dict) or not all(
                 isinstance(row.get(k), str) for k in ("chat_id", "key", "text")
             ):
@@ -124,6 +124,7 @@ def send_batch(
             intent = member["deliveries"].get(row["key"])
             if not isinstance(intent, dict) or intent.get("state") != "sending":
                 continue
+            stop = False
             try:
                 message_id = telegram.send_message(
                     chat_id=chat_id, html=row["text"], sleep=sleep,
@@ -137,11 +138,11 @@ def send_batch(
                 elif exc.status == 429:
                     store.cancel_delivery(int(chat_id), row["key"])
                     counts["failed"] += 1
-                    break
+                    stop = True
                 else:
                     store.finish_delivery(int(chat_id), row["key"], uncertain=True)
                     counts["uncertain"] += 1
-                    break
+                    stop = True
             except Exception:
                 store.finish_delivery(int(chat_id), row["key"], uncertain=True)
                 store.save()
@@ -150,4 +151,17 @@ def send_batch(
                 store.finish_delivery(int(chat_id), row["key"], message_id=message_id)
                 counts["sent"] += 1
             store.save()
+            if stop:
+                # None of the remaining batch entries has been submitted.
+                # Release only those known-unattempted intents; never
+                # release the request with an ambiguous remote outcome.
+                for remainder in batch[index + 1:]:
+                    pending = store.subscriber(remainder["chat_id"])
+                    if pending is None:
+                        continue
+                    receipt = pending["deliveries"].get(remainder["key"])
+                    if receipt is not None and receipt["state"] == "sending":
+                        store.cancel_delivery(int(remainder["chat_id"]), remainder["key"])
+                store.save()
+                break
     return counts

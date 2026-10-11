@@ -264,9 +264,13 @@ def telegram_sync(
             if exc.status == 409:
                 log.error("telegram_webhook_set",
                           hint="a webhook is set for this bot; commands only work without one")
+                if store.subscribers:
+                    raise  # never send to opted-in users when /stop cannot be received
                 return summary
             if exc.status in (401, 403, 404):
                 log.warning("telegram_auth_or_chat_failed", error=str(exc))
+                if store.subscribers:
+                    raise
                 return summary
             raise
         if not updates:
