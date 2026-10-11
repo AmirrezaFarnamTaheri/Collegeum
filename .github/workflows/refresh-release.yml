@@ -12,6 +12,11 @@ on:
     branches: ['**']
     paths:
       - .github/workflows/refresh-release.yml
+      - src/**
+      - tests/**
+      - tools/**
+      - config/**
+      - .github/workflows/**
   workflow_dispatch:
 
 permissions:
