@@ -66,6 +66,7 @@ def render(settings: Settings, store: FeedbackStore, page: str = "status") -> st
     init(settings.db_path)
     with Database(settings.db_path) as db:
         state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
+        state.restore_runs(db, settings.health_json)
         if page == "runs":
             runs = db.recent_runs(8)
             lines = [
