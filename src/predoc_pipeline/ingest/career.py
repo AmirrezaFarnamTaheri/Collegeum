@@ -28,6 +28,7 @@ log = get_logger(__name__)
 
 REMOTE_API = "https://jobicy.com/api/v2/remote-jobs?count=200&geo=anywhere"
 REMOTE_STATUS_API = "https://jobicy.com/api/v2/remote-jobs/status"
+IRANTALENT_URL = "https://www.irantalent.com/en/jobs"
 MAX_PROVIDER_ID = 9_007_199_254_740_991
 IRAN_SEARCH_TERMS = (
     "تحلیلگر داده", "دانشمند داده", "تحلیل اقتصادی", "مشاور مدیریت",
@@ -187,6 +188,82 @@ def parse_iran_jobs(html: str) -> list[dict[str, str]]:
     return out
 
 
+
+# IranTalent's public /en/jobs page serves job cards without requiring login.
+# The unfiltered path avoids search parameters disallowed by its robots.txt.
+# Do not infer Iran-based location from the company domain alone.
+_IRAN_CITIES_EN = (
+    "tehran", "karaj", "mashhad", "isfahan", "shiraz", "tabriz", "ahvaz",
+    "qom", "rasht", "yazd", "kish", "qazvin", "kerman", "ardabil", "arak",
+    "urmia", "orumiyeh", "zanjan", "hamadan", "sanandaj", "bandar abbas",
+    "kermanshah", "sari", "gorgan", "bushehr", "iran",
+)
+_IRAN_CITIES_FA = (
+    "تهران", "کرج", "مشهد", "اصفهان", "شیراز", "تبریز", "اهواز", "قم",
+    "رشت", "یزد", "کیش", "قزوین", "کرمان", "اراک", "ارومیه", "زنجان",
+    "همدان", "سنندج", "بندرعباس", "کرمانشاه", "ساری", "گرگان",
+    "بوشهر", "ایران",
+)
+_IRANTALENT_JOB = re.compile(r"/(?:en|fa)/job/[^/]+/[1-9]\d{3,10}/?$", re.I)
+
+
+def _iran_location(card_text: str) -> str | None:
+    if re.search(r"\b(?:outside (?:of )?iran|abroad)\b", card_text, re.I):
+        return None
+    for place in _IRAN_CITIES_FA:
+        if place in card_text:
+            return place
+    for place in _IRAN_CITIES_EN:
+        if re.search(rf"\b{re.escape(place)}\b", card_text, re.I):
+            return place.title()
+    return None
+
+
+def parse_irantalent_jobs(html: str) -> list[dict[str, str]]:
+    """Extract validated Iran-based career cards from the public listing page.
+
+    A job link alone cannot establish location; cards with no explicit Iranian
+    place are excluded. The surrounding navigation and similar-jobs links
+    never count as title evidence.
+    """
+    soup = BeautifulSoup(html, "lxml")
+    output: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for a in soup.select("a[href]")[:500]:
+        raw = str(a.get("href") or "")
+        link = urlsplit(urljoin(IRANTALENT_URL, raw))
+        if (link.scheme != "https" or link.hostname not in
+                {"www.irantalent.com", "irantalent.com"} or
+                not _IRANTALENT_JOB.fullmatch(link.path)):
+            continue
+        url = "https://www.irantalent.com" + link.path.rstrip("/")
+        if url in seen:
+            continue
+        seen.add(url)
+        title_element = a.select_one("h2, h3, h4, [class*='job-title']")
+        title = (title_element.get_text(" ", strip=True)
+                 if title_element else next(a.stripped_strings, ""))
+        card = a.find_parent(["article", "li"]) or a
+        details = card.get_text(" ", strip=True)[:800]
+        location = _iran_location(details)
+        if not location:
+            continue
+        company = card.select_one("[class*='company'], [class*='employer']")
+        employer = (
+            company.get_text(" ", strip=True)
+            if company else "IranTalent employer"
+        )
+        parsed = _job(
+            url=url, title=title, employer=employer, location=location,
+            source="IranTalent", scope="iran",
+        )
+        if parsed is not None:
+            output.append(parsed)
+        if len(output) >= 30:
+            break
+    return output
+
+
 def load_career(path: str | Path) -> list[dict[str, str]]:
     p = Path(path)
     if not p.exists():
@@ -341,6 +418,7 @@ def poll_career(
     sources: dict[str, dict[str, Any]] = {
         "jobicy": {"requested": needs_remote, "fetched": 0, "accepted": 0},
         "jobinja": {"requested": needs_iran, "fetched": 0, "accepted": 0},
+        "irantalent": {"requested": needs_iran, "fetched": 0, "accepted": 0},
     }
     if needs_remote:
         cursor: str | None = None
@@ -389,6 +467,18 @@ def poll_career(
             fresh.extend(parsed)
         else:
             errors.append(f"Jobinja fetch: {res.error or res.status}")
+
+        # One unfiltered, robots-allowed IranTalent listing request.
+        other = client.get(IRANTALENT_URL)
+        sources["irantalent"]["fetched"] += 1
+        if other.ok:
+            parsed = parse_irantalent_jobs(other.text)
+            sources["irantalent"]["accepted"] += len(parsed)
+            if not re.search(r"/(?:en|fa)/job/[^"' ]+", other.text, re.I):
+                errors.append("IranTalent returned no job links; verify page markup")
+            fresh.extend(parsed)
+        else:
+            errors.append(f"IranTalent fetch: {other.error or other.status}")
     new_count = save_career(path, previous, fresh)
     for error in errors:
         log.warning("career_source_failed", error=truncate(error, 200))
