@@ -833,3 +833,94 @@ def test_sources_command_and_inline_navigation_share_same_panel(tmp_path):
     edits = [p for m, p in api.calls if m == "editMessageText"]
     assert len(edits) == 1
     assert "IranTalent" in edits[0]["text"]
+
+
+
+def test_private_job_cards_have_action_links_and_manage_alerts(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_analyst")
+    store.toggle_subscription(101, "scopes", "iran")
+    previous = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_analyst"] = previous
+    store.subscriber(101)["scopes"]["iran"] = previous
+    store.save()
+    url = "https://www.irantalent.com/en/job/data-analyst/184771"
+    save_career(cfg.career_state_path, [], [{
+        "key": "career:job-card", "title": "Data Analyst",
+        "category": "data_analyst", "scope": "iran", "url": url,
+        "employer": "Pars", "location": "Tehran", "source": "IranTalent",
+    }])
+    batch = tmp_path / "private.json"
+    assert plan_batch(cfg, path=batch) == 1
+    api = API()
+    with httpx.Client(transport=httpx.MockTransport(api.handler)) as client:
+        result = send_batch(cfg, path=batch, client=client, sleep=lambda _: None)
+    assert result["sent"] == 1
+    sent = api.sent(101)[0]
+    actions = sent["reply_markup"]["inline_keyboard"]
+    assert actions[0][0]["url"] == url
+    assert actions[1][0]["callback_data"] == "sub:p:home"
+    assert len(actions) == 2
+
+
+def test_pause_after_planning_cancels_unsent_message_intent(tmp_path):
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "data_scientist")
+    store.toggle_subscription(101, "scopes", "remote")
+    previous = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+    store.subscriber(101)["topics"]["data_scientist"] = previous
+    store.subscriber(101)["scopes"]["remote"] = previous
+    store.save()
+    save_career(cfg.career_state_path, [], [{
+        "key": "career:pause-late", "title": "Data Scientist",
+        "category": "data_scientist", "scope": "remote",
+        "url": "https://jobicy.com/jobs/pause-late",
+        "employer": "Example", "location": "Anywhere", "source": "Jobicy",
+    }])
+    batch = tmp_path / "batch.json"
+    assert plan_batch(cfg, path=batch) == 1
+    fresh = FeedbackStore.from_settings(cfg)
+    fresh.set_paused(101, True)
+    fresh.save()
+    api = API()
+    with httpx.Client(transport=httpx.MockTransport(api.handler)) as client:
+        result = send_batch(cfg, path=batch, client=client, sleep=lambda _: None)
+    assert result["sent"] == 0
+    assert api.sent(101) == []
+    assert FeedbackStore.from_settings(cfg).subscriber(101)["deliveries"] == {}
+
+
+def test_bot_command_scopes_exclude_administration_for_general_users(tmp_path):
+    cfg = settings(tmp_path, "99")
+    api = API([message(1, 101, "/start")])
+    run(cfg, api)
+    command_sets = [
+        payload for name, payload in api.calls if name == "setMyCommands"
+    ]
+    assert len(command_sets) == 3
+    global_commands = {
+        c["command"] for c in command_sets[0]["commands"]
+    }
+    assert "admin" not in global_commands
+    assert "settings" in global_commands
+    assert "sources" in global_commands
+    fa = command_sets[1]
+    assert fa["language_code"] == "fa"
+    assert fa["scope"]["type"] == "all_private_chats"
+    scoped = command_sets[2]
+    assert scoped["scope"] == {"type": "chat", "chat_id": 99}
+    assert "admin" in {command["command"] for command in scoped["commands"]}
+
+
+def test_forged_cross_user_callback_does_not_change_subscriptions(tmp_path):
+    cfg = settings(tmp_path)
+    forged = tap(1, 202, "sub:t:predoc")
+    forged["callback_query"]["message"]["chat"]["id"] = 101
+    api = API([forged])
+    run(cfg, api)
+    store = FeedbackStore.from_settings(cfg)
+    assert store.subscriber(101) is None
+    assert store.subscriber(202) is None
+    assert not api.sent()
