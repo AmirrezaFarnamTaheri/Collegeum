@@ -302,11 +302,13 @@ variables, logs, documentation, or PR comments. Use the existing
 `predoc-pipeline feedback-key` command on a trusted machine to generate a
 new Fernet key, then save its output directly as the Actions secret.
 
-For an intentionally inactive private bot, set the Actions **repository
-variable** `ENABLE_TELEGRAM_SYNC=false`. That explicitly skips the job,
-instead of displaying green processing despite missing credentials. Unset
-the variable (or set any value other than `false`) after configuring both
-secrets. Existing ciphertext requires its **original** encryption key; a
+Private subscriptions are **inactive by default**. After verifying the
+original encryption key, the authoritative encrypted state and both
+required credentials, set the Actions **repository variable**
+`ENABLE_TELEGRAM_SYNC=true` to activate private inbox polling. Any other
+value, including unset or `false`, skips that job while leaving public
+channel publication unaffected. After explicit activation, missing
+credentials remain fatal rather than producing a false-green inbox poll. Existing ciphertext requires its **original** encryption key; a
 newly generated key cannot decrypt old `data/feedback.enc`. Restore the
 original key from trusted backup, or perform a documented migration while
 preserving prior encrypted state and receipts.
@@ -440,9 +442,10 @@ never print its value or copy it to a public workflow file.
 When the key is unavailable, the main pipeline **does not poll or acknowledge
 private updates**, and public cards do not display nonfunctional personal
 feedback controls. Normal public channel announcements remain enabled. The
-private inbox workflow reports a failed configuration preflight unless it is
-explicitly disabled with `ENABLE_TELEGRAM_SYNC=false`. Disabling the private
-inbox is not equivalent to providing encryption or processing subscriptions.
+private inbox workflow remains inactive until explicitly enabled with
+`ENABLE_TELEGRAM_SYNC=true`. Once enabled, missing credentials cause a
+failed preflight. An inactive private inbox is not equivalent to providing
+encryption or processing subscriptions.
 
 A separate `403 Forbidden: bot can't initiate conversation with a user`
 when delivering an **administrator alert** means that the destination user

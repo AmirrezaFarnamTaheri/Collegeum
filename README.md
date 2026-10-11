@@ -54,9 +54,11 @@ are committed before any Bot API send, and delivery outcomes are committed
 afterward. Failed and ambiguous sends remain visible for reconciliation.
 Both require the existing `FEEDBACK_ENCRYPTION_KEY`; configure a positive
 `TELEGRAM_ADMIN_CHAT_ID` for the admin surface. Scheduled private-sync
-runs now **fail** when `TELEGRAM_BOT_TOKEN` or `FEEDBACK_ENCRYPTION_KEY`
-is missing; a deliberately inactive bot must be explicitly disabled with
-the Actions repository variable `ENABLE_TELEGRAM_SYNC=false`. A previous
+runs **only** when `ENABLE_TELEGRAM_SYNC=true` is set as an Actions
+repository variable; when enabled, it fails if `TELEGRAM_BOT_TOKEN` or
+`FEEDBACK_ENCRYPTION_KEY` is missing. By default the private inbox is
+inactive until existing encrypted state and its original key are verified.
+Public Telegram channel announcements remain independent. A previous
 production run appeared green after silently skipping due to a missing
 encryption key. See the operations guide for safe restoration and validation.
 

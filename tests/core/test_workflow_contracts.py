@@ -36,7 +36,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("timeout-minutes: 120", pipeline)
         self.assertIn("github.event.inputs.dry_run != 'true'", pipeline)
         self.assertIn(
-            "vars.ENABLE_TELEGRAM_SYNC != 'false'", workflow("telegram.yml"),
+            "vars.ENABLE_TELEGRAM_SYNC == 'true'", workflow("telegram.yml"),
         )
 
     def test_existing_github_environment_secrets_can_be_selected_without_rotation(self):
@@ -58,9 +58,9 @@ class WorkflowContractTests(unittest.TestCase):
             workflow("telegram.yml"),
         )
 
-    def test_private_telegram_requires_credentials_or_explicit_disable(self):
+    def test_private_telegram_requires_explicit_activation_and_credentials(self):
         content = workflow("telegram.yml")
-        self.assertIn("vars.ENABLE_TELEGRAM_SYNC != 'false'", content)
+        self.assertIn("vars.ENABLE_TELEGRAM_SYNC == 'true'", content)
         guard = content.index("name: Require live private Telegram credentials")
         private_checkout = content.index("name: Checkout authoritative private state")
         sync = content.index("name: Process private commands")
@@ -68,6 +68,8 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertLess(private_checkout, sync)
         self.assertIn('if [ -z "$TELEGRAM_BOT_TOKEN" ]', content)
         self.assertIn('if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]', content)
+        # Only the literal 'true' is permission to activate private writes.
+        self.assertNotIn("vars.ENABLE_TELEGRAM_SYNC != 'false'", content)
         self.assertIn("::error::FEEDBACK_ENCRYPTION_KEY was not injected", content)
         self.assertIn("::error::TELEGRAM_BOT_TOKEN is missing", content)
         self.assertNotIn('echo "private_enabled=false"', content)

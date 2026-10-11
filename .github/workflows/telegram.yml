@@ -22,8 +22,9 @@ concurrency:
 
 jobs:
   sync:
-    # Opt out explicitly; absence of credentials is never a successful no-op.
-    if: github.ref == 'refs/heads/main' && vars.ENABLE_TELEGRAM_SYNC != 'false'
+    # Private subscriptions require explicit opt-in after validating state and key.
+    # Public Telegram broadcasts remain controlled independently by pipeline.yml.
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_TELEGRAM_SYNC == 'true'
     runs-on: ubuntu-latest
     # When existing credentials are GitHub Environment secrets, set the
     # REPOSITORY variable COLLEGEUM_SECRET_ENVIRONMENT to that environment's
