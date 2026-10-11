@@ -1,7 +1,48 @@
 {
- "generated_at": "2026-10-11T10:34:36Z",
- "count": 133,
+ "generated_at": "2026-10-11T12:41:36Z",
+ "count": 134,
  "listings": [
+  {
+   "id": 175,
+   "title": "Public Health Research Analyst",
+   "institution": "University of Chicago",
+   "principal_investigator": null,
+   "country": "United States",
+   "city": "Chicago",
+   "is_remote": false,
+   "duration_years": null,
+   "deadline": "2026-12-01T23:59:59Z",
+   "days_left": 51,
+   "disciplines": [
+    "Health Economics"
+   ],
+   "visa": "unknown",
+   "summary": "The Public Health Research Analyst position at the University of Chicago involves data quality management, retrieval of patient or participant data from clinical and research databases, and support for evaluating the California Safety-Net Population Health Management Initiative through mixed methods analysis. The role requires a college degree and less than two years of related experience, with preferred background in social sciences, data science, or public health and proficiency in statistical software such as SAS, Stata, or R.",
+   "language": "en",
+   "apply_url": "https://uchicago.wd5.myworkdayjobs.com/External/job/Illinois-Chicago/Public-Health-Research-Analyst_JR33866",
+   "source_url": "https://uchicago.wd5.myworkdayjobs.com/External/job/Illinois-Chicago/Public-Health-Research-Analyst_JR33866",
+   "confidence": 0.924,
+   "first_seen_at": "2026-10-11T12:41:35Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": [],
+   "salary_min": null,
+   "salary_max": null,
+   "salary_currency": null,
+   "salary_period": null,
+   "salary_raw": null,
+   "tools_required": [
+    "Stata",
+    "R"
+   ],
+   "tools_preferred": [],
+   "min_degree": "bachelors",
+   "degree_note": null,
+   "start_term": null,
+   "start_date": null,
+   "kind": "predoc",
+   "sector": "academic"
+  },
   {
    "id": 173,
    "title": "Doktorand/in und Assistent/in",
@@ -387,7 +428,9 @@
    "first_seen_at": "2026-10-11T10:18:16Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://www.timeshighereducation.com/unijobs/listing/414115/cus-postdoctoral-researcher-in-spatial-data-science?LinkSource=PremiumListing"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -884,7 +927,7 @@
   {
    "id": 140,
    "title": "Post-doctoral Associate in the Division of Social Science (Social Research and Public Policy)",
-   "institution": "New York University Abu Dhabi",
+   "institution": "NEW YORK UNIVERSITY ABU DHABI",
    "principal_investigator": "Luca Maria Pesando",
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
@@ -893,20 +936,22 @@
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 96,
    "disciplines": [
+    "Econometrics",
     "Public Policy",
-    "Development Economics",
     "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The role is a post-doctoral associate position at NYU Abu Dhabi's Division of Social Science, focusing on research into educational inequalities and social stratification in the Global South. It suits candidates with a PhD in sociology, demography, international development, public policy, economics or a related field, and experience with large-scale survey data analysis.",
+   "summary": "This is a fixed-term postdoctoral associate position at NYU Abu Dhabi focusing on educational inequalities and social stratification in the Global South using large-scale assessment data. Applicants must hold a PhD within five years of graduation and demonstrate expertise in data analysis with skills in R, Stata, Python, and GIS.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing",
-   "confidence": 0.96,
+   "confidence": 0.953,
    "first_seen_at": "2026-10-11T10:10:23Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -1206,7 +1251,7 @@
    "id": 131,
    "title": "Postdoctoral/Research Fellow, Tax and Transfer Policy Institute",
    "institution": "Australian National University (ANU)",
-   "principal_investigator": "Professor Robert Breunig",
+   "principal_investigator": "Robert Breunig",
    "country": "Australia",
    "city": "Canberra",
    "is_remote": false,
@@ -1215,10 +1260,11 @@
    "days_left": 0,
    "disciplines": [
     "Public Policy",
+    "Econometrics",
     "Applied Microeconomics"
    ],
-   "visa": "unknown",
-   "summary": "The position is a Postdoctoral/Research Fellow at the Tax and Transfer Policy Institute, focusing on policy‑relevant research in tax and transfer areas. The role suits candidates with a completed doctorate who can conduct independent research and publish in economics and public policy journals.",
+   "visa": "not_offered",
+   "summary": "The role is a postdoctoral research fellowship at the Tax and Transfer Policy Institute, Australian National University, conducting research on tax and transfer policy. It is intended for candidates with a doctoral degree or equivalent research experience in economics, econometrics or public policy who can publish in peer‑reviewed journals and work with government stakeholders.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/415881/postdoctoral-research-fellow-tax-and-transfer-policy-institute-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/415881/postdoctoral-research-fellow-tax-and-transfer-policy-institute-?LinkSource=PremiumListing",
@@ -1226,7 +1272,9 @@
    "first_seen_at": "2026-10-11T10:09:56Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://www.timeshighereducation.com/unijobs/listing/415881/postdoctoral-research-fellow-tax-and-transfer-policy-institute-?LinkSource=PremiumListing"
+   ],
    "salary_min": 91546.0,
    "salary_max": 141317.0,
    "salary_currency": "USD",
@@ -1234,8 +1282,8 @@
    "salary_raw": "$91,546 - $141,317 per annum plus 17 % superannuation",
    "tools_required": [],
    "tools_preferred": [],
-   "min_degree": "phd",
-   "degree_note": null,
+   "min_degree": "unstated",
+   "degree_note": "unstated",
    "start_term": null,
    "start_date": null,
    "kind": "postdoc",
@@ -3161,16 +3209,17 @@
    "institution": "Princeton University",
    "principal_investigator": "Ilyana Kuziemko, Henrik Kleven, Evan Soltas",
    "country": "United States",
-   "city": null,
+   "city": "Princeton",
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 96,
    "disciplines": [
-    "Applied Microeconomics"
+    "Applied Microeconomics",
+    "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "The position is a full‑time predoctoral research role at Princeton University, focusing on public economics under the supervision of Ilyana Kuziemko, Henrik Kleven, and Evan Soltas. It is suitable for candidates seeking pre‑doctoral research experience in public economics.",
+   "summary": "This is a full-time predoctoral research role at Princeton University focused on public economics. The position is supervised by Ilyana Kuziemko, Henrik Kleven, and Evan Soltas, with applications accepted until January 15, 2027.",
    "language": "en",
    "apply_url": "https://bit.ly/4xP280Q",
    "source_url": "https://bit.ly/4xP280Q",
@@ -3178,7 +3227,9 @@
    "first_seen_at": "2026-10-11T09:50:44Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://bit.ly/4xP280Q"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
