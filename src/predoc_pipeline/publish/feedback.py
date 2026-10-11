@@ -295,7 +295,7 @@ class FeedbackStore:
         self._dirty = True
         return True
 
-    def prune_deliveries(self, *, days: int = 180) -> int:
+    def prune_deliveries(self, *, days: int = 45) -> int:
         """Discard old confirmed receipts, never unresolved/uncertain sends.
 
         Incoming academic matches are bounded to fourteen days; career

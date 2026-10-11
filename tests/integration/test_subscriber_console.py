@@ -949,7 +949,7 @@ def test_poison_career_journal_does_not_block_later_unsubscribe(tmp_path):
     assert load_chat_state(cfg.telegram_state_path)["offset"] == 7
     assert FeedbackStore.from_settings(cfg).subscriber(101) is None
     assert any("unavailable" in str(m["text"]) for m in api.sent(101))
-    assert any("journal unreadable" in str(m["text"]) for m in api.sent(99))
+    assert any("journal unreadable" in str(body["text"]) for method, body in api.calls if method == "editMessageText")
 
 
 def test_blocked_bot_is_unsubscribed_without_delivery_failure(tmp_path):
