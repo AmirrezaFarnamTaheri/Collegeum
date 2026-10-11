@@ -30,7 +30,7 @@ jobs:
     # Scheduled/manual publication must never execute unreviewed branch code.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 120
     steps:
       # ref: the branch, not the commit that triggered the run. A run that
       # waited in the queue behind the other workflow must start from the

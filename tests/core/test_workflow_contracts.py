@@ -7,7 +7,6 @@ accept workflow edits that remove the critical safety/locking contracts.
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = ROOT / ".github" / "workflows"
 
@@ -33,7 +32,10 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertIn("if: github.ref == 'refs/heads/main'", content)
                 self.assertIn("uv sync --locked", content)
                 self.assertIn("queue: max", content)
-        self.assertIn("github.event.inputs.dry_run != 'true'", workflow("pipeline.yml"))
+        pipeline = workflow("pipeline.yml")
+        self.assertIn("timeout-minutes: 120", pipeline)
+        self.assertIn("github.event.inputs.dry_run != 'true'", pipeline)
+        self.assertIn("FEEDBACK_ENCRYPTION_KEY is not configured; skipping Telegram sync.", workflow("telegram.yml"))
 
     def test_failed_sync_keeps_recovery_and_failing_status(self):
         telegram = workflow("telegram.yml")
