@@ -96,7 +96,8 @@ notification pause does not block collection or the legacy public channel.
 
 - The previous 6-hour pipeline cron is now **every 3 hours**. Automated
   scheduled executions poll alternating deterministic halves of enabled
-  academic boards: every enabled source remains eligible once per 6 hours.
+  academic boards, syndicated feeds and portals: every enabled source remains
+  eligible once per 6 hours.
   Manual pipeline runs and `--only` overrides still scan selected/all sources.
 - Per-run `max_details_per_run` and `recheck_max_per_run` were halved.
   The pipeline and Telegram jobs share a single serialized workflow

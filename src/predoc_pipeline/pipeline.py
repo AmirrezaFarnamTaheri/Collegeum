@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from . import state
-from .boards.config import Preferences, load_preferences
+from .boards.config import Preferences, load_board_sources, load_preferences
 from .core import gating
 from .core.db import Database
 from .core.db import init as init_db
@@ -1102,9 +1102,12 @@ def run(
         prefs = load_preferences(settings.preferences_config)
         feedback = FeedbackStore.from_settings(settings)
         sources = load_sources(settings.sources_config)
+        scheduled_registry: set[str] | None = None
         if settings.source_rotation_enabled and only_sources is None and not dry_run:
-            only_sources = scheduled_sources(sources)
-            log.info("source_cohort_selected", count=len(only_sources))
+            scheduled_registry = scheduled_sources(
+                [*sources, *load_board_sources(settings.sources_config)]
+            )
+            log.info("source_cohort_selected", count=len(scheduled_registry))
         unverified = [s.name for s in sources if s.enabled and not s.verified]
         if unverified:
             log.warning("unverified_sources", names=unverified[:10])
@@ -1121,6 +1124,7 @@ def run(
                 sources,
                 client,
                 only=only_sources,
+                scheduled_registry=scheduled_registry,
                 prefs=prefs,
                 known=lambda url: db.knows_url(url_hash(url)),
                 board_transport=board_transport,
