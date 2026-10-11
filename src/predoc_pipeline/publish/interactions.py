@@ -71,8 +71,6 @@ def private_message(
         bot.send(str(user_id), "You are unsubscribed. Your saved preferences were erased. "
                  "Use /start to subscribe again.")
     elif text == "/latest":
-        from .subscriptions import matching
-
         member = store.subscriber(user_id)
         if member is None or not member["topics"]:
             bot.send(str(user_id), "Choose interests with /settings first.")

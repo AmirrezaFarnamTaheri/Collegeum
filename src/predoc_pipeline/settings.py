@@ -141,7 +141,7 @@ class Settings(BaseSettings):
     sources_config: str = "config/sources.toml"
     # Fields, region, employer type, excluded employers... (see the file).
     preferences_config: str = "config/preferences.toml"
-    max_items_per_source: int = 400
+    max_items_per_source: int = 200
     http_timeout_seconds: float = 25.0
     http_user_agent: str = (
         "predoc-pipeline/2.0 (+https://github.com/USER/predoc-pipeline; "

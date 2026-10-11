@@ -89,6 +89,8 @@ jobs:
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
           XQUIK_API_KEY: ${{ secrets.XQUIK_API_KEY }}
           DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+          SOURCE_ROTATION_ENABLED: ${{ github.event_name == 'schedule' }}
+          ENABLE_CAREER_FEEDS: 'true'
         run: |
           set -o pipefail
           FLAG=""
@@ -123,7 +125,7 @@ jobs:
           # One file at a time: `git add a b` stages nothing if one is missing
           # (feedback.enc only exists once you have tapped a button).
           for f in data/listings.ndjson data/seen.ndjson data/x_threads.ndjson data/feedback.enc \
-                   data/telegram_state.json docs/data/listings.json docs/data/health.json \
+                   data/career_jobs.ndjson data/telegram_state.json docs/data/listings.json docs/data/health.json \
                    docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
           done

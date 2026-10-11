@@ -53,8 +53,10 @@ from .core.timeparse import format_ts, parse_datetime, utcnow
 from .core.urls import url_hash
 from .extract import ExtractionError, RateLimited, build_extractor
 from .extract.heuristic import UNKNOWN_INSTITUTION, HeuristicExtractor, _deadline_iso
+from .ingest.career import poll_career
 from .ingest.collectors import gather
 from .ingest.http import PoliteClient
+from .ingest.rotation import scheduled_sources
 from .ingest.sources import load_sources
 from .logging_setup import get_logger
 from .models import CoercionError, ExtractionResult, PredocListing, RawItem, coerce
@@ -1100,6 +1102,9 @@ def run(
         prefs = load_preferences(settings.preferences_config)
         feedback = FeedbackStore.from_settings(settings)
         sources = load_sources(settings.sources_config)
+        if settings.source_rotation_enabled and only_sources is None and not dry_run:
+            only_sources = scheduled_sources(sources)
+            log.info("source_cohort_selected", count=len(only_sources))
         unverified = [s.name for s in sources if s.enabled and not s.verified]
         if unverified:
             log.warning("unverified_sources", names=unverified[:10])
@@ -1149,6 +1154,27 @@ def run(
                     score=gate.score,
                 )
             return stats
+
+        if settings.enable_career_feeds and feedback.key:
+            needs_iran = feedback.wants_career("iran")
+            needs_remote = feedback.wants_career("remote")
+            if needs_iran or needs_remote:
+                try:
+                    with PoliteClient(
+                        user_agent=settings.http_user_agent,
+                        timeout=settings.http_timeout_seconds,
+                        per_host_delay=settings.per_host_delay_seconds,
+                        respect_robots=settings.respect_robots_txt,
+                        store=db,
+                    ) as career_client:
+                        count, errors = poll_career(
+                            settings.career_state_path, client=career_client,
+                            needs_iran=needs_iran, needs_remote=needs_remote,
+                        )
+                    log.info("career_sources_polled", added=count, errors=len(errors))
+                except Exception:
+                    stats.errors += 1
+                    log.exception("career_feed_poll_failed")
 
         telegram = (
             TelegramClient(bot_token=settings.telegram_bot_token, client=telegram_client)
