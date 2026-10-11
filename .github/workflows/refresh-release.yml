@@ -6,6 +6,7 @@ name: refresh-release
 # Include stdlib workflow-contract tests in the reproducible manifest. Editing this
 # workflow also refreshes it automatically, with no feature-branch hardcoding.
 # Preserve the current main source/config when refreshing after upstream merges.
+# Keep generated manifests synchronized after workflow regression-test fixes.
 on:
   push:
     branches: ['**']

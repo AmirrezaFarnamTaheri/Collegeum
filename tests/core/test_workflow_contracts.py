@@ -35,7 +35,10 @@ class WorkflowContractTests(unittest.TestCase):
         pipeline = workflow("pipeline.yml")
         self.assertIn("timeout-minutes: 120", pipeline)
         self.assertIn("github.event.inputs.dry_run != 'true'", pipeline)
-        self.assertIn("FEEDBACK_ENCRYPTION_KEY is not configured; skipping Telegram sync.", workflow("telegram.yml"))
+        self.assertIn(
+            "FEEDBACK_ENCRYPTION_KEY is not configured; skipping Telegram sync.",
+            workflow("telegram.yml"),
+        )
 
     def test_failed_sync_keeps_recovery_and_failing_status(self):
         telegram = workflow("telegram.yml")
