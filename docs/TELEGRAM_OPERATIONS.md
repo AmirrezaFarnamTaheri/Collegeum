@@ -285,114 +285,42 @@ digest date is released for same-day replanning **only when every reserved key
 has been explicitly canceled or verified absent**. A single confirmed sent or
 unresolved key keeps the digest reserved to prevent duplicate notifications.
 
-## 🧬 Life Sciences PhD — independent private category
+## Life Sciences PhD — independent private category
 
-The /lifesciences Telegram screen independently opts a subscriber in to
-`life_sciences_phd`. It does **not** change the economics/public academic
-filter, older subscriber topics, or the global `config/preferences.toml`.
-Life-sciences discovery bypasses the economics-only field filter and uses
-`config/life_sciences.toml` with the same bounded RSS/link-scan adapters.
+The bilingual Telegram /lifesciences command enables the distinct
+life_sciences_phd subscription. Economics, general academic positions and
+other career topics remain separate. No Iran/worldwide-remote job-market
+selection is required; subscriber opt-in, pause, digest, daily quotas, private
+delivery checkpoints and unsubscribe are respected.
 
-The enabled starting feeds are targeted EURAXESS searches, Dutch
-AcademicTransfer searches, and the official Max Planck vacancy RSS.
-Max Planck's international branding does not establish the location of each
-vacancy: items from that feed require an explicitly labelled European workplace
-or equivalent direct location field.
-EMBL, ETH Zurich D-BSSE and EPFL are recorded as disabled candidate sources
-pending verification of detail URL selectors and site terms; these must not
-be reported as functioning sources until they are tested.
+The current detailed source inventory, parser rules and activation procedure
+are maintained in LIFE_SCIENCES_SOURCES.md. As of 11 October 2026 the
+regional catalogue contains 112 source entries: 22 enabled and 90
+explicitly disabled candidates, across the core list and five regional
+registries. Sources include EURAXESS, AcademicTransfer, Max Planck,
+Karolinska, Uppsala, Lund, Umeå, Gothenburg, Aalto, Copenhagen, VIB, Ghent,
+Utrecht, Radboud, EPFL, Biozentrum Basel, University of Basel, CRG,
+IBEC, IRB Barcelona, Inria and the University of Vienna.
 
-**Strict match:** an actual PhD/doctoral role, explicit life-science research
-(epigenetics, chromatin, gene regulation, functional genomics,
-neurodevelopment and psychiatric genetics are prioritized; related cell/molecular
-biology, bioinformatics, RNA biology, CRISPR, iPSCs and organoids qualify),
-an identified European country outside the UK, a valid HTTPS vacancy URL,
-and no expired deadline or explicit self-funded requirement. Jobs with unknown
-geography are not automatically treated as European. A listing may mention
-funding or research grants without establishing a salary or tuition waiver;
-the bot does not claim that funding/salary/tuition has been verified.
+The two large aggregators now include 34 targeted searches in total,
+including epigenomics, gene regulation, psychiatric genetics, neurobiology,
+RNA biology, organoids and single-cell research. At most eight enabled source
+entries run per pipeline invocation. Persistent oldest-attempt-first rotation,
+doctoral-title prioritization, per-source candidate limits and bounded
+detail-page enrichment protect smaller sources from starvation and keep
+network usage bounded. The independent Life Sciences source journal is
+committed alongside public pipeline state; subscriber data is never
+included in that journal.
 
-Jobs are stored in `data/career_jobs.ndjson` using stable per-vacancy keys
-and delivered through the same checkpointed, replay-safe private outbox as
-other subscriptions. Their scope is empty, so *no Iran/worldwide-remote
-market selection is required*. The private opt-in timestamp continues to
-prevent automatic backfilling of older listings.
+A manual GitHub Actions workflow (verify-life-sciences-sources) can audit
+public landing-page link formats with a separate robots-aware client and
+a bounded 4/8/16-request limit. A green unit test is not proof that a
+third-party provider is still reachable. The legacy asynchronous collector
+does not yet automatically enforce robots.txt, so site-specific robots and
+terms verification remains required before further sources are activated.
 
-New network sources must be tested with the existing board verification
-tools and real provider pages before the disabled templates are enabled.
-
-### Expanded official PhD discovery (11 October 2026)
-
-The eight enabled source families and their current, official listing pages are:
-
-| Source | Geographic scope | Listing source |
-| --- | --- | --- |
-| EURAXESS | Eligible mainland European countries; each post verified | https://euraxess.ec.europa.eu/jobs/search |
-| AcademicTransfer | Netherlands | https://www.academictransfer.com/en/jobs/ |
-| Max Planck Society | Explicitly located European posts only | https://www.mpg.de/job-offers.rss |
-| Uppsala University | Sweden | https://www.uu.se/en/about-uu/join-us/jobs-and-vacancies?varbiCategory=PhD+positions |
-| Karolinska Institutet | Sweden | https://ki.se/en/about-ki/jobs-at-ki/available-positions-at-ki |
-| University of Copenhagen | Denmark | https://employment.ku.dk/phd/ |
-| VIB | Belgium | https://jobs.vib.be/ |
-| EPFL | Switzerland | https://careers.epfl.ch/go/PhD-Student/505174/ |
-
-The five newly enabled institutional sources have their **individual vacancy URL
-patterns** matched against verified publicly accessible posting links, including
-KI Varbi posts, Uppsala job-details IDs, Copenhagen show IDs, VIB Jobsoid
-calls, and EPFL recruitment slugs. Each source remains fallible as pages
-change, and source availability is **not** a promise of vacancies or scrape
-success. No UK, unknown-country, or remotely located non-European position
-should become eligible just because its publisher is European.
-
-The registry includes disabled candidates for ETH Zurich, DKFZ, FMI's
-twice-yearly biomedical PhD programme, EMBL's International PhD Programme,
-ETH D-BSSE, and multi-site EMBL general jobs. Research the real detail-link
-structure and recruitment cycle before enabling a candidate; programme
-information pages are not individual vacancies.
-
-**Operational budgets and fairness:** each run attempts at most 8 enabled
-sources (at most 64 may be configured). The next source batch is selected by
-the least recently attempted source first. The public checkpoint
-`data/life_sources_rotation.json` is committed with the ordinary pipeline
-journals. An unvisited source is scheduled before previously visited sources;
-skipped runs do not permanently starve it. Up to 60 postings per source and
-200 postings total are sampled fairly across sources. When a likely doctoral
-card lacks sufficient research or workplace context, the collector may read
-the corresponding *individual job detail page*: at most 6 per source and 24
-in total, with an 18-second per-page timeout. Detail text is only used as
-evidence and never bypasses the country, degree-level, deadline, funding, or
-subscription controls.
-
-The standalone sources config lives in `config/life_sciences.toml`. New
-sources can be added there without changing the economics-only public
-publication path or importing unrelated life-sciences posts into the
-economics listing stream. Keep `min_interval` for host politeness and verify each provider's
-robots.txt and terms before enabling it. The legacy asynchronous board HTTP
-client rate-limits but does **not yet automatically enforce robots.txt**;
-the separate Jobicy/IranTalent poller has its own robots-aware client. Do not
-bypass technical access controls or treat blocked sites as healthy.
-
-
-### CRG Barcelona and University of Vienna (October 2026)
-
-Two additional verified **enabled** sources are now included:
-
-- **Centre for Genomic Regulation, Barcelona:** the official open-calls
-  listing links to the 2027 International PhD call, covering chromatin,
-  genome regulation, single-cell genomics, RNA biology and more. The
-  published application deadline is **22 November 2026**. The institution
-  explicitly advertises four-year employment contracts and a competitive
-  salary. These are facts about this named call, not guarantees for other
-  postings or the absence of tuition costs.
-- **University of Vienna:** the official predoctoral listings include
-  doctoral-school calls in cognition, behaviour and neuroscience. Examples
-  have an application deadline of **15 October 2026**. The collector
-  requests the individual call detail when an autumn/spring/winter call
-  appears, even if the research area is already visible in its title.
-
-The enabled registry now has **10 sources**, rotating 8 per scheduled run.
-Four additional candidates are configured disabled: Vienna BioCenter's
-multi-institution campus board, University of Helsinki's dynamically embedded
-SAP jobs, ISTA graduate recruitment, and Max Delbrück Center's cyclical PhD
-programme. Do not turn on these templates until individual vacancy links,
-scope and recruitment dates can be validated.
+The actual listing must indicate a doctoral role, relevant biology research
+and a known continental-European workplace, with no expired deadline or
+explicitly self-funded terms. Programme pages alone are not jobs.
+Funding, salary and tuition remain **unverified** unless an individual
+advert provides evidence.
