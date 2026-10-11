@@ -303,8 +303,8 @@ class FeedbackStore:
     def set_paused(self, chat_id: int, paused: bool) -> bool:
         if type(paused) is not bool:
             raise ValueError("invalid pause state")
-        member = self._member(chat_id)
-        if member["paused"] == paused:
+        member = self.subscriber(chat_id)
+        if member is None or member["paused"] == paused:
             return False
         member["paused"] = paused
         self._dirty = True
@@ -336,7 +336,9 @@ class FeedbackStore:
             raise ValueError("quiet hours must be a boolean")
         if value not in allowed[field]:
             raise ValueError("unsupported delivery preference")
-        member = self._member(chat_id)
+        member = self.subscriber(chat_id)
+        if member is None:
+            raise ValueError("Choose a topic before setting delivery preferences")
         if member[field] == value:
             return False
         member[field] = value

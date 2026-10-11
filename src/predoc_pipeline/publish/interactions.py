@@ -153,9 +153,14 @@ def private_message(
         html = render(settings, store)
         keyboard = buttons(paused=bool(store.data["ops"]["paused"]), page="status")
     elif command in ("/pause", "/resume"):
-        store.set_paused(chat_id, command == "/pause")
-        store.save()
-        html, keyboard = menu(store.subscriber(chat_id))
+        member = store.subscriber(chat_id)
+        if member is None:
+            html, keyboard = menu(None, "home")
+            html += "\n\nSelect a topic before changing notification settings."
+        else:
+            store.set_paused(chat_id, command == "/pause")
+            store.save()
+            html, keyboard = menu(member)
     elif command == "/latest":
         html, keyboard = _latest(store, chat_id, academic, settings)
     elif command == "/sources":
@@ -262,6 +267,13 @@ def private_callback(
                     ("sub:b:", "sub:a:", "sub:l:")
                 ))):
             _reply_callback(bot, callback_id, "Subscriptions are currently full.")
+            return True
+        if member is None and raw in (
+            "sub:a:pause", "sub:a:resume", "sub:d:mode",
+            "sub:d:limit", "sub:d:quiet", "sub:d:zone",
+        ):
+            _reply_callback(bot, callback_id, "Choose a topic first.")
+            _update_panel(bot, cq, *menu(None, "home"))
             return True
         visible = _page(raw, member, store, user_id, settings, academic)
         if visible is not None:

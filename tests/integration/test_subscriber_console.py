@@ -1187,6 +1187,9 @@ def test_quiet_hours_prevent_new_intents_without_discarding_jobs(tmp_path):
 
 def test_delivery_preferences_are_persistent_and_idempotent(tmp_path):
     cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    store.save()
     api = API([
         tap(1, 101, "sub:d:mode"), tap(2, 101, "sub:d:quiet"),
         tap(3, 101, "sub:d:limit"), tap(4, 101, "sub:p:delivery"),
@@ -1414,3 +1417,43 @@ def test_source_rotation_handles_future_checkpoint_without_long_starvation():
         sources, timestamp=now, history={"attempts": {"a": future, "b": future}},
     )
     assert chosen == {"a", "b"}
+
+
+def test_unsubscribed_visitor_never_poison_queues_at_capacity(tmp_path, monkeypatch):
+    from predoc_pipeline.publish import feedback as feedback_module
+
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    store.toggle_subscription(101, "topics", "predoc")
+    store.save()
+    monkeypatch.setattr(feedback_module, "MAX_SUBSCRIBERS", 1)
+    api = API([
+        message(1, 202, "/pause"),
+        message(2, 202, "/resume"),
+        message(3, 202, "/delivery"),
+        tap(4, 202, "sub:d:mode"),
+        tap(5, 202, "sub:d:limit"),
+        tap(6, 202, "sub:d:quiet"),
+        tap(7, 202, "sub:d:zone"),
+        tap(8, 202, "sub:a:pause"),
+        message(9, 101, "/stop"),
+        tap(10, 101, "sub:stop:yes"),
+    ])
+    result = run(cfg, api)
+    assert result["failed"] == 0
+    assert load_chat_state(cfg.telegram_state_path)["offset"] == 11
+    final = FeedbackStore.from_settings(cfg)
+    assert final.subscriber(202) is None
+    assert final.subscriber(101) is None
+    assert any("topic" in str(m["text"]).lower() for m in api.sent(202))
+
+
+def test_delivery_settings_and_pause_do_not_create_empty_members(tmp_path):
+    import pytest
+
+    cfg = settings(tmp_path)
+    store = FeedbackStore.from_settings(cfg)
+    assert store.set_paused(202, True) is False
+    with pytest.raises(ValueError, match="Choose a topic"):
+        store.set_delivery_preference(202, "daily_limit", 3)
+    assert store.subscribers == {}
