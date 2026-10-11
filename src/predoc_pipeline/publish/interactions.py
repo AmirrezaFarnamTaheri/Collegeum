@@ -10,9 +10,8 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
-from ..logging_setup import get_logger
-
 from ..ingest.career import load_career
+from ..logging_setup import get_logger
 from ..settings import Settings
 from .admin import admin_id, audit, buttons, render
 from .feedback import FeedbackStore
