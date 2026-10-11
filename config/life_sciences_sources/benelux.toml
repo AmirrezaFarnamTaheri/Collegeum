@@ -45,13 +45,14 @@ note = "Disabled: candidate institution or programme page, not a proven individu
 name = "life_benelux_ghent"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://www.ugent.be/en/work/vacancies"
-link_pattern = '^$'
+enabled = true
+url = "https://www.ugent.be/en/work/scientific"
+link_pattern = 'ugent\.be/en/work/scientific/doctoral-fellow(?:-\d+)?/?(?:\?|$)'
 country = "Belgium"
 institution = "Ghent University"
-verification = "candidate_unverified"
-note = "Disabled: candidate institution or programme page, not a proven individual vacancy feed."
+min_interval = 3.0
+verification = "listing_and_vacancy_url"
+note = "Official doctoral fellows index with /doctoral-fellow-ID detail pages; fields require card or detail evidence."
 
 [[board]]
 name = "life_benelux_antwerp"

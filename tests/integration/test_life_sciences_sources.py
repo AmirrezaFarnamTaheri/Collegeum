@@ -26,6 +26,11 @@ CATALOG = ROOT / "config/life_sciences.toml"
 
 REGIONAL_EXAMPLES = [
     (
+        "life_benelux_ghent",
+        "https://www.ugent.be/en/work/scientific/doctoral-fellow-129",
+        "Doctoral fellow",
+    ),
+    (
         "life_lund_university",
         "https://lu.varbi.com/en/what:job/jobID:965334/type:job/where:4/apply:1",
         "PhD student in chromatin remodeling",
@@ -100,8 +105,8 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     assert len(names) == len(set(names))
     assert len(registered) == 112
     active = [source for source in registered if source.enabled]
-    assert len(active) == 20
-    assert len(registered) - len(active) == 92
+    assert len(active) == 21
+    assert len(registered) - len(active) == 91
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
     assert all(source.type in {"rss", "link_scan"} for source in active)
@@ -130,7 +135,13 @@ def test_regional_vacancy_patterns_match_real_page_link_shapes(
     pattern = re.compile(source.opt("link_pattern"), re.I)
     assert pattern.search(url)
     scraper = LinkScanScraper(source, StubHttp())
-    if name == "life_ibec_barcelona":
+    if name == "life_benelux_ghent":
+        html = (
+            "<table><tr><td>"
+            f"<a href='{url}'>{title}</a></td>"
+            "<td>Department of Biochemistry and Microbiology</td></tr></table>"
+        )
+    elif name == "life_ibec_barcelona":
         # IBEC's clickable code is not the actual role title.
         html = (
             f"<article class='job-card'><h3>{title}</h3>"
@@ -144,6 +155,9 @@ def test_regional_vacancy_patterns_match_real_page_link_shapes(
     assert posts[0].country == source.country, name
     assert posts[0].title == title, name
     assert life_sciences._doctoral_title(posts[0].title), name
+    if name == "life_benelux_ghent":
+        assert "Biochemistry" in posts[0].description_snippet
+        assert life_sciences.classify_post(posts[0]) is not None
 
 
 @pytest.mark.parametrize("title", [
@@ -189,7 +203,7 @@ def test_duplicate_provider_name_across_catalogues_is_rejected(tmp_path: Path) -
 def test_source_round_robin_with_twenty_enabled_providers(tmp_path: Path) -> None:
     journal = tmp_path / "life_rotation.json"
     enabled = {s.name for s in life_sciences.load_life_sources(CATALOG) if s.enabled}
-    assert len(enabled) == 20
+    assert len(enabled) == 21
     seen: set[str] = set()
     for iteration in range(3):
         selected = life_sciences.select_sources(CATALOG, journal)
@@ -197,7 +211,7 @@ def test_source_round_robin_with_twenty_enabled_providers(tmp_path: Path) -> Non
         if iteration <= 1:
             assert not (selected & seen)
         else:
-            assert len(selected - seen) == 4
+            assert len(selected - seen) == 5
         seen.update(selected)
         save_rotation(
             journal, selected, timestamp=datetime.now(UTC) + timedelta(minutes=iteration),

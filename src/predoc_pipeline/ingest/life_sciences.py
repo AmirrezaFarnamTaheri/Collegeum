@@ -47,7 +47,8 @@ PRIMARY_FIELD = re.compile(
 )
 RELATED_FIELD = re.compile(
     r"\b(?:molecular biolog\w*|cell(?:ular)? biolog\w*|"
-    r"developmental biolog\w*|genom\w*|genetic\w*|"
+    r"developmental biolog\w*|biochem\w*|microbiolog\w*|"
+    r"genom\w*|genetic\w*|"
     r"bioinformatic\w*|computational biolog\w*|systems biolog\w*|"
     r"transcriptom\w*|proteom\w*|crispr|rna biolog\w*|"
     r"single[\s-]cell|stem[\s-]cell\w*|ipsc\w*|"
