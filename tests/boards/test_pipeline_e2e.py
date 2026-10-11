@@ -10,6 +10,7 @@ import pytest
 
 from predoc_pipeline import pipeline
 from predoc_pipeline.core.db import Database
+from predoc_pipeline.publish.feedback import generate_key
 from predoc_pipeline.settings import Settings
 from tests.boards.conftest import ROOT, fixture_text
 
@@ -189,11 +190,16 @@ def test_full_run_then_nothing_is_sent_twice(settings):
     for unwanted in ("Notre Dame", "Columbia University", "Pre-Doc Intern", "protein"):
         assert unwanted not in text, unwanted
 
-    # every card: Apply/Source (or Open) row + ✅ ❌ 📝 row for the owner
+    # Even without a private-state key, public announcements must still be
+    # delivered. Nonfunctional personal-feedback buttons must not be shown.
     for card in cards:
         rows = card["reply_markup"]["inline_keyboard"]
-        assert [b["text"] for b in rows[-1]] == ["✅ Interested", "❌ Not for me", "📝 Applied"]
+        assert all(
+            b["text"] not in ("✅ Interested", "❌ Not for me", "📝 Applied")
+            for row in rows for b in row
+        )
         assert card["chat_id"] == "42" and card["parse_mode"] == "HTML"
+    assert not any(method == "getUpdates" for method, _ in fake.calls)
 
     # the bit.ly link of the UBC pre-doc intern answers 410 -> recorded as filled
     assert stats.gate_reasons.get("board:filled-or-closed") == 1
@@ -289,7 +295,10 @@ def test_filled_positions_leave_the_dashboard_on_recheck(settings):
 
 
 def test_digest_for_many_new_listings_is_paged_with_numbered_buttons(settings):
-    many = settings.model_copy(update={"telegram_digest_threshold": 2})
+    many = settings.model_copy(update={
+        "telegram_digest_threshold": 2,
+        "feedback_encryption_key": generate_key(),
+    })
     fake = FakeTelegram()
     stats = run(many, fake)
     msgs = fake.sent()
@@ -392,3 +401,41 @@ def test_feedback_buttons_omitted_when_disabled(settings):
             assert "✅ Interested" not in texts
             assert "❌ Not for me" not in texts
             assert "📝 Applied" not in texts
+
+
+def test_public_telegram_channel_survives_missing_private_feedback_key(settings):
+    # A user's private update must not be read/acknowledged without the
+    # encryption key; public channel publishing remains independent.
+    fake = FakeTelegram(updates=[{
+        "update_id": 765,
+        "message": {
+            "chat": {"id": 42, "type": "private"},
+            "from": {"id": 42},
+            "text": "/start",
+        },
+    }])
+    stats = run(settings.model_copy(update={"feedback_encryption_key": ""}), fake)
+    assert stats.published == 4
+    assert len(fake.sent()) == 4
+    assert not any(method == "getUpdates" for method, _ in fake.calls)
+    assert not Path(settings.telegram_state_path).exists()
+    for payload in fake.sent():
+        buttons = payload.get("reply_markup", {}).get("inline_keyboard", [])
+        assert all(
+            b["text"] not in ("✅ Interested", "❌ Not for me", "📝 Applied")
+            for row in buttons for b in row
+        )
+
+
+def test_valid_private_feedback_key_enables_owner_polling_and_buttons(settings):
+    enabled = settings.model_copy(update={"feedback_encryption_key": generate_key()})
+    fake = FakeTelegram()
+    stats = run(enabled, fake)
+    assert stats.published == 4
+    assert any(method == "getUpdates" for method, _ in fake.calls)
+    assert len(fake.sent()) == 4
+    for payload in fake.sent():
+        buttons = payload["reply_markup"]["inline_keyboard"]
+        assert [b["text"] for b in buttons[-1]] == [
+            "✅ Interested", "❌ Not for me", "📝 Applied"
+        ]

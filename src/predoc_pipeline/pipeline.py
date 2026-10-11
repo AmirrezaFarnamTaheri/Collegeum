@@ -777,7 +777,12 @@ def _broadcast(
     if not listings:
         return
 
-    include_feedback = settings.telegram_feedback_buttons
+    # Private feedback buttons require a durable encrypted marks store.
+    # Public channel publication remains available with TELEGRAM_BOT_TOKEN
+    # even when private encryption is unavailable to this workflow.
+    include_feedback = bool(
+        settings.telegram_feedback_buttons and settings.feedback_encryption_key
+    )
     digest_page_size = max(1, digest_page_size)
     status_of = feedback.status if feedback is not None else (lambda _h: None)
     send_kw: dict[str, Any] = {"sleep": sleep} if sleep else {}
@@ -1131,15 +1136,24 @@ def run(
     stats = RunStats(run_id=_run_id())
     log.info("run_start", run_id=stats.run_id, dry_run=dry_run)
 
-    # Answer /positions and save button taps first, so today's run already
-    # knows which positions you hid.
+    # The public channel is independent of private subscriber feedback.
+    # Never poll/acknowledge private updates unless their marks can be saved
+    # under the original Fernet key. Without it, polling may advance the
+    # durable update cursor while discarding private opt-ins and callbacks.
     if sync_telegram and not dry_run and settings.telegram_bot_token and settings.owner_ids:
-        try:
-            from .publish.bot import telegram_sync
+        if not settings.feedback_encryption_key:
+            log.warning(
+                "telegram_private_sync_skipped",
+                reason="feedback encryption key not injected into this run",
+                public_channel="unaffected",
+            )
+        else:
+            try:
+                from .publish.bot import telegram_sync
 
-            telegram_sync(settings, http_client=telegram_client)
-        except Exception as exc:  # never let the chat side stop the run
-            log.warning("telegram_sync_failed", error=str(exc))
+                telegram_sync(settings, http_client=telegram_client)
+            except Exception as exc:  # never let the chat side stop the run
+                log.warning("telegram_sync_failed", error=str(exc))
 
     init_db(settings.db_path)
     db = Database(settings.db_path)

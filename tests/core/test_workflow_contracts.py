@@ -135,3 +135,18 @@ class WorkflowContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_missing_private_key_does_not_disable_public_channel(self):
+        pipeline_code = (ROOT / "src/predoc_pipeline/pipeline.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"telegram_private_sync_skipped"', pipeline_code)
+        self.assertIn('public_channel="unaffected"', pipeline_code)
+        self.assertIn(
+            'settings.telegram_feedback_buttons and settings.feedback_encryption_key',
+            pipeline_code,
+        )
+        telegram = workflow("telegram.yml")
+        self.assertIn("Public channel announcements use TELEGRAM_BOT_TOKEN", telegram)
+        self.assertIn("FEEDBACK_ENCRYPTION_KEY was not injected", telegram)

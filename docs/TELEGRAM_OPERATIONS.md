@@ -399,3 +399,43 @@ have no exactly-once or maximum-latency guarantee, and Telegram updates are
 retained for a limited period. A sustained schedule gap requires manual
 `workflow_dispatch` recovery from reviewed `main` code and should be reported
 as an operational incident, not as an empty job market.
+ 
+
+## Distinguishing public publishing from encrypted private sync
+
+The public announcements and private inbox are independent operational
+functions. The scheduled pipeline uses `TELEGRAM_BOT_TOKEN` and
+`TELEGRAM_PUBLIC_CHANNEL_ID` to publish vacancy announcements. A successful
+`sendMessage` response proves that a request was accepted at that moment,
+not that every private subscription received a message.
+
+The private inbox (`telegram-sync`, private opt-ins, marks and delivery
+receipts) additionally requires the **existing**
+`FEEDBACK_ENCRYPTION_KEY`. If Actions logs show an empty value in the
+`FEEDBACK_ENCRYPTION_KEY:` environment line, the key was **not injected into
+that job**. This does not prove the key was removed from GitHub Secrets: it may
+be environment-scoped rather than repository-scoped, governed by access
+restrictions, or stored under a different name. Do not generate or rotate
+the key merely because one workflow cannot read it; existing ciphertext
+would become undecryptable.
+
+Check the secret's scope under repository Settings > Secrets and variables >
+Actions (and any linked GitHub Environments). Repository secrets reach jobs
+through `secrets.FEEDBACK_ENCRYPTION_KEY`. Environment secrets are available
+only to jobs explicitly attached to the corresponding environment. Reuse
+the **same** key across the pipeline and private inbox jobs; never print
+its value or copy it to a public workflow file.
+
+When the key is unavailable, the main pipeline **does not poll or acknowledge
+private updates**, and public cards do not display nonfunctional personal
+feedback controls. Normal public channel announcements remain enabled. The
+private inbox workflow reports a failed configuration preflight unless it is
+explicitly disabled with `ENABLE_TELEGRAM_SYNC=false`. Disabling the private
+inbox is not equivalent to providing encryption or processing subscriptions.
+
+A separate `403 Forbidden: bot can't initiate conversation with a user`
+when delivering an **administrator alert** means that the destination user
+has not started the bot or has blocked it (or the configured ID is wrong).
+Confirm the admin recipient has opened the bot privately and pressed Start;
+do not rotate the working public-channel bot token in response. An admin
+alert failure does not invalidate a preceding public `sendMessage 200 OK`.

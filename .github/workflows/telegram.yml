@@ -46,7 +46,9 @@ jobs:
             exit 1
           fi
           if [ -z "$FEEDBACK_ENCRYPTION_KEY" ]; then
-            echo "::error::FEEDBACK_ENCRYPTION_KEY is missing; private sync not started"
+            echo "::error::FEEDBACK_ENCRYPTION_KEY was not injected into this job; private sync cannot preserve subscriptions"
+            echo "::notice::Public channel announcements use TELEGRAM_BOT_TOKEN independently and may still work"
+            echo "::notice::Check the scope/name of the EXISTING encryption secret (repository versus environment); do not replace a key protecting saved ciphertext"
             exit 1
           fi
 
