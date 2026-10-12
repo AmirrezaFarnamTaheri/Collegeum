@@ -1,0 +1,180 @@
+import assert from 'node:assert/strict';
+import { webcrypto } from 'node:crypto';
+import test from 'node:test';
+import worker, { TelegramBot, sameSecret } from './worker.mjs';
+
+if (!globalThis.crypto) globalThis.crypto = webcrypto;
+
+class Storage {
+  values = new Map();
+  tail = Promise.resolve();
+  async get(key) { return structuredClone(this.values.get(key)); }
+  async put(key, value) { this.values.set(key, structuredClone(value)); }
+  async delete(key) {
+    for (const k of Array.isArray(key) ? key : [key]) this.values.delete(k);
+  }
+  async list({prefix} = {}) {
+    return new Map([...this.values].filter(([k]) => !prefix || k.startsWith(prefix)));
+  }
+  async transaction(fn) {
+    const result = this.tail.catch(() => {}).then(async () => {
+      const saved = structuredClone(this.values);
+      try { return await fn(this); } catch (error) { this.values = saved; throw error; }
+    });
+    this.tail = result;
+    return result;
+  }
+}
+const env = {OWNER_IDS: '42', TELEGRAM_BOT_TOKEN: 'test', WEBHOOK_SECRET: 'webhook', SYNC_TOKEN: 'sync'};
+const record = {url_hash: 'a'.repeat(64), title: 'Predoc in Economics', institution: 'Example University',
+  apply_url: 'https://example.org/job', country: 'United Kingdom', first_seen_at: new Date().toISOString()};
+const post = (path, payload) => new Request(`https://example.workers.dev${path}`, {
+  method: 'POST', body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'},
+});
+function bot() {
+  const instance = new TelegramBot({storage: new Storage()}, env);
+  instance.calls = [];
+  instance.api = async (method, payload) => { instance.calls.push({method, payload}); return {message_id: 900}; };
+  return instance;
+}
+const snapshot = {listings: [record], marks: {}, generated_at: new Date().toISOString()};
+
+test('authentication fails before durable state is allocated', async () => {
+  let touched = false;
+  const bindings = {...env, BOT: {get() { touched = true; }, idFromName() { touched = true; }}};
+  const response = await worker.fetch(post('/webhook', {}), bindings);
+  assert.equal(response.status, 401);
+  assert.equal(touched, false);
+  assert.equal(await sameSecret('x', 'x'), true);
+  assert.equal(await sameSecret('x', 'y'), false);
+  assert.equal(await sameSecret('', ''), false);
+});
+
+test('sync rejects malformed snapshots without erasing previous listings', async () => {
+  const instance = bot();
+  assert.equal((await instance.fetch(post('/sync', snapshot))).status, 200);
+  assert.equal((await instance.fetch(post('/sync', {...snapshot, listings: [{...record, apply_url: 'javascript:alert(1)'}]}))).status, 400);
+  assert.equal((await instance.dataset()).rows.length, 1);
+});
+
+test('stranger cannot query, mark or trigger outbound Telegram traffic', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', snapshot));
+  await instance.fetch(post('/webhook', {update_id: 1, message: {chat: {id: 999}, text: '/positions'}}));
+  await instance.fetch(post('/webhook', {update_id: 2, callback_query: {id: 'cb', from: {id: 999},
+    message: {chat: {id: 42}, message_id: 1}, data: `fb|v|${record.url_hash.slice(0,16)}`}}));
+  assert.equal(instance.calls.length, 0);
+});
+
+test('webhook replies immediately once and replay does not toggle feedback', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', snapshot));
+  const update = {update_id: 1, message: {chat: {id: 42}, text: '/positions'}};
+  await instance.fetch(post('/webhook', update));
+  await instance.fetch(post('/webhook', update));
+  assert.equal(instance.calls.filter(c => c.method === 'sendMessage').length, 1);
+  const mark = {update_id: 2, callback_query: {id: 'cb', from: {id: 42},
+    message: {chat: {id: 42}, message_id: 900}, data: `fb|v|${record.url_hash.slice(0,16)}`}};
+  await instance.fetch(post('/webhook', mark));
+  await instance.fetch(post('/webhook', mark));
+  assert.equal((await instance.dataset()).marks.get(record.url_hash), 'valid');
+  const undo = {...mark, update_id: 3, callback_query: {...mark.callback_query, id: 'cb2'}};
+  await instance.fetch(post('/webhook', undo));
+  const result = await (await instance.fetch(post('/sync', {...snapshot,
+    marks: {[record.url_hash]: {status: 'valid', at: '2026-01-01T00:00:00Z'}}}))).json();
+  assert.equal(result.marks[record.url_hash].status, null);
+});
+
+test('unknown delivery is not submitted again when Telegram repeats its webhook', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', snapshot));
+  let attempts = 0;
+  instance.api = async () => { attempts++; throw new Error('unknown response'); };
+  const update = {update_id: 4, message: {chat: {id: 42}, text: '/menu'}};
+  await instance.fetch(post('/webhook', update));
+  await instance.fetch(post('/webhook', update));
+  assert.equal(attempts, 1);
+  assert.equal((await instance.ctx.storage.get('update:4')).stage, 'uncertain');
+});
+
+test('search pagination retains the same query; listing text is escaped', async () => {
+  const instance = bot();
+  const records = Array.from({length: 6}, (_, i) => ({...record, url_hash: String(i).repeat(64), title: '<b>Economics & data</b>'}));
+  await instance.fetch(post('/sync', {...snapshot, listings: records}));
+  await instance.fetch(post('/webhook', {update_id: 5, message: {chat: {id: 42}, text: '/search economics'}}));
+  assert.match(instance.calls[0].payload.text, /&lt;b&gt;Economics &amp; data&lt;\/b&gt;/);
+  await instance.fetch(post('/webhook', {update_id: 6, callback_query: {id: 'next', from: {id: 42},
+    message: {chat: {id: 42}, message_id: 900}, data: 'view|search|1'}}));
+  const content = instance.calls.at(-1).payload;
+  assert.match(content.text, /Page 2 of 2/);
+  assert.match(content.text, /Search: economics/);
+});
+
+test('stale sync cannot replace a newer snapshot', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', {...snapshot, generated_at:'2026-10-12T10:00:00Z'}));
+  const result = await instance.fetch(post('/sync', {...snapshot, listings:[],
+    generated_at:'2026-10-12T09:00:00Z'}));
+  assert.equal(result.status,409);
+  assert.equal((await instance.dataset()).rows.length,1);
+});
+
+test('slow public AI never blocks owner browsing, including the same owner chat', async () => {
+  const instance = bot();
+  instance.env = {...env,OPENROUTER_API_KEY:'offline-key'};
+  await instance.fetch(post('/sync',snapshot));
+  let release;
+  const gate = new Promise(resolve => {release=resolve;});
+  let entered;
+  const started = new Promise(resolve => {entered=resolve;});
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => {entered(); await gate; return Response.json({choices:[{message:{tool_calls:[{
+    function:{name:'query_database',arguments:'{"action":"count"}'}
+  }]}}]});};
+  try {
+    const slow = instance.fetch(post('/webhook',{update_id:10,message:{chat:{id:42},text:'/ask Count open roles'}}));
+    await started;
+    const menu = await instance.fetch(post('/webhook',{update_id:11,message:{chat:{id:42},text:'/menu'}}));
+    assert.equal(menu.status,200);
+    assert.match(instance.calls.find(c => c.method==='sendMessage').payload.text,/research shortlist/);
+    release(); await slow;
+  } finally {release();globalThis.fetch=original;}
+});
+
+test('concurrent public quota reservations never exceed the shared limit', async () => {
+  const {reservePublic} = await import('./assistant.mjs');
+  const instance=bot();instance.env.PUBLIC_HOURLY_CAP='4';
+  const outcomes=await Promise.all(Array.from({length:12},(_,i)=>reservePublic(instance,i+100,false)));
+  assert.equal(outcomes.filter(v=>v===null).length,4);
+  assert.equal((await instance.ctx.storage.get('rate:public')).length,4);
+});
+
+test('explicit long Telegram throttling retries a prepared AI reply without repeating AI or quota', async () => {
+  const instance=bot();instance.env={...env,OPENROUTER_API_KEY:'offline-key'};
+  instance.api=TelegramBot.prototype.api.bind(instance);
+  await instance.fetch(post('/sync',snapshot));
+  let provider=0,telegram=0,throttled=true;
+  const original=globalThis.fetch;
+  globalThis.fetch=async url=>{
+    if(String(url).includes('openrouter.ai')){
+      provider++;
+      return Response.json({choices:[{message:{tool_calls:[{function:{name:'query_database',arguments:'{"action":"count"}'}}]}}]});
+    }
+    telegram++;
+    return throttled?Response.json({ok:false,parameters:{retry_after:60}},{status:429})
+      :Response.json({ok:true,result:{message_id:901}});
+  };
+  const update={update_id:22,message:{chat:{id:123,type:'private'},from:{id:123},text:'/ask Count roles'}};
+  try{
+    assert.equal((await instance.fetch(post('/webhook',update))).status,503);
+    const prepared=await instance.ctx.storage.get('update:22');
+    assert.equal(prepared.stage,'prepared');
+    assert.equal((await instance.fetch(post('/webhook',update))).status,503);
+    assert.equal(telegram,1);
+    await instance.ctx.storage.put('update:22',{...prepared,retry_at:0});
+    throttled=false;
+    assert.equal((await instance.fetch(post('/webhook',update))).status,200);
+    assert.equal(provider,1);assert.equal(telegram,2);
+    assert.equal((await instance.ctx.storage.get('rate:public')).length,1);
+  }finally{globalThis.fetch=original;}
+});

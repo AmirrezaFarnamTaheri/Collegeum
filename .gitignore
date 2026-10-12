@@ -54,3 +54,8 @@ htmlcov/
 data/feedback.json
 data/feedback.json.tmp
 data/*.corrupt-*
+
+# Local Cloudflare tools and secrets.
+cloudflare/**/node_modules/
+cloudflare/**/.wrangler/
+cloudflare/**/.dev.vars

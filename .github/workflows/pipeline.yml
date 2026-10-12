@@ -78,6 +78,9 @@ jobs:
           CUSTOM_LLM_BASE_URL: ${{ vars.CUSTOM_LLM_BASE_URL || secrets.CUSTOM_LLM_BASE_URL }}
           EXTRACTION_BACKEND: ${{ vars.EXTRACTION_BACKEND || 'auto' }}
           SITE_URL: ${{ vars.SITE_URL }}
+          TELEGRAM_WEBHOOK_ENABLED: ${{ vars.TELEGRAM_WEBHOOK_ENABLED || 'false' }}
+          TELEGRAM_WORKER_URL: ${{ vars.TELEGRAM_WORKER_URL }}
+          TELEGRAM_WORKER_SYNC_TOKEN: ${{ secrets.TELEGRAM_WORKER_SYNC_TOKEN }}
           ENABLE_JOBSPY: ${{ vars.ENABLE_JOBSPY || 'false' }}
           ENABLE_TWITTER: ${{ vars.ENABLE_TWITTER || 'false' }}
           TWSCRAPE_ACCOUNTS: ${{ secrets.TWSCRAPE_ACCOUNTS }}

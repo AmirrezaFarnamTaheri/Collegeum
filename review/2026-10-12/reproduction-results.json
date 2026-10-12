@@ -1,0 +1,54 @@
+{
+  "stale_cache": {
+    "status": "pending",
+    "telegram_message_id": null,
+    "rewritten_durable_status": "pending"
+  },
+  "pending_policy": {
+    "current_policy_rejection": "excluded-employer",
+    "remote_calls": [
+      "sendMessage"
+    ],
+    "published": 1,
+    "final_status": "published"
+  },
+  "exports_retry": {
+    "fresh_runner_failed": 1,
+    "empty_cache_export_count": 0,
+    "journal_listings": 1
+  },
+  "closed_hint": {
+    "listing_status": "published",
+    "seen_decision": "rejected"
+  },
+  "unchanged_feed": {
+    "first_poll_items": 1,
+    "retry_poll_items": 0,
+    "retry_errors": 0
+  },
+  "early_board_dedupe": {
+    "distinct_vacancies": 2,
+    "emitted": 1,
+    "rejected": {
+      "duplicate-in-run": 1
+    }
+  },
+  "pagination_failure": {
+    "posts": 1,
+    "reported_ok": true,
+    "reported_errors": 0
+  },
+  "relaxed_policy_seen": {
+    "prior_rejection": "preferences:region-US",
+    "reconsidered_after_relaxation": false,
+    "new_preferences_regions": [
+      "UK",
+      "Europe",
+      "Canada"
+    ]
+  },
+  "uncertain_telegram": {
+    "identical_submission_attempts": 2,
+    "returned_message_id": 778
+  }
+}

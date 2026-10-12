@@ -45,6 +45,11 @@ INCLUDE_GLOBS = [
     "tests/fixtures/*.jsonl",
     "tests/fixtures/boards/**/*",
     "config/*.toml",
+    "config/*.json",
+    "cloudflare/telegram/*.mjs",
+    "cloudflare/telegram/*.json",
+    "cloudflare/telegram/*.jsonc",
+    "cloudflare/telegram/*.md",
     "docs/index.html",
     # docs/data/*.json and docs/feed.xml are mutable publications; the
     # pull-request merge checkout can contain newer website state than this branch.
@@ -69,15 +74,17 @@ INCLUDE_GLOBS = [
     "CHANGES.md",
     "FINALIZATION.md",
     "docs/X_THREAD_RECOVERY.md",
+    "docs/TELEGRAM_PROTOCOL.md",
     "SETUP_GUIDE.md",
 ]
 
 EXCLUDE_SUFFIXES = (".pyc", ".pyo")
 EXCLUDE_DIR_PARTS = {"__pycache__", ".git", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 TEXT_SUFFIXES = {
-    '.py', '.toml', '.md', '.yml', '.html', '.json', '.xml', '.jsonl', '.lock', '.example',
+    '.py', '.toml', '.md', '.yml', '.html', '.json', '.jsonc', '.mjs',
+    '.xml', '.jsonl', '.lock', '.example', '.txt',
 }
-TEXT_NAMES = {'Makefile', '.gitignore', '.gitattributes'}
+TEXT_NAMES = {'Makefile', '.gitignore', '.gitattributes', 'LICENSE'}
 
 
 def collect_files() -> list[Path]:

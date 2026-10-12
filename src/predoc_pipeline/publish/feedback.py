@@ -221,6 +221,10 @@ class FeedbackStore:
             self._legacy_plain = None
         self._dirty = False
 
+    def mark_dirty(self) -> None:
+        """Persist private auxiliary bot state in the same encrypted envelope."""
+        self._dirty = True
+
 
 def load_state(path: str | Path) -> dict[str, Any]:
     """Strict: {} only when the file is absent."""

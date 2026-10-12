@@ -56,17 +56,25 @@ log = get_logger(__name__)
 __all__ = ["COMMANDS", "telegram_sync", "select_rows", "build_pages", "command_of"]
 
 COMMANDS = [
+    ("menu", "Home, shortcuts and your shortlist"),
     ("positions", "All open positions, soonest deadline first"),
     ("applied", "Positions you marked 📝 applied"),
     ("valid", "Positions you marked ✅ interested"),
     ("hidden", "Positions you marked ❌ (to restore one)"),
+    ("search", "Search by role, employer, field or location"),
+    ("new", "Positions added in the last 7 days"),
+    ("closing", "Open positions closing within 7 days"),
+    ("ask", "Ask the vacancy database, with source-backed results"),
+    ("forget", "Clear your AI follow-up context"),
     ("help", "How the buttons work"),
 ]
-COMMANDS_VERSION = 1
+COMMANDS_VERSION = 3
 ALIASES = {
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
-    "saved": "valid", "hidden": "hidden", "invalid": "hidden", "help": "help", "start": "help",
+    "saved": "valid", "hidden": "hidden", "invalid": "hidden", "help": "help", "start": "menu",
+    "menu": "menu", "home": "menu", "search": "search", "new": "new", "closing": "closing",
+    "ask": "ask", "forget": "forget",
 }
 HELP = (
     "🤖 <b>Predoc bot</b>\n\n"
@@ -74,6 +82,11 @@ HELP = (
     "/applied: the ones you applied to\n"
     "/valid: the ones you marked ✅\n"
     "/hidden: the ones you marked ❌\n\n"
+    "/menu: your shortlist and browsing shortcuts\n"
+    "/search economics London: find roles by keyword\n"
+    "/new: added this week · /closing: deadlines within 7 days\n\n"
+    "/ask: query stored vacancy facts with source links\n"
+    "/forget: clear your private AI follow-up context\n\n"
     "Under every position:\n"
     "✅ = interested  ·  ❌ = not for me (it disappears everywhere)  ·  "
     "📝 = I applied (moves to /applied)\n"
@@ -200,8 +213,9 @@ class _Bot:
     def __init__(self, client: TelegramClient, sleep: Callable[[float], None]):
         self.client, self.sleep = client, sleep
 
-    def send(self, chat_id: str, html: str, keyboard: dict[str, Any] | None = None) -> None:
-        self.client.send_message(chat_id=chat_id, html=html, keyboard=keyboard, sleep=self.sleep)
+    def send(self, chat_id: str, html: str, keyboard: dict[str, Any] | None = None) -> int:
+        return self.client.send_message(
+            chat_id=chat_id, html=html, keyboard=keyboard, sleep=self.sleep)
 
     def call(self, method: str, payload: dict[str, Any]) -> Any:
         return self.client.call(method, payload, sleep=self.sleep)
@@ -216,6 +230,10 @@ def telegram_sync(
     max_items: int | None = None,
 ) -> dict[str, int]:
     """Answer everything sent to the bot since the last run. Safe to run as often as you like."""
+    if settings.telegram_webhook_enabled:
+        from .cloud import sync_cloud
+
+        return sync_cloud(settings, http_client=http_client)
     from ..boards.config import load_preferences
 
     tg_prefs = load_preferences(settings.preferences_config).telegram
@@ -282,11 +300,14 @@ def telegram_sync(
             try:
                 if "callback_query" in update:
                     changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,
-                                           owners, summary)
+                                           owners, summary, rows=rows, context=chat_state,
+                                           page_size=page_size, max_items=max_items,
+                                           site_url=settings.site_url)
                 elif "message" in update:
                     _handle_message(bot, update["message"], rows, store, owners, summary,
                                     page_size=page_size, max_items=max_items,
-                                    site_url=settings.site_url)
+                                    site_url=settings.site_url, context=chat_state,
+                                    ai_settings=settings)
             except Exception as exc:  # noqa: BLE001
                 if _is_retryable(exc):
                     # Do not acknowledge: this update (and everything after it) is
@@ -331,7 +352,9 @@ def _refresh_public_exports(settings: Settings, store: FeedbackStore) -> bool:
     """A ❌ should also take the position off the dashboard and the RSS feed."""
     try:
         router = Router(load_preferences(settings.preferences_config))
+        init_db(settings.db_path)
         with Database(settings.db_path) as db:
+            state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
             state.export_dashboard(db, settings.dashboard_json, hidden=store.hidden, router=router)
             state.export_feed(db, settings.feed_path, site_url=settings.site_url,
                               hidden=store.hidden, router=router)
@@ -358,19 +381,96 @@ def _handle_message(
     **page_opts: Any,
 ) -> None:
     chat = _chat_id(msg.get("chat"))
-    if chat not in owners:
-        summary["ignored"] += 1
-        return
+    settings = page_opts.pop('ai_settings', None)
+    owner = chat in owners
     kind = command_of(msg.get("text"))
     if not kind:
         return
+    text_input = (msg.get('text') or '').strip()
+    natural_question = kind == 'help' and not text_input.startswith('/') and bool(
+        settings and settings.get_openrouter_keys())
+    is_ai = kind in ('ask', 'forget') or natural_question
+    if not owner:
+        private_sender = chat is not None and chat > 0 and _chat_id(msg.get('from')) == chat
+        if private_sender and text_input.lower().split('@')[0] in ('/start', '/help'):
+            bot.send(str(chat), '📚 <b>Collegeum database chat</b>\n\n'
+                     'Ask /ask Which economics roles close this month?\n'
+                     '3 questions per minute, within a shared hourly cap. '
+                     'Personal tracking stays private to the owners.')
+            summary['received'] += 1
+            summary['commands'] += 1
+            return
+        if not (private_sender and is_ai and settings and settings.telegram_ai_public_enabled):
+            summary['ignored'] += 1
+            return
+    if is_ai and settings is not None and chat is not None:
+        from .assistant import ask_database
+        from .browse import menu_keyboard
+
+        message_id = msg.get('message_id')
+        request_key = f'{chat}:{message_id}'
+        replies = store.data.get('assistant_replies', {})
+        prior = replies.get(request_key) if isinstance(replies, dict) else None
+        if isinstance(prior, dict) and prior.get('stage') in ('sent', 'uncertain'):
+            if prior['stage'] == 'uncertain':
+                summary['failed'] += 1
+                log.warning('ai_reply_needs_verification', message_id=message_id)
+            return  # Never repeat a confirmed or possibly accepted reply.
+
+        if kind == 'forget':
+            queries = store.data.get('assistant_queries', {})
+            if isinstance(queries, dict):
+                queries.pop(str(chat), None)
+            store.mark_dirty()
+            store.save()
+            answer = 'Your AI follow-up context has been cleared. Rate limits still apply.'
+        else:
+            router = Router(load_preferences(settings.preferences_config))
+            records = []
+            for row in rows:
+                record = state._public_record(row)
+                record.update({key: row[key] for key in (
+                    'url_hash', 'closed_at', 'expired_at', 'first_seen_at', 'last_seen_at',
+                )})
+                record['kind'] = router.position_kind(row['title'], row['summary'] or '')
+                records.append(record)
+            question = text_input if natural_question else text_input.partition(' ')[2]
+            answer = ask_database(question, records, store, settings, user_id=chat, owner=owner,
+                                  request_id=message_id, client=bot.client.client)
+        try:
+            bot.send(str(chat), answer, menu_keyboard() if owner else None)
+        except TelegramError as exc:
+            cached = store.data.get('assistant_replies', {}).get(request_key)
+            if exc.uncertain and isinstance(cached, dict):
+                cached['stage'] = 'uncertain'
+                store.mark_dirty()
+                store.save()
+            raise
+        cached = store.data.get('assistant_replies', {}).get(request_key)
+        if isinstance(cached, dict):
+            cached['stage'] = 'sent'
+            store.mark_dirty()
+            store.save()
+        summary['received'] += 1
+        summary['commands'] += 1
+        return
     summary["received"] += 1
     if kind == "help":
-        bot.send(str(chat), HELP)
+        from .browse import menu_keyboard
+
+        bot.send(str(chat), HELP, menu_keyboard())
         summary["commands"] += 1
         return
-    for text, keyboard in build_pages(kind, select_rows(kind, rows, store), store, **page_opts):
-        bot.send(str(chat), text, keyboard)
+    from .browse import home, screen, search_token
+
+    context = page_opts.pop('context', {})
+    if kind == 'menu':
+        text, keyboard = home(rows, store)
+    else:
+        query = (msg.get('text') or '').partition(' ')[2].strip()[:160] if kind == 'search' else ''
+        token = search_token(query, context) if query else ''
+        text, keyboard = screen(kind, rows, store, query=query, search_id=token, **page_opts)
+    bot.send(str(chat), text, keyboard)
     summary["commands"] += 1
 
 
@@ -381,10 +481,63 @@ def _handle_tap(
     store: FeedbackStore,
     owners: set[int],
     summary: dict[str, int],
+    *, rows: list[sqlite3.Row] | None = None, context: dict[str, Any] | None = None,
+    page_size: int = 5, max_items: int = 60, site_url: str = '',
 ) -> bool:
     """Returns True when public exports need refreshing, including replay recovery."""
     if _chat_id(cq.get("from")) not in owners:
         summary["ignored"] += 1
+        return False
+    data = cq.get('data') or ''
+    if isinstance(data, str) and data.startswith(('view|', 'detail|')):
+        from .browse import VIEWS, details, home, menu_keyboard, screen, valid_prefix
+
+        message = cq.get('message') or {}
+        if _chat_id(message.get('chat')) not in owners or not message.get('message_id'):
+            summary['ignored'] += 1
+            return False
+        try:
+            bot.call('answerCallbackQuery', {'callback_query_id': cq['id']})
+        except TelegramError:
+            pass
+        parts = data.split('|')
+        if parts[0] == 'detail' and len(parts) == 2 and valid_prefix(parts[1]):
+            row = by_prefix.get(parts[1])
+            if row is None:
+                text, keyboard = 'This position is no longer available. Try the current list.', \
+                    menu_keyboard()
+            else:
+                text, keyboard = details(row, store)
+        elif len(parts) == 3 and parts[0] == 'view' and parts[2].isascii() \
+                and parts[2].isdigit() and len(parts[2]) <= 6:
+            kind, page = parts[1], int(parts[2])
+            query, token = '', ''
+            if kind.startswith('search:'):
+                token = kind.partition(':')[2]
+                searches = (context or {}).get('searches', {})
+                query = searches.get(token, '') if isinstance(searches, dict) else ''
+                kind = 'search'
+            if kind == 'menu':
+                text, keyboard = home(rows or [], store)
+            elif kind == 'help':
+                text, keyboard = HELP, menu_keyboard()
+            elif kind in VIEWS:
+                text, keyboard = screen(kind, rows or [], store, page=page, query=query,
+                                        search_id=token, page_size=page_size,
+                                        max_items=max_items, site_url=site_url)
+            else:
+                return False
+        else:
+            return False
+        try:
+            bot.call('editMessageText', {
+                'chat_id': message['chat']['id'], 'message_id': message['message_id'],
+                'text': text, 'parse_mode': 'HTML', 'reply_markup': keyboard,
+                'link_preview_options': {'is_disabled': True},
+            })
+        except TelegramError as exc:
+            if not (exc.status == 400 and 'message is not modified' in str(exc).lower()):
+                raise
         return False
     parsed = parse_callback(cq.get("data"))
     if not parsed:

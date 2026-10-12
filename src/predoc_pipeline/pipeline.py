@@ -1364,6 +1364,22 @@ def run(
         if (stats.errors or stats.source_errors) and stats.outcome == "ok":
             stats.outcome = "partial"
 
+        if settings.telegram_webhook_enabled:
+            try:
+                from .publish.cloud import sync_cloud
+
+                # Write the current journal before uploading fresh rows; Cloudflare
+                # feedback remains authoritative while the webhook is enabled.
+                state.write_journal(db, settings.state_path)
+                sync_cloud(settings)
+                feedback = FeedbackStore.from_settings(settings)
+                hidden = feedback.hidden
+            except Exception:
+                stats.errors += 1
+                if stats.outcome == 'ok':
+                    stats.outcome = 'partial'
+                log.exception('telegram_webhook_sync_failed')
+
         journal = state.write_journal(db, settings.state_path)
         router = Router(prefs)
         dashboard = state.export_dashboard(

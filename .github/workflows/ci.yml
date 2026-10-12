@@ -66,3 +66,19 @@ jobs:
 
       - name: Enforce stdlib-only core (belt and suspenders)
         run: PYTHONPATH=src python3 -m pytest tests/core/test_no_third_party.py -v
+
+      - uses: actions/setup-node@v7
+        if: matrix.python-version == '3.12'
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: cloudflare/telegram/package-lock.json
+
+      - name: Verify Telegram Worker and SQLite Durable Object runtime
+        if: matrix.python-version == '3.12'
+        working-directory: cloudflare/telegram
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+        run: |
+          npm ci
+          npm test

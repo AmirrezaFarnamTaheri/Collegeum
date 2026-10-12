@@ -89,6 +89,8 @@ exclude = [
 ]
 include = [
     "src", "tests", "tools", "config", "docs", ".github",
+    "cloudflare/telegram/*.mjs", "cloudflare/telegram/*.json",
+    "cloudflare/telegram/*.jsonc", "cloudflare/telegram/*.md",
     "review/**/*.md", "review/**/*.json", "review/**/*.py",
     "pyproject.toml", "uv.lock", "Makefile", "LICENSE", ".env.example", ".gitignore", ".gitattributes",
     "README.md", "ARCHITECTURE.md", "REVIEW.md", "COMPLIANCE.md", "OPERATIONS.md",
