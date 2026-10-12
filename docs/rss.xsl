@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:atom="http://www.w3.org/2005/Atom"
+                exclude-result-prefixes="atom">
   <xsl:output method="html" version="5.0" encoding="UTF-8" indent="yes"/>
   <xsl:template match="/">
     <html lang="en">
@@ -129,7 +131,7 @@
             <div class="feed-notice">
               <b>RSS Web Feed:</b> To subscribe in a feed reader (NetNewsWire, Feedly, Reeder, etc.), copy this URL:
               <br/>
-              <code><xsl:value-of select="/rss/channel/link"/>/feed.xml</code>
+              <code><xsl:value-of select="/rss/channel/atom:link[@rel='self']/@href"/></code>
             </div>
           </header>
 

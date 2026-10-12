@@ -1,11 +1,26 @@
 # Collegeum Telegram webhook worker
 
+The current subscriber bot must remain in polling mode. This Worker does not
+implement subscriber preferences, alerts or unsubscribe handling. Snapshot sync
+refuses activation when private subscriber records exist; do not switch the
+production bot's webhook until those flows have been migrated and validated.
+
 Optional instant Telegram browsing and database chat, backed by a SQLite Durable
 Object. The existing GitHub pipeline still discovers vacancies and owns the
 committed listing journal; the worker stores its uploaded snapshot and private
 feedback. [Protocol and access rules](../../docs/TELEGRAM_PROTOCOL.md).
 
 ## Local verification
+
+The manual deployment workflow rotates its starting credential across the
+GitHub secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_API_TOKEN_2` and
+`CLOUDFLARE_API_TOKEN_3`. Missing backup secrets are optional. It verifies an
+active token with Worker access to the configured account and falls back before
+deployment starts; it never retries a
+deployment using another credential. This selects existing tokens, and does
+not create, renew or revoke them or bypass Cloudflare account quotas.
+All tokens require Workers Scripts Edit permission on that same intended account;
+the read-only preflight confirms account access, not write authority.
 
 ```powershell
 cd cloudflare/telegram

@@ -30,6 +30,8 @@ def sync_cloud(
             or parts.query or parts.fragment or not settings.telegram_worker_sync_token):
         raise ValueError('Webhook mode needs an HTTPS TELEGRAM_WORKER_URL and sync token')
     store = FeedbackStore.from_settings(settings)
+    if store.subscribers:
+        raise ValueError('Webhook mode cannot replace active subscriber polling')
     init_db(settings.db_path)
     with Database(settings.db_path) as db:
         state.restore_if_needed(db, settings.state_path, settings.seen_state_path)

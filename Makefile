@@ -54,7 +54,8 @@ single-file:
 	$(PY) tools/build_single_file.py
 
 verify-single-file:
-	$(PY) tools/verify_single_file.py
+	$(PY) tools/build_single_file.py
+	$(PY) -S tools/verify_single_file.py
 
 clean:
 	find . -name '__pycache__' -exec rm -rf {} +

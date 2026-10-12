@@ -6,6 +6,12 @@ collectors/adapters, extraction, deduplication, routing, Telegram/X publication,
 private feedback, dashboard functions, source configuration, CI and packaging.
 The later Telegram improvements are local changes on top of that base.
 
+Integration note: PR #18 subsequently merged main's newer source, subscriber,
+private-delivery and packaging implementation. The six findings below describe
+the reviewed base `8b61f84`, not an assertion that all remain in current main.
+The accompanying reproduction outputs are historical evidence for that base.
+See `MERGE_VALIDATION.md` for the integrated branch validation and boundaries.
+
 ## Verified remaining defects in the synced base
 
 ### P1 — An old cache can erase newer durable publication acknowledgments

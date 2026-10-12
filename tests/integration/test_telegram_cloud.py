@@ -21,6 +21,24 @@ def configure(settings):
     settings.telegram_worker_sync_token = 'offline-sync-secret'
 
 
+def test_webhook_mode_cannot_disable_existing_subscriber_controls(settings):
+    from predoc_pipeline.publish.cloud import sync_cloud
+    from predoc_pipeline.publish.feedback import generate_key
+
+    configure(settings)
+    settings.feedback_encryption_key = generate_key()
+    store = FeedbackStore.from_settings(settings)
+    store.toggle_subscription(101, 'topics', 'predoc')
+    store.save()
+    calls = []
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda request: calls.append(request) or httpx.Response(200))) as client:
+        for function in (telegram_sync, sync_cloud):
+            with pytest.raises(ValueError, match='active subscriber polling'):
+                function(settings, http_client=client)
+    assert not calls
+
+
 def test_webhook_mode_sends_snapshot_and_imports_marks_without_polling(settings):
     ids = add_listings(settings)
     configure(settings)

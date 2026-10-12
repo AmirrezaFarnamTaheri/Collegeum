@@ -103,7 +103,7 @@ class RoutingConfig(BaseModel):
     """Which listings go to the website (and X) and which go to Telegram only."""
 
     web_regions: list[str] = Field(default_factory=lambda: ["US"])
-    web_position_kinds: list[str] = Field(default_factory=lambda: ["phd", "postdoc"])
+    web_position_kinds: list[str] = Field(default_factory=lambda: ["phd", "postdoc", "research"])
     web_employer_patterns: list[str] = Field(default_factory=list)
     web_employer_names: list[str] = Field(default_factory=list)
 

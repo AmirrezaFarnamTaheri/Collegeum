@@ -1,22 +1,19 @@
-"""The owner's preferences, applied to every listing before it can be published.
+"""Owner-defined eligibility policy, evaluated before publishing a vacancy.
 
-The gate and the extractor answer "is this a predoc vacancy?". This module
-answers "is it one *I* want?" -- and it runs whichever extractor produced the
-listing, so a confident model can never send a position these rules forbid:
+The board and model stages establish whether an advert describes an opening.
+This policy enforces configured field, region and employer restrictions using
+config/preferences.toml, whichever extraction backend was selected.
 
-* region: UK, Europe or Canada only (US and elsewhere dropped);
-* employer: universities, business/economics schools and research institutes
-  only -- no companies, no banks, never J-PAL (``excluded_employers``);
-* field: economics / business / political science / law, not medicine,
-  biology, engineering, psychology, arts or humanities;
-* no PhD-student positions, no "PhD required" roles;
-* no expired deadlines, no pages that say the position is filled.
-
-All of it is configured in ``config/preferences.toml``.
+Enabled PhD studentships and postdoctoral positions must not be rejected solely
+for requiring doctorate-related activities. An excluded field, employer, or
+expired advert is rejected when the available evidence supports that decision.
+The actual permitted fields and regions are configuration, not fixed here.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sqlite3
 from typing import Any
 
@@ -41,6 +38,11 @@ __all__ = ["Policy"]
 class Policy:
     def __init__(self, prefs: Preferences, *, trust_model_fields: bool = False) -> None:
         self.prefs = prefs
+        # Eligibility preferences are immutable during one pipeline execution;
+        # compute the rejection cache version once rather than per candidate.
+        self.decision_fingerprint = hashlib.sha256(json.dumps(
+            prefs.filters.model_dump(mode="json"), sort_keys=True, ensure_ascii=False
+        ).encode("utf-8")).hexdigest()[:16]
         self.flt = RelevanceFilter(prefs.filters)
         # With a language model, its discipline labels count as evidence of the
         # field; with the heuristic backend they are keyword guesses and don't.

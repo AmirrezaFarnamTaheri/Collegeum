@@ -1,21 +1,14 @@
-"""Two-way Telegram: commands and ✅ ❌ 📝 buttons.
+"""Scheduled two-way Telegram subscriber, owner and administrator interactions.
 
-Commands you can send to the bot:
+General commands configure private opt-in alerts and browse job opportunities.
+The administrator has scoped /admin and /reconcile commands. Legacy
+feedback buttons remain owner-only. Shared GitHub Actions workflows serialize
+state writers and checkpoint delivery intents before sending. Ambiguous sends
+must be reconciled with verified evidence.
 
-    /positions  all open positions, soonest deadline first
-    /applied    positions you marked 📝 applied
-    /valid      positions you marked ✅
-    /hidden     positions you marked ❌ (tap ❌ again to bring one back)
-    /help       what the buttons mean
-
-There is no always-on server. GitHub Actions runs ``predoc-pipeline
-telegram-sync`` every 30 minutes during the day (and at the start of the daily
-run). Each run reads the messages and button taps that arrived since the last
-one (Telegram keeps them for 24 hours), answers them, and saves your marks to
-``data/feedback.json``.
-
-Only the owner (the private chat in TELEGRAM_PUBLIC_CHANNEL_ID or
-TELEGRAM_ADMIN_CHAT_ID) is answered; everybody else is ignored.
+The service polls approximately every 30 minutes throughout the day, subject
+to GitHub scheduler delays. It is not an always-online webhook server.
+Incoming updates expire at Telegram after at most 24 hours.
 """
 
 from __future__ import annotations
@@ -48,7 +41,9 @@ from .feedback import (
     load_chat_state,
     save_state,
 )
+from .interactions import private_callback, private_message
 from .keyboards import LEGEND, feedback_row, parse_callback, rebuild
+from .subscriptions import private_user_id
 from .telegram import TelegramClient, TelegramError, deadline_label, pack_html_blocks
 
 log = get_logger(__name__)
@@ -56,25 +51,61 @@ log = get_logger(__name__)
 __all__ = ["COMMANDS", "telegram_sync", "select_rows", "build_pages", "command_of"]
 
 COMMANDS = [
-    ("menu", "Home, shortcuts and your shortlist"),
-    ("positions", "All open positions, soonest deadline first"),
-    ("applied", "Positions you marked 📝 applied"),
-    ("valid", "Positions you marked ✅ interested"),
-    ("hidden", "Positions you marked ❌ (to restore one)"),
-    ("search", "Search by role, employer, field or location"),
-    ("new", "Positions added in the last 7 days"),
-    ("closing", "Open positions closing within 7 days"),
-    ("ask", "Ask the vacancy database, with source-backed results"),
-    ("forget", "Clear your AI follow-up context"),
-    ("help", "How the buttons work"),
+    ("ask", "Ask stored vacancy facts"),
+    ("forget", "Clear AI follow-up context"),
+    ("start", "Open personal job alerts"),
+    ("settings", "Choose jobs and markets"),
+    ("latest", "Browse matching opportunities"),
+    ("lifesciences", "European Life Sciences PhD alerts"),
+    ("sources", "See current job sources"),
+    ("delivery", "Digest and notification hours"),
+    ("privacy", "Understand private data retention"),
+    ("pause", "Pause notifications"),
+    ("resume", "Resume notifications"),
+    ("guide", "Help with job alerts"),
+    ("help", "Help with job alerts"),
+    ("stop", "Unsubscribe with confirmation"),
+    ("delete", "Delete active subscriber data"),
 ]
-COMMANDS_VERSION = 3
+OWNER_COMMANDS = [
+    ("menu", "Owner shortlist and browsing"),
+    ("search", "Search stored vacancies"),
+    ("new", "Positions added this week"),
+    ("closing", "Deadlines within seven days"),
+    ("positions", "All open published positions"),
+    ("applied", "Your applied positions"),
+    ("valid", "Your interested positions"),
+    ("hidden", "Your hidden positions"),
+    ("ownerhelp", "Help with owner feedback buttons"),
+]
+ADMIN_COMMAND = ("admin", "Operations and source health")
+RECONCILE_COMMAND = ("reconcile", "Verify a private delivery outcome")
+FA_COMMAND_DESCRIPTIONS = {
+    "ask": "پرسش از اطلاعات فرصت‌ها",
+    "forget": "پاک کردن زمینه گفت‌وگوی هوش مصنوعی",
+    "start": "صفحه اصلی اعلان فرصت‌ها",
+    "settings": "تنظیم موضوع‌ها و محدوده",
+    "latest": "مرور تازه‌ترین فرصت‌ها",
+    "lifesciences": "دکتری علوم زیستی در اروپا",
+    "sources": "وضعیت منابع آگهی",
+    "delivery": "تنظیمات دریافت اعلان",
+    "privacy": "حریم خصوصی و نگهداری داده",
+    "pause": "توقف اعلان‌ها",
+    "resume": "ازسرگیری اعلان‌ها",
+    "guide": "راهنمای استفاده",
+    "help": "راهنمای استفاده",
+    "stop": "لغو عضویت با تأیید",
+    "delete": "حذف داده‌های فعال اشتراک",
+}
+COMMANDS_VERSION = 11
+MAX_COMMANDS_PER_SYNC = 20
 ALIASES = {
+    "menu": "menu", "home": "menu", "search": "search", "new": "new",
+    "closing": "closing", "ask": "ask", "forget": "forget",
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
-    "saved": "valid", "hidden": "hidden", "invalid": "hidden", "help": "help", "start": "menu",
-    "menu": "menu", "home": "menu", "search": "search", "new": "new", "closing": "closing",
-    "ask": "ask", "forget": "forget",
+    "saved": "valid", "hidden": "hidden", "invalid": "hidden", "help": "help",
+    "ownerhelp": "help", "start": "help",
 }
 HELP = (
     "🤖 <b>Predoc bot</b>\n\n"
@@ -82,11 +113,6 @@ HELP = (
     "/applied: the ones you applied to\n"
     "/valid: the ones you marked ✅\n"
     "/hidden: the ones you marked ❌\n\n"
-    "/menu: your shortlist and browsing shortcuts\n"
-    "/search economics London: find roles by keyword\n"
-    "/new: added this week · /closing: deadlines within 7 days\n\n"
-    "/ask: query stored vacancy facts with source links\n"
-    "/forget: clear your private AI follow-up context\n\n"
     "Under every position:\n"
     "✅ = interested  ·  ❌ = not for me (it disappears everywhere)  ·  "
     "📝 = I applied (moves to /applied)\n"
@@ -213,9 +239,8 @@ class _Bot:
     def __init__(self, client: TelegramClient, sleep: Callable[[float], None]):
         self.client, self.sleep = client, sleep
 
-    def send(self, chat_id: str, html: str, keyboard: dict[str, Any] | None = None) -> int:
-        return self.client.send_message(
-            chat_id=chat_id, html=html, keyboard=keyboard, sleep=self.sleep)
+    def send(self, chat_id: str, html: str, keyboard: dict[str, Any] | None = None) -> None:
+        self.client.send_message(chat_id=chat_id, html=html, keyboard=keyboard, sleep=self.sleep)
 
     def call(self, method: str, payload: dict[str, Any]) -> Any:
         return self.client.call(method, payload, sleep=self.sleep)
@@ -230,21 +255,27 @@ def telegram_sync(
     max_items: int | None = None,
 ) -> dict[str, int]:
     """Answer everything sent to the bot since the last run. Safe to run as often as you like."""
+    from ..boards.config import load_preferences
+
     if settings.telegram_webhook_enabled:
         from .cloud import sync_cloud
 
+        store = FeedbackStore.from_settings(settings)
+        if store.subscribers:
+            raise ValueError("Webhook mode cannot replace active subscriber polling")
         return sync_cloud(settings, http_client=http_client)
-    from ..boards.config import load_preferences
-
     tg_prefs = load_preferences(settings.preferences_config).telegram
     page_size = max(1, page_size or tg_prefs.list_page_size)
     max_items = max(1, max_items or tg_prefs.list_max)
-    summary = {"received": 0, "commands": 0, "taps": 0, "ignored": 0, "failed": 0, "dropped": 0}
+    summary = {
+        "received": 0, "commands": 0, "taps": 0, "ignored": 0,
+        "failed": 0, "dropped": 0,
+    }
     owners = settings.owner_ids
-    if not settings.telegram_bot_token or not owners:
+    if not settings.telegram_bot_token or not (owners or settings.feedback_encryption_key):
         log.warning("telegram_sync_skipped",
-                    reason="set TELEGRAM_BOT_TOKEN and your own chat id "
-                           "(TELEGRAM_PUBLIC_CHANNEL_ID or TELEGRAM_ADMIN_CHAT_ID)")
+                    reason="set TELEGRAM_BOT_TOKEN and encrypted private subscriptions "
+                           "or an owner Telegram chat ID")
         return summary
 
     tg = TelegramClient(bot_token=settings.telegram_bot_token, client=http_client)
@@ -258,13 +289,52 @@ def telegram_sync(
     try:
         if chat_state.get("commands_version") != COMMANDS_VERSION:
             try:
-                bot.call("setMyCommands", {"commands": [
-                    {"command": c, "description": d} for c, d in COMMANDS]})
+                command_list = [
+                    {"command": c, "description": d} for c, d in COMMANDS
+                ]
+                bot.call("setMyCommands", {"commands": command_list})
+                # Persian labels for users whose Telegram locale is Persian.
+                bot.call("setMyCommands", {
+                    "scope": {"type": "all_private_chats"},
+                    "language_code": "fa",
+                    "commands": [
+                        {"command": c, "description": FA_COMMAND_DESCRIPTIONS[c]}
+                        for c, _ in COMMANDS
+                    ],
+                })
+                raw_admin = settings.telegram_admin_chat_id.strip()
+                admin_chat = (
+                    int(raw_admin) if raw_admin.isascii()
+                    and raw_admin.isdecimal() and int(raw_admin) > 0
+                    else None
+                )
+                for chat_id in sorted(owners):
+                    scoped = [
+                        *command_list,
+                        *[
+                            {"command": c, "description": desc}
+                            for c, desc in OWNER_COMMANDS
+                        ],
+                    ]
+                    if chat_id == admin_chat:
+                        scoped.extend([
+                            {"command": ADMIN_COMMAND[0], "description": ADMIN_COMMAND[1]},
+                            {
+                                "command": RECONCILE_COMMAND[0],
+                                "description": RECONCILE_COMMAND[1],
+                            },
+                        ])
+                    bot.call("setMyCommands", {
+                        "scope": {"type": "chat", "chat_id": chat_id},
+                        "commands": scoped,
+                    })
                 chat_state["commands_version"] = COMMANDS_VERSION
             except TelegramError as exc:
                 log.warning("set_commands_failed", error=str(exc))
 
-        payload: dict[str, Any] = {"timeout": 0,
+        # Bound interactive processing so a command storm cannot monopolize
+        # the ten-minute scheduled sync window. Unprocessed updates keep offset.
+        payload: dict[str, Any] = {"timeout": 0, "limit": 100,
                                    "allowed_updates": ["message", "callback_query"]}
         if chat_state.get("offset"):
             payload["offset"] = chat_state["offset"]
@@ -274,9 +344,13 @@ def telegram_sync(
             if exc.status == 409:
                 log.error("telegram_webhook_set",
                           hint="a webhook is set for this bot; commands only work without one")
+                if store.subscribers:
+                    raise  # never send to opted-in users when /stop cannot be received
                 return summary
             if exc.status in (401, 403, 404):
                 log.warning("telegram_auth_or_chat_failed", error=str(exc))
+                if store.subscribers:
+                    raise
                 return summary
             raise
         if not updates:
@@ -294,20 +368,54 @@ def telegram_sync(
             rows = list(db.published_listings())
         by_prefix = {r["url_hash"][:ID_PREFIX]: r for r in rows}
         changed = False
+        per_user_count: dict[int, int] = {}
 
         for update in updates:
             update_id = int(update["update_id"])
+            message = update.get("message") or {}
+            callback = update.get("callback_query") or {}
+            if "callback_query" in update:
+                user_id = private_user_id({
+                    "from": callback.get("from"),
+                    "chat": (callback.get("message") or {}).get("chat"),
+                })
+                raw = str(callback.get("data") or "")
+                essential = raw in ("sub:p:stop", "sub:stop:yes", "sub:a:pause")
+            else:
+                user_id = private_user_id(message)
+                raw = str(message.get("text") or "").strip().split(" ", 1)[0].lower()
+                essential = raw.split("@", 1)[0] in ("/stop", "/delete", "/pause")
+            if user_id is not None and user_id not in owners and not essential:
+                per_user_count[user_id] = per_user_count.get(user_id, 0) + 1
+            too_many = (
+                user_id is not None and user_id not in owners and not essential
+                and per_user_count[user_id] > MAX_COMMANDS_PER_SYNC
+            )
             try:
-                if "callback_query" in update:
-                    changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,
-                                           owners, summary, rows=rows, context=chat_state,
-                                           page_size=page_size, max_items=max_items,
-                                           site_url=settings.site_url)
-                elif "message" in update:
-                    _handle_message(bot, update["message"], rows, store, owners, summary,
-                                    page_size=page_size, max_items=max_items,
-                                    site_url=settings.site_url, context=chat_state,
-                                    ai_settings=settings)
+                if too_many:
+                    summary["throttled"] = summary.get("throttled", 0) + 1
+                    if "callback_query" in update:
+                        try:
+                            bot.call("answerCallbackQuery", {
+                                "callback_query_id": callback["id"],
+                                "text": "Too many requests. Try again after the next sync.",
+                            })
+                        except (TelegramError, KeyError):
+                            pass
+                elif "callback_query" in update:
+                    if not private_callback(bot, update["callback_query"], store,
+                                            settings, summary, rows):
+                        changed |= _handle_tap(bot, update["callback_query"], by_prefix, store,
+                                               owners, summary, rows=rows, context=chat_state,
+                                               page_size=page_size, max_items=max_items,
+                                               site_url=settings.site_url)
+                elif ("message" in update and
+                      not private_message(bot, update["message"], store,
+                                          settings, rows, summary)):
+                    _handle_message(bot, update["message"], rows, store, owners,
+                                    summary, page_size=page_size,
+                                    max_items=max_items, site_url=settings.site_url,
+                                    context=chat_state, ai_settings=settings)
             except Exception as exc:  # noqa: BLE001
                 if _is_retryable(exc):
                     # Do not acknowledge: this update (and everything after it) is

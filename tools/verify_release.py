@@ -9,7 +9,10 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FORBIDDEN = {'.env', '.codegraph', '.serena', '.statamcp', '__pycache__', '.venv', 'feedback.json'}
+FORBIDDEN = {
+    '.env', '.codegraph', '.serena', '.statamcp', '__pycache__',
+    '.venv', 'feedback.json', 'compile_project.py',
+}
 
 
 def check_names(names: list[str]) -> None:
@@ -39,8 +42,10 @@ def main() -> None:
         names = archive.getnames()
         check_names(names)
         prefix = names[0].split('/')[0]
-        for name in ('FINALIZATION.md', 'uv.lock', 'compile_project.py',
-                     'tools/verify_single_file.py', 'tools/verify_release.py'):
+        for name in (
+            'FINALIZATION.md', 'uv.lock',
+            'tools/verify_single_file.py', 'tools/verify_release.py',
+        ):
             file = archive.extractfile(f'{prefix}/{name}')
             if file is None or file.read() != (ROOT / name).read_bytes():
                 raise SystemExit(f'Source archive mismatch: {name}')

@@ -36,6 +36,39 @@ changes, source coverage and the requirements still blocking full acceptance.
 `COMPLIANCE.md` before enabling external scrapers, `REVIEW.md` for the defect
 register, and `OPERATIONS.md` for production runbooks.
 
+## Personal Telegram alerts and admin console
+
+Private chat subscriptions now support predocs, PhDs, postdocs, data science,
+data analytics, economics consulting, and research-analyst vacancies.
+Career alerts offer separate **Iran-based** and **worldwide-remote** switches.
+Use `/start` for the compact home screen, then select academic roles, careers
+and job markets with inline buttons. Other shortcuts include `/settings`,
+`/latest` (paginated preview), `/sources` (provider-health summary),
+`/pause`, `/resume`, `/guide` and `/stop` (confirmed unsubscribe).
+The bot supports English and Persian menus without requiring a public web
+application. Users can select an entire role group at once, and new job cards
+include an Open vacancy and Manage alerts button.
+The private admin can open `/admin` for run, cache and queue health.
+Private notification sends use a checkpointed outbox: encrypted intents
+are committed before any Bot API send, and delivery outcomes are committed
+afterward. Failed and ambiguous sends remain visible for reconciliation.
+Both require the existing `FEEDBACK_ENCRYPTION_KEY`; configure a positive
+`TELEGRAM_ADMIN_CHAT_ID` for the admin surface. Scheduled private-sync
+runs **only** when `ENABLE_TELEGRAM_SYNC=true` is set as an Actions
+repository variable; when enabled, it fails if `TELEGRAM_BOT_TOKEN` or
+`FEEDBACK_ENCRYPTION_KEY` is missing. By default the private inbox is
+inactive until existing encrypted state and its original key are verified.
+Public Telegram channel announcements remain independent. A previous
+production run appeared green after silently skipping due to a missing
+encryption key. See the operations guide for safe restoration and validation.
+
+The scheduled pipeline checks alternating source cohorts every **4 hours**;
+each academic board is checked once per 8 hours and runs have halved budgets.
+See [Telegram subscriptions and operations](docs/TELEGRAM_OPERATIONS.md)
+for data flow, delivery recovery, source constraints, and setup. The
+[provider integration matrix](docs/IRAN_JOB_PROVIDERS.md) distinguishes
+public job feeds from undocumented/private ATS and candidate APIs.
+
 ## Quickstart
 
 ```bash
@@ -65,8 +98,8 @@ predoc-pipeline vacuum           # prune dead-letter/seen rows and compact the d
 
 For a scheduled, hosted setup add `TELEGRAM_BOT_TOKEN` and
 `TELEGRAM_PUBLIC_CHANNEL_ID` (your own chat id, for a personal bot) as
-repository secrets. `.github/workflows/pipeline.yml` runs every six hours
-(00:00, 06:00, 12:00 and 18:00 UTC),
+repository secrets. `.github/workflows/pipeline.yml` runs every four hours
+(00:07, 04:07, 08:07, 12:07, 16:07 and 20:07 UTC),
 and `.github/workflows/telegram.yml` checks commands at its configured half-hour
 slots. Both workflows share a serial queue with multiple waiting runs enabled;
 [GitHub permits up to 100 waiting runs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)

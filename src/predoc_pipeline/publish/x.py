@@ -124,8 +124,12 @@ def format_tweet(listing: PredocListing, max_chars: int = MAX_TWEET_CHARS) -> st
         loc_str = ""
 
     kind = Router.position_kind(listing.title, listing.summary)
-    label, tag = {'predoc': ('Pre-Doctoral', '#Predoc'),
-                  'phd': ('PhD', '#PhD'), 'postdoc': ('Postdoctoral', '#Postdoc')}[kind]
+    label, tag = {
+        'predoc': ('Pre-Doctoral', '#Predoc'),
+        'phd': ('PhD', '#PhD'),
+        'postdoc': ('Postdoctoral', '#Postdoc'),
+        'research': ('Research Staff', '#ResearchStaff'),
+    }[kind]
     link = listing.apply_url or listing.source_url
     fields = [
         ('🏛 ', _truncate_weighted(listing.institution, max_chars)),

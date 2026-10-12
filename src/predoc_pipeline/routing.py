@@ -2,9 +2,9 @@
 
 Two destinations, never both:
 
-* ``web``: the website and X. US positions, PhD and postdoc positions, and
-  anything from a bank, international organization, consultancy or company
-  that is explicitly named in the routing config.
+* ``web``: the website and X. US positions; PhD, postdoctoral, and
+  PhD-qualified staff research positions; and institutional employers
+  explicitly included by routing configuration.
 * ``telegram``: pre-doctoral roles outside the US at universities and
   research institutes.
 
@@ -27,6 +27,10 @@ __all__ = ["Channel", "Router"]
 
 _POSTDOC = re.compile(r"\bpost-?\s?doc(toral)?\b", re.IGNORECASE)
 _PREDOC = re.compile(r"\bpre-?\s?(doc(toral)?|phd)\b", re.IGNORECASE)
+_PHD_JOB_MARKET = re.compile(
+    r"\bph\.?d\.?\s+researcher\b.*\bph\.?d\.?\s+job\s+market\b", re.I
+)
+_PERMANENT = re.compile(r"\b(?:permanent|indeterminate|continuing)\b", re.I)
 _DOCTORAL_DUTY = re.compile(
     r"\b(?:holder|appointee|candidate|you|employee|successful applicant)\b"
     r"[^.!?\n]{0,100}?\b(?:enroll?|register|complete|undertake|pursue|write)\w*"
@@ -66,7 +70,12 @@ class Router:
 
     @staticmethod
     def position_kind(title: str, summary: str = "") -> str:
-        """``predoc``, ``phd`` or ``postdoc``. Predoc is the default."""
+        """Predoc, doctoral student, postdoc, or PhD-qualified staff."""
+        # A permanent PhD job-market hire does not enroll a doctoral student.
+        if _PHD_JOB_MARKET.search(title) or (
+            _COMPLETED_PHD_REQUIRED.search(summary) and _PERMANENT.search(summary)
+        ):
+            return "research"
         if _POSTDOC.search(title):
             return "postdoc"
         if _COMPLETED_PHD_REQUIRED.search(summary):

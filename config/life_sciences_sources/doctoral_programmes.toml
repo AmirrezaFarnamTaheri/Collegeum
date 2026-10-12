@@ -1,0 +1,162 @@
+# Life Sciences PhD programmes research-candidate directory (11 Oct 2026).
+# NONE of these entries is an enabled vacancy feed. Host roots identify
+# institutions, not verified listing endpoints or live doctoral calls.
+# Manual verification must establish robots access, dated vacancies,
+# individual link pattern, field and European workplace before activation.
+
+[[board]]
+name = "life_programme_imprs_molecular"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.imprs-ls.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "International Max Planck Research School for Molecular Life Sciences"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_imprs_neuroscience"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.imprs-neurosciences.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "International Max Planck Research School Neurosciences"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_spemann"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.sgbm.uni-freiburg.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Spemann Graduate School of Biology and Medicine"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_berlin_mind_brain"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.mind-and-brain.de/"
+link_pattern = '^$'
+country = "Germany"
+institution = "Berlin School of Mind and Brain"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_zurich_lszgs"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.lifescience-graduateschool.uzh.ch/"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "Life Science Zurich Graduate School"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_basel_gsbm"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.unibas.ch/"
+link_pattern = '^$'
+country = "Switzerland"
+institution = "Graduate School of Biomedical Science University of Basel"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_helsinki_biomed"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.helsinki.fi/"
+link_pattern = '^$'
+country = "Finland"
+institution = "University of Helsinki Doctoral Programme in Biomedicine"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_copenhagen_bric"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.bric.ku.dk/"
+link_pattern = '^$'
+country = "Denmark"
+institution = "BRIC Copenhagen Doctoral Training"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_utrecht_gsls"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.uu.nl/"
+link_pattern = '^$'
+country = "Netherlands"
+institution = "Utrecht University Graduate School of Life Sciences"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_champalimaud_neuro"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://fchampalimaud.org/"
+link_pattern = '^$'
+country = "Portugal"
+institution = "Champalimaud Neuroscience Doctoral Programme"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_bist_igd"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://bist.eu/"
+link_pattern = '^$'
+country = "Spain"
+institution = "Barcelona Institute of Science and Technology Doctoral Training"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+
+[[board]]
+name = "life_programme_neuroschool_marseille"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://neuroschool.univ-amu.fr/"
+link_pattern = '^$'
+country = "France"
+institution = "NeuroSchool Aix-Marseille Doctoral School"
+verification = "candidate_unverified"
+programme_mode = "cohort"
+note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+

@@ -49,6 +49,7 @@ dependencies = [
     "cryptography>=42",
     # twitter-text parsing is vendored (MIT license, src/twitter_text/LICENSE).
     # It loads Unicode emoji data through importlib.resources, not pkg_resources.
+    "tzdata>=2026.5 ; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
@@ -94,7 +95,7 @@ include = [
     "review/**/*.md", "review/**/*.json", "review/**/*.py",
     "pyproject.toml", "uv.lock", "Makefile", "LICENSE", ".env.example", ".gitignore", ".gitattributes",
     "README.md", "ARCHITECTURE.md", "REVIEW.md", "COMPLIANCE.md", "OPERATIONS.md",
-    "CHANGES.md", "SETUP_GUIDE.md", "FINALIZATION.md", "compile_project.py",
+    "CHANGES.md", "SETUP_GUIDE.md", "FINALIZATION.md",
 ]
 
 [tool.pytest.ini_options]

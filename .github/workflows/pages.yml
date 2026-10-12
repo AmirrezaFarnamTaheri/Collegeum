@@ -52,11 +52,26 @@ jobs:
         with:
           ref: main
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      # Only approved public assets belong on Pages, never operator guides.
+      - name: Stage public dashboard assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/pages/data
+          for f in index.html architecture.html favicon.png favicon.svg \
+                   feed.xml logo.svg predoc-pipeline.architecture.json \
+                   rss.xsl telegram-avatar-512.png telegram-avatar.png; do
+            cp "docs/$f" "build/pages/$f"
+          done
+          for f in listings.json health.json; do
+            cp "docs/data/$f" "build/pages/data/$f"
+          done
+
+      - uses: actions/upload-pages-artifact@v5
         with:
-          path: docs
+          path: build/pages
 
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

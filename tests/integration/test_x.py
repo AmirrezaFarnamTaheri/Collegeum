@@ -53,6 +53,18 @@ class TestXFormatting(unittest.TestCase):
         expected = len("Check this job: ") + 23
         self.assertEqual(tweet_length(text), expected)
 
+    def test_completed_phd_staff_role_has_accurate_type_and_valid_post(self):
+        listing = _sample_listing(
+            title="PhD Researcher (2026-2027 PhD Job Market)",
+            institution="Bank of Canada", city="Ottawa", country="Canada",
+            summary="Permanent researcher, appointed as Senior Economist.",
+        )
+        tweet = format_tweet(listing)
+        self.assertIn("Research Staff Opening", tweet)
+        self.assertIn("#ResearchStaff", tweet)
+        self.assertNotIn("#PhD\n", tweet)
+        self.assertLessEqual(tweet_length(tweet), 280)
+
     def test_format_tweet_within_budget(self):
         listing = _sample_listing()
         tweet = format_tweet(listing)

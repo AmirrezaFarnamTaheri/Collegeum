@@ -1,59 +1,51 @@
-name: refresh-release
+name: build-single-file
 
-# Maintainer-only artifact regeneration for this remediation branch.
-# Run with workflow_dispatch for a later refresh. This workflow never deploys
-# or publishes; CI independently checks the committed generated manifest.
+# The self-contained materializer is built from reviewed source, never
+# checked into Git or pushed to a PR branch by a privileged bot.
 on:
   push:
-    branches:
-      - codex/finalize-sources-and-pipeline
+    branches: ['**']
     paths:
-      - .github/workflows/refresh-release.yml
+      - .github/workflows/*.yml
+      - src/**
+      - tests/**
+      - tools/**
+      - config/**
+      - review/**
+      - docs/*.html
+      - '*.md'
+      - pyproject.toml
+      - uv.lock
+      - Makefile
+      - .gitignore
+      - .gitattributes
+      - .env.example
   workflow_dispatch:
 
-# Refresh checkpoint: finalization documentation aligned to verified CI.
-
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: collegeum-release-refresh-${{ github.ref }}
-  cancel-in-progress: false
+  group: collegeum-distribution-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  regenerate:
-    if: github.repository == 'AmirrezaFarnamTaheri/Collegeum' && github.ref == 'refs/heads/codex/finalize-sources-and-pipeline'
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.ref_name }}
-          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - name: Build and verify standalone materializer
+        run: |
+          python3 tools/build_single_file.py
+          python3 -S tools/verify_single_file.py
+      - name: Upload standalone distribution
+        uses: actions/upload-artifact@v7
         with:
-          enable-cache: true
-      - name: Resolve dependencies from current project
-        run: uv lock
-      - name: Rebuild reproducible project distribution
-        run: |
-          python tools/build_single_file.py
-          python -S tools/verify_single_file.py
-      - name: Commit generated artifacts to the existing PR branch
-        run: |
-          set -eu
-          git config user.name 'collegeum-release-bot'
-          git config user.email 'actions@users.noreply.github.com'
-          git add -- uv.lock compile_project.py
-          if git diff --cached --quiet; then
-            echo 'Generated artifacts already current'
-            exit 0
-          fi
-          git commit -m 'chore: synchronize locked dependencies and reproducible distribution [skip ci]'
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
-      - name: Verify committed distribution
-        run: python -S tools/verify_single_file.py
+          name: collegeum-single-file-${{ github.sha }}
+          path: compile_project.py
+          retention-days: 14
+          if-no-files-found: error

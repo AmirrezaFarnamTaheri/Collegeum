@@ -1,5 +1,12 @@
 # Telegram database chat protocol
 
+After integration with current main, subscriber commands (`/start`, `/settings`,
+`/latest`, `/stop`, `/delete`, and administrator controls) keep their existing
+polling behavior. AI commands are added alongside those controls. Webhook mode
+is refused while subscriber records exist, because this optional Worker does
+not implement their subscription and unsubscribe protocol. Keep polling enabled
+for the current subscriber bot until a complete webhook migration is validated.
+
 The Telegram bot is the only user interface for AI database questions. It has
 two audiences: configured owners can browse and track vacancies without product
 rate limits; other users can ask about public vacancy facts in a private chat.

@@ -26,6 +26,7 @@ def settings(tmp_path, monkeypatch):
         telegram_public_channel_id=str(OWNER),
         db_path=str(tmp_path / "predocs.db"),
         state_path=str(tmp_path / "listings.ndjson"),
+        seen_state_path=str(tmp_path / "seen.ndjson"),
         feedback_path=str(tmp_path / "feedback.json"),
         telegram_state_path=str(tmp_path / "state.json"),
         dashboard_json=str(tmp_path / "docs" / "listings.json"),

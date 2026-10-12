@@ -28,4 +28,16 @@ def notify_admin(settings: Settings, message: str) -> None:
         with TelegramClient(bot_token=settings.telegram_bot_token) as client:
             client.send_plain(chat_id=settings.alert_chat_id, text=prefixed)
     except TelegramError as exc:
-        log.error("alert_delivery_failed", error=str(exc), message=message)
+        if exc.status == 403:
+            log.error(
+                "alert_delivery_failed",
+                error=str(exc),
+                message=message,
+                advice=(
+                    "The configured admin recipient must open this bot in a private "
+                    "chat and press Start, or unblock it. Public channel delivery "
+                    "is independent; do not rotate a working bot token."
+                ),
+            )
+        else:
+            log.error("alert_delivery_failed", error=str(exc), message=message)

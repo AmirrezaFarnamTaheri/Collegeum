@@ -22,8 +22,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
+from .core.output_quality import application_url_issue, authentication_page_text, excluded_by_audit
 from .core.timeparse import format_ts, parse_datetime, utcnow
+from .models import parse_salary
 
 __all__ = [
     "write_journal",
@@ -151,8 +154,35 @@ def _row_value(row: Any, key: str) -> Any:
         return None
 
 
+def _public_application_url(value: str | None) -> str | None:
+    """Unwrap only a verified HTTPS Google Forms target from Google login."""
+    if not value:
+        return value
+    try:
+        parts = urlsplit(value)
+        if parts.hostname == "accounts.google.com" and "/signin/" in parts.path:
+            target = parse_qs(parts.query).get("continue", [""])[0]
+            dest = urlsplit(target)
+            if (dest.scheme == "https" and dest.hostname == "docs.google.com"
+                    and dest.path.startswith("/forms/")):
+                return target
+    except ValueError:
+        pass
+    return value
+
+
 def _public_record(row: Any) -> dict[str, Any]:
     get = row.__getitem__ if hasattr(row, "keys") else row.get
+    salary_raw = _row_value(row, "salary_raw")
+    if salary_raw:
+        salary_min, salary_max, salary_currency, salary_period = parse_salary(
+            salary_raw, country=get("country")
+        )
+    else:
+        salary_min = _row_value(row, "salary_min")
+        salary_max = _row_value(row, "salary_max")
+        salary_currency = _row_value(row, "salary_currency")
+        salary_period = _row_value(row, "salary_period")
     deadline = get("deadline")
     parsed = parse_datetime(deadline)
     days_left = (parsed.date() - utcnow().date()).days if parsed else None
@@ -184,18 +214,18 @@ def _public_record(row: Any) -> dict[str, Any]:
         "visa": get("visa_sponsorship_status"),
         "summary": get("summary") or "",
         "language": get("language") or "en",
-        "apply_url": get("apply_url"),
+        "apply_url": _public_application_url(get("apply_url")),
         "source_url": get("source_url"),
         "confidence": round(float(get("confidence") or 0), 3),
         "first_seen_at": get("first_seen_at"),
         "deadline_note": _row_value(row, "deadline_note"),
         "visa_note": _row_value(row, "visa_note"),
         "alternate_sources": json.loads(get("alternate_sources") or "[]"),
-        "salary_min": _row_value(row, "salary_min"),
-        "salary_max": _row_value(row, "salary_max"),
-        "salary_currency": _row_value(row, "salary_currency"),
-        "salary_period": _row_value(row, "salary_period"),
-        "salary_raw": _row_value(row, "salary_raw"),
+        "salary_min": salary_min,
+        "salary_max": salary_max,
+        "salary_currency": salary_currency,
+        "salary_period": salary_period,
+        "salary_raw": salary_raw,
         "tools_required": tools_req,
         "tools_preferred": tools_pref,
         "min_degree": _row_value(row, "min_degree"),
@@ -211,6 +241,9 @@ def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
         row
         for row in db.active_listings()
         if row["url_hash"] not in hidden
+        and not excluded_by_audit(row["url_hash"])
+        and application_url_issue(_public_application_url(row["apply_url"])) is None
+        and not authentication_page_text(row["summary"])
         and (router is None or router.channel_for_row(row) == "web")
     ]
 
@@ -237,7 +270,9 @@ def export_dashboard(
     }
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(target)
     return len(records)
 
 
@@ -265,6 +300,12 @@ def export_health(
         except ValueError:
             source_stats = {}
         public_stats = public_source_stats(source_stats)
+        run_summary = source_summary(source_stats)
+        derived_outcome = row["outcome"]
+        if derived_outcome == "ok" and (
+            run_summary["failed"] or run_summary["partial"] or row["errors"]
+        ):
+            derived_outcome = "partial"
         for name, data in public_stats.items():
             if name.startswith("_") or not row["finished_at"]:
                 continue
@@ -280,7 +321,7 @@ def export_health(
         runs.append(
             {
                 "source_stats": public_stats,
-                "source_summary": source_summary(source_stats),
+                "source_summary": run_summary,
                 "run_id": row["run_id"],
                 "started_at": row["started_at"],
                 "finished_at": row["finished_at"],
@@ -291,14 +332,14 @@ def export_health(
                 "published": row["published"],
                 "errors": row["errors"],
                 "llm_calls": row["llm_calls"],
-                "outcome": row["outcome"],
+                "outcome": derived_outcome,
             }
         )
     latest = runs[0] if runs else {}
     summary = latest.get("source_summary") or source_summary({})
     outcome = stats.get("outcome") or latest.get("outcome") or "unknown"
     status = "degraded" if outcome == "partial" or (
-        outcome == "ok" and (summary["failed"] or stats.get("errors"))
+        outcome == "ok" and (summary["failed"] or summary["partial"] or stats.get("errors"))
     ) else outcome
     # Retain known successful times after they age out of the 30-run history.
     # Validate the timestamp before carrying it forward from the prior export.
@@ -312,8 +353,11 @@ def export_health(
             old = previous_sources.get(name)
             if entry["last_successful_at"] is None and isinstance(old, dict):
                 entry["last_successful_at"] = previous_success(old.get("last_successful_at"))
-    last_success = next((run["finished_at"] for run in runs if run["outcome"] == "ok"
-                         and not run["source_summary"]["failed"]), None)
+    last_success = next((
+        run["finished_at"] for run in runs
+        if run["outcome"] == "ok" and run["finished_at"]
+        and not (run["source_summary"]["failed"] or run["source_summary"]["partial"])
+    ), None)
     payload = {
         "generated_at": format_ts(),
         "counts": db.counts(),
@@ -372,6 +416,7 @@ def export_feed(
     Removes any single channel as the only way in: anyone can subscribe in a
     reader, and the data stays usable if a bot token is ever revoked.
     """
+    site_url = site_url or "https://amirrezafarnamtaheri.github.io/Collegeum/"
     rows = _web_rows(db, hidden or set(), router)[:limit]
     now = utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
     parts = [
@@ -380,7 +425,7 @@ def export_feed(
         '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
         "<channel>",
         f"<title>{_xml_escape(title)}</title>",
-        f"<link>{_xml_escape(site_url or 'https://example.invalid')}</link>",
+        f"<link>{_xml_escape(site_url)}</link>",
         "<description>US research positions, PhD and postdoc posts, and openings at "
         "central banks, international organizations and firms.</description>",
         "<language>en</language>",

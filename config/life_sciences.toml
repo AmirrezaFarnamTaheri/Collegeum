@@ -1,0 +1,265 @@
+# Independent Life Sciences PhD sourcing for private Telegram subscribers.
+# These boards are NEVER passed through the economics publication pipeline.
+# Sources are only contacted if somebody opts in to "life_sciences_phd".
+# Each run checks at most 12 enabled sources (with oldest-first rotation when
+# more are enabled), up to 60 rows each and 200 rows per run.
+#
+# All matching additionally requires an explicit doctoral role, an eligible
+# biological research field and a concrete continental-European country.
+# Unknown location, UK/US/Canada, postdoc and explicitly self-funded adverts
+# are excluded. Salaries, fee waivers and full funding are NOT assumed.
+
+[[board]]
+name = "life_euraxess"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aepigenetics",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Achromatin",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Aneurodevelopment",
+  "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Agenomics",
+]
+link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
+institution_from_context = true
+note = "EU careers; individual job cards must establish a European country."
+
+[[board]]
+name = "life_academictransfer"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://www.academictransfer.com/en/jobs/?q=epigenetics",
+  "https://www.academictransfer.com/en/jobs/?q=genomics",
+  "https://www.academictransfer.com/en/jobs/?q=neuroscience",
+]
+link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
+institution_from_context = true
+country = "Netherlands"
+note = "Dutch academic jobs; title and card description must support the match."
+
+[[board]]
+name = "life_max_planck"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.mpg.de/jobboard"
+link_pattern = 'mpg\.de/\d{7,9}/[^/?#]+'
+institution = "Max Planck Society"
+note = "Official Max Planck jobboard replaces retired RSS; require explicitly proven European location and biological field."
+
+# Official pages and actual vacancy href formats checked 2026-10-11.
+# Site structure and consent/robots behavior still need ongoing live checks.
+[[board]]
+name = "life_uppsala"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://www.uu.se/en/about-uu/join-us/jobs-and-vacancies?varbiCategory=PhD+positions",
+  "https://www.uu.se/en/about-uu/join-us/jobs-and-vacancies?varbiCategory=PhD+positions&start=10",
+  "https://www.uu.se/en/about-uu/join-us/jobs-and-vacancies?varbiCategory=PhD+positions&start=20",
+]
+link_pattern = 'uu\.se/en/about-uu/join-us/jobs-and-vacancies/job-details\?query=\d+'
+institution = "Uppsala University"
+country = "Sweden"
+min_interval = 3.0
+note = "Official doctoral listings; detail URLs use /job-details?query=ID."
+
+[[board]]
+name = "life_karolinska"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+urls = [
+  "https://ki.se/en/about-ki/jobs-at-ki/available-positions-at-ki",
+  "https://ki.se/en/about-ki/jobs-at-ki/available-positions-at-ki?page=1",
+  "https://ki.se/en/about-ki/jobs-at-ki/available-positions-at-ki?page=2",
+  "https://ki.se/en/about-ki/jobs-at-ki/available-positions-at-ki?page=3",
+]
+link_pattern = '(?:kidoktorand|ki)\.varbi\.com/(?:en|se)/what(?::|%3A)job/jobID(?::|%3A)\d+'
+institution = "Karolinska Institutet"
+country = "Sweden"
+min_interval = 3.0
+note = "Official KI vacancies; doctoral adverts link to Varbi applications."
+
+[[board]]
+name = "life_copenhagen"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://employment.ku.dk/phd/"
+link_pattern = 'employment\.ku\.dk/(?:phd/|all-vacancies)\?show=\d+'
+institution = "University of Copenhagen"
+country = "Denmark"
+min_interval = 3.0
+note = "Official UCPH PhD-only vacancy table and ?show=ID detail URLs."
+
+[[board]]
+name = "life_vib"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://jobs.vib.be/"
+link_pattern = 'jobs\.vib\.be/j/\d+/[^?#\s]+'
+institution = "VIB"
+country = "Belgium"
+min_interval = 3.0
+note = "Official VIB Jobs portal; individual calls carry Jobsoid /j/ID/slug links."
+
+[[board]]
+name = "life_epfl"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://careers.epfl.ch/go/PhD-Student/505174/"
+link_pattern = 'careers\.epfl\.ch/job/[^/?#]+/\d+/?'
+institution = "EPFL"
+country = "Switzerland"
+min_interval = 3.0
+note = "Official EPFL PhD category; successfactors-style /job/slug/ID detail links."
+
+
+# Independent, verified 2026 doctoral recruitment portals. Each posting must
+# still pass the same country, doctoral-role and field relevance checks.
+[[board]]
+name = "life_crg_phd"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://www.crg.eu/en/content/jobs/jobs"
+link_pattern = 'crg\.eu/en/content/training-phd-students/crg-international-phd-fellowships-programme-\d+/?'
+institution = "Centre for Genomic Regulation"
+country = "Spain"
+min_interval = 3.0
+note = "CRG Barcelona International PhD Call 2027: deadline 22 Nov 2026, four-year salaried contracts. Details must be checked for dates/fields."
+
+[[board]]
+name = "life_vienna_doctoral"
+type = "link_scan"
+group = "life_sciences"
+enabled = true
+url = "https://jobs.univie.ac.at/go/predoctoral/8877801/"
+link_pattern = 'jobs\.univie\.ac\.at/job/[^/?#]+/\d+/?'
+institution = "University of Vienna"
+country = "Austria"
+min_interval = 3.0
+note = "University of Vienna predoctoral/doctoral-school vacancies; explicit life-science field and current deadline required."
+
+# Official institutions to verify before enabling: their doctoral programmes
+# and recruitment links change and some listings are JavaScript-rendered.
+[[board]]
+name = "life_embl"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.embl.org/careers/"
+link_pattern = 'embl\.org/(?:jobs|careers)/'
+country = "Germany"
+note = "OFF: EMBL recruits across several countries; single-country inference would be unsafe."
+
+[[board]]
+name = "life_eth_bsse"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://bsse.ethz.ch/department/open-positions.html"
+link_pattern = '(?:jobs\.ethz\.ch|ethz\.ch/.+/(?:open-positions|jobs)/)'
+institution = "ETH Zurich, D-BSSE"
+country = "Switzerland"
+note = "OFF: validate vacancy URL markup and external recruitment links first."
+
+
+
+# Official high-value discovery targets without a verified end-to-end scraper.
+# In particular, programme pages are NOT individual job cards, and ETH may
+# advertise Singapore jobs; neither case can be treated as local to Europe.
+[[board]]
+name = "life_eth_jobs"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.jobs.ethz.ch/site/index"
+link_pattern = '(?:www\.)?jobs\.ethz\.ch/job/view/(?:\d+|JOPG_[^/?#]+)'
+institution = "ETH Zurich"
+note = "OFF: listing loads dynamically and some ETH roles are outside Switzerland."
+
+[[board]]
+name = "life_dkfz"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://jobs.dkfz.de/en/jobs/iframe"
+link_pattern = 'jobs\.dkfz\.de/en/jobs/\d+/[^/?#]+'
+institution = "German Cancer Research Center (DKFZ)"
+country = "Germany"
+note = "OFF: site lists doctoral roles but cancer-focused matches need lower priority."
+
+[[board]]
+name = "life_fmi_programme"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.fmi.ch/education-careers/programs/"
+link_pattern = 'fmi\.ch/education-careers/programs/'
+institution = "Friedrich Miescher Institute"
+country = "Switzerland"
+note = "OFF: time-windowed applications, not linked job cards; needs programme parser."
+
+[[board]]
+name = "life_embl_phd_programme"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.embl.org/about/info/embl-international-phd-programme/application/"
+link_pattern = 'embl\.org/about/info/embl-international-phd-programme/'
+institution = "EMBL"
+note = "OFF: programme recruits across six European sites with recurring cycles."
+
+
+# Wider institution-level discovery candidates. These are OFF until an actual
+# recurring doctoral link pattern is verified; a campus/programme index by
+# itself is not a current vacancy.
+[[board]]
+name = "life_vienna_biocenter"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.viennabiocenter.org/career/open-positions/"
+link_pattern = '(?:maxperutzlabs\.ac\.at|imp\.ac\.at|imba\.ac\.at)/.+'
+note = "OFF: multi-organization campus page with mixed university/industry roles; PhD card detection needs validation."
+
+[[board]]
+name = "life_helsinki"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.helsinki.fi/en/about-us/careers/open-positions"
+link_pattern = '(?:jobs\.helsinki\.fi|jobs\.sap\.com)/.+'
+institution = "University of Helsinki"
+country = "Finland"
+note = "OFF: dynamic SAP recruitment embedded feed currently reports zero positions."
+
+[[board]]
+name = "life_ista"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://ista.ac.at/en/jobs/open-positions/"
+link_pattern = 'phd\.pages\.ist\.ac\.at/phd-application-admission/'
+institution = "Institute of Science and Technology Austria"
+country = "Austria"
+note = "OFF: graduate-school admission portal requires call-date-aware dedicated parsing."
+
+[[board]]
+name = "life_mdc"
+type = "link_scan"
+group = "life_sciences"
+enabled = false
+url = "https://www.mdc-berlin.de/phd"
+link_pattern = 'mdc-berlin\.de/phd/.+'
+institution = "Max Delbrück Center"
+country = "Germany"
+note = "OFF: central fully funded PhD application is cyclical, not a live job listing index."
+

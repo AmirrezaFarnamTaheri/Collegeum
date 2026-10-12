@@ -494,6 +494,8 @@ def _salary_number(raw: str) -> float:
 
 def parse_salary(
     raw: str | None,
+    *,
+    country: str | None = None,
 ) -> tuple[float | None, float | None, str | None, str | None]:
     """Parse one compensation amount/range, preserving unknown currency/period.
 
@@ -515,20 +517,29 @@ def parse_salary(
     ]:
         if re.search(pattern, text, re.I):
             currencies.add(code)
-    # Bare dollars follow the existing USD convention only without a qualifier.
+    # Bare "$" follows the currency of the advertised country, not always
+    # USD. Preserve existing USD convention when the country is unknown.
     if not currencies and "$" in text:
-        currencies.add("USD")
+        local_dollar = {
+            "australia": "AUD", "canada": "CAD", "new zealand": "NZD",
+            "singapore": "SGD", "hong kong": "HKD",
+        }
+        currencies.add(local_dollar.get((country or "").strip().lower(), "USD"))
     currency = next(iter(currencies)) if len(currencies) == 1 else None
     periods = set()
     for pattern, name in [
         (r"\b(?:hour|hourly|hr)\b|p/h", "hour"),
-        (r"\b(?:month|monthly|mo|pcm)\b|p\.m\.", "month"),
+        (r"\b(?:month|monthly|mo|pcm|mois|monatlich|monat|mese|mensual)\b|p\.m\.", "month"),
         (r"\b(?:year|yearly|yr|annum|annual|annually|pa)\b|p\.a\.", "year"),
     ]:
         if re.search(pattern, text, re.I):
             periods.add(name)
     period = next(iter(periods)) if len(periods) == 1 else None
     if len(currencies) > 1 or len(periods) > 1:
+        return (None, None, currency, period)
+    # Pay grades and calendar years are not currency amounts. Multiple grade
+    # alternatives cannot be reduced to one monetary range without losing data.
+    if not currency or len(re.findall(r"\bgrade\s+\d+\b", text, re.I)) > 1:
         return (None, None, currency, period)
 
     marker = r"(?:\b(?:GBP|EUR|USD|CHF|CAD|AUD|NZD|HKD|SGD|SEK|NOK|DKK)|[£€$])"
@@ -854,12 +865,10 @@ def coerce(
     s_max = result.salary_max
     s_curr = result.salary_currency
     s_per = result.salary_period
-    if s_raw and (s_min is None or s_max is None or s_curr is None):
-        p_min, p_max, p_curr, p_per = parse_salary(s_raw)
-        s_min = s_min if s_min is not None else p_min
-        s_max = s_max if s_max is not None else p_max
-        s_curr = s_curr or p_curr
-        s_per = s_per or p_per
+    if s_raw:
+        # The advert's text is the evidence; model-supplied numeric fields can
+        # mistake "TV-L E 13", "Grade 6" or "2026 rates" for compensation.
+        s_min, s_max, s_curr, s_per = parse_salary(s_raw, country=result.country)
 
     # Tools normalization
     req_tools = list(result.tools_required)
