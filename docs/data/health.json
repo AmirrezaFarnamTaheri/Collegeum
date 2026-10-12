@@ -1,50 +1,553 @@
 {
- "generated_at": "2026-10-11T21:55:31Z",
+ "generated_at": "2026-10-12T05:49:57Z",
  "counts": {
-  "listings": 176,
-  "published": 174,
+  "listings": 177,
+  "published": 175,
   "pending": 2,
-  "expired": 4,
+  "expired": 5,
   "closed": 16,
-  "seen_items": 498,
-  "dlq": 0,
-  "runs": 28
+  "seen_items": 499,
+  "dlq": 14,
+  "runs": 29
  },
  "last_run": {
-  "run_id": "38177525700",
-  "ingested": 298,
-  "already_seen": 287,
-  "gated": 1,
-  "extracted": 8,
+  "run_id": "38209289357",
+  "ingested": 129,
+  "already_seen": 116,
+  "gated": 2,
+  "extracted": 10,
   "low_confidence": 0,
-  "duplicates": 6,
+  "duplicates": 7,
   "refreshed": 3,
-  "published": 0,
+  "published": 1,
   "errors": 0,
-  "source_errors": 32,
+  "source_errors": 17,
   "sources": {
-   "total": 81,
-   "successful": 43,
-   "empty": 12,
-   "failed": 26,
-   "partial": 3,
+   "total": 31,
+   "successful": 16,
+   "empty": 1,
+   "failed": 13,
+   "partial": 1,
    "skipped": 0
   },
   "llm_calls": 10,
   "quota_stopped": false,
-  "expired": 0,
+  "expired": 1,
   "not_wanted": 3,
-  "closed_before_send": 1,
+  "closed_before_send": 0,
   "closed_found": 0,
   "refiltered": 0,
   "outcome": "partial",
   "gate_reasons": {
+   "board:filled-or-closed": 2,
    "board:no-field-in-detail": 1,
-   "board:wrong-field-detail": 2,
+   "model:admissions": 1,
    "model:not_a_vacancy": 1
   }
  },
  "runs": [
+  {
+   "source_stats": {
+    "_boards": {
+     "deferred": 0,
+     "kind": "summary",
+     "known": 128,
+     "rejected": {
+      "excluded-title": 95,
+      "expired": 22,
+      "filled-or-closed": 19,
+      "no-field-in-detail": 4,
+      "no-role-term": 333,
+      "not-academic-employer": 14,
+      "wrong-field": 50,
+      "wrong-field-context": 10,
+      "wrong-field-detail": 10
+     },
+     "messages": []
+    },
+    "board:aarhus_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 59,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 2,
+     "ok": true,
+     "raw": 59,
+     "relevant": 7,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:academics_com": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 12,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 1,
+     "ok": true,
+     "raw": 12,
+     "relevant": 2,
+     "seconds": 0.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:akadeus": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 1.0,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:bank_canada_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 15,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 15,
+     "relevant": 1,
+     "seconds": 0.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:bruegel_jobs": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 17.5,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:carlo_alberto": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 4.2,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:crest_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 3,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 3,
+     "relevant": 1,
+     "seconds": 1.9,
+     "skipped": false,
+     "messages": []
+    },
+    "board:duke_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 24,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 2,
+     "ok": true,
+     "raw": 24,
+     "relevant": 2,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:eth_lawecon": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:eui_florence": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 9,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 9,
+     "relevant": 0,
+     "seconds": 0.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:iese": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 11,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 2,
+     "ok": true,
+     "raw": 11,
+     "relevant": 2,
+     "seconds": 0.2,
+     "skipped": false,
+     "messages": []
+    },
+    "board:ifo": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 5,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 5,
+     "relevant": 0,
+     "seconds": 0.2,
+     "skipped": false,
+     "messages": []
+    },
+    "board:ifs": {
+     "errors": 2,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 18.5,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:iies_stockholm": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 1.2,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:linkoping_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 19,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 19,
+     "relevant": 4,
+     "seconds": 0.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:mcgill": {
+     "errors": 3,
+     "fetched": 0,
+     "items": 64,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 1,
+     "ok": false,
+     "raw": 64,
+     "relevant": 3,
+     "seconds": 9.3,
+     "skipped": false,
+     "messages": [
+      "Response could not be parsed"
+     ]
+    },
+    "board:mit_blueprint": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 22,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 3,
+     "ok": true,
+     "raw": 22,
+     "relevant": 3,
+     "seconds": 0.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:niesr": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 1.2,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:oecd": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 14,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 14,
+     "relevant": 0,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:predoc_org": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 147,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 71,
+     "ok": true,
+     "raw": 147,
+     "relevant": 91,
+     "seconds": 1.3,
+     "skipped": false,
+     "messages": []
+    },
+    "board:pse": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 1.8,
+     "skipped": false,
+     "messages": [
+      "HTTP 418"
+     ]
+    },
+    "board:pse_paris": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": [
+      "HTTP 418"
+     ]
+    },
+    "board:rwi_essen": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 1.0,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:stanford_siepr": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:stockholm_school_of_economics": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 8,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 2,
+     "ok": true,
+     "raw": 8,
+     "relevant": 2,
+     "seconds": 2.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:the_unijobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 21,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 5,
+     "ok": true,
+     "raw": 21,
+     "relevant": 5,
+     "seconds": 0.6,
+     "skipped": false,
+     "messages": []
+    },
+    "board:tse": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 180,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 180,
+     "relevant": 0,
+     "seconds": 1.0,
+     "skipped": false,
+     "messages": []
+    },
+    "board:uab_ufae": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.3,
+     "skipped": false,
+     "messages": []
+    },
+    "board:uzh": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 2.3,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:warwick_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 40,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 4,
+     "ok": true,
+     "raw": 40,
+     "relevant": 6,
+     "seconds": 1.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:wzb": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 20.5,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    }
+   },
+   "source_summary": {
+    "total": 31,
+    "successful": 16,
+    "empty": 1,
+    "failed": 13,
+    "partial": 1,
+    "skipped": 0
+   },
+   "run_id": "38209289357",
+   "started_at": "2026-10-12T05:45:00Z",
+   "finished_at": "2026-10-12T05:49:57Z",
+   "ingested": 129,
+   "gated": 2,
+   "extracted": 10,
+   "duplicates": 7,
+   "published": 1,
+   "errors": 0,
+   "llm_calls": 10,
+   "outcome": "partial"
+  },
   {
    "source_stats": {
     "_boards": {
@@ -120,7 +623,9 @@
      "relevant": 0,
      "seconds": 2.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -194,7 +699,9 @@
      "relevant": 0,
      "seconds": 1.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -574,7 +1081,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 2,
@@ -826,7 +1335,9 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:nuffield_jobs": {
      "errors": 0,
@@ -854,7 +1365,9 @@
      "relevant": 0,
      "seconds": 0.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -974,7 +1487,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:sciencespo_jobs": {
      "errors": 0,
@@ -1002,7 +1517,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -1206,7 +1723,9 @@
      "relevant": 0,
      "seconds": 2.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:warwick_jobs": {
      "errors": 0,
@@ -1250,14 +1769,16 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 81,
     "successful": 43,
-    "empty": 12,
-    "failed": 26,
+    "empty": 3,
+    "failed": 32,
     "partial": 3,
     "skipped": 0
    },
@@ -1348,7 +1869,9 @@
      "relevant": 0,
      "seconds": 2.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -1422,7 +1945,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -1800,7 +2325,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 2,
@@ -2052,7 +2579,9 @@
      "relevant": 0,
      "seconds": 2.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:nuffield_jobs": {
      "errors": 0,
@@ -2080,7 +2609,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -2200,7 +2731,9 @@
      "relevant": 0,
      "seconds": 1.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:sciencespo_jobs": {
      "errors": 0,
@@ -2228,7 +2761,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -2432,7 +2967,9 @@
      "relevant": 0,
      "seconds": 2.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:warwick_jobs": {
      "errors": 0,
@@ -2476,14 +3013,16 @@
      "relevant": 0,
      "seconds": 1.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 81,
     "successful": 44,
-    "empty": 12,
-    "failed": 25,
+    "empty": 3,
+    "failed": 31,
     "partial": 3,
     "skipped": 0
    },
@@ -2574,7 +3113,9 @@
      "relevant": 0,
      "seconds": 2.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -2648,7 +3189,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -3280,7 +3823,9 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:nuffield_jobs": {
      "errors": 0,
@@ -3308,7 +3853,9 @@
      "relevant": 0,
      "seconds": 1.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -3428,7 +3975,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:sciencespo_jobs": {
      "errors": 0,
@@ -3456,7 +4005,9 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -3660,7 +4211,9 @@
      "relevant": 0,
      "seconds": 1.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:warwick_jobs": {
      "errors": 0,
@@ -3704,14 +4257,16 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 81,
     "successful": 44,
-    "empty": 11,
-    "failed": 26,
+    "empty": 3,
+    "failed": 31,
     "partial": 3,
     "skipped": 0
    },
@@ -3785,7 +4340,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -3841,7 +4398,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -4135,7 +4694,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -4359,7 +4920,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -4373,7 +4936,9 @@
      "relevant": 0,
      "seconds": 0.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -4485,7 +5050,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -4499,7 +5066,9 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -4667,7 +5236,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -4695,14 +5266,16 @@
      "relevant": 0,
      "seconds": 1.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 35,
-    "empty": 12,
-    "failed": 21,
+    "empty": 3,
+    "failed": 30,
     "partial": 0,
     "skipped": 0
    },
@@ -4716,7 +5289,7 @@
    "published": 40,
    "errors": 0,
    "llm_calls": 2,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -4776,7 +5349,9 @@
      "relevant": 0,
      "seconds": 2.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -4832,7 +5407,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -5126,7 +5703,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -5266,7 +5845,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:mannheim_econ": {
      "errors": 0,
@@ -5350,7 +5931,9 @@
      "relevant": 0,
      "seconds": 2.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -5364,7 +5947,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -5476,7 +6061,9 @@
      "relevant": 0,
      "seconds": 1.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -5490,7 +6077,9 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -5518,7 +6107,9 @@
      "relevant": 0,
      "seconds": 18.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stockholm_university": {
      "errors": 0,
@@ -5532,7 +6123,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:the_unijobs": {
      "errors": 0,
@@ -5644,7 +6237,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:uzh": {
      "errors": 0,
@@ -5658,7 +6253,9 @@
      "relevant": 0,
      "seconds": 2.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 0,
@@ -5686,14 +6283,16 @@
      "relevant": 0,
      "seconds": 1.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 32,
-    "empty": 16,
-    "failed": 20,
+    "empty": 3,
+    "failed": 33,
     "partial": 0,
     "skipped": 0
    },
@@ -5707,7 +6306,7 @@
    "published": 40,
    "errors": 0,
    "llm_calls": 1,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -5768,7 +6367,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -5824,7 +6425,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -6118,7 +6721,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -6342,7 +6947,9 @@
      "relevant": 0,
      "seconds": 2.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -6356,7 +6963,9 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -6468,7 +7077,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -6482,7 +7093,9 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -6650,7 +7263,9 @@
      "relevant": 0,
      "seconds": 4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -6678,14 +7293,16 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 35,
-    "empty": 12,
-    "failed": 21,
+    "empty": 3,
+    "failed": 30,
     "partial": 0,
     "skipped": 0
    },
@@ -6699,7 +7316,7 @@
    "published": 40,
    "errors": 0,
    "llm_calls": 3,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -6760,7 +7377,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -6816,7 +7435,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -7110,7 +7731,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -7334,7 +7957,9 @@
      "relevant": 0,
      "seconds": 2.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -7348,7 +7973,9 @@
      "relevant": 0,
      "seconds": 0.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -7460,7 +8087,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -7474,7 +8103,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -7642,7 +8273,9 @@
      "relevant": 0,
      "seconds": 4.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -7670,14 +8303,16 @@
      "relevant": 0,
      "seconds": 1.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 35,
-    "empty": 12,
-    "failed": 21,
+    "empty": 3,
+    "failed": 30,
     "partial": 0,
     "skipped": 0
    },
@@ -7691,7 +8326,7 @@
    "published": 40,
    "errors": 0,
    "llm_calls": 2,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -7751,7 +8386,9 @@
      "relevant": 0,
      "seconds": 4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -7807,7 +8444,9 @@
      "relevant": 0,
      "seconds": 1.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -8101,7 +8740,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -8325,7 +8966,9 @@
      "relevant": 0,
      "seconds": 2.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -8339,7 +8982,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -8451,7 +9096,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -8465,7 +9112,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -8633,7 +9282,9 @@
      "relevant": 0,
      "seconds": 2.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 0,
@@ -8661,14 +9312,16 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 36,
-    "empty": 12,
-    "failed": 20,
+    "empty": 3,
+    "failed": 29,
     "partial": 0,
     "skipped": 0
    },
@@ -8682,7 +9335,7 @@
    "published": 40,
    "errors": 0,
    "llm_calls": 2,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -8744,7 +9397,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -8800,7 +9455,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -9094,7 +9751,9 @@
      "relevant": 0,
      "seconds": 0.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -9318,7 +9977,9 @@
      "relevant": 0,
      "seconds": 3.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -9332,7 +9993,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -9444,7 +10107,9 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -9458,7 +10123,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -9626,7 +10293,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -9654,14 +10323,16 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 34,
-    "empty": 12,
-    "failed": 22,
+    "empty": 3,
+    "failed": 31,
     "partial": 0,
     "skipped": 0
    },
@@ -9675,7 +10346,7 @@
    "published": 42,
    "errors": 0,
    "llm_calls": 4,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -9736,7 +10407,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -9792,7 +10465,9 @@
      "relevant": 0,
      "seconds": 2.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -10086,7 +10761,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -10310,7 +10987,9 @@
      "relevant": 0,
      "seconds": 1.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -10324,7 +11003,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -10436,7 +11117,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -10450,7 +11133,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -10618,7 +11303,9 @@
      "relevant": 0,
      "seconds": 2.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 0,
@@ -10646,14 +11333,16 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 36,
-    "empty": 12,
-    "failed": 20,
+    "empty": 3,
+    "failed": 29,
     "partial": 0,
     "skipped": 0
    },
@@ -10667,7 +11356,7 @@
    "published": 39,
    "errors": 0,
    "llm_calls": 3,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -10726,7 +11415,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -10782,7 +11473,9 @@
      "relevant": 0,
      "seconds": 0.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -11300,7 +11993,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -11314,7 +12009,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -11426,7 +12123,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -11440,7 +12139,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -11608,7 +12309,9 @@
      "relevant": 0,
      "seconds": 2.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 0,
@@ -11636,14 +12339,16 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 37,
-    "empty": 11,
-    "failed": 20,
+    "empty": 3,
+    "failed": 28,
     "partial": 0,
     "skipped": 0
    },
@@ -11657,7 +12362,7 @@
    "published": 39,
    "errors": 0,
    "llm_calls": 0,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -11717,7 +12422,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -11773,7 +12480,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -12067,7 +12776,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -12291,7 +13002,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -12305,7 +13018,9 @@
      "relevant": 0,
      "seconds": 0.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -12417,7 +13132,9 @@
      "relevant": 0,
      "seconds": 1.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -12431,7 +13148,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -12599,7 +13318,9 @@
      "relevant": 0,
      "seconds": 2.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -12627,14 +13348,16 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 34,
-    "empty": 12,
-    "failed": 22,
+    "empty": 3,
+    "failed": 31,
     "partial": 0,
     "skipped": 0
    },
@@ -12648,7 +13371,7 @@
    "published": 40,
    "errors": 0,
    "llm_calls": 2,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -12710,7 +13433,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -12766,7 +13491,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -13060,7 +13787,9 @@
      "relevant": 0,
      "seconds": 0.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -13284,7 +14013,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -13298,7 +14029,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -13410,7 +14143,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -13424,7 +14159,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -13592,7 +14329,9 @@
      "relevant": 0,
      "seconds": 2.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -13620,14 +14359,16 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 35,
-    "empty": 12,
-    "failed": 21,
+    "empty": 3,
+    "failed": 30,
     "partial": 0,
     "skipped": 0
    },
@@ -13641,7 +14382,7 @@
    "published": 38,
    "errors": 0,
    "llm_calls": 3,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -13701,7 +14442,9 @@
      "relevant": 0,
      "seconds": 2.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -13757,7 +14500,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -14051,7 +14796,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -14275,7 +15022,9 @@
      "relevant": 0,
      "seconds": 2.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -14289,7 +15038,9 @@
      "relevant": 0,
      "seconds": 0.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -14401,7 +15152,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -14415,7 +15168,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -14583,7 +15338,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -14611,14 +15368,16 @@
      "relevant": 0,
      "seconds": 1.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 34,
-    "empty": 12,
-    "failed": 22,
+    "empty": 3,
+    "failed": 31,
     "partial": 0,
     "skipped": 0
    },
@@ -14632,7 +15391,7 @@
    "published": 37,
    "errors": 0,
    "llm_calls": 2,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -14694,7 +15453,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -14750,7 +15511,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -15268,7 +16031,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -15282,7 +16047,9 @@
      "relevant": 0,
      "seconds": 0.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -15394,7 +16161,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -15408,7 +16177,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -15576,7 +16347,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -15604,14 +16377,16 @@
      "relevant": 0,
      "seconds": 1.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 36,
-    "empty": 11,
-    "failed": 21,
+    "empty": 3,
+    "failed": 29,
     "partial": 0,
     "skipped": 0
    },
@@ -15625,7 +16400,7 @@
    "published": 38,
    "errors": 0,
    "llm_calls": 6,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -15686,7 +16461,9 @@
      "relevant": 0,
      "seconds": 2.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -15742,7 +16519,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -16036,7 +16815,9 @@
      "relevant": 0,
      "seconds": 0.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -16260,7 +17041,9 @@
      "relevant": 0,
      "seconds": 3.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -16274,7 +17057,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -16386,7 +17171,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -16400,7 +17187,9 @@
      "relevant": 0,
      "seconds": 1.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -16568,7 +17357,9 @@
      "relevant": 0,
      "seconds": 2.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -16596,14 +17387,16 @@
      "relevant": 0,
      "seconds": 1.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 35,
-    "empty": 12,
-    "failed": 21,
+    "empty": 3,
+    "failed": 30,
     "partial": 0,
     "skipped": 0
    },
@@ -16617,7 +17410,7 @@
    "published": 38,
    "errors": 0,
    "llm_calls": 0,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -16678,7 +17471,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -16734,7 +17529,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -17028,7 +17825,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -17252,7 +18051,9 @@
      "relevant": 0,
      "seconds": 1.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -17266,7 +18067,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -17378,7 +18181,9 @@
      "relevant": 0,
      "seconds": 1.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -17392,7 +18197,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -17560,7 +18367,9 @@
      "relevant": 0,
      "seconds": 2.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -17588,14 +18397,16 @@
      "relevant": 0,
      "seconds": 1.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 34,
-    "empty": 12,
-    "failed": 22,
+    "empty": 3,
+    "failed": 31,
     "partial": 0,
     "skipped": 0
    },
@@ -17609,7 +18420,7 @@
    "published": 39,
    "errors": 0,
    "llm_calls": 8,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -17670,7 +18481,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -17726,7 +18539,9 @@
      "relevant": 0,
      "seconds": 0.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -18244,7 +19059,9 @@
      "relevant": 0,
      "seconds": 1.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -18258,7 +19075,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -18370,7 +19189,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -18384,7 +19205,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -18552,7 +19375,9 @@
      "relevant": 0,
      "seconds": 2.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -18580,14 +19405,16 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 35,
-    "empty": 11,
-    "failed": 22,
+    "empty": 3,
+    "failed": 30,
     "partial": 0,
     "skipped": 0
    },
@@ -18601,7 +19428,7 @@
    "published": 38,
    "errors": 0,
    "llm_calls": 2,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -18660,7 +19487,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -18716,7 +19545,9 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -19234,7 +20065,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -19248,7 +20081,9 @@
      "relevant": 0,
      "seconds": 0.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -19360,7 +20195,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -19374,7 +20211,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -19542,7 +20381,9 @@
      "relevant": 0,
      "seconds": 2.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 0,
@@ -19570,14 +20411,16 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 37,
-    "empty": 11,
-    "failed": 20,
+    "empty": 3,
+    "failed": 28,
     "partial": 0,
     "skipped": 0
    },
@@ -19591,7 +20434,7 @@
    "published": 38,
    "errors": 0,
    "llm_calls": 0,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -19651,7 +20494,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -19707,7 +20552,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -20001,7 +20848,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -20225,7 +21074,9 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -20239,7 +21090,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -20351,7 +21204,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -20365,7 +21220,9 @@
      "relevant": 0,
      "seconds": 1.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -20533,7 +21390,9 @@
      "relevant": 0,
      "seconds": 2.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -20561,14 +21420,16 @@
      "relevant": 0,
      "seconds": 1.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 35,
-    "empty": 11,
-    "failed": 22,
+    "empty": 2,
+    "failed": 31,
     "partial": 0,
     "skipped": 0
    },
@@ -20582,7 +21443,7 @@
    "published": 38,
    "errors": 0,
    "llm_calls": 1,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -20641,7 +21502,9 @@
      "relevant": 0,
      "seconds": 2.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -20697,7 +21560,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -20991,7 +21856,9 @@
      "relevant": 0,
      "seconds": 0.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -21215,7 +22082,9 @@
      "relevant": 0,
      "seconds": 1.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -21229,7 +22098,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -21341,7 +22212,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -21355,7 +22228,9 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -21523,7 +22398,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -21551,14 +22428,16 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 36,
-    "empty": 11,
-    "failed": 21,
+    "empty": 2,
+    "failed": 30,
     "partial": 0,
     "skipped": 0
    },
@@ -21572,7 +22451,7 @@
    "published": 38,
    "errors": 0,
    "llm_calls": 0,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -21631,7 +22510,9 @@
      "relevant": 0,
      "seconds": 2.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -21687,7 +22568,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -21981,7 +22864,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -22205,7 +23090,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -22219,7 +23106,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -22331,7 +23220,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -22345,7 +23236,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -22513,7 +23406,9 @@
      "relevant": 0,
      "seconds": 2.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -22541,14 +23436,16 @@
      "relevant": 0,
      "seconds": 1.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 35,
-    "empty": 11,
-    "failed": 22,
+    "empty": 2,
+    "failed": 31,
     "partial": 0,
     "skipped": 0
    },
@@ -22562,7 +23459,7 @@
    "published": 48,
    "errors": 0,
    "llm_calls": 0,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -22622,7 +23519,9 @@
      "relevant": 0,
      "seconds": 2.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -22678,7 +23577,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -23196,7 +24097,9 @@
      "relevant": 0,
      "seconds": 2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -23210,7 +24113,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -23322,7 +24227,9 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -23336,7 +24243,9 @@
      "relevant": 0,
      "seconds": 1.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -23504,7 +24413,9 @@
      "relevant": 0,
      "seconds": 2.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -23532,14 +24443,16 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 37,
-    "empty": 10,
-    "failed": 21,
+    "empty": 2,
+    "failed": 29,
     "partial": 0,
     "skipped": 0
    },
@@ -23553,7 +24466,7 @@
    "published": 1,
    "errors": 0,
    "llm_calls": 1,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -23612,7 +24525,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -23668,7 +24583,9 @@
      "relevant": 0,
      "seconds": 0.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -24186,7 +25103,9 @@
      "relevant": 0,
      "seconds": 1.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -24200,7 +25119,9 @@
      "relevant": 0,
      "seconds": 0.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -24312,7 +25233,9 @@
      "relevant": 0,
      "seconds": 1.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -24326,7 +25249,9 @@
      "relevant": 0,
      "seconds": 1.3,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -24494,7 +25419,9 @@
      "relevant": 0,
      "seconds": 2.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 0,
@@ -24522,14 +25449,16 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 38,
-    "empty": 10,
-    "failed": 20,
+    "empty": 2,
+    "failed": 28,
     "partial": 0,
     "skipped": 0
    },
@@ -24543,7 +25472,7 @@
    "published": 0,
    "errors": 0,
    "llm_calls": 0,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -24602,7 +25531,9 @@
      "relevant": 0,
      "seconds": 2.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -24658,7 +25589,9 @@
      "relevant": 0,
      "seconds": 0.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -25176,7 +26109,9 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -25190,7 +26125,9 @@
      "relevant": 0,
      "seconds": 0.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -25302,7 +26239,9 @@
      "relevant": 0,
      "seconds": 1.9,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:somma": {
      "errors": 0,
@@ -25316,7 +26255,9 @@
      "relevant": 0,
      "seconds": 1.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -25484,7 +26425,9 @@
      "relevant": 0,
      "seconds": 3.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -25512,14 +26455,16 @@
      "relevant": 0,
      "seconds": 1.5,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 68,
     "successful": 37,
-    "empty": 10,
-    "failed": 21,
+    "empty": 2,
+    "failed": 29,
     "partial": 0,
     "skipped": 0
    },
@@ -25533,7 +26478,7 @@
    "published": 3,
    "errors": 0,
    "llm_calls": 9,
-   "outcome": "ok"
+   "outcome": "partial"
   },
   {
    "source_stats": {
@@ -25595,7 +26540,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:akadeus": {
      "errors": 1,
@@ -25651,7 +26598,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:bocconi_igier": {
      "errors": 0,
@@ -25945,7 +26894,9 @@
      "relevant": 0,
      "seconds": 0.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ifs": {
      "errors": 1,
@@ -26169,7 +27120,9 @@
      "relevant": 0,
      "seconds": 1.7,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:ny_fed": {
      "errors": 0,
@@ -26183,7 +27136,9 @@
      "relevant": 0,
      "seconds": 1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:oecd": {
      "errors": 0,
@@ -26309,7 +27264,9 @@
      "relevant": 0,
      "seconds": 1.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stanford_siepr": {
      "errors": 1,
@@ -26477,7 +27434,9 @@
      "relevant": 0,
      "seconds": 2.1,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:wzb": {
      "errors": 1,
@@ -26511,8 +27470,8 @@
    "source_summary": {
     "total": 68,
     "successful": 39,
-    "empty": 8,
-    "failed": 21,
+    "empty": 1,
+    "failed": 28,
     "partial": 0,
     "skipped": 0
    },
@@ -26815,7 +27774,9 @@
      "relevant": 0,
      "seconds": 1.2,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stockholm_school_of_economics": {
      "errors": 0,
@@ -26927,14 +27888,16 @@
      "relevant": 0,
      "seconds": 1.8,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 27,
     "successful": 23,
-    "empty": 3,
-    "failed": 1,
+    "empty": 1,
+    "failed": 3,
     "partial": 0,
     "skipped": 0
    },
@@ -27239,7 +28202,9 @@
      "relevant": 0,
      "seconds": 1.4,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     },
     "board:stockholm_school_of_economics": {
      "errors": 0,
@@ -27351,14 +28316,16 @@
      "relevant": 0,
      "seconds": 2.6,
      "skipped": false,
-     "messages": []
+     "messages": [
+      "Unexpected empty source result"
+     ]
     }
    },
    "source_summary": {
     "total": 27,
     "successful": 22,
-    "empty": 3,
-    "failed": 2,
+    "empty": 1,
+    "failed": 4,
     "partial": 0,
     "skipped": 0
    },
@@ -27377,25 +28344,227 @@
  ],
  "status": "degraded",
  "source_summary": {
-  "total": 81,
-  "successful": 43,
-  "empty": 12,
-  "failed": 26,
-  "partial": 3,
+  "total": 31,
+  "successful": 16,
+  "empty": 1,
+  "failed": 13,
+  "partial": 1,
   "skipped": 0
  },
  "sources": {
   "board:aarhus_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
    "messages": []
   },
   "board:academics_com": {
    "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
    "messages": []
+  },
+  "board:akadeus": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 404"
+   ]
+  },
+  "board:bank_canada_jobs": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:bruegel_jobs": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 403"
+   ]
+  },
+  "board:carlo_alberto": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 404"
+   ]
+  },
+  "board:crest_jobs": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:duke_jobs": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:eth_lawecon": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 404"
+   ]
+  },
+  "board:eui_florence": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:iese": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:ifo": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:ifs": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 403"
+   ]
+  },
+  "board:iies_stockholm": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 404"
+   ]
+  },
+  "board:linkoping_jobs": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:mcgill": {
+   "status": "partial",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-10T12:18:53Z",
+   "messages": [
+    "Response could not be parsed"
+   ]
+  },
+  "board:mit_blueprint": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:niesr": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-11T21:55:31Z",
+   "messages": [
+    "Unexpected empty source result"
+   ]
+  },
+  "board:oecd": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:predoc_org": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:pse": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 418"
+   ]
+  },
+  "board:pse_paris": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 418"
+   ]
+  },
+  "board:rwi_essen": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-03T21:14:31Z",
+   "messages": [
+    "Unexpected empty source result"
+   ]
+  },
+  "board:stanford_siepr": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": null,
+   "messages": [
+    "HTTP 404"
+   ]
+  },
+  "board:stockholm_school_of_economics": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:the_unijobs": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:tse": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:uab_ufae": {
+   "status": "empty",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:uzh": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-11T21:55:31Z",
+   "messages": [
+    "Unexpected empty source result"
+   ]
+  },
+  "board:warwick_jobs": {
+   "status": "successful",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-12T05:49:57Z",
+   "messages": []
+  },
+  "board:wzb": {
+   "status": "failed",
+   "last_attempt_at": "2026-10-12T05:49:57Z",
+   "last_successful_at": "2026-10-10T05:26:04Z",
+   "messages": [
+    "HTTP 403"
+   ]
   },
   "board:academics_de": {
    "status": "successful",
@@ -27404,24 +28573,12 @@
    "messages": []
   },
   "board:academictransfer": {
-   "status": "empty",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:akadeus": {
    "status": "failed",
    "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 404"
-   ]
-  },
-  "board:bank_canada_jobs": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
+   "messages": [
+    "Unexpected empty source result"
+   ]
   },
   "board:bank_of_england": {
    "status": "successful",
@@ -27438,10 +28595,12 @@
    ]
   },
   "board:bis": {
-   "status": "empty",
+   "status": "failed",
    "last_attempt_at": "2026-10-11T21:55:31Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
+   "messages": [
+    "Unexpected empty source result"
+   ]
   },
   "board:bocconi_igier": {
    "status": "successful",
@@ -27466,22 +28625,6 @@
    "last_attempt_at": "2026-10-11T21:55:31Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": []
-  },
-  "board:bruegel_jobs": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 403"
-   ]
-  },
-  "board:carlo_alberto": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 404"
-   ]
   },
   "board:cemfi": {
    "status": "empty",
@@ -27509,12 +28652,6 @@
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": []
   },
-  "board:crest_jobs": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
   "board:diw_berlin": {
    "status": "failed",
    "last_attempt_at": "2026-10-11T21:55:31Z",
@@ -27522,12 +28659,6 @@
    "messages": [
     "HTTP 403"
    ]
-  },
-  "board:duke_jobs": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
   },
   "board:ecb": {
    "status": "failed",
@@ -27561,22 +28692,6 @@
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": []
   },
-  "board:eth_lawecon": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 404"
-   ]
-  },
-  "board:eui_florence": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 404"
-   ]
-  },
   "board:euraxess": {
    "status": "successful",
    "last_attempt_at": "2026-10-11T21:55:31Z",
@@ -27603,39 +28718,11 @@
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": []
   },
-  "board:iese": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:ifo": {
-   "status": "empty",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:ifs": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 403"
-   ]
-  },
   "board:ifw_kiel": {
    "status": "successful",
    "last_attempt_at": "2026-10-11T21:55:31Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": []
-  },
-  "board:iies_stockholm": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 404"
-   ]
   },
   "board:inomics": {
    "status": "successful",
@@ -27677,12 +28764,6 @@
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": []
   },
-  "board:linkoping_jobs": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
   "board:lund": {
    "status": "successful",
    "last_attempt_at": "2026-10-11T21:55:31Z",
@@ -27703,20 +28784,6 @@
     "HTTP 404"
    ]
   },
-  "board:mcgill": {
-   "status": "partial",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-10T12:18:53Z",
-   "messages": [
-    "Response could not be parsed"
-   ]
-  },
-  "board:mit_blueprint": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
   "board:nber_ras": {
    "status": "failed",
    "last_attempt_at": "2026-10-11T21:55:31Z",
@@ -27725,12 +28792,6 @@
     "HTTP 403"
    ]
   },
-  "board:niesr": {
-   "status": "empty",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
   "board:nuffield_jobs": {
    "status": "successful",
    "last_attempt_at": "2026-10-11T21:55:31Z",
@@ -27738,16 +28799,12 @@
    "messages": []
   },
   "board:ny_fed": {
-   "status": "empty",
+   "status": "failed",
    "last_attempt_at": "2026-10-11T21:55:31Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:oecd": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
+   "messages": [
+    "Unexpected empty source result"
+   ]
   },
   "board:opportunity_insights": {
    "status": "failed",
@@ -27771,34 +28828,6 @@
     "HTTP 403"
    ]
   },
-  "board:predoc_org": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:pse": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 418"
-   ]
-  },
-  "board:pse_paris": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
-   "messages": [
-    "HTTP 418"
-   ]
-  },
-  "board:rwi_essen": {
-   "status": "empty",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
   "board:sciencespo_jobs": {
    "status": "successful",
    "last_attempt_at": "2026-10-11T21:55:31Z",
@@ -27806,32 +28835,14 @@
    "messages": []
   },
   "board:somma": {
-   "status": "empty",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:stanford_siepr": {
    "status": "failed",
    "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": null,
+   "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": [
-    "HTTP 404"
+    "Unexpected empty source result"
    ]
   },
-  "board:stockholm_school_of_economics": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
   "board:stockholm_university": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:the_unijobs": {
    "status": "successful",
    "last_attempt_at": "2026-10-11T21:55:31Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
@@ -27853,18 +28864,6 @@
   },
   "board:trinity_cambridge_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:tse": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:uab_ufae": {
-   "status": "empty",
    "last_attempt_at": "2026-10-11T21:55:31Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": []
@@ -27897,58 +28896,22 @@
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": []
   },
-  "board:uzh": {
-   "status": "empty",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:warwick_jobs": {
-   "status": "successful",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
-  },
-  "board:wzb": {
+  "board:zew": {
    "status": "failed",
    "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-10T05:26:04Z",
+   "last_successful_at": "2026-10-03T21:14:31Z",
    "messages": [
-    "HTTP 403"
+    "Unexpected empty source result"
    ]
-  },
-  "board:zew": {
-   "status": "empty",
-   "last_attempt_at": "2026-10-11T21:55:31Z",
-   "last_successful_at": "2026-10-11T21:55:31Z",
-   "messages": []
   }
  },
  "llm_usage": [
   {
    "day": "2026-10-11",
-   "requests": 217,
-   "tokens": 1550679,
-   "errors": 42
+   "requests": 227,
+   "tokens": 1591660,
+   "errors": 44
   }
  ],
- "last_successful_run_at": null,
- "output_audit": {
-  "reviewed_at": "2026-10-11T19:10:39Z",
-  "quarantined_ids": [
-   25,
-   55,
-   115,
-   117,
-   119,
-   120,
-   121,
-   122,
-   145,
-   148,
-   162
-  ],
-  "source_run_id": "38139499012",
-  "reason": "Non-actionable public application URLs quarantined; historical vacancy status and receipts are unchanged"
- }
+ "last_successful_run_at": null
 }

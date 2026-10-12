@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-11T21:55:30Z",
+ "generated_at": "2026-10-12T05:49:57Z",
  "count": 124,
  "listings": [
   {
@@ -12,7 +12,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-12-01T23:59:59Z",
-   "days_left": 51,
+   "days_left": 50,
    "disciplines": [
     "Health Economics"
    ],
@@ -92,7 +92,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T22:59:00Z",
-   "days_left": 35,
+   "days_left": 34,
    "disciplines": [
     "Other"
    ],
@@ -171,9 +171,9 @@
    "country": "Germany",
    "city": "Göttingen",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-11T23:59:59Z",
-   "days_left": 31,
+   "days_left": 30,
    "disciplines": [
     "Quantitative Social Sciences",
     "Political Economy"
@@ -210,9 +210,9 @@
    "country": "Canada",
    "city": "Montreal",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 20,
+   "days_left": 19,
    "disciplines": [
     "Public Policy",
     "Health Economics",
@@ -228,9 +228,9 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 75000,
-   "salary_max": 75000,
-   "salary_currency": "USD",
+   "salary_min": 75000.0,
+   "salary_max": 75000.0,
+   "salary_currency": "CAD",
    "salary_period": "year",
    "salary_raw": "$75,000/year",
    "tools_required": [],
@@ -252,7 +252,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-06T23:59:59Z",
-   "days_left": 26,
+   "days_left": 25,
    "disciplines": [
     "Labor Economics"
    ],
@@ -288,9 +288,9 @@
    "country": "Germany",
    "city": "Berlin or Wiesbaden",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-10-18T00:00:00Z",
-   "days_left": 7,
+   "days_left": 6,
    "disciplines": [
     "Other"
    ],
@@ -329,9 +329,9 @@
    "country": "United States",
    "city": "Cambridge, MA",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 20,
+   "days_left": 19,
    "disciplines": [
     "Applied Microeconomics",
     "Public Policy",
@@ -367,21 +367,19 @@
   {
    "id": 158,
    "title": "CUS - Postdoctoral Researcher in Spatial Data Science",
-   "institution": "Mohammed VI Polytechnic University",
+   "institution": "MOHAMMED VI POLYTECHNIC UNIVERSITY",
    "principal_investigator": null,
    "country": "Morocco",
    "city": "Benguerir",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 20,
+   "deadline": "2026-10-31T23:59:00Z",
+   "days_left": 19,
    "disciplines": [
-    "Applied Microeconomics",
-    "Environmental and Energy Economics",
-    "Quantitative Social Sciences"
+    "Other"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral researcher in spatial data science focusing on urban modeling and cost analysis of urbanization. The role requires a PhD in a related field, proficiency in MATLAB, Python, and R, and fluency in French and English.",
+   "summary": "This is a postdoctoral research position focused on spatial data science and urban modeling. The role involves developing predictive models for urbanization costs, simulating scenarios under different climatic and social contexts, and producing publications. It seeks candidates with a Ph.D. in Data Science, Urban Planning, or related fields, proficiency in Python/R/MATLAB, and fluency in French and English.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/414115/cus-postdoctoral-researcher-in-spatial-data-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/414115/cus-postdoctoral-researcher-in-spatial-data-science?LinkSource=PremiumListing",
@@ -398,12 +396,12 @@
    "salary_period": null,
    "salary_raw": "competitive salary on an international scale",
    "tools_required": [
-    "MATLAB",
     "Python",
-    "R"
+    "R",
+    "MATLAB"
    ],
    "tools_preferred": [],
-   "min_degree": "phd",
+   "min_degree": "unstated",
    "degree_note": null,
    "start_term": null,
    "start_date": null,
@@ -420,7 +418,7 @@
    "is_remote": false,
    "duration_years": 0.96,
    "deadline": "2026-10-30T23:59:59Z",
-   "days_left": 19,
+   "days_left": 18,
    "disciplines": [
     "Other"
    ],
@@ -434,8 +432,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 27079,
-   "salary_max": 30832,
+   "salary_min": 27079.0,
+   "salary_max": 30832.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£27,079 to £30,832 per annum pro rata (60% of £45,132.00 rising to £51,387.00 FTE)",
@@ -458,7 +456,7 @@
    "is_remote": false,
    "duration_years": 4.5,
    "deadline": "2026-11-07T00:00:00Z",
-   "days_left": 27,
+   "days_left": 26,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -474,8 +472,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 13,
-   "salary_max": 13,
+   "salary_min": null,
+   "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
    "salary_raw": "Vergütungsgruppe TV-L E 13",
@@ -498,7 +496,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-12T23:59:59Z",
-   "days_left": 1,
+   "days_left": 0,
    "disciplines": [
     "Finance"
    ],
@@ -536,7 +534,7 @@
    "is_remote": false,
    "duration_years": 3.5,
    "deadline": "2026-10-18T23:59:59Z",
-   "days_left": 7,
+   "days_left": 6,
    "disciplines": [
     "Public Policy",
     "Quantitative Social Sciences"
@@ -573,9 +571,9 @@
    "country": "Denmark",
    "city": "Copenhagen",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 4,
+   "days_left": 3,
    "disciplines": [
     "Development Economics",
     "Environmental and Energy Economics",
@@ -613,9 +611,9 @@
    "country": "United States",
    "city": "Cambridge",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-10-31T00:00:00Z",
-   "days_left": 20,
+   "days_left": 19,
    "disciplines": [
     "Other",
     "Public Policy",
@@ -656,9 +654,9 @@
    "country": "Denmark",
    "city": "Copenhagen",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-10-19T23:59:59Z",
-   "days_left": 8,
+   "days_left": 7,
    "disciplines": [
     "Public Policy",
     "Political Economy",
@@ -674,8 +672,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 39900,
-   "salary_max": 39900,
+   "salary_min": 39900.0,
+   "salary_max": 39900.0,
    "salary_currency": "DKK",
    "salary_period": "month",
    "salary_raw": "DKK 39,900 per month + a 18.07 % contribution to the pension scheme",
@@ -696,9 +694,9 @@
    "country": "United Kingdom",
    "city": "London",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-10-18T23:59:00Z",
-   "days_left": 7,
+   "days_left": 6,
    "disciplines": [
     "Behavioral/Experimental Economics",
     "Quantitative Social Sciences"
@@ -713,8 +711,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 53949,
-   "salary_max": 62160,
+   "salary_min": 53949.0,
+   "salary_max": 62160.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£53,949 to £62,160 pa inclusive with potential to progress to £69,073 pa inclusive of London allowance",
@@ -735,27 +733,31 @@
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
-   "duration_years": 2,
-   "deadline": "2026-10-24T00:00:00Z",
-   "days_left": 13,
+   "duration_years": 2.0,
+   "deadline": "2026-10-24T23:59:59Z",
+   "days_left": 12,
    "disciplines": [
-    "Other"
+    "Behavioral/Experimental Economics",
+    "Applied Microeconomics",
+    "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "This is a Post-Doctoral Associate position in the Center for Behavioral Institutional Design at NYU Abu Dhabi seeking researchers with expertise in experimental, empirical, or theoretical methods. The role focuses on studying human behavioral diversity and designing institutions for social welfare, based in Abu Dhabi, UAE.",
+   "summary": "The Center for Behavioral Institutional Design at New York University Abu Dhabi is recruiting several postdoctoral researchers with a PhD in economics or a related field, preferably within five years of completion, to investigate the origins of human behavioral diversity and develop empirically-informed models and institutions for social welfare. Candidates should have expertise in experimental, empirical, or theoretical methods and will collaborate with the C-BID team; applications are accepted on a rolling basis and must be submitted by email to the named faculty contacts.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/415848/post-doctoral-associate-in-the-center-for-behavioral-institutional-design-c-bid-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/415848/post-doctoral-associate-in-the-center-for-behavioral-institutional-design-c-bid-?LinkSource=PremiumListing",
-   "confidence": 0.95,
+   "confidence": 0.972,
    "first_seen_at": "2026-10-11T10:17:25Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://www.timeshighereducation.com/unijobs/listing/415848/post-doctoral-associate-in-the-center-for-behavioral-institutional-design-c-bid-?LinkSource=PremiumListing"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
-   "salary_raw": "higher than internationally competitive rates for postdoctoral research positions",
+   "salary_raw": "salary higher than internationally competitive rates for postdoctoral research positions, in addition to substantial benefits (generous housing, transportation and travel allowances, educational subsidies for children), together with full health insurance and retirement contributions. The UAE does not levy income tax.",
    "tools_required": [],
    "tools_preferred": [],
    "min_degree": "phd",
@@ -773,7 +775,7 @@
    "country": "United States",
    "city": "Ann Arbor",
    "is_remote": true,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -789,8 +791,8 @@
    "deadline_note": null,
    "visa_note": "Existing work authorisation may be required (“authorized to work in the United States”)",
    "alternate_sources": [],
-   "salary_min": 20,
-   "salary_max": 22,
+   "salary_min": 20.0,
+   "salary_max": 22.0,
    "salary_currency": "USD",
    "salary_period": "hour",
    "salary_raw": "$20-$22/hour",
@@ -816,7 +818,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-01T23:59:59Z",
-   "days_left": 21,
+   "days_left": 20,
    "disciplines": [
     "Applied Microeconomics",
     "Political Economy",
@@ -831,7 +833,9 @@
    "first_seen_at": "2026-10-11T10:10:25Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://www.timeshighereducation.com/unijobs/listing/416148/post-doctoral-associate-in-the-division-of-social-science-cities-dr-etienne-wasmer?LinkSource=PremiumListing"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -854,9 +858,9 @@
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2027-01-15T23:59:59Z",
-   "days_left": 96,
+   "days_left": 95,
    "disciplines": [
     "Applied Microeconomics",
     "Public Policy",
@@ -902,7 +906,7 @@
    "is_remote": false,
    "duration_years": 2.5,
    "deadline": "2026-10-30T23:59:59Z",
-   "days_left": 19,
+   "days_left": 18,
    "disciplines": [
     "Political Economy",
     "Labor Economics"
@@ -981,7 +985,7 @@
    "country": "United States",
    "city": "Providence",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -994,7 +998,7 @@
    "language": "en",
    "apply_url": "https://brown.wd5.myworkdayjobs.com/staff-careers-brown/job/121-South-Main-Street/Health-Economics-Lead-Research-Analyst_REQ210857",
    "source_url": "https://brown.wd5.myworkdayjobs.com/staff-careers-brown/job/121-South-Main-Street/Health-Economics-Lead-Research-Analyst_REQ210857",
-   "confidence": 1,
+   "confidence": 1.0,
    "first_seen_at": "2026-10-11T10:10:20Z",
    "deadline_note": null,
    "visa_note": null,
@@ -1061,7 +1065,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T22:59:00Z",
-   "days_left": 35,
+   "days_left": 34,
    "disciplines": [
     "Econometrics",
     "Finance"
@@ -1098,9 +1102,9 @@
    "country": "United Kingdom",
    "city": "Oxford",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-19T12:00:00Z",
-   "days_left": 39,
+   "days_left": 38,
    "disciplines": [
     "Finance",
     "Quantitative Social Sciences"
@@ -1115,8 +1119,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 41636,
-   "salary_max": 47779,
+   "salary_min": 41636.0,
+   "salary_max": 47779.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£41,636 to £47,779 per annum, with a discretionary range to £53,483 per annum, including the Oxford University Weighting (OUW) and the possibility of a market pay supplement",
@@ -1139,7 +1143,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-18T00:00:00Z",
-   "days_left": 7,
+   "days_left": 6,
    "disciplines": [
     "Finance"
    ],
@@ -1153,8 +1157,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 6,
-   "salary_max": 31236,
+   "salary_min": null,
+   "salary_max": null,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "Grade 6 - £31,236 - £36,636 / Grade 7, £37,694 - £43,482 per annum",
@@ -1177,7 +1181,7 @@
    "is_remote": false,
    "duration_years": 1.5,
    "deadline": "2026-10-30T23:59:59Z",
-   "days_left": 19,
+   "days_left": 18,
    "disciplines": [
     "Public Policy",
     "Applied Microeconomics",
@@ -1217,7 +1221,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-15T23:59:59Z",
-   "days_left": 96,
+   "days_left": 95,
    "disciplines": [
     "Econometrics",
     "Labor Economics",
@@ -1232,7 +1236,9 @@
    "first_seen_at": "2026-10-11T10:09:50Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://www.timeshighereducation.com/unijobs/listing/415846/post-doctoral-associate-in-the-division-of-social-science-economics-?LinkSource=PremiumListing"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -1261,7 +1267,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-19T23:59:59Z",
-   "days_left": 39,
+   "days_left": 38,
    "disciplines": [
     "Econometrics",
     "Finance",
@@ -1277,8 +1283,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 41636,
-   "salary_max": 47779,
+   "salary_min": 41636.0,
+   "salary_max": 47779.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£41,636 to £47,779 per annum",
@@ -1299,9 +1305,9 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-02-08T23:59:59Z",
-   "days_left": 120,
+   "days_left": 119,
    "disciplines": [
     "Quantitative Social Sciences"
    ],
@@ -1315,8 +1321,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -1343,7 +1349,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-02-25T23:59:59Z",
-   "days_left": 137,
+   "days_left": 136,
    "disciplines": [
     "Finance",
     "Environmental and Energy Economics",
@@ -1359,8 +1365,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -1386,9 +1392,9 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-11-20T23:59:59Z",
-   "days_left": 40,
+   "days_left": 39,
    "disciplines": [
     "Applied Microeconomics",
     "Behavioral/Experimental Economics",
@@ -1404,8 +1410,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -1430,9 +1436,9 @@
    "country": "United States",
    "city": "Cambridge, MA",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-07-15T00:00:00Z",
-   "days_left": 277,
+   "days_left": 276,
    "disciplines": [
     "Quantitative Social Sciences",
     "Public Policy",
@@ -1448,8 +1454,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 69294,
-   "salary_max": 69294,
+   "salary_min": 69294.0,
+   "salary_max": 69294.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$69,294",
@@ -1476,7 +1482,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-10T23:59:59Z",
-   "days_left": 91,
+   "days_left": 90,
    "disciplines": [
     "Environmental and Energy Economics",
     "Public Policy",
@@ -1492,8 +1498,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -1518,9 +1524,9 @@
    "country": "Germany",
    "city": "Hannover",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-22T11:00:00Z",
-   "days_left": 42,
+   "days_left": 41,
    "disciplines": [
     "Other",
     "Behavioral/Experimental Economics",
@@ -1536,8 +1542,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 13,
-   "salary_max": 13,
+   "salary_min": null,
+   "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
    "salary_raw": "salary scale 13 TV-L, 100%",
@@ -1558,9 +1564,9 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-03-14T23:59:59Z",
-   "days_left": 154,
+   "days_left": 153,
    "disciplines": [
     "Other"
    ],
@@ -1574,8 +1580,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -1600,9 +1606,9 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-03-14T23:59:59Z",
-   "days_left": 154,
+   "days_left": 153,
    "disciplines": [
     "Econometrics",
     "Political Economy"
@@ -1617,8 +1623,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -1759,9 +1765,9 @@
    "country": "United States",
    "city": "South Bend",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-11-01T00:00:00Z",
-   "days_left": 21,
+   "days_left": 20,
    "disciplines": [
     "Development Economics",
     "Health Economics",
@@ -1802,9 +1808,9 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-10-31T00:00:00Z",
-   "days_left": 20,
+   "days_left": 19,
    "disciplines": [
     "Finance"
    ],
@@ -1880,9 +1886,9 @@
    "country": "United States",
    "city": "South Bend",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-11-02T04:59:59Z",
-   "days_left": 22,
+   "days_left": 21,
    "disciplines": [
     "Health Economics",
     "Public Policy",
@@ -1965,7 +1971,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-13T23:59:59Z",
-   "days_left": 33,
+   "days_left": 32,
    "disciplines": [
     "Finance",
     "Macroeconomics",
@@ -2005,7 +2011,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T23:59:59Z",
-   "days_left": 35,
+   "days_left": 34,
    "disciplines": [
     "Finance"
    ],
@@ -2123,7 +2129,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T00:00:00Z",
-   "days_left": 5,
+   "days_left": 4,
    "disciplines": [
     "Public Policy",
     "Applied Microeconomics",
@@ -2161,7 +2167,7 @@
    "country": "United States",
    "city": "Cambridge",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -2204,9 +2210,9 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-11-01T00:00:00Z",
-   "days_left": 21,
+   "days_left": 20,
    "disciplines": [
     "Applied Microeconomics",
     "Public Policy",
@@ -2422,7 +2428,9 @@
    "first_seen_at": "2026-10-11T09:52:34Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://bit.ly/4frCcTg"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -2485,7 +2493,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-23T00:00:00Z",
-   "days_left": 12,
+   "days_left": 11,
    "disciplines": [
     "Law and Economics",
     "Public Policy",
@@ -2645,7 +2653,7 @@
    "country": "United States",
    "city": "Boston",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -2771,7 +2779,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T00:00:00Z",
-   "days_left": 5,
+   "days_left": 4,
    "disciplines": [
     "International Trade"
    ],
@@ -2807,9 +2815,9 @@
    "country": "United States",
    "city": "Boston",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-10-20T23:59:59Z",
-   "days_left": 9,
+   "days_left": 8,
    "disciplines": [
     "Business and Management",
     "Finance",
@@ -2854,7 +2862,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T00:00:00Z",
-   "days_left": 5,
+   "days_left": 4,
    "disciplines": [
     "Development Economics",
     "Political Economy"
@@ -2933,7 +2941,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-15T00:00:00Z",
-   "days_left": 96,
+   "days_left": 95,
    "disciplines": [
     "Applied Microeconomics",
     "Public Policy"
@@ -2974,7 +2982,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-05-23T23:59:59Z",
-   "days_left": 224,
+   "days_left": 223,
    "disciplines": [
     "Labor Economics",
     "Development Economics"
@@ -3013,7 +3021,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-04-30T00:00:00Z",
-   "days_left": 201,
+   "days_left": 200,
    "disciplines": [
     "Macroeconomics"
    ],
@@ -3024,11 +3032,11 @@
    "source_url": "https://careers.bankofcanada.ca/job/Ottawa-%28Downtown%29-PhD-Researcher-%282026-2027-PhD-Job-Market%29-ON/606660617",
    "confidence": 0.98,
    "first_seen_at": "2026-10-11T09:48:38Z",
-   "deadline_note": null,
+   "deadline_note": "Closes April 30, 2027; employer's closing hour not verified",
    "visa_note": "Priority to citizens/residents (“Priority will be given to Canadian”); Relocation assistance mentioned; sponsorship unstated (“Relocation assistance”)",
    "alternate_sources": [],
    "salary_min": 114952.5,
-   "salary_max": 156778,
+   "salary_max": 156778.0,
    "salary_currency": "CAD",
    "salary_period": "year",
    "salary_raw": "Starting annual base salary CAD $114,952.50–$156,778.00 per year (2026 scales)",
@@ -3049,9 +3057,9 @@
    "country": "Sweden",
    "city": "Gothenburg",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-10-21T23:59:59Z",
-   "days_left": 10,
+   "days_left": 9,
    "disciplines": [
     "Quantitative Social Sciences"
    ],
@@ -3087,9 +3095,9 @@
    "country": "Sweden",
    "city": "Umeå",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-11-04T22:59:59Z",
-   "days_left": 24,
+   "days_left": 23,
    "disciplines": [
     "Quantitative Social Sciences",
     "Other"
@@ -3126,9 +3134,9 @@
    "country": "France",
    "city": "Paris",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-30T23:59:59Z",
-   "days_left": 50,
+   "days_left": 49,
    "disciplines": [
     "Public Policy",
     "Labor Economics",
@@ -3144,10 +3152,10 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 3400,
-   "salary_max": 3400,
+   "salary_min": 3400.0,
+   "salary_max": 3400.0,
    "salary_currency": "EUR",
-   "salary_period": null,
+   "salary_period": "month",
    "salary_raw": "3400€ brut/mois",
    "tools_required": [],
    "tools_preferred": [],
@@ -3207,7 +3215,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-08T23:59:59Z",
-   "days_left": 28,
+   "days_left": 27,
    "disciplines": [
     "Public Policy",
     "Law and Economics",
@@ -3245,9 +3253,9 @@
    "country": "Sweden",
    "city": "Linköping",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-11-02T23:59:59Z",
-   "days_left": 22,
+   "days_left": 21,
    "disciplines": [
     "Environmental and Energy Economics",
     "Public Policy",
@@ -3285,9 +3293,9 @@
    "country": "Denmark",
    "city": "Aarhus",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-01T23:59:59Z",
-   "days_left": 21,
+   "days_left": 20,
    "disciplines": [
     "Business and Management",
     "Behavioral/Experimental Economics",
@@ -3329,9 +3337,9 @@
    "country": "Sweden",
    "city": "Lund",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-10-27T23:59:59Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Political Economy"
    ],
@@ -3369,7 +3377,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-19T23:59:59Z",
-   "days_left": 39,
+   "days_left": 38,
    "disciplines": [
     "Political Economy"
    ],
@@ -3407,7 +3415,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 4,
+   "days_left": 3,
    "disciplines": [
     "Political Economy",
     "Environmental and Energy Economics",
@@ -3447,7 +3455,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-19T23:59:59Z",
-   "days_left": 39,
+   "days_left": 38,
    "disciplines": [
     "Quantitative Social Sciences"
    ],
@@ -3523,9 +3531,9 @@
    "country": "Sweden",
    "city": "Kista",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 4,
+   "days_left": 3,
    "disciplines": [
     "Public Policy",
     "Quantitative Social Sciences"
@@ -3562,9 +3570,9 @@
    "country": "Sweden",
    "city": "Uppsala",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-11-09T23:59:59Z",
-   "days_left": 29,
+   "days_left": 28,
    "disciplines": [
     "Political Economy",
     "Quantitative Social Sciences",
@@ -3604,7 +3612,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-29T23:59:59Z",
-   "days_left": 110,
+   "days_left": 109,
    "disciplines": [
     "Other"
    ],
@@ -3646,7 +3654,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-02-26T00:00:00Z",
-   "days_left": 138,
+   "days_left": 137,
    "disciplines": [
     "Business and Management",
     "Econometrics"
@@ -3823,7 +3831,7 @@
    "country": "United States",
    "city": "Philadelphia",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -3839,8 +3847,8 @@
    "deadline_note": "Rolling",
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 50000,
-   "salary_max": 60000,
+   "salary_min": 50000.0,
+   "salary_max": 60000.0,
    "salary_currency": "USD",
    "salary_period": "year",
    "salary_raw": "Annual salary USD $50,000–$60,000, plus benefits",
@@ -3866,7 +3874,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 5,
+   "days_left": 4,
    "disciplines": [
     "Finance",
     "Business and Management"
@@ -3947,7 +3955,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 4,
+   "days_left": 3,
    "disciplines": [
     "Macroeconomics",
     "Econometrics",
@@ -4036,7 +4044,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 5,
+   "days_left": 4,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -4095,8 +4103,8 @@
    "alternate_sources": [
     "https://bit.ly/4zFggLT"
    ],
-   "salary_min": 70500,
-   "salary_max": 70500,
+   "salary_min": 70500.0,
+   "salary_max": 70500.0,
    "salary_currency": "USD",
    "salary_period": "year",
    "salary_raw": "$70,500 annually, plus benefits",
@@ -4119,7 +4127,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-15T00:00:00Z",
-   "days_left": 4,
+   "days_left": 3,
    "disciplines": [
     "Applied Microeconomics",
     "Econometrics",
@@ -4247,7 +4255,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-12-30T23:59:59Z",
-   "days_left": 80,
+   "days_left": 79,
    "disciplines": [
     "Econometrics",
     "Quantitative Social Sciences",
@@ -4265,10 +4273,10 @@
    "alternate_sources": [
     "https://uchicago.wd5.myworkdayjobs.com/External/job/Chicago-IL/Research-Professional--BFI_JR32644"
    ],
-   "salary_min": 55000,
-   "salary_max": 62000,
+   "salary_min": 55000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
-   "salary_period": "year",
+   "salary_period": null,
    "salary_raw": "$55,000.00 - $62,000.00",
    "tools_required": [
     "Stata",
@@ -4293,7 +4301,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 5,
+   "days_left": 4,
    "disciplines": [
     "Business and Management",
     "Applied Microeconomics"
@@ -4379,7 +4387,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 20,
+   "days_left": 19,
    "disciplines": [
     "Macroeconomics",
     "Finance",
@@ -4398,10 +4406,10 @@
     "https://bit.ly/3V5WhWY",
     "https://uchicago.wd5.myworkdayjobs.com/External/job/Chicago-IL/Research-Professional_JR35094"
    ],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
-   "salary_period": "year",
+   "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
    "tools_required": [
     "Python",
@@ -4471,7 +4479,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-21T23:59:59Z",
-   "days_left": 10,
+   "days_left": 9,
    "disciplines": [
     "Other"
    ],
@@ -4550,7 +4558,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T23:59:59Z",
-   "days_left": 35,
+   "days_left": 34,
    "disciplines": [
     "Finance",
     "Industrial Organization",
@@ -4840,7 +4848,7 @@
     "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "NYU ... Click to see full trail Careers at NYU Shanghai NYU Shanghai Career Site USA Positions Abu Dhabi Positions Shanghai Positions Other Global Locations All Positions Internal Applicants New York University Unless otherwise noted, all content copyright New York University. All rights reserved.",
+   "summary": "Full-time predoctoral research role at New York University-Shanghai, Business Division, working with Sterling Huang and Chen Li. Research focus: Accounting and Corporate Finance. Application deadline: Rolling.",
    "language": "en",
    "apply_url": "https://shanghai-nyu.icims.com/jobs/15898/pre-doctoral-research-associate-in-accounting/job",
    "source_url": "https://bit.ly/4ruWtLi",
@@ -4960,7 +4968,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-06-30T23:59:59Z",
-   "days_left": 262,
+   "days_left": 261,
    "disciplines": [
     "Development Economics"
    ],
@@ -5000,7 +5008,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 20,
+   "days_left": 19,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -5042,7 +5050,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-19T23:59:59Z",
-   "days_left": 8,
+   "days_left": 7,
    "disciplines": [
     "Macroeconomics",
     "Finance"
@@ -5073,6 +5081,5 @@
    "kind": "predoc",
    "sector": "academic"
   }
- ],
- "output_audited_at": "2026-10-11T19:10:39Z"
+ ]
 }
