@@ -260,3 +260,65 @@ test('an in-flight replay cannot acknowledge uncommitted Telegram delivery', asy
   } finally {finish();}
   await first;
 });
+
+
+test('crashed processing checkpoint is reclaimed after its lease expires', async () => {
+  const instance = bot();
+  const key = 'update:250';
+  await instance.ctx.storage.put(key, {stage: 'processing', at: Date.now() - 91000,
+    quota_reserved: true});
+  const result = await instance.fetch(post('/webhook', {update_id: 250,
+    message: {chat: {id: 42}, text: '/menu'}}));
+  assert.equal(result.status, 200);
+  assert.equal(instance.calls.length, 1);
+  assert.equal((await instance.ctx.storage.get(key)).stage, 'done');
+});
+
+test('ambiguous in-flight sends return 503 until a safe replay lease expires', async () => {
+  const instance = bot();
+  const key = 'update:251';
+  const payload = {chat_id: 42, text: 'Prepared menu'};
+  await instance.ctx.storage.put(key, {stage: 'sending', at: Date.now(), method: 'sendMessage', payload});
+  const update = {update_id: 251, message: {chat: {id: 42}, text: '/menu'}};
+  const busy = await instance.fetch(post('/webhook', update));
+  assert.equal(busy.status, 503);
+  assert.equal(instance.calls.length, 0);
+  await instance.ctx.storage.put(key, {stage: 'sending', at: Date.now() - 91000,
+    method: 'sendMessage', payload});
+  const recovered = await instance.fetch(post('/webhook', update));
+  assert.equal(recovered.status, 200);
+  assert.deepEqual(instance.calls[0].payload, payload);
+  assert.equal((await instance.ctx.storage.get(key)).stage, 'done');
+});
+
+test('ambiguous Telegram API errors are never falsely acknowledged as delivered', async () => {
+  const instance = bot();
+  instance.api = async () => {throw new Error('unconfirmed delivery');};
+  const key = 'update:252';
+  const update = {update_id: 252, message: {chat: {id: 42}, text: '/menu'}};
+  const first = await instance.fetch(post('/webhook', update));
+  assert.equal(first.status, 503);
+  const checkpoint = await instance.ctx.storage.get(key);
+  assert.equal(checkpoint.stage, 'uncertain');
+  assert.equal(checkpoint.method, 'sendMessage');
+  assert.equal(checkpoint.payload.chat_id, 42);
+  await instance.ctx.storage.put(key, {...checkpoint, at: Date.now() - 91000});
+  instance.api = async (method, payload) => {instance.calls.push({method, payload}); return {message_id: 1};};
+  const recovered = await instance.fetch(post('/webhook', update));
+  assert.equal(recovered.status, 200);
+  assert.equal(instance.calls.length, 1);
+});
+
+test('global AI disable gate applies to owners without invoking the provider', async () => {
+  const instance = bot();
+  instance.env = {...env, AI_ENABLED: 'false', OPENROUTER_API_KEY: 'offline-key'};
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => {throw new Error('provider must not be invoked');};
+  try {
+    const response = await instance.fetch(post('/webhook', {update_id: 253,
+      message: {chat: {id: 42}, text: '/ask Count roles'}}));
+    assert.equal(response.status, 200);
+    assert.match(instance.calls[0].payload.text, /currently disabled/);
+    assert.equal(await instance.ctx.storage.get('rate:public'), undefined);
+  } finally {globalThis.fetch = original;}
+});
