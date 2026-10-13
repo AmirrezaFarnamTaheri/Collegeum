@@ -123,7 +123,7 @@ export class TelegramBot {
         (callback && !owners.has(String(callback.from?.id)))) return json({ok: true, ignored: true});
     const question = callback ? null : aiQuestion(message);
     if (question !== null && question.trim() && question.length <= 1000 &&
-        this.env.AI_ENABLED !== 'false' && (owner || this.env.PUBLIC_AI_ENABLED !== 'false'))
+        this.env.AI_ENABLED !== 'false' && (owner || this.env.PUBLIC_AI_ENABLED === 'true'))
       return this.queueAI(update,message,owner);
     return this.processUpdate(update,callback,message,owner);
   }
@@ -188,7 +188,7 @@ export class TelegramBot {
           // Reserve on arrival, not after waiting behind another slow AI question.
           // Invalid input gets its guidance reply without charging either quota.
           const enabled = this.env.AI_ENABLED !== 'false';
-          const publicEnabled = this.env.PUBLIC_AI_ENABLED !== 'false';
+          const publicEnabled = this.env.PUBLIC_AI_ENABLED === 'true';
           const limited = !enabled || (!owner && !publicEnabled) ||
             !question.trim() || question.length > 1000 ? null
             : await reservePublic(this,message.chat.id,owner,key);
@@ -398,7 +398,7 @@ export class TelegramBot {
       const question = naturalQuestion ? String(message.text || '') : words.join(' ');
       const text = this.env.AI_ENABLED === 'false'
         ? 'Database chat is currently disabled.'
-        : !owner && this.env.PUBLIC_AI_ENABLED === 'false'
+        : !owner && this.env.PUBLIC_AI_ENABLED !== 'true'
           ? 'Database chat is currently available to the configured owners.'
           : admission.limited || await ask(this,question,message.chat.id,owner,
             admission.admitted && Boolean(question.trim()) && question.length <= 1000,updateKey);
