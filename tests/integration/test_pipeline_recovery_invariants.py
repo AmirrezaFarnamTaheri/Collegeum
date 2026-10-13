@@ -233,6 +233,7 @@ def test_manual_broadcast_respects_policy_and_persists_recovery_journal(
     prefs = Preferences()
     prefs.enrich.fetch_details = False
     prefs.filters.excluded_employers = ["Example University"]
+    prefs.filters.allow_private_sector = True
     monkeypatch.setattr(cli, "_settings", lambda: settings)
     monkeypatch.setattr(cli, "load_preferences", lambda _: prefs)
 
