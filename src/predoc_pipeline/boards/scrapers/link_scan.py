@@ -161,6 +161,7 @@ class LinkScanScraper(BaseScraper):
                     )
                 except Exception as exc:  # noqa: BLE001
                     errors.append(f"{page_url}: {exc}")
+                    self.discovery_fetch_errors.append(f"{type(exc).__name__} at page {page}")
                     log.warning("%s: page %d (%s) failed: %s", self.name, page, page_url, exc)
                     break
                 out.append((page_url, html))
@@ -172,6 +173,12 @@ class LinkScanScraper(BaseScraper):
                 ]
                 if not matching:
                     break
+                if page == max_pages and max_pages > 1:
+                    # A populated terminal page is not proof that all later
+                    # pages are empty. Surface the bounded scan as partial.
+                    self.discovery_limits.append(
+                        f"pagination page cap {max_pages} reached for {base_url}"
+                    )
         if errors and not out:
             raise RuntimeError("; ".join(errors)[:500])
         return out
