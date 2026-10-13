@@ -42,6 +42,13 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
     // Distinct valid IDs execute concurrently against the actual DO transaction API.
     await Promise.all(Array.from({length:6},(_,i)=>send('/webhook',{update_id:100+i,
       message:{chat:{id:1000+i,type:'private'},from:{id:1000+i},text:'/ask Count open roles'}})));
+    // AI is performed by Durable Object alarms after the webhook has been
+    // acknowledged, rather than during its HTTP request.
+    for (let i = 0; i < 100; i++) {
+      if (calls.filter(c=>c.url==='/api/v1/chat/completions').length === 4 &&
+          calls.some(c=>c.body.text?.includes('shared hourly'))) break;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
     assert.equal(calls.filter(c=>c.url==='/api/v1/chat/completions').length,4);
     assert.ok(calls.some(c=>c.body.text?.includes('shared hourly')));
   } finally {await mf.dispose();}
