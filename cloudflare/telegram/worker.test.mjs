@@ -28,7 +28,8 @@ class Storage {
     return result;
   }
 }
-const env = {OWNER_IDS: '42', TELEGRAM_BOT_TOKEN: 'test', WEBHOOK_SECRET: 'webhook', SYNC_TOKEN: 'sync'};
+const env = {OWNER_IDS: '42', TELEGRAM_BOT_TOKEN: 'test', WEBHOOK_SECRET: 'webhook', SYNC_TOKEN: 'sync',
+  PUBLIC_AI_ENABLED: 'true'};
 const record = {url_hash: 'a'.repeat(64), title: 'Predoc in Economics', institution: 'Example University',
   apply_url: 'https://example.org/job', country: 'United Kingdom', first_seen_at: new Date().toISOString()};
 const post = (path, payload) => new Request(`https://example.workers.dev${path}`, {
