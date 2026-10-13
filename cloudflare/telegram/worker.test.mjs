@@ -148,7 +148,10 @@ test('slow public AI never blocks owner browsing, including the same owner chat'
     function:{name:'query_database',arguments:'{"action":"count"}'}
   }]}}]});};
   try {
-    const slow = instance.fetch(post('/webhook',{update_id:10,message:{chat:{id:42},text:'/ask Count open roles'}}));
+    const accepted = await instance.fetch(post('/webhook',{update_id:10,
+      message:{chat:{id:42},text:'/ask Count open roles'}}));
+    assert.equal(accepted.status, 200);
+    const slow = instance.alarm();
     await started;
     const menu = await instance.fetch(post('/webhook',{update_id:11,message:{chat:{id:42},text:'/menu'}}));
     assert.equal(menu.status,200);
@@ -182,14 +185,17 @@ test('explicit long Telegram throttling retries a prepared AI reply without repe
   };
   const update={update_id:22,message:{chat:{id:123,type:'private'},from:{id:123},text:'/ask Count roles'}};
   try{
-    assert.equal((await instance.fetch(post('/webhook',update))).status,503);
+    assert.equal((await instance.fetch(post('/webhook',update))).status,200);
+    assert.equal((await instance.ctx.storage.get('update:22')).stage,'queued');
+    await instance.alarm();
     const prepared=await instance.ctx.storage.get('update:22');
     assert.equal(prepared.stage,'prepared');
-    assert.equal((await instance.fetch(post('/webhook',update))).status,503);
+    assert.equal((await instance.fetch(post('/webhook',update))).status,200);
     assert.equal(telegram,1);
     await instance.ctx.storage.put('update:22',{...prepared,retry_at:0});
     throttled=false;
-    assert.equal((await instance.fetch(post('/webhook',update))).status,200);
+    await instance.alarm();
+    assert.equal((await instance.ctx.storage.get('update:22')).stage,'done');
     assert.equal(provider,1);assert.equal(telegram,2);
     assert.equal((await instance.ctx.storage.get('rate:public')).length,1);
   }finally{globalThis.fetch=original;}
