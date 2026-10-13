@@ -35,3 +35,18 @@ test('active token without target Worker account access is rejected', async () =
   assert.ok(urls[1].includes(`/accounts/${'a'.repeat(32)}/workers/scripts`));
   await assert.rejects(verifyTargetToken('mock', ''), /ACCOUNT_ID/);
 });
+
+test('account-owned token verifies through the account endpoint before Worker access', async () => {
+  const urls = [];
+  assert.equal(await verifyTargetToken('mock', 'a'.repeat(32), async url => {
+    urls.push(url);
+    if (url.includes('/user/tokens/verify')) return new Response('', {status: 403});
+    if (url.includes('/tokens/verify')) {
+      return Response.json({success: true, result: {status: 'active'}});
+    }
+    return Response.json({success: true, result: []});
+  }), true);
+  assert.equal(urls.length, 3);
+  assert.ok(urls[1].endsWith(`/accounts/${'a'.repeat(32)}/tokens/verify`));
+  assert.ok(urls[2].endsWith('/workers/scripts'));
+});

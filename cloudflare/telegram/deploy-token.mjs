@@ -18,19 +18,27 @@ export async function verifyTargetToken(token, accountId, request = fetch) {
   if (!/^[a-f0-9]{32}$/.test(accountId || '')) {
     throw new Error('Set the intended CLOUDFLARE_ACCOUNT_ID first');
   }
+  let active = false;
   for (const url of [
     'https://api.cloudflare.com/client/v4/user/tokens/verify',
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts`,
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/tokens/verify`,
   ]) {
     const response = await request(url, {
       headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(10000),
     });
-    if (!response.ok) return false;
+    if (!response.ok) continue;
     const body = await response.json();
-    if (body.success !== true) return false;
-    if (url.endsWith('/verify') && body.result?.status !== 'active') return false;
+    if (body.success === true && body.result?.status === 'active') {
+      active = true;
+      break;
+    }
   }
-  return true;
+  if (!active) return false;
+  const response = await request(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts`, {
+      headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(10000),
+    });
+  return response.ok && (await response.json()).success === true;
 }
 
 async function main() {

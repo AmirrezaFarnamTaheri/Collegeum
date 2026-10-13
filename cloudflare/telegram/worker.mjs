@@ -104,8 +104,12 @@ export class TelegramBot {
         const known = new Set([...VIEWS,'menu','home','help','start','forget','saved','interested','jobs','list']);
         const ai = word === 'ask' || (!input.startsWith('/') && !known.has(word));
         if (ai) {
+          const question = word === 'ask' ? input.split(/\s+/).slice(1).join(' ')
+            : String(message.text || '');
           // Reserve on arrival, not after waiting behind another slow AI question.
-          const limited = await reservePublic(this,message.chat.id,owner,key);
+          // Invalid input gets its guidance reply without charging either quota.
+          const limited = !question.trim() || question.length > 1000 ? null
+            : await reservePublic(this,message.chat.id,owner,key);
           const chat = String(message.chat.id);
           const previous = this.chatTails.get(chat) || Promise.resolve();
           const result = previous.catch(() => {}).then(() => this.command(message,owner,{limited,admitted:true},key));

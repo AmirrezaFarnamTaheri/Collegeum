@@ -53,6 +53,13 @@ def test_predoc_without_field_is_checked_on_detail_page():
     assert not FLT.evaluate(post("Predoc in Macroeconomics")).needs_field_check
 
 
+def test_advancement_prospect_research_is_not_an_academic_research_role():
+    verdict = FLT.evaluate(post('Senior Research Analyst, Prospect Development',
+                                institution='Brown University', field_implied=True,
+                                description_snippet='Wealth analysis for fundraising teams.'))
+    assert not verdict.keep and verdict.reason == 'excluded-title'
+
+
 @pytest.mark.parametrize("title,reason", [
     ("Postdoctoral Fellow in Economics", "excluded-title"),
     ("Assistant Professor in Health Economics", "excluded-title"),

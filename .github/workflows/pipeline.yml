@@ -95,9 +95,6 @@ jobs:
         id: pipeline
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_WEBHOOK_ENABLED: ${{ vars.TELEGRAM_WEBHOOK_ENABLED || 'false' }}
-          TELEGRAM_WORKER_URL: ${{ vars.TELEGRAM_WORKER_URL }}
-          TELEGRAM_WORKER_SYNC_TOKEN: ${{ secrets.TELEGRAM_WORKER_SYNC_TOKEN }}
           TELEGRAM_PUBLIC_CHANNEL_ID: ${{ secrets.TELEGRAM_PUBLIC_CHANNEL_ID }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
           FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}

@@ -114,21 +114,37 @@ export async function ask(instance, question, userId, owner, admitted = false, u
     tools:[protocol.tool],tool_choice:{type:'function',function:{name:'query_database'}}};
   try {
     let query;
+    let providerFailed = false;
     const deadline = Date.now() + 25000;
     for (const key of keys.slice(0,5)) {
       const remaining = deadline-Date.now();
       if (remaining <= 0) break;
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {method:'POST',
-        headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(Math.min(20000,remaining))});
+      let response;
+      try {
+        response = await fetch('https://openrouter.ai/api/v1/chat/completions', {method:'POST',
+          headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(Math.min(20000,remaining))});
+      } catch {
+        providerFailed = true;
+        continue;
+      }
       if (response.status === 429) continue;
       if (!response.ok) return 'Database AI is temporarily unavailable. Your tracking marks are unchanged.';
-      const data = await response.json();
+      let data;
+      try { data = await response.json(); }
+      catch { providerFailed = true; continue; }
+      if (!data || !Array.isArray(data.choices) || !data.choices[0]?.message ||
+          typeof data.choices[0].message !== 'object') {
+        providerFailed = true;
+        continue;
+      }
       const calls = data.choices?.[0]?.message?.tool_calls;
       if (!Array.isArray(calls) || calls.length !== 1 || calls[0].function?.name !== 'query_database') return refusal;
       query = validateQuery(JSON.parse(calls[0].function.arguments));
       break;
     }
-    if (!query) return 'The AI provider is busy. Please try again later.';
+    if (!query) return providerFailed
+      ? 'Database AI is temporarily unavailable. Your tracking marks are unchanged.'
+      : 'The AI provider is busy. Please try again later.';
     if (query.action === 'refuse') return refusal;
     const {rows,marks} = await instance.dataset(owner);
     const result = queryRecords(query,rows,owner ? marks : new Map(),owner);

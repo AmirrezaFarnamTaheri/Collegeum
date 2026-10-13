@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -20,6 +21,41 @@ REFUSAL = ('I can query stored research vacancies and their deadlines, employers
            'predict openings, decide personal eligibility, or invent missing facts. '
            'Try /ask Which economics positions close this month?')
 ResultField = Literal['deadline', 'visa', 'salary', 'degree', 'tools', 'start', 'summary']
+NOT_CONFIGURED = 'Database chat is not configured yet. Please try again later.'
+UNAVAILABLE = 'Database AI is temporarily unavailable. Your tracking marks are unchanged.'
+
+
+def _load_protocol(path: str) -> dict[str, Any] | None:
+    """Reject unusable local configuration before reserving provider capacity."""
+    try:
+        protocol = json.loads(Path(path).read_text(encoding='utf-8'))
+    except (OSError, UnicodeError, ValueError):
+        return None
+    if not isinstance(protocol, dict):
+        return None
+    system, tool = protocol.get('system'), protocol.get('tool')
+    if not isinstance(system, str) or not system.strip() or not isinstance(tool, dict):
+        return None
+    function = tool.get('function')
+    if tool.get('type') != 'function' or not isinstance(function, dict):
+        return None
+    parameters = function.get('parameters')
+    if function.get('name') != 'query_database' or not isinstance(parameters, dict):
+        return None
+    properties, required = parameters.get('properties'), parameters.get('required')
+    if (parameters.get('type') != 'object' or parameters.get('additionalProperties') is not False
+            or not isinstance(properties, dict) or not properties
+            or any(not isinstance(value, dict) for value in properties.values())
+            or not isinstance(required, list) or 'action' not in required
+            or any(not isinstance(key, str) or key not in properties for key in required)):
+        return None
+    action = properties.get('action', {})
+    actions = action.get('enum')
+    if (action.get('type') != 'string' or not isinstance(actions, list)
+            or not all(isinstance(value, str) for value in actions)
+            or set(actions) != {'list', 'count', 'group', 'detail', 'refuse'}):
+        return None
+    return protocol
 
 
 class DatabaseQuery(BaseModel):
@@ -191,12 +227,13 @@ def _ask_database(
     if not settings.telegram_ai_enabled or not keys:
         return ('Database chat is not configured yet. '
                 'Try again after OpenRouter is connected.')
+    protocol = _load_protocol(settings.telegram_ai_protocol_path)
+    if protocol is None:
+        return NOT_CONFIGURED
     limited = reserve_public_request(store, user_id, owner=owner,
                                      hourly_cap=settings.telegram_ai_public_hourly_cap)
     if limited:
         return limited
-    protocol_path = Path(settings.telegram_ai_protocol_path)
-    protocol = json.loads(protocol_path.read_text(encoding='utf-8'))
     conversations = store.data.setdefault('assistant_queries', {})
     if not isinstance(conversations, dict):
         raise ValueError('Invalid assistant query state')
@@ -213,22 +250,43 @@ def _ask_database(
         'tool_choice': {'type': 'function', 'function': {'name': 'query_database'}},
     }
     owns_client = client is None
-    http = client or httpx.Client(timeout=30)
+    http = client or httpx.Client(timeout=20)
     parsed: DatabaseQuery | None = None
+    expires = time.monotonic() + 25
+    provider_failed = False
     try:
         for key in keys[:5]:
-            response = http.post(settings.openrouter_base_url.rstrip('/') + '/chat/completions',
-                                 headers={'Authorization': f'Bearer {key}'}, json=body)
+            remaining = expires - time.monotonic()
+            if remaining <= 0:
+                return UNAVAILABLE
+            try:
+                response = http.post(
+                    settings.openrouter_base_url.rstrip('/') + '/chat/completions',
+                    headers={'Authorization': f'Bearer {key}'}, json=body,
+                    timeout=min(20, remaining),
+                )
+            except httpx.RequestError:
+                provider_failed = True
+                continue
             if response.status_code == 429:
                 continue
             if response.status_code != 200:
-                return 'Database AI is temporarily unavailable. Your tracking marks are unchanged.'
-            calls = response.json()['choices'][0]['message'].get('tool_calls', [])
+                return UNAVAILABLE
+            try:
+                message = response.json()['choices'][0]['message']
+                if not isinstance(message, dict):
+                    raise ValueError('Invalid provider message')
+            except (ValueError, KeyError, IndexError, TypeError):
+                provider_failed = True
+                continue
+            calls = message.get('tool_calls', [])
             if len(calls) != 1 or calls[0]['function']['name'] != 'query_database':
                 return REFUSAL
             parsed = DatabaseQuery.model_validate_json(calls[0]['function']['arguments'])
             break
         if parsed is None:
+            if provider_failed:
+                return UNAVAILABLE
             return 'The AI provider is busy. Try again later or browse /positions.'
         if parsed.action == 'refuse':
             return REFUSAL

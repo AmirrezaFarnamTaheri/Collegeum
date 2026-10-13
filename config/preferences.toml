@@ -76,6 +76,7 @@ exclude_terms = [
   "buy side", "private equity", "hedge fund", "trading", "trader", "sales",
   "real estate", "market research", "semiconductor*", "wealth management",
   "portfolio", "underwriting", "actuar*",
+    "prospect development",
 ]
 
 # Drop "PhD student / doctoral candidate" jobs (set false to include them).

@@ -39,6 +39,19 @@ function bot() {
 }
 const snapshot = {listings: [record], marks: {}, generated_at: new Date().toISOString()};
 
+test('invalid AI questions consume neither public nor user quota', async () => {
+  const instance = bot();
+  for (const [index, text] of ['/ask', '/ask ' + 'x'.repeat(1001), 'x'.repeat(1001),
+    ' '.repeat(1001) + 'x'].entries()) {
+    const response = await instance.fetch(post('/webhook', {update_id: 100 + index,
+      message: {chat: {id: 999, type: 'private'}, from: {id: 999}, text}}));
+    assert.equal(response.status, 200);
+  }
+  assert.equal(instance.calls.length, 4);
+  assert.equal(await instance.ctx.storage.get('rate:999'), undefined);
+  assert.equal(await instance.ctx.storage.get('rate:public'), undefined);
+});
+
 test('authentication fails before durable state is allocated', async () => {
   let touched = false;
   const bindings = {...env, BOT: {get() { touched = true; }, idFromName() { touched = true; }}};

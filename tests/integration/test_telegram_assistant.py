@@ -8,7 +8,9 @@ import pytest
 
 from predoc_pipeline.core.timeparse import format_ts, utcnow
 from predoc_pipeline.publish.assistant import (
+    NOT_CONFIGURED,
     REFUSAL,
+    UNAVAILABLE,
     DatabaseQuery,
     ask_database,
     query_records,
@@ -127,4 +129,97 @@ def test_replayed_polling_request_reuses_prepared_result_without_spending_again(
         second = ask_database('Count roles', [row()], store, settings,
                               user_id=101, owner=False, request_id=7, client=client)
     assert first == second and len(calls) == 1
+    assert len(store.data['assistant_usage']['public']) == 1
+
+
+@pytest.mark.parametrize('contents', [
+    None, '{bad json', '[]', '{}', '{"system": 42, "tool": {}}',
+    '{"system": "Rules", "tool": {"type": "function", "function": null}}',
+    '{"system": "Rules", "tool": {"type": "function", "function": '
+    '{"name": "query_database", "parameters": {}}}}',
+])
+def test_unavailable_protocol_is_cached_without_quota_or_provider_work(tmp_path, contents):
+    protocol = tmp_path / 'custom-protocol.json'
+    if contents is not None:
+        protocol.write_text(contents, encoding='utf-8')
+    store = FeedbackStore(tmp_path / 'feedback.json')
+    settings = Settings(_env_file=None, openrouter_api_key='offline-test-key',
+                        telegram_ai_protocol_path=str(protocol))
+
+    def handler(request):
+        pytest.fail('An unusable protocol must not invoke OpenRouter')
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        answer = ask_database('Count roles', [row()], store, settings,
+                              user_id=101, owner=False, request_id=7, client=client)
+        assert answer == NOT_CONFIGURED
+        persisted = FeedbackStore(tmp_path / 'feedback.json')
+        assert 'assistant_usage' not in persisted.data
+        assert persisted.data['assistant_replies']['101:7']['answer'] == answer
+        # A polling replay reuses the prepared response even if configuration changes.
+        protocol.write_text('{}', encoding='utf-8')
+        assert ask_database('Count roles', [row()], persisted, settings,
+                            user_id=101, owner=False, request_id=7, client=client) == answer
+
+
+@pytest.mark.parametrize('failure', ['transport', 'json', 'envelope'])
+def test_provider_failure_uses_next_key_and_reserves_only_once(tmp_path, failure):
+    store = FeedbackStore(tmp_path / 'feedback.json')
+    settings = Settings(_env_file=None, openrouter_api_key='first second')
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        if len(calls) == 1:
+            if failure == 'transport':
+                raise httpx.ReadTimeout('offline timeout', request=request)
+            return httpx.Response(200, text='invalid' if failure == 'json' else '{}')
+        return response({'action': 'count'})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        answer = ask_database('Count roles', [row()], store, settings,
+                              user_id=101, owner=False, request_id=9, client=client)
+    assert '1 matching record' in answer and len(calls) == 2
+    assert len(store.data['assistant_usage']['public']) == 1
+
+
+@pytest.mark.parametrize('responses,expected', [
+    ([httpx.Response(200, text='invalid'), httpx.Response(429)], UNAVAILABLE),
+    ([httpx.Response(429), httpx.Response(429)], 'The AI provider is busy.'),
+    ([response({'action': 'list', 'sql': 'bad'})], REFUSAL),
+])
+def test_provider_outage_is_distinct_from_refused_tool_arguments(tmp_path, responses, expected):
+    store = FeedbackStore(tmp_path / 'feedback.json')
+    settings = Settings(_env_file=None, openrouter_api_key='first second')
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return responses[len(calls) - 1]
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        answer = ask_database('Count roles', [row()], store, settings,
+                              user_id=101, owner=False, client=client)
+    assert answer.startswith(expected)
+    assert len(calls) == len(responses)
+
+
+def test_provider_retries_share_one_monotonic_budget(tmp_path, monkeypatch):
+    from predoc_pipeline.publish import assistant
+
+    clock = iter([100.0, 100.0, 120.0, 126.0])
+    monkeypatch.setattr(assistant.time, 'monotonic', lambda: next(clock))
+    store = FeedbackStore(tmp_path / 'feedback.json')
+    settings = Settings(_env_file=None, openrouter_api_key='first second third')
+    timeouts = []
+
+    class Client:
+        def post(self, url, *, headers, json, timeout):
+            timeouts.append(timeout)
+            raise httpx.ConnectError('offline failure')
+
+    answer = ask_database('Count roles', [row()], store, settings,
+                          user_id=101, owner=False, client=Client())
+    assert answer == UNAVAILABLE
+    assert timeouts == [20, 5]
     assert len(store.data['assistant_usage']['public']) == 1

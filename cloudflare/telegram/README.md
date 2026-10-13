@@ -86,6 +86,10 @@ Polling and webhooks must not consume updates simultaneously. For rollback,
 remove the webhook without dropping pending updates, run a final authenticated
 feedback sync, then disable `TELEGRAM_WEBHOOK_ENABLED` and resume polling.
 
+Scheduled snapshot refresh is owned by the Telegram sync workflow; set
+`ENABLE_TELEGRAM_SYNC=true` for that workflow. The scraper pipeline runs with
+`--no-private-sync` and does not receive the Worker sync credential.
+
 The unauthenticated `/health` endpoint exposes only a service name. `/webhook`
 requires the Telegram secret header, and `/sync` requires its separate bearer
 token. Neither endpoint serves a browser chat interface. No secret can be read
