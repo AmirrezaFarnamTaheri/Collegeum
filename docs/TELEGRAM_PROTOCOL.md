@@ -81,8 +81,10 @@ unknown visa status cannot satisfy a filter for explicit sponsorship.
   Polling also checkpoints public quota reservations by update ID before the
   provider call, preventing double charging after process termination.
   Confirmed and possibly accepted replies are not sent again automatically.
-- Worker AI requests reserve quota atomically before entering a per-user AI
-  queue. Menus/callbacks do not wait on that queue. Provider fallback has a shared
+- Worker AI requests reserve quota atomically before entering the durable
+  asynchronous AI queue. Telegram's webhook receives success only after this
+  admission and a recoverable inbox checkpoint, not after OpenRouter completes.
+  Menus/callbacks do not wait on that queue. Provider fallback has a shared
   25-second budget; Telegram's own delivery time is separate.
 - Explicit Telegram throttling keeps a prepared Worker reply for later retry.
   Retrying that reply does not repeat AI work or apply tracking toggles twice.
