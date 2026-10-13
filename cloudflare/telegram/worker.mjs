@@ -3,6 +3,14 @@ import {ask, reservePublic} from './assistant.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const VIEWS = new Set(["positions", "valid", "applied", "hidden", "new", "closing", "search"]);
+const COMMANDS = new Set([...VIEWS, 'menu', 'home', 'help', 'start', 'forget', 'saved',
+  'interested', 'jobs', 'list']);
+const aiQuestion = message => {
+  const input = String(message.text || '').trim();
+  const word = input.split(/\s+/)[0].replace(/^\//, '').split('@')[0].toLowerCase();
+  if (word === 'ask') return input.split(/\s+/).slice(1).join(' ');
+  return !input.startsWith('/') && !COMMANDS.has(word) ? input : null;
+};
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c =>
   ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[c]);
 const json = (body, status = 200) => Response.json(body, {status, headers: {"Cache-Control": "no-store"}});
@@ -60,14 +68,14 @@ export class TelegramBot {
     // Telegram abandons non-2xx webhooks after a finite number of retries.
     // Alarms keep unfinished replies recoverable even without another request.
     const readyAt = state => Math.max(
-      state.stage === 'prepared' ? 0 : (state.at || 0) + 90000,
+      ['prepared', 'queued'].includes(state.stage) ? 0 : (state.at || 0) + 90000,
       state.retry_at || 0,
     );
     const pending = [...(await this.ctx.storage.list({prefix: 'update:'}))]
       .filter(([,state]) => state?.stage !== 'done' && state?.update);
     let attempted = 0;
     for (const [key, state] of pending) {
-      if (attempted >= 20) break;
+      if (attempted >= 4) break;
       if (readyAt(state) > Date.now() || this.activeUpdates.has(key)) continue;
       const update = state.update;
       const callback = update.callback_query;
@@ -113,6 +121,10 @@ export class TelegramBot {
       message.from?.id === message.chat.id;
     if (!message || (!owner && !publicChat) ||
         (callback && !owners.has(String(callback.from?.id)))) return json({ok: true, ignored: true});
+    const question = callback ? null : aiQuestion(message);
+    if (question !== null && question.trim() && question.length <= 1000 &&
+        this.env.AI_ENABLED !== 'false' && (owner || this.env.PUBLIC_AI_ENABLED !== 'false'))
+      return this.queueAI(update,message,owner);
     return this.processUpdate(update,callback,message,owner);
   }
 
@@ -124,12 +136,30 @@ export class TelegramBot {
     finally{this.activeUpdates.delete(key);}
   }
 
+  async queueAI(update,message,owner) {
+    // Acknowledge the webhook only after an inbox record is durable and
+    // public quota is reserved. The provider and Telegram calls run by alarm.
+    const key = `update:${update.update_id}`;
+    const created = await this.ctx.storage.transaction(async tx => {
+      if (await tx.get(key)) return false;
+      await tx.put(key, {stage: 'queued', at: Date.now(), update});
+      return true;
+    });
+    if (created) await reservePublic(this,message.chat.id,owner,key);
+    await this.scheduleRecovery(Date.now() + 5);
+    return json({ok: true, queued: true, replay: !created});
+  }
+
   async runUpdate(key,update,callback,message,owner) {
     const claimed = await this.ctx.storage.transaction(async tx => {
       const previous=await tx.get(key);
       if (previous) {
         if (previous.stage === 'prepared') return previous;
         if (previous.stage === 'done') return false;
+        if (previous.stage === 'queued') {
+          await tx.put(key, {...previous, stage: 'processing', at: Date.now()});
+          return true;
+        }
         if (Date.now() - previous.at < 90000) return null;
         if (['sending', 'uncertain'].includes(previous.stage) && previous.method &&
             previous.payload) {
@@ -153,13 +183,8 @@ export class TelegramBot {
       if(typeof claimed==='object'&&claimed.stage==='prepared')await this.sendPrepared(key,claimed);
       else if (callback) await this.callback(callback,key);
       else {
-        const input = String(message.text || '').trim();
-        const word = input.split(/\s+/)[0].replace(/^\//,'').split('@')[0].toLowerCase();
-        const known = new Set([...VIEWS,'menu','home','help','start','forget','saved','interested','jobs','list']);
-        const ai = word === 'ask' || (!input.startsWith('/') && !known.has(word));
-        if (ai) {
-          const question = word === 'ask' ? input.split(/\s+/).slice(1).join(' ')
-            : String(message.text || '');
+        const question = aiQuestion(message);
+        if (question !== null) {
           // Reserve on arrival, not after waiting behind another slow AI question.
           // Invalid input gets its guidance reply without charging either quota.
           const enabled = this.env.AI_ENABLED !== 'false';
