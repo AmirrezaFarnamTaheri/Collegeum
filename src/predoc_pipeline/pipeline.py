@@ -1036,11 +1036,6 @@ def _recover_pending(
         listing_id = int(row["id"])
         if listing_id in accepted_ids or row["url_hash"] in hidden:
             continue
-        if row["missing_404_observations"]:
-            # One unconfirmed 404 is insufficient to close the listing, but
-            # sufficient to withhold an automatic delivery until rechecked.
-            log.info("pending_held_for_404_confirmation", listing_id=listing_id)
-            continue
         reason = policy.check_stored(row)
         if reason:
             stats.not_wanted += 1
@@ -1066,7 +1061,12 @@ def _verify_before_sending(
     that has since been filled (a bit.ly link that now answers 410, a page
     reading "this position has been filled"). Those are dropped here.
     """
-    if not prefs.enrich.fetch_details:
+    suspect_ids = {
+        lid for lid, _ in candidates
+        if (stored := db.listing(lid)) is not None
+        and stored["missing_404_observations"]
+    }
+    if not prefs.enrich.fetch_details and not suspect_ids:
         return candidates
     from .boards.collector import check_links
 
@@ -1077,7 +1077,9 @@ def _verify_before_sending(
             listing.deadline.date() if listing.deadline else None,
         )
         for lid, listing in candidates
-        if not listing.__dict__.get("_page_read")
+        if lid in suspect_ids or (
+            prefs.enrich.fetch_details and not listing.__dict__.get("_page_read")
+        )
     }
     verified_open: set[int] = set()
     verdicts = check_links(
