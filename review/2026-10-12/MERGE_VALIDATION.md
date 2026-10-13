@@ -1,19 +1,22 @@
 # PR #18 integration validation
 
-Integrated current main (42cc94d) into the Telegram database assistant branch.
-Current subscriber navigation, private intent checkpoints, unsubscribe controls,
-source expansion, publication state, and release artifact workflows are preserved.
+Integrated the subscriber-capable main branch and subsequently merged its
+latest journal/source-health update at `056d2d0` into PR #18, retaining the
+reconciled newer publications and curated per-listing corrections. Existing
+subscriber navigation, private intent checkpoints, unsubscribe controls,
+source expansion, publication state, and release workflows remain preserved.
 The generated compile_project.py remains ignored, matching main's policy.
 
-Current source validation (13 October 2026): [CI run 38390677429](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/38390677429)
-for commit `d90e655880b9f270a9386460abd59c9fa778e7bf` passed all three jobs.
-Python 3.11 and 3.12 each passed 1,209 tests plus 21 subtests, Ruff, strict
-mypy (75 source files), release verification and stdlib-only core checks.
-Overall statement coverage remained 85%. The Worker passed all 35 tests,
-including a real local workerd/SQLite Durable Object test, with no npm audit
-vulnerabilities. The strict committed-publications gate passed.
-The earlier integration validation counted 1,187 Python tests and 18 Worker
-tests before later feature/replay regressions were added.
+Current source validation (13 October 2026): [CI run 38403211375](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/38403211375)
+for commit `0070d913064efa8781d4954959115c12868d2d80` passed all three jobs.
+Python 3.11 and 3.12 each passed 1,226 tests plus 21 subtests; Ruff, strict
+mypy (75 source files), release verification and stdlib-only core checks
+passed. Overall statement coverage was 85%. Worker CI passed 35 tests,
+including local workerd/SQLite Durable Object integration; npm audit found
+zero reported vulnerabilities. The strict committed-publications gate
+passed. The generated single-file build workflow also passed.
+The original integrated baseline counted 1,187 Python tests and 18 Worker
+tests before these regression cases were added.
 The npm dependency audit reported no vulnerabilities. A fresh Python advisory
 audit timed out against PyPI; it is not reported as passing. Production behavior
 remains outside these offline checks.
@@ -67,8 +70,50 @@ Cloudflare write privileges. Subscriber polling has **not** been migrated to
 the optional webhook implementation. No production webhook or deployment
 was activated during remediation.
 
-The historical repository-review findings in `REVIEW.md` refer to a
-separately reviewed base, and fixes to legacy collector deduplication,
-publication-policy recovery and journal conflict resolution are not asserted
-by PR #18's scoped CI checks. Revalidate and address those as independent
-pipeline work rather than assuming that green Telegram tests close them.
+## Pipeline recovery, collection and main-branch reconciliation
+
+The six historical findings in `REVIEW.md` were reproduced with new focused
+tests against the prior PR revision (eight failures across core cases), then
+addressed in this branch. The historical reproduction JSON and
+`review/2026-10-12/reproduce.py` retain their original baseline expectations:
+they are archive artifacts, not current-release test verdicts.
+
+- In-run collector deduplication no longer drops two different application
+  URLs solely because title and institution match. Identity/fuzzy checks after
+  enrichment still decide actual duplicate vacancies.
+- A previously pending/unpublished position is rechecked under today's
+  publication policy before **both** scheduled and manual broadcasting.
+  Preference exclusions remain reversible, rather than being mislabeled
+  closed. Manual retry also uses the same link-verification safeguards.
+- SQLite cache restoration reconciles publication receipts from the
+  committed journal and locally derived database in both directions.
+  Different nonempty receipts fail closed for manual investigation; neither
+  stale copy silently clears an accepted send. Previously rejected,
+  manually reviewed false positives cannot reappear through a stale
+  publication snapshot. A strictly newer journal observation updates factual
+  fields, while equal-timestamp conflicts preserve local corrections.
+- Explicit vacancy-closed evidence from a matching board URL now closes the
+  existing stored listing promptly. A first HTTP 404 still requires a second
+  independent observation before closure. While that is pending, automatic
+  delivery must reverify the original URL (even when general detail
+  enrichment is disabled), withhold delivery until verified, and clear the
+  hold only after confirmed availability.
+- Old `candidate-v3` policy rejection entries are reconsidered under current
+  policy once on migration, not only PhD-related rejections.
+- Multi-page link scans surface partial fetch failures and a populated
+  pagination cap in source-health errors, instead of incorrectly appearing
+  fully successful.
+
+The [merge commit c3969ca](https://github.com/AmirrezaFarnamTaheri/Collegeum/commit/c3969cab02d55607dbea908116b4f4e391744105)
+integrated the newer `main` data: six additional journal listings and
+14 seen-item rows were retained. It preserved a curated rejection for the
+Brown University prospect-development role (#185), the corrected
+Royal Holloway application URL (#179), and Health Economics disciplines
+(#186); dashboard and RSS data were reconciled consistently. The final
+source-ci tests confirm the resulting publication integrity.
+
+The project still needs actual production Telegram/OpenRouter delivery tests
+and, before activating the optional Worker, a complete subscriber migration.
+Network-level Telegram sends cannot offer exactly-once semantics on
+uncertain acknowledgements. No deployment, bot-webhook switch or pull-request
+merge was performed by this remediation.
