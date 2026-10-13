@@ -90,7 +90,22 @@ export class TelegramBot {
   async runUpdate(key,update,callback,message,owner) {
     const claimed = await this.ctx.storage.transaction(async tx => {
       const previous=await tx.get(key);
-      if(previous)return previous.stage==='prepared'?previous:previous.stage==='processing'?null:false;
+      if (previous) {
+        if (previous.stage === 'prepared') return previous;
+        if (previous.stage === 'done') return false;
+        if (Date.now() - previous.at < 90000) return null;
+        if (['sending', 'uncertain'].includes(previous.stage) && previous.method &&
+            previous.payload) {
+          // At-least-once recovery: an interrupted Telegram call may duplicate a
+          // message. Never acknowledge ambiguous delivery without retrying it.
+          return {...previous, stage: 'prepared'};
+        }
+        // A crashed processor may have already persisted quota, AI results or
+        // feedback. Preserve these checkpoints when reclaiming its update.
+        const resumed = {...previous, stage: 'processing', at: Date.now()};
+        await tx.put(key, resumed);
+        return true;
+      }
       await tx.put(key, {stage:'processing',at:Date.now()});
       return true;
     });
@@ -109,7 +124,10 @@ export class TelegramBot {
             : String(message.text || '');
           // Reserve on arrival, not after waiting behind another slow AI question.
           // Invalid input gets its guidance reply without charging either quota.
-          const limited = !question.trim() || question.length > 1000 ? null
+          const enabled = this.env.AI_ENABLED !== 'false';
+          const publicEnabled = this.env.PUBLIC_AI_ENABLED !== 'false';
+          const limited = !enabled || (!owner && !publicEnabled) ||
+            !question.trim() || question.length > 1000 ? null
             : await reservePublic(this,message.chat.id,owner,key);
           const chat = String(message.chat.id);
           const previous = this.chatTails.get(chat) || Promise.resolve();
@@ -124,9 +142,12 @@ export class TelegramBot {
       if(error.retryable){
         return json({error:'Telegram temporarily rejected the reply; retry later'},503);
       }
-      // No raw API response or request URL enters logs; the token is in the API URL.
-      await this.ctx.storage.put(key, {stage: "uncertain", at: Date.now()});
+      // Preserve prepared payload and checkpoints across crashes. Do not emit
+      // a successful webhook acknowledgement when delivery was not verified.
+      const saved = await this.ctx.storage.get(key);
+      await this.ctx.storage.put(key, {...saved, stage: "uncertain", at: Date.now()});
       console.warn("Telegram reply needs verification; update", update.update_id);
+      return json({error:'Telegram delivery unconfirmed; retry later'},503);
     }
     const clean=await this.ctx.storage.transaction(async tx=>{
       const last=await tx.get('cleanup_at')||0;
@@ -311,10 +332,12 @@ export class TelegramBot {
     }
     if (kind === 'ask' || naturalQuestion) {
       const question = naturalQuestion ? String(message.text || '') : words.join(' ');
-      const text = !owner && this.env.PUBLIC_AI_ENABLED === 'false'
-         ? 'Database chat is currently available to the configured owners.'
-         : admission.limited || await ask(this,question,message.chat.id,owner,
-           admission.admitted && Boolean(question.trim()) && question.length <= 1000,updateKey);
+      const text = this.env.AI_ENABLED === 'false'
+        ? 'Database chat is currently disabled.'
+        : !owner && this.env.PUBLIC_AI_ENABLED === 'false'
+          ? 'Database chat is currently available to the configured owners.'
+          : admission.limited || await ask(this,question,message.chat.id,owner,
+            admission.admitted && Boolean(question.trim()) && question.length <= 1000,updateKey);
       await this.deliver(updateKey,'sendMessage', {chat_id:message.chat.id,text,parse_mode:'HTML',
         ...(owner ? {reply_markup:menu()} : {}),link_preview_options:{is_disabled:true}});
       return;
