@@ -167,31 +167,26 @@ def render_result(query: DatabaseQuery, rows: list[dict[str, Any]], *, snapshot:
             lines.append(f'{field.capitalize()}: {esc(str(value or "Unstated")[:180])}')
         lines.append(f'<a href="{esc(row["apply_url"])}">Source advert ↗</a>')
         blocks.append('\n'.join(lines))
-    from .telegram import pack_html_blocks
+    from .telegram import MAX_MESSAGE_CHARS, SAFETY_CHARS, telegram_visible_length
 
-    footer = (f'\n\nShowing <b>SHOWN_COUNT</b> of {len(rows)} matching records. '
-              'Ask for specific IDs to see omitted details.' + foot)
-    pages = pack_html_blocks(blocks, header=head, footer=footer, page_size=query.limit)
-    first = pages[0]
-    # The packer reserves its footer for the last page, but this command sends one
-    # message. Always attach a bounded, explicit count and provenance to that message.
-    from .telegram import telegram_visible_length
-    suffix = (f'\n\nShowing <b>{first.end - first.start}</b> of {len(rows)} matching records. '
-              'Ask for specific IDs to see omitted details.' + foot)
-    text = first.html
-    if len(pages) == 1:
-        return text.replace('<b>SHOWN_COUNT</b>', f'<b>{first.end - first.start}</b>')
-    # Drop complete row blocks until the first Telegram reply fits with its footer.
-    while telegram_visible_length(text + suffix) > 4096 and first.end > first.start:
-        first = pack_html_blocks(blocks[:first.end - 1], header=head, footer='', page_size=query.limit)[0]
-        text = first.html
-        suffix = (f'\n\nShowing <b>{first.end - first.start}</b> of {len(rows)} matching records. '
-                  'Ask for specific IDs to see omitted details.' + foot)
-    return text + suffix
+    def footer(shown: int) -> str:
+        return (f'\n\nShowing <b>{shown}</b> of {len(rows)} matching records. '
+                'Ask for specific IDs to see omitted details.' + foot)
+
+    # Exactly one message is sent for /ask. Pack complete rows with the
+    # provenance/count already included; never discard the final-page footer.
+    chosen: list[str] = []
+    for block in blocks:
+        candidate = head + '\n\n'.join([*chosen, block]) + footer(len(chosen) + 1)
+        if telegram_visible_length(candidate) > MAX_MESSAGE_CHARS - SAFETY_CHARS:
+            break
+        chosen.append(block)
+    return head + '\n\n'.join(chosen) + footer(len(chosen))
 
 
 def reserve_public_request(
     store: FeedbackStore, user_id: int, *, owner: bool, hourly_cap: int,
+    reservation_key: str | None = None,
 ) -> str | None:
     if owner:
         return None
@@ -199,6 +194,15 @@ def reserve_public_request(
     usage = store.data.setdefault('assistant_usage', {})
     if not isinstance(usage, dict):
         raise ValueError('Invalid assistant usage state')
+    reservations = usage.setdefault('reservations', {})
+    if not isinstance(reservations, dict):
+        raise ValueError('Invalid assistant reservation state')
+    if reservation_key and reservation_key in reservations:
+        previous = reservations[reservation_key]
+        if not isinstance(previous, dict):
+            raise ValueError('Invalid assistant reservation entry')
+        denial = previous.get('denial')
+        return denial if isinstance(denial, str) and denial else None
     public = usage.get('public', [])
     users = usage.get('users', {})
     if not isinstance(public, list) or not isinstance(users, dict):
@@ -211,11 +215,21 @@ def reserve_public_request(
         raise ValueError('Invalid assistant user rate state')
     recent = [stamp for stamp in recent if isinstance(stamp, str)
               and (time := parse_datetime(stamp)) and now - timedelta(minutes=1) < time <= now]
-    if len(recent) >= 3:
-        return 'You can ask 3 questions per minute. Try again in a moment.'
-    if len(public) >= hourly_cap:
-        return 'The shared hourly AI limit has been reached. Please try again later.'
+    denial = (
+        'You can ask 3 questions per minute. Try again in a moment.'
+        if len(recent) >= 3 else
+        'The shared hourly AI limit has been reached. Please try again later.'
+        if len(public) >= hourly_cap else None
+    )
     stamp = format_ts(now)
+    if reservation_key:
+        reservations[reservation_key] = {'at': stamp, 'denial': denial}
+        while len(reservations) > 2000:
+            reservations.pop(next(iter(reservations)))
+    if denial:
+        store.mark_dirty()
+        store.save()
+        return denial
     usage['public'] = public + [stamp]
     users[str(user_id)] = recent + [stamp]
     # Expire inactive user counters so arbitrary user IDs cannot grow state forever.
@@ -230,6 +244,7 @@ def reserve_public_request(
 def _ask_database(
     question: str, rows: list[dict[str, Any]], store: FeedbackStore, settings: Settings,
     *, user_id: int, owner: bool, client: httpx.Client | None = None,
+    reservation_key: str | None = None,
 ) -> str:
     if not question.strip():
         return '📚 Ask about vacancies: /ask Which economics roles close this month?'
@@ -245,7 +260,8 @@ def _ask_database(
     if protocol is None:
         return NOT_CONFIGURED
     limited = reserve_public_request(store, user_id, owner=owner,
-                                     hourly_cap=settings.telegram_ai_public_hourly_cap)
+                                     hourly_cap=settings.telegram_ai_public_hourly_cap,
+                                     reservation_key=reservation_key)
     if limited:
         return limited
     conversations = store.data.setdefault('assistant_queries', {})
@@ -335,7 +351,7 @@ def ask_database(
     if isinstance(cached, dict) and isinstance(cached.get('answer'), str):
         return str(cached['answer'])
     answer = _ask_database(question, rows, store, settings, user_id=user_id,
-                           owner=owner, client=client)
+                           owner=owner, client=client, reservation_key=key)
     if key:
         replies[key] = {'answer': answer, 'stage': 'ready', 'at': format_ts()}
         while len(replies) > 200:
