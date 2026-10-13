@@ -223,3 +223,43 @@ def test_provider_retries_share_one_monotonic_budget(tmp_path, monkeypatch):
     assert answer == UNAVAILABLE
     assert timeouts == [20, 5]
     assert len(store.data['assistant_usage']['public']) == 1
+
+
+def test_oversized_answer_keeps_snapshot_and_truncation_notice():
+    from predoc_pipeline.publish.telegram import telegram_visible_length
+    query = DatabaseQuery(action='list', fields=[
+        'deadline', 'visa', 'salary', 'degree', 'tools', 'start', 'summary',
+    ], limit=5)
+    rows = [
+        row(id=i, title='Very long vacancy ' + 'T' * 110,
+            institution='Research center ' + 'I' * 95,
+            summary='x' * 650, visa_note='v' * 600,
+            salary_raw='s' * 600, degree_note='d' * 600,
+            start_term='t' * 600, tools_required=['p' * 600])
+        for i in range(1, 6)
+    ]
+    result = render_result(query, rows, snapshot='2026-10-13T11:02:03Z')
+    assert telegram_visible_length(result) <= 4096
+    assert 'Snapshot: 2026-10-13T11:02:03Z' in result
+    assert 'Showing' in result and 'matching records' in result
+    assert 'Ask for specific IDs' in result
+
+
+def test_replay_after_crash_does_not_reserve_public_quota_twice(tmp_path):
+    store = FeedbackStore(tmp_path / 'feedback.json')
+    settings = Settings(_env_file=None, openrouter_api_key='offline-test-key')
+
+    class CrashingClient:
+        def post(self, url, *, headers, json, timeout):
+            raise KeyboardInterrupt('simulated runner termination')
+
+    with pytest.raises(KeyboardInterrupt):
+        ask_database('Count roles', [row()], store, settings,
+                     user_id=101, owner=False, request_id=77, client=CrashingClient())
+    recovered = FeedbackStore(tmp_path / 'feedback.json')
+    with httpx.Client(transport=httpx.MockTransport(
+            lambda request: response({'action': 'count'}))) as client:
+        result = ask_database('Count roles', [row()], recovered, settings,
+                              user_id=101, owner=False, request_id=77, client=client)
+    assert '1 matching record' in result
+    assert len(recovered.data['assistant_usage']['public']) == 1

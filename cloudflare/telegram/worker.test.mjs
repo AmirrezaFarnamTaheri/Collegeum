@@ -191,3 +191,72 @@ test('explicit long Telegram throttling retries a prepared AI reply without repe
     assert.equal((await instance.ctx.storage.get('rate:public')).length,1);
   }finally{globalThis.fetch=original;}
 });
+
+
+test('plain-text ask with no question never reaches the provider or spends quota', async () => {
+  const instance = bot();
+  instance.env = {...env, OPENROUTER_API_KEY: 'offline-key'};
+  let providerCalls = 0;
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => {
+    providerCalls++;
+    return Response.json({choices: [{message: {tool_calls: [{
+      function: {name: 'query_database', arguments: '{"action":"count"}'},
+    }]}}]});
+  };
+  try {
+    const response = await instance.fetch(post('/webhook', {update_id: 240,
+      message: {chat: {id: 999, type: 'private'}, from: {id: 999}, text: 'ask'}}));
+    assert.equal(response.status, 200);
+    assert.equal(providerCalls, 0);
+    assert.equal(await instance.ctx.storage.get('rate:public'), undefined);
+    assert.match(instance.calls[0].payload.text, /Try \/ask/);
+  } finally {globalThis.fetch = original;}
+});
+
+test('a replaced snapshot with the same timestamp invalidates the browsing cache', async () => {
+  const instance = bot();
+  const at = '2026-10-13T12:00:00Z';
+  assert.equal((await instance.fetch(post('/sync', {...snapshot, generated_at: at}))).status, 200);
+  assert.equal((await instance.dataset()).rows[0].title, record.title);
+  const fresh = {...record, title: 'Newly updated vacancy'};
+  assert.equal((await instance.fetch(post('/sync', {...snapshot, generated_at: at, listings: [fresh]}))).status, 200);
+  assert.equal((await instance.dataset()).rows[0].title, fresh.title);
+});
+
+test('disabled public AI does not spend quota or call the provider', async () => {
+  const instance = bot();
+  instance.env = {...env, OPENROUTER_API_KEY: 'offline-key', PUBLIC_AI_ENABLED: 'false'};
+  let providerCalls = 0;
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => {providerCalls++; throw new Error('unwanted provider call');};
+  try {
+    const result = await instance.fetch(post('/webhook', {update_id: 241,
+      message: {chat: {id: 999, type: 'private'}, from: {id: 999}, text: '/ask Open roles'}}));
+    assert.equal(result.status, 200);
+    assert.equal(providerCalls, 0);
+    assert.equal(await instance.ctx.storage.get('rate:public'), undefined);
+    assert.match(instance.calls[0].payload.text, /available to the configured owners/);
+  } finally {globalThis.fetch = original;}
+});
+
+test('an in-flight replay cannot acknowledge uncommitted Telegram delivery', async () => {
+  const instance = bot();
+  let start;
+  const entered = new Promise(resolve => {start = resolve;});
+  let finish;
+  const held = new Promise(resolve => {finish = resolve;});
+  instance.api = async () => {
+    start();
+    await held;
+    throw Object.assign(new Error('Telegram rate limited'), {retryable: true, retryAfter: 60});
+  };
+  const update = {update_id: 242, message: {chat: {id: 42}, text: '/menu'}};
+  const first = instance.fetch(post('/webhook', update));
+  await entered;
+  try {
+    const repeat = await instance.fetch(post('/webhook', update));
+    assert.equal(repeat.status, 503, 'A replay must not acknowledge an uncompleted delivery');
+  } finally {finish();}
+  await first;
+});
