@@ -125,7 +125,7 @@ def test_pending_publication_rechecks_latest_employer_policy(tmp_path):
     with Database(settings.db_path) as db:
         row = db.listing(42)
         assert row["status"] != "published"
-        assert row["closed_at"]
+        assert row["closed_at"] is None  # preference changes must remain reversible
     assert stats.published == 0
     assert "sendMessage" not in calls
 
