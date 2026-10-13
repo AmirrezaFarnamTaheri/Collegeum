@@ -73,9 +73,12 @@ group = "aggregator"
 url = "https://www.europeanjobmarketofeconomists.org/job-listings"
 link_pattern = 'europeanjobmarketofeconomists\.org/job-listing/'
 pagination_param = "page"
-max_pages = 5
+pagination_zero_based = true
+max_pages = 12
+skip_unresolved_link_templates = true
 institution_from_context = true
 field_implied = true
+note = "EJME is an EconJobMarket mirror. Upstream currently publishes placeholder [nid] URLs; skip unusable links and retry on later runs. EconJobMarket is independently collected."
 
 [[board]]
 name = "academics_de"
@@ -425,12 +428,14 @@ note = "Full-time predoctoral researchers across Econ, Finance, Strategy, Decisi
 name = "ifo"
 type = "link_scan"
 group = "research_institute"
-url = "https://www.ifo.de/karriere"
-link_pattern = 'ifo\.de/.*karriere'
+url = "https://www.ifo.de/karriere-am-ifo"
+link_pattern = 'ifo\.de/stellenangebot(?:/|-)'
+prefer_card_heading = true
+card_title = true
 institution = "ifo Institute"
 country = "Germany"
 field_implied = true
-note = "Leibniz Institute for Economic Research at the University of Munich."
+note = "Leibniz Institute for Economic Research at the University of Munich; current vacancy cards link to /stellenangebot/."
 
 [[board]]
 name = "diw_berlin"

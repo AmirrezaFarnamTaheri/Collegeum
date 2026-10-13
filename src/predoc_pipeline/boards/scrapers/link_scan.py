@@ -28,7 +28,7 @@ from ..models import JobPostSchema
 from ..utils.dates import extract_deadline, find_dates, parse_posted
 from ..utils.geo import detect_location
 from ..utils.text import absolutize, clean_ws, truncate
-from .base import BaseScraper, register
+from .base import BaseScraper, SourceSkipped, register
 
 log = logging.getLogger(__name__)
 
@@ -36,11 +36,12 @@ GENERIC_ANCHORS = {
     "read more", "more", "apply", "apply now", "details", "view", "view job", "view details",
     "more info", "more information", "learn more", "here", "click here", "link", "see more",
     "job details", "show more", "next", "previous", "login", "sign in", "share",
+    "mehr erfahren", "stellenangebot", "zum stellenangebot", "weiterlesen", "jobangebot",
     "link for job posting", "link to job posting", "link for job", "link to job",
     "apply here", "apply online", "view posting", "job posting", "full posting",
     "vacancy notice", "further particulars",
 }
-_CARD_CLASS = re.compile(r"card|job|result|vacanc|listing|item|teaser|views-row|posting|position|opening",
+_CARD_CLASS = re.compile(r"card|job|result|vacanc|listing|item|teaser|views-row|posting|position|opening|stellenangebot",
                          re.IGNORECASE)
 _INSTITUTION_RX = re.compile(
     r"universit|college|school|institut|centre|center|\bbank\b|academy|foundation|council|hochschule|"
@@ -183,7 +184,7 @@ class LinkScanScraper(BaseScraper):
             return base_url
         parts = urlsplit(base_url)
         qs = parse_qs(parts.query, keep_blank_values=True)
-        qs[param] = [str(page)]
+        qs[param] = [str(page - 1 if self.opt("pagination_zero_based") else page)]
         new_query = urlencode(qs, doseq=True)
         return urlunsplit((parts.scheme, parts.netloc, parts.path, new_query, parts.fragment))
 
@@ -200,6 +201,18 @@ class LinkScanScraper(BaseScraper):
                 posts.extend(self._parse_selectors(base, soup))
             else:
                 posts.extend(self._parse_links(base, soup))
+        if (
+            not posts
+            and self.opt("skip_unresolved_link_templates", False)
+            and self.discovery_parse_errors
+            and all("Unresolved application URL" in reason
+                    for reason in self.discovery_parse_errors)
+        ):
+            # EJM currently emits placeholder [nid] IDs. Do not invent URLs;
+            # retry the live source on the next run so valid IDs self-recover.
+            self.discovery_parse_errors.clear()
+            self.discovery_limits.clear()
+            raise SourceSkipped("upstream advert links have unresolved IDs")
         return posts
 
     def _parse_links(self, base: str, soup: BeautifulSoup) -> list[JobPostSchema]:
@@ -223,7 +236,7 @@ class LinkScanScraper(BaseScraper):
                 # the nearby H2/H3. Only use a heading within the same card
                 # to avoid borrowing the preceding vacancy's title.
                 card = find_card(a)
-                heading = card.select_one("h2, h3, h4")
+                heading = card.select_one("h2, h3, h4, h5, h6")
                 if heading is not None:
                     heading_text = clean_ws(heading.get_text(" "))
                     if min_len <= len(heading_text) <= 300:

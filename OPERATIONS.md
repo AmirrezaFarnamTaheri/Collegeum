@@ -1,21 +1,29 @@
 # Operations runbook
 
-For the person who gets the alert (or notices the channel has gone quiet)
-and needs to know what to check, in order.
+For maintainers diagnosing a quiet channel or a source failing to produce
+vacancies. Operational errors are written to logs and health artifacts by
+default; **ordinary Telegram users never receive error alerts or logs**.
 
 ## First look: three places, in order
 
-1. **The Telegram admin chat** (`TELEGRAM_ADMIN_CHAT_ID`), if you configured
-   one. `pipeline.py::_maybe_alert` sends here on three conditions:
-   consecutive empty runs past `EMPTY_RUN_ALERT_THRESHOLD` (default 3), three
-   or more sources fetching successfully but yielding zero items, or a run
-   stopping early on quota exhaustion.
-2. **`docs/data/health.json`** (rendered by the dashboard's footer health
-   dot). Shows the last 30 runs with their outcome, item counts, and error
-   counts — this is the fastest way to see *when* something changed.
-3. **The GitHub Actions run log**, plus the `dlq-<run_id>` artifact uploaded
-   on every run (`run.log` and `dlq-failures.json`) — the full detail behind
-   the summary in (2).
+1. **`docs/data/health.json`** (rendered by the dashboard's footer health
+   dot). Shows the last 30 runs with outcomes and per-source counts.
+2. **The GitHub Actions run log** plus the `dlq-<run_id>` artifact uploaded
+   on each run (`run.log` and `dlq-failures.json`). These are the detailed
+   diagnostics, not bot messages.
+3. **Optional dedicated Telegram administrator:** to explicitly opt in,
+   set `TELEGRAM_OPERATIONAL_ALERTS_ENABLED=true` **and**
+   `TELEGRAM_ADMIN_CHAT_ID` to a positive private chat ID **different**
+   from `TELEGRAM_PUBLIC_CHANNEL_ID`. This is disabled by default; neither
+   the public vacancy destination nor subscribers are ever fallback
+   operational-alert recipients.
+
+A known upstream EJME problem currently yields unresolvable `[nid]`
+application links: that discovery pass is recorded as skipped and retried
+later, rather than publishing invalid listings. The separately configured
+EconJobMarket scraper continues to collect its own valid vacancies.
+ifo source discovery follows `https://www.ifo.de/karriere-am-ifo` and
+`/stellenangebot/` job links instead of the retired `/karriere` path.
 
 ## Common failure signatures
 

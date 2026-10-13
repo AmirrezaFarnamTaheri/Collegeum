@@ -1,10 +1,9 @@
 """Maintainer alerts.
 
-Deliberately minimal: one function, one channel (a Telegram message to the
-admin chat, configured separately from the public channel), with a stderr
-fallback so an alert is never silently dropped just because the admin chat is
-not set up yet. This is what turns "the workflow is green but nothing has
-posted in a week" into something that actually reaches a person.
+Operational diagnostics go to internal logs and health artifacts by default.
+Telegram delivery is opt-in only, and requires an explicit, distinct positive
+private admin chat ID. The vacancy broadcast destination and subscribers never
+receive operational errors or log details.
 """
 
 from __future__ import annotations
