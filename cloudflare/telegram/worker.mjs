@@ -9,7 +9,7 @@ const aiQuestion = message => {
   const input = String(message.text || '').trim();
   const word = input.split(/\s+/)[0].replace(/^\//, '').split('@')[0].toLowerCase();
   if (word === 'ask') return input.split(/\s+/).slice(1).join(' ');
-  return !input.startsWith('/') && !COMMANDS.has(word) ? input : null;
+  return !input.startsWith('/') && !COMMANDS.has(word) ? String(message.text || '') : null;
 };
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c =>
   ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[c]);
