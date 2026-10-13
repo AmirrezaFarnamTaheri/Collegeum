@@ -1015,7 +1015,12 @@ class Database:
         local_status = str(existing["status"])
         saved_status = str(incoming.get("status") or local_status)
         statuses = {local_status, saved_status}
-        if "published" in statuses:
+        if "rejected" in statuses:
+            # A human-curated rejection (for instance a fundraising rather
+            # than research position) must not be resurrected by an older
+            # publication journal merely because a message was once sent.
+            updates["status"] = "rejected"
+        elif "published" in statuses:
             updates["status"] = "published"
         elif "delivery-uncertain" in statuses:
             updates["status"] = "delivery-uncertain"
