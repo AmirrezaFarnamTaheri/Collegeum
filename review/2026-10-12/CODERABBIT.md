@@ -21,7 +21,8 @@ Source evidence: [Brown fundraising advert](https://brown.wd5.myworkdayjobs.com/
 [Cloudflare account token API](https://developers.cloudflare.com/api/resources/accounts/).
 The Brown records were verified through the official Workday JSON endpoints.
 
-The published inventory now has 131 visible records. Regeneration preserves the
+After integrating main's publication refresh through 3955b24, the inventory has
+132 visible records (131 before that refresh). Regeneration preserves the
 previous public visibility set, without reading or modifying encrypted owner
 marks. The publication audit reports zero integrity errors; its existing
 historical warnings and clock-skew warning remain visible. Health history is
