@@ -251,3 +251,27 @@ def test_manual_broadcast_respects_policy_and_persists_recovery_journal(
         )
     assert len(eligible) == 1  # relaxing a preference restores eligibility
     assert state.read_journal(settings.state_path)[0]["status"] == "pending"
+
+
+@pytest.mark.parametrize("rejected_in_journal", [False, True])
+def test_curated_rejected_listing_cannot_be_resurrected_by_stale_status(
+    tmp_path, rejected_in_journal,
+):
+    settings = settings_for(tmp_path)
+    init(settings.db_path)
+    published = record(
+        status="published", published_at="2026-10-12T01:00:00Z",
+        telegram_message_id=777,
+    )
+    excluded = record(
+        status="rejected", published_at="2026-10-12T01:00:00Z",
+        telegram_message_id=777,
+    )
+    cached = published if rejected_in_journal else excluded
+    saved = excluded if rejected_in_journal else published
+    with Database(settings.db_path) as db:
+        db.import_rows([cached])
+        Path(settings.state_path).write_text(json.dumps(saved) + "\n")
+        state.restore_if_needed(db, settings.state_path)
+        assert db.listing(42)["status"] == "rejected"
+        assert db.active_listings() == []
