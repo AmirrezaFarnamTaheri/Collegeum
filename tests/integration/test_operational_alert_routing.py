@@ -50,7 +50,8 @@ def test_explicit_opt_in_sends_maintenance_alert_only_to_distinct_private_admin(
     with patch("predoc_pipeline.alerts.TelegramClient") as sender:
         notify_admin(settings, "Source check requires maintenance")
     sender.assert_called_once()
-    assert sender.return_value.__enter__.return_value.send_plain.call_args.kwargs["chat_id"] == "99999"
+    sent = sender.return_value.__enter__.return_value.send_plain.call_args
+    assert sent.kwargs["chat_id"] == "99999"
 
 
 def test_negative_channel_id_is_not_a_valid_operational_admin_recipient():
