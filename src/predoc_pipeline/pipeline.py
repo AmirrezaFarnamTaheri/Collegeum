@@ -343,14 +343,12 @@ def _pre_extract(
         prior.startswith("candidate-v4:") and prior.endswith(f":{evidence_hash}")
     )
     if seen is not None and (prior == digest or same_candidate):
-        legacy_role_reject = prior.startswith("candidate-v3:") and bool(re.search(
-            r"phd.studentship|postdoc|post.doc|outside_US|requires.phd",
-            (seen["reason"] or ""), re.I
-        ))
-        # A policy change reopens *rejections*, never already accepted listings.
-        # Old PhD/postdoc rejections get one explicit eligibility migration.
+        # Every v3 rejection predates the policy-version field, not just
+        # PhD/postdoc decisions. Reconsider each old rejection once under the
+        # current policy; retain the fast path for previously accepted listings.
         reconsider = seen["decision"] == "rejected" and (
-            legacy_role_reject or (prior.startswith("candidate-v4:") and prior != digest)
+            prior.startswith("candidate-v3:")
+            or (prior.startswith("candidate-v4:") and prior != digest)
         )
         if not reconsider:
             stats.already_seen += 1
