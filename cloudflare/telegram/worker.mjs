@@ -49,6 +49,43 @@ export default {
 export class TelegramBot {
   constructor(ctx, env) { this.ctx = ctx; this.env = env; this.chatTails = new Map(); this.activeUpdates=new Set(); }
 
+  async scheduleRecovery(at) {
+    const storage = this.ctx.storage;
+    if (typeof storage.getAlarm !== 'function' || typeof storage.setAlarm !== 'function') return;
+    const existing = await storage.getAlarm();
+    if (existing === null || existing > at) await storage.setAlarm(at);
+  }
+
+  async alarm() {
+    // Telegram abandons non-2xx webhooks after a finite number of retries.
+    // Alarms keep unfinished replies recoverable even without another request.
+    const readyAt = state => Math.max(
+      state.stage === 'prepared' ? 0 : (state.at || 0) + 90000,
+      state.retry_at || 0,
+    );
+    const pending = [...(await this.ctx.storage.list({prefix: 'update:'}))]
+      .filter(([,state]) => state?.stage !== 'done' && state?.update);
+    let attempted = 0;
+    for (const [key, state] of pending) {
+      if (attempted >= 20) break;
+      if (readyAt(state) > Date.now() || this.activeUpdates.has(key)) continue;
+      const update = state.update;
+      const callback = update.callback_query;
+      const message = callback?.message || update.message;
+      if (!message) continue;
+      attempted++;
+      const owner = ownerIds(this.env).has(String(message.chat?.id));
+      try { await this.processUpdate(update,callback,message,owner); }
+      catch { console.warn('Failed to recover durable Telegram update',update.update_id); }
+    }
+    const waiting = [...(await this.ctx.storage.list({prefix: 'update:'}))]
+      .filter(([,state]) => state?.stage !== 'done' && state?.update);
+    if (waiting.length) {
+      const next = Math.min(...waiting.map(([,state]) => readyAt(state)));
+      await this.scheduleRecovery(Math.max(Date.now() + 1000, next));
+    }
+  }
+
   fetch(request) {
     return this.handle(request);
   }
@@ -106,9 +143,10 @@ export class TelegramBot {
         await tx.put(key, resumed);
         return true;
       }
-      await tx.put(key, {stage:'processing',at:Date.now()});
+      await tx.put(key, {stage:'processing',at:Date.now(),update});
       return true;
     });
+    if (claimed) await this.scheduleRecovery(Date.now() + 90000);
     if (claimed === null) return json({error:'Update is still processing; retry later'},503);
     if (!claimed) return json({ok: true, replay: true});
     try {
@@ -168,7 +206,8 @@ export class TelegramBot {
   }
 
   async deliver(key,method,payload){
-    const prepared={stage:'prepared',at:Date.now(),method,payload};
+    const checkpoint = await this.ctx.storage.get(key) || {};
+    const prepared={...checkpoint,stage:'prepared',at:Date.now(),method,payload};
     await this.ctx.storage.put(key,prepared);
     return this.sendPrepared(key,prepared);
   }
