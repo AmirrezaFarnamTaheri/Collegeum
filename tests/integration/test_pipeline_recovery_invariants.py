@@ -184,3 +184,25 @@ def test_legacy_v3_rejection_is_reconsidered_under_current_preferences(tmp_path)
             item, db=db, stats=pipeline.RunStats(), policy=Policy(prefs),
         )
         assert result is not None, "legacy rejections must be re-evaluated once"
+
+
+def test_single_board_http_404_holds_pending_without_claiming_permanent_closure(tmp_path):
+    settings = settings_for(tmp_path)
+    init(settings.db_path)
+    with Database(settings.db_path) as db:
+        db.import_rows([record()])
+        item = RawItem(
+            source="test", source_url=record()["source_url"],
+            title=record()["title"], text="Detail fetch returned 404",
+            hints={
+                "board": True, "reject": "filled-or-closed",
+                "closed_reason": "link no longer works (HTTP 404)",
+            },
+        )
+        assert pipeline._pre_extract(item, db=db, stats=pipeline.RunStats()) is None
+        listing = db.listing(42)
+        assert listing["closed_at"] is None
+        assert listing["missing_404_observations"] == 1
+        assert not pipeline._recover_pending(
+            [], db, Policy(Preferences()), pipeline.RunStats(), set(),
+        )
