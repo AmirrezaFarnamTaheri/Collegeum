@@ -117,3 +117,29 @@ and, before activating the optional Worker, a complete subscriber migration.
 Network-level Telegram sends cannot offer exactly-once semantics on
 uncertain acknowledgements. No deployment, bot-webhook switch or pull-request
 merge was performed by this remediation.
+
+## Operational-source hotfix merged into main — 13 October 2026
+
+[PR #19](https://github.com/AmirrezaFarnamTaheri/Collegeum/pull/19)
+was independently released to `main` as `c74bf9aa2759c90c72362a5d29479edf6901c3b7`.
+It corrects the ifo careers URL/pattern and German heading parsing.
+The upstream European Job Market site currently emits unresolved `[nid]`
+listing URL templates; those are classified as a visible skipped source
+rather than publishing incorrect job links or repeatedly notifying users.
+Its zero-based pagination is supported and valid upstream IDs automatically
+resume collection. The separate EconJobMarket collector remains active.
+
+Maintenance errors are now **log-only by default**; operator Telegram alerts
+require `TELEGRAM_OPERATIONAL_ALERTS_ENABLED=true` plus a distinct,
+positive private `TELEGRAM_ADMIN_CHAT_ID`. There is no fallback to a
+public vacancy or subscriber chat. Regression tests on the hotfix branch
+passed [CI 38408510204](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/38408510204):
+1,170 Python tests and 21 subtests each on 3.11 and 3.12, with strict
+mypy, Ruff and an 85% coverage report.
+The feature PR separately verified the same behavioral repairs in
+[CI 38407511787](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/38407511787)
+with 1,234 Python tests plus 21 subtests per interpreter and 35 Worker tests.
+
+These results are mocked/offline fixture verification, not live
+production source fetches, nor confirmation that the upstream EJM
+template has been repaired. The larger Telegram Worker remains optional.
