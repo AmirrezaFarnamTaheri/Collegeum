@@ -6,7 +6,9 @@ refuses activation when private subscriber records exist; do not switch the
 production bot's webhook until those flows have been migrated and validated.
 
 Optional instant Telegram browsing and database chat, backed by a SQLite Durable
-Object. The existing GitHub pipeline still discovers vacancies and owns the
+Object. Valid AI questions are durably queued and acknowledged before the
+OpenRouter request; an alarm processes and delivers the answer after receipt.
+Owner browsing commands and callbacks are answered directly. The existing GitHub pipeline still discovers vacancies and owns the
 committed listing journal; the worker stores its uploaded snapshot and private
 feedback. [Protocol and access rules](../../docs/TELEGRAM_PROTOCOL.md).
 
