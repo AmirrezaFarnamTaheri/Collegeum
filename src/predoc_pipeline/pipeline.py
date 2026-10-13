@@ -337,6 +337,26 @@ def _pre_extract(
     digest = f"candidate-v4:{policy_fingerprint}:{evidence_hash}"
     board = bool(item.hints.get("board"))
 
+    # A previously published (or still pending) vacancy can be explicitly
+    # withdrawn on its original board. Record the closure on the listing, not
+    # solely in seen_items, so that the website and retry queue reflect it now.
+    # A single HTTP 404 is weaker evidence and needs a second-day observation.
+    if board and item.hints.get("reject") == "filled-or-closed":
+        existing = db.listing_by_url(item.source_url)
+        if existing is not None and not existing["closed_at"]:
+            listing_id = int(existing["id"])
+            evidence = str(item.hints.get("closed_reason") or "")
+            if "HTTP 404" in evidence:
+                if db.observe_http_404(listing_id):
+                    db.mark_closed(listing_id, "confirmed HTTP 404 on separate days")
+                    stats.closed_found += 1
+            else:
+                db.mark_closed(listing_id, evidence or "board reports vacancy filled or closed")
+                if existing["status"] == "published":
+                    stats.closed_found += 1
+                else:
+                    stats.closed_before_send += 1
+
     seen = db.seen(source_key)
     prior = (seen["content_hash"] or "") if seen is not None else ""
     same_candidate = prior == f"candidate-v3:{evidence_hash}" or (
@@ -1013,6 +1033,11 @@ def _recover_pending(
     for row in db.pending_listings():
         listing_id = int(row["id"])
         if listing_id in accepted_ids or row["url_hash"] in hidden:
+            continue
+        if row["missing_404_observations"]:
+            # One unconfirmed 404 is insufficient to close the listing, but
+            # sufficient to withhold an automatic delivery until rechecked.
+            log.info("pending_held_for_404_confirmation", listing_id=listing_id)
             continue
         reason = policy.check_stored(row)
         if reason:
