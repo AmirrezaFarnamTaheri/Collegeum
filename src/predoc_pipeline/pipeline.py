@@ -997,6 +997,35 @@ def _telegram_setup_problem(settings: Settings, exc: TelegramError) -> None:
     )
 
 
+def _recover_pending(
+    accepted: list[tuple[int, PredocListing]],
+    db: Database,
+    policy: Policy,
+    stats: RunStats,
+    hidden: set[str],
+) -> list[tuple[int, PredocListing]]:
+    """Recover unsent records only when they still pass the current policy.
+
+    Do not turn temporary preference exclusions into permanent closure. Once
+    preferences relax, the original pending record can be reconsidered.
+    """
+    accepted_ids = {lid for lid, _ in accepted}
+    for row in db.pending_listings():
+        listing_id = int(row["id"])
+        if listing_id in accepted_ids or row["url_hash"] in hidden:
+            continue
+        reason = policy.check_stored(row)
+        if reason:
+            stats.not_wanted += 1
+            key = f"pending:{reason}"
+            stats.gate_reasons[key] = stats.gate_reasons.get(key, 0) + 1
+            log.info("pending_filtered_by_current_policy", listing_id=listing_id, reason=reason)
+            continue
+        accepted.append((listing_id, _listing_from_row(row)))
+    return [(lid, listing) for lid, listing in accepted
+            if url_hash(listing.apply_url) not in hidden]
+
+
 def _verify_before_sending(
     candidates: list[tuple[int, PredocListing]],
     prefs: Preferences,
@@ -1461,16 +1490,10 @@ def run(
                                     accepted.append((listing.__dict__["_listing_id"], listing))
                 stats.llm_calls = getattr(extractor, "calls", 0)
 
-            # Rows inserted by an earlier run that never reached Telegram
-            # (a crash, or Telegram not configured yet) go out with today's.
-            new_ids = {lid for lid, _ in accepted}
-            for row in db.pending_listings():
-                if int(row["id"]) not in new_ids:
-                    accepted.append((int(row["id"]), _listing_from_row(row)))
-            hidden = feedback.hidden
-            accepted = [
-                (lid, lst) for lid, lst in accepted if url_hash(lst.apply_url) not in hidden
-            ]
+            # Earlier unsent rows must satisfy *today's* rules before retry.
+            # Filtering is reversible: leave excluded rows pending rather than
+            # incorrectly treating an employer/region preference as closure.
+            accepted = _recover_pending(accepted, db, policy, stats, feedback.hidden)
             accepted = _verify_before_sending(accepted, prefs, db, stats, board_transport)
             sent_now = {lid for lid, _ in accepted}
             router = Router(prefs)
