@@ -203,9 +203,22 @@ def test_single_board_http_404_holds_pending_without_claiming_permanent_closure(
         listing = db.listing(42)
         assert listing["closed_at"] is None
         assert listing["missing_404_observations"] == 1
-        assert not pipeline._recover_pending(
-            [], db, Policy(Preferences()), pipeline.RunStats(), set(),
-        )
+        prefs = Preferences()
+        prefs.enrich.fetch_details = False
+        prefs.filters.allow_private_sector = True
+        stats = pipeline.RunStats()
+        candidates = pipeline._recover_pending([], db, Policy(prefs), stats, set())
+        assert len(candidates) == 1
+        with patch("predoc_pipeline.boards.collector.check_links", return_value={}):
+            assert pipeline._verify_before_sending(candidates, prefs, db, stats) == []
+
+        def now_open(items, _http, **kwargs):
+            kwargs["verified_open"].update(items)
+            return {}
+
+        with patch("predoc_pipeline.boards.collector.check_links", side_effect=now_open):
+            assert len(pipeline._verify_before_sending(candidates, prefs, db, stats)) == 1
+        assert db.listing(42)["missing_404_observations"] == 0
 
 
 def test_uncertain_delivery_checkpoint_survives_pending_journal_replay(tmp_path):
