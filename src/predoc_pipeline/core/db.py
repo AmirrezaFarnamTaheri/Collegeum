@@ -1035,6 +1035,20 @@ class Database:
                       "last_seen_at"):
             updates[field] = latest(field)
         updates["first_seen_at"] = earliest("first_seen_at")
+        if (incoming.get("last_seen_at") or "") >= (existing["last_seen_at"] or ""):
+            # The journal is the durable source of factual corrections when
+            # observations are equally fresh. A genuinely newer local fetch
+            # takes precedence until it is committed. Lifecycle receipts and
+            # closure evidence are reconciled independently above/below.
+            protected = {
+                "id", "url_hash", "signature", "status", "telegram_message_id",
+                "x_post_id", "published_at", "expired_at", "closed_at",
+                "closed_reason", "first_seen_at", "last_seen_at",
+                "last_checked_at", "missing_404_at", "missing_404_observations",
+            }
+            for field, value in incoming.items():
+                if field not in protected:
+                    updates[field] = value
         if updates["closed_at"] == incoming.get("closed_at"):
             updates["closed_reason"] = incoming.get("closed_reason") or existing["closed_reason"]
         else:
