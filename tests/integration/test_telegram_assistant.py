@@ -18,6 +18,7 @@ from predoc_pipeline.publish.assistant import (
     reserve_public_request,
 )
 from predoc_pipeline.publish.feedback import FeedbackStore
+from predoc_pipeline.publish.telegram import telegram_visible_length
 from predoc_pipeline.settings import Settings
 
 
@@ -225,7 +226,6 @@ def test_provider_retries_share_one_monotonic_budget(tmp_path, monkeypatch):
 
 
 def test_oversized_answer_keeps_snapshot_and_truncation_notice():
-    from predoc_pipeline.publish.telegram import telegram_visible_length
     query = DatabaseQuery(action='list', fields=[
         'deadline', 'visa', 'salary', 'degree', 'tools', 'start', 'summary',
     ], limit=5)
@@ -238,7 +238,7 @@ def test_oversized_answer_keeps_snapshot_and_truncation_notice():
         for i in range(1, 6)
     ]
     result = render_result(query, rows, snapshot='2026-10-13T11:02:03Z')
-    assert len(result) <= 4096
+    assert telegram_visible_length(result) <= 4096
     assert 'Snapshot: 2026-10-13T11:02:03Z' in result
     assert 'Showing' in result and 'matching records' in result
     assert 'Ask for specific IDs' in result
