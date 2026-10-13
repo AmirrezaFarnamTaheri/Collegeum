@@ -66,6 +66,9 @@ unknown visa status cannot satisfy a filter for explicit sponsorship.
 - Public users: three requests per rolling minute per Telegram user ID.
 - Public users collectively: 100 requests per rolling hour by default, controlled
   by `TELEGRAM_AI_PUBLIC_HOURLY_CAP` (Python) / `PUBLIC_HOURLY_CAP` (Worker).
+  The Worker deployment defaults public AI to disabled until the operator sets
+  `TELEGRAM_AI_PUBLIC_ENABLED=true`; `TELEGRAM_AI_ENABLED=false` disables all
+  AI questions in Worker mode.
 - Up to five configured keys can be considered when OpenRouter returns 429.
 - Each parser request has a 600-token output limit. At most five listing records
   are rendered, with bounded fields and complete HTML tags.
@@ -75,12 +78,18 @@ unknown visa status cannot satisfy a filter for explicit sponsorship.
 - Public refusals and provider errors never include API keys or response bodies.
 - Prepared polling replies are cached privately by chat/message identity. Retries
   reuse the result instead of spending another provider call/quota reservation.
+  Polling also checkpoints public quota reservations by update ID before the
+  provider call, preventing double charging after process termination.
   Confirmed and possibly accepted replies are not sent again automatically.
 - Worker AI requests reserve quota atomically before entering a per-user AI
   queue. Menus/callbacks do not wait on that queue. Provider fallback has a shared
   25-second budget; Telegram's own delivery time is separate.
 - Explicit Telegram throttling keeps a prepared Worker reply for later retry.
   Retrying that reply does not repeat AI work or apply tracking toggles twice.
+  Durable Object alarms retry unfinished updates independently of Telegram
+  webhook retries. Ambiguous outbound sends may be delivered twice after the
+  90-second recovery lease; Telegram's send-message API provides no atomic
+  confirmation with Durable Object storage.
 - Large detail answers disclose how many matched records are actually shown;
   users can ask for specific IDs to retrieve omitted details.
 
