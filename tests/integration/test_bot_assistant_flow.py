@@ -108,4 +108,5 @@ def test_crash_between_quota_reservation_and_provider_response_is_idempotent(set
     assert fake.provider_calls == 2
     assert len(fake.sent()) == 1
     assert len(FeedbackStore(settings.feedback_path).data["assistant_usage"]["public"]) == 1
-    assert FeedbackStore(settings.feedback_path).data["assistant_replies"]["101:90"]["stage"] == "sent"
+    saved = FeedbackStore(settings.feedback_path)
+    assert saved.data["assistant_replies"]["101:90"]["stage"] == "sent"
