@@ -97,7 +97,6 @@ def test_result_rendering_is_bounded_and_html_escaped():
                 visa_note='x' * 400, degree_note='x' * 400, start_term='x' * 400,
                 tools_required=['x' * 400]) for i in range(1, 6)]
     answer = render_result(query, rows, snapshot='2026-10-12')
-    from predoc_pipeline.publish.telegram import telegram_visible_length
 
     assert telegram_visible_length(answer) <= 4096
     assert '&lt;b&gt;Fake title&lt;/b&gt;' in answer
@@ -231,15 +230,15 @@ def test_oversized_answer_keeps_snapshot_and_truncation_notice():
         'deadline', 'visa', 'salary', 'degree', 'tools', 'start', 'summary',
     ], limit=5)
     rows = [
-        row(id=i, title='Very long vacancy ' + 'T' * 110,
-            institution='Research center ' + 'I' * 95,
-            summary='x' * 650, visa_note='v' * 600,
-            salary_raw='s' * 600, degree_note='d' * 600,
-            start_term='t' * 600, tools_required=['p' * 600])
+        row(**{'id': i, 'title': 'Very long vacancy ' + 'T' * 110,
+            'institution': 'Research center ' + 'I' * 95,
+            'summary': 'x' * 650, 'visa_note': 'v' * 600,
+            'salary_raw': 's' * 600, 'degree_note': 'd' * 600,
+            'start_term': 't' * 600, 'tools_required': ['p' * 600]})
         for i in range(1, 6)
     ]
     result = render_result(query, rows, snapshot='2026-10-13T11:02:03Z')
-    assert telegram_visible_length(result) <= 4096
+    assert len(result) <= 4096
     assert 'Snapshot: 2026-10-13T11:02:03Z' in result
     assert 'Showing' in result and 'matching records' in result
     assert 'Ask for specific IDs' in result

@@ -81,7 +81,7 @@ export class TelegramBot {
 
   async processUpdate(update, callback, message, owner) {
     const key = `update:${update.update_id}`;
-    if(this.activeUpdates.has(key))return json({ok:true,replay:true});
+    if(this.activeUpdates.has(key))return json({error:'Update is still processing; retry later'},503);
     this.activeUpdates.add(key);
     try{return await this.runUpdate(key,update,callback,message,owner);}
     finally{this.activeUpdates.delete(key);}
@@ -90,10 +90,11 @@ export class TelegramBot {
   async runUpdate(key,update,callback,message,owner) {
     const claimed = await this.ctx.storage.transaction(async tx => {
       const previous=await tx.get(key);
-      if(previous)return ['prepared','processing'].includes(previous.stage)?previous:false;
+      if(previous)return previous.stage==='prepared'?previous:previous.stage==='processing'?null:false;
       await tx.put(key, {stage:'processing',at:Date.now()});
       return true;
     });
+    if (claimed === null) return json({error:'Update is still processing; retry later'},503);
     if (!claimed) return json({ok: true, replay: true});
     try {
       if(typeof claimed==='object'&&claimed.stage==='prepared')await this.sendPrepared(key,claimed);
@@ -197,6 +198,7 @@ export class TelegramBot {
       return true;
     });
     if (!replaced) return json({error:'snapshot is older than the stored inventory'},409);
+    this.cachedDataset = null;
     await this.ctx.storage.transaction(async tx => {
       const expiredRates = [...(await tx.list({prefix:'rate:'}))]
         .filter(([key, stamps]) => key !== 'rate:public' && Array.isArray(stamps) &&
@@ -301,7 +303,7 @@ export class TelegramBot {
     const aliases = {start: "menu", home: "menu", saved: "valid", interested: "valid", jobs: "positions", list: "positions"};
     let kind = word.replace(/^\//, "").split("@")[0].toLowerCase();
     kind = aliases[kind] || kind;
-    const naturalQuestion = !word.startsWith('/') && !VIEWS.has(kind) && !['menu','help'].includes(kind);
+    const naturalQuestion = !word.startsWith('/') && kind !== 'ask' && !VIEWS.has(kind) && !['menu','help'].includes(kind);
     if (kind === 'forget') {
       await this.ctx.storage.delete(`query:${message.chat.id}`);
       await this.deliver(updateKey,'sendMessage', {chat_id:message.chat.id, text:'Your AI follow-up context is cleared. Rate limits still apply.'});
@@ -309,7 +311,10 @@ export class TelegramBot {
     }
     if (kind === 'ask' || naturalQuestion) {
       const question = naturalQuestion ? String(message.text || '') : words.join(' ');
-      const text = admission.limited || await ask(this,question,message.chat.id,owner,admission.admitted,updateKey);
+      const text = !owner && this.env.PUBLIC_AI_ENABLED === 'false'
+         ? 'Database chat is currently available to the configured owners.'
+         : admission.limited || await ask(this,question,message.chat.id,owner,
+           admission.admitted && Boolean(question.trim()) && question.length <= 1000,updateKey);
       await this.deliver(updateKey,'sendMessage', {chat_id:message.chat.id,text,parse_mode:'HTML',
         ...(owner ? {reply_markup:menu()} : {}),link_preview_options:{is_disabled:true}});
       return;

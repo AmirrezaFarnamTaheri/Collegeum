@@ -173,7 +173,21 @@ def render_result(query: DatabaseQuery, rows: list[dict[str, Any]], *, snapshot:
               'Ask for specific IDs to see omitted details.' + foot)
     pages = pack_html_blocks(blocks, header=head, footer=footer, page_size=query.limit)
     first = pages[0]
-    return first.html.replace('<b>SHOWN_COUNT</b>', f'<b>{first.end - first.start}</b>')
+    # The packer reserves its footer for the last page, but this command sends one
+    # message. Always attach a bounded, explicit count and provenance to that message.
+    from .telegram import telegram_visible_length
+    suffix = (f'\n\nShowing <b>{first.end - first.start}</b> of {len(rows)} matching records. '
+              'Ask for specific IDs to see omitted details.' + foot)
+    text = first.html
+    if len(pages) == 1:
+        return text.replace('<b>SHOWN_COUNT</b>', f'<b>{first.end - first.start}</b>')
+    # Drop complete row blocks until the first Telegram reply fits with its footer.
+    while telegram_visible_length(text + suffix) > 4096 and first.end > first.start:
+        first = pack_html_blocks(blocks[:first.end - 1], header=head, footer='', page_size=query.limit)[0]
+        text = first.html
+        suffix = (f'\n\nShowing <b>{first.end - first.start}</b> of {len(rows)} matching records. '
+                  'Ask for specific IDs to see omitted details.' + foot)
+    return text + suffix
 
 
 def reserve_public_request(
