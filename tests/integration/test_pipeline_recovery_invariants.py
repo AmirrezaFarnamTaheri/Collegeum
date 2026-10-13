@@ -275,3 +275,33 @@ def test_curated_rejected_listing_cannot_be_resurrected_by_stale_status(
         state.restore_if_needed(db, settings.state_path)
         assert db.listing(42)["status"] == "rejected"
         assert db.active_listings() == []
+
+
+def test_committed_fact_corrections_win_over_equally_fresh_derived_cache(tmp_path):
+    settings = settings_for(tmp_path)
+    init(settings.db_path)
+    corrected = record(
+        apply_url="https://example.org/job/correct-application",
+        disciplines=["Health Economics", "Econometrics"],
+    )
+    with Database(settings.db_path) as db:
+        db.import_rows([record()])
+        Path(settings.state_path).write_text(json.dumps(corrected) + "\n")
+        state.restore_if_needed(db, settings.state_path)
+        row = db.listing(42)
+        assert row["apply_url"] == corrected["apply_url"]
+        assert json.loads(row["disciplines"]) == corrected["disciplines"]
+
+
+def test_older_journal_facts_never_override_newer_local_extraction(tmp_path):
+    settings = settings_for(tmp_path)
+    init(settings.db_path)
+    newer = record(
+        apply_url="https://example.org/job/current",
+        last_seen_at="2026-10-13T09:00:00Z",
+    )
+    with Database(settings.db_path) as db:
+        db.import_rows([newer])
+        Path(settings.state_path).write_text(json.dumps(record()) + "\n")
+        state.restore_if_needed(db, settings.state_path)
+        assert db.listing(42)["apply_url"] == newer["apply_url"]
