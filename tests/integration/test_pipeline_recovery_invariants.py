@@ -290,12 +290,13 @@ def test_curated_rejected_listing_cannot_be_resurrected_by_stale_status(
         assert db.active_listings() == []
 
 
-def test_committed_fact_corrections_win_over_equally_fresh_derived_cache(tmp_path):
+def test_newer_committed_fact_corrections_win_over_older_derived_cache(tmp_path):
     settings = settings_for(tmp_path)
     init(settings.db_path)
     corrected = record(
         apply_url="https://example.org/job/correct-application",
         disciplines=["Health Economics", "Econometrics"],
+        last_seen_at="2026-10-13T11:00:00Z",
     )
     with Database(settings.db_path) as db:
         db.import_rows([record()])
