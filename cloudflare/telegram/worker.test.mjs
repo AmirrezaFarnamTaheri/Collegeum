@@ -358,3 +358,43 @@ test('the recovery alarm also resumes crashed processing without a Telegram repl
   assert.equal(instance.calls.length, 1);
   assert.equal((await instance.ctx.storage.get('update:261')).stage, 'done');
 });
+
+
+test('slow AI is durably queued and acknowledged before any provider call', async () => {
+  const instance = bot();
+  instance.env = {...env, OPENROUTER_API_KEY: 'offline-key'};
+  let provider = 0;
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => {
+    provider++;
+    return Response.json({choices: [{message: {tool_calls: [{
+      function: {name: 'query_database', arguments: '{"action":"count"}'},
+    }]}}]});
+  };
+  try {
+    const update = {update_id: 270, message: {chat: {id: 999, type: 'private'},
+      from: {id: 999}, text: '/ask Count open roles'}};
+    const accepted = await instance.fetch(post('/webhook', update));
+    assert.equal(accepted.status, 200);
+    assert.equal(provider, 0, 'Webhook acknowledgement must not await OpenRouter');
+    const pending = await instance.ctx.storage.get('update:270');
+    assert.equal(pending.stage, 'queued');
+    assert.deepEqual(pending.update, update);
+    assert.equal((await instance.ctx.storage.get('rate:public')).length, 1);
+    await instance.alarm();
+    assert.equal(provider, 1);
+    assert.equal(instance.calls.length, 1);
+    assert.equal((await instance.ctx.storage.get('update:270')).stage, 'done');
+  } finally {globalThis.fetch = original;}
+});
+
+test('replayed queued update does not reserve quota twice or enqueue twice', async () => {
+  const instance = bot();
+  instance.env = {...env, OPENROUTER_API_KEY: 'offline-key'};
+  const update = {update_id: 271, message: {chat: {id: 123, type: 'private'},
+    from: {id: 123}, text: '/ask Count roles'}};
+  assert.equal((await instance.fetch(post('/webhook', update))).status, 200);
+  assert.equal((await instance.fetch(post('/webhook', update))).status, 200);
+  assert.equal((await instance.ctx.storage.get('rate:public')).length, 1);
+  assert.equal((await instance.ctx.storage.get('update:271')).stage, 'queued');
+});
