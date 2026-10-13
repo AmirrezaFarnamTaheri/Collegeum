@@ -110,6 +110,10 @@ class BaseScraper(ABC):
             raise DiscoveryFetchError(str(exc)) from exc
         try:
             posts = self.parse_postings(raw)
+        except SourceSkipped:
+            # A recognized upstream limitation is explicitly skipped, not
+            # a parser failure. Keep the reason in source-health metadata.
+            raise
         except Exception as exc:
             raise DiscoveryParseError(str(exc)) from exc
         # de-duplicate within a single source run
