@@ -8,6 +8,9 @@ if (!globalThis.crypto) globalThis.crypto = webcrypto;
 class Storage {
   values = new Map();
   tail = Promise.resolve();
+  alarmAt = null;
+  async getAlarm() { return this.alarmAt; }
+  async setAlarm(at) { this.alarmAt = at; }
   async get(key) { return structuredClone(this.values.get(key)); }
   async put(key, value) { this.values.set(key, structuredClone(value)); }
   async delete(key) {
@@ -321,4 +324,37 @@ test('global AI disable gate applies to owners without invoking the provider', a
     assert.match(instance.calls[0].payload.text, /currently disabled/);
     assert.equal(await instance.ctx.storage.get('rate:public'), undefined);
   } finally {globalThis.fetch = original;}
+});
+
+
+test('a durable alarm completes delivery after webhooks stop retrying', async () => {
+  const instance = bot();
+  const update = {update_id: 260, message: {chat: {id: 42}, text: '/menu'}};
+  instance.api = async () => {
+    throw Object.assign(new Error('rate limited'), {retryable: true, retryAfter: 3});
+  };
+  assert.equal((await instance.fetch(post('/webhook', update))).status, 503);
+  const key = 'update:260';
+  const checkpoint = await instance.ctx.storage.get(key);
+  assert.equal(checkpoint.stage, 'prepared');
+  assert.deepEqual(checkpoint.update, update);
+  assert.ok(await instance.ctx.storage.getAlarm());
+  await instance.ctx.storage.put(key, {...checkpoint, retry_at: Date.now() - 1});
+  instance.api = async (method, payload) => {
+    instance.calls.push({method, payload});
+    return {message_id: 900};
+  };
+  await instance.alarm();
+  assert.equal(instance.calls.length, 1);
+  assert.equal((await instance.ctx.storage.get(key)).stage, 'done');
+});
+
+test('the recovery alarm also resumes crashed processing without a Telegram replay', async () => {
+  const instance = bot();
+  const update = {update_id: 261, message: {chat: {id: 42}, text: '/menu'}};
+  await instance.ctx.storage.put('update:261', {stage: 'processing',
+    at: Date.now() - 91000, update});
+  await instance.alarm();
+  assert.equal(instance.calls.length, 1);
+  assert.equal((await instance.ctx.storage.get('update:261')).stage, 'done');
 });
