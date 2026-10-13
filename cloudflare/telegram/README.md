@@ -41,7 +41,11 @@ test service; it never sends a real chat message or spends a real API token.
 Set `OWNER_IDS` to comma-separated positive private Telegram chat IDs.
 Keep `PUBLIC_HOURLY_CAP=100` unless changing the shared rolling-hour cap.
 Public users always receive three requests per rolling minute; owners are exempt.
-`OPENROUTER_MODEL` defaults to `openrouter/free`.
+`OPENROUTER_MODEL` defaults to `openrouter/free`. Set the deployment variable
+`TELEGRAM_AI_ENABLED=false` to disable all AI requests, or
+`TELEGRAM_AI_PUBLIC_ENABLED=false` to keep AI owner-only. The manual deployment
+workflow defaults public AI to **disabled** until it is explicitly enabled.
+These map to the Worker's `AI_ENABLED` and `PUBLIC_AI_ENABLED` bindings.
 
 Worker secrets:
 
@@ -68,7 +72,9 @@ Prepare locally first; deployment, secrets and webhook changes modify external
 resources and need the user's explicit approval.
 
 1. Configure the intended owners; deploy the worker to the intended account.
-2. Set its runtime secrets securely with Wrangler secret commands.
+2. Provide the required runtime secrets to deployment with Wrangler's
+   `deploy --secrets-file`, so the code and secrets are uploaded together.
+   Do not separately deploy unconfigured code.
 3. Set pipeline/Telegram workflow variable `TELEGRAM_WORKER_URL` to the HTTPS
    worker origin and secret `TELEGRAM_WORKER_SYNC_TOKEN` to the matching sync
    token. Preserve the existing feedback encryption key and OpenRouter secret.
@@ -97,9 +103,16 @@ through the database query grammar.
 
 The implementation bounds snapshots at 2,000 records and 2 MB. Oversized uploads
 fail before replacing the existing inventory. Long-term archive growth needs
-an explicit retention policy rather than silent truncation. Replies with unknown
-remote acceptance are held instead of automatically replayed; the user can issue
-a new command after checking the chat.
+an explicit retention policy rather than silent truncation. Webhook delivery uses durable update checkpoints and Durable Object alarms to
+resume after an interrupted request, even when Telegram stops retrying the
+webhook. An interrupted outbound send has **at-least-once**, not exactly-once,
+semantics: after a 90-second recovery lease, a retry may duplicate a message
+whose first delivery was accepted but whose acknowledgement was lost. Monitor
+recovery logs and verify the chat when reconciling ambiguous deliveries.
+Pending updates temporarily store inbound command text in private Durable
+Object storage until confirmed delivery; completed updates retain only replay
+metadata. This is distinct from AI follow-up context, which keeps only
+validated query filters.
 
 References: [Telegram webhooks](https://core.telegram.org/bots/api#setwebhook),
 [Cloudflare Durable Object storage](https://developers.cloudflare.com/durable-objects/best-practices/access-durable-objects-storage/),
