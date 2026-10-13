@@ -344,14 +344,16 @@ def _pre_extract(
     if board and item.hints.get("reject") == "filled-or-closed":
         existing = db.listing_by_url(item.source_url)
         if existing is not None and not existing["closed_at"]:
-            listing_id = int(existing["id"])
+            closed_listing_id = int(existing["id"])
             evidence = str(item.hints.get("closed_reason") or "")
             if "HTTP 404" in evidence:
-                if db.observe_http_404(listing_id):
-                    db.mark_closed(listing_id, "confirmed HTTP 404 on separate days")
+                if db.observe_http_404(closed_listing_id):
+                    db.mark_closed(closed_listing_id, "confirmed HTTP 404 on separate days")
                     stats.closed_found += 1
             else:
-                db.mark_closed(listing_id, evidence or "board reports vacancy filled or closed")
+                db.mark_closed(
+                    closed_listing_id, evidence or "board reports vacancy filled or closed"
+                )
                 if existing["status"] == "published":
                     stats.closed_found += 1
                 else:
