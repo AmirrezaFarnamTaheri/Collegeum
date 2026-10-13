@@ -1035,11 +1035,11 @@ class Database:
                       "last_seen_at"):
             updates[field] = latest(field)
         updates["first_seen_at"] = earliest("first_seen_at")
-        if (incoming.get("last_seen_at") or "") >= (existing["last_seen_at"] or ""):
-            # The journal is the durable source of factual corrections when
-            # observations are equally fresh. A genuinely newer local fetch
-            # takes precedence until it is committed. Lifecycle receipts and
-            # closure evidence are reconciled independently above/below.
+        if (incoming.get("last_seen_at") or "") > (existing["last_seen_at"] or ""):
+            # Only a strictly newer journal observation can replace factual
+            # cache fields. Equal-timestamp conflicts preserve the local
+            # value: a manual SQLite correction may not advance last_seen_at.
+            # Lifecycle receipts and closure evidence are merged separately.
             protected = {
                 "id", "url_hash", "signature", "status", "telegram_message_id",
                 "x_post_id", "published_at", "expired_at", "closed_at",
