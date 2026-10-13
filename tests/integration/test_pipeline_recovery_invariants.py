@@ -206,3 +206,47 @@ def test_single_board_http_404_holds_pending_without_claiming_permanent_closure(
         assert not pipeline._recover_pending(
             [], db, Policy(Preferences()), pipeline.RunStats(), set(),
         )
+
+
+def test_uncertain_delivery_checkpoint_survives_pending_journal_replay(tmp_path):
+    settings = settings_for(tmp_path)
+    init(settings.db_path)
+    with Database(settings.db_path) as db:
+        db.import_rows([record(status="delivery-uncertain")])
+        Path(settings.state_path).write_text(json.dumps(record()) + "\n")
+        state.restore_if_needed(db, settings.state_path)
+        assert db.listing(42)["status"] == "delivery-uncertain"
+        assert db.pending_listings() == []
+
+
+def test_manual_broadcast_respects_policy_and_persists_recovery_journal(
+    tmp_path, monkeypatch,
+):
+    from predoc_pipeline import cli
+    from predoc_pipeline.publish import telegram
+
+    settings = settings_for(tmp_path)
+    init(settings.db_path)
+    with Database(settings.db_path) as db:
+        db.import_rows([record()])
+
+    prefs = Preferences()
+    prefs.enrich.fetch_details = False
+    prefs.filters.excluded_employers = ["Example University"]
+    monkeypatch.setattr(cli, "_settings", lambda: settings)
+    monkeypatch.setattr(cli, "load_preferences", lambda _: prefs)
+
+    def deny_telegram(*_args, **_kwargs):
+        pytest.fail("manual broadcast must not call Telegram for excluded rows")
+
+    monkeypatch.setattr(telegram, "TelegramClient", deny_telegram)
+    cli.broadcast_pending()
+
+    with Database(settings.db_path) as db:
+        assert len(db.pending_listings()) == 1
+        prefs.filters.excluded_employers = []
+        eligible = pipeline._recover_pending(
+            [], db, Policy(prefs), pipeline.RunStats(), set(),
+        )
+    assert len(eligible) == 1  # relaxing a preference restores eligibility
+    assert state.read_journal(settings.state_path)[0]["status"] == "pending"
