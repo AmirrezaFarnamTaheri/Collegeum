@@ -22,9 +22,11 @@ class FixtureHttp:
 
     async def get_text(self, url: str) -> str:
         self.requests.append(url)
-        if url != self.url:
-            raise RuntimeError("unexpected or obsolete endpoint")
-        return self.html
+        if url == self.url:
+            return self.html
+        if url.startswith(self.url + "?page="):
+            return "<p>No additional listings</p>"
+        raise RuntimeError("unexpected or obsolete endpoint")
 
 
 def test_ejm_upstream_template_links_are_skipped_not_reported_as_parser_failures():
@@ -59,6 +61,9 @@ def test_ejm_recovers_automatically_when_upstream_publishes_real_ids():
     assert len(result.posts) == 1
     assert result.posts[0].url.endswith("/81203")
     assert result.posts[0].title == "Research Assistant in Economics"
+    assert transport.requests == [
+        transport.url, transport.url + "?page=1",
+    ]
 
 
 def test_ifo_scrapes_current_careers_page_and_uses_job_titles_not_link_labels():
