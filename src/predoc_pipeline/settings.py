@@ -30,9 +30,11 @@ class Settings(BaseSettings):
     # Where new positions are posted. For a personal bot, put YOUR chat id here
     # (the number `predoc-pipeline telegram-chat-id` prints); a channel works too.
     telegram_public_channel_id: str = ""
-    # Where warnings go (broken sources, quiet weeks). Defaults to the chat above
-    # when that is a private chat.
+    # Dedicated operator-only private destination, never the public chat.
     telegram_admin_chat_id: str = ""
+    # Maintenance/errors are written to internal health/logs only by default.
+    # An operator can explicitly enable private alerts to a distinct admin ID.
+    telegram_operational_alerts_enabled: bool = False
     telegram_digest_threshold: int = Field(
         0,
         description="Above this many new listings in one run, post a compact "
@@ -271,11 +273,19 @@ class Settings(BaseSettings):
 
     @property
     def alert_chat_id(self) -> str:
-        if self.telegram_admin_chat_id:
-            return self.telegram_admin_chat_id
-        if self._is_private_chat(self.telegram_public_channel_id):
-            return self.telegram_public_channel_id
-        return ""
+        """Explicit opt-in and separate private admin chat are both mandatory.
+
+        Private user IDs can also be public notification targets in a personal
+        bot. Never use that identity for operational errors or stack traces.
+        """
+        if not self.telegram_operational_alerts_enabled:
+            return ""
+        admin = self.telegram_admin_chat_id.strip()
+        if not self._is_private_chat(admin):
+            return ""
+        if admin == self.telegram_public_channel_id.strip():
+            return ""
+        return admin
 
     def get_openrouter_keys(self) -> list[str]:
         keys: list[str] = []
