@@ -1520,7 +1520,8 @@ def run(
             # Earlier unsent rows must satisfy *today's* rules before retry.
             # Filtering is reversible: leave excluded rows pending rather than
             # incorrectly treating an employer/region preference as closure.
-            accepted = _recover_pending(accepted, db, policy, stats, feedback.hidden)
+            hidden = feedback.hidden
+            accepted = _recover_pending(accepted, db, policy, stats, hidden)
             accepted = _verify_before_sending(accepted, prefs, db, stats, board_transport)
             sent_now = {lid for lid, _ in accepted}
             router = Router(prefs)
