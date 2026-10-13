@@ -46,6 +46,15 @@ class Settings(BaseSettings):
         description="Whether to include personal feedback buttons (Interested/Not for me/Applied) "
                     "on broadcast channel posts.",
     )
+    # Optional instant-reply webhook service. Leave disabled until deployed,
+    # seeded, and verified; polling continues to work without Cloudflare.
+    telegram_webhook_enabled: bool = False
+    telegram_worker_url: str = ''
+    telegram_worker_sync_token: str = ''
+    telegram_ai_enabled: bool = True
+    telegram_ai_public_enabled: bool = True
+    telegram_ai_public_hourly_cap: int = Field(100, ge=1, le=10000)
+    telegram_ai_protocol_path: str = 'config/telegram-assistant.json'
 
     # -- Model provider ---------------------------------------------------
     gemini_api_key: str = ""

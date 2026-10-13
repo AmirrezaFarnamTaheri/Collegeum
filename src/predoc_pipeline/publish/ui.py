@@ -221,6 +221,13 @@ def menu(
             "Encrypted snapshots may remain in the public repository history. "
             "See /privacy for storage details."
         )
+        body += (
+            "\n\nبا /ask درباره اطلاعات ذخیره‌شده فرصت‌ها بپرسید. "
+            "با /forget زمینه گفت‌وگوی هوش مصنوعی را پاک کنید."
+            if fa else
+            "\n\nUse /ask to question the stored vacancy database, "
+            "and /forget to clear AI follow-up context."
+        )
         buttons = [_back(lang)]
     elif page == "stop":
         body = (

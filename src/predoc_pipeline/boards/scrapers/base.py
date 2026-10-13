@@ -111,7 +111,8 @@ class BaseScraper(ABC):
         try:
             posts = self.parse_postings(raw)
         except SourceSkipped:
-            # Preserve a recognized upstream limitation as a monitored skip.
+            # A recognized upstream limitation is explicitly skipped, not
+            # a parser failure. Keep the reason in source-health metadata.
             raise
         except Exception as exc:
             raise DiscoveryParseError(str(exc)) from exc

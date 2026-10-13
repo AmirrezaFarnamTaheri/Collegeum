@@ -337,20 +337,40 @@ def _pre_extract(
     digest = f"candidate-v4:{policy_fingerprint}:{evidence_hash}"
     board = bool(item.hints.get("board"))
 
+    # A previously published (or still pending) vacancy can be explicitly
+    # withdrawn on its original board. Record the closure on the listing, not
+    # solely in seen_items, so that the website and retry queue reflect it now.
+    # A single HTTP 404 is weaker evidence and needs a second-day observation.
+    if board and item.hints.get("reject") == "filled-or-closed":
+        existing = db.listing_by_url(item.source_url)
+        if existing is not None and not existing["closed_at"]:
+            closed_listing_id = int(existing["id"])
+            evidence = str(item.hints.get("closed_reason") or "")
+            if "HTTP 404" in evidence:
+                if db.observe_http_404(closed_listing_id):
+                    db.mark_closed(closed_listing_id, "confirmed HTTP 404 on separate days")
+                    stats.closed_found += 1
+            else:
+                db.mark_closed(
+                    closed_listing_id, evidence or "board reports vacancy filled or closed"
+                )
+                if existing["status"] == "published":
+                    stats.closed_found += 1
+                else:
+                    stats.closed_before_send += 1
+
     seen = db.seen(source_key)
     prior = (seen["content_hash"] or "") if seen is not None else ""
     same_candidate = prior == f"candidate-v3:{evidence_hash}" or (
         prior.startswith("candidate-v4:") and prior.endswith(f":{evidence_hash}")
     )
     if seen is not None and (prior == digest or same_candidate):
-        legacy_role_reject = prior.startswith("candidate-v3:") and bool(re.search(
-            r"phd.studentship|postdoc|post.doc|outside_US|requires.phd",
-            (seen["reason"] or ""), re.I
-        ))
-        # A policy change reopens *rejections*, never already accepted listings.
-        # Old PhD/postdoc rejections get one explicit eligibility migration.
+        # Every v3 rejection predates the policy-version field, not just
+        # PhD/postdoc decisions. Reconsider each old rejection once under the
+        # current policy; retain the fast path for previously accepted listings.
         reconsider = seen["decision"] == "rejected" and (
-            legacy_role_reject or (prior.startswith("candidate-v4:") and prior != digest)
+            prior.startswith("candidate-v3:")
+            or (prior.startswith("candidate-v4:") and prior != digest)
         )
         if not reconsider:
             stats.already_seen += 1
@@ -999,6 +1019,35 @@ def _telegram_setup_problem(settings: Settings, exc: TelegramError) -> None:
     )
 
 
+def _recover_pending(
+    accepted: list[tuple[int, PredocListing]],
+    db: Database,
+    policy: Policy,
+    stats: RunStats,
+    hidden: set[str],
+) -> list[tuple[int, PredocListing]]:
+    """Recover unsent records only when they still pass the current policy.
+
+    Do not turn temporary preference exclusions into permanent closure. Once
+    preferences relax, the original pending record can be reconsidered.
+    """
+    accepted_ids = {lid for lid, _ in accepted}
+    for row in db.pending_listings():
+        listing_id = int(row["id"])
+        if listing_id in accepted_ids or row["url_hash"] in hidden:
+            continue
+        reason = policy.check_stored(row)
+        if reason:
+            stats.not_wanted += 1
+            key = f"pending:{reason}"
+            stats.gate_reasons[key] = stats.gate_reasons.get(key, 0) + 1
+            log.info("pending_filtered_by_current_policy", listing_id=listing_id, reason=reason)
+            continue
+        accepted.append((listing_id, _listing_from_row(row)))
+    return [(lid, listing) for lid, listing in accepted
+            if url_hash(listing.apply_url) not in hidden]
+
+
 def _verify_before_sending(
     candidates: list[tuple[int, PredocListing]],
     prefs: Preferences,
@@ -1012,7 +1061,12 @@ def _verify_before_sending(
     that has since been filled (a bit.ly link that now answers 410, a page
     reading "this position has been filled"). Those are dropped here.
     """
-    if not prefs.enrich.fetch_details:
+    suspect_ids = {
+        lid for lid, _ in candidates
+        if (stored := db.listing(lid)) is not None
+        and stored["missing_404_observations"]
+    }
+    if not prefs.enrich.fetch_details and not suspect_ids:
         return candidates
     from .boards.collector import check_links
 
@@ -1023,7 +1077,9 @@ def _verify_before_sending(
             listing.deadline.date() if listing.deadline else None,
         )
         for lid, listing in candidates
-        if not listing.__dict__.get("_page_read")
+        if lid in suspect_ids or (
+            prefs.enrich.fetch_details and not listing.__dict__.get("_page_read")
+        )
     }
     verified_open: set[int] = set()
     verdicts = check_links(
@@ -1463,16 +1519,11 @@ def run(
                                     accepted.append((listing.__dict__["_listing_id"], listing))
                 stats.llm_calls = getattr(extractor, "calls", 0)
 
-            # Rows inserted by an earlier run that never reached Telegram
-            # (a crash, or Telegram not configured yet) go out with today's.
-            new_ids = {lid for lid, _ in accepted}
-            for row in db.pending_listings():
-                if int(row["id"]) not in new_ids:
-                    accepted.append((int(row["id"]), _listing_from_row(row)))
+            # Earlier unsent rows must satisfy *today's* rules before retry.
+            # Filtering is reversible: leave excluded rows pending rather than
+            # incorrectly treating an employer/region preference as closure.
             hidden = feedback.hidden
-            accepted = [
-                (lid, lst) for lid, lst in accepted if url_hash(lst.apply_url) not in hidden
-            ]
+            accepted = _recover_pending(accepted, db, policy, stats, hidden)
             accepted = _verify_before_sending(accepted, prefs, db, stats, board_transport)
             sent_now = {lid for lid, _ in accepted}
             router = Router(prefs)
@@ -1509,6 +1560,20 @@ def run(
 
         if (stats.errors or stats.source_errors) and stats.outcome == "ok":
             stats.outcome = "partial"
+
+        if settings.telegram_webhook_enabled and sync_telegram:
+            try:
+                from .publish.cloud import sync_cloud
+
+                state.write_journal(db, settings.state_path)
+                sync_cloud(settings)
+                feedback = FeedbackStore.from_settings(settings)
+                hidden = feedback.hidden
+            except Exception:
+                stats.errors += 1
+                if stats.outcome == "ok":
+                    stats.outcome = "partial"
+                log.exception("telegram_webhook_sync_failed")
 
         journal = state.write_journal(db, settings.state_path)
         router = Router(prefs)

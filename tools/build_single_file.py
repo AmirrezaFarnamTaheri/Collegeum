@@ -45,6 +45,12 @@ INCLUDE_GLOBS = [
     "tests/fixtures/*.jsonl",
     "tests/fixtures/boards/**/*",
     "config/*.toml",
+    "config/*.json",
+    "config/**/*.toml",
+    "cloudflare/telegram/*.mjs",
+    "cloudflare/telegram/*.json",
+    "cloudflare/telegram/*.jsonc",
+    "cloudflare/telegram/*.md",
     # Include all site assets required for a materialized checkout to render.
     # Exclude only mutable publication snapshots (docs/data and feed.xml).
     "docs/*.html",
@@ -75,6 +81,7 @@ INCLUDE_GLOBS = [
     "CHANGES.md",
     "FINALIZATION.md",
     "docs/X_THREAD_RECOVERY.md",
+    "docs/TELEGRAM_PROTOCOL.md",
     "SETUP_GUIDE.md",
 ]
 
@@ -82,9 +89,9 @@ EXCLUDE_SUFFIXES = (".pyc", ".pyo")
 EXCLUDE_DIR_PARTS = {"__pycache__", ".git", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 TEXT_SUFFIXES = {
     '.py', '.toml', '.md', '.yml', '.html', '.svg', '.xsl',
-    '.json', '.xml', '.jsonl', '.lock', '.example',
+    '.json', '.mjs', '.jsonc', '.txt', '.xml', '.jsonl', '.lock', '.example',
 }
-TEXT_NAMES = {'Makefile', '.gitignore', '.gitattributes'}
+TEXT_NAMES = {'Makefile', '.gitignore', '.gitattributes', 'LICENSE'}
 
 
 def collect_files() -> list[Path]:

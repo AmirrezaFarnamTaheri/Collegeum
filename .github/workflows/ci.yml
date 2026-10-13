@@ -94,3 +94,19 @@ jobs:
 
       - name: Enforce stdlib-only core (belt and suspenders)
         run: PYTHONPATH=src python3 -m pytest tests/core/test_no_third_party.py -v
+
+  telegram-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: cloudflare/telegram/package-lock.json
+      - run: npm ci
+        working-directory: cloudflare/telegram
+      - run: npm test
+        working-directory: cloudflare/telegram
+        env:
+          WRANGLER_SEND_METRICS: "false"

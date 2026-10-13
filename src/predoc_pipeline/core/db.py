@@ -980,6 +980,94 @@ class Database:
             out.append(record)
         return out
 
+    def _reconcile_imported_listing(
+        self, existing: sqlite3.Row, incoming: dict[str, Any],
+    ) -> None:
+        """Merge monotonic delivery evidence without discarding local progress.
+
+        The committed journal and an old SQLite cache can each contain a newer
+        publication acknowledgement. Neither a pending row nor a stale
+        snapshot can erase an already accepted remote send. Conflicting
+        nonempty receipts are ambiguous and must be reconciled explicitly.
+        """
+        updates: dict[str, Any] = {}
+        for field in ("telegram_message_id", "x_post_id"):
+            local = existing[field]
+            saved = incoming.get(field)
+            if local is not None and saved is not None and str(local) != str(saved):
+                raise ValueError(
+                    f"conflicting {field} acknowledgements for listing {existing['id']}"
+                )
+            updates[field] = local if local is not None else saved
+
+        def latest(field: str) -> Any:
+            local, saved = existing[field], incoming.get(field)
+            return max(local, saved) if local is not None and saved is not None else (
+                local if local is not None else saved
+            )
+
+        def earliest(field: str) -> Any:
+            local, saved = existing[field], incoming.get(field)
+            return min(local, saved) if local is not None and saved is not None else (
+                local if local is not None else saved
+            )
+
+        local_status = str(existing["status"])
+        saved_status = str(incoming.get("status") or local_status)
+        statuses = {local_status, saved_status}
+        if "rejected" in statuses:
+            # A human-curated rejection (for instance a fundraising rather
+            # than research position) must not be resurrected by an older
+            # publication journal merely because a message was once sent.
+            updates["status"] = "rejected"
+        elif "published" in statuses:
+            updates["status"] = "published"
+        elif "delivery-uncertain" in statuses:
+            updates["status"] = "delivery-uncertain"
+        elif "undeliverable" in statuses:
+            updates["status"] = "undeliverable"
+        else:
+            # Pending and unpublished are both retryable. Preserve any more
+            # recent local transition instead of forcing a stale journal state.
+            updates["status"] = local_status
+
+        for field in ("published_at", "expired_at", "closed_at", "last_checked_at",
+                      "last_seen_at"):
+            updates[field] = latest(field)
+        updates["first_seen_at"] = earliest("first_seen_at")
+        if (incoming.get("last_seen_at") or "") > (existing["last_seen_at"] or ""):
+            # Only a strictly newer journal observation can replace factual
+            # cache fields. Equal-timestamp conflicts preserve the local
+            # value: a manual SQLite correction may not advance last_seen_at.
+            # Lifecycle receipts and closure evidence are merged separately.
+            protected = {
+                "id", "url_hash", "signature", "status", "telegram_message_id",
+                "x_post_id", "published_at", "expired_at", "closed_at",
+                "closed_reason", "first_seen_at", "last_seen_at",
+                "last_checked_at", "missing_404_at", "missing_404_observations",
+            }
+            for field, value in incoming.items():
+                if field not in protected:
+                    updates[field] = value
+        if updates["closed_at"] == incoming.get("closed_at"):
+            updates["closed_reason"] = incoming.get("closed_reason") or existing["closed_reason"]
+        else:
+            updates["closed_reason"] = existing["closed_reason"] or incoming.get("closed_reason")
+
+        # Retain the latest independent HTTP 404 observation and its count.
+        if (incoming.get("missing_404_at") or "") > (existing["missing_404_at"] or ""):
+            updates["missing_404_at"] = incoming["missing_404_at"]
+            updates["missing_404_observations"] = incoming.get("missing_404_observations") or 0
+        else:
+            updates["missing_404_at"] = existing["missing_404_at"]
+            updates["missing_404_observations"] = existing["missing_404_observations"]
+
+        assignments = ", ".join(f"{field}=?" for field in updates)
+        self.conn.execute(
+            f"UPDATE listings SET {assignments} WHERE id=?",
+            (*updates.values(), existing["id"]),
+        )
+
     def import_rows(self, records: Sequence[dict[str, Any]]) -> int:
         """Restore IDs atomically; return actual inserts and surface invalid records."""
         inserted = 0
@@ -1000,8 +1088,11 @@ class Database:
                 data["alternate_sources"] = json.dumps(data.get("alternate_sources") or [])
                 data["is_remote"] = int(bool(data.get("is_remote")))
                 existing = self.listing_by_url_hash(data["url_hash"])
-                if existing is not None and "id" in data and existing["id"] != data["id"]:
-                    raise ValueError("listing URL has conflicting durable IDs")
+                if existing is not None:
+                    if "id" in data and existing["id"] != data["id"]:
+                        raise ValueError("listing URL has conflicting durable IDs")
+                    self._reconcile_imported_listing(existing, data)
+                    continue
                 columns = list(data)
                 placeholders = ",".join("?" for _ in columns)
                 cur = self.conn.execute(

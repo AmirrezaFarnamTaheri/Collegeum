@@ -60,3 +60,7 @@ data/*.corrupt-*
 # They are never part of the committed encrypted state or release artifact.
 data/.private_delivery_batch.json
 data/.private_delivery_batch.json.tmp
+
+cloudflare/telegram/node_modules/
+cloudflare/telegram/.wrangler/
+cloudflare/telegram/.dev.vars

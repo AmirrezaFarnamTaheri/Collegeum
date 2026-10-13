@@ -1,0 +1,7 @@
+{
+  "name": "collegeum-telegram-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "wrangler deploy --dry-run --outdir .wrangler/build && node --test", "test:unit": "node --test worker.test.mjs assistant.test.mjs", "check": "wrangler deploy --dry-run", "dev": "wrangler dev", "deploy": "wrangler deploy"},
+  "devDependencies": {"wrangler": "^4.0.0"}
+}

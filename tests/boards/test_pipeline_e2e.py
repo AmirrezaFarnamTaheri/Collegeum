@@ -175,6 +175,18 @@ def titles(messages):
     return "\n".join(m["text"] for m in messages)
 
 
+def test_disabled_private_sync_does_not_upload_webhook_snapshot(settings, monkeypatch):
+    from predoc_pipeline.publish import cloud
+
+    settings.telegram_webhook_enabled = True
+    calls = []
+    monkeypatch.setattr(cloud, 'sync_cloud', lambda *_args, **_kwargs: calls.append(True))
+    fake = FakeTelegram()
+    pipeline.run(settings, board_transport=httpx.MockTransport(board_handler),
+                 telegram_client=fake.client(), sync_telegram=False)
+    assert not calls
+
+
 def test_full_run_then_nothing_is_sent_twice(settings):
     fake = FakeTelegram()
     stats = run(settings, fake)

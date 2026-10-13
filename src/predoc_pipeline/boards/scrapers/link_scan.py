@@ -162,6 +162,7 @@ class LinkScanScraper(BaseScraper):
                     )
                 except Exception as exc:  # noqa: BLE001
                     errors.append(f"{page_url}: {exc}")
+                    self.discovery_fetch_errors.append(f"{type(exc).__name__} at page {page}")
                     log.warning("%s: page %d (%s) failed: %s", self.name, page, page_url, exc)
                     break
                 out.append((page_url, html))
@@ -173,6 +174,12 @@ class LinkScanScraper(BaseScraper):
                 ]
                 if not matching:
                     break
+                if page == max_pages and max_pages > 1:
+                    # A populated terminal page is not proof that all later
+                    # pages are empty. Surface the bounded scan as partial.
+                    self.discovery_limits.append(
+                        f"pagination page cap {max_pages} reached for {base_url}"
+                    )
         if errors and not out:
             raise RuntimeError("; ".join(errors)[:500])
         return out
@@ -208,8 +215,10 @@ class LinkScanScraper(BaseScraper):
             and all("Unresolved application URL" in reason
                     for reason in self.discovery_parse_errors)
         ):
-            # EJM currently emits placeholder [nid] IDs. Do not invent URLs;
-            # retry the live source on the next run so valid IDs self-recover.
+            # EJME's live Drupal template can emit links ending in [nid].
+            # No unique application identity exists. Do not invent a URL,
+            # publish garbage, or classify this known upstream state as a
+            # successful empty scrape. It will retry automatically next run.
             self.discovery_parse_errors.clear()
             self.discovery_limits.clear()
             raise SourceSkipped("upstream advert links have unresolved IDs")

@@ -1,0 +1,70 @@
+name: deploy-telegram-worker
+
+# Manually run only after reviewing the deployment/activation instructions.
+# This deploys Worker code/secrets but does not change Telegram's webhook.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-worker-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: cloudflare/telegram
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: cloudflare/telegram/package-lock.json
+      - name: Install locked tooling
+        run: npm ci
+      - name: Verify worker and local SQLite runtime
+        run: npm test
+      - name: Rotate and verify deployment token
+        env:
+          CF_TOKEN_PRIMARY: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
+          CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
+        run: node deploy-token.mjs
+      - name: Verify intended Cloudflare account
+        run: npx wrangler whoami
+      - name: Deploy with verified runtime secrets
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          SYNC_TOKEN: ${{ secrets.TELEGRAM_WORKER_SYNC_TOKEN }}
+          OWNER_IDS: ${{ vars.TELEGRAM_OWNER_IDS }}
+          AI_ENABLED: ${{ vars.TELEGRAM_AI_ENABLED || 'true' }}
+          PUBLIC_AI_ENABLED: ${{ vars.TELEGRAM_AI_PUBLIC_ENABLED || 'false' }}
+          PUBLIC_HOURLY_CAP: ${{ vars.TELEGRAM_AI_PUBLIC_HOURLY_CAP || '100' }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openrouter/free' }}
+        run: |
+          set -eu
+          test -n "$OWNER_IDS" || { echo "Set TELEGRAM_OWNER_IDS first"; exit 1; }
+          secret_file="$(mktemp)"
+          trap 'rm -f "$secret_file"' EXIT
+          export SECRET_FILE="$secret_file"
+          node --input-type=module -e '
+            import {writeFileSync} from "node:fs";
+            const names = ["TELEGRAM_BOT_TOKEN", "OPENROUTER_API_KEY", "WEBHOOK_SECRET", "SYNC_TOKEN"];
+            if (names.some(name => !process.env[name])) throw new Error("Required runtime secret missing");
+            writeFileSync(process.env.SECRET_FILE, JSON.stringify(Object.fromEntries(names.map(name => [name, process.env[name]]))), {mode: 0o600});'
+          npx wrangler deploy --secrets-file "$secret_file" --var "OWNER_IDS:$OWNER_IDS" \
+            --var "AI_ENABLED:$AI_ENABLED" --var "PUBLIC_AI_ENABLED:$PUBLIC_AI_ENABLED" \
+            --var "PUBLIC_HOURLY_CAP:$PUBLIC_HOURLY_CAP" \
+            --var "OPENROUTER_MODEL:$OPENROUTER_MODEL"

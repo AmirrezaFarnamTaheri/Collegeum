@@ -204,6 +204,7 @@ def to_raw_item(post: JobPostSchema, verdict: Verdict, *, detail: str = "",
         "final_url": final_url or None,
         "enriched": enriched,
         "reject": reject,
+        "closed_reason": post.extra.get("closed_reason"),
     }
     return RawItem(
         source=post.source,
@@ -235,9 +236,11 @@ async def _collect(
     results = await _scrape_all(scrapers, prefs.http.max_concurrent_sources,
                                 prefs.http.source_timeout)
 
-    # ---- 1. title-level rules + region + in-run duplicates -------------------------
+    # ---- 1. title-level rules + region + canonical-URL duplicates -------------------
     candidates: dict[str, tuple[SourceResult, JobPostSchema, Verdict]] = {}
-    by_fingerprint: dict[str, JobPostSchema] = {}
+    # Same title/employer does not prove identical vacancies. Different URLs
+    # may have separate supervisors, deadlines and applications; later, the
+    # enriched deduper checks actual job identity before combining candidates.
     by_url: dict[str, str] = {}
     for res in results:
         for post in res.posts:
@@ -251,17 +254,12 @@ async def _collect(
                 out.reject(why)
                 continue
             res.n_relevant += 1
-            twin = by_fingerprint.get(post.fingerprint)
-            if twin and twin.source != post.source:
-                out.reject("duplicate-in-run")  # same job on two boards today
-                continue
             other_id = by_url.get(post.url)
             if other_id and other_id != post.job_id:
                 if verdict.score <= candidates[other_id][2].score:
                     out.reject("duplicate-in-run")
                     continue
                 del candidates[other_id]
-            by_fingerprint.setdefault(post.fingerprint, post)
             by_url[post.url] = post.job_id
             prev = candidates.get(post.job_id)
             if not prev or verdict.score > prev[2].score:
