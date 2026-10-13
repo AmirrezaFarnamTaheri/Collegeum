@@ -16,6 +16,7 @@ def test_distinct_same_title_institution_jobs_survive_cross_board_discovery():
     prefs.enrich.fetch_details = False
     prefs.filters.strong_terms = ["predoc"]
     prefs.filters.field_terms = ["economics"]
+    prefs.filters.allow_private_sector = True
     configs = [
         SourceConfig(name=name, type="link_scan", url=f"https://example.org/{name}")
         for name in ("first", "second")
