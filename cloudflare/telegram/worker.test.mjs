@@ -404,3 +404,21 @@ test('replayed queued update does not reserve quota twice or enqueue twice', asy
   assert.equal((await instance.ctx.storage.get('rate:public')).length, 1);
   assert.equal((await instance.ctx.storage.get('update:271')).stage, 'queued');
 });
+
+
+test('omitted public-AI feature flag fails closed before quota or OpenRouter', async () => {
+  const instance = bot();
+  instance.env = {...env, PUBLIC_AI_ENABLED: undefined, OPENROUTER_API_KEY: 'offline-key'};
+  const original = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {providerCalls++; throw new Error('unwanted network call');};
+  try {
+    const result = await instance.fetch(post('/webhook', {update_id: 272,
+      message: {chat: {id: 222, type: 'private'}, from: {id: 222},
+        text: '/ask Count research vacancies'}}));
+    assert.equal(result.status, 200);
+    assert.equal(providerCalls, 0);
+    assert.equal(await instance.ctx.storage.get('rate:public'), undefined);
+    assert.match(instance.calls[0].payload.text, /configured owners/);
+  } finally {globalThis.fetch = original;}
+});
