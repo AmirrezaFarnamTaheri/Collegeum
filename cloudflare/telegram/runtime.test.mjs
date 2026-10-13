@@ -10,7 +10,8 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
     modules:true,scriptPath:resolve('.wrangler/build/worker.js'),compatibilityDate:'2026-10-12',
     durableObjects:{BOT:{className:'TelegramBot',useSQLite:true}},
     bindings:{OWNER_IDS:'42',TELEGRAM_BOT_TOKEN:'offline-token',WEBHOOK_SECRET:'offline-webhook',
-      SYNC_TOKEN:'offline-sync',OPENROUTER_API_KEY:'offline-openrouter',PUBLIC_HOURLY_CAP:'4'},
+      SYNC_TOKEN:'offline-sync',OPENROUTER_API_KEY:'offline-openrouter',PUBLIC_HOURLY_CAP:'4',
+      PUBLIC_AI_ENABLED:'true'},
     outboundService:async request => {
       const url=new URL(request.url);
       assert.ok(['api.telegram.org','openrouter.ai'].includes(url.hostname));
