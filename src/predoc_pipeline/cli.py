@@ -166,7 +166,8 @@ def feedback_key() -> None:
 def broadcast_pending() -> None:
     """Broadcast unposted pending predoc positions directly to Telegram and update state."""
     from . import state
-    from .pipeline import RunStats, _broadcast, _listing_from_row
+    from .pipeline import RunStats, _broadcast, _recover_pending, _verify_before_sending
+    from .policy import Policy
     from .publish.feedback import FeedbackStore
     from .publish.telegram import TelegramClient
 
@@ -184,31 +185,26 @@ def broadcast_pending() -> None:
     feedback = FeedbackStore.from_settings(settings)
     with Database(settings.db_path) as db:
         state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
-        pending_rows = db.pending_listings()
-        accepted = []
-        for row in pending_rows:
-            if row["url_hash"] not in feedback.hidden:
-                accepted.append((int(row["id"]), _listing_from_row(row)))
-
-        typer.echo(f"Found {len(accepted)} pending position(s) eligible for broadcast.")
-        if not accepted:
-            return
-
         stats = RunStats(run_id="broadcast-manual")
-        telegram = TelegramClient(bot_token=settings.telegram_bot_token)
-        try:
-            _broadcast(
-                accepted,
-                telegram,
-                settings,
-                db,
-                stats,
-                router=router,
-                feedback=feedback,
-                digest_page_size=prefs.telegram.digest_page_size,
-            )
-        finally:
-            telegram.close()
+        accepted = _recover_pending([], db, Policy(prefs), stats, feedback.hidden)
+        accepted = _verify_before_sending(accepted, prefs, db, stats)
+        typer.echo(f"Found {len(accepted)} pending position(s) eligible for broadcast.")
+
+        if accepted:
+            telegram = TelegramClient(bot_token=settings.telegram_bot_token)
+            try:
+                _broadcast(
+                    accepted,
+                    telegram,
+                    settings,
+                    db,
+                    stats,
+                    router=router,
+                    feedback=feedback,
+                    digest_page_size=prefs.telegram.digest_page_size,
+                )
+            finally:
+                telegram.close()
 
         state.write_journal(db, settings.state_path)
         state.export_dashboard(
