@@ -12,6 +12,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from ..core.textproc import escape_telegram_html as esc
+from ..core.textproc import telegram_visible_length
 from ..core.timeparse import format_ts, parse_datetime, utcnow
 from ..settings import Settings
 from .feedback import FeedbackStore
@@ -167,7 +168,7 @@ def render_result(query: DatabaseQuery, rows: list[dict[str, Any]], *, snapshot:
             lines.append(f'{field.capitalize()}: {esc(str(value or "Unstated")[:180])}')
         lines.append(f'<a href="{esc(row["apply_url"])}">Source advert ↗</a>')
         blocks.append('\n'.join(lines))
-    from .telegram import MAX_MESSAGE_CHARS, SAFETY_CHARS, telegram_visible_length
+    from .telegram import MAX_MESSAGE_CHARS, SAFETY_CHARS
 
     def footer(shown: int) -> str:
         return (f'\n\nShowing <b>{shown}</b> of {len(rows)} matching records. '
