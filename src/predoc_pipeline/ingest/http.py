@@ -177,11 +177,12 @@ class PoliteClient:
                     if hop >= 5:
                         raise UnsafeDestination("HTTP redirect limit exceeded")
                     if urlsplit(target).netloc != urlsplit(current).netloc:
+                        # Do not forward vendor-specific credentials or
+                        # cache validators to a different HTTP origin.
+                        safe_headers = {"user-agent", "accept", "accept-language",
+                                        "accept-encoding"}
                         current_headers = {name: value for name, value in current_headers.items()
-                                           if name.lower() not in {
-                                               "authorization", "cookie",
-                                               "if-none-match", "if-modified-since",
-                                           }}
+                                           if name.lower() in safe_headers}
                     current = target
                     continue
                 body = bytearray()

@@ -116,9 +116,12 @@ class HttpClient:
                     if (origin.scheme, origin.netloc) != (destination.scheme, destination.netloc):
                         if method.upper() not in {"GET", "HEAD"}:
                             raise FetchError("Cross-origin write redirect refused")
-                        # Never send caller credentials to a different origin.
+                        # A third-party redirect must never inherit arbitrary
+                        # client/vendor secret headers (e.g. X-Api-Key).
+                        safe_headers = {"user-agent", "accept", "accept-language",
+                                        "accept-encoding"}
                         headers = {k: v for k, v in headers.items()
-                                   if k.lower() not in {"authorization", "cookie", "proxy-authorization"}}
+                                   if k.lower() in safe_headers}
                     if response.status_code == 303 or (
                         response.status_code in {301, 302} and method.upper() == "POST"
                     ):
