@@ -10,6 +10,7 @@ from __future__ import annotations
 import ipaddress
 import socket
 from collections.abc import Callable
+from typing import Any
 from urllib.parse import urlsplit
 
 _PRIVATE_SUFFIXES = (
@@ -48,7 +49,7 @@ def validate_public_url(
     url: str,
     *,
     resolve_dns: bool = True,
-    resolver: Callable[..., list[tuple]] = socket.getaddrinfo,
+    resolver: Callable[..., Any] = socket.getaddrinfo,
 ) -> str:
     """Validate a public HTTP(S) destination, including all DNS A/AAAA answers.
 
