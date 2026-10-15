@@ -475,7 +475,8 @@ name = "carlo_alberto"
 type = "link_scan"
 group = "research_institute"
 url = "https://www.carloalberto.org/about/jobs-fellowships/"
-link_pattern = 'carloalberto\.org/about/jobs-fellowships/(?:research-assistantships|post-doctoral-[^/]+)'\nopen_section_only = true
+link_pattern = 'carloalberto\.org/about/jobs-fellowships/(?:research-assistantships|post-doctoral-[^/]+)'
+open_section_only = true
 institution = "Collegio Carlo Alberto"
 country = "Italy"
 field_implied = true
