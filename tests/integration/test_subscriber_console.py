@@ -1669,3 +1669,16 @@ def test_telegram_command_picker_stays_short_and_advanced_commands_still_work():
     assert {'privacy', 'sources', 'delete', 'forget', 'lifesciences'}.isdisjoint(visible)
     assert ALIASES['hidden'] == 'hidden'
     assert ALIASES['new'] == 'new'
+
+
+def test_subscription_home_does_not_claim_active_alerts_without_any_topic():
+    from predoc_pipeline.publish.ui import menu
+
+    empty, _ = menu(None)
+    assert "Not configured" in empty
+    ready, _ = menu({"topics": {"predoc": "2026-10-15T00:00:00Z"},
+                     "scopes": {}, "paused": False})
+    assert "Alerts: On" in ready
+    paused, _ = menu({"topics": {"predoc": "2026-10-15T00:00:00Z"},
+                      "scopes": {}, "paused": True})
+    assert "Alerts: Paused" in paused
