@@ -275,6 +275,9 @@ def menu(
             _label(key, lang) for key in CAREER_SCOPES if key in scopes
         ]
         alerts_ready = bool(academic or life_active or (careers and selected_markets))
+        delivery_status_en = (
+            "Not configured" if not alerts_ready else "Paused" if paused else "On"
+        )
         market_line = ", ".join(selected_markets) if selected_markets else (
             "انتخاب نشده" if fa else "Not selected"
         )
@@ -292,7 +295,7 @@ def menu(
             f"💼 Career roles: {careers}/4\n"
             f"🧬 Life Sciences PhD: {'On' if life_active else 'Off'}\n"
             f"🌍 Markets: {escape(market_line)}\n"
-            f"🔔 Alerts: {'Not configured' if not alerts_ready else 'Paused' if paused else 'On'}\n\n"
+            f"🔔 Alerts: {delivery_status_en}\n\n"
             "Choose a category to tailor your alerts."
         )
         body += (
