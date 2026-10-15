@@ -100,7 +100,7 @@ FA_COMMAND_DESCRIPTIONS = {
 COMMANDS_VERSION = 11
 MAX_COMMANDS_PER_SYNC = 20
 ALIASES = {
-    "menu": "menu", "home": "menu", "search": "search", "new": "new",
+    "menu": "menu", "home": "menu", "more": "more", "search": "search", "new": "new",
     "closing": "closing", "ask": "ask", "forget": "forget",
     "positions": "positions", "position": "positions", "list": "positions", "jobs": "positions",
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
@@ -569,11 +569,13 @@ def _handle_message(
         bot.send(str(chat), HELP, menu_keyboard())
         summary["commands"] += 1
         return
-    from .browse import home, screen, search_token
+    from .browse import home, more, screen, search_token
 
     context = page_opts.pop('context', {})
     if kind == 'menu':
         text, keyboard = home(rows, store)
+    elif kind == 'more':
+        text, keyboard = more()
     else:
         query = (msg.get('text') or '').partition(' ')[2].strip()[:160] if kind == 'search' else ''
         token = search_token(query, context) if query else ''
@@ -598,7 +600,7 @@ def _handle_tap(
         return False
     data = cq.get('data') or ''
     if isinstance(data, str) and data.startswith(('view|', 'detail|')):
-        from .browse import VIEWS, details, home, menu_keyboard, screen, valid_prefix
+        from .browse import VIEWS, details, home, menu_keyboard, more, screen, valid_prefix
 
         message = cq.get('message') or {}
         if _chat_id(message.get('chat')) not in owners or not message.get('message_id'):
@@ -627,6 +629,8 @@ def _handle_tap(
                 kind = 'search'
             if kind == 'menu':
                 text, keyboard = home(rows or [], store)
+            elif kind == 'more':
+                text, keyboard = more()
             elif kind == 'help':
                 text, keyboard = HELP, menu_keyboard()
             elif kind in VIEWS:
