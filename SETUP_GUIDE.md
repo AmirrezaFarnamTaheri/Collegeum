@@ -1,147 +1,134 @@
-# Setup guide (GitHub website only, no programming)
+# Collegeum setup and operations (October 2026)
 
-This guide walks you through deploying the pipeline and connecting your Telegram channel and optional LLM providers. Plan for about 10 minutes.
+This is the setup guide for the **existing Collegeum GitHub repository**. The
+tracked workflows under `.github/workflows/` are authoritative: do not upload
+older project ZIPs or manually recreate workflow files from chat messages.
+Unreviewed branches must not execute publication jobs.
 
-You will need: your Telegram **bot token** and your **public channel ID** (or chat ID).
+## 1. Configure GitHub Actions
 
----
+In **Settings → Actions → General**, permit the repository's workflows and
+their required `contents: write` permission. In **Settings → Secrets and
+variables → Actions**, configure the settings below.
 
-## Step 1 — Prepare your Telegram Bot and Channel
+**Public announcements:** set the repository secrets `TELEGRAM_BOT_TOKEN`
+and `TELEGRAM_PUBLIC_CHANNEL_ID`. The bot must be an administrator of its
+destination channel. The channel ID and the *positive private user ID* of the
+admin are different things. Set `TELEGRAM_ADMIN_CHAT_ID` for private owner
+commands, if used.
 
-Ensure your Telegram bot is added as an administrator to your target Telegram channel so it has permission to post messages.
+**Private commands/feedback:** set the existing
+`FEEDBACK_ENCRYPTION_KEY` secret. This key decrypts saved subscriber state.
+Never replace an active key with a new one without a verified re-encryption
+migration: doing so can make saved marks/subscriptions unreadable.
+Set the repository variable `ENABLE_TELEGRAM_SYNC=true` only after verifying
+the key, bot and intended inbox. If private sync is not wanted, keep it
+disabled. Public announcements are configured separately.
 
-## Step 2 — Configure Repository Secrets
+If credentials are stored as **GitHub Environment secrets**, set the repository
+variable `COLLEGEUM_SECRET_ENVIRONMENT` to the correct environment name.
+Check that the workflow actually receives the configured environment secrets.
 
-In your GitHub repository:
-1. Go to **Settings** → **Secrets and variables** → **Actions**.
-2. Click **New repository secret** and add your credentials.
+**Recommended subscriber privacy boundary:** create an independently private
+GitHub repository for encrypted `data/feedback.enc` and
+`data/telegram_state.json`. Copy the **existing** encrypted state there in a
+trusted checkout before setting `PRIVATE_STATE_REPO=OWNER/REPOSITORY` and
+`PRIVATE_STATE_TOKEN`. The workflows verify that the target is private.
+Never start an empty private state over existing subscribers. Follow
+[Telegram operations](docs/TELEGRAM_OPERATIONS.md#optional-private-repository-for-subscriber-state)
+for the state migration, checkpoint validation and historic privacy caveats.
+`PRIVATE_STATE_REPO` is not enabled by merely creating this variable.
 
-## Step 3 — Upload the files
+The optional `COLLEGEUM_SITE_URL` variable overrides the verified Pages
+default `https://amirrezafarnamtaheri.github.io/Collegeum/`. Do not reuse
+legacy `SITE_URL` pointing at a different project.
 
-1. Unzip `predoc-pipeline.zip` on your computer.
-2. On the new repository page click **uploading an existing file**.
-3. Open the unzipped `predoc-pipeline` folder, select **everything inside it**
-   (`src`, `config`, `docs`, `tests`, `tools`, `pyproject.toml`, `README.md`
-   and the other files) and drag it onto the GitHub page.
-4. Wait until all files are listed, then click **Commit changes**.
+## 2. Extraction and optional integrations
 
-Folders whose name starts with a dot (`.github`) are hidden on most computers
-and are not uploaded this way. That is expected: you create the two
-important files by hand in the next step. (If the repository page *does* show
-a `.github` folder after the upload, it worked anyway: skip Step 4.)
+Without any model-provider API key the pipeline uses its deterministic
+heuristic extractor. Optional secrets include `GROQ_API_KEY`,
+`NVIDIA_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+`OPENROUTER_API_KEY`, `MISTRAL_API_KEY`, `GEMINI_API_KEY` and
+`CUSTOM_LLM_API_KEY`; set `EXTRACTION_BACKEND` if the automatic
+provider selection is not desired. See `.env.example` for the complete
+provider options. Do not put keys in TOML or tracked files.
 
-## Step 4 — Create the two automatic jobs
+X ingestion is separately gated by `ENABLE_TWITTER=true` and can use the
+official `X_BEARER_TOKEN` or `XQUIK_API_KEY`. If both are configured,
+quota exhaustion on the official endpoint can fall back to Xquik while
+retaining the official provider's errors. Genuine permission-denied
+responses do not permit fallback to another unauthorised method.
+X broadcasting needs OAuth secrets and is controlled by
+`X_BROADCAST_ENABLED`. Check `COMPLIANCE.md` before activating any
+scraping or third-party service.
 
-Do this twice, once per file:
+## 3. Run and validate
 
-1. In the repository click **Add file** → **Create new file**.
-2. In the name box type exactly `.github/workflows/pipeline.yml`
-   (typing the `/` creates the folders).
-3. Open the file **`pipeline.yml`** I sent you in the chat, copy **all** of
-   it, and paste it into the big text box.
-4. Click **Commit changes…** → **Commit changes**.
+Under **Actions → predoc-pipeline → Run workflow**, first select
+`dry_run=true` to inspect extraction and source health without publishing.
+Read its job log and `docs/data/health.json` before a live run.
+A *green Actions check* establishes that the workflow completed; it does
+**not** guarantee every independent source is healthy. Use the per-source
+statuses and recent-run trends in the health dashboard.
 
-Then repeat with the name `.github/workflows/telegram.yml` and the content of
-**`telegram.yml`**.
+The scheduled `predoc-pipeline` workflow runs at **00:07, 04:07, 08:07,
+12:07, 16:07, and 20:07 UTC** (four-hour source cohorts). GitHub scheduling,
+runner queues and network outages can delay execution.
 
-(The other two workflow files are optional: `ci.yml` re-runs the tests after
-each upload and uses extra free minutes; `pages.yml` is the web dashboard,
-which only works on a public repository. You can skip both.)
+The `telegram-sync` workflow checks private commands at **:15 and :45
+every hour, UTC**, throughout the day—but only if
+`ENABLE_TELEGRAM_SYNC=true` and required encryption/bot secrets are
+present. GitHub Actions is not an always-on service; a scheduled check may
+be delayed. Telegram can discard unconsumed updates after 24 hours, so do
+not promise immediate or infallible command delivery.
 
-## Step 5 — Allow the jobs to save their data
+The optional Cloudflare Telegram Worker is deployed separately through
+**Actions → deploy-telegram-worker** on `main`, after configuring its
+Cloudflare account, tokens, secret and Owner IDs. Deploying Worker code
+does **not** automatically switch Telegram's webhook. Follow
+[Telegram operations](docs/TELEGRAM_OPERATIONS.md) to review ownership,
+webhook activation, unknown-send reconciliation and rollback.
 
-1. **Settings** (top of the repository) → **Actions** (left) → **General**.
-2. Scroll to **Workflow permissions**, choose **Read and write permissions**,
-   click **Save**.
+Never send logs, full exception messages or source failures to vacancy
+subscribers. Inspect CI/health privately. Subscriber-facing messages should
+contain only supported vacancy/status information.
 
-## Step 6 — Add your two secrets
+## 4. Manage sources and records safely
 
-**Settings** → **Secrets and variables** (left) → **Actions** →
-**New repository secret**. Add:
+Source definitions live in `config/sources.toml`; filters and routing are in
+`config/preferences.toml`. After changing either, run CI and verify representative
+live discovery. A source returning 403/418, refusing `robots.txt`, or
+requiring human login is **not** an invitation to spoof browser headers or
+circumvent access restrictions. Distinguish genuinely empty recruitment
+from fetch failures and missing selectors. Temporary upstream failure is
+not proof a vacancy closed.
 
-| Name | Value |
-|---|---|
-| `TELEGRAM_BOT_TOKEN` | your bot token (same as the old bot) |
-| `TELEGRAM_PUBLIC_CHANNEL_ID` | your chat id, the number you used as `TELEGRAM_CHAT_ID` before |
+Before manually repairing historical **audit-only false closures**:
 
-Type the names exactly as shown (capital letters, underscores). You do **not**
-need `GEMINI_API_KEY`: without it the bot uses its own rules, which is also the
-only option that works from Iran.
+1. Pause jobs that write the listing journal; save a trusted checkout of the
+   latest `main` with all relevant state and receipts.
+2. Preview using `PYTHONPATH=src python3 tools/repair_false_audit_closures.py`.
+   Confirm the candidate IDs and exclusion rationale.
+3. Run `PYTHONPATH=src python3 tools/repair_false_audit_closures.py --apply`
+   only after review. It creates a byte-exact local backup under `build/`,
+   clears only specific obsolete audit-generated closure markers, and leaves
+   prior Telegram/X receipts intact.
+4. Review the journal diff and perform a controlled state checkpoint. Broken
+   application links remain suppressed by normal public export quality
+   filters. **Do not manually rebroadcast** repaired rows or mistake an
+   audit marker for evidence of a genuinely reopened vacancy.
 
-### Optional: X/Twitter credentials
+These actions do not erase records from historical public Git commits.
 
-If you want to broadcast new listings to X/Twitter or ingest postings from X:
+## 5. Troubleshooting
 
-| Name | Purpose |
-|---|---|
-| `X_BROADCAST_ENABLED` | Set to `true` to enable automatic X posting |
-| `X_CONSUMER_KEY`, `X_CONSUMER_SECRET` | OAuth app keys from X Developer Portal |
-| `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` | User access tokens for the target X account |
-| `X_BEARER_TOKEN` | Official X API v2 search token |
-| `XQUIK_API_KEY` | Xquik proxy search key (alternative to X API v2) |
+If CI is red, open the failed workflow and inspect the exact failing step.
+If source health is degraded but CI is green, inspect `docs/data/health.json`,
+identify the failed source and test its official site/permissions separately.
+For stale or unanswered private commands, check `ENABLE_TELEGRAM_SYNC`,
+bot credentials, encrypted-state restoration and durable send-intent recovery
+before retrying. Do **not** blindly replay an ambiguous Telegram send.
 
-## Step 7 — First run
-
-1. **Actions** tab → **predoc-pipeline** (left) → **Run workflow** → green
-   **Run workflow** button.
-2. It takes about 5–15 minutes (it reads every new job page). A green tick
-   means it finished.
-3. In Telegram you receive the positions that are open right now. On this
-   first run that can be many, so they arrive as numbered lists of 6 with
-   buttons under each list.
-
-After this, it runs by itself every morning at 04:00 UTC (07:30 Tehran time)
-and only sends positions it has not sent before.
-
-## Step 8 — Use the buttons and commands
-
-Under every position:
-
-* ✅ **Interested** — keeps it in `/valid`
-* ❌ **Not for me** — hides it everywhere, for good
-* 📝 **Applied** — moves it to `/applied`, so you can track your applications
-
-Tap the same button again to undo. Commands you can send to the bot:
-`/positions` (all open positions, soonest deadline first), `/applied`,
-`/valid`, `/hidden`, `/help`.
-
-The bot checks for your messages every 30 minutes between 06:45 and 00:15
-Tehran time, so an answer can take up to half an hour. To get an answer right
-away: **Actions** → **telegram-sync** → **Run workflow**.
-
----
-
-## Changing what the bot sends
-
-Open `config/preferences.toml` on GitHub and click the pencil icon ✏️ to edit.
-For example, to exclude an employer or keyword, add it to `excluded_employers`:
-
-```toml
-excluded_employers = [
-  "Some Unwanted Institute",
-  "commercial-bank.com",
-]
-```
-
-Click **Commit changes**. The next run uses the new rules, and positions
-already sent that no longer match are removed from `/positions`.
-
-To switch a source off, open `config/sources.toml`, find its `[[board]]`
-block and add the line `enabled = false`.
-
-## If something goes wrong
-
-* **A red ✗ in Actions**: click it, then the failed step, and send me a
-  screenshot of the red lines.
-* **"N source(s) failing for 3+ runs in a row"** in Telegram: a website
-  changed or blocks GitHub. The bot keeps working with the other sources.
-  Send me the message and I'll fix that source.
-* **No reply to /positions**: wait 30 minutes, or run **telegram-sync** by
-  hand (see Step 8). Check that the old bot's workflows are disabled (Step 1).
-
-## Free minutes
-
-A private repository gets 2,000 free GitHub Actions minutes a month. The daily
-run uses about 250 of them, the 30-minute Telegram check about 1,100. If you
-ever run short, open `.github/workflows/telegram.yml`, change
-`"15,45 3,5-20 * * *"` to `"15 3,5-20 * * *"` (once an hour) and commit.
+GitHub Actions quotas, schedule delays and optional service pricing vary by
+account and time. Consult GitHub's current usage/billing page instead of
+relying on a fixed historical minutes estimate.
