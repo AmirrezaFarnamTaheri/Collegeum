@@ -320,7 +320,7 @@ export class TelegramBot {
     if (!response.ok || !result?.ok) {
       if (method === "editMessageText" && response.status === 400 &&
           String(result.description).includes("message is not modified")) return;
-      if ([400, 401, 403, 404, 422].includes(response.status)) {
+      if ([400, 403, 422].includes(response.status)) {
         throw Object.assign(new Error('Telegram permanently rejected the operation'),
           {permanent:true,status:response.status});
       }

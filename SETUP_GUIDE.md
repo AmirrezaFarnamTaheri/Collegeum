@@ -7,9 +7,10 @@ Unreviewed branches must not execute publication jobs.
 
 ## 1. Configure GitHub Actions
 
-In **Settings → Actions → General**, permit the repository's workflows and
-their required `contents: write` permission. In **Settings → Secrets and
-variables → Actions**, configure the settings below.
+Keep the repository-wide `GITHUB_TOKEN` default **read-only** in
+**Settings → Actions → General**. Workflows needing repository writes must
+explicitly declare `contents: write` in their workflow files.
+In **Settings → Secrets and variables → Actions**, configure the settings below.
 
 **Public announcements:** set the repository secrets `TELEGRAM_BOT_TOKEN`
 and `TELEGRAM_PUBLIC_CHANNEL_ID`. The bot must be an administrator of its

@@ -76,6 +76,8 @@ def validate_public_url(
         raise UnsafeDestination("private or ambiguous hostname")
     literal = _literal_address(host)
     if literal is not None:
+        if isinstance(literal, ipaddress.IPv6Address) and literal.ipv4_mapped is not None:
+            literal = literal.ipv4_mapped
         if not literal.is_global:
             raise UnsafeDestination("non-public IP address")
         return url

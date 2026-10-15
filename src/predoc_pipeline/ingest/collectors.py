@@ -49,6 +49,7 @@ class SourceStats:
     unchanged: int = 0
     errors: int = 0
     messages: list[str] = field(default_factory=list)
+    quota_exhausted: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -560,6 +561,7 @@ def collect_x_api(
             stat.fetched += 1
             if resp.status_code == 429:
                 stat.errors += 1
+                stat.quota_exhausted = True
                 stat.messages.append("rate limited by X API (429)")
                 break
             if resp.status_code in (402, 403):
@@ -570,9 +572,10 @@ def collect_x_api(
                 except (ValueError, TypeError):
                     detail = ""
                 if any(token in detail for token in (
-                    "usagecap", "quota", "monthly limit", "rate limit", "credits depleted",
-                )):
+                    "usagecap", "quota exhausted", "monthly quota", "monthly limit exceeded", "credits depleted",
+                )) and "permission denied" not in detail:
                     stat.errors += 1
+                    stat.quota_exhausted = True
                     stat.messages.append(f"X API quota exhausted ({resp.status_code})")
                     break
             if resp.status_code != 200:
@@ -795,10 +798,7 @@ def collect_twitter(
     xquik_key = getattr(settings, "xquik_api_key", "") or os.environ.get("XQUIK_API_KEY", "")
     if bearer:
         official, reports = collect_x_api(settings, client=client)
-        exhausted = any(
-            "rate limited" in message.lower() or "quota exhausted" in message.lower()
-            for report in reports for message in report.messages
-        )
+        exhausted = any(report.quota_exhausted for report in reports)
         if not exhausted or not xquik_key:
             return official, reports
         backup, backup_reports = collect_xquik(settings, client=client)

@@ -692,6 +692,11 @@ def _record_extraction_failure(
 ) -> None:
     """Persist a short retry checkpoint in the already-journalled seen table."""
     previous = db.seen(source_key)
+    # A duplicate failure in the same batch is one attempt, not another retry.
+    if (previous is not None and previous["decision"] == "extract_error"
+            and previous["content_hash"] == digest
+            and not _extraction_retry_due(previous, digest)):
+        return
     attempts = 1
     if (previous is not None and previous["decision"] == "extract_error"
             and previous["content_hash"] == digest):
@@ -1489,6 +1494,7 @@ def run(
                     batch_size = max(1, settings.extraction_concurrency * 2)
                     item_iter = iter(items)
                     stop_pipeline = False
+                    submitted_this_run: set[tuple[str, str]] = set()
 
                     while not stop_pipeline:
                         to_submit: list[tuple[RawItem, float, str, str, str]] = []
@@ -1502,6 +1508,11 @@ def run(
                             if pre is None:
                                 continue
                             gate, source_key, digest = pre
+                            key = (source_key, digest)
+                            if key in submitted_this_run:
+                                stats.already_seen += 1
+                                continue
+                            submitted_this_run.add(key)
                             to_submit.append((item, gate.score, gate.language, source_key, digest))
 
                         if not to_submit:

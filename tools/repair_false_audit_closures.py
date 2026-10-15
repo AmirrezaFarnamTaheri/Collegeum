@@ -22,7 +22,7 @@ JOURNAL = Path("data/listings.ndjson")
 def _parse_records(data: bytes) -> list[dict[str, Any]]:
     seen: set[int] = set()
     records: list[dict[str, Any]] = []
-    for number, line in enumerate(data.decode("utf-8").splitlines(), 1):
+    for number, line in enumerate(data.decode("utf-8").split("\n"), 1):
         if not line.strip():
             continue
         record = json.loads(line)

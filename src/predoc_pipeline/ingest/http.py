@@ -183,7 +183,7 @@ class PoliteClient:
                     validate_public_url(target, resolve_dns=self._check_dns)
                     if hop >= 5:
                         raise UnsafeDestination("HTTP redirect limit exceeded")
-                    if urlsplit(target).netloc != urlsplit(current).netloc:
+                    if (urlsplit(target).scheme, urlsplit(target).netloc) != (urlsplit(current).scheme, urlsplit(current).netloc):
                         # Do not forward vendor-specific credentials or
                         # cache validators to a different HTTP origin.
                         safe_headers = {"user-agent", "accept", "accept-language",
