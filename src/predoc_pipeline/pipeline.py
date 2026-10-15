@@ -37,6 +37,7 @@ import os
 import re
 import uuid
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
@@ -364,7 +365,9 @@ def _pre_extract(
     same_candidate = prior == f"candidate-v3:{evidence_hash}" or (
         prior.startswith("candidate-v4:") and prior.endswith(f":{evidence_hash}")
     )
-    if seen is not None and (prior == digest or same_candidate):
+    if seen is not None and (prior == digest or same_candidate) and not (
+        _extraction_retry_due(seen, digest)
+    ):
         # Every v3 rejection predates the policy-version field, not just
         # PhD/postdoc decisions. Reconsider each old rejection once under the
         # current policy; retain the fast path for previously accepted listings.
@@ -657,6 +660,58 @@ def _post_extract(
     return listing
 
 
+_EXTRACT_RETRY_PREFIX = "extract-retry-v1|"
+_MAX_EXTRACT_RETRIES = 3
+
+
+def _extraction_retry_due(
+    seen: Any, digest: str, *, now: datetime | None = None,
+) -> bool:
+    """Only failed extractions may retry: new evidence resets the budget."""
+    if seen is None or seen["decision"] != "extract_error":
+        return False
+    if seen["content_hash"] != digest:
+        return True
+    raw = str(seen["reason"] or "")
+    if not raw.startswith(_EXTRACT_RETRY_PREFIX):
+        return False  # an invalid checkpoint must never cause unlimited spend
+    try:
+        attempt_text, due_text = raw[len(_EXTRACT_RETRY_PREFIX):].split("|", 1)
+        attempts = int(attempt_text)
+        retry_at = parse_datetime(due_text)
+    except (TypeError, ValueError):
+        return False
+    return bool(
+        0 < attempts < _MAX_EXTRACT_RETRIES and retry_at is not None
+        and (now or utcnow()) >= retry_at
+    )
+
+
+def _record_extraction_failure(
+    db: Database, item: RawItem, source_key: str, digest: str,
+) -> None:
+    """Persist a short retry checkpoint in the already-journalled seen table."""
+    previous = db.seen(source_key)
+    attempts = 1
+    if (previous is not None and previous["decision"] == "extract_error"
+            and previous["content_hash"] == digest):
+        raw = str(previous["reason"] or "")
+        if raw.startswith(_EXTRACT_RETRY_PREFIX):
+            try:
+                attempts = min(
+                    _MAX_EXTRACT_RETRIES,
+                    int(raw[len(_EXTRACT_RETRY_PREFIX):].split("|", 1)[0]) + 1,
+                )
+            except ValueError:
+                attempts = _MAX_EXTRACT_RETRIES
+    retry_after = utcnow() + timedelta(hours=8 * 2 ** (attempts - 1))
+    db.mark_seen(
+        source_key, source=item.source, decision="extract_error",
+        reason=f"{_EXTRACT_RETRY_PREFIX}{attempts}|{format_ts(retry_after)}",
+        content_hash=digest,
+    )
+
+
 def _process(
     item: RawItem,
     *,
@@ -683,6 +738,7 @@ def _process(
         raise
     except ExtractionError as exc:
         stats.errors += 1
+        _record_extraction_failure(db, item, source_key, digest)
         db.log_dlq(
             run_id=stats.run_id,
             stage="extract",
@@ -1474,7 +1530,10 @@ def run(
                                         # results still consume quota and must be saved.
                                         continue
                                     stats.errors += 1
-                                    log.exception("item_failed", source=it.source)
+                                    if isinstance(extraction_error, ExtractionError):
+                                        _record_extraction_failure(db, it, skey, dig)
+                                    log.warning("extract_failed", source=it.source,
+                                                error=type(extraction_error).__name__)
                                     db.log_dlq(
                                         run_id=stats.run_id,
                                         stage="extract",
