@@ -540,7 +540,7 @@ def _handle_message(
                 record.update({key: row[key] for key in (
                     'url_hash', 'closed_at', 'expired_at', 'first_seen_at', 'last_seen_at',
                 )})
-                record['kind'] = router.position_kind(row['title'], row['summary'] or '')
+                record['kind'] = router.kind_for_row(row)
                 records.append(record)
             question = text_input if natural_question else text_input.partition(' ')[2]
             answer = ask_database(question, records, store, settings, user_id=chat, owner=owner,
