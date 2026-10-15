@@ -562,6 +562,19 @@ def collect_x_api(
                 stat.errors += 1
                 stat.messages.append("rate limited by X API (429)")
                 break
+            if resp.status_code in (402, 403):
+                # Some plans report quota exhaustion via 402/403. Do not
+                # confuse a permission rejection with a depleted allocation.
+                try:
+                    detail = str(resp.json()).lower()[:1000]
+                except (ValueError, TypeError):
+                    detail = ""
+                if any(token in detail for token in (
+                    "usagecap", "quota", "monthly limit", "rate limit", "credits depleted",
+                )):
+                    stat.errors += 1
+                    stat.messages.append(f"X API quota exhausted ({resp.status_code})")
+                    break
             if resp.status_code != 200:
                 stat.errors += 1
                 stat.messages.append(f"X API status {resp.status_code}")
@@ -779,10 +792,23 @@ def collect_twitter(
     import os
 
     bearer = getattr(settings, "x_bearer_token", "") or os.environ.get("X_BEARER_TOKEN", "")
-    if bearer:
-        return collect_x_api(settings, client=client)
-
     xquik_key = getattr(settings, "xquik_api_key", "") or os.environ.get("XQUIK_API_KEY", "")
+    if bearer:
+        official, reports = collect_x_api(settings, client=client)
+        exhausted = any(
+            "rate limited" in message.lower() or "quota exhausted" in message.lower()
+            for report in reports for message in report.messages
+        )
+        if not exhausted or not xquik_key:
+            return official, reports
+        backup, backup_reports = collect_xquik(settings, client=client)
+        seen_urls = {item.source_url for item in official}
+        for item in backup:
+            if item.source_url not in seen_urls:
+                official.append(item)
+                seen_urls.add(item.source_url)
+        return official, [*reports, *backup_reports]
+
     if xquik_key:
         return collect_xquik(settings, client=client)
 

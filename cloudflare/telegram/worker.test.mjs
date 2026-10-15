@@ -423,3 +423,39 @@ test('omitted public-AI feature flag fails closed before quota or OpenRouter', a
     assert.match(instance.calls[0].payload.text, /configured owners/);
   } finally {globalThis.fetch = original;}
 });
+
+test('permanent Telegram rejection is terminal and not retried by webhook or alarm', async () => {
+  const instance = bot();
+  let attempts = 0;
+  instance.api = async () => {
+    attempts++;
+    throw Object.assign(new Error('invalid markup'), {permanent: true, status: 400});
+  };
+  const update = {update_id: 8181, message: {
+    chat: {id:42,type:'private'}, from:{id:42}, text:'/menu', message_id:14,
+  }};
+  const first = await instance.fetch(post('/webhook',update));
+  assert.equal(first.status,200);
+  const state = await instance.ctx.storage.get('update:8181');
+  assert.equal(state.stage,'rejected');
+  assert.equal(state.status,400);
+  assert.equal(state.payload,undefined,'terminal checkpoint must not retain private message text');
+  assert.equal((await instance.fetch(post('/webhook',update))).status,200);
+  await instance.alarm();
+  assert.equal(attempts,1);
+});
+
+test('explicit Telegram 400 errors are classified as permanent', async () => {
+  const instance = bot();
+  const fetchBefore = globalThis.fetch;
+  globalThis.fetch = async () => Response.json(
+    {ok:false,description:'Bad Request: cannot parse entities'},{status:400});
+  try {
+    await assert.rejects(
+      () => TelegramBot.prototype.api.call(instance,'sendMessage',{chat_id:42,text:'<b>bad'}),
+      error => error.permanent === true && error.status === 400,
+    );
+  } finally {
+    globalThis.fetch=fetchBefore;
+  }
+});

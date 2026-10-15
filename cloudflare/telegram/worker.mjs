@@ -72,7 +72,7 @@ export class TelegramBot {
       state.retry_at || 0,
     );
     const pending = [...(await this.ctx.storage.list({prefix: 'update:'}))]
-      .filter(([,state]) => state?.stage !== 'done' && state?.update);
+      .filter(([,state]) => !['done', 'rejected'].includes(state?.stage) && state?.update);
     let attempted = 0;
     for (const [key, state] of pending) {
       if (attempted >= 4) break;
@@ -87,7 +87,7 @@ export class TelegramBot {
       catch { console.warn('Failed to recover durable Telegram update',update.update_id); }
     }
     const waiting = [...(await this.ctx.storage.list({prefix: 'update:'}))]
-      .filter(([,state]) => state?.stage !== 'done' && state?.update);
+      .filter(([,state]) => !['done', 'rejected'].includes(state?.stage) && state?.update);
     if (waiting.length) {
       const next = Math.min(...waiting.map(([,state]) => readyAt(state)));
       await this.scheduleRecovery(Math.max(Date.now() + 1000, next));
@@ -155,7 +155,7 @@ export class TelegramBot {
       const previous=await tx.get(key);
       if (previous) {
         if (previous.stage === 'prepared') return previous;
-        if (previous.stage === 'done') return false;
+        if (['done', 'rejected'].includes(previous.stage)) return false;
         if (previous.stage === 'queued') {
           await tx.put(key, {...previous, stage: 'processing', at: Date.now()});
           return true;
@@ -202,6 +202,15 @@ export class TelegramBot {
       }
       await this.ctx.storage.put(key, {stage: "done", at: Date.now()});
     } catch(error) {
+      if(error.permanent){
+        // Definitive API rejections are not retryable. Drop the private
+        // payload while retaining a terminal receipt for webhook replays.
+        const saved = await this.ctx.storage.get(key) || {};
+        await this.ctx.storage.put(key,{stage:'rejected',at:Date.now(),
+          status:error.status,method:saved.method || 'unknown'});
+        console.warn('Telegram operation permanently rejected',update.update_id,error.status);
+        return json({ok:true,rejected:true});
+      }
       if(error.retryable){
         return json({error:'Telegram temporarily rejected the reply; retry later'},503);
       }
@@ -221,7 +230,7 @@ export class TelegramBot {
     // rather than evicting a valid claim merely because traffic exceeded 1,000.
     if(clean){
       const recent=await this.ctx.storage.list({prefix:'update:'});
-      const expired=[...recent].filter(([,v])=>v.stage==='done'&&Date.now()-v.at>48*3600000);
+      const expired=[...recent].filter(([,v])=>['done','rejected'].includes(v.stage)&&Date.now()-v.at>48*3600000);
       if(expired.length)await this.ctx.storage.delete(expired.map(([k])=>k));
       const searches=await this.ctx.storage.list({prefix:'search:'});
       const old=[...searches].filter(([,v])=>typeof v==='string'||Date.now()-v.at>48*3600000);
@@ -311,6 +320,10 @@ export class TelegramBot {
     if (!response.ok || !result?.ok) {
       if (method === "editMessageText" && response.status === 400 &&
           String(result.description).includes("message is not modified")) return;
+      if ([400, 401, 403, 404, 422].includes(response.status)) {
+        throw Object.assign(new Error('Telegram permanently rejected the operation'),
+          {permanent:true,status:response.status});
+      }
       throw new Error("Telegram operation failed");
     }
     return result.result;
