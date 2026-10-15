@@ -137,9 +137,14 @@ class HttpClient:
                     if total > MAX_RESPONSE_BYTES:
                         raise FetchError("HTTP response too large")
                     chunks.append(chunk)
+                # aiter_bytes already decoded gzip/deflate. Retaining the
+                # upstream encoding/length would cause a second decode.
+                headers_out = {k: v for k, v in response.headers.items()
+                               if k.lower() not in {"content-encoding", "content-length",
+                                                    "transfer-encoding"}}
                 return httpx.Response(
                     response.status_code, content=b"".join(chunks),
-                    headers=response.headers, request=response.request,
+                    headers=headers_out, request=response.request,
                 )
         raise FetchError("HTTP redirect limit exceeded")
 

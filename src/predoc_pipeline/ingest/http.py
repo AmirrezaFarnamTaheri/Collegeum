@@ -197,8 +197,13 @@ class PoliteClient:
                     body.extend(chunk)
                     if len(body) > MAX_RESPONSE_BYTES:
                         raise UnsafeDestination("HTTP response too large")
+                # iter_bytes has decoded compressed content already; never
+                # forward the original Content-Encoding/Content-Length pair.
+                headers_out = {k: v for k, v in response.headers.items()
+                               if k.lower() not in {"content-encoding", "content-length",
+                                                    "transfer-encoding"}}
                 return httpx.Response(
-                    response.status_code, headers=response.headers,
+                    response.status_code, headers=headers_out,
                     content=bytes(body), request=response.request,
                 )
         raise UnsafeDestination("HTTP redirect limit exceeded")
