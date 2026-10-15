@@ -53,7 +53,7 @@ class HttpClient:
         self.backoff_base = backoff_base
         self.default_min_interval = default_min_interval
         self.user_agents = user_agents or DEFAULT_UAS
-        self._mock_transport = transport is not None
+        self._mock_transport = isinstance(transport, httpx.MockTransport)
         self._host_interval: dict[str, float] = {}
         self._host_last: dict[str, float] = {}
         self._host_lock: dict[str, asyncio.Lock] = {}
