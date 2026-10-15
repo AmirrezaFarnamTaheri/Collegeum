@@ -357,8 +357,8 @@ export class TelegramBot {
       `${rows.filter(r => marks.get(r.url_hash) === "applied").length} applied\n\n` +
       'Browse, save promising roles, and track applications.\n🔎 <code>/search economics London</code>\n\n' +
       `Snapshot: ${esc((await this.ctx.storage.get("snapshot_at")) || "not uploaded yet")}`, reply_markup: menu()};
-    if (kind === "more") return {text: '⚙️ <b>More options</b>\\n\\n' +
-      'See recently added roles, revisit hidden jobs, or get help.\\n' +
+    if (kind === "more") return {text: '⚙️ <b>More options</b>\n\n' +
+      'See recently added roles, revisit hidden jobs, or get help.\n' +
       'Use <code>/search economics London</code> to filter by keywords.', reply_markup: moreMenu()};
     if (kind === "help" || (kind === "search" && !query)) return {text:
       '🎓 <b>Collegeum bot</b>\n\n/menu · /positions · /saved · /applied · /hidden\n' +
