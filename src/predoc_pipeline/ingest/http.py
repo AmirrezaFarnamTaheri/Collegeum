@@ -80,7 +80,7 @@ class PoliteClient:
     _check_dns: bool = False
 
     def __post_init__(self) -> None:
-        self._check_dns = self.client is None
+        self._check_dns = self.client is None or not isinstance(\n            getattr(self.client, "_transport", None), httpx.MockTransport\n        )
         if self.client is None:
             self.client = httpx.Client(
                 timeout=self.timeout,
@@ -150,7 +150,7 @@ class PoliteClient:
         try:
             return parser.can_fetch(self.user_agent, url)
         except Exception:  # pragma: no cover - defensive
-            return True
+            return False
 
     # -- pacing -----------------------------------------------------------
     def _pace(self, url: str, sleep: Callable[[float], None] = time.sleep) -> None:
