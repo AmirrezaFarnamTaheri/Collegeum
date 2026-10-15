@@ -274,6 +274,7 @@ def menu(
         selected_markets = [
             _label(key, lang) for key in CAREER_SCOPES if key in scopes
         ]
+        alerts_ready = bool(academic or life_active or (careers and selected_markets))
         market_line = ", ".join(selected_markets) if selected_markets else (
             "انتخاب نشده" if fa else "Not selected"
         )
@@ -283,7 +284,7 @@ def menu(
             f"💼 شغلی: {careers}/4\n"
             f"🧬 زیست‌شناسی: {'فعال' if life_active else 'غیرفعال'}\n"
             f"🌍 محدوده: {escape(market_line)}\n"
-            f"🔔 وضعیت: {'متوقف' if paused else 'فعال'}\n\n"
+            f"🔔 وضعیت: {'تنظیم نشده' if not alerts_ready else 'متوقف' if paused else 'فعال'}\n\n"
             "برای تنظیم، یکی از دسته‌ها را انتخاب کنید."
             if fa else
             "🧭 <b>Collegeum | Job alerts</b>\n\n"
@@ -291,7 +292,7 @@ def menu(
             f"💼 Career roles: {careers}/4\n"
             f"🧬 Life Sciences PhD: {'On' if life_active else 'Off'}\n"
             f"🌍 Markets: {escape(market_line)}\n"
-            f"🔔 Alerts: {'Paused' if paused else 'On'}\n\n"
+            f"🔔 Alerts: {'Not configured' if not alerts_ready else 'Paused' if paused else 'On'}\n\n"
             "Choose a category to tailor your alerts."
         )
         body += (
