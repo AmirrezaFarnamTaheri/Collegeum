@@ -134,3 +134,31 @@ def test_board_http_client_rejects_oversized_response():
             with pytest.raises(FetchError, match="too large"):
                 await client.get_text("https://example.org/jobs")
     asyncio.run(exercise())
+
+
+def test_cross_origin_redirect_never_forwards_custom_api_key():
+    requested = []
+
+    def handler(request):
+        requested.append(request)
+        if request.url.host == "first.example.org":
+            return httpx.Response(302, headers={
+                "Location": "https://second.example.org/jobs"
+            })
+        assert request.url.host == "second.example.org"
+        assert request.headers.get("x-api-key") is None
+        assert request.headers.get("authorization") is None
+        assert request.headers.get("cookie") is None
+        return httpx.Response(200, text="Vacancy")
+
+    async def exercise():
+        async with HttpClient(transport=httpx.MockTransport(handler),
+                              max_retries=0, default_min_interval=0) as client:
+            text = await client.get_text("https://first.example.org/jobs", headers={
+                "X-Api-Key": "private-provider-key",
+                "Authorization": "Bearer private-secret",
+                "Cookie": "session=secret",
+            })
+            assert text == "Vacancy"
+    asyncio.run(exercise())
+    assert len(requested) == 2
