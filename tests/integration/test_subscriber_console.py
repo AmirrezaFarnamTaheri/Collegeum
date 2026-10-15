@@ -644,7 +644,7 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
     assert "sub:p:more" in str(markup)
     assert "sub:p:markets" not in str(markup)
     more_text, more_keyboard = menu(None, "more")
-    assert "Settings" in more_text
+    assert "More options" in more_text
     assert "sub:p:markets" in str(more_keyboard)
     assert "sub:p:privacy" in str(more_keyboard)
     assert "sub:p:stop" in str(more_keyboard)
