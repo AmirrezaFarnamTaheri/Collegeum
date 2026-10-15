@@ -228,7 +228,7 @@ class LinkScanScraper(BaseScraper):
         pattern = re.compile(self.opt("link_pattern", r".+"), re.IGNORECASE)
         min_len = int(self.opt("title_min_len", 6))
         posts, seen = [], set()
-        anchors = soup.find_all("a", href=True)
+        anchors: list[Tag] = list(soup.find_all("a", href=True))
         if self.opt("open_section_only", False):
             # Some careers pages list archived postings under CURRENTLY CLOSED.
             # Require both markers: a changed layout is not proof of emptiness.
