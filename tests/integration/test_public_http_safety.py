@@ -162,3 +162,20 @@ def test_cross_origin_redirect_never_forwards_custom_api_key():
             assert text == "Vacancy"
     asyncio.run(exercise())
     assert len(requested) == 2
+
+
+def test_oversized_robots_policy_is_denied_without_fetching_job():
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.path)
+        if request.url.path == "/robots.txt":
+            return httpx.Response(200, content=b"User-agent: *\\nAllow: /\\n" * 20_000)
+        return httpx.Response(200, text="Do not scrape this")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        crawler = PoliteClient(user_agent="Collegeum", client=client,
+                               respect_robots=True, per_host_delay=0)
+        result = crawler.get("https://example.org/roles", sleep=lambda _: None)
+    assert result.status == 999
+    assert seen == ["/robots.txt"]
