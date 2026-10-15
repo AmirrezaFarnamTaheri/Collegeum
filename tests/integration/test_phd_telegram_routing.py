@@ -12,8 +12,8 @@ from types import SimpleNamespace
 import pytest
 
 from predoc_pipeline.boards.config import Preferences
-from predoc_pipeline.routing import Channel, Router
 from predoc_pipeline.publish.subscriptions import matching
+from predoc_pipeline.routing import Channel, Router
 
 
 @pytest.mark.parametrize(("title", "summary", "degree", "expected"), [
@@ -23,8 +23,10 @@ from predoc_pipeline.publish.subscriptions import matching
     ("Research Associate in Labor Economics", "A PhD in economics is required.", None, "research"),
     ("Research Assistant", "Applicants must hold a PhD in economics.", None, "research"),
     ("Postdoctoral Researcher", "Economic policy analysis", "phd", "postdoc"),
-    ("Research Assistant", "The role suits candidates with a Bachelor's or Master's degree planning to pursue a PhD.", None, "predoc"),
-    ("Predoctoral Research Assistant", "A PhD is not required. This role prepares graduates for a PhD.", None, "predoc"),
+    ("Research Assistant",
+     "This role suits recent graduates who plan to pursue a PhD.", None, "predoc"),
+    ("Predoctoral Research Assistant",
+     "A PhD is not required. This role prepares graduates for a PhD.", None, "predoc"),
     ("Research Analyst", "A PhD is preferred but not required.", None, "predoc"),
 ])
 def test_qualification_aware_role_classification(title, summary, degree, expected):
