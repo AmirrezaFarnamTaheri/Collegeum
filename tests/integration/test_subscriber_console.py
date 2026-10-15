@@ -1655,3 +1655,17 @@ def test_research_staff_private_opt_in_and_quarantined_link_exclusion():
     assert matches[0]["category"] == "research"
     assert "پژوهشگر حرفه‌ای" in render_alert(matches[0], lang="fa")
     db.close()
+
+
+def test_telegram_command_picker_stays_short_and_advanced_commands_still_work():
+    from predoc_pipeline.publish.bot import COMMANDS, OWNER_COMMANDS, ALIASES
+
+    visible = {name for name, _ in COMMANDS}
+    owner = {name for name, _ in OWNER_COMMANDS}
+    assert len(COMMANDS) <= 9
+    assert len(COMMANDS) + len(OWNER_COMMANDS) <= 14
+    assert {'start', 'latest', 'settings', 'delivery', 'ask', 'help', 'stop'} <= visible
+    assert {'menu', 'positions', 'search', 'saved', 'applied'} <= owner
+    assert {'privacy', 'sources', 'delete', 'forget', 'lifesciences'}.isdisjoint(visible)
+    assert ALIASES['hidden'] == 'hidden'
+    assert ALIASES['new'] == 'new'
