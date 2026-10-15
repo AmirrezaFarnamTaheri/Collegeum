@@ -74,8 +74,15 @@ def menu(
     buttons: list[list[dict[str, str]]] = []
     if page == "academic":
         title = "🎓 <b>فرصت‌های دانشگاهی</b>" if fa else "🎓 <b>Academic opportunities</b>"
-        caption = ("موارد دلخواه را روشن کنید. فقط آگهی‌های تازه اعلان می‌شوند."
-                   if fa else "Choose the roles you want. New matches start after opt-in.")
+        caption = (
+            "پیشادکتری پیش از ورود به دکتری است؛ دکتری برای دانشجویان دکتری است؛ "
+            "پسادکتری و پژوهشگر حرفه‌ای معمولاً مدرک دکتری می‌خواهند. "
+            "موضوع‌ها مستقل‌اند و فقط آگهی‌های تازه اعلان می‌شوند."
+            if fa else
+            "Predoc = before a PhD; PhD = doctoral student openings; "
+            "postdoc and research staff may require a completed PhD. "
+            "Choose topics separately. Alerts start with newly discovered jobs."
+        )
         for key in ACADEMIC:
             buttons.append([_button(
                 ("✓ " if key in topics else "○ ") + _label(key, lang), f"sub:t:{key}",
@@ -185,6 +192,24 @@ def menu(
             )],
             _back(lang),
         ]
+    elif page == "more":
+        body = (
+            "⚙️ <b>تنظیمات و راهنما</b>\n\n"
+            "تنظیمات منطقه، زبان و حریم خصوصی و راهنمای استفاده."
+            if fa else
+            "⚙️ <b>More options</b>\n\n"
+            "Adjust job markets and language, get help, or manage your privacy."
+        )
+        buttons = [
+            [_button("🌍 محدوده" if fa else "🌍 Job markets", "sub:p:markets"),
+             _button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources")],
+            [_button("ℹ️ راهنما" if fa else "ℹ️ Help", "sub:p:help"),
+             _button("🔒 حریم خصوصی" if fa else "🔒 Privacy", "sub:p:privacy")],
+            [_button("🇬🇧 English" if fa else "🇮🇷 فارسی",
+                     "sub:l:en" if fa else "sub:l:fa")],
+            [_button("لغو عضویت" if fa else "Unsubscribe", "sub:p:stop")],
+            _back(lang),
+        ]
     elif page == "privacy":
         body = (
             "🔒 <b>حریم خصوصی</b>\n\n"
@@ -254,7 +279,7 @@ def menu(
         )
         body = (
             "🧭 <b>Collegeum | اعلان فرصت‌ها</b>\n\n"
-            f"🎓 دانشگاهی: {academic}/3\n"
+            f"🎓 دانشگاهی: {academic}/{len(ACADEMIC)}\n"
             f"💼 شغلی: {careers}/4\n"
             f"🧬 زیست‌شناسی: {'فعال' if life_active else 'غیرفعال'}\n"
             f"🌍 محدوده: {escape(market_line)}\n"
@@ -262,7 +287,7 @@ def menu(
             "برای تنظیم، یکی از دسته‌ها را انتخاب کنید."
             if fa else
             "🧭 <b>Collegeum | Job alerts</b>\n\n"
-            f"🎓 Academic roles: {academic}/3\n"
+            f"🎓 Academic roles: {academic}/{len(ACADEMIC)}\n"
             f"💼 Career roles: {careers}/4\n"
             f"🧬 Life Sciences PhD: {'On' if life_active else 'Off'}\n"
             f"🌍 Markets: {escape(market_line)}\n"
@@ -282,26 +307,22 @@ def menu(
         buttons = [
             [_button("🎓 دانشگاهی" if fa else "🎓 Academic", "sub:p:academic"),
              _button("💼 مشاغل" if fa else "💼 Careers", "sub:p:careers")],
+            [_button("🧬 دکتری علوم زیستی" if fa else "🧬 Life Sciences PhD",
+                     "sub:p:life_sciences")],
+            [_button("🔎 تازه‌ترین‌ها" if fa else "🔎 Latest matches", "sub:p:latest"),
+             _button("🔔 تنظیم ارسال" if fa else "🔔 Delivery", "sub:p:delivery")],
             [_button(
-                "🧬 دکتری علوم زیستی" if fa else "🧬 Life Sciences PhD",
-                "sub:p:life_sciences",
-            )],
-            [_button("🌍 محدوده" if fa else "🌍 Job markets", "sub:p:markets"),
-             _button("🔎 تازه‌ترین‌ها" if fa else "🔎 Latest", "sub:p:latest")],
-            [_button(
-                "▶ ازسرگیری اعلان‌ها" if fa and paused else
-                "⏸ توقف اعلان‌ها" if fa else
-                "▶ Resume alerts" if paused else "⏸ Pause alerts",
+                "▶ ازسرگیری" if fa and paused else "⏸ توقف" if fa else
+                "▶ Resume" if paused else "⏸ Pause",
                 "sub:a:resume" if paused else "sub:a:pause",
-            )],
-            [_button("🔔 تنظیم ارسال" if fa else "🔔 Delivery", "sub:p:delivery"),
-             _button("ℹ️ راهنما" if fa else "ℹ️ Help", "sub:p:help")],
-            [_button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources"),
-             _button("🔒 حریم خصوصی" if fa else "🔒 Privacy", "sub:p:privacy")],
-            [_button("🇬🇧 English" if fa else "🇮🇷 فارسی",
-                     "sub:l:en" if fa else "sub:l:fa")],
-            [_button("لغو عضویت" if fa else "Unsubscribe", "sub:p:stop")],
+            ),
+             _button("⚙️ بیشتر" if fa else "⚙️ More", "sub:p:more")],
         ]
+        if careers and not selected_markets:
+            buttons.insert(2, [_button(
+                "🌍 محدوده را انتخاب کنید" if fa else "🌍 Choose a job market",
+                "sub:p:markets",
+            )])
     return body, {"inline_keyboard": buttons}
 
 
