@@ -939,7 +939,7 @@ def test_bot_command_scopes_exclude_administration_for_general_users(tmp_path):
     }
     assert "admin" not in global_commands
     assert "settings" in global_commands
-    assert "sources" in global_commands
+    assert "sources" not in global_commands  # available from More
     fa = command_sets[1]
     assert fa["language_code"] == "fa"
     assert fa["scope"]["type"] == "all_private_chats"
