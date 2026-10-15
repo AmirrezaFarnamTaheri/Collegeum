@@ -273,7 +273,7 @@ def render_card(listing: PredocListing) -> str:
         "phd": "PhD",
         "postdoc": "Postdoc",
         "research": "ResearchStaff",
-    }[Router.position_kind(listing.title, listing.summary)]
+    }[Router.position_kind(listing.title, listing.summary, min_degree=listing.min_degree, degree_note=listing.degree_note)]
     tags = [
         hashtag(listing.disciplines[0].value) if listing.disciplines else "",
         hashtag(listing.location.country),
@@ -326,7 +326,7 @@ def render_keyboard(
 def render_digest(listings: list[PredocListing], *, site_url: str = "") -> str:
     """Compact multi-listing message for high-volume runs and backfills."""
     all_predoc = all(
-        Router.position_kind(job.title, job.summary) == "predoc" for job in listings
+        Router.position_kind(job.title, job.summary, min_degree=job.min_degree, degree_note=job.degree_note) == "predoc" for job in listings
     )
     descriptor = "predoc listings" if all_predoc else "research positions"
     header = f"\U0001f393 <b>{len(listings)} new {descriptor}</b>"
@@ -380,7 +380,7 @@ def render_digest_batches(
             f' · <a href="{escape_attribute(listing.apply_url, quote=True)}">open ad</a>'
         )
     all_predoc = all(
-        Router.position_kind(job.title, job.summary) == "predoc"
+        Router.position_kind(job.title, job.summary, min_degree=job.min_degree, degree_note=job.degree_note) == "predoc"
         for _, job in listings
     )
     if all_predoc:
