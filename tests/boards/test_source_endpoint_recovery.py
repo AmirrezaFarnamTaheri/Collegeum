@@ -77,3 +77,8 @@ def test_iies_does_not_match_generic_university_jobs_index():
     import re
     pattern = source("iies_stockholm").opt("link_pattern")
     assert not re.search(pattern, "https://www.su.se/english/about/working-at-su/available-jobs")
+
+
+def test_rwi_essen_routes_to_official_jobs_page_not_general_career_landing():
+    cfg = source("rwi_essen")
+    assert cfg.opt("url") == "https://www.rwi-essen.de/rwi/karriere/jobs"
