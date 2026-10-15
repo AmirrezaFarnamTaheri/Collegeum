@@ -3,7 +3,7 @@ import {ask, reservePublic} from './assistant.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const VIEWS = new Set(["positions", "valid", "applied", "hidden", "new", "closing", "search"]);
-const COMMANDS = new Set([...VIEWS, 'menu', 'home', 'help', 'start', 'forget', 'saved',
+const COMMANDS = new Set([...VIEWS, 'menu', 'more', 'home', 'help', 'start', 'forget', 'saved',
   'interested', 'jobs', 'list']);
 const aiQuestion = message => {
   const input = String(message.text || '').trim();
@@ -23,8 +23,11 @@ const safeUrl = value => {
 const menu = () => ({inline_keyboard: [
   [nav("📋 Open positions", "positions"), nav("⏳ Closing soon", "closing")],
   [nav("⭐ Saved", "valid"), nav("📝 Applied", "applied")],
+  [nav("🔎 Search help", "search"), nav("⚙️ More", "more")],
+]});
+const moreMenu = () => ({inline_keyboard: [
   [nav("🆕 New this week", "new"), nav("🙈 Hidden", "hidden")],
-  [nav("🔎 Search tips", "search"), nav("❔ Help", "help")],
+  [nav("❔ Help", "help"), nav("← Home", "menu")],
 ]});
 
 export async function sameSecret(actual, expected) {
@@ -354,6 +357,9 @@ export class TelegramBot {
       `${rows.filter(r => marks.get(r.url_hash) === "applied").length} applied\n\n` +
       'Browse, save promising roles, and track applications.\n🔎 <code>/search economics London</code>\n\n' +
       `Snapshot: ${esc((await this.ctx.storage.get("snapshot_at")) || "not uploaded yet")}`, reply_markup: menu()};
+    if (kind === "more") return {text: '⚙️ <b>More options</b>\\n\\n' +
+      'See recently added roles, revisit hidden jobs, or get help.\\n' +
+      'Use <code>/search economics London</code> to filter by keywords.', reply_markup: moreMenu()};
     if (kind === "help" || (kind === "search" && !query)) return {text:
       '🎓 <b>Collegeum bot</b>\n\n/menu · /positions · /saved · /applied · /hidden\n' +
       '/new: added this week · /closing: deadlines within 7 days\n' +
@@ -401,7 +407,7 @@ export class TelegramBot {
     const aliases = {start: "menu", home: "menu", saved: "valid", interested: "valid", jobs: "positions", list: "positions"};
     let kind = word.replace(/^\//, "").split("@")[0].toLowerCase();
     kind = aliases[kind] || kind;
-    const naturalQuestion = !word.startsWith('/') && kind !== 'ask' && !VIEWS.has(kind) && !['menu','help'].includes(kind);
+    const naturalQuestion = !word.startsWith('/') && kind !== 'ask' && !VIEWS.has(kind) && !['menu','help','more'].includes(kind);
     if (kind === 'forget') {
       await this.ctx.storage.delete(`query:${message.chat.id}`);
       await this.deliver(updateKey,'sendMessage', {chat_id:message.chat.id, text:'Your AI follow-up context is cleared. Rate limits still apply.'});
@@ -423,7 +429,7 @@ export class TelegramBot {
       await this.deliver(updateKey,'sendMessage',{chat_id:message.chat.id,text:'Ask about stored research vacancies with /ask. Public users can ask 3 questions per minute, within a shared hourly cap. Personal tracking is private to the owners.'});
       return;
     }
-    if (!VIEWS.has(kind) && !["menu", "help"].includes(kind)) kind = "help";
+    if (!VIEWS.has(kind) && !["menu", "help", "more"].includes(kind)) kind = "help";
     const query = kind === "search" ? words.join(" ").slice(0, 160) : "";
     const content = await this.render(kind, 0, query);
     const result = await this.deliver(updateKey,"sendMessage", {chat_id: message.chat.id, ...content, parse_mode: "HTML",
