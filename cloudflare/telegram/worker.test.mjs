@@ -485,3 +485,27 @@ test('token and method errors retain recoverable delivery checkpoints', async ()
     }
   } finally {globalThis.fetch = original;}
 });
+
+test('owner home is compact and More remains available through private callback', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', snapshot));
+  await instance.fetch(post('/webhook', {update_id: 8282,
+    message: {chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/menu'}}));
+  const home = instance.calls.find(call => call.method === 'sendMessage').payload;
+  assert.equal(home.reply_markup.inline_keyboard.length, 3);
+  const actions = home.reply_markup.inline_keyboard.flat().map(button => button.callback_data);
+  assert.ok(actions.includes('view|more|0'));
+  assert.ok(!actions.includes('view|hidden|0'));
+
+  await instance.fetch(post('/webhook', {update_id: 8283,
+    callback_query: {id: 'show-more', from: {id: 42},
+      message: {chat: {id: 42, type: 'private'}, message_id: 900},
+      data: 'view|more|0'}}));
+  const advanced = instance.calls.find(call => call.method === 'editMessageText')?.payload;
+  assert.ok(advanced);
+  assert.match(advanced.text, /More options/);
+  const menuActions = advanced.reply_markup.inline_keyboard.flat().map(button => button.callback_data);
+  assert.ok(menuActions.includes('view|new|0'));
+  assert.ok(menuActions.includes('view|hidden|0'));
+  assert.ok(menuActions.includes('view|menu|0'));
+});
