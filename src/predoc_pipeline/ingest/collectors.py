@@ -572,7 +572,8 @@ def collect_x_api(
                 except (ValueError, TypeError):
                     detail = ""
                 if any(token in detail for token in (
-                    "usagecap", "quota exhausted", "monthly quota", "monthly limit exceeded", "credits depleted",
+                    "usagecap", "quota exhausted", "monthly quota",
+                    "monthly limit exceeded", "credits depleted",
                 )) and "permission denied" not in detail:
                     stat.errors += 1
                     stat.quota_exhausted = True
