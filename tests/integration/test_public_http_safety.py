@@ -41,8 +41,11 @@ def test_url_validation_rejects_nonpublic_addresses(url):
 
 def test_url_validation_allows_public_websites_and_refuses_private_dns():
     assert validate_public_url("https://jobs.example.org/posting", resolve_dns=False)
-    public_dns = lambda *a, **k: [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.215.14", 443))]
-    private_dns = lambda *a, **k: [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("127.0.0.1", 443))]
+    def public_dns(*_args, **_kwargs):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.215.14", 443))]
+
+    def private_dns(*_args, **_kwargs):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("127.0.0.1", 443))]
     assert validate_public_url("https://jobs.example.org/posting", resolver=public_dns)
     with pytest.raises(UnsafeDestination):
         validate_public_url("https://jobs.example.org/posting", resolver=private_dns)
