@@ -120,3 +120,33 @@ def test_export_retry_restores_journal_on_fresh_runner(settings):
     assert summary['failed'] == 0
     assert json.loads(Path(settings.telegram_state_path).read_text())['exports_pending'] is False
     assert len(rows_of(settings)) == 5
+
+
+def test_compact_owner_menu_reaches_less_frequent_views_without_clutter(settings):
+    from predoc_pipeline.publish.browse import home, more
+    from predoc_pipeline.publish.feedback import FeedbackStore
+
+    home_text, home_markup = home([], FeedbackStore(settings.feedback_path))
+    actions = [button['callback_data'] for row in home_markup['inline_keyboard']
+               for button in row]
+    assert 'view|more|0' in actions
+    assert 'view|new|0' not in actions
+    assert 'view|hidden|0' not in actions
+    assert len(home_markup['inline_keyboard']) <= 3
+    extra_text, extra_markup = more()
+    assert 'More' in extra_text
+    extras = [button['callback_data'] for row in extra_markup['inline_keyboard']
+              for button in row]
+    assert {'view|new|0', 'view|hidden|0', 'view|help|0', 'view|menu|0'} <= set(extras)
+
+
+def test_more_callback_edits_existing_owner_message(settings):
+    add_listings(settings)
+    first = FakeTelegram([msg(1, '/menu')])
+    run_sync(settings, first)
+    keyboard = first.sent()[0]['reply_markup']
+    fake = FakeTelegram([tap(2, 'view|more|0', keyboard)])
+    run_sync(settings, fake)
+    edits = [body for name, body in fake.calls if name == 'editMessageText']
+    assert len(edits) == 1
+    assert 'More' in edits[0]['text']
