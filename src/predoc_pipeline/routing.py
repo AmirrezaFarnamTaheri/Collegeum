@@ -166,7 +166,10 @@ class Router:
     ) -> Channel:
         if self.region(country or "", city, institution) in self.cfg.web_regions:
             return Channel.WEB
-        if self.position_kind(title, summary, min_degree=min_degree, degree_note=degree_note) in self.cfg.web_position_kinds:
+        kind = self.position_kind(
+            title, summary, min_degree=min_degree, degree_note=degree_note,
+        )
+        if kind in self.cfg.web_position_kinds:
             return Channel.WEB
         if self._web_employer(institution):
             return Channel.WEB
@@ -184,12 +187,13 @@ class Router:
         )
 
     def channel_for_row(self, row: sqlite3.Row) -> Channel:
+        keys = row.keys()
         return self.channel(
             title=row["title"],
             institution=row["institution"] or "",
             country=row["country"] or "",
             city=row["city"],
             summary=row["summary"] or "",
-            min_degree=row["min_degree"] if "min_degree" in row.keys() else None,
-            degree_note=row["degree_note"] if "degree_note" in row.keys() else None,
+            min_degree=row["min_degree"] if "min_degree" in keys else None,
+            degree_note=row["degree_note"] if "degree_note" in keys else None,
         )
