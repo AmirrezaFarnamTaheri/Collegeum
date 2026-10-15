@@ -80,7 +80,9 @@ class PoliteClient:
     _check_dns: bool = False
 
     def __post_init__(self) -> None:
-        self._check_dns = self.client is None or not isinstance(\n            getattr(self.client, "_transport", None), httpx.MockTransport\n        )
+        self._check_dns = self.client is None or not isinstance(
+            getattr(self.client, "_transport", None), httpx.MockTransport
+        )
         if self.client is None:
             self.client = httpx.Client(
                 timeout=self.timeout,
