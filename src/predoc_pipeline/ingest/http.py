@@ -118,16 +118,23 @@ class PoliteClient:
         robots_url = f"{origin}/robots.txt"
         try:
             validate_public_url(robots_url, resolve_dns=self._check_dns)
-            response = self.client.get(  # type: ignore[union-attr]
-                robots_url, timeout=10.0, follow_redirects=False,
-            )
-            if response.status_code == 200:
-                parser = RobotFileParser()
-                parser.parse(response.text.splitlines())
-            elif response.status_code not in (404, 410):
-                # 403/429, redirects and 5xx are not permission to crawl.
-                parser = RobotFileParser()
-                parser.parse(["User-agent: *", "Disallow: /"])
+            # Stream robots.txt too: a server must not exhaust crawler memory
+            # before the job-page response-size guard ever runs.
+            with self.client.stream(  # type: ignore[union-attr]
+                "GET", robots_url, timeout=10.0, follow_redirects=False,
+            ) as response:
+                if response.status_code == 200:
+                    body = bytearray()
+                    for chunk in response.iter_bytes():
+                        if len(body) + len(chunk) > 256 * 1024:
+                            raise UnsafeDestination("robots.txt response too large")
+                        body.extend(chunk)
+                    parser = RobotFileParser()
+                    parser.parse(body.decode("utf-8", errors="replace").splitlines())
+                elif response.status_code not in (404, 410):
+                    # 403/429, redirects and 5xx are not permission to crawl.
+                    parser = RobotFileParser()
+                    parser.parse(["User-agent: *", "Disallow: /"])
         except (httpx.RequestError, UnsafeDestination, OSError, ValueError):
             parser = RobotFileParser()
             parser.parse(["User-agent: *", "Disallow: /"])
