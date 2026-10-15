@@ -637,14 +637,20 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
     from predoc_pipeline.publish.ui import menu
 
     home, markup = menu(None)
-    assert "Academic roles: 0/3" in home
-    assert len(markup["inline_keyboard"]) == 8  # includes life-sciences category
+    assert "Academic roles: 0/4" in home
+    assert len(markup["inline_keyboard"]) <= 5  # high-priority actions only
     assert "sub:p:academic" in str(markup)
     assert "sub:p:careers" in str(markup)
-    assert "sub:p:markets" in str(markup)
+    assert "sub:p:more" in str(markup)
+    assert "sub:p:markets" not in str(markup)
+    more_text, more_keyboard = menu(None, "more")
+    assert "Settings" in more_text
+    assert "sub:p:markets" in str(more_keyboard)
+    assert "sub:p:privacy" in str(more_keyboard)
+    assert "sub:p:stop" in str(more_keyboard)
     for page in (
         "academic", "life_sciences", "careers", "markets",
-        "delivery", "privacy", "help", "stop",
+        "delivery", "privacy", "help", "more", "stop",
     ):
         text, keyboard = menu(None, page)
         assert text
@@ -1303,7 +1309,9 @@ def test_privacy_notice_is_available_in_both_languages():
     assert "حریم خصوصی" in persian and "/delete" in persian
     home, keyboard = menu(None)
     assert "/privacy" in home
-    assert "sub:p:privacy" in str(keyboard)
+    assert "sub:p:more" in str(keyboard)
+    _, more = menu(None, "more")
+    assert "sub:p:privacy" in str(more)
 
 
 def test_admin_reconciliation_requires_verified_evidence(tmp_path):
