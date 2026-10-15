@@ -445,7 +445,7 @@ export class TelegramBot {
     let content;
     if (parts[0] === "view" && parts.length === 3 && /^\d{1,6}$/.test(parts[2])) {
       const kind = parts[1];
-      if (!VIEWS.has(kind) && !["menu", "help"].includes(kind)) return;
+      if (!VIEWS.has(kind) && !["menu", "help", "more"].includes(kind)) return;
       const storedSearch=kind==='search'?await this.ctx.storage.get(`search:${message.chat.id}:${message.message_id}`):null;
       const query=typeof storedSearch==='string'?storedSearch:storedSearch?.query||'';
       content = await this.render(kind, Number(parts[2]), query);
