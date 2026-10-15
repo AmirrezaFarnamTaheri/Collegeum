@@ -179,3 +179,32 @@ def test_oversized_robots_policy_is_denied_without_fetching_job():
         result = crawler.get("https://example.org/roles", sleep=lambda _: None)
     assert result.status == 999
     assert seen == ["/robots.txt"]
+
+
+def test_streamed_compressed_response_is_decoded_once_in_both_http_clients():
+    import gzip
+
+    original = "Research Assistant in Economics \\u2713"
+    compressed = gzip.compress(original.encode("utf-8"))
+
+    def handler(request):
+        return httpx.Response(200, content=compressed, headers={
+            "Content-Type": "text/html; charset=utf-8",
+            "Content-Encoding": "gzip",
+            "Content-Length": str(len(compressed)),
+        })
+
+    transport = httpx.MockTransport(handler)
+    with httpx.Client(transport=transport) as http:
+        client = PoliteClient(user_agent="Collegeum", client=http,
+                             respect_robots=False, per_host_delay=0)
+        response = client.get("https://example.org/jobs", sleep=lambda _: None)
+        assert response.ok
+        assert response.text == original
+
+    async def exercise():
+        async with HttpClient(transport=httpx.MockTransport(handler), max_retries=0,
+                              default_min_interval=0) as client:
+            text = await client.get_text("https://example.org/jobs")
+            assert text == original
+    asyncio.run(exercise())
