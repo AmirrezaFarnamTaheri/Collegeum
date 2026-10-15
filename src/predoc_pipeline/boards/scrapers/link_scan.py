@@ -228,7 +228,30 @@ class LinkScanScraper(BaseScraper):
         pattern = re.compile(self.opt("link_pattern", r".+"), re.IGNORECASE)
         min_len = int(self.opt("title_min_len", 6))
         posts, seen = [], set()
-        for a in soup.find_all("a", href=True):
+        anchors = soup.find_all("a", href=True)
+        if self.opt("open_section_only", False):
+            # Some careers pages list archived postings under CURRENTLY CLOSED.
+            # Require both markers: a changed layout is not proof of emptiness.
+            open_mark = soup.find(string=lambda x: bool(x) and x.strip().upper() == "CURRENTLY OPEN")
+            closed_mark = soup.find(
+                string=lambda x: bool(x) and x.strip().upper() == "CURRENTLY CLOSED"
+            )
+            if open_mark is None or closed_mark is None:
+                self.discovery_parse_errors.append("Missing open/closed vacancy boundaries")
+                return []
+            allowed: set[int] = set()
+            found_end = False
+            for node in open_mark.next_elements:
+                if node is closed_mark:
+                    found_end = True
+                    break
+                if isinstance(node, Tag) and node.name == "a" and node.get("href"):
+                    allowed.add(id(node))
+            if not found_end:
+                self.discovery_parse_errors.append("Closed vacancy boundary not reachable")
+                return []
+            anchors = [a for a in anchors if id(a) in allowed]
+        for a in anchors:
             href = absolutize(base, str(a["href"]))
             if not pattern.search(href) or href in seen or _EXCLUDED_URL_RX.search(href):
                 continue
