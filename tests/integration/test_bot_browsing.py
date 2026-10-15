@@ -150,3 +150,20 @@ def test_more_callback_edits_existing_owner_message(settings):
     edits = [body for name, body in fake.calls if name == 'editMessageText']
     assert len(edits) == 1
     assert 'More' in edits[0]['text']
+
+
+def test_details_button_survives_feedback_redraw_in_compact_listing_row():
+    from predoc_pipeline.publish.keyboards import feedback_row, rebuild
+
+    key = "a" * 64
+    compact = {
+        "inline_keyboard": [[
+            {"text": "🔎 1", "callback_data": f"detail|{key[:16]}"},
+            *feedback_row(key, None, 1),
+        ]],
+    }
+    refreshed = rebuild(compact, lambda _prefix: "valid")
+    actions = refreshed["inline_keyboard"][0]
+    assert actions[0]["callback_data"] == f"detail|{key[:16]}"
+    assert len(actions) == 4
+    assert any(button["text"].startswith("• ✅") for button in actions)
