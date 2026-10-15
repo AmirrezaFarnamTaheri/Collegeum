@@ -51,32 +51,24 @@ log = get_logger(__name__)
 __all__ = ["COMMANDS", "telegram_sync", "select_rows", "build_pages", "command_of"]
 
 COMMANDS = [
-    ("ask", "Ask stored vacancy facts"),
-    ("forget", "Clear AI follow-up context"),
-    ("start", "Open personal job alerts"),
-    ("settings", "Choose jobs and markets"),
-    ("latest", "Browse matching opportunities"),
-    ("lifesciences", "European Life Sciences PhD alerts"),
-    ("sources", "See current job sources"),
-    ("delivery", "Digest and notification hours"),
-    ("privacy", "Understand private data retention"),
-    ("pause", "Pause notifications"),
-    ("resume", "Resume notifications"),
-    ("guide", "Help with job alerts"),
-    ("help", "Help with job alerts"),
-    ("stop", "Unsubscribe with confirmation"),
-    ("delete", "Delete active subscriber data"),
+    ("start", "Open your job alert dashboard"),
+    ("latest", "See recently found opportunities"),
+    ("settings", "Choose topics and job markets"),
+    ("delivery", "Digest, alert limit and quiet hours"),
+    ("pause", "Pause your alerts"),
+    ("resume", "Resume your alerts"),
+    ("ask", "Ask questions about stored vacancies"),
+    ("help", "How Collegeum alerts work"),
+    ("stop", "Unsubscribe (with confirmation)"),
 ]
+# Advanced commands remain available when typed or tapped; the Telegram
+# command picker only exposes everyday actions rather than 24+ shortcuts.
 OWNER_COMMANDS = [
-    ("menu", "Owner shortlist and browsing"),
+    ("menu", "Browse your research shortlist"),
+    ("positions", "All open vacancies"),
     ("search", "Search stored vacancies"),
-    ("new", "Positions added this week"),
-    ("closing", "Deadlines within seven days"),
-    ("positions", "All open published positions"),
-    ("applied", "Your applied positions"),
-    ("valid", "Your interested positions"),
-    ("hidden", "Your hidden positions"),
-    ("ownerhelp", "Help with owner feedback buttons"),
+    ("saved", "Saved and interesting roles"),
+    ("applied", "Track applications"),
 ]
 ADMIN_COMMAND = ("admin", "Operations and source health")
 RECONCILE_COMMAND = ("reconcile", "Verify a private delivery outcome")
@@ -97,7 +89,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "stop": "لغو عضویت با تأیید",
     "delete": "حذف داده‌های فعال اشتراک",
 }
-COMMANDS_VERSION = 11
+COMMANDS_VERSION = 12
 MAX_COMMANDS_PER_SYNC = 20
 ALIASES = {
     "menu": "menu", "home": "menu", "more": "more", "search": "search", "new": "new",
@@ -117,8 +109,8 @@ HELP = (
     "✅ = interested  ·  ❌ = not for me (it disappears everywhere)  ·  "
     "📝 = I applied (moves to /applied)\n"
     "Tap the same button again to undo.\n\n"
-    "⏱ I check for messages every 30 minutes during the day, so replies can take up to "
-    "half an hour."
+    "⏱ Replies are checked about twice per hour. GitHub Actions scheduling "
+    "may delay the next check."
 )
 DONE = {
     VALID: "✅ Marked as interested",
@@ -133,7 +125,7 @@ TITLES = {
     "hidden": "❌ <b>{n} hidden position{s}</b> (tap ❌ again to bring one back)",
 }
 EMPTY = {
-    "positions": "📋 No open positions right now. New ones arrive with the morning run.",
+    "positions": "📋 No open positions right now. New ones appear after the next collection.",
     "applied": "📝 You haven't marked anything as applied yet. Tap 📝 under a position.",
     "valid": "✅ Nothing marked as interesting yet. Tap ✅ under a position.",
     "hidden": "❌ Nothing hidden.",
