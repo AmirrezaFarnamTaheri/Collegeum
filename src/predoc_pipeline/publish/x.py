@@ -123,7 +123,7 @@ def format_tweet(listing: PredocListing, max_chars: int = MAX_TWEET_CHARS) -> st
     else:
         loc_str = ""
 
-    kind = Router.position_kind(listing.title, listing.summary)
+    kind = Router.position_kind(listing.title, listing.summary, min_degree=listing.min_degree, degree_note=listing.degree_note)
     label, tag = {
         'predoc': ('Pre-Doctoral', '#Predoc'),
         'phd': ('PhD', '#PhD'),
