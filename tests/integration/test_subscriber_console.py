@@ -1658,7 +1658,7 @@ def test_research_staff_private_opt_in_and_quarantined_link_exclusion():
 
 
 def test_telegram_command_picker_stays_short_and_advanced_commands_still_work():
-    from predoc_pipeline.publish.bot import COMMANDS, OWNER_COMMANDS, ALIASES
+    from predoc_pipeline.publish.bot import ALIASES, COMMANDS, OWNER_COMMANDS
 
     visible = {name for name, _ in COMMANDS}
     owner = {name for name, _ in OWNER_COMMANDS}
