@@ -43,7 +43,7 @@ def sync_cloud(
                 'url_hash', 'first_seen_at', 'last_seen_at', 'closed_at', 'expired_at',
                 'deadline_note',
             )})
-            data['kind'] = router.position_kind(row['title'], row['summary'] or '')
+            data['kind'] = router.kind_for_row(row)
             records.append(data)
     if len(records) > 2000:
         raise ValueError('Webhook snapshot exceeds 2,000 listings; archive history before syncing')
