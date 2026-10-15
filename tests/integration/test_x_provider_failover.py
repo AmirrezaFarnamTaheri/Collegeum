@@ -64,3 +64,15 @@ def test_explicit_quota_error_in_403_uses_backup():
     assert not items
     assert len(calls) == 2
     assert [report.name for report in reports] == ["x_api", "xquik"]
+
+def test_permission_error_mentioning_rate_limits_does_not_fall_back():
+    calls = []
+    def respond(request):
+        calls.append(request)
+        return httpx.Response(403, json={"detail":
+            "Permission denied: rate limit upgrades are not available."})
+    with httpx.Client(transport=httpx.MockTransport(respond)) as client:
+        items, reports = collect_twitter(_settings(), client=client)
+    assert not items
+    assert len(calls) == 1
+    assert [report.name for report in reports] == ["x_api"]

@@ -459,3 +459,29 @@ test('explicit Telegram 400 errors are classified as permanent', async () => {
     globalThis.fetch=fetchBefore;
   }
 });
+
+test('token and method errors retain recoverable delivery checkpoints', async () => {
+  const original = globalThis.fetch;
+  try {
+    for (const status of [401, 404]) {
+      const instance = bot();
+      instance.api = TelegramBot.prototype.api.bind(instance);
+      let attempts = 0;
+      globalThis.fetch = async () => {
+        attempts++;
+        return attempts === 1
+          ? Response.json({ok:false,description:'Not ready'},{status})
+          : Response.json({ok:true,result:{message_id:901}});
+      };
+      const update = {update_id:status,message:{chat:{id:42},text:'/menu'}};
+      assert.equal((await instance.fetch(post('/webhook',update))).status,503);
+      const key = `update:${status}`;
+      const checkpoint = await instance.ctx.storage.get(key);
+      assert.notEqual(checkpoint.stage,'rejected');
+      await instance.ctx.storage.put(key,{...checkpoint,at:Date.now()-91000});
+      assert.equal((await instance.fetch(post('/webhook',update))).status,200);
+      assert.equal((await instance.ctx.storage.get(key)).stage,'done');
+      assert.equal(attempts,2);
+    }
+  } finally {globalThis.fetch = original;}
+});

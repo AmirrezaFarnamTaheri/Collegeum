@@ -72,3 +72,8 @@ def test_spanish_central_bank_links_match_actual_open_vacancies():
             "personal-investigador-en-temas-de-economia-y-finanzas2026.html")
     assert re.search(cfg.opt("link_pattern"), role)
     assert not re.search(cfg.opt("link_pattern"), "https://www.bde.es/wbe/es/noticias/")
+
+def test_iies_does_not_match_generic_university_jobs_index():
+    import re
+    pattern = source("iies_stockholm").opt("link_pattern")
+    assert not re.search(pattern, "https://www.su.se/english/about/working-at-su/available-jobs")

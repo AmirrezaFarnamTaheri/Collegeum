@@ -78,3 +78,12 @@ def test_audit_prefix_without_closed_at_is_not_modified(tmp_path):
     before = path.read_bytes()
     assert reconcile(tmp_path, apply=True)["candidate_ids"] == []
     assert path.read_bytes() == before
+
+def test_unicode_line_separator_remains_inside_ndjson_record(tmp_path):
+    path = tmp_path / "data" / "listings.ndjson"
+    path.parent.mkdir(parents=True)
+    record = {"id": 31, "status": "published", "title": "Economics\u2028Research",
+              "closed_at": "2026-10-11T18:00:00Z",
+              "closed_reason": "output audit: non-actionable application link (template)"}
+    path.write_text(json.dumps(record, ensure_ascii=False) + "\n", encoding="utf-8")
+    assert reconcile(tmp_path)["candidate_ids"] == [31]

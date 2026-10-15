@@ -64,3 +64,16 @@ def test_extraction_retry_checkpoint_roundtrips_through_committed_seen(tmp_path,
         assert pipeline._extraction_retry_due(
             checkpoint, digest, now=instant + timedelta(days=2)
         )
+
+def test_duplicate_failure_does_not_consume_second_attempt(tmp_path, monkeypatch):
+    path = tmp_path / "retry-round.db"
+    init(path)
+    instant = datetime(2026, 10, 15, 12, 0, tzinfo=UTC)
+    monkeypatch.setattr(pipeline, "utcnow", lambda: instant)
+    item = RawItem(source="rss", source_url="https://example.org/predoc",
+                   text="Economics", title="Research Assistant in Economics")
+    key, digest = "c" * 64, "candidate-v4:policy:unchanged"
+    with Database(path) as db:
+        pipeline._record_extraction_failure(db, item, key, digest)
+        pipeline._record_extraction_failure(db, item, key, digest)
+        assert db.seen(key)["reason"].startswith("extract-retry-v1|1|")

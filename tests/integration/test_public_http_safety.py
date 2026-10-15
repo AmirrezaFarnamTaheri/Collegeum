@@ -19,6 +19,8 @@ from predoc_pipeline.ingest.http import PoliteClient
 @pytest.mark.parametrize("url", [
     "http://127.0.0.1/admin",
     "http://[::1]/admin",
+    "http://[::ffff:127.0.0.1]/admin",
+    "http://[::ffff:169.254.169.254]/latest/meta-data",
     "http://169.254.169.254/latest/meta-data",
     "https://10.2.3.4/secret",
     "https://172.16.0.2/secret",
@@ -208,3 +210,21 @@ def test_streamed_compressed_response_is_decoded_once_in_both_http_clients():
             text = await client.get_text("https://example.org/jobs")
             assert text == original
     asyncio.run(exercise())
+
+def test_https_to_http_redirect_strips_sensitive_headers():
+    requested = []
+    def handler(request):
+        requested.append(request)
+        if request.url.scheme == "https":
+            return httpx.Response(302, headers={"Location": "http://example.org/jobs"})
+        assert request.headers.get("authorization") is None
+        assert request.headers.get("if-none-match") is None
+        return httpx.Response(200, text="Vacancy")
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        crawler = PoliteClient(user_agent="Collegeum", client=client,
+                               respect_robots=False, per_host_delay=0)
+        response = crawler._safe_get("https://example.org/jobs",
+                                    {"Authorization": "Bearer secret",
+                                     "If-None-Match": "private-etag"}, lambda _: None)
+    assert response.status_code == 200
+    assert len(requested) == 2
