@@ -1,0 +1,119 @@
+"""Export stored life-science positions; optionally collect current public sources.
+
+No subscriber state, Telegram credentials or messages are used. Discovery keeps
+the collector's existing source/detail budgets and qualification rules. A report
+beside the CSV distinguishes an empty result from unavailable sources.
+"""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import csv
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+COLUMNS = ('title', 'institution', 'country', 'location', 'position_type',
+           'research_fields', 'deadline', 'deadline_note', 'salary', 'funding_status',
+           'research_priority', 'application_url', 'source', 'first_seen_at',
+           'last_seen_at', 'availability')
+
+
+def stored_positions(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    rows = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines()
+            if line.strip()]
+    if not all(isinstance(row, dict) for row in rows):
+        raise ValueError('Position journal contains a non-object record')
+    return [row for row in rows if row.get('category') == 'life_sciences_phd']
+
+
+def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
+    """Keep known facts, preserve historical rows, and escape spreadsheet formulas."""
+    unique: dict[str, dict[str, Any]] = {}
+    for item in positions:
+        url = str(item.get('url') or item.get('application_url') or '')
+        if not url:
+            raise ValueError('Position has no application URL')
+        unique.setdefault(url, item)
+    aliases = {'institution': 'employer', 'application_url': 'url',
+               'position_type': 'category'}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('w', encoding='utf-8-sig', newline='') as stream:
+        writer = csv.DictWriter(stream, fieldnames=COLUMNS)
+        writer.writeheader()
+        for item in sorted(unique.values(), key=lambda row: str(row.get('title', '')).casefold()):
+            row = {}
+            for column in COLUMNS:
+                value = str(item.get(column, item.get(aliases.get(column, column), '')) or '')
+                if value.lstrip().startswith(('=', '+', '-', '@')):
+                    value = "'" + value
+                row[column] = value
+            writer.writerow(row)
+    return len(unique)
+
+
+async def collect(config_path: Path, rows: list[dict[str, Any]], output: Path,
+                  report: dict[str, Any]) -> None:
+    from predoc_pipeline.boards.config import HttpConfig
+    from predoc_pipeline.boards.utils.geo import detect_location
+    from predoc_pipeline.ingest.life_sciences import (
+        MAX_SOURCES,
+        classify_post,
+        discover,
+        load_life_sources,
+    )
+
+    sources = [s.name for s in load_life_sources(config_path) if s.enabled]
+    report['enabled_sources'] = len(sources)
+    # Keep each discovery call within the same budget as scheduled collection.
+    config = HttpConfig(timeout=15, max_retries=0, source_timeout=45)
+    for offset in range(0, len(sources), MAX_SOURCES):
+        selected = sources[offset:offset + MAX_SOURCES]
+        posts, errors = await discover(config_path, config, selected_names=set(selected))
+        accepted = 0
+        for post in posts:
+            row = classify_post(post)
+            if row is None:
+                continue
+            country, _ = detect_location(post.country, post.location)
+            row.update({
+                'country': country or '', 'research_fields': post.fields_of_research or '',
+                'deadline': post.deadline.isoformat() if post.deadline else '',
+                'deadline_note': post.deadline_text or '',
+                'first_seen_at': report['collected_at'], 'last_seen_at': report['collected_at'],
+                'availability': 'unknown',
+            })
+            rows.append(row)
+            accepted += 1
+        report['batches'].append({'sources': selected, 'candidates': len(posts),
+                                  'accepted': accepted, 'errors': errors})
+        report['exported_positions'] = write_csv(output, rows)
+        output.with_suffix('.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+        print(json.dumps({'sources_checked': min(offset + MAX_SOURCES, len(sources)),
+                          'exported_positions': report['exported_positions'],
+                          'source_issues': len(errors)}), flush=True)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--journal', type=Path, default=Path('data/career_jobs.ndjson'))
+    parser.add_argument('--config', type=Path, default=Path('config/life_sciences.toml'))
+    parser.add_argument('--output', type=Path, default=Path('exports/life_sciences_positions.csv'))
+    parser.add_argument('--discover', action='store_true',
+                        help='Also collect current public sources')
+    args = parser.parse_args()
+    rows = stored_positions(args.journal)
+    report: dict[str, Any] = {'collected_at': datetime.now(UTC).isoformat(),
+                              'stored_positions': len(rows), 'batches': []}
+    if args.discover:
+        asyncio.run(collect(args.config, rows, args.output, report))
+    report['exported_positions'] = write_csv(args.output, rows)
+    args.output.with_suffix('.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+    print(json.dumps({'csv': str(args.output), 'positions': report['exported_positions']}))
+
+
+if __name__ == '__main__':
+    main()
