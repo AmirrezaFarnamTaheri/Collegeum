@@ -20,8 +20,22 @@ for (const label of labels) {
       });
       const scripts = await workers.json();
       const accessible = workers.ok && scripts.success && Array.isArray(scripts.result);
+      const metadata = {};
+      for (const [field, path] of [
+        ['subdomain', `accounts/${account.id}/workers/subdomain`],
+        ['zones', `zones?account.id=${account.id}&per_page=50`],
+      ]) {
+        const extra = await fetch(`https://api.cloudflare.com/client/v4/${path}`, {
+          headers: {Authorization: `Bearer ${token}`}, signal: AbortSignal.timeout(15000),
+        });
+        const info = await extra.json();
+        metadata[field] = extra.ok && info.success
+          ? field === 'zones' ? info.result.map(z => z.name) : info.result.subdomain
+          : 'not accessible with this token';
+      }
       console.log(JSON.stringify({credential: label, account_id: account.id,
-        worker_access: accessible, existing_bot: accessible && scripts.result.some(s => s.id === 'collegeum-telegram')}));
+        worker_access: accessible, existing_bot: accessible && scripts.result.some(s => s.id === 'collegeum-telegram'),
+        ...metadata}));
       found ||= accessible;
     }
   } catch {
