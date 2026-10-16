@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: telegram-worker-deployment
+  group: ${{ inputs.activate_webhook && 'predoc-bot' || 'telegram-worker-deployment' }}
   cancel-in-progress: false
 
 jobs:
@@ -131,10 +131,11 @@ jobs:
           TELEGRAM_WORKER_URL: ${{ vars.TELEGRAM_WORKER_URL }}
           TELEGRAM_WORKER_SYNC_TOKEN: ${{ secrets.TELEGRAM_WORKER_SYNC_TOKEN }}
           TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
         run: |
           set -eu
           test "$TELEGRAM_WEBHOOK_ENABLED" = true || { echo "Enable webhook mode before activation"; exit 1; }
           test -n "$FEEDBACK_ENCRYPTION_KEY" || { echo "Original encryption key is required"; exit 1; }
           uv sync --locked --python 3.12
           uv run --no-sync predoc-pipeline telegram-sync
-          python3 -S tools/telegram_connection.py --activate
+          python3 -S tools/telegram_connection.py --activate --smoke

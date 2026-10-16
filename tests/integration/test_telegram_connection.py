@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from tools.telegram_connection import inspect_connection
+from tools.telegram_connection import inspect_connection, smoke_test
 
 
 def test_polling_diagnosis_does_not_change_webhook():
@@ -19,6 +19,28 @@ def test_polling_diagnosis_does_not_change_webhook():
     assert not result['ready']
     assert len(calls) == 1 and calls[0].endswith('getWebhookInfo')
     assert 'secret' not in str(result)
+
+
+def test_live_menu_test_requires_readiness_and_confirms_worker_send():
+    env = {'TELEGRAM_ADMIN_CHAT_ID': '42', 'TELEGRAM_WORKER_URL': 'https://bot.workers.dev',
+           'TELEGRAM_WEBHOOK_SECRET': 'secret'}
+    calls = []
+
+    def request(url, **kwargs):
+        calls.append((url, kwargs))
+        return {'ok': True}
+
+    with pytest.raises(ValueError, match='readiness'):
+        smoke_test(env, {'ready': False}, request=request)
+    assert not calls
+    result = smoke_test(env, {'ready': True}, request=request)
+    assert result['menu_delivery_confirmed']
+    assert calls[0][0] == 'https://bot.workers.dev/webhook'
+    assert calls[0][1]['payload']['message']['text'] == '/menu'
+    assert calls[0][1]['webhook_secret'] == 'secret'
+    assert 'secret' not in str(result)
+    with pytest.raises(RuntimeError, match='confirm'):
+        smoke_test(env, {'ready': True}, request=lambda *a, **k: {'ok': True, 'rejected': True})
 
 
 @pytest.mark.parametrize('seeded', [False, True])
