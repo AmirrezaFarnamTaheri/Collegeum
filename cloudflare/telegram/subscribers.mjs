@@ -39,10 +39,18 @@ export function validPreferences(value) {
 export function panel(member, page = 'home', size = 4) {
   const m = member || fresh(), fa = m.language === 'fa';
   const tr = (en, persian) => fa ? persian : en;
-  const home = [button(tr('← Home', '← خانه'), 'sub:p:home')];
+  const parent = ['academic', 'careers', 'life_sciences', 'markets'].includes(page) ? 'subscriptions' :
+    page === 'display' ? 'more' : 'home';
+  const home = [button(tr('← Back', '← بازگشت'), `sub:p:${parent}`)];
   const link = (en, persian, page) => button(tr(en, persian), `sub:p:${page}`);
   let text, rows;
-  if (['academic', 'careers', 'life_sciences', 'markets'].includes(page)) {
+  if (page === 'subscriptions') {
+    text = tr('<b>Subscriptions</b>\n\nChoose the roles you want to browse and receive alerts for. Changes save immediately.\n☑ Selected · ☐ Not selected',
+      '<b>اشتراک‌ها</b>\n\nموضوع‌های دلخواه برای مرور و دریافت اعلان را انتخاب کنید. تغییرها فوری ذخیره می‌شوند.\n☑ انتخاب‌شده · ☐ انتخاب‌نشده');
+    rows = [[link('Academic roles', 'دانشگاهی', 'academic'), link('Career roles', 'مشاغل', 'careers')],
+      [link('Life Sciences PhD', 'دکتری علوم زیستی', 'life_sciences'), link('Job markets', 'محدوده مشاغل', 'markets')],
+      [link('View my matches', 'مشاهده فرصت‌های من', 'latest')]];
+  } else if (['academic', 'careers', 'life_sciences', 'markets'].includes(page)) {
     const options = page === 'academic' ? ACADEMIC : page === 'careers' ? CAREERS :
       page === 'life_sciences' ? ['life_sciences_phd'] : ['iran', 'remote'];
     const field = page === 'markets' ? 'scopes' : 'topics';
@@ -51,7 +59,8 @@ export function panel(member, page = 'home', size = 4) {
       page === 'markets' ? tr('<b>Job markets</b>\n\nChoose one or both markets for career alerts.', '<b>محدوده مشاغل</b>\n\nبرای اعلان مشاغل یک یا هر دو محدوده را انتخاب کنید.') :
       page === 'careers' ? tr('<b>Career roles</b>\n\nChoose roles, then a job market.', '<b>مشاغل</b>\n\nموضوع‌ها و سپس محدوده جستجو را انتخاب کنید.') :
       tr('<b>Life Sciences PhD · Europe</b>\n\nToggle alerts for doctoral openings.', '<b>دکتری علوم زیستی · اروپا</b>\n\nاعلان فرصت‌های دکتری را روشن یا خاموش کنید.');
-    rows = options.map(key => [button((key in m[field] ? '✓ ' : '○ ') +
+    text += '\n\n' + tr('☑ Selected · ☐ Not selected · Tap to change', '☑ انتخاب‌شده · ☐ انتخاب‌نشده · برای تغییر لمس کنید');
+    rows = options.map(key => [button((key in m[field] ? '☑ ' : '☐ ') +
       (key === 'iran' ? tr('Iran', 'ایران') : key === 'remote' ? tr('Worldwide remote', 'دورکاری جهانی') :
         LABELS[m.language][TOPICS.indexOf(key)]), `sub:${field === 'topics' ? 't' : 'g'}:${key}`)]);
     if (['academic', 'careers'].includes(page)) {
@@ -69,6 +78,13 @@ export function panel(member, page = 'home', size = 4) {
       [button(tr('Daily maximum: ', 'حد روزانه: ') + m.daily_limit, 'sub:d:limit')],
       [button(tr('Quiet hours: ', 'ساعات آرام: ') + (m.quiet_hours ? '22:00–08:00' : tr('Off', 'خاموش')), 'sub:d:quiet')],
       [button(tr('Time zone: ', 'منطقه زمانی: ') + m.timezone, 'sub:d:zone')]];
+    rows.push([button(m.paused ? tr('Resume alerts', 'ازسرگیری اعلان') : tr('Pause alerts', 'توقف اعلان'),
+      m.paused ? 'sub:a:resume' : 'sub:a:pause')]);
+  } else if (page === 'display') {
+    text = tr('<b>Display settings</b>\n\nPositions per page. This does not change your daily alert limit.',
+      '<b>تنظیمات نمایش</b>\n\nتعداد فرصت در هر صفحه. این تنظیم حد اعلان روزانه را تغییر نمی‌دهد.');
+    rows = [PAGE_SIZES.slice(0, 2), PAGE_SIZES.slice(2)].map(options => options.map(n =>
+      button(`${n === pageSize(size) ? '☑' : '☐'} ${n}`, `sub:n:${n}`)));
   } else if (page === 'stop') {
     text = tr('<b>Unsubscribe?</b>\n\nRemove your active preferences and stop future alerts. Previously encrypted backups may remain.',
       '<b>لغو عضویت؟</b>\n\nتنظیمات فعال حذف و اعلان‌ها متوقف می‌شوند. نسخه‌های پشتیبان رمزگذاری‌شده قبلی ممکن است باقی بمانند.');
@@ -85,7 +101,7 @@ export function panel(member, page = 'home', size = 4) {
     text = tr('<b>Settings</b>', '<b>تنظیمات</b>');
     text += '\n\n' + tr('Listing size affects browsing only. Alert limits are set under Alert delivery.',
       'تعداد هر صفحه فقط برای مرور است. حد اعلان‌ها در «ارسال اعلان» تنظیم می‌شود.');
-    rows = [[button(tr('Positions per page: ', 'فرصت در هر صفحه: ') + pageSize(size), 'sub:n:next')],
+    rows = [[link('Display settings', 'تنظیمات نمایش', 'display')],
       [link('Alert delivery', 'ارسال اعلان', 'delivery'), link('My matches', 'فرصت‌های من', 'latest')],
       [link('Job markets', 'محدوده مشاغل', 'markets'), link('Sources', 'منابع', 'sources')],
       [link('Help', 'راهنما', 'help'), link('Privacy', 'حریم خصوصی', 'privacy')],
@@ -99,11 +115,9 @@ export function panel(member, page = 'home', size = 4) {
         tr('Alerts on for your selected roles.', 'اعلان موضوع‌های انتخاب‌شده روشن است.'));
     const chosen = TOPICS.filter(k => k in m.topics).map(k => LABELS[m.language][TOPICS.indexOf(k)]);
     if (chosen.length) text += '\n\n' + chosen.join(' · ');
-    rows = [[link('Academic roles', 'دانشگاهی', 'academic'), link('Career roles', 'مشاغل', 'careers')],
-      [link('Life Sciences PhD', 'دکتری علوم زیستی', 'life_sciences')],
-      [link('Latest matches', 'تازه‌ترین‌ها', 'latest'), link('Alert delivery', 'ارسال اعلان', 'delivery')],
-      [button(m.paused ? tr('Resume alerts', 'ازسرگیری اعلان') : tr('Pause alerts', 'توقف اعلان'),
-        m.paused ? 'sub:a:resume' : 'sub:a:pause'), link('Settings', 'تنظیمات', 'more')]];
+    rows = [[link('My matches', 'فرصت‌های من', 'latest')],
+      [link('Subscriptions', 'اشتراک‌ها', 'subscriptions'), link('Alert delivery', 'ارسال اعلان', 'delivery')],
+      [link('Settings', 'تنظیمات', 'more'), link('Help', 'راهنما', 'help')]];
     if (CAREERS.some(k => k in m.topics) && !Object.keys(m.scopes).length)
       rows.splice(2, 0, [link('Choose a job market', 'محدوده مشاغل را انتخاب کنید', 'markets')]);
     return {text, reply_markup: {inline_keyboard: rows}};
@@ -112,9 +126,9 @@ export function panel(member, page = 'home', size = 4) {
   return {text, reply_markup: {inline_keyboard: rows}};
 }
 
-const PAGES = new Set(['home', 'academic', 'careers', 'life_sciences', 'markets', 'delivery',
+const PAGES = new Set(['home', 'subscriptions', 'display', 'academic', 'careers', 'life_sciences', 'markets', 'delivery',
   'more', 'help', 'privacy', 'stop', 'latest', 'sources']);
-const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'home', status: 'home',
+const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'subscriptions', status: 'home',
   academic: 'academic', careers: 'careers', markets: 'markets', lifesciences: 'life_sciences',
   delivery: 'delivery', guide: 'help', privacy: 'privacy', stop: 'stop', delete: 'stop',
   latest: 'latest', sources: 'sources', help: 'help', more: 'more'};
@@ -151,7 +165,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
     } else if (parts[1] === 'l' && ['en', 'fa'].includes(parts[2])) {
       m.language = parts[2]; changed = true;
     } else if (parts[1] === 'a' && ['pause', 'resume'].includes(parts[2]) && old) {
-      m.paused = parts[2] === 'pause'; changed = true;
+      m.paused = parts[2] === 'pause'; changed = true; target = 'delivery';
     } else if (parts[1] === 'd' && old) {
       const fields = {mode: ['delivery_mode', ['instant', 'digest']], limit: ['daily_limit', LIMITS],
         zone: ['timezone', ZONES], quiet: ['quiet_hours', [false, true]]};
@@ -162,10 +176,9 @@ export async function subscriberUpdate(bot, message, callback, key) {
     } else if (raw === 'sub:stop:yes') {
       await tx.put(`subscriber:${id}`, null);
       await tx.delete(`page_size:${id}`);
-    } else if (raw === 'sub:n:next') {
-      const size = pageSize(await tx.get(`page_size:${id}`));
-      await tx.put(`page_size:${id}`, PAGE_SIZES[(PAGE_SIZES.indexOf(size) + 1) % PAGE_SIZES.length]);
-      target = 'more';
+    } else if (parts.length === 3 && parts[1] === 'n' && PAGE_SIZES.some(n => String(n) === parts[2])) {
+      await tx.put(`page_size:${id}`, Number(parts[2]));
+      target = 'display';
     } else return 'home';
     if (changed) {
       const members = await tx.list({prefix: 'subscriber:'});
@@ -208,12 +221,13 @@ export async function subscriberUpdate(bot, message, callback, key) {
         ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${current - 1}`)] : []),
           button(`${current + 1}/${totalPages}`, `sub:p:latest:${current}`),
           ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${current + 1}`)] : [])]] : []),
-        [button(fa ? 'موضوع‌ها' : 'Edit subscriptions', 'sub:p:home'),
-          button(fa ? 'تنظیمات نمایش' : `Page size: ${size}`, 'sub:p:more')]]}};
+        [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),
+          button(fa ? 'تنظیمات نمایش' : `Page size: ${size}`, 'sub:p:display')],
+        [button(fa ? 'خانه' : 'Home', 'sub:p:home')]]}};
   }
   if ((bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id))
     content.reply_markup.inline_keyboard.push([{text: member?.language === 'fa' ? 'پیگیری درخواست‌ها' : 'Saved & applications',
-      callback_data: 'view|menu|0'}]);
+      callback_data: 'view|tracking|0'}]);
   if (callback) {
     try { await bot.api('answerCallbackQuery', {callback_query_id: callback.id}); } catch { /* expired tap */ }
   }

@@ -85,7 +85,7 @@ def menu(
         )
         for key in ACADEMIC:
             buttons.append([_button(
-                ("✓ " if key in topics else "○ ") + _label(key, lang), f"sub:t:{key}",
+                ("☑ " if key in topics else "☐ ") + _label(key, lang), f"sub:t:{key}",
             )])
         all_set = all(key in topics for key in ACADEMIC)
         buttons.append([_button(
@@ -112,7 +112,7 @@ def menu(
         )
         buttons = [
             [_button(
-                ("✓ " if LIFE_SCIENCES in topics else "○ ") +
+                ("☑ " if LIFE_SCIENCES in topics else "☐ ") +
                 _label(LIFE_SCIENCES, lang),
                 "sub:t:life_sciences_phd",
             )],
@@ -125,7 +125,7 @@ def menu(
                    if fa else "Pick roles, then choose your job markets.")
         for key in CAREERS:
             buttons.append([_button(
-                ("✓ " if key in topics else "○ ") + _label(key, lang), f"sub:t:{key}",
+                ("☑ " if key in topics else "☐ ") + _label(key, lang), f"sub:t:{key}",
             )])
         all_set = all(key in topics for key in CAREERS)
         buttons.append([_button(
@@ -144,7 +144,7 @@ def menu(
                    if fa else "Iran-based and worldwide-remote are independent.")
         for key in CAREER_SCOPES:
             buttons.append([_button(
-                ("✓ " if key in scopes else "○ ") + _label(key, lang), f"sub:g:{key}",
+                ("☑ " if key in scopes else "☐ ") + _label(key, lang), f"sub:g:{key}",
             )])
         buttons.append([_button(
             "انتخاب مشاغل ←" if fa else "← Career roles", "sub:p:careers",

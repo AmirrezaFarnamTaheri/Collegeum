@@ -1,11 +1,11 @@
 /** Owner-only webhook bot. The Durable Object serializes updates and syncs. */
 import {ask, reservePublic} from './assistant.mjs';
-import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreferences, pageSize} from './subscribers.mjs';
+import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreferences, pageSize, panel} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const VIEWS = new Set(["positions", "valid", "applied", "hidden", "new", "closing", "search"]);
 const COMMANDS = new Set([...VIEWS, 'menu', 'more', 'home', 'help', 'start', 'forget', 'saved',
-  'interested', 'jobs', 'list']);
+  'interested', 'jobs', 'list', 'tracking']);
 const aiQuestion = message => {
   const input = String(message.text || '').trim();
   const word = input.split(/\s+/)[0].replace(/^\//, '').split('@')[0].toLowerCase();
@@ -23,10 +23,10 @@ const safeUrl = value => {
   catch { return ""; }
 };
 const menu = () => ({inline_keyboard: [
-  [{text: 'My matches', callback_data: 'sub:p:latest'}, nav("Closing soon", "closing")],
-  [nav("⭐ Saved", "valid"), nav("📝 Applied", "applied")],
-  [{text: 'Subscriptions & alerts', callback_data: 'sub:p:home'}, {text: 'Settings', callback_data: 'sub:p:more'}],
+  [nav('Saved', 'valid'), nav('Applied', 'applied')],
+  [nav('Academic matches', 'positions'), nav('Closing soon', 'closing')],
   [nav('Search', 'search'), nav('More', 'more')],
+  [nav('← Home', 'menu')],
 ]});
 const moreMenu = () => ({inline_keyboard: [
   [nav("🆕 New this week", "new"), nav("🙈 Hidden", "hidden")],
@@ -397,7 +397,12 @@ export class TelegramBot {
     const open = r => !r.closed_at && !r.expired_at && (!r.deadline || Date.parse(r.deadline) >= now);
     const available = rows.filter(r => open(r) && !["invalid", "applied"].includes(marks.get(r.url_hash)) &&
       matchesPreferences(r, member));
-    if (kind === "menu") return {text: '<b>Collegeum · Positions and applications</b>\n\n' +
+    if (kind === 'menu') {
+      const content = panel(member, 'home', size);
+      content.reply_markup.inline_keyboard.push([nav('Saved & applications', 'tracking')]);
+      return content;
+    }
+    if (kind === "tracking") return {text: '<b>Saved & applications</b>\n\n' +
       `<b>${available.length} academic matches</b> · ${rows.filter(r => open(r) && marks.get(r.url_hash) === "valid").length} saved · ` +
       `${rows.filter(r => marks.get(r.url_hash) === "applied").length} applied\n\n` +
       'Search with <code>/search economics London</code>.\n\n' +
@@ -435,8 +440,8 @@ export class TelegramBot {
     navigation.push(nav("⌂ Home", "menu"));
     if (page + 1 < count) navigation.push(nav("Next →", kind, page + 1));
     buttons.push(navigation);
-    buttons.push([{text: 'Edit subscriptions', callback_data: 'sub:p:home'},
-      {text: `Page size: ${size}`, callback_data: 'sub:p:more'}]);
+    buttons.push([{text: 'Edit subscriptions', callback_data: 'sub:p:subscriptions'},
+      {text: `Page size: ${size}`, callback_data: 'sub:p:display'}]);
     return {text: `<b>${esc(labels[kind])} · ${selected.length}</b>\n\n` +
       (blocks.join("\n\n") || (kind === 'valid' ? 'No saved positions yet. Open a position and tap Save.' :
         kind === 'search' ? 'No matches. Try fewer words or a different location.' :
@@ -460,7 +465,7 @@ export class TelegramBot {
       return;
     }
     kind = aliases[kind] || kind;
-    const naturalQuestion = !word.startsWith('/') && kind !== 'ask' && !VIEWS.has(kind) && !['menu','help','more'].includes(kind);
+    const naturalQuestion = !word.startsWith('/') && kind !== 'ask' && !VIEWS.has(kind) && !['menu','help','more','tracking'].includes(kind);
     if (kind === 'forget') {
       await this.ctx.storage.delete(`query:${message.chat.id}`);
       await this.deliver(updateKey,'sendMessage', {chat_id:message.chat.id, text:'Your AI follow-up context is cleared. Rate limits still apply.'});
@@ -482,7 +487,7 @@ export class TelegramBot {
       await this.deliver(updateKey,'sendMessage',{chat_id:message.chat.id,text:'Ask about stored research vacancies with /ask. Public users can ask 3 questions per minute, within a shared hourly cap. Personal tracking is private to the owners.'});
       return;
     }
-    if (!VIEWS.has(kind) && !["menu", "help", "more"].includes(kind)) kind = "help";
+    if (!VIEWS.has(kind) && !["menu", "help", "more", "tracking"].includes(kind)) kind = "help";
     const query = kind === "search" ? words.join(" ").slice(0, 160) : "";
     const content = await this.render(kind, 0, query, message.chat.id);
     const result = await this.deliver(updateKey,"sendMessage", {chat_id: message.chat.id, ...content, parse_mode: "HTML",
@@ -498,7 +503,7 @@ export class TelegramBot {
     let content;
     if (parts[0] === "view" && parts.length === 3 && /^\d{1,6}$/.test(parts[2])) {
       const kind = parts[1];
-      if (!VIEWS.has(kind) && !["menu", "help", "more"].includes(kind)) return;
+      if (!VIEWS.has(kind) && !["menu", "help", "more", "tracking"].includes(kind)) return;
       const storedSearch=kind==='search'?await this.ctx.storage.get(`search:${message.chat.id}:${message.message_id}`):null;
       const query=typeof storedSearch==='string'?storedSearch:storedSearch?.query||'';
       content = await this.render(kind, Number(parts[2]), query, message.chat.id);

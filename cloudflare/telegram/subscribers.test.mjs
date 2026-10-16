@@ -7,7 +7,7 @@ const member = {topics: {predoc: new Date().toISOString()}, scopes: {}, paused: 
 
 test('both languages keep all settings reachable with bounded native buttons', () => {
   for (const language of ['en', 'fa']) {
-    for (const page of ['home', 'academic', 'careers', 'life_sciences', 'markets',
+    for (const page of ['home', 'subscriptions', 'display', 'academic', 'careers', 'life_sciences', 'markets',
       'delivery', 'more', 'help', 'privacy', 'stop']) {
       const result = panel({...member, language}, page);
       assert.ok(result.text.length < 4096);
@@ -16,7 +16,7 @@ test('both languages keep all settings reachable with bounded native buttons', (
         assert.ok(row.length <= 2);
         for (const button of row) assert.ok(Buffer.byteLength(button.callback_data) <= 64);
       }
-      if (page !== 'home') assert.ok(result.reply_markup.inline_keyboard.flat().some(b => b.callback_data === 'sub:p:home'));
+      if (page !== 'home') assert.ok(result.reply_markup.inline_keyboard.flat().some(b => b.text.startsWith('←')));
     }
   }
   assert.ok(panel(member).reply_markup.inline_keyboard.length <= 4);
@@ -54,8 +54,8 @@ test('page size persists, paginates filtered matches and survives duplicate call
       title: `Position ${i}`, institution: 'University', apply_url: `https://example.org/${i}`,
       published_at: new Date().toISOString()}))})};
   const message = {chat: {id: 42}, message_id: 1};
-  await subscriberUpdate(bot, message, {data: 'sub:n:next'}, 'size');
-  await subscriberUpdate(bot, message, {data: 'sub:n:next'}, 'size');
+  await subscriberUpdate(bot, message, {data: 'sub:n:6'}, 'size');
+  await subscriberUpdate(bot, message, {data: 'sub:n:6'}, 'size');
   assert.equal(values.get('page_size:42'), 6);
   await subscriberUpdate(bot, message, {data: 'sub:p:latest:1'}, 'browse');
   assert.equal((sent.at(-1).text.match(/<a href=/g) || []).length, 6);
@@ -63,4 +63,18 @@ test('page size persists, paginates filtered matches and survives duplicate call
   assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b => b.text === '2/3'));
   await subscriberUpdate(bot, message, {data: 'sub:stop:yes'}, 'stop');
   assert.equal(values.has('page_size:42'), false);
+});
+
+test('menu hierarchy groups subscriptions and uses explicit checkbox states', () => {
+  const home = panel(member).reply_markup.inline_keyboard.flat().map(b => b.callback_data);
+  assert.ok(home.includes('sub:p:subscriptions'));
+  assert.ok(!home.includes('sub:p:academic'));
+  const roles = panel(member, 'academic').reply_markup.inline_keyboard.flat();
+  assert.ok(roles.find(b => b.callback_data === 'sub:t:predoc').text.startsWith('☑ '));
+  assert.ok(roles.find(b => b.callback_data === 'sub:t:phd').text.startsWith('☐ '));
+  assert.ok(roles.some(b => b.callback_data === 'sub:p:subscriptions'));
+  const display = panel(member, 'display', 6).reply_markup.inline_keyboard.flat();
+  assert.equal(display.find(b => b.callback_data === 'sub:n:6').text, '☑ 6');
+  assert.equal(display.find(b => b.callback_data === 'sub:n:4').text, '☐ 4');
+  assert.ok(display.some(b => b.callback_data === 'sub:p:more'));
 });

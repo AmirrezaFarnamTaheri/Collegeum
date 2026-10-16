@@ -36,7 +36,7 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
     assert.equal((await send('/sync',snapshot)).status,200);
     assert.equal((await send('/sync',{...snapshot,listings:[],generated_at:'2026-10-11T00:00:00Z'})).status,409);
     await send('/webhook',{update_id:1,message:{chat:{id:42},text:'/menu'}});
-    assert.match(calls.find(c=>c.url.endsWith('/sendMessage')).body.text,/0 academic matches/);
+    assert.match(calls.find(c=>c.url.endsWith('/sendMessage')).body.text,/Choose roles/);
     await send('/webhook',{update_id:2,callback_query:{id:'callback',from:{id:42},
       message:{chat:{id:42},message_id:900},data:'fb|v|'+row.url_hash.slice(0,16)}});
     const marked=await (await send('/sync',snapshot)).json();

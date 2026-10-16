@@ -190,7 +190,7 @@ test('slow public AI never blocks owner browsing, including the same owner chat'
     await started;
     const menu = await instance.fetch(post('/webhook',{update_id:11,message:{chat:{id:42},text:'/menu'}}));
     assert.equal(menu.status,200);
-    assert.match(instance.calls.find(c => c.method==='sendMessage').payload.text,/Positions and applications/);
+    assert.match(instance.calls.find(c => c.method==='sendMessage').payload.text,/Collegeum/);
     release(); await slow;
   } finally {release();globalThis.fetch=original;}
 });
@@ -520,7 +520,7 @@ test('token and method errors retain recoverable delivery checkpoints', async ()
   } finally {globalThis.fetch = original;}
 });
 
-test('owner home is compact and More remains available through private callback', async () => {
+test('owner home groups subscriptions, matches and a separate tracking section', async () => {
   const instance = bot();
   await instance.fetch(post('/sync', snapshot));
   await instance.fetch(post('/webhook', {update_id: 8282,
@@ -528,21 +528,22 @@ test('owner home is compact and More remains available through private callback'
   const home = instance.calls.find(call => call.method === 'sendMessage').payload;
   assert.equal(home.reply_markup.inline_keyboard.length, 4);
   const actions = home.reply_markup.inline_keyboard.flat().map(button => button.callback_data);
-  assert.ok(actions.includes('view|more|0'));
+  assert.ok(actions.includes('view|tracking|0'));
   assert.ok(actions.includes('sub:p:latest'));
   assert.ok(actions.includes('sub:p:more'));
   assert.ok(!actions.includes('view|hidden|0'));
+  assert.ok(actions.includes('sub:p:subscriptions'));
 
   await instance.fetch(post('/webhook', {update_id: 8283,
     callback_query: {id: 'show-more', from: {id: 42},
       message: {chat: {id: 42, type: 'private'}, message_id: 900},
-      data: 'view|more|0'}}));
+      data: 'view|tracking|0'}}));
   const advanced = instance.calls.find(call => call.method === 'editMessageText')?.payload;
   assert.ok(advanced);
-  assert.match(advanced.text, /More options/);
+  assert.match(advanced.text, /Saved & applications/);
   const menuActions = advanced.reply_markup.inline_keyboard.flat().map(button => button.callback_data);
-  assert.ok(menuActions.includes('view|new|0'));
-  assert.ok(menuActions.includes('view|hidden|0'));
+  assert.ok(menuActions.includes('view|valid|0'));
+  assert.ok(menuActions.includes('view|applied|0'));
   assert.ok(menuActions.includes('view|menu|0'));
 });
 
