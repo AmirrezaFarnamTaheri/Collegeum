@@ -76,3 +76,32 @@ def test_predoc_only_private_subscription_must_not_receive_phd_qualified_staff()
         "degree_note": None,
     }
     assert matching(member, [row], [], preview=True) == []
+
+def test_phd_requirement_still_excluded_when_config_omits_web_categories():
+    """Misconfiguration must not publish a doctorate-required opening as a predoc."""
+    from predoc_pipeline.boards.config import RoutingConfig
+
+    router = Router(Preferences(routing=RoutingConfig(web_position_kinds=[])))
+    assert router.channel(
+        title="Research Fellow", institution="University of Warwick",
+        country="United Kingdom", summary="The appointment requires a completed PhD.",
+        min_degree="phd",
+    ) is Channel.WEB
+    assert router.channel(
+        title="Doctoral Researcher", institution="University of Zurich",
+        country="Switzerland", summary="The holder must pursue a PhD thesis.",
+    ) is Channel.WEB
+    assert router.channel(
+        title="Predoctoral Research Assistant", institution="University of Warwick",
+        country="United Kingdom", summary="Ideal preparation for a future PhD.",
+    ) is Channel.TELEGRAM
+
+
+def test_completed_phd_required_does_not_invent_postdoctoral_role():
+    """A completed qualification is distinct from an explicitly postdoctoral job."""
+    assert Router.position_kind(
+        "Research Fellow", "A completed PhD is required for this appointment."
+    ) == "research"
+    assert Router.position_kind(
+        "Postdoctoral Fellow", "A completed PhD is required for this appointment."
+    ) == "postdoc"
