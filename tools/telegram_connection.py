@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -65,7 +66,9 @@ def inspect_connection(env: dict[str, str], *, activate: bool = False,
             raise ValueError('TELEGRAM_WORKER_URL must be an HTTPS origin')
         if not sync_token:
             raise ValueError('TELEGRAM_WORKER_SYNC_TOKEN is required')
+        started = time.perf_counter()
         status = request(origin + '/status', bearer=sync_token)
+        result['worker_status_ms'] = round((time.perf_counter() - started) * 1000)
         result['worker'] = {field: status.get(field) for field in (
             'subscriber_protocol', 'subscribers_initialized', 'snapshot_at', 'pending_updates')}
     if activate:
