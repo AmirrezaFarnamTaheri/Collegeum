@@ -453,3 +453,36 @@ has not started the bot or has blocked it (or the configured ID is wrong).
 Confirm the admin recipient has opened the bot privately and pressed Start;
 do not rotate the working public-channel bot token in response. An admin
 alert failure does not invalidate a preceding public `sendMessage 200 OK`.
+
+## Correcting historical PhD/postdoc posts in the predoc channel
+
+The channel router now excludes doctorate-required research and postdoctoral
+jobs even if the configurable web-kind list is changed. This does **not**
+retroactively alter messages already posted in Telegram. Publication receipts
+must remain intact; one message ID may represent a multi-job digest.
+
+Run the offline, read-only preview on a trusted checkout:
+
+    python -m tools.reconcile_telegram_misroutes --journal data/listings.ndjson
+
+The preview reports the exact SHA-256 of the journal, candidate listing IDs,
+original Telegram message IDs, qualifications and shared digest receipts.
+Verify the original advert before selecting each candidate: preparation to
+**apply for** a PhD is not a completed-PhD qualification; model-derived
+degree labels can be wrong.
+
+An operator with the original posting bot's TELEGRAM_BOT_TOKEN and the correct
+public channel ID may explicitly correct reviewed unique messages in place:
+
+    python -m tools.reconcile_telegram_misroutes --apply --reviewed-ids 43,61 --confirm-sha256 FULL_JOURNAL_SHA256 --channel @your_channel --confirm-channel @your_channel
+
+The command requires exact state hash, matching channel confirmation and
+reviewed IDs. It only invokes editMessageText; never sendMessage or
+deleteMessage. It changes neither the journal nor publication receipts.
+Placeholder application links are omitted. The bot must have edit rights.
+Inspect edited_listing_ids and failed in the JSON result. Shared digest
+receipts are refused to protect valid jobs sharing that original message.
+Do not infer that a failed edit was accepted. Do not schedule this operation.
+
+CI and the PR never contact production Telegram. Historical corrections
+remain a separately reviewed, explicit operator action.
