@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-16T19:31:14Z",
+ "generated_at": "2026-10-16T23:06:58Z",
  "count": 154,
  "listings": [
   {
@@ -395,25 +395,25 @@
   {
    "id": 216,
    "title": "Post-doctoral Fellow (HKU Stone Centre on Socio-Economic Inequality in Asia)",
-   "institution": "The University of Hong Kong",
+   "institution": "THE UNIVERSITY OF HONG KONG",
    "principal_investigator": "Professor Tarani Chandola",
    "country": "Hong Kong",
    "city": "Pok Fu Lam",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2027-01-15T00:00:00Z",
+   "deadline": "2027-01-15T23:59:59Z",
    "days_left": 91,
    "disciplines": [
+    "Econometrics",
     "Labor Economics",
-    "Development Economics",
-    "Political Economy"
+    "International Trade"
    ],
    "visa": "unknown",
-   "summary": "This is a postdoctoral fellowship at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia at the University of Hong Kong, focusing on research in labour economics, trade, development, or political economy. The fellow will conduct quantitative and qualitative data analysis, prepare manuscripts for publication, and assist with project management, and should hold a PhD and have experience with large datasets and causal inference methods.",
+   "summary": "New Pok Fu Lam, Hong Kong Competitive salary THE UNIVERSITY OF HONG KONG Applications are invited for appointment as Post-doctoral Fellow at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality ... View details 1 day ago Save You need to sign in or create an account to save",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
-   "confidence": 1.0,
+   "confidence": 0.924,
    "first_seen_at": "2026-10-15T13:28:02Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2690,7 +2690,9 @@
    "first_seen_at": "2026-10-11T10:09:47Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://bit.ly/4ySSueu"
+   ],
    "salary_min": 59000.0,
    "salary_max": 62000.0,
    "salary_currency": "USD",
@@ -3915,37 +3917,39 @@
    "deadline": null,
    "days_left": null,
    "disciplines": [
-    "Labor Economics",
     "Finance",
+    "Labor Economics",
     "Behavioral/Experimental Economics"
    ],
-   "visa": "unknown",
-   "summary": "Harvard Business School is hiring Predoctoral Research Associates to begin in Summer 2027. Positions involve supporting faculty research across economics, finance, and behavioral science topics.",
+   "visa": "not_offered",
+   "summary": "Full-time predoctoral research role at Harvard Business School, working with HBS Faculty. Research focus: Accounting and Management, Business Government and the International Economy, Entrepreneurial Management, Finance, General Management, Marketing, Negotiation Organizations and Markets, Organizational Behavior, Strategy, Technology and Operations Management. Application deadline: Rolling.",
    "language": "en",
    "apply_url": "https://careers.harvard.edu/job/predoctoral-research-associate-summer-2027-in-boston-ma-united-states-jid-2162",
    "source_url": "https://bit.ly/4zaCRyR",
-   "confidence": 0.908,
+   "confidence": 0.88,
    "first_seen_at": "2026-10-11T09:52:11Z",
-   "deadline_note": null,
+   "deadline_note": "Rolling",
    "visa_note": "No sponsorship / citizenship restriction (“unable to provide visa”)",
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://bit.ly/4zaCRyR"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
    "salary_raw": null,
    "tools_required": [
-    "Stata",
     "Python",
-    "R",
-    "MATLAB"
+    "Stata",
+    "MATLAB",
+    "R"
    ],
    "tools_preferred": [],
-   "min_degree": "unstated",
+   "min_degree": "phd",
    "degree_note": "unstated",
    "start_term": "Summer 2027",
    "start_date": null,
-   "kind": "predoc",
+   "kind": "research",
    "sector": "academic"
   },
   {
@@ -4052,7 +4056,9 @@
    "first_seen_at": "2026-10-11T09:50:58Z",
    "deadline_note": null,
    "visa_note": "No sponsorship / citizenship restriction (“unable to provide visa”)",
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://bit.ly/3Vn96MG"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -4373,7 +4379,9 @@
    "first_seen_at": "2026-10-11T09:45:10Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://www.sciencespo.fr/liepp/fr/actualites/appel-a-candidatures-contrat-post-doctoral-de-24-mois"
+   ],
    "salary_min": 3400.0,
    "salary_max": 3400.0,
    "salary_currency": "EUR",
@@ -6104,7 +6112,7 @@
     "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "This is a full-time research assistant role in health economics and econometrics at the University of Michigan, reporting to Professor Amanda Kowalski. It seeks candidates with interest in economic research and experience with statistical software like Stata, SAS, R, or Matlab, offering competitive pay and opportunities for PhD preparation.",
+   "summary": "Full-time predoctoral research assistant position in health economics and econometrics, focusing on a randomized natural experiment on health resource allocation. The role suits candidates with programming experience and an interest in developing research skills for PhD studies in economics.",
    "language": "en",
    "apply_url": "https://users.nber.org/~kowalski/Kowalski.Latest.RA.Posting.pdf",
    "source_url": "https://bit.ly/4guNTbS",
@@ -6128,8 +6136,8 @@
    "tools_preferred": [],
    "min_degree": "unstated",
    "degree_note": "unstated",
-   "start_term": "Immediate or May-July 2027",
-   "start_date": null,
+   "start_term": "May 2027",
+   "start_date": "2027-05-01",
    "kind": "predoc",
    "sector": "academic"
   },
