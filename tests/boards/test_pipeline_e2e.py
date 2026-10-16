@@ -3,6 +3,7 @@
 mocked HTTP. No Gemini key, as for a user in a country where Gemini is blocked."""
 
 import json
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import httpx
@@ -15,6 +16,15 @@ from predoc_pipeline.settings import Settings
 from tests.boards.conftest import ROOT, fixture_text
 
 WD_API = "https://ubc.wd10.myworkdayjobs.com/wday/cxs/ubc/ubcstaffjobs"
+# Explicit fixture deadlines from October/November 2026 are historical.
+# Shift the synthetic advert dates beyond the test clock; use the same year
+# in assertions so the suite still works when a calendar year changes.
+FUTURE_YEAR = datetime.now(UTC).year + 2
+
+
+def future_dates(text: str) -> str:
+    return text.replace("2026", str(FUTURE_YEAR))
+
 
 PAGES = {
     # UCL predoc (still open)
@@ -41,22 +51,22 @@ DEAD: dict[str, int] = {"https://bit.ly/3VuuwHD": 410}  # UBC pre-doc intern: fi
 def board_handler(request: httpx.Request) -> httpx.Response:
     url = str(request.url)
     if url == "https://predoc.org/opportunities":
-        return httpx.Response(200, text=fixture_text("predoc_org.html"))
+        return httpx.Response(200, text=future_dates(fixture_text("predoc_org.html")))
     if url in DEAD:
         return httpx.Response(DEAD[url])
     if url in PAGES:
-        return httpx.Response(200, text=PAGES[url])
+        return httpx.Response(200, text=future_dates(PAGES[url]))
     if url in REDIRECTS:
         return httpx.Response(302, headers={"Location": REDIRECTS[url]})
     if url == f"{WD_API}/jobs":
-        return httpx.Response(200, text=fixture_text("workday_jobs.json"),
+        return httpx.Response(200, text=future_dates(fixture_text("workday_jobs.json")),
                               headers={"content-type": "application/json"})
     if url.startswith(f"{WD_API}/job/"):
         name = "workday_detail_econ.json" if "Economics" in url else "workday_detail_bio.json"
-        return httpx.Response(200, text=fixture_text(name),
+        return httpx.Response(200, text=future_dates(fixture_text(name)),
                               headers={"content-type": "application/json"})
     if url == "https://su.varbi.com/en/":
-        return httpx.Response(200, text=fixture_text("varbi.html"))
+        return httpx.Response(200, text=future_dates(fixture_text("varbi.html")))
     if url == "https://broken.example.org/jobs":
         return httpx.Response(500)
     return httpx.Response(404)
@@ -161,21 +171,9 @@ def settings(tmp_path, monkeypatch):
 
 @pytest.fixture(autouse=True)
 def no_sleep(monkeypatch):
-    """E2E fixture deadlines are set in 2026; do not expire them with wall time."""
-    from datetime import UTC, datetime
-
-    import predoc_pipeline.boards.filter as board_filter
-    import predoc_pipeline.boards.utils.dates as board_dates
-    import predoc_pipeline.core.timeparse as timeparse
-    import predoc_pipeline.pipeline as pipeline_module
     import predoc_pipeline.publish.telegram as tg
 
-    instant = datetime(2026, 10, 10, 12, 0, tzinfo=UTC)
     monkeypatch.setattr(tg, "MIN_SEND_INTERVAL", 0)
-    monkeypatch.setattr(board_dates, "today", lambda: instant.date())
-    monkeypatch.setattr(board_filter, "today", lambda: instant.date())
-    monkeypatch.setattr(timeparse, "utcnow", lambda: instant)
-    monkeypatch.setattr(pipeline_module, "utcnow", lambda: instant)
 
 
 def run(settings, fake):
@@ -233,7 +231,7 @@ def test_full_run_then_nothing_is_sent_twice(settings):
     with Database(settings.db_path) as db:
         vse = next(r for r in db.published_listings() if "Vancouver" in r["title"])
         assert vse["principal_investigator"] == "Jane Doe"
-        assert vse["deadline"].startswith("2026-11-15")
+        assert vse["deadline"].startswith(f"{FUTURE_YEAR}-11-15")
         # This fixture welcomes international applicants but promises no sponsorship.
         assert vse["visa_sponsorship_status"] == "unknown"
         assert "International applications welcome" in vse["visa_note"]
@@ -349,7 +347,7 @@ def test_blocked_bot_keeps_everything_pending(settings):
 
 def test_same_title_twice_on_one_board_is_two_jobs(settings):
     """Stockholm often has several "Research assistant in economics" ads at once."""
-    varbi = fixture_text("varbi.html")
+    varbi = future_dates(fixture_text("varbi.html"))
     twin = varbi.replace("jobID:971001", "jobID:971777")
     if twin == varbi:
         pytest.skip("fixture layout changed")
@@ -402,10 +400,11 @@ def test_recheck_uses_the_stored_deadline():
     from predoc_pipeline.boards.config import HttpConfig
 
     page = ("<html><body><main>Predoctoral RA. Review of applications will begin on "
-            "15 Sep 2026.</main></body></html>")
+            f"15 Sep {FUTURE_YEAR}.</main></body></html>")
     transport = httpx.MockTransport(lambda r: httpx.Response(200, text=page))
     cfg = HttpConfig(default_min_interval=0, max_retries=0)
-    links = {1: ("RA", "https://x.org/ra", date(2026, 11, 30)), 2: ("RA", "https://x.org/ra")}
+    links = {1: ("RA", "https://x.org/ra", date(FUTURE_YEAR, 11, 30)),
+             2: ("RA", "https://x.org/ra")}
     out = check_links(links, cfg, transport=transport)
     assert out[1] is None                     # known deadline 30 Nov: still open
     assert out[2] is None  # Review scheduling alone does not establish a closed application window.
