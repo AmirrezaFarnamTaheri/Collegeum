@@ -5,6 +5,14 @@ Subscribers can choose roles and markets, change delivery preferences, switch
 English/Persian, pause and unsubscribe. GitHub still collects vacancies and sends
 checkpointed alerts on its schedule. Fast menus do not make collection continuous.
 
+My matches uses the same selected roles and career markets as subscriptions,
+and shows matches from the last 14 days. Owner academic browsing, search and
+closing-soon views also respect selected roles. Saved, applied and hidden views
+retain explicitly tracked positions even if the subscription changes.
+Settings offers 3, 4, 6 or 8 positions per page (default 4). This display preference
+is private to the Worker's chat and is removed on unsubscribe; it does not change
+the daily alert limit in Alert delivery.
+
 The first authenticated protocol-v1 sync seeds existing preferences. Afterward,
 Cloudflare owns preference edits; the encrypted Python journal keeps delivery
 receipts. Sync imports preferences without replacing receipts. Unsubscribe

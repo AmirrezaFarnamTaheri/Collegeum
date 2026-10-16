@@ -4,6 +4,11 @@ export const TOPICS = ['predoc', 'phd', 'postdoc', 'research', 'life_sciences_ph
 const ACADEMIC = TOPICS.slice(0, 4), CAREERS = TOPICS.slice(5);
 const ZONES = ['UTC', 'Asia/Tehran', 'Europe/London', 'America/New_York'];
 const LIMITS = [3, 6, 10];
+export const PAGE_SIZES = [3, 4, 6, 8];
+export const pageSize = value => PAGE_SIZES.includes(value) ? value : 4;
+export const matchesPreferences = (row, member) => Boolean(member &&
+  (row.category || row.kind) in member.topics &&
+  (!row.scope || row.scope in member.scopes));
 const LABELS = {
   en: ['Predoc / research assistant', 'PhD positions', 'Postdocs', 'Research staff',
     'Life Sciences PhD · Europe', 'Data science', 'Data analysis / BI',
@@ -31,7 +36,7 @@ export function validPreferences(value) {
     typeof value.quiet_hours === 'boolean' && ZONES.includes(value.timezone);
 }
 
-export function panel(member, page = 'home') {
+export function panel(member, page = 'home', size = 4) {
   const m = member || fresh(), fa = m.language === 'fa';
   const tr = (en, persian) => fa ? persian : en;
   const home = [button(tr('← Home', '← خانه'), 'sub:p:home')];
@@ -55,6 +60,7 @@ export function panel(member, page = 'home') {
         `sub:b:${page}:${all ? 'off' : 'on'}`)]);
     }
     if (page === 'careers') rows.push([link('Choose job markets →', 'محدوده مشاغل ←', 'markets')]);
+    rows.push([link('View my matches', 'مشاهده فرصت‌های من', 'latest'), link('Alert delivery', 'ارسال اعلان', 'delivery')]);
   } else if (page === 'delivery') {
     text = tr('<b>Alert delivery</b>', '<b>ارسال اعلان‌ها</b>') + '\n\n' +
       tr('Changes apply at the next scheduled alert run. Individual alerts are sent when new matches are collected.',
@@ -77,7 +83,11 @@ export function panel(member, page = 'home') {
     rows = [];
   } else if (page === 'more') {
     text = tr('<b>Settings</b>', '<b>تنظیمات</b>');
-    rows = [[link('Job markets', 'محدوده مشاغل', 'markets'), link('Sources', 'منابع', 'sources')],
+    text += '\n\n' + tr('Listing size affects browsing only. Alert limits are set under Alert delivery.',
+      'تعداد هر صفحه فقط برای مرور است. حد اعلان‌ها در «ارسال اعلان» تنظیم می‌شود.');
+    rows = [[button(tr('Positions per page: ', 'فرصت در هر صفحه: ') + pageSize(size), 'sub:n:next')],
+      [link('Alert delivery', 'ارسال اعلان', 'delivery'), link('My matches', 'فرصت‌های من', 'latest')],
+      [link('Job markets', 'محدوده مشاغل', 'markets'), link('Sources', 'منابع', 'sources')],
       [link('Help', 'راهنما', 'help'), link('Privacy', 'حریم خصوصی', 'privacy')],
       [button(fa ? 'English' : 'فارسی', `sub:l:${fa ? 'en' : 'fa'}`),
         link('Unsubscribe', 'لغو عضویت', 'stop')]];
@@ -87,6 +97,8 @@ export function panel(member, page = 'home') {
     text = '<b>Collegeum</b>\n\n' + (!ready ? tr('Choose roles to start receiving alerts.', 'برای دریافت اعلان، موضوع دلخواه را انتخاب کنید.') :
       m.paused ? tr('Alerts paused. Your choices are saved.', 'اعلان‌ها متوقف‌اند. انتخاب‌های شما ذخیره شده‌اند.') :
         tr('Alerts on for your selected roles.', 'اعلان موضوع‌های انتخاب‌شده روشن است.'));
+    const chosen = TOPICS.filter(k => k in m.topics).map(k => LABELS[m.language][TOPICS.indexOf(k)]);
+    if (chosen.length) text += '\n\n' + chosen.join(' · ');
     rows = [[link('Academic roles', 'دانشگاهی', 'academic'), link('Career roles', 'مشاغل', 'careers')],
       [link('Life Sciences PhD', 'دکتری علوم زیستی', 'life_sciences')],
       [link('Latest matches', 'تازه‌ترین‌ها', 'latest'), link('Alert delivery', 'ارسال اعلان', 'delivery')],
@@ -102,7 +114,7 @@ export function panel(member, page = 'home') {
 
 const PAGES = new Set(['home', 'academic', 'careers', 'life_sciences', 'markets', 'delivery',
   'more', 'help', 'privacy', 'stop', 'latest', 'sources']);
-const COMMAND_PAGES = {start: 'home', settings: 'home', subscribe: 'home', status: 'home',
+const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'home', status: 'home',
   academic: 'academic', careers: 'careers', markets: 'markets', lifesciences: 'life_sciences',
   delivery: 'delivery', guide: 'help', privacy: 'privacy', stop: 'stop', delete: 'stop',
   latest: 'latest', sources: 'sources', help: 'help', more: 'more'};
@@ -149,6 +161,11 @@ export async function subscriberUpdate(bot, message, callback, key) {
       target = 'delivery'; changed = true;
     } else if (raw === 'sub:stop:yes') {
       await tx.put(`subscriber:${id}`, null);
+      await tx.delete(`page_size:${id}`);
+    } else if (raw === 'sub:n:next') {
+      const size = pageSize(await tx.get(`page_size:${id}`));
+      await tx.put(`page_size:${id}`, PAGE_SIZES[(PAGE_SIZES.indexOf(size) + 1) % PAGE_SIZES.length]);
+      target = 'more';
     } else return 'home';
     if (changed) {
       const members = await tx.list({prefix: 'subscriber:'});
@@ -159,33 +176,44 @@ export async function subscriberUpdate(bot, message, callback, key) {
     return target;
   });
   const member = await bot.ctx.storage.get(`subscriber:${id}`);
-  let content = panel(member, page);
+  const size = pageSize(await bot.ctx.storage.get(`page_size:${id}`));
+  let content = panel(member, page, size);
   if (page === 'full') content.text = 'Subscriptions are full. Please try again later.';
   if (page === 'sources') content.text = (await bot.ctx.storage.get('source_status'))?.[member?.language || 'en'] ||
     (member?.language === 'fa' ? 'هنوز گزارش بررسی منابع در دسترس نیست.' : 'No source-check report is available yet.');
   if (page === 'latest') {
-    const {rows} = await bot.dataset(false);
-    const recent = at => Number.isFinite(Date.parse(at)) && Date.parse(at) >= Date.now() - 14 * 86400000;
-    const academic = rows.filter(r => member && r.kind in member.topics && !r.closed_at && !r.expired_at &&
+    const owner = (bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id);
+    const {rows, marks} = await bot.dataset(owner);
+    const recent = at => Number.isFinite(Date.parse(at)) && Date.parse(at) <= Date.now() &&
+      Date.parse(at) >= Date.now() - 14 * 86400000;
+    const academic = rows.filter(r => matchesPreferences(r, member) && !r.closed_at && !r.expired_at &&
+      !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
       recent(r.published_at) && (!r.deadline || Date.parse(r.deadline) >= Date.now()));
-    const careers = (await bot.ctx.storage.get('career_listings') || []).filter(r => member &&
-      r.category in member.topics && (!r.scope || r.scope in member.scopes) &&
-      r.availability !== 'closed' && recent(r.first_seen_at)).map(r => ({
+    const careers = (await bot.ctx.storage.get('career_listings') || []).filter(r => matchesPreferences(r, member) &&
+      r.availability !== 'closed' && (!r.deadline || Date.parse(r.deadline) >= Date.now()) &&
+      recent(r.first_seen_at)).map(r => ({
         ...r, apply_url: r.url, institution: r.employer, published_at: r.first_seen_at,
       }));
-    const matches = [...academic, ...careers].sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at)).slice(0, 40);
+    const matches = [...academic, ...careers].sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
     const fa = member?.language === 'fa';
-    const totalPages = Math.max(1, Math.ceil(matches.length / 4));
+    const totalPages = Math.max(1, Math.ceil(matches.length / size));
     const current = Math.min(totalPages - 1, /^sub:p:latest:\d{1,6}$/.test(raw) ? Number(raw.split(':')[3]) : 0);
     content = {text: (fa ? '<b>تازه‌ترین‌ها</b>' : '<b>Latest matches</b>') + '\n\n' +
-      (matches.slice(current * 4, current * 4 + 4).map(r => `<a href="${escape(r.apply_url)}">${escape(r.title.slice(0, 110))}</a>\n${escape(r.institution.slice(0, 90))}`).join('\n\n') ||
+      (fa ? 'بر اساس موضوع‌ها و محدوده‌های انتخاب‌شده · ۱۴ روز اخیر' : 'Your selected roles and markets · last 14 days') + '\n\n' +
+      (matches.slice(current * size, current * size + size).map(r => `<a href="${escape(r.apply_url)}">${escape(r.title.slice(0, 110))}</a>\n${escape(r.institution.slice(0, 90))}` +
+        (r.country ? ` · ${escape(r.country.slice(0, 50))}` : '') +
+        (r.deadline ? `\n${fa ? 'مهلت' : 'Deadline'}: ${escape(r.deadline.slice(0, 10))}` : '')).join('\n\n') ||
         (fa ? 'موردی یافت نشد. موضوع‌ها را تغییر دهید یا بعداً بررسی کنید.' : 'No matches yet. Change your roles or check again later.')),
       reply_markup: {inline_keyboard: [
         ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${current - 1}`)] : []),
           button(`${current + 1}/${totalPages}`, `sub:p:latest:${current}`),
           ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${current + 1}`)] : [])]] : []),
-        [button(fa ? '← خانه' : '← Home', 'sub:p:home')]]}};
+        [button(fa ? 'موضوع‌ها' : 'Edit subscriptions', 'sub:p:home'),
+          button(fa ? 'تنظیمات نمایش' : `Page size: ${size}`, 'sub:p:more')]]}};
   }
+  if ((bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id))
+    content.reply_markup.inline_keyboard.push([{text: member?.language === 'fa' ? 'پیگیری درخواست‌ها' : 'Saved & applications',
+      callback_data: 'view|menu|0'}]);
   if (callback) {
     try { await bot.api('answerCallbackQuery', {callback_query_id: callback.id}); } catch { /* expired tap */ }
   }

@@ -149,7 +149,8 @@ test('unknown delivery is not submitted again when Telegram repeats its webhook'
 
 test('search pagination retains the same query; listing text is escaped', async () => {
   const instance = bot();
-  const records = Array.from({length: 6}, (_, i) => ({...record, url_hash: String(i).repeat(64), title: '<b>Economics & data</b>'}));
+  await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date().toISOString()}, scopes: {}});
+  const records = Array.from({length: 6}, (_, i) => ({...record, kind: 'predoc', url_hash: String(i).repeat(64), title: '<b>Economics & data</b>'}));
   await instance.fetch(post('/sync', {...snapshot, listings: records}));
   await instance.fetch(post('/webhook', {update_id: 5, message: {chat: {id: 42}, text: '/search economics'}}));
   assert.match(instance.calls[0].payload.text, /&lt;b&gt;Economics &amp; data&lt;\/b&gt;/);
@@ -157,7 +158,7 @@ test('search pagination retains the same query; listing text is escaped', async 
     message: {chat: {id: 42}, message_id: 900}, data: 'view|search|1'}}));
   const content = instance.calls.at(-1).payload;
   assert.match(content.text, /Page 2 of 2/);
-  assert.match(content.text, /Search: economics/);
+  assert.match(content.text, /Search my academic matches: economics/);
 });
 
 test('stale sync cannot replace a newer snapshot', async () => {
@@ -525,9 +526,11 @@ test('owner home is compact and More remains available through private callback'
   await instance.fetch(post('/webhook', {update_id: 8282,
     message: {chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/menu'}}));
   const home = instance.calls.find(call => call.method === 'sendMessage').payload;
-  assert.equal(home.reply_markup.inline_keyboard.length, 3);
+  assert.equal(home.reply_markup.inline_keyboard.length, 4);
   const actions = home.reply_markup.inline_keyboard.flat().map(button => button.callback_data);
   assert.ok(actions.includes('view|more|0'));
+  assert.ok(actions.includes('sub:p:latest'));
+  assert.ok(actions.includes('sub:p:more'));
   assert.ok(!actions.includes('view|hidden|0'));
 
   await instance.fetch(post('/webhook', {update_id: 8283,
@@ -541,4 +544,19 @@ test('owner home is compact and More remains available through private callback'
   assert.ok(menuActions.includes('view|new|0'));
   assert.ok(menuActions.includes('view|hidden|0'));
   assert.ok(menuActions.includes('view|menu|0'));
+});
+
+test('owner listing commands filter saved roles and use the saved page size', async () => {
+  const instance = bot();
+  const records = Array.from({length: 8}, (_, i) => ({...record,
+    kind: i === 7 ? 'phd' : 'predoc', title: `Role ${i}`, url_hash: String(i).repeat(64)}));
+  await instance.fetch(post('/sync', {...snapshot, listings: records}));
+  assert.match((await instance.render('positions', 0, '', 42)).text, /No matches/);
+  await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date().toISOString()}, scopes: {}});
+  await instance.ctx.storage.put('page_size:42', 6);
+  const first = await instance.render('positions', 0, '', 42);
+  assert.match(first.text, /My academic matches · 7/);
+  assert.doesNotMatch(first.text, /Role 7/);
+  assert.equal((first.text.match(/Open advert/g) || []).length, 6);
+  assert.match((await instance.render('positions', 1, '', 42)).text, /Page 2 of 2/);
 });
