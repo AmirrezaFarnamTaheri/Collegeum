@@ -161,9 +161,21 @@ def settings(tmp_path, monkeypatch):
 
 @pytest.fixture(autouse=True)
 def no_sleep(monkeypatch):
+    """E2E fixture deadlines are set in 2026; do not expire them with wall time."""
+    from datetime import UTC, datetime
+
+    import predoc_pipeline.boards.filter as board_filter
+    import predoc_pipeline.boards.utils.dates as board_dates
+    import predoc_pipeline.core.timeparse as timeparse
+    import predoc_pipeline.pipeline as pipeline_module
     import predoc_pipeline.publish.telegram as tg
 
+    instant = datetime(2026, 10, 10, 12, 0, tzinfo=UTC)
     monkeypatch.setattr(tg, "MIN_SEND_INTERVAL", 0)
+    monkeypatch.setattr(board_dates, "today", lambda: instant.date())
+    monkeypatch.setattr(board_filter, "today", lambda: instant.date())
+    monkeypatch.setattr(timeparse, "utcnow", lambda: instant)
+    monkeypatch.setattr(pipeline_module, "utcnow", lambda: instant)
 
 
 def run(settings, fake):
