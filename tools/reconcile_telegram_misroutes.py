@@ -158,6 +158,12 @@ def apply_corrections(
         try:
             client.call("editMessageText", payload)
         except Exception as exc:
+            # Editing identical text twice is a confirmed no-op, not an
+            # undelivered message. Other errors remain explicit for review.
+            if (getattr(exc, "status", None) == 400
+                    and "message is not modified" in str(exc).lower()):
+                report["edited_listing_ids"].append(item.listing_id)
+                continue
             # Do not expose bot tokens, request URLs or subscriber data in logs.
             report["failed"].append({
                 "listing_id": item.listing_id, "error_type": type(exc).__name__,
