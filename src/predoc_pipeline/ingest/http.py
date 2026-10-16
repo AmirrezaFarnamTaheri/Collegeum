@@ -28,16 +28,18 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 from urllib.robotparser import RobotFileParser
 
 import httpx
 
+from ..core.network_safety import UnsafeDestination, validate_public_url
 from ..core.urls import content_hash, registrable_host, url_hash
 from ..logging_setup import get_logger
 
 log = get_logger(__name__)
 MAX_CACHED_BODY_BYTES = 1_000_000
+MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 __all__ = ["FetchResult", "PoliteClient"]
 
@@ -75,12 +77,16 @@ class PoliteClient:
     _last_request: dict[str, float] = field(default_factory=dict)
     _robots: dict[str, RobotFileParser | None] = field(default_factory=dict)
     _owns_client: bool = False
+    _check_dns: bool = False
 
     def __post_init__(self) -> None:
+        self._check_dns = self.client is None or not isinstance(
+            getattr(self.client, "_transport", None), httpx.MockTransport
+        )
         if self.client is None:
             self.client = httpx.Client(
                 timeout=self.timeout,
-                follow_redirects=True,
+                follow_redirects=False,
                 headers={
                     "User-Agent": self.user_agent,
                     "Accept": (
@@ -113,12 +119,27 @@ class PoliteClient:
         parser: RobotFileParser | None = None
         robots_url = f"{origin}/robots.txt"
         try:
-            response = self.client.get(robots_url, timeout=10.0)  # type: ignore[union-attr]
-            if response.status_code == 200:
-                parser = RobotFileParser()
-                parser.parse(response.text.splitlines())
-        except Exception:
-            parser = None  # unreachable robots.txt is treated as "no rules"
+            validate_public_url(robots_url, resolve_dns=self._check_dns)
+            # Stream robots.txt too: a server must not exhaust crawler memory
+            # before the job-page response-size guard ever runs.
+            with self.client.stream(  # type: ignore[union-attr]
+                "GET", robots_url, timeout=10.0, follow_redirects=False,
+            ) as response:
+                if response.status_code == 200:
+                    body = bytearray()
+                    for chunk in response.iter_bytes():
+                        if len(body) + len(chunk) > 256 * 1024:
+                            raise UnsafeDestination("robots.txt response too large")
+                        body.extend(chunk)
+                    parser = RobotFileParser()
+                    parser.parse(body.decode("utf-8", errors="replace").splitlines())
+                elif response.status_code not in (404, 410):
+                    # 403/429, redirects and 5xx are not permission to crawl.
+                    parser = RobotFileParser()
+                    parser.parse(["User-agent: *", "Disallow: /"])
+        except (httpx.RequestError, UnsafeDestination, OSError, ValueError):
+            parser = RobotFileParser()
+            parser.parse(["User-agent: *", "Disallow: /"])
         self._robots[origin] = parser
         return parser
 
@@ -131,7 +152,7 @@ class PoliteClient:
         try:
             return parser.can_fetch(self.user_agent, url)
         except Exception:  # pragma: no cover - defensive
-            return True
+            return False
 
     # -- pacing -----------------------------------------------------------
     def _pace(self, url: str, sleep: Callable[[float], None] = time.sleep) -> None:
@@ -142,11 +163,64 @@ class PoliteClient:
         self._last_request[host] = time.monotonic()
 
     # -- fetching ---------------------------------------------------------
+    def _safe_get(self, url: str, headers: dict[str, str],
+                  sleep: Callable[[float], None]) -> httpx.Response:
+        """Fetch only validated destinations and inspect every redirect hop."""
+        current = url
+        current_headers = dict(headers)
+        for hop in range(6):
+            validate_public_url(current, resolve_dns=self._check_dns)
+            if hop:
+                if not self.allowed(current):
+                    raise UnsafeDestination("redirect blocked by robots.txt")
+                self._pace(current, sleep=sleep)
+            with self.client.stream(  # type: ignore[union-attr]
+                "GET", current, headers=current_headers, follow_redirects=False
+            ) as response:
+                if response.status_code in (301, 302, 303, 307, 308):
+                    location = response.headers.get("location")
+                    if not location:
+                        raise UnsafeDestination("HTTP redirect without location")
+                    target = urljoin(current, location)
+                    validate_public_url(target, resolve_dns=self._check_dns)
+                    if hop >= 5:
+                        raise UnsafeDestination("HTTP redirect limit exceeded")
+                    origin = urlsplit(current)
+                    destination = urlsplit(target)
+                    if (origin.scheme, origin.netloc) != (destination.scheme, destination.netloc):
+                        # Do not forward vendor-specific credentials or
+                        # cache validators to a different HTTP origin.
+                        safe_headers = {"user-agent", "accept", "accept-language",
+                                        "accept-encoding"}
+                        current_headers = {name: value for name, value in current_headers.items()
+                                           if name.lower() in safe_headers}
+                    current = target
+                    continue
+                body = bytearray()
+                for chunk in response.iter_bytes():
+                    body.extend(chunk)
+                    if len(body) > MAX_RESPONSE_BYTES:
+                        raise UnsafeDestination("HTTP response too large")
+                # iter_bytes has decoded compressed content already; never
+                # forward the original Content-Encoding/Content-Length pair.
+                headers_out = {k: v for k, v in response.headers.items()
+                               if k.lower() not in {"content-encoding", "content-length",
+                                                    "transfer-encoding"}}
+                return httpx.Response(
+                    response.status_code, headers=headers_out,
+                    content=bytes(body), request=response.request,
+                )
+        raise UnsafeDestination("HTTP redirect limit exceeded")
+
     def get(
         self, url: str, *, use_cache: bool = True,
         sleep: Callable[[float], None] = time.sleep,
     ) -> FetchResult:
         """Fetch a URL, returning a result object rather than raising."""
+        try:
+            validate_public_url(url, resolve_dns=self._check_dns)
+        except UnsafeDestination:
+            return FetchResult(url=url, status=0, error="unsafe outbound HTTP destination")
         if not self.allowed(url):
             return FetchResult(url=url, status=999, error="blocked by robots.txt")
 
@@ -165,9 +239,11 @@ class PoliteClient:
 
         self._pace(url, sleep=sleep)
         try:
-            response = self.client.get(url, headers=headers)  # type: ignore[union-attr]
+            response = self._safe_get(url, headers, sleep)
+        except UnsafeDestination as exc:
+            return FetchResult(url=url, status=0, error=f"outbound policy: {exc}")
         except httpx.RequestError as exc:
-            return FetchResult(url=url, status=0, error=f"transport: {exc}")
+            return FetchResult(url=url, status=0, error=f"transport: {type(exc).__name__}")
 
         if response.status_code == 304:
             if cached is None or cached["body"] is None:

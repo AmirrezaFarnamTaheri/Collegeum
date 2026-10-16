@@ -56,5 +56,12 @@ def rebuild(
             continue
         match = _DIGITS_RX.search(row[0].get("text", ""))
         prefix = parsed[1]
-        rows.append(feedback_row(prefix, status_of(prefix), int(match.group()) if match else None))
+        # A compact listing row also has a Details button. Preserve all
+        # non-feedback actions when a mark changes; only redraw the marks.
+        leading = [button for button in row
+                   if parse_callback(button.get("callback_data")) is None]
+        rows.append([
+            *leading,
+            *feedback_row(prefix, status_of(prefix), int(match.group()) if match else None),
+        ])
     return {"inline_keyboard": rows}

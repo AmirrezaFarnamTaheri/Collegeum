@@ -185,7 +185,11 @@ def test_confirmed_source_facts_survive_public_rebuild(tmp_path: Path):
     assert entries[77]["kind"] == "research"
     assert entries[77]["salary_min"] == rows[77]["salary_min"]
     assert entries[139]["min_degree"] == "masters"
-    assert entries[173]["institution"] == rows[173]["institution"]
+    # The source review survives in the journal after a verified HTTP 410.
+    # A closed vacancy must not be reinstated into the public dashboard.
+    assert rows[173]["closed_at"]
+    assert rows[173]["closed_reason"] == "link no longer works (HTTP 410)"
+    assert 173 not in entries
 
 
 def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
@@ -214,8 +218,9 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
     published = {entry["id"]: entry for entry in output["listings"]}
     assert output["count"] == len(published)
     assert 28 not in published  # neuroscience is not economics
-    for identifier in (46, 77, 139, 173):
+    for identifier in (46, 77, 139):
         assert identifier in published
+    assert 173 not in published  # source returned HTTP 410; durable record is retained
     assert "University of Pennsylvania" in published[46]["institution"]
     assert "upenn.wd1.myworkdayjobs.com" in published[46]["apply_url"]
     assert published[46]["salary_min"] == 50000
@@ -227,14 +232,14 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
     assert published[139]["min_degree"] == "masters"
     assert "jobs.unisg.ch" in published[139]["apply_url"]
     assert published[139]["tools_required"] == []
-    assert "University of Bern" in published[173]["institution"]
-    assert "jobs.unibe.ch" in published[173]["apply_url"]
+    # Historical source facts remain in the durable journal, but this
+    # confirmed-closed application cannot be re-advertised by rebuilding.
 
     items = ET.parse(rss).getroot().findall("channel/item")
     feed_by_guid = {entry.findtext("guid"): entry for entry in items}
     assert not any("Freedman Lab" in (item.findtext("description") or "")
                    for item in items)
-    for identifier in (46, 77, 139, 173):
+    for identifier in (46, 77, 139):
         item = published[identifier]
         guid = item["source_url"]
         assert guid in feed_by_guid

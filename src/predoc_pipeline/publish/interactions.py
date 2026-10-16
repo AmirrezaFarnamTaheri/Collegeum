@@ -105,7 +105,7 @@ def private_message(
     command = tokens[0].lower().split("@")[0]
     pages = {
         "/start": "home", "/settings": "home", "/subscribe": "home",
-        "/status": "home", "/academic": "academic",
+        "/status": "home", "/more": "more", "/academic": "academic",
         "/careers": "careers", "/markets": "markets", "/guide": "help",
         "/lifesciences": "life_sciences",
         "/stop": "stop", "/delete": "stop", "/help": "help",
@@ -212,7 +212,7 @@ def _page(
         return sources_panel(settings.career_health_path, lang=language(member))
     if target in (
         "home", "academic", "life_sciences", "careers", "markets",
-        "delivery", "privacy", "help", "stop",
+        "delivery", "privacy", "help", "more", "stop",
     ):
         return menu(member, target)
     return None

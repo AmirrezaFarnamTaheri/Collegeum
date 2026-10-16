@@ -5,199 +5,174 @@
 [![Dashboard](https://img.shields.io/badge/Live_Dashboard-GitHub_Pages-blue)](https://amirrezafarnamtaheri.github.io/Collegeum/)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 
-An automated pipeline that discovers, deduplicates, and broadcasts
-**pre-doctoral** research assistantships, fellowships, and academic research
-openings in economics, finance, public policy, and quantitative social
-science across the UK, Europe, Canada, the US, and international research
-institutions to Telegram and X/Twitter daily, at zero dollar cost.
+An automated pipeline that discovers, filters, and broadcasts pre-doctoral
+research assistantships, fellowships, and academic research openings in
+economics, finance, public policy, and quantitative social science. It covers
+the UK, Europe, Canada, the US, and international research institutions,
+delivering new positions to Telegram and X/Twitter daily at zero infrastructure
+cost.
 
-🌐 **Live Web Dashboard:** [https://amirrezafarnamtaheri.github.io/Collegeum](https://amirrezafarnamtaheri.github.io/Collegeum)
+**Live dashboard:** https://amirrezafarnamtaheri.github.io/Collegeum
 
-The pipeline monitors academic job boards (PREDOC.org, EconJobMarket, European
-Job Market, jobs.ac.uk, EURAXESS, SOMMA, academics.de), university applicant
-tracking systems (Workday, Varbi), department career pages, RSS/Atom feeds,
-and X/Twitter accounts (via official X API v2 and Xquik). It filters out
-unrelated vacancies through a deterministic gate, extracts structured metadata
-(deadlines, supervisors, visa sponsorship, application links, and filled
-status), deduplicates cross-posted listings across three tiers (URL hash,
-MinHash/LSH, fuzzy composite keys), and broadcasts new positions to Telegram
-channels and X/Twitter feeds. It also updates an interactive GitHub Pages
-dashboard and RSS syndication feed.
+## What it does
 
-No paid API keys are required: without `GEMINI_API_KEY`, a built-in heuristic
-extractor parses vacancy pages. When configured, Gemini provides structured LLM
-extraction subject to the same policy rules.
+The pipeline runs on GitHub Actions every four hours and performs a full cycle:
 
-**Getting Started:** Read `SETUP_GUIDE.md` for deployment instructions.
-**Recent Updates:** See `CHANGES.md` for release history and architecture changes.
-**Current readiness:** See [FINALIZATION.md](FINALIZATION.md) for verified local
-changes, source coverage and the requirements still blocking full acceptance.
-**Technical Details:** Consult `ARCHITECTURE.md` for design trade-offs,
-`COMPLIANCE.md` before enabling external scrapers, `REVIEW.md` for the defect
-register, and `OPERATIONS.md` for production runbooks.
+1. **Discovers** vacancies from academic job boards (PREDOC.org, EconJobMarket,
+   European Job Market, jobs.ac.uk, EURAXESS, SOMMA, academics.de), university
+   applicant tracking systems (Workday, Varbi), department career pages,
+   RSS/Atom feeds, and X/Twitter accounts.
+2. **Filters** unrelated vacancies through a deterministic rule-based gate that
+   checks institution, field, region, position type, and employer classification.
+3. **Extracts** structured metadata — deadlines, supervisors, visa sponsorship,
+   application links, filled status — using either a zero-dependency heuristic
+   parser or an optional LLM provider (Gemini, Groq, OpenAI, Anthropic, Mistral,
+   NVIDIA, OpenRouter, or any OpenAI-compatible endpoint).
+4. **Deduplicates** cross-posted listings across three tiers: exact URL hash,
+   MinHash/LSH similarity, and fuzzy composite keys.
+5. **Broadcasts** new positions to a Telegram channel, an X/Twitter account, and
+   an interactive GitHub Pages dashboard with RSS syndication.
 
-## Personal Telegram alerts and admin console
-
-Private chat subscriptions now support predocs, PhDs, postdocs, data science,
-data analytics, economics consulting, and research-analyst vacancies.
-Career alerts offer separate **Iran-based** and **worldwide-remote** switches.
-Use `/start` for the compact home screen, then select academic roles, careers
-and job markets with inline buttons. Other shortcuts include `/settings`,
-`/latest` (paginated preview), `/sources` (provider-health summary),
-`/pause`, `/resume`, `/guide` and `/stop` (confirmed unsubscribe).
-The bot supports English and Persian menus without requiring a public web
-application. Users can select an entire role group at once, and new job cards
-include an Open vacancy and Manage alerts button.
-The private admin can open `/admin` for run, cache and queue health.
-Private notification sends use a checkpointed outbox: encrypted intents
-are committed before any Bot API send, and delivery outcomes are committed
-afterward. Failed and ambiguous sends remain visible for reconciliation.
-Both require the existing `FEEDBACK_ENCRYPTION_KEY`; configure a positive
-`TELEGRAM_ADMIN_CHAT_ID` for the admin surface. Scheduled private-sync
-runs **only** when `ENABLE_TELEGRAM_SYNC=true` is set as an Actions
-repository variable; when enabled, it fails if `TELEGRAM_BOT_TOKEN` or
-`FEEDBACK_ENCRYPTION_KEY` is missing. By default the private inbox is
-inactive until existing encrypted state and its original key are verified.
-Public Telegram channel announcements remain independent. A previous
-production run appeared green after silently skipping due to a missing
-encryption key. See the operations guide for safe restoration and validation.
-
-The scheduled pipeline checks alternating source cohorts every **4 hours**;
-each academic board is checked once per 8 hours and runs have halved budgets.
-See [Telegram subscriptions and operations](docs/TELEGRAM_OPERATIONS.md)
-for data flow, delivery recovery, source constraints, and setup. The
-[provider integration matrix](docs/IRAN_JOB_PROVIDERS.md) distinguishes
-public job feeds from undocumented/private ATS and candidate APIs.
+No paid API keys are required. Without any model-provider key, the built-in
+heuristic extractor parses vacancy pages. When a key is configured, the LLM
+provides structured extraction subject to the same policy rules.
 
 ## Quickstart
 
 ```bash
-git clone <this-repo>
-cd predoc-pipeline
+git clone https://github.com/AmirrezaFarnamTaheri/Collegeum.git
+cd Collegeum
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[portals]"
 
 cp .env.example .env
-# edit .env: TELEGRAM_BOT_TOKEN, TELEGRAM_PUBLIC_CHANNEL_ID (GEMINI_API_KEY optional)
+# Edit .env: set TELEGRAM_BOT_TOKEN and TELEGRAM_PUBLIC_CHANNEL_ID
+#           (GEMINI_API_KEY or another LLM key is optional)
 
 predoc-pipeline init             # initialize local database and directories
-predoc-pipeline smoke            # offline sanity check (tests gating & models)
-predoc-pipeline sources verify   # exercise discovery/parsing for enabled sources
-predoc-pipeline run --dry-run    # ingest and gate without calling models or broadcasting
-predoc-pipeline run --only cemfi,predoc_org   # run specific job boards
-predoc-pipeline run              # execute full cycle: ingest, gate, extract, dedupe, broadcast
+predoc-pipeline smoke            # offline sanity check (no network or credentials)
+predoc-pipeline sources verify   # test discovery and parsing for enabled sources
+predoc-pipeline run --dry-run    # ingest and gate without models or broadcasting
+predoc-pipeline run --only cemfi,predoc_org   # run specific sources only
+predoc-pipeline run              # full cycle: ingest, gate, extract, dedupe, broadcast
 predoc-pipeline telegram-sync    # answer bot commands and persist button taps
-predoc-pipeline dashboard        # export docs/data/*.json and RSS feed without a full run
-predoc-pipeline search "macro"   # query cached active listings by keyword or institution
-predoc-pipeline search-x "from:econ_RA"  # query X/Twitter postings (API v2 / Xquik)
-predoc-pipeline test-telegram    # send a test message to your configured Telegram channel
-predoc-pipeline test-x           # post a test update to your configured X/Twitter account
-predoc-pipeline stats            # display database counts and recent run outcomes
-predoc-pipeline vacuum           # prune dead-letter/seen rows and compact the database
+predoc-pipeline dashboard        # export dashboard JSON and RSS feed without a full run
+predoc-pipeline search "macro"   # query cached active listings by keyword
+predoc-pipeline stats            # show database counts and recent run outcomes
+predoc-pipeline vacuum           # prune dead-letter and seen rows, compact the database
 ```
 
-For a scheduled, hosted setup add `TELEGRAM_BOT_TOKEN` and
-`TELEGRAM_PUBLIC_CHANNEL_ID` (your own chat id, for a personal bot) as
-repository secrets. `.github/workflows/pipeline.yml` runs every four hours
-(00:07, 04:07, 08:07, 12:07, 16:07 and 20:07 UTC),
-and `.github/workflows/telegram.yml` checks commands at its configured half-hour
-slots. Both workflows share a serial queue with multiple waiting runs enabled;
-[GitHub permits up to 100 waiting runs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
-in that concurrency group. The
-dashboard (`pages.yml`) is optional: it needs a public repository on the Free
-plan and the repository variable `ENABLE_PAGES=true`. This switch applies to
-pushes, completed pipeline/bot runs and manual dashboard deployment alike;
-leaving it unset or setting it to `false` disables the deployment job.
+## Deployment
 
-### What you get, and how to change it
+For a scheduled, hosted setup on GitHub Actions:
 
-`config/preferences.toml` defines filtering criteria: included regions (UK,
-Europe, Canada, US, Other), academic and research fields, employer classification
-patterns, position types (predoc, PhD, postdoc), and deadline expiry rules.
-`config/sources.toml` lists the sources: `[[board]]` entries are active by
-default, while `[[feed]]` and `[[portal]]` entries serve as configured templates.
+1. **Configure secrets.** In **Settings > Secrets and variables > Actions**, add
+   `TELEGRAM_BOT_TOKEN` and `TELEGRAM_PUBLIC_CHANNEL_ID`. The bot must be an
+   administrator of the destination channel. See `SETUP_GUIDE.md` for full
+   instructions including private commands, encrypted feedback, and optional
+   integrations.
 
-The [10 October source validation record](review/2026-10-10/source-expansion.md)
-documents the enabled Nuffield, CREST and ESSEC additions and the staged NHH
-source. The [second expansion batch](review/2026-10-10/source-expansion-batch2.md)
-adds Warwick, the Bank of Canada and Sciences Po with live discovery/detail
-evidence and explicit coverage limits. Discovery counts are separate from eligible
-vacancies and healthy coverage.
+2. **Enable the dashboard (optional).** Set the repository variable
+   `ENABLE_PAGES=true` and make the repository public. The dashboard deploys
+   via GitHub Pages on every push and after each pipeline run.
 
-The [institution coverage investigation](review/2026-10-10/institution-expansion.md)
-adds seven further official pages, including Aarhus, Gothenburg, Umeå, Linköping,
-Duke, Trinity College Cambridge and Bruegel. It records working discovery/detail
-contracts and the blocked candidate backlog separately.
+3. **The pipeline runs automatically.** The `pipeline.yml` workflow fires at
+   00:07, 04:07, 08:07, 12:07, 16:07, and 20:07 UTC. The `telegram.yml` workflow
+   checks for private bot commands at :15 and :45 every hour when
+   `ENABLE_TELEGRAM_SYNC=true`.
 
-### Feed and portal templates
+See `SETUP_GUIDE.md` for detailed deployment, `OPERATIONS.md` for production
+runbooks, and `COMPLIANCE.md` before enabling external scrapers.
 
-`[[feed]]` and `[[portal]]` entries default to `verified = false` and
-`enabled = false`. Public syndication endpoints change frequently across
-academic portals. Run `predoc-pipeline sources verify` to validate connectivity
-and data return for configured sources. Consult `config/sources.toml` for
-site-specific parameters, and run `predoc-pipeline sources discover <url>` to
-detect live RSS or Atom feeds directly from publisher homepages.
+## Telegram bot
+
+The Telegram bot provides two surfaces:
+
+- **Public channel announcements.** New vacancies are posted as formatted cards
+  or digest messages to a public channel. No private data is exposed.
+
+- **Private owner console.** In a private chat with the bot, owners can browse
+  positions, save/hide/track applications, search by keyword, and ask natural
+  language questions about stored vacancies (powered by OpenRouter with a
+  database-grounded tool-call protocol). The bot supports English and Persian
+  menus.
+
+An optional Cloudflare Worker (`cloudflare/telegram/`) provides a durable
+webhook handler with serialized update processing, crash recovery via alarms,
+quota-gated public AI, and checkpointed delivery that never silently
+acknowledges an unconfirmed Telegram send.
+
+## Configuration
+
+- **`config/sources.toml`** — Source registry. `[[board]]` entries are active by
+  default; `[[feed]]` and `[[portal]]` entries are templates that default to
+  `enabled = false` and `verified = false`.
+
+- **`config/preferences.toml`** — Filtering criteria: included regions, academic
+  fields, employer classification patterns, position types, and deadline expiry
+  rules.
+
+- **`.env.example`** — All environment variables with defaults and inline
+  documentation. Copy to `.env` for local runs; use repository secrets for CI.
 
 ## Project layout
 
 ```
 src/predoc_pipeline/
-  core/            Stdlib-only: URLs, text, MinHash+LSH, fuzzy matching,
-                   time parsing, SQLite storage (Schema v5), rate limiting,
-                   and deterministic gating. Fully unit-testable with zero
-                   third-party packages.
-  ingest/          HTTP client (conditional GET, robots.txt, pacing),
-                   source registry, feed autodiscovery, and collectors
-                   (job boards, RSS/Atom feeds, ATS portals, X API v2, Xquik).
-  extract/         Classification prompts, Gemini REST backends with
-                   automatic fallback, and a zero-dependency heuristic extractor.
+  core/            URL handling, text processing, MinHash+LSH, fuzzy matching,
+                   time parsing, SQLite storage, rate limiting, deterministic gating
+  ingest/          HTTP client (conditional GET, robots.txt, pacing), source
+                   registry, feed autodiscovery, collectors for boards, feeds,
+                   ATS portals, and X API v2 / Xquik
+  extract/         Classification prompts, LLM REST backends with fallback,
+                   and a zero-dependency heuristic extractor
   boards/          Job-board scrapers, preference rules, detail-page heuristics,
-                   and filled-position verification.
+                   and filled-position verification
   publish/         Telegram Bot API client, X/Twitter broadcast client, message
-                   formatting, `/positions` command handler, and feedback store.
-  policy.py        Applies config/preferences.toml to every listing.
-  models.py        Domain models (PredocListing) and extraction schema.
-  pipeline.py      Orchestrates the ingestion, gating, extraction, and broadcasting cycle.
-  state.py         Committed NDJSON journal, dashboard JSON export, and RSS generation.
-  cli.py           `predoc-pipeline` command-line interface.
+                   formatting, and encrypted feedback store
+  pipeline.py      Orchestrates the ingestion, gating, extraction, and broadcast cycle
+  policy.py        Applies config/preferences.toml to every listing
+  models.py        Domain models and extraction schema
+  state.py         NDJSON journal, dashboard JSON export, and RSS generation
+  cli.py           Command-line interface
 
-tests/core/        Unit tests, standard library only (no pip dependencies required).
-tests/integration/ Tests covering HTTP, persistence, extraction, and publishers.
-tests/fixtures/    Labeled examples for precision and recall evaluation.
-
-config/sources.toml      Source registry configuration.
-config/preferences.toml  Field, region, and employer filters.
-data/                    Committed state: listings.ndjson, seen.ndjson, feedback.json.
-docs/                    Static web dashboard (docs/index.html) and JSON/RSS data feeds.
-.github/workflows/       pipeline.yml, telegram.yml, ci.yml, pages.yml.
+cloudflare/telegram/   Optional Cloudflare Worker for durable Telegram webhook handling
+config/                Source registry and filter preferences
+data/                  Committed state: listings, seen items, feedback
+docs/                  Static web dashboard and JSON/RSS data feeds
+tests/                 Unit tests (core) and integration tests
+tools/                 Maintenance scripts (e.g. false-closure repair)
 ```
 
 ## Testing
 
 ```bash
-make test-core          # stdlib only: runs with standard python3 without dependencies
-make test               # full suite: 282 tests passing
+make test-core          # stdlib only, no dependencies required
+make test               # full suite
 make eval               # gate precision/recall against tests/fixtures/golden.jsonl
 make smoke              # offline self-check without network or credentials
 ```
 
-`tests/core/` is runnable with zero third-party packages installed:
+Core tests run with standard Python 3 and no installed packages:
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
 ```
 
-## Design principles this project holds itself to
+## Design principles
 
-1. **The model's daily request quota, not compute, is the scarce resource.**
-   Every layer before extraction exists to protect it: the seen-items gate,
-   the deterministic rule-based classifier, and per-source item caps.
+1. **The model quota, not compute, is the scarce resource.** Every layer before
+   extraction exists to protect it: the seen-items gate, the deterministic
+   classifier, and per-source item caps.
+
 2. **Nothing is asserted without being checked.** Source URLs default to
    `verified = false` until someone runs `sources verify`. Rate limits are
-   configurable rather than hard-coded constants.
+   configurable, not hard-coded.
+
 3. **A crash should never cause a duplicate broadcast or silent data loss.**
    Rows are inserted with pending status before broadcasting; committed state
    uses an append-then-sorted-rewrite NDJSON journal.
+
 4. **Silent failure is the default failure mode for an unattended scraper.**
    Per-source yield is tracked in run health metrics; consecutive empty runs
    and failing sources trigger maintainer alerts.

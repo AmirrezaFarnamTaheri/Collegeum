@@ -6,9 +6,11 @@ import logging
 import random
 import time
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 import httpx
+
+from ..core.network_safety import UnsafeDestination, validate_public_url
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +35,8 @@ DEFAULT_BROWSER_HEADERS = {
     "Upgrade-Insecure-Requests": "1",
 }
 
-RETRY_STATUS = {403, 429, 500, 502, 503, 504, 520, 522, 524}
+RETRY_STATUS = {429, 500, 502, 503, 504, 520, 522, 524}
+MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 
 class FetchError(RuntimeError):
@@ -50,11 +53,12 @@ class HttpClient:
         self.backoff_base = backoff_base
         self.default_min_interval = default_min_interval
         self.user_agents = user_agents or DEFAULT_UAS
+        self._mock_transport = isinstance(transport, httpx.MockTransport)
         self._host_interval: dict[str, float] = {}
         self._host_last: dict[str, float] = {}
         self._host_lock: dict[str, asyncio.Lock] = {}
         self._client = httpx.AsyncClient(
-            timeout=timeout, follow_redirects=True, transport=transport,
+            timeout=timeout, follow_redirects=False, transport=transport,
             headers={"Accept-Encoding": "gzip, deflate"},
         )
 
@@ -80,7 +84,75 @@ class HttpClient:
                 await asyncio.sleep(wait + random.uniform(0, interval * 0.3))
             self._host_last[host] = time.monotonic()
 
+    async def _safe_fetch(self, method: str, url: str, headers: dict[str, str],
+                          **kw: Any) -> httpx.Response:
+        """Follow a bounded number of explicitly validated redirects."""
+        current = url
+        arguments = dict(kw)
+        for hop in range(6):
+            try:
+                validate_public_url(current, resolve_dns=not self._mock_transport)
+            except UnsafeDestination as exc:
+                raise FetchError(f"Unsafe outbound HTTP destination: {exc}") from exc
+            if hop:
+                await self._polite_wait(urlsplit(current).netloc.lower())
+            async with self._client.stream(
+                method, current, headers=headers, follow_redirects=False, **arguments
+            ) as response:
+                if response.status_code in {301, 302, 303, 307, 308}:
+                    location = response.headers.get("location")
+                    if not location:
+                        raise FetchError("HTTP redirect without location",
+                                         status=response.status_code)
+                    target = urljoin(current, location)
+                    try:
+                        validate_public_url(target, resolve_dns=not self._mock_transport)
+                    except UnsafeDestination as exc:
+                        raise FetchError(f"Unsafe redirect destination: {exc}") from exc
+                    if hop >= 5:
+                        raise FetchError("HTTP redirect limit exceeded")
+                    origin = urlsplit(current)
+                    destination = urlsplit(target)
+                    if (origin.scheme, origin.netloc) != (destination.scheme, destination.netloc):
+                        if method.upper() not in {"GET", "HEAD"}:
+                            raise FetchError("Cross-origin write redirect refused")
+                        # A third-party redirect must never inherit arbitrary
+                        # client/vendor secret headers (e.g. X-Api-Key).
+                        safe_headers = {"user-agent", "accept", "accept-language",
+                                        "accept-encoding"}
+                        headers = {k: v for k, v in headers.items()
+                                   if k.lower() in safe_headers}
+                    if response.status_code == 303 or (
+                        response.status_code in {301, 302} and method.upper() == "POST"
+                    ):
+                        method = "GET"
+                        arguments = {k: v for k, v in arguments.items()
+                                     if k not in {"json", "data", "content", "files"}}
+                    current = target
+                    continue
+                chunks: list[bytes] = []
+                total = 0
+                async for chunk in response.aiter_bytes():
+                    total += len(chunk)
+                    if total > MAX_RESPONSE_BYTES:
+                        raise FetchError("HTTP response too large")
+                    chunks.append(chunk)
+                # aiter_bytes already decoded gzip/deflate. Retaining the
+                # upstream encoding/length would cause a second decode.
+                headers_out = {k: v for k, v in response.headers.items()
+                               if k.lower() not in {"content-encoding", "content-length",
+                                                    "transfer-encoding"}}
+                return httpx.Response(
+                    response.status_code, content=b"".join(chunks),
+                    headers=headers_out, request=response.request,
+                )
+        raise FetchError("HTTP redirect limit exceeded")
+
     async def request(self, method: str, url: str, **kw: Any) -> httpx.Response:
+        try:
+            validate_public_url(url, resolve_dns=not self._mock_transport)
+        except UnsafeDestination as exc:
+            raise FetchError(f"Unsafe outbound HTTP destination: {exc}") from exc
         parsed = urlsplit(url)
         host = parsed.netloc.lower()
         ua = random.choice(self.user_agents)
@@ -94,7 +166,7 @@ class HttpClient:
         for attempt in range(self.max_retries + 1):
             await self._polite_wait(host)
             try:
-                resp = await self._client.request(method, url, headers=headers, **kw)
+                resp = await self._safe_fetch(method, url, headers, **kw)
             except (httpx.TransportError, httpx.TimeoutException) as exc:
                 last_exc = exc
                 log.debug("%s %s failed (%s), attempt %d", method, url, exc, attempt + 1)
@@ -104,16 +176,8 @@ class HttpClient:
                         raise FetchError(f"HTTP {resp.status_code} for {url}", status=resp.status_code)
                     return resp
                 last_exc = FetchError(f"HTTP {resp.status_code} for {url}", status=resp.status_code)
-                if resp.status_code == 403 and attempt < self.max_retries:
-                    # Cloudflare or anti-bot: rotate headers, switch referer, and back off
-                    headers["Referer"] = "https://www.google.com/"
-                    headers["Sec-Fetch-Site"] = "cross-site"
-                    headers["User-Agent"] = random.choice(self.user_agents)
-                    delay = self.backoff_base ** (attempt + 1) + random.uniform(0.5, 1.5)
-                    await asyncio.sleep(delay)
-                    continue
                 retry_after = resp.headers.get("Retry-After", "")
-                if retry_after.isdigit():
+                if retry_after.isdigit() and attempt < self.max_retries:
                     await asyncio.sleep(min(int(retry_after), 120))
                     continue
             if attempt < self.max_retries:

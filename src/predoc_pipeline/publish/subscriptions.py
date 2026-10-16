@@ -125,7 +125,7 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
             continue
         when = str(row["published_at"] or "")
         parsed = _instant(when)
-        kind = Router.position_kind(row["title"], row["summary"] or "")
+        kind = Router.kind_for_row(row)
         if parsed is None or parsed < cutoff or not selected(member, kind, ""):
             continue
         if not preview and not eligible(member, kind, "", when):

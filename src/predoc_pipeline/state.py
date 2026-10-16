@@ -260,7 +260,7 @@ def export_dashboard(
     for row in _web_rows(db, hidden or set(), router):
         record = _public_record(row)
         if router is not None:
-            record["kind"] = router.position_kind(row["title"], row["summary"] or "")
+            record["kind"] = router.kind_for_row(row)
             record["sector"] = router.sector(row["institution"] or "")
         records.append(record)
     payload = {

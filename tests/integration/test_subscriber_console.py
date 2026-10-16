@@ -637,14 +637,20 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
     from predoc_pipeline.publish.ui import menu
 
     home, markup = menu(None)
-    assert "Academic roles: 0/3" in home
-    assert len(markup["inline_keyboard"]) == 8  # includes life-sciences category
+    assert "Academic roles: 0/4" in home
+    assert len(markup["inline_keyboard"]) <= 5  # high-priority actions only
     assert "sub:p:academic" in str(markup)
     assert "sub:p:careers" in str(markup)
-    assert "sub:p:markets" in str(markup)
+    assert "sub:p:more" in str(markup)
+    assert "sub:p:markets" not in str(markup)
+    more_text, more_keyboard = menu(None, "more")
+    assert "More options" in more_text
+    assert "sub:p:markets" in str(more_keyboard)
+    assert "sub:p:privacy" in str(more_keyboard)
+    assert "sub:p:stop" in str(more_keyboard)
     for page in (
         "academic", "life_sciences", "careers", "markets",
-        "delivery", "privacy", "help", "stop",
+        "delivery", "privacy", "help", "more", "stop",
     ):
         text, keyboard = menu(None, page)
         assert text
@@ -933,7 +939,7 @@ def test_bot_command_scopes_exclude_administration_for_general_users(tmp_path):
     }
     assert "admin" not in global_commands
     assert "settings" in global_commands
-    assert "sources" in global_commands
+    assert "sources" not in global_commands  # available from More
     fa = command_sets[1]
     assert fa["language_code"] == "fa"
     assert fa["scope"]["type"] == "all_private_chats"
@@ -1303,7 +1309,9 @@ def test_privacy_notice_is_available_in_both_languages():
     assert "حریم خصوصی" in persian and "/delete" in persian
     home, keyboard = menu(None)
     assert "/privacy" in home
-    assert "sub:p:privacy" in str(keyboard)
+    assert "sub:p:more" in str(keyboard)
+    _, more = menu(None, "more")
+    assert "sub:p:privacy" in str(more)
 
 
 def test_admin_reconciliation_requires_verified_evidence(tmp_path):
@@ -1647,3 +1655,30 @@ def test_research_staff_private_opt_in_and_quarantined_link_exclusion():
     assert matches[0]["category"] == "research"
     assert "پژوهشگر حرفه‌ای" in render_alert(matches[0], lang="fa")
     db.close()
+
+
+def test_telegram_command_picker_stays_short_and_advanced_commands_still_work():
+    from predoc_pipeline.publish.bot import ALIASES, COMMANDS, OWNER_COMMANDS
+
+    visible = {name for name, _ in COMMANDS}
+    owner = {name for name, _ in OWNER_COMMANDS}
+    assert len(COMMANDS) <= 9
+    assert len(COMMANDS) + len(OWNER_COMMANDS) <= 14
+    assert {'start', 'latest', 'settings', 'delivery', 'ask', 'help', 'stop'} <= visible
+    assert {'menu', 'positions', 'search', 'saved', 'applied'} <= owner
+    assert {'privacy', 'sources', 'delete', 'forget', 'lifesciences'}.isdisjoint(visible)
+    assert ALIASES['hidden'] == 'hidden'
+    assert ALIASES['new'] == 'new'
+
+
+def test_subscription_home_does_not_claim_active_alerts_without_any_topic():
+    from predoc_pipeline.publish.ui import menu
+
+    empty, _ = menu(None)
+    assert "Not configured" in empty
+    ready, _ = menu({"topics": {"predoc": "2026-10-15T00:00:00Z"},
+                     "scopes": {}, "paused": False})
+    assert "Alerts: On" in ready
+    paused, _ = menu({"topics": {"predoc": "2026-10-15T00:00:00Z"},
+                      "scopes": {}, "paused": True})
+    assert "Alerts: Paused" in paused

@@ -15,16 +15,30 @@ VIEWS = frozenset({'positions', 'valid', 'applied', 'hidden', 'closing', 'new', 
 
 
 def menu_keyboard() -> dict[str, Any]:
+    """Three action rows on a phone; advanced actions live on one extra screen."""
     return {'inline_keyboard': [
         [{'text': '📋 Open positions', 'callback_data': 'view|positions|0'},
          {'text': '⏳ Closing soon', 'callback_data': 'view|closing|0'}],
         [{'text': '⭐ Saved', 'callback_data': 'view|valid|0'},
          {'text': '📝 Applied', 'callback_data': 'view|applied|0'}],
-        [{'text': '🆕 New this week', 'callback_data': 'view|new|0'},
-         {'text': '🙈 Hidden', 'callback_data': 'view|hidden|0'}],
-        [{'text': '🔎 Search tips', 'callback_data': 'view|search|0'},
-         {'text': '❔ Help', 'callback_data': 'view|help|0'}],
+        [{'text': '🔎 Search help', 'callback_data': 'view|search|0'},
+         {'text': '⚙️ More', 'callback_data': 'view|more|0'}],
     ]}
+
+
+def more() -> tuple[str, dict[str, Any]]:
+    """Secondary owner-only pages: visible but not crowding the primary menu."""
+    return (
+        '⚙️ <b>More options</b>\n\n'
+        'See recently added roles, revisit hidden jobs, or get help.\n'
+        'Use <code>/search economics London</code> to filter by keywords.',
+        {'inline_keyboard': [
+            [{'text': '🆕 New this week', 'callback_data': 'view|new|0'},
+             {'text': '🙈 Hidden', 'callback_data': 'view|hidden|0'}],
+            [{'text': '❔ Help', 'callback_data': 'view|help|0'},
+             {'text': '← Home', 'callback_data': 'view|menu|0'}],
+        ]},
+    )
 
 
 def home(rows: list[sqlite3.Row], store: FeedbackStore) -> tuple[str, dict[str, Any]]:
@@ -94,13 +108,19 @@ def screen(
             text = labels[kind] + '\n\nNo matches. Try another view or search.'
     if len(pages) > 1:
         text += f'\n\nPage {page + 1} of {len(pages)}'
-    buttons = list((markup or {}).get('inline_keyboard', []))
-    # Numbered detail buttons complement the compact feedback rows.
-    for row in list(buttons):
+    buttons = []
+    # Put the details link on the same row as the three short feedback actions:
+    # one action row per job rather than two, without losing any capability.
+    for row in (markup or {}).get('inline_keyboard', []):
         if row and row[0].get('callback_data', '').startswith('fb|'):
             prefix = row[0]['callback_data'].split('|')[-1]
             number = row[0]['text'].split()[-1]
-            buttons.append([{'text': f'↗ Details {number}', 'callback_data': f'detail|{prefix}'}])
+            buttons.append([
+                {'text': f'🔎 {number}', 'callback_data': f'detail|{prefix}'},
+                *row,
+            ])
+        else:
+            buttons.append(row)
     nav_kind = f'search:{search_id}' if kind == 'search' else kind
     nav = []
     if page:
