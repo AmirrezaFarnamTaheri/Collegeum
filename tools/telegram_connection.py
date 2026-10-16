@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import secrets
 import time
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -21,10 +22,15 @@ class _NoRedirects(HTTPRedirectHandler):
         return None
 
 
-def request_json(url: str, *, payload: dict | None = None, bearer: str = '') -> dict:
-    headers = {'Content-Type': 'application/json'}
+def request_json(url: str, *, payload: dict | None = None, bearer: str = '',
+                 webhook_secret: str = '') -> dict:
+    headers = {'Content-Type': 'application/json',
+               'User-Agent': 'Collegeum-ConnectionCheck/1.0 '
+                             '(+https://github.com/AmirrezaFarnamTaheri/Collegeum)'}
     if bearer:
         headers['Authorization'] = f'Bearer {bearer}'
+    if webhook_secret:
+        headers['X-Telegram-Bot-Api-Secret-Token'] = webhook_secret
     request = Request(url, data=json.dumps(payload).encode() if payload is not None else None,
                       headers=headers)
     try:
@@ -35,6 +41,34 @@ def request_json(url: str, *, payload: dict | None = None, bearer: str = '') -> 
     if not isinstance(result, dict):
         raise RuntimeError('Invalid connection response')
     return result
+
+
+def smoke_test(env: dict[str, str], report: dict[str, Any], *,
+               request: Any = request_json) -> dict[str, Any]:
+    """Send one owner menu through the authenticated Worker and confirm delivery."""
+    if not report.get('ready'):
+        raise ValueError('Verified webhook readiness is required before a live menu test')
+    identifier = env.get('TELEGRAM_ADMIN_CHAT_ID', '')
+    if not identifier.isascii() or not identifier.isdecimal() or int(identifier) <= 0:
+        raise ValueError('A positive TELEGRAM_ADMIN_CHAT_ID is required for a live menu test')
+    secret = env.get('TELEGRAM_WEBHOOK_SECRET', '')
+    if not secret:
+        raise ValueError('TELEGRAM_WEBHOOK_SECRET is required for a live menu test')
+    # This private test ID does not alter Telegram's polling cursor. The real
+    # webhook and the test share the Worker's ordinary delivery checkpoints.
+    update_id = 2**52 + secrets.randbelow(2**50)
+    started = time.perf_counter()
+    result = request(env['TELEGRAM_WORKER_URL'].rstrip('/') + '/webhook',
+                     webhook_secret=secret, payload={
+        'update_id': update_id, 'message': {
+            'chat': {'id': int(identifier), 'type': 'private'},
+            'from': {'id': int(identifier)}, 'text': '/menu',
+        },
+    })
+    if result != {'ok': True}:
+        raise RuntimeError('Worker did not confirm owner menu delivery')
+    return {'menu_delivery_confirmed': True,
+            'menu_response_ms': round((time.perf_counter() - started) * 1000)}
 
 
 def inspect_connection(env: dict[str, str], *, activate: bool = False,
@@ -107,9 +141,12 @@ def inspect_connection(env: dict[str, str], *, activate: bool = False,
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--activate', action='store_true')
+    parser.add_argument('--smoke', action='store_true', help='Send one test menu to the owner')
     args = parser.parse_args()
     try:
         report = inspect_connection(dict(os.environ), activate=args.activate)
+        if args.smoke:
+            report['live_test'] = smoke_test(dict(os.environ), report)
     except (ValueError, RuntimeError) as exc:
         parser.exit(1, str(exc) + '\n')
     print(json.dumps(report, indent=2))
