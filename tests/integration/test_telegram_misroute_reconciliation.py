@@ -118,3 +118,19 @@ def test_historical_journal_is_never_modified_by_planning(tmp_path):
     assert digest == hashlib.sha256(original).hexdigest()
     assert [p.listing_id for p in plan] == [2]
     assert file.read_bytes() == original
+
+
+def test_repeated_identical_correction_is_idempotent_after_telegram_ack():
+    from predoc_pipeline.publish.telegram import TelegramError
+
+    class AlreadyEdited:
+        def call(self, method, payload):
+            raise TelegramError("Bad Request: message is not modified", status=400)
+
+    plan = plan_records([row(12, 81)])
+    report = apply_corrections(
+        plan, reviewed_ids={12}, journal_sha256="f" * 64,
+        confirm_sha256="f" * 64, channel="-100123",
+        confirm_channel="-100123", client=AlreadyEdited(),
+    )
+    assert report == {"edited_listing_ids": [12], "failed": []}
