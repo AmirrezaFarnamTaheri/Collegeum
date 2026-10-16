@@ -1,11 +1,11 @@
 /** Owner-only webhook bot. The Durable Object serializes updates and syncs. */
 import {ask, reservePublic} from './assistant.mjs';
-import {subscriberCommand, subscriberUpdate, validPreferences} from './subscribers.mjs';
+import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreferences, pageSize, panel} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const VIEWS = new Set(["positions", "valid", "applied", "hidden", "new", "closing", "search"]);
 const COMMANDS = new Set([...VIEWS, 'menu', 'more', 'home', 'help', 'start', 'forget', 'saved',
-  'interested', 'jobs', 'list']);
+  'interested', 'jobs', 'list', 'tracking']);
 const aiQuestion = message => {
   const input = String(message.text || '').trim();
   const word = input.split(/\s+/)[0].replace(/^\//, '').split('@')[0].toLowerCase();
@@ -23,9 +23,10 @@ const safeUrl = value => {
   catch { return ""; }
 };
 const menu = () => ({inline_keyboard: [
-  [nav("📋 Open positions", "positions"), nav("⏳ Closing soon", "closing")],
-  [nav("⭐ Saved", "valid"), nav("📝 Applied", "applied")],
-  [nav("🔎 Search help", "search"), nav("⚙️ More", "more")],
+  [nav('Saved', 'valid'), nav('Applied', 'applied')],
+  [nav('Academic matches', 'positions'), nav('Closing soon', 'closing')],
+  [nav('Search', 'search'), nav('More', 'more')],
+  [nav('← Home', 'menu')],
 ]});
 const moreMenu = () => ({inline_keyboard: [
   [nav("🆕 New this week", "new"), nav("🙈 Hidden", "hidden")],
@@ -388,13 +389,21 @@ export class TelegramBot {
     return {rows, marks};
   }
 
-  async render(kind, page = 0, query = "") {
+  async render(kind, page = 0, query = "", chatId = null) {
     const {rows, marks} = await this.dataset();
+    const member = chatId === null ? null : await this.ctx.storage.get(`subscriber:${chatId}`);
+    const size = pageSize(chatId === null ? null : await this.ctx.storage.get(`page_size:${chatId}`));
     const now = Date.now();
     const open = r => !r.closed_at && !r.expired_at && (!r.deadline || Date.parse(r.deadline) >= now);
-    const available = rows.filter(r => open(r) && !["invalid", "applied"].includes(marks.get(r.url_hash)));
-    if (kind === "menu") return {text: '<b>Collegeum · Positions and applications</b>\n\n' +
-      `<b>${available.length} open</b> · ${rows.filter(r => open(r) && marks.get(r.url_hash) === "valid").length} saved · ` +
+    const available = rows.filter(r => open(r) && !["invalid", "applied"].includes(marks.get(r.url_hash)) &&
+      matchesPreferences(r, member));
+    if (kind === 'menu') {
+      const content = panel(member, 'home', size);
+      content.reply_markup.inline_keyboard.push([nav('Saved & applications', 'tracking')]);
+      return content;
+    }
+    if (kind === "tracking") return {text: '<b>Saved & applications</b>\n\n' +
+      `<b>${available.length} academic matches</b> · ${rows.filter(r => open(r) && marks.get(r.url_hash) === "valid").length} saved · ` +
       `${rows.filter(r => marks.get(r.url_hash) === "applied").length} applied\n\n` +
       'Search with <code>/search economics London</code>.\n\n' +
       `Listings updated: ${esc((await this.ctx.storage.get("snapshot_at")) || "Waiting for first sync")}`, reply_markup: menu()};
@@ -415,26 +424,28 @@ export class TelegramBot {
       [r.title, r.institution, r.country, r.city, r.summary, r.principal_investigator].join(" ").toLowerCase().includes(term)));
     selected.sort((a, b) => kind === "new" ? Date.parse(b.first_seen_at) - Date.parse(a.first_seen_at) :
       (Date.parse(a.deadline) || Infinity) - (Date.parse(b.deadline) || Infinity) || a.title.localeCompare(b.title));
-    const count = Math.max(1, Math.ceil(selected.length / 4));
+    const count = Math.max(1, Math.ceil(selected.length / size));
     page = Math.min(Math.max(0, page), count - 1);
-    const chunk = selected.slice(page * 4, page * 4 + 4);
-    const labels = {positions: "Open positions", valid: "Saved", applied: "Applications", hidden: "Hidden", new: "New this week", closing: "Closing soon", search: `Search: ${query}`};
-    const blocks = chunk.map((r, i) => `<b>${page * 4 + i + 1}. ${esc(r.title.slice(0, 110))}</b>\n` +
+    const chunk = selected.slice(page * size, page * size + size);
+    const labels = {positions: "My academic matches", valid: "Saved", applied: "Applications", hidden: "Hidden", new: "New academic matches", closing: "Academic matches closing soon", search: `Search my academic matches: ${query}`};
+    const blocks = chunk.map((r, i) => `<b>${page * size + i + 1}. ${esc(r.title.slice(0, 110))}</b>\n` +
       `🏛 ${esc(r.institution.slice(0, 90))} · ${esc([r.city, r.country].filter(Boolean).join(", ").slice(0, 90) || "Location unstated")}\n` +
       `⏳ ${esc(r.deadline ? r.deadline.slice(0, 10) : r.deadline_note?.slice(0, 70) || "Deadline unstated")} · <a href="${esc(safeUrl(r.apply_url))}">Open advert</a>`);
     const buttons = chunk.map((r, i) => [
-      {text: `↗ ${page * 4 + i + 1} Details`, callback_data: `detail|${r.url_hash.slice(0, 16)}`},
-      ...this.feedback(r, marks.get(r.url_hash), page * 4 + i + 1),
+      {text: `↗ ${page * size + i + 1} Details`, callback_data: `detail|${r.url_hash.slice(0, 16)}`},
+      ...this.feedback(r, marks.get(r.url_hash), page * size + i + 1),
     ]);
     const navigation = [];
     if (page) navigation.push(nav("← Previous", kind, page - 1));
     navigation.push(nav("⌂ Home", "menu"));
     if (page + 1 < count) navigation.push(nav("Next →", kind, page + 1));
     buttons.push(navigation);
+    buttons.push([{text: 'Edit subscriptions', callback_data: 'sub:p:subscriptions'},
+      {text: `Page size: ${size}`, callback_data: 'sub:p:display'}]);
     return {text: `<b>${esc(labels[kind])} · ${selected.length}</b>\n\n` +
       (blocks.join("\n\n") || (kind === 'valid' ? 'No saved positions yet. Open a position and tap Save.' :
         kind === 'search' ? 'No matches. Try fewer words or a different location.' :
-          'No positions in this view. Try Open positions.')) +
+          'No matches in this view. Review your subscriptions or check again later.')) +
       (count > 1 ? `\n\nPage ${page + 1} of ${count}` : ''), reply_markup: {inline_keyboard: buttons}};
   }
 
@@ -454,7 +465,7 @@ export class TelegramBot {
       return;
     }
     kind = aliases[kind] || kind;
-    const naturalQuestion = !word.startsWith('/') && kind !== 'ask' && !VIEWS.has(kind) && !['menu','help','more'].includes(kind);
+    const naturalQuestion = !word.startsWith('/') && kind !== 'ask' && !VIEWS.has(kind) && !['menu','help','more','tracking'].includes(kind);
     if (kind === 'forget') {
       await this.ctx.storage.delete(`query:${message.chat.id}`);
       await this.deliver(updateKey,'sendMessage', {chat_id:message.chat.id, text:'Your AI follow-up context is cleared. Rate limits still apply.'});
@@ -476,9 +487,9 @@ export class TelegramBot {
       await this.deliver(updateKey,'sendMessage',{chat_id:message.chat.id,text:'Ask about stored research vacancies with /ask. Public users can ask 3 questions per minute, within a shared hourly cap. Personal tracking is private to the owners.'});
       return;
     }
-    if (!VIEWS.has(kind) && !["menu", "help", "more"].includes(kind)) kind = "help";
+    if (!VIEWS.has(kind) && !["menu", "help", "more", "tracking"].includes(kind)) kind = "help";
     const query = kind === "search" ? words.join(" ").slice(0, 160) : "";
-    const content = await this.render(kind, 0, query);
+    const content = await this.render(kind, 0, query, message.chat.id);
     const result = await this.deliver(updateKey,"sendMessage", {chat_id: message.chat.id, ...content, parse_mode: "HTML",
       link_preview_options: {is_disabled: true}});
     if (kind === "search" && query && Number.isSafeInteger(result?.message_id))
@@ -492,10 +503,10 @@ export class TelegramBot {
     let content;
     if (parts[0] === "view" && parts.length === 3 && /^\d{1,6}$/.test(parts[2])) {
       const kind = parts[1];
-      if (!VIEWS.has(kind) && !["menu", "help", "more"].includes(kind)) return;
+      if (!VIEWS.has(kind) && !["menu", "help", "more", "tracking"].includes(kind)) return;
       const storedSearch=kind==='search'?await this.ctx.storage.get(`search:${message.chat.id}:${message.message_id}`):null;
       const query=typeof storedSearch==='string'?storedSearch:storedSearch?.query||'';
-      content = await this.render(kind, Number(parts[2]), query);
+      content = await this.render(kind, Number(parts[2]), query, message.chat.id);
     } else if ((parts[0] === "fb" && parts.length === 3) || (parts[0] === "detail" && parts.length === 2)) {
       const prefix = parts.at(-1);
       if (!/^[a-f0-9]{16}$/.test(prefix)) return;

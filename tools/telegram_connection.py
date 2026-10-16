@@ -105,6 +105,16 @@ def inspect_connection(env: dict[str, str], *, activate: bool = False,
         result['worker_status_ms'] = round((time.perf_counter() - started) * 1000)
         result['worker'] = {field: status.get(field) for field in (
             'subscriber_protocol', 'subscribers_initialized', 'snapshot_at', 'pending_updates')}
+    snapshot_fresh = False
+    if status:
+        try:
+            timestamp = datetime.fromisoformat(
+                str(status.get('snapshot_at')).replace('Z', '+00:00'))
+            age = datetime.now(UTC) - timestamp
+            snapshot_fresh = timedelta(0) <= age <= timedelta(hours=8)
+        except (ValueError, TypeError):
+            pass
+        result['snapshot_fresh'] = snapshot_fresh
     if activate:
         if not enabled or not webhook_secret or not status:
             raise ValueError('Activation requires webhook mode, Worker URL, sync token '
@@ -112,13 +122,7 @@ def inspect_connection(env: dict[str, str], *, activate: bool = False,
         if (status.get('subscriber_protocol') != 1
                 or status.get('subscribers_initialized') is not True):
             raise ValueError('Seed subscriber preferences with telegram-sync before activation')
-        try:
-            timestamp = datetime.fromisoformat(
-                str(status.get('snapshot_at')).replace('Z', '+00:00'))
-            age = datetime.now(UTC) - timestamp
-        except (ValueError, TypeError):
-            raise ValueError('Worker has no valid snapshot') from None
-        if not timedelta(0) <= age <= timedelta(hours=8):
+        if not snapshot_fresh:
             raise ValueError('Refresh the Worker snapshot before activation')
         applied = request(api + 'setWebhook', payload={
             'url': origin + '/webhook', 'secret_token': webhook_secret,
@@ -132,9 +136,11 @@ def inspect_connection(env: dict[str, str], *, activate: bool = False,
             raise RuntimeError('Telegram did not confirm the intended Worker webhook')
         result['telegram_delivery'] = 'webhook'
         result['webhook_matches_worker'] = True
+        result['pending_updates'] = checked['result'].get('pending_update_count', 0)
+        result['last_delivery_error_at'] = checked['result'].get('last_error_date')
     result['ready'] = bool(enabled and result['webhook_matches_worker'] and status and
                            status.get('subscribers_initialized') is True and
-                           status.get('subscriber_protocol') == 1)
+                           status.get('subscriber_protocol') == 1 and snapshot_fresh)
     return result
 
 

@@ -1,9 +1,35 @@
 """Connection diagnostics are read-only unless activation is explicit."""
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from tools.telegram_connection import inspect_connection, smoke_test
+
+
+@pytest.mark.parametrize('snapshot', [
+    None, 'invalid', '2026-01-01T12:00:00',
+    (datetime.now(UTC) - timedelta(hours=9)).isoformat(),
+    (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
+])
+def test_stale_or_invalid_snapshot_is_not_ready(snapshot):
+    calls = []
+    env = {'TELEGRAM_BOT_TOKEN': 'secret', 'TELEGRAM_WORKER_URL': 'https://bot.workers.dev',
+           'TELEGRAM_WEBHOOK_ENABLED': 'true', 'TELEGRAM_WORKER_SYNC_TOKEN': 'sync',
+           'TELEGRAM_WEBHOOK_SECRET': 'webhook-secret'}
+
+    def request(url, **kwargs):
+        calls.append(url)
+        if url.endswith('/status'):
+            return {'subscriber_protocol': 1, 'subscribers_initialized': True,
+                    'snapshot_at': snapshot}
+        return {'ok': True, 'result': {'url': 'https://bot.workers.dev/webhook'}}
+
+    report = inspect_connection(env, request=request)
+    assert report['snapshot_fresh'] is False
+    assert report['ready'] is False
+    with pytest.raises(ValueError, match='Refresh the Worker snapshot'):
+        inspect_connection(env, activate=True, request=request)
+    assert not any(url.endswith('setWebhook') for url in calls)
 
 
 def test_polling_diagnosis_does_not_change_webhook():

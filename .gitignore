@@ -20,6 +20,7 @@ data/accounts.txt
 *.accounts.txt
 
 # Local-only operational artefacts.
+/exports/
 dlq-failures.json
 .env
 *.env.local
