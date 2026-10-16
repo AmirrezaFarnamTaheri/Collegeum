@@ -1,52 +1,1289 @@
 {
- "generated_at": "2026-10-15T23:08:32Z",
+ "generated_at": "2026-10-16T04:28:43Z",
  "counts": {
   "listings": 222,
   "published": 218,
   "pending": 3,
-  "expired": 9,
+  "expired": 12,
   "closed": 21,
-  "seen_items": 588,
-  "dlq": 32,
+  "seen_items": 591,
+  "dlq": 31,
   "runs": 31
  },
  "last_run": {
-  "run_id": "38820801071",
-  "ingested": 292,
-  "already_seen": 255,
-  "gated": 3,
-  "extracted": 21,
-  "low_confidence": 0,
-  "duplicates": 14,
-  "refreshed": 7,
-  "published": 4,
+  "run_id": "38850034908",
+  "ingested": 289,
+  "already_seen": 277,
+  "gated": 1,
+  "extracted": 7,
+  "low_confidence": 1,
+  "duplicates": 5,
+  "refreshed": 4,
+  "published": 0,
   "errors": 0,
-  "source_errors": 38,
+  "source_errors": 35,
   "sources": {
    "total": 81,
-   "successful": 45,
+   "successful": 46,
    "empty": 3,
-   "failed": 29,
+   "failed": 28,
    "partial": 3,
    "skipped": 1
   },
-  "llm_calls": 21,
+  "llm_calls": 7,
   "quota_stopped": false,
-  "expired": 0,
-  "not_wanted": 16,
+  "expired": 3,
+  "not_wanted": 5,
   "closed_before_send": 0,
   "closed_found": 0,
   "refiltered": 0,
   "outcome": "partial",
   "gate_reasons": {
-   "board:wrong-field-detail": 9,
-   "board:no-field-in-detail": 6,
-   "board:filled-or-closed": 1,
-   "model:not_a_vacancy": 2,
-   "model:student_job": 1
+   "board:wrong-field-detail": 3,
+   "board:no-field-in-detail": 2,
+   "model:not_a_vacancy": 1
   }
  },
  "runs": [
+  {
+   "source_stats": {
+    "_boards": {
+     "deferred": 0,
+     "kind": "summary",
+     "known": 286,
+     "rejected": {
+      "excluded-title": 276,
+      "expired": 42,
+      "filled-or-closed": 16,
+      "industry-employer": 1,
+      "no-field-in-detail": 29,
+      "no-role-term": 1104,
+      "not-academic-employer": 155,
+      "wrong-field": 199,
+      "wrong-field-context": 33,
+      "wrong-field-detail": 65
+     },
+     "messages": []
+    },
+    "board:aarhus_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 66,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 3,
+     "ok": true,
+     "raw": 66,
+     "relevant": 7,
+     "seconds": 5.3,
+     "skipped": false,
+     "messages": []
+    },
+    "board:academics_com": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 15,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 3,
+     "ok": true,
+     "raw": 15,
+     "relevant": 4,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:academics_de": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 94,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 5,
+     "ok": true,
+     "raw": 94,
+     "relevant": 13,
+     "seconds": 2.8,
+     "skipped": false,
+     "messages": []
+    },
+    "board:academictransfer": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 3.6,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:akadeus": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:bank_canada_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 10,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 10,
+     "relevant": 1,
+     "seconds": 0.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:bank_of_england": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 14,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 14,
+     "relevant": 0,
+     "seconds": 0.6,
+     "skipped": false,
+     "messages": []
+    },
+    "board:bde_spain": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.6,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:bis": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.6,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:bocconi_igier": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 23,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 23,
+     "relevant": 0,
+     "seconds": 2.6,
+     "skipped": false,
+     "messages": []
+    },
+    "board:bocconi_leap": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 3,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 3,
+     "relevant": 0,
+     "seconds": 1.8,
+     "skipped": false,
+     "messages": []
+    },
+    "board:bonn_econ": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 2,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 2,
+     "relevant": 0,
+     "seconds": 3.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:brown_econ": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 5,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 3,
+     "ok": true,
+     "raw": 5,
+     "relevant": 3,
+     "seconds": 4.2,
+     "skipped": false,
+     "messages": []
+    },
+    "board:bruegel_jobs": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 16.9,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:carlo_alberto": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 127.1,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:cemfi": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.8,
+     "skipped": false,
+     "messages": []
+    },
+    "board:cemfi_madrid": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 19.2,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:copenhagen": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 87,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 5,
+     "ok": true,
+     "raw": 87,
+     "relevant": 13,
+     "seconds": 1.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:crei": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 19,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 19,
+     "relevant": 0,
+     "seconds": 1.2,
+     "skipped": false,
+     "messages": []
+    },
+    "board:crest_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 3,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 3,
+     "relevant": 1,
+     "seconds": 1.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:diw_berlin": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 1,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 1,
+     "relevant": 0,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": []
+    },
+    "board:duke_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 19,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 2,
+     "ok": true,
+     "raw": 19,
+     "relevant": 2,
+     "seconds": 0.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:ecb": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 16.0,
+     "skipped": false,
+     "messages": [
+      "Source request failed"
+     ]
+    },
+    "board:econjobmarket": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 5,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 5,
+     "relevant": 0,
+     "seconds": 3.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:economic_misfit": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 10,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 5,
+     "ok": true,
+     "raw": 10,
+     "relevant": 6,
+     "seconds": 3.2,
+     "skipped": false,
+     "messages": []
+    },
+    "board:eief": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 79,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 79,
+     "relevant": 0,
+     "seconds": 1.6,
+     "skipped": false,
+     "messages": []
+    },
+    "board:essec_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 18,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 18,
+     "relevant": 0,
+     "seconds": 0.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:eth_lawecon": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.4,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:eui_florence": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 10,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 10,
+     "relevant": 0,
+     "seconds": 0.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:euraxess": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 10,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 10,
+     "relevant": 1,
+     "seconds": 6.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:european_job_market": {
+     "errors": 0,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 15.4,
+     "skipped": true,
+     "messages": [
+      "Source skipped by its adapter"
+     ]
+    },
+    "board:fed_board": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 189,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 1,
+     "ok": true,
+     "raw": 189,
+     "relevant": 1,
+     "seconds": 0.2,
+     "skipped": false,
+     "messages": []
+    },
+    "board:gothenburg_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 57,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 5,
+     "ok": true,
+     "raw": 57,
+     "relevant": 13,
+     "seconds": 0.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:iese": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 9,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 2,
+     "ok": true,
+     "raw": 9,
+     "relevant": 2,
+     "seconds": 0.3,
+     "skipped": false,
+     "messages": []
+    },
+    "board:ifo": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.2,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:ifs": {
+     "errors": 2,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 17.1,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:ifw_kiel": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 1,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 1,
+     "relevant": 0,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": []
+    },
+    "board:iies_stockholm": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:inomics": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 3,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 1,
+     "ok": true,
+     "raw": 3,
+     "relevant": 1,
+     "seconds": 0.8,
+     "skipped": false,
+     "messages": []
+    },
+    "board:insead": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 18.0,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:iwh_halle": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:jobs_ac_uk": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 115,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 18,
+     "ok": true,
+     "raw": 115,
+     "relevant": 24,
+     "seconds": 15.0,
+     "skipped": false,
+     "messages": []
+    },
+    "board:jpal_global": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 9,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 5,
+     "ok": true,
+     "raw": 9,
+     "relevant": 5,
+     "seconds": 0.2,
+     "skipped": false,
+     "messages": []
+    },
+    "board:linkedin": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 220,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 9,
+     "ok": true,
+     "raw": 220,
+     "relevant": 18,
+     "seconds": 174.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:linkoping_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 17,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 17,
+     "relevant": 4,
+     "seconds": 0.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:lund": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 86,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 3,
+     "ok": true,
+     "raw": 86,
+     "relevant": 8,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": []
+    },
+    "board:mannheim_econ": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 1.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:max_planck_econ": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 36,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 36,
+     "relevant": 3,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": []
+    },
+    "board:mcgill": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 43,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 2,
+     "ok": false,
+     "raw": 43,
+     "relevant": 7,
+     "seconds": 8.2,
+     "skipped": false,
+     "messages": [
+      "Response could not be parsed"
+     ]
+    },
+    "board:mit_blueprint": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 22,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 3,
+     "ok": true,
+     "raw": 22,
+     "relevant": 3,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:nber_ras": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 17.7,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:niesr": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:nuffield_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 2,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 2,
+     "relevant": 0,
+     "seconds": 20.0,
+     "skipped": false,
+     "messages": []
+    },
+    "board:ny_fed": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.4,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:oecd": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 14,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 14,
+     "relevant": 0,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:opportunity_insights": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.6,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:piie": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 59,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 1,
+     "ok": true,
+     "raw": 59,
+     "relevant": 1,
+     "seconds": 0.1,
+     "skipped": false,
+     "messages": []
+    },
+    "board:poverty_action": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 17.7,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:predoc_org": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 152,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 75,
+     "ok": true,
+     "raw": 152,
+     "relevant": 93,
+     "seconds": 1.2,
+     "skipped": false,
+     "messages": []
+    },
+    "board:pse": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 1.5,
+     "skipped": false,
+     "messages": [
+      "HTTP 418"
+     ]
+    },
+    "board:pse_paris": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": [
+      "HTTP 418"
+     ]
+    },
+    "board:rwi_essen": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.9,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:sciencespo_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 3,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 3,
+     "relevant": 1,
+     "seconds": 0.8,
+     "skipped": false,
+     "messages": []
+    },
+    "board:somma": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.8,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:stanford_siepr": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.8,
+     "skipped": false,
+     "messages": [
+      "HTTP 404"
+     ]
+    },
+    "board:stockholm_school_of_economics": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 8,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 2,
+     "ok": true,
+     "raw": 8,
+     "relevant": 2,
+     "seconds": 2.8,
+     "skipped": false,
+     "messages": []
+    },
+    "board:stockholm_university": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 27,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 1,
+     "ok": true,
+     "raw": 27,
+     "relevant": 9,
+     "seconds": 1.0,
+     "skipped": false,
+     "messages": []
+    },
+    "board:the_unijobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 21,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 8,
+     "ok": true,
+     "raw": 21,
+     "relevant": 8,
+     "seconds": 0.7,
+     "skipped": false,
+     "messages": []
+    },
+    "board:tobin_yale": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 17.1,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:toronto": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 60,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 60,
+     "relevant": 1,
+     "seconds": 4.1,
+     "skipped": false,
+     "messages": []
+    },
+    "board:trinity_cambridge_jobs": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": false,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 17.6,
+     "skipped": false,
+     "messages": [
+      "HTTP 403"
+     ]
+    },
+    "board:tse": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 183,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 183,
+     "relevant": 0,
+     "seconds": 1.8,
+     "skipped": false,
+     "messages": []
+    },
+    "board:uab_ufae": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.5,
+     "skipped": false,
+     "messages": []
+    },
+    "board:ubc": {
+     "errors": 1,
+     "fetched": 0,
+     "items": 34,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": false,
+     "raw": 34,
+     "relevant": 1,
+     "seconds": 8.3,
+     "skipped": false,
+     "messages": [
+      "Response could not be parsed"
+     ]
+    },
+    "board:uchicago_bfi": {
+     "errors": 4,
+     "fetched": 0,
+     "items": 90,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 6,
+     "ok": false,
+     "raw": 90,
+     "relevant": 15,
+     "seconds": 8.8,
+     "skipped": false,
+     "messages": [
+      "Response could not be parsed"
+     ]
+    },
+    "board:umea_usbe_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 3,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 1,
+     "ok": true,
+     "raw": 3,
+     "relevant": 1,
+     "seconds": 0.8,
+     "skipped": false,
+     "messages": []
+    },
+    "board:uppsala": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 92,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 1,
+     "ok": true,
+     "raw": 92,
+     "relevant": 11,
+     "seconds": 1.0,
+     "skipped": false,
+     "messages": []
+    },
+    "board:uzh": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 2.7,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    },
+    "board:warwick_jobs": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 47,
+     "kind": "board",
+     "may_be_empty": true,
+     "new": 4,
+     "ok": true,
+     "raw": 47,
+     "relevant": 6,
+     "seconds": 1.4,
+     "skipped": false,
+     "messages": []
+    },
+    "board:wzb": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 4,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 4,
+     "relevant": 0,
+     "seconds": 2.0,
+     "skipped": false,
+     "messages": []
+    },
+    "board:zew": {
+     "errors": 0,
+     "fetched": 1,
+     "items": 0,
+     "kind": "board",
+     "may_be_empty": false,
+     "new": 0,
+     "ok": true,
+     "raw": 0,
+     "relevant": 0,
+     "seconds": 0.7,
+     "skipped": false,
+     "messages": [
+      "Unexpected empty source result"
+     ]
+    }
+   },
+   "source_summary": {
+    "total": 81,
+    "successful": 46,
+    "empty": 3,
+    "failed": 28,
+    "partial": 3,
+    "skipped": 1
+   },
+   "run_id": "38850034908",
+   "started_at": "2026-10-16T04:19:45Z",
+   "finished_at": "2026-10-16T04:28:43Z",
+   "ingested": 289,
+   "gated": 1,
+   "extracted": 7,
+   "duplicates": 5,
+   "published": 0,
+   "errors": 0,
+   "llm_calls": 7,
+   "outcome": "partial"
+  },
   {
    "source_stats": {
     "_boards": {
@@ -122,7 +1359,7 @@
      "seconds": 2.9,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     },
     "board:akadeus": {
@@ -198,7 +1435,7 @@
      "seconds": 1.0,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     },
     "board:bocconi_igier": {
@@ -578,7 +1815,7 @@
      "seconds": 0.3,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     },
     "board:ifs": {
@@ -830,7 +2067,7 @@
      "seconds": 1.8,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     },
     "board:nuffield_jobs": {
@@ -860,7 +2097,7 @@
      "seconds": 1.5,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     },
     "board:oecd": {
@@ -982,7 +2219,7 @@
      "seconds": 1.2,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     },
     "board:sciencespo_jobs": {
@@ -1012,7 +2249,7 @@
      "seconds": 0.9,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     },
     "board:stanford_siepr": {
@@ -1220,7 +2457,7 @@
      "seconds": 2.9,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     },
     "board:warwick_jobs": {
@@ -1264,7 +2501,7 @@
      "seconds": 1.9,
      "skipped": false,
      "messages": [
-      "Unexpected empty source result"
+      "Source request failed"
      ]
     }
    },
@@ -29851,1049 +31088,39 @@
    "errors": 0,
    "llm_calls": 0,
    "outcome": "partial"
-  },
-  {
-   "source_stats": {
-    "_boards": {
-     "deferred": 0,
-     "kind": "summary",
-     "known": 277,
-     "rejected": {
-      "duplicate-in-run": 89,
-      "excluded-title": 266,
-      "expired": 63,
-      "industry-employer": 1,
-      "no-field-in-detail": 1,
-      "no-role-term": 855,
-      "not-academic-employer": 156,
-      "wrong-field": 143,
-      "wrong-field-detail": 5
-     },
-     "messages": []
-    },
-    "board:academics_com": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 14,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 14,
-     "relevant": 2,
-     "seconds": 2.2,
-     "skipped": false,
-     "messages": []
-    },
-    "board:academics_de": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 172,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 172,
-     "relevant": 20,
-     "seconds": 9.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:academictransfer": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 2.1,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    },
-    "board:akadeus": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.2,
-     "skipped": false,
-     "messages": []
-    },
-    "board:bank_of_england": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 14,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 14,
-     "relevant": 0,
-     "seconds": 0.8,
-     "skipped": false,
-     "messages": []
-    },
-    "board:bde_spain": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.2,
-     "skipped": false,
-     "messages": []
-    },
-    "board:bis": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 0.9,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    },
-    "board:bocconi_igier": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 23,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 23,
-     "relevant": 0,
-     "seconds": 2.2,
-     "skipped": false,
-     "messages": []
-    },
-    "board:bocconi_leap": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 3,
-     "kind": "board",
-     "may_be_empty": true,
-     "new": 0,
-     "ok": true,
-     "raw": 3,
-     "relevant": 0,
-     "seconds": 1.7,
-     "skipped": false,
-     "messages": []
-    },
-    "board:bonn_econ": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 3,
-     "kind": "board",
-     "may_be_empty": true,
-     "new": 0,
-     "ok": true,
-     "raw": 3,
-     "relevant": 0,
-     "seconds": 1.9,
-     "skipped": false,
-     "messages": []
-    },
-    "board:brown_econ": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 6,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 6,
-     "relevant": 4,
-     "seconds": 4.6,
-     "skipped": false,
-     "messages": []
-    },
-    "board:carlo_alberto": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 3.9,
-     "skipped": false,
-     "messages": []
-    },
-    "board:cemfi": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": true,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:cemfi_madrid": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 18.6,
-     "skipped": false,
-     "messages": []
-    },
-    "board:copenhagen": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 84,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 84,
-     "relevant": 15,
-     "seconds": 1.8,
-     "skipped": false,
-     "messages": []
-    },
-    "board:crei": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 19,
-     "kind": "board",
-     "may_be_empty": true,
-     "new": 0,
-     "ok": true,
-     "raw": 19,
-     "relevant": 0,
-     "seconds": 1.1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:diw_berlin": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 19.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:ecb": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 16.6,
-     "skipped": false,
-     "messages": []
-    },
-    "board:econjobmarket": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 4,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 4,
-     "relevant": 0,
-     "seconds": 3.1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:economic_misfit": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 10,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 1,
-     "ok": true,
-     "raw": 10,
-     "relevant": 6,
-     "seconds": 3.2,
-     "skipped": false,
-     "messages": []
-    },
-    "board:eief": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 77,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 77,
-     "relevant": 0,
-     "seconds": 1.1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:eth_lawecon": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.4,
-     "skipped": false,
-     "messages": []
-    },
-    "board:eui_florence": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:euraxess": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 10,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 10,
-     "relevant": 2,
-     "seconds": 6.1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:european_job_market": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 45,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 2,
-     "ok": true,
-     "raw": 45,
-     "relevant": 10,
-     "seconds": 14.6,
-     "skipped": false,
-     "messages": []
-    },
-    "board:fed_board": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 0.2,
-     "skipped": false,
-     "messages": []
-    },
-    "board:iese": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 13,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 13,
-     "relevant": 3,
-     "seconds": 1.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:ifo": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 0.2,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    },
-    "board:ifs": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 18,
-     "skipped": false,
-     "messages": []
-    },
-    "board:ifw_kiel": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 1,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 1,
-     "relevant": 0,
-     "seconds": 2.7,
-     "skipped": false,
-     "messages": []
-    },
-    "board:iies_stockholm": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.8,
-     "skipped": false,
-     "messages": []
-    },
-    "board:inomics": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 4,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 4,
-     "relevant": 0,
-     "seconds": 0.8,
-     "skipped": false,
-     "messages": []
-    },
-    "board:insead": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 17.5,
-     "skipped": false,
-     "messages": []
-    },
-    "board:iwh_halle": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:jobs_ac_uk": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 105,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 105,
-     "relevant": 26,
-     "seconds": 14.4,
-     "skipped": false,
-     "messages": []
-    },
-    "board:jpal_global": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 9,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 9,
-     "relevant": 1,
-     "seconds": 0.4,
-     "skipped": false,
-     "messages": []
-    },
-    "board:linkedin": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 212,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 2,
-     "ok": true,
-     "raw": 212,
-     "relevant": 29,
-     "seconds": 131.9,
-     "skipped": false,
-     "messages": []
-    },
-    "board:lund": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 72,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 72,
-     "relevant": 7,
-     "seconds": 1.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:mannheim_econ": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": true,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.8,
-     "skipped": false,
-     "messages": []
-    },
-    "board:max_planck_econ": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 0.6,
-     "skipped": false,
-     "messages": []
-    },
-    "board:mcgill": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 61,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 61,
-     "relevant": 4,
-     "seconds": 9.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:mit_blueprint": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 22,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 22,
-     "relevant": 3,
-     "seconds": 0.9,
-     "skipped": false,
-     "messages": []
-    },
-    "board:nber_ras": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 17.5,
-     "skipped": false,
-     "messages": []
-    },
-    "board:niesr": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.8,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    },
-    "board:ny_fed": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 0.7,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    },
-    "board:oecd": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 14,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 14,
-     "relevant": 1,
-     "seconds": 0.6,
-     "skipped": false,
-     "messages": []
-    },
-    "board:opportunity_insights": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 0.5,
-     "skipped": false,
-     "messages": []
-    },
-    "board:piie": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 59,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 59,
-     "relevant": 1,
-     "seconds": 2.1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:poverty_action": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 17,
-     "skipped": false,
-     "messages": []
-    },
-    "board:predoc_org": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 172,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 172,
-     "relevant": 106,
-     "seconds": 1.2,
-     "skipped": false,
-     "messages": []
-    },
-    "board:pse": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": true,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.8,
-     "skipped": false,
-     "messages": []
-    },
-    "board:pse_paris": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:rwi_essen": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.5,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    },
-    "board:somma": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    },
-    "board:stanford_siepr": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:stockholm_school_of_economics": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 12,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 12,
-     "relevant": 2,
-     "seconds": 3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:stockholm_university": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 32,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 32,
-     "relevant": 13,
-     "seconds": 1.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:the_unijobs": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 21,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 21,
-     "relevant": 6,
-     "seconds": 0.8,
-     "skipped": false,
-     "messages": []
-    },
-    "board:tobin_yale": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 17.5,
-     "skipped": false,
-     "messages": []
-    },
-    "board:toronto": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 64,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 64,
-     "relevant": 4,
-     "seconds": 3.6,
-     "skipped": false,
-     "messages": []
-    },
-    "board:tse": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 176,
-     "kind": "board",
-     "may_be_empty": true,
-     "new": 0,
-     "ok": true,
-     "raw": 176,
-     "relevant": 0,
-     "seconds": 1.1,
-     "skipped": false,
-     "messages": []
-    },
-    "board:uab_ufae": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": true,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 0.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:ubc": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 34,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 34,
-     "relevant": 1,
-     "seconds": 7.5,
-     "skipped": false,
-     "messages": []
-    },
-    "board:uchicago_bfi": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 74,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 1,
-     "ok": true,
-     "raw": 74,
-     "relevant": 17,
-     "seconds": 7.7,
-     "skipped": false,
-     "messages": []
-    },
-    "board:uppsala": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 80,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 80,
-     "relevant": 8,
-     "seconds": 1.3,
-     "skipped": false,
-     "messages": []
-    },
-    "board:uzh": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 2.2,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    },
-    "board:wzb": {
-     "errors": 1,
-     "fetched": 0,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": false,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 21.2,
-     "skipped": false,
-     "messages": []
-    },
-    "board:zew": {
-     "errors": 0,
-     "fetched": 1,
-     "items": 0,
-     "kind": "board",
-     "may_be_empty": false,
-     "new": 0,
-     "ok": true,
-     "raw": 0,
-     "relevant": 0,
-     "seconds": 1.7,
-     "skipped": false,
-     "messages": [
-      "Source request failed"
-     ]
-    }
-   },
-   "source_summary": {
-    "total": 68,
-    "successful": 34,
-    "empty": 3,
-    "failed": 31,
-    "partial": 0,
-    "skipped": 0
-   },
-   "run_id": "37391270161",
-   "started_at": "2026-10-05T23:56:18Z",
-   "finished_at": "2026-10-06T00:01:40Z",
-   "ingested": 15,
-   "gated": 7,
-   "extracted": 8,
-   "duplicates": 0,
-   "published": 39,
-   "errors": 0,
-   "llm_calls": 8,
-   "outcome": "partial"
   }
  ],
  "status": "degraded",
  "source_summary": {
   "total": 81,
-  "successful": 45,
+  "successful": 46,
   "empty": 3,
-  "failed": 29,
+  "failed": 28,
   "partial": 3,
   "skipped": 1
  },
  "sources": {
   "board:aarhus_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:academics_com": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:academics_de": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:academictransfer": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": [
     "Unexpected empty source result"
@@ -30901,7 +31128,7 @@
   },
   "board:akadeus": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 404"
@@ -30909,19 +31136,19 @@
   },
   "board:bank_canada_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:bank_of_england": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:bde_spain": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 404"
@@ -30929,7 +31156,7 @@
   },
   "board:bis": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": [
     "Unexpected empty source result"
@@ -30937,31 +31164,31 @@
   },
   "board:bocconi_igier": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:bocconi_leap": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:bonn_econ": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:brown_econ": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:bruegel_jobs": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 403"
@@ -30969,7 +31196,7 @@
   },
   "board:carlo_alberto": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 404"
@@ -30977,13 +31204,13 @@
   },
   "board:cemfi": {
    "status": "empty",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:cemfi_madrid": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 403"
@@ -30991,39 +31218,37 @@
   },
   "board:copenhagen": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:crei": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:crest_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:diw_berlin": {
-   "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T04:35:55Z",
-   "messages": [
-    "HTTP 403"
-   ]
+   "status": "successful",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
+   "messages": []
   },
   "board:duke_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:ecb": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "Source request failed"
@@ -31031,31 +31256,31 @@
   },
   "board:econjobmarket": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:economic_misfit": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:eief": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:essec_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:eth_lawecon": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 404"
@@ -31063,19 +31288,19 @@
   },
   "board:eui_florence": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:euraxess": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:european_job_market": {
    "status": "skipped",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": [
     "Source skipped by its adapter"
@@ -31083,25 +31308,25 @@
   },
   "board:fed_board": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:gothenburg_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:iese": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:ifo": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-12T05:49:57Z",
    "messages": [
     "Unexpected empty source result"
@@ -31109,7 +31334,7 @@
   },
   "board:ifs": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 403"
@@ -31117,13 +31342,13 @@
   },
   "board:ifw_kiel": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:iies_stockholm": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 404"
@@ -31131,13 +31356,13 @@
   },
   "board:inomics": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:insead": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 403"
@@ -31145,7 +31370,7 @@
   },
   "board:iwh_halle": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 404"
@@ -31153,49 +31378,49 @@
   },
   "board:jobs_ac_uk": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:jpal_global": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:linkedin": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:linkoping_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:lund": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:mannheim_econ": {
    "status": "empty",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:max_planck_econ": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:mcgill": {
    "status": "partial",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-10T12:18:53Z",
    "messages": [
     "Response could not be parsed"
@@ -31203,13 +31428,13 @@
   },
   "board:mit_blueprint": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:nber_ras": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 403"
@@ -31217,7 +31442,7 @@
   },
   "board:niesr": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": [
     "Unexpected empty source result"
@@ -31225,13 +31450,13 @@
   },
   "board:nuffield_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:ny_fed": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": [
     "Unexpected empty source result"
@@ -31239,13 +31464,13 @@
   },
   "board:oecd": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:opportunity_insights": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 404"
@@ -31253,13 +31478,13 @@
   },
   "board:piie": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:poverty_action": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 403"
@@ -31267,13 +31492,13 @@
   },
   "board:predoc_org": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:pse": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 418"
@@ -31281,7 +31506,7 @@
   },
   "board:pse_paris": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 418"
@@ -31289,7 +31514,7 @@
   },
   "board:rwi_essen": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-03T21:14:31Z",
    "messages": [
     "Unexpected empty source result"
@@ -31297,13 +31522,13 @@
   },
   "board:sciencespo_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:somma": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": [
     "Unexpected empty source result"
@@ -31311,7 +31536,7 @@
   },
   "board:stanford_siepr": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 404"
@@ -31319,25 +31544,25 @@
   },
   "board:stockholm_school_of_economics": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:stockholm_university": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:the_unijobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:tobin_yale": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": null,
    "messages": [
     "HTTP 403"
@@ -31345,13 +31570,13 @@
   },
   "board:toronto": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:trinity_cambridge_jobs": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-13T11:54:58Z",
    "messages": [
     "HTTP 403"
@@ -31359,19 +31584,19 @@
   },
   "board:tse": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:uab_ufae": {
    "status": "empty",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:ubc": {
    "status": "partial",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-10T12:18:53Z",
    "messages": [
     "Response could not be parsed"
@@ -31379,7 +31604,7 @@
   },
   "board:uchicago_bfi": {
    "status": "partial",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-10T12:18:53Z",
    "messages": [
     "Response could not be parsed"
@@ -31387,19 +31612,19 @@
   },
   "board:umea_usbe_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:uppsala": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:uzh": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-11T21:55:31Z",
    "messages": [
     "Unexpected empty source result"
@@ -31407,19 +31632,19 @@
   },
   "board:warwick_jobs": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:wzb": {
    "status": "successful",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
-   "last_successful_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
+   "last_successful_at": "2026-10-16T04:28:43Z",
    "messages": []
   },
   "board:zew": {
    "status": "failed",
-   "last_attempt_at": "2026-10-15T23:08:32Z",
+   "last_attempt_at": "2026-10-16T04:28:43Z",
    "last_successful_at": "2026-10-03T21:14:31Z",
    "messages": [
     "Unexpected empty source result"
@@ -31429,9 +31654,9 @@
  "llm_usage": [
   {
    "day": "2026-10-15",
-   "requests": 38,
-   "tokens": 332717,
-   "errors": 0
+   "requests": 45,
+   "tokens": 359495,
+   "errors": 2
   },
   {
    "day": "2026-10-14",

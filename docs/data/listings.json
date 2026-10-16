@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-15T23:08:32Z",
- "count": 147,
+ "generated_at": "2026-10-16T04:28:42Z",
+ "count": 139,
  "listings": [
   {
    "id": 222,
@@ -51,7 +51,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-11-01T23:59:59Z",
-   "days_left": 17,
+   "days_left": 16,
    "disciplines": [
     "Business and Management"
    ],
@@ -93,7 +93,7 @@
    "is_remote": false,
    "duration_years": 5.0,
    "deadline": "2027-01-15T00:00:00Z",
-   "days_left": 92,
+   "days_left": 91,
    "disciplines": [
     "Other"
    ],
@@ -131,7 +131,7 @@
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-11-03T00:00:00Z",
-   "days_left": 19,
+   "days_left": 18,
    "disciplines": [
     "Quantitative Social Sciences"
    ],
@@ -172,18 +172,19 @@
    "city": "Pok Fu Lam",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2027-01-15T00:00:00Z",
-   "days_left": 92,
+   "deadline": "2027-01-15T23:59:59Z",
+   "days_left": 91,
    "disciplines": [
     "Econometrics",
-    "Business and Management"
+    "Labor Economics",
+    "International Trade"
    ],
    "visa": "unknown",
-   "summary": "The position is a post-doctoral fellow at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia, jointly hosted by the Faculty of Social Sciences and the HKU Business School. It is suited for candidates with a PhD in economics or a related discipline who have experience in large-scale data analysis and causal inference.",
+   "summary": "New Pok Fu Lam, Hong Kong Competitive salary THE UNIVERSITY OF HONG KONG Applications are invited for appointment as Post-doctoral Fellow at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality ... View details 1 day ago Save You need to sign in or create an account to save",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
-   "confidence": 0.97,
+   "confidence": 0.924,
    "first_seen_at": "2026-10-15T13:28:02Z",
    "deadline_note": null,
    "visa_note": null,
@@ -407,44 +408,6 @@
    "sector": "academic"
   },
   {
-   "id": 203,
-   "title": "PhD student in Computer and Systems Sciences, with focus on Human–Computer Interaction and Design of AI User Interfaces",
-   "institution": "Stockholm University",
-   "principal_investigator": null,
-   "country": "Sweden",
-   "city": "Kista",
-   "is_remote": false,
-   "duration_years": 4.0,
-   "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 0,
-   "disciplines": [
-    "Other"
-   ],
-   "visa": "unknown",
-   "summary": "The position is a PhD studentship at Stockholm University's Department of Computer and Systems Sciences focusing on Human-Computer Interaction and Design of AI User Interfaces. The role involves designing and building prototypes and conducting empirical studies on human-AI interaction to advance theoretical understandings.",
-   "language": "en",
-   "apply_url": "https://su.varbi.com/en/what:job/jobID:966176",
-   "source_url": "https://su.varbi.com/en/what:job/jobID:966176",
-   "confidence": 0.958,
-   "first_seen_at": "2026-10-13T19:27:10Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "masters",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "phd",
-   "sector": "academic"
-  },
-  {
    "id": 202,
    "title": "Research Assistant and Doctoral Candidate – Editorial Lead of a Marketing Journal",
    "institution": "University of St. Gallen (HSG)",
@@ -534,7 +497,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-11-15T00:00:00Z",
-   "days_left": 31,
+   "days_left": 30,
    "disciplines": [
     "Applied Microeconomics",
     "Behavioral/Experimental Economics"
@@ -575,7 +538,7 @@
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-12-01T15:59:00Z",
-   "days_left": 47,
+   "days_left": 46,
    "disciplines": [
     "Public Policy",
     "Quantitative Social Sciences"
@@ -614,7 +577,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-11-26T00:00:00Z",
-   "days_left": 42,
+   "days_left": 41,
    "disciplines": [
     "Applied Microeconomics",
     "Econometrics"
@@ -655,7 +618,7 @@
    "is_remote": false,
    "duration_years": 3.0,
    "deadline": "2026-11-13T23:59:59Z",
-   "days_left": 29,
+   "days_left": 28,
    "disciplines": [
     "Other"
    ],
@@ -693,7 +656,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-11-12T00:00:00Z",
-   "days_left": 28,
+   "days_left": 27,
    "disciplines": [
     "Behavioral/Experimental Economics",
     "Quantitative Social Sciences"
@@ -734,7 +697,7 @@
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-11-30T00:00:00Z",
-   "days_left": 46,
+   "days_left": 45,
    "disciplines": [
     "Macroeconomics",
     "Public Policy",
@@ -774,7 +737,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-03T23:59:59Z",
-   "days_left": 19,
+   "days_left": 18,
    "disciplines": [
     "Finance",
     "Environmental and Energy Economics",
@@ -814,7 +777,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-11-11T07:59:00Z",
-   "days_left": 27,
+   "days_left": 26,
    "disciplines": [
     "Applied Microeconomics",
     "Political Economy",
@@ -898,7 +861,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-05T00:00:00Z",
-   "days_left": 21,
+   "days_left": 20,
    "disciplines": [
     "Business and Management"
    ],
@@ -938,7 +901,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-11-09T23:59:59Z",
-   "days_left": 25,
+   "days_left": 24,
    "disciplines": [
     "Public Policy"
    ],
@@ -976,7 +939,7 @@
    "is_remote": false,
    "duration_years": 3.0,
    "deadline": "2026-11-22T22:59:00Z",
-   "days_left": 38,
+   "days_left": 37,
    "disciplines": [
     "Political Economy"
    ],
@@ -1014,7 +977,7 @@
    "is_remote": false,
    "duration_years": 2.5,
    "deadline": "2026-10-23T11:00:00Z",
-   "days_left": 8,
+   "days_left": 7,
    "disciplines": [
     "Political Economy",
     "Quantitative Social Sciences",
@@ -1094,7 +1057,7 @@
    "is_remote": false,
    "duration_years": 5.0,
    "deadline": "2026-11-12T23:59:00Z",
-   "days_left": 28,
+   "days_left": 27,
    "disciplines": [
     "Public Policy"
    ],
@@ -1132,7 +1095,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-12-01T23:59:59Z",
-   "days_left": 47,
+   "days_left": 46,
    "disciplines": [
     "Health Economics"
    ],
@@ -1173,7 +1136,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T22:59:00Z",
-   "days_left": 31,
+   "days_left": 30,
    "disciplines": [
     "Other"
    ],
@@ -1254,7 +1217,7 @@
    "is_remote": false,
    "duration_years": 3.0,
    "deadline": "2026-11-11T23:59:59Z",
-   "days_left": 27,
+   "days_left": 26,
    "disciplines": [
     "Quantitative Social Sciences",
     "Political Economy"
@@ -1293,7 +1256,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Public Policy",
     "Health Economics",
@@ -1333,7 +1296,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-06T23:59:59Z",
-   "days_left": 22,
+   "days_left": 21,
    "disciplines": [
     "Labor Economics"
    ],
@@ -1371,7 +1334,7 @@
    "is_remote": false,
    "duration_years": 3.0,
    "deadline": "2026-10-18T00:00:00Z",
-   "days_left": 3,
+   "days_left": 2,
    "disciplines": [
     "Other"
    ],
@@ -1412,7 +1375,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Applied Microeconomics",
     "Public Policy",
@@ -1455,7 +1418,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Econometrics",
     "Environmental and Energy Economics",
@@ -1501,7 +1464,7 @@
    "is_remote": false,
    "duration_years": 0.96,
    "deadline": "2026-10-30T23:59:59Z",
-   "days_left": 15,
+   "days_left": 14,
    "disciplines": [
     "Other"
    ],
@@ -1539,7 +1502,7 @@
    "is_remote": false,
    "duration_years": 4.5,
    "deadline": "2026-11-07T00:00:00Z",
-   "days_left": 23,
+   "days_left": 22,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -1579,7 +1542,7 @@
    "is_remote": false,
    "duration_years": 3.5,
    "deadline": "2026-10-18T23:59:59Z",
-   "days_left": 3,
+   "days_left": 2,
    "disciplines": [
     "Public Policy",
     "Quantitative Social Sciences"
@@ -1609,46 +1572,6 @@
    "sector": "academic"
   },
   {
-   "id": 154,
-   "title": "Interdisciplinary post doc studying impacts of extreme heat",
-   "institution": "University of Copenhagen",
-   "principal_investigator": null,
-   "country": "Denmark",
-   "city": "Copenhagen",
-   "is_remote": false,
-   "duration_years": 2.0,
-   "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 0,
-   "disciplines": [
-    "Development Economics",
-    "Environmental and Energy Economics",
-    "Health Economics"
-   ],
-   "visa": "unknown",
-   "summary": "The University of Copenhagen seeks a postdoctoral researcher for a two-year interdisciplinary project on the socioeconomic impacts of extreme heat, starting December 2026. The role involves quantitative analysis of heat exposure effects on economic and human development outcomes in developing countries, combining climate data with micro-level datasets.",
-   "language": "en",
-   "apply_url": "https://employment.ku.dk/all-vacancies?show=169071",
-   "source_url": "https://employment.ku.dk/all-vacancies?show=169071",
-   "confidence": 0.924,
-   "first_seen_at": "2026-10-11T10:17:59Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "phd",
-   "degree_note": null,
-   "start_term": "1 December 2026",
-   "start_date": "2026-12-01",
-   "kind": "postdoc",
-   "sector": "academic"
-  },
-  {
    "id": 150,
    "title": "Postdoctoral Associate, Charter Schools",
    "institution": "MIT (Massachusetts Institute of Technology)",
@@ -1658,7 +1581,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-10-31T00:00:00Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Other",
     "Public Policy",
@@ -1701,7 +1624,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-10-19T23:59:59Z",
-   "days_left": 4,
+   "days_left": 3,
    "disciplines": [
     "Public Policy",
     "Political Economy",
@@ -1741,7 +1664,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-10-18T23:59:00Z",
-   "days_left": 3,
+   "days_left": 2,
    "disciplines": [
     "Behavioral/Experimental Economics",
     "Quantitative Social Sciences"
@@ -1780,7 +1703,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-10-24T00:00:00Z",
-   "days_left": 9,
+   "days_left": 8,
    "disciplines": [
     "Behavioral/Experimental Economics",
     "Public Policy"
@@ -1862,7 +1785,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-01T00:00:00Z",
-   "days_left": 17,
+   "days_left": 16,
    "disciplines": [
     "Applied Microeconomics",
     "Public Policy",
@@ -1903,19 +1826,19 @@
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2027-01-15T23:59:59Z",
-   "days_left": 92,
+   "deadline": "2027-01-15T00:00:00Z",
+   "days_left": 91,
    "disciplines": [
     "Public Policy",
     "Development Economics",
-    "Political Economy"
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The role is a postdoctoral associate position at NYU Abu Dhabi's Division of Social Science, splitting time between independent research and collaborative work with Professor Luca Maria Pesando on educational inequalities and school segregation in the Global South. It suits recent PhD holders (within five years) in sociology, demography, international development, public policy, economics, or related fields with strong quantitative skills in large-scale data analysis.",
+   "summary": "This is a fixed-term, full-time post-doctoral associate position at New York University Abu Dhabi, beginning September 1, 2027, for up to three years. The role divides time between independent research and collaborative research with Professor Luca Maria Pesando on educational inequalities and social stratification in the Global South, and requires a PhD in a relevant social science field with expertise in R, Stata, Python, or GIS.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing",
-   "confidence": 0.924,
+   "confidence": 0.953,
    "first_seen_at": "2026-10-11T10:10:23Z",
    "deadline_note": null,
    "visa_note": null,
@@ -1950,7 +1873,7 @@
    "is_remote": false,
    "duration_years": 2.5,
    "deadline": "2026-10-30T23:59:59Z",
-   "days_left": 15,
+   "days_left": 14,
    "disciplines": [
     "Political Economy",
     "Labor Economics"
@@ -2113,7 +2036,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T22:59:00Z",
-   "days_left": 31,
+   "days_left": 30,
    "disciplines": [
     "Econometrics",
     "Finance"
@@ -2152,7 +2075,7 @@
    "is_remote": false,
    "duration_years": 3.0,
    "deadline": "2026-11-19T12:00:00Z",
-   "days_left": 35,
+   "days_left": 34,
    "disciplines": [
     "Finance",
     "Quantitative Social Sciences"
@@ -2191,7 +2114,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-18T00:00:00Z",
-   "days_left": 3,
+   "days_left": 2,
    "disciplines": [
     "Finance"
    ],
@@ -2229,7 +2152,7 @@
    "is_remote": false,
    "duration_years": 1.5,
    "deadline": "2026-10-30T23:59:59Z",
-   "days_left": 15,
+   "days_left": 14,
    "disciplines": [
     "Public Policy",
     "Applied Microeconomics",
@@ -2269,7 +2192,7 @@
    "is_remote": false,
    "duration_years": 3.0,
    "deadline": "2027-01-15T00:00:00Z",
-   "days_left": 92,
+   "days_left": 91,
    "disciplines": [
     "Development Economics",
     "Public Policy",
@@ -2315,7 +2238,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-19T23:59:59Z",
-   "days_left": 35,
+   "days_left": 34,
    "disciplines": [
     "Econometrics",
     "Finance",
@@ -2355,7 +2278,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2027-02-08T23:59:59Z",
-   "days_left": 116,
+   "days_left": 115,
    "disciplines": [
     "Quantitative Social Sciences"
    ],
@@ -2397,7 +2320,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-02-25T23:59:59Z",
-   "days_left": 133,
+   "days_left": 132,
    "disciplines": [
     "Finance",
     "Environmental and Energy Economics",
@@ -2444,7 +2367,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-11-20T23:59:59Z",
-   "days_left": 36,
+   "days_left": 35,
    "disciplines": [
     "Behavioral/Experimental Economics",
     "Health Economics",
@@ -2490,7 +2413,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2027-07-15T00:00:00Z",
-   "days_left": 273,
+   "days_left": 272,
    "disciplines": [
     "Quantitative Social Sciences",
     "Public Policy",
@@ -2534,7 +2457,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-10T23:59:59Z",
-   "days_left": 87,
+   "days_left": 86,
    "disciplines": [
     "Environmental and Energy Economics",
     "Public Policy"
@@ -2579,7 +2502,7 @@
    "is_remote": false,
    "duration_years": 3.0,
    "deadline": "2026-11-22T11:00:00Z",
-   "days_left": 38,
+   "days_left": 37,
    "disciplines": [
     "Other",
     "Behavioral/Experimental Economics",
@@ -2619,7 +2542,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2027-03-14T23:59:59Z",
-   "days_left": 150,
+   "days_left": 149,
    "disciplines": [
     "Other"
    ],
@@ -2661,7 +2584,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2027-03-14T23:59:59Z",
-   "days_left": 150,
+   "days_left": 149,
    "disciplines": [
     "Econometrics",
     "Political Economy"
@@ -2822,7 +2745,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-11-01T00:00:00Z",
-   "days_left": 17,
+   "days_left": 16,
    "disciplines": [
     "Development Economics",
     "Health Economics",
@@ -2865,7 +2788,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-10-31T00:00:00Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Finance"
    ],
@@ -2943,7 +2866,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-11-02T04:59:59Z",
-   "days_left": 18,
+   "days_left": 17,
    "disciplines": [
     "Health Economics",
     "Public Policy",
@@ -3026,7 +2949,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-13T23:59:59Z",
-   "days_left": 29,
+   "days_left": 28,
    "disciplines": [
     "Finance",
     "Macroeconomics",
@@ -3066,7 +2989,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T23:59:59Z",
-   "days_left": 31,
+   "days_left": 30,
    "disciplines": [
     "Finance"
    ],
@@ -3175,46 +3098,6 @@
    "sector": "academic"
   },
   {
-   "id": 102,
-   "title": "Predoctoral Research Professional",
-   "institution": "Strengthening Families Research Initiative at the University of Notre Dame",
-   "principal_investigator": "Melissa S. Kearney",
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": "2026-10-16T00:00:00Z",
-   "days_left": 1,
-   "disciplines": [
-    "Public Policy",
-    "Applied Microeconomics",
-    "Econometrics"
-   ],
-   "visa": "unknown",
-   "summary": "A full-time predoctoral research position at the Strengthening Families Research Initiative, University of Notre Dame, working with Melissa S. Kearney on gender and family, public economics, public policy, microeconomics, and applied econometrics. Suitable for recent graduates seeking research experience before doctoral studies.",
-   "language": "en",
-   "apply_url": "https://apply.interfolio.com/192682",
-   "source_url": "https://bit.ly/4xNIp26",
-   "confidence": 0.91,
-   "first_seen_at": "2026-10-11T09:58:50Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": "unstated",
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
    "id": 99,
    "title": "Pre-Doctoral Fellowship in Behavioral-Economic Theory",
    "institution": "Harvard University",
@@ -3267,7 +3150,7 @@
    "is_remote": false,
    "duration_years": 1.0,
    "deadline": "2026-11-01T00:00:00Z",
-   "days_left": 17,
+   "days_left": 16,
    "disciplines": [
     "Applied Microeconomics",
     "Public Policy",
@@ -3469,7 +3352,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-23T00:00:00Z",
-   "days_left": 8,
+   "days_left": 7,
    "disciplines": [
     "Law and Economics",
     "Public Policy",
@@ -3746,44 +3629,6 @@
    "sector": "academic"
   },
   {
-   "id": 85,
-   "title": "Economics Research Specialist",
-   "institution": "Dartmouth College",
-   "principal_investigator": "Davin Chor",
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": "2026-10-16T00:00:00Z",
-   "days_left": 1,
-   "disciplines": [
-    "International Trade"
-   ],
-   "visa": "unknown",
-   "summary": "Full-time predoctoral research position at Dartmouth College in international trade, supervised by Davin Chor. The role is suitable for candidates seeking research experience before doctoral study.",
-   "language": "en",
-   "apply_url": "https://apply.interfolio.com/194447",
-   "source_url": "https://bit.ly/3W33A1T",
-   "confidence": 0.95,
-   "first_seen_at": "2026-10-11T09:51:02Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": "unstated",
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
    "id": 84,
    "title": "Predoctoral Research Associate",
    "institution": "Harvard Business School",
@@ -3793,7 +3638,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-10-20T23:59:59Z",
-   "days_left": 5,
+   "days_left": 4,
    "disciplines": [
     "Business and Management",
     "Finance",
@@ -3824,45 +3669,6 @@
    "min_degree": "unstated",
    "degree_note": "unstated",
    "start_term": "Summer 2027",
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
-   "id": 83,
-   "title": "Economics Research Specialist",
-   "institution": "Dartmouth College",
-   "principal_investigator": "Yang-Yang Zhou",
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": "2026-10-16T00:00:00Z",
-   "days_left": 1,
-   "disciplines": [
-    "Development Economics",
-    "Political Economy"
-   ],
-   "visa": "unknown",
-   "summary": "Full-time predoctoral research specialist position at Dartmouth College working with Yang-Yang Zhou on research in globalization, migration, development, aid, and/or conflict. Suitable for candidates with a strong background in economics or political science seeking research experience before pursuing a PhD.",
-   "language": "en",
-   "apply_url": "https://apply.interfolio.com/194465",
-   "source_url": "https://bit.ly/3VmR0KN",
-   "confidence": 0.95,
-   "first_seen_at": "2026-10-11T09:50:47Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": "unstated",
-   "start_term": null,
    "start_date": null,
    "kind": "predoc",
    "sector": "academic"
@@ -3917,7 +3723,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-15T00:00:00Z",
-   "days_left": 92,
+   "days_left": 91,
    "disciplines": [
     "Public Policy",
     "Applied Microeconomics"
@@ -3958,7 +3764,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-05-23T23:59:59Z",
-   "days_left": 220,
+   "days_left": 219,
    "disciplines": [
     "Labor Economics",
     "Development Economics"
@@ -3997,7 +3803,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-04-30T00:00:00Z",
-   "days_left": 197,
+   "days_left": 196,
    "disciplines": [
     "Macroeconomics"
    ],
@@ -4035,7 +3841,7 @@
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-10-21T23:59:59Z",
-   "days_left": 6,
+   "days_left": 5,
    "disciplines": [
     "Quantitative Social Sciences"
    ],
@@ -4073,7 +3879,7 @@
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-11-04T22:59:59Z",
-   "days_left": 20,
+   "days_left": 19,
    "disciplines": [
     "Quantitative Social Sciences",
     "Other"
@@ -4112,7 +3918,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-11-30T23:59:59Z",
-   "days_left": 46,
+   "days_left": 45,
    "disciplines": [
     "Public Policy",
     "Labor Economics",
@@ -4191,7 +3997,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-08T23:59:59Z",
-   "days_left": 24,
+   "days_left": 23,
    "disciplines": [
     "Public Policy",
     "Law and Economics",
@@ -4231,7 +4037,7 @@
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-11-02T23:59:59Z",
-   "days_left": 18,
+   "days_left": 17,
    "disciplines": [
     "Environmental and Energy Economics",
     "Public Policy",
@@ -4271,7 +4077,7 @@
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2026-11-01T23:59:59Z",
-   "days_left": 17,
+   "days_left": 16,
    "disciplines": [
     "Business and Management",
     "Behavioral/Experimental Economics",
@@ -4315,7 +4121,7 @@
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-10-27T23:59:59Z",
-   "days_left": 12,
+   "days_left": 11,
    "disciplines": [
     "Political Economy"
    ],
@@ -4353,7 +4159,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-19T23:59:59Z",
-   "days_left": 35,
+   "days_left": 34,
    "disciplines": [
     "Political Economy"
    ],
@@ -4382,46 +4188,6 @@
    "sector": "academic"
   },
   {
-   "id": 66,
-   "title": "Postdoctoral Fellow in Political Science",
-   "institution": "University of Gothenburg",
-   "principal_investigator": "Niklas Harring",
-   "country": "Sweden",
-   "city": "Gothenburg",
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 0,
-   "disciplines": [
-    "Political Economy",
-    "Environmental and Energy Economics",
-    "Quantitative Social Sciences"
-   ],
-   "visa": "unknown",
-   "summary": "The position is a postdoctoral fellowship in Political Science at the University of Gothenburg, focusing on research about public opinion and policy acceptance in the energy transition. The role is suited for candidates who hold a doctoral degree and wish to develop an independent research agenda in climate and energy politics.",
-   "language": "en",
-   "apply_url": "https://web103.reachmee.com/ext/I005/1035/job?site=7&lang=UK&validator=9b89bead79bb7258ad55c8d75228e5b7&job_id=41465",
-   "source_url": "https://web103.reachmee.com/ext/I005/1035/main?lang=UK&rmjob=41465&rmpage=job&site=7&validator=9b89bead79bb7258ad55c8d75228e5b7",
-   "confidence": 0.939,
-   "first_seen_at": "2026-10-11T09:44:33Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "phd",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "postdoc",
-   "sector": "academic"
-  },
-  {
    "id": 64,
    "title": "Postdoctoral Fellow in Political Science",
    "institution": "University of Gothenburg",
@@ -4431,7 +4197,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-19T23:59:59Z",
-   "days_left": 35,
+   "days_left": 34,
    "disciplines": [
     "Quantitative Social Sciences"
    ],
@@ -4500,45 +4266,6 @@
    "sector": "academic"
   },
   {
-   "id": 62,
-   "title": "PhD student in Computer and Systems Sciences, with focus on AI-enabled Digital Transformation in the Public Sector",
-   "institution": "Department of Computer and Systems Sciences, Stockholm University",
-   "principal_investigator": "Professor Janis Stirna",
-   "country": "Sweden",
-   "city": "Kista",
-   "is_remote": false,
-   "duration_years": 4.0,
-   "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 0,
-   "disciplines": [
-    "Public Policy",
-    "Quantitative Social Sciences"
-   ],
-   "visa": "unknown",
-   "summary": "The position is a fixed-term doctoral student role researching AI-enabled digital transformation in the public sector, focusing on governance, organizational readiness, and public value. It suits applicants holding a second-cycle degree (or equivalent) in Computer and Systems Sciences who meet the university's entry requirements and are interested in interdisciplinary AI research.",
-   "language": "en",
-   "apply_url": "https://su.varbi.com/en/what:job/jobID:965776",
-   "source_url": "https://su.varbi.com/en/what:job/jobID:965776",
-   "confidence": 0.95,
-   "first_seen_at": "2026-10-11T09:44:24Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "masters",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "phd",
-   "sector": "academic"
-  },
-  {
    "id": 60,
    "title": "PhD candidates within Peace and Conflict Research (DIViNE)",
    "institution": "Uppsala University, Department of Peace and Conflict Research",
@@ -4548,7 +4275,7 @@
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-11-09T23:59:59Z",
-   "days_left": 25,
+   "days_left": 24,
    "disciplines": [
     "Political Economy",
     "Quantitative Social Sciences",
@@ -4588,7 +4315,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-01-29T23:59:59Z",
-   "days_left": 106,
+   "days_left": 105,
    "disciplines": [
     "Other"
    ],
@@ -4630,7 +4357,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-02-26T00:00:00Z",
-   "days_left": 134,
+   "days_left": 133,
    "disciplines": [
     "Business and Management",
     "Econometrics"
@@ -4850,7 +4577,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 1,
+   "days_left": 0,
    "disciplines": [
     "Finance",
     "Business and Management"
@@ -4922,53 +4649,6 @@
    "sector": "institutional"
   },
   {
-   "id": 38,
-   "title": "Research Assistant",
-   "institution": "Federal Reserve Board",
-   "principal_investigator": "Federal Reserve Board",
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": "2026-10-15T23:59:59Z",
-   "days_left": 0,
-   "disciplines": [
-    "Macroeconomics",
-    "Econometrics",
-    "Finance"
-   ],
-   "visa": "not_offered",
-   "summary": "Full-time predoctoral research role at Federal Reserve Board, working with Federal Reserve Board. Research focus: Microeconomics, Macroeconomics, Finance, Labor, Statistics and Econometrics, and Public Policy. Application deadline: October 15, 2026.",
-   "language": "en",
-   "apply_url": "https://www.federalreserve.gov/careers-research-assistants.htm",
-   "source_url": "https://bit.ly/3V0FWCX",
-   "confidence": 0.887,
-   "first_seen_at": "2026-10-03T21:02:13Z",
-   "deadline_note": null,
-   "visa_note": "No sponsorship / citizenship restriction (“U.S. citizenship is required”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
-   "alternate_sources": [
-    "https://bit.ly/3V0FWCX"
-   ],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [
-    "Python",
-    "Stata",
-    "MATLAB",
-    "R"
-   ],
-   "tools_preferred": [],
-   "min_degree": "phd",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "institutional"
-  },
-  {
    "id": 37,
    "title": "Research Fellow",
    "institution": "Harvard Center for International Development",
@@ -5020,7 +4700,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 1,
+   "days_left": 0,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -5189,7 +4869,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-12-30T23:59:59Z",
-   "days_left": 76,
+   "days_left": 75,
    "disciplines": [
     "Econometrics",
     "Quantitative Social Sciences",
@@ -5235,7 +4915,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-16T23:59:59Z",
-   "days_left": 1,
+   "days_left": 0,
    "disciplines": [
     "Business and Management",
     "Applied Microeconomics"
@@ -5321,7 +5001,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Macroeconomics",
     "Finance",
@@ -5413,7 +5093,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-21T23:59:59Z",
-   "days_left": 6,
+   "days_left": 5,
    "disciplines": [
     "Other"
    ],
@@ -5492,7 +5172,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-11-15T23:59:59Z",
-   "days_left": 31,
+   "days_left": 30,
    "disciplines": [
     "Finance",
     "Industrial Organization",
@@ -5907,7 +5587,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2027-06-30T23:59:59Z",
-   "days_left": 258,
+   "days_left": 257,
    "disciplines": [
     "Development Economics"
    ],
@@ -5947,7 +5627,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-31T23:59:59Z",
-   "days_left": 16,
+   "days_left": 15,
    "disciplines": [
     "Labor Economics",
     "Public Policy",
@@ -5989,7 +5669,7 @@
    "is_remote": false,
    "duration_years": null,
    "deadline": "2026-10-19T23:59:59Z",
-   "days_left": 4,
+   "days_left": 3,
    "disciplines": [
     "Macroeconomics",
     "Finance"
