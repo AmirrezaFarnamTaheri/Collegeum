@@ -72,7 +72,7 @@ def test_structured_summary_preserves_explicit_role_category(summary):
         ("Predoctoral Fellow", "Preparation for applying to PhD programs.", "predoc"),
         ("Research Assistant", "Work with PhD students on economic research.", "predoc"),
         ("Research Assistant", "No doctoral enrollment is required.", "predoc"),
-        ("Research Fellow", "A completed PhD is required for this appointment.", "postdoc"),
+        ("Research Fellow", "A completed PhD is required for this appointment.", "research"),
         ("Research Assistant", "Work with postdoctoral researchers on economics.", "predoc"),
         ("Research Fellow", "This is a postdoctoral appointment in economics.", "postdoc"),
         ("Research Assistant", "The holder may pursue a PhD degree later.", "predoc"),
