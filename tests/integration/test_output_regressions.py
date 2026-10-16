@@ -217,9 +217,10 @@ def test_publication_holds_auth_and_error_pages_and_unwraps_valid_forms(tmp_path
         assert state.export_dashboard(db, output) == 2
     payload = __import__("json").loads(output.read_text(encoding="utf-8"))
     assert len(payload["listings"]) == 2
-    assert payload["listings"][1]["apply_url"] == (
-        "https://docs.google.com/forms/d/e/abc/viewform"
-    )
+    assert {row["apply_url"] for row in payload["listings"]} == {
+        "https://example.org/vacancy/1",
+        "https://docs.google.com/forms/d/e/abc/viewform",
+    }
 
 
 def test_published_salary_projection_rechecks_ad_text_instead_of_model_numbers():
