@@ -94,7 +94,9 @@ class Router:
         if _POSTDOC.search(title):
             return "postdoc"
         if _COMPLETED_PHD_REQUIRED.search(summary):
-            return "postdoc"
+            # A doctoral qualification is not evidence of a *postdoctoral*
+            # appointment. Only explicitly postdoctoral roles get that label.
+            return "postdoc" if _POSTDOC_ROLE.search(summary) else "research"
         for match in _DOCTORAL_DUTY.finditer(summary):
             if not re.search(r"\b(?:not|no|may|can|optional|opportunity)\b", match[0], re.I):
                 return "phd"
@@ -169,7 +171,10 @@ class Router:
         kind = self.position_kind(
             title, summary, min_degree=min_degree, degree_note=degree_note,
         )
-        if kind in self.cfg.web_position_kinds:
+        # The public Telegram channel is explicitly predoc-only: a future
+        # preference edit cannot silently send doctorate-qualified or doctoral
+        # student vacancies into that channel.
+        if kind != "predoc" or kind in self.cfg.web_position_kinds:
             return Channel.WEB
         if self._web_employer(institution):
             return Channel.WEB
