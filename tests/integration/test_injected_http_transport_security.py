@@ -15,6 +15,38 @@ from predoc_pipeline.core.network_safety import UnsafeDestination
 from predoc_pipeline.ingest import http as ingest_http
 
 
+@pytest.mark.parametrize("target", ["https://other.org/job", "http://public.org/job"])
+def test_redirect_strips_client_credentials_from_page_and_robots(target):
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        if request.url.path == "/robots.txt":
+            return httpx.Response(404)
+        if str(request.url) == "https://public.org/job":
+            return httpx.Response(302, headers={"location": target})
+        return httpx.Response(200, text="vacancy")
+
+    with httpx.Client(
+        transport=httpx.MockTransport(respond), auth=("user", "password"),
+        headers={"X-Api-Key": "secret"}, cookies={"session": "private"},
+    ) as supplied:
+        crawler = ingest_http.PoliteClient(
+            user_agent="test", client=supplied, per_host_delay=0,
+        )
+        assert crawler.get("https://public.org/job", sleep=lambda _: None).ok
+        original = next(r for r in requests if str(r.url) == "https://public.org/job")
+        assert original.headers["X-Api-Key"] == "secret"
+        assert "authorization" in original.headers
+        for request in requests:
+            if request is original:
+                continue
+            assert "x-api-key" not in request.headers
+            assert "authorization" not in request.headers
+            assert "cookie" not in request.headers
+        assert supplied.headers["X-Api-Key"] == "secret"
+
+
 def test_injected_real_sync_http_client_must_not_disable_dns_guard(monkeypatch):
     dns_validation = []
 

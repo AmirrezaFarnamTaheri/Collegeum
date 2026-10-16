@@ -110,14 +110,17 @@ class Router:
         # The generic heuristic misses 'a PhD in economics is required'. The
         # positive language here is deliberately narrow; a PhD *preference* or
         # 'PhD not required' must not trigger it.
-        required_in_field = _PHD_IN_FIELD_REQUIRED.search(summary) or (
-            _PHD_IN_FIELD_REQUIRED.search(degree_note or "")
-        )
-        if required_in_field and not re.search(
-            r"\b(?:not|never|no)\s+(?:actually\s+)?"
-            r"(?:required|essential|mandatory)\b", required_in_field.group(0), re.I,
-        ):
-            qualified = True
+        for text in (summary, degree_note or ""):
+            for match in _PHD_IN_FIELD_REQUIRED.finditer(text):
+                before = text[max(0, match.start() - 30):match.start()]
+                if re.search(r"\b(?:not|never|no|without)\s+(?:a\s+)?$", before, re.I):
+                    continue
+                if re.search(
+                    r"\b(?:not|never|no)\s+(?:actually\s+)?"
+                    r"(?:required|essential|mandatory)\b", match.group(0), re.I,
+                ):
+                    continue
+                qualified = True
         if qualified:
             return "research"
         if _PREDOC.search(title):
