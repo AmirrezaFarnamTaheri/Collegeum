@@ -3,7 +3,7 @@
 mocked HTTP. No Gemini key, as for a user in a country where Gemini is blocked."""
 
 import json
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
