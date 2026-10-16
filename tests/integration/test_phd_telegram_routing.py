@@ -16,6 +16,16 @@ from predoc_pipeline.publish.subscriptions import matching
 from predoc_pipeline.routing import Channel, Router
 
 
+@pytest.mark.parametrize("field", ["summary", "degree_note"])
+@pytest.mark.parametrize("text", [
+    "No PhD in economics is required. A bachelor degree is sufficient.",
+    "A PhD in economics is not required.",
+    "A PhD in economics is preferred but not required.",
+])
+def test_negated_phd_field_requirement_remains_predoc(field, text):
+    assert Router.position_kind("Research Assistant", **{field: text}) == "predoc"
+
+
 @pytest.mark.parametrize(("title", "summary", "degree", "expected"), [
     ("Research Fellow", "Lead quantitative research in econometrics", "phd", "research"),
     ("Senior Research Fellow (Evaluation)", "Design rigorous RCTs", "phd", "research"),

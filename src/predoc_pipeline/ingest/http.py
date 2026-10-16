@@ -25,7 +25,8 @@ a firewall rule.
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urljoin, urlsplit
@@ -109,6 +110,23 @@ class PoliteClient:
         self.close()
 
     # -- robots -----------------------------------------------------------
+    @contextmanager
+    def _stream(self, url: str, *, public_only: bool = False,
+                **kwargs: Any) -> Iterator[httpx.Response]:
+        assert self.client is not None
+        request = self.client.build_request("GET", url, **kwargs)
+        if public_only:
+            safe = {"host", "user-agent", "accept", "accept-language", "accept-encoding"}
+            for name in list(request.headers):
+                if name.lower() not in safe:
+                    del request.headers[name]
+        options: dict[str, Any] = {"auth": None} if public_only else {}
+        response = self.client.send(request, stream=True, follow_redirects=False, **options)
+        try:
+            yield response
+        finally:
+            response.close()
+
     def _robots_for(self, url: str) -> RobotFileParser | None:
         parts = urlsplit(url)
         # Robots policies are origin-scoped, not registrable-host scoped.
@@ -122,8 +140,8 @@ class PoliteClient:
             validate_public_url(robots_url, resolve_dns=self._check_dns)
             # Stream robots.txt too: a server must not exhaust crawler memory
             # before the job-page response-size guard ever runs.
-            with self.client.stream(  # type: ignore[union-attr]
-                "GET", robots_url, timeout=10.0, follow_redirects=False,
+            with self._stream(
+                robots_url, timeout=10.0, public_only=True,
             ) as response:
                 if response.status_code == 200:
                     body = bytearray()
@@ -168,14 +186,15 @@ class PoliteClient:
         """Fetch only validated destinations and inspect every redirect hop."""
         current = url
         current_headers = dict(headers)
+        public_only = False
         for hop in range(6):
             validate_public_url(current, resolve_dns=self._check_dns)
             if hop:
                 if not self.allowed(current):
                     raise UnsafeDestination("redirect blocked by robots.txt")
                 self._pace(current, sleep=sleep)
-            with self.client.stream(  # type: ignore[union-attr]
-                "GET", current, headers=current_headers, follow_redirects=False
+            with self._stream(
+                current, headers=current_headers, public_only=public_only,
             ) as response:
                 if response.status_code in (301, 302, 303, 307, 308):
                     location = response.headers.get("location")
@@ -188,6 +207,7 @@ class PoliteClient:
                     origin = urlsplit(current)
                     destination = urlsplit(target)
                     if (origin.scheme, origin.netloc) != (destination.scheme, destination.netloc):
+                        public_only = True
                         # Do not forward vendor-specific credentials or
                         # cache validators to a different HTTP origin.
                         safe_headers = {"user-agent", "accept", "accept-language",
