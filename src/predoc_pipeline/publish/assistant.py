@@ -17,13 +17,12 @@ from ..core.timeparse import format_ts, parse_datetime, utcnow
 from ..settings import Settings
 from .feedback import FeedbackStore
 
-REFUSAL = ('I can query stored research vacancies and their deadlines, employers, locations, '
-           'pay, qualifications and stated visa terms. I cannot answer unrelated questions, '
-           'predict openings, decide personal eligibility, or invent missing facts. '
+REFUSAL = ('Ask about the listed research vacancies: locations, deadlines, pay, '
+           'qualifications or visa terms. '
            'Try /ask Which economics positions close this month?')
 ResultField = Literal['deadline', 'visa', 'salary', 'degree', 'tools', 'start', 'summary']
 NOT_CONFIGURED = 'Database chat is not configured yet. Please try again later.'
-UNAVAILABLE = 'Database AI is temporarily unavailable. Your tracking marks are unchanged.'
+UNAVAILABLE = 'Vacancy questions are temporarily unavailable. Please try again later.'
 
 
 def _load_protocol(path: str) -> dict[str, Any] | None:

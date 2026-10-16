@@ -1,6 +1,6 @@
 import protocol from '../../config/telegram-assistant.json' with {type: 'json'};
 
-export const refusal = 'I can query stored research vacancies, deadlines, employers, locations, pay, qualifications and stated visa terms. I cannot answer unrelated questions, predict openings, decide personal eligibility or invent missing facts.';
+export const refusal = 'Ask about the listed research vacancies: locations, deadlines, pay, qualifications or visa terms. Try /ask Which economics positions close this month?';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'})[c]);
 
@@ -128,7 +128,7 @@ export async function ask(instance, question, userId, owner, admitted = false, u
         continue;
       }
       if (response.status === 429) continue;
-      if (!response.ok) return 'Database AI is temporarily unavailable. Your tracking marks are unchanged.';
+      if (!response.ok) return 'Vacancy questions are temporarily unavailable. Please try again later.';
       let data;
       try { data = await response.json(); }
       catch { providerFailed = true; continue; }
@@ -143,7 +143,7 @@ export async function ask(instance, question, userId, owner, admitted = false, u
       break;
     }
     if (!query) return providerFailed
-      ? 'Database AI is temporarily unavailable. Your tracking marks are unchanged.'
+      ? 'Vacancy questions are temporarily unavailable. Please try again later.'
       : 'The AI provider is busy. Please try again later.';
     if (query.action === 'refuse') return refusal;
     const {rows,marks} = await instance.dataset(owner);

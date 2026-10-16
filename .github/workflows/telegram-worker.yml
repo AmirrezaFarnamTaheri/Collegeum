@@ -4,6 +4,15 @@ name: deploy-telegram-worker
 # This deploys Worker code/secrets but does not change Telegram's webhook.
 on:
   workflow_dispatch:
+    inputs:
+      inspect_only:
+        description: 'Only inspect accessible Cloudflare accounts; do not deploy'
+        type: boolean
+        default: true
+      activate_webhook:
+        description: 'After deployment, seed private preferences and activate Telegram delivery'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -13,8 +22,31 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  inspect:
+    if: inputs.inspect_only == true
+    runs-on: ubuntu-latest
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Inspect accounts accessible to existing tokens
+        env:
+          CF_TOKEN_PRIMARY: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
+          CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
+        run: node cloudflare/telegram/inspect-accounts.mjs
+      - name: Inspect Telegram delivery without changing it
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK_ENABLED: ${{ vars.TELEGRAM_WEBHOOK_ENABLED || 'false' }}
+          TELEGRAM_WORKER_URL: ${{ vars.TELEGRAM_WORKER_URL }}
+          TELEGRAM_WORKER_SYNC_TOKEN: ${{ secrets.TELEGRAM_WORKER_SYNC_TOKEN }}
+        run: python3 -S tools/telegram_connection.py
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && inputs.inspect_only == false
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -48,7 +80,7 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
           SYNC_TOKEN: ${{ secrets.TELEGRAM_WORKER_SYNC_TOKEN }}
-          OWNER_IDS: ${{ vars.TELEGRAM_OWNER_IDS }}
+          OWNER_IDS: ${{ vars.TELEGRAM_OWNER_IDS || secrets.TELEGRAM_ADMIN_CHAT_ID }}
           AI_ENABLED: ${{ vars.TELEGRAM_AI_ENABLED || 'true' }}
           PUBLIC_AI_ENABLED: ${{ vars.TELEGRAM_AI_PUBLIC_ENABLED || 'false' }}
           PUBLIC_HOURLY_CAP: ${{ vars.TELEGRAM_AI_PUBLIC_HOURLY_CAP || '100' }}
@@ -68,3 +100,37 @@ jobs:
             --var "AI_ENABLED:$AI_ENABLED" --var "PUBLIC_AI_ENABLED:$PUBLIC_AI_ENABLED" \
             --var "PUBLIC_HOURLY_CAP:$PUBLIC_HOURLY_CAP" \
             --var "OPENROUTER_MODEL:$OPENROUTER_MODEL"
+      - name: Checkout private state for activation
+        if: inputs.activate_webhook && vars.PRIVATE_STATE_REPO != ''
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ vars.PRIVATE_STATE_REPO }}
+          token: ${{ secrets.PRIVATE_STATE_TOKEN }}
+          path: .private-state
+      - name: Restore private state for activation
+        if: inputs.activate_webhook && vars.PRIVATE_STATE_REPO != ''
+        working-directory: .
+        run: python3 tools/private_state.py restore
+      - uses: actions/setup-python@v7
+        if: inputs.activate_webhook
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4
+        if: inputs.activate_webhook
+      - name: Seed preferences and verify webhook activation
+        if: inputs.activate_webhook
+        working-directory: .
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
+          TELEGRAM_WEBHOOK_ENABLED: ${{ vars.TELEGRAM_WEBHOOK_ENABLED || 'false' }}
+          TELEGRAM_WORKER_URL: ${{ vars.TELEGRAM_WORKER_URL }}
+          TELEGRAM_WORKER_SYNC_TOKEN: ${{ secrets.TELEGRAM_WORKER_SYNC_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+        run: |
+          set -eu
+          test "$TELEGRAM_WEBHOOK_ENABLED" = true || { echo "Enable webhook mode before activation"; exit 1; }
+          test -n "$FEEDBACK_ENCRYPTION_KEY" || { echo "Original encryption key is required"; exit 1; }
+          uv sync --locked --python 3.12
+          uv run --no-sync predoc-pipeline telegram-sync
+          python3 -S tools/telegram_connection.py --activate

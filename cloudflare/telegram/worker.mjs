@@ -1,5 +1,6 @@
 /** Owner-only webhook bot. The Durable Object serializes updates and syncs. */
 import {ask, reservePublic} from './assistant.mjs';
+import {subscriberCommand, subscriberUpdate, validPreferences} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const VIEWS = new Set(["positions", "valid", "applied", "hidden", "new", "closing", "search"]);
@@ -9,7 +10,8 @@ const aiQuestion = message => {
   const input = String(message.text || '').trim();
   const word = input.split(/\s+/)[0].replace(/^\//, '').split('@')[0].toLowerCase();
   if (word === 'ask') return input.split(/\s+/).slice(1).join(' ');
-  return !input.startsWith('/') && !COMMANDS.has(word) ? String(message.text || '') : null;
+  return !input.startsWith('/') && !COMMANDS.has(word) && !subscriberCommand(word)
+    ? String(message.text || '') : null;
 };
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c =>
   ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[c]);
@@ -28,6 +30,7 @@ const menu = () => ({inline_keyboard: [
 const moreMenu = () => ({inline_keyboard: [
   [nav("🆕 New this week", "new"), nav("🙈 Hidden", "hidden")],
   [nav("❔ Help", "help"), nav("← Home", "menu")],
+  [{text: 'Alert settings', callback_data: 'sub:p:home'}],
 ]});
 
 export async function sameSecret(actual, expected) {
@@ -44,7 +47,8 @@ export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname;
     if (path === "/health" && request.method === "GET") return json({service: "collegeum-telegram"});
-    if (request.method !== "POST" || !["/webhook", "/sync"].includes(path)) return json({error: "not found"}, 404);
+    if (!(request.method === 'GET' && path === '/status') &&
+        (request.method !== "POST" || !["/webhook", "/sync"].includes(path))) return json({error: "not found"}, 404);
     if (!env.TELEGRAM_BOT_TOKEN || !env.WEBHOOK_SECRET || !env.SYNC_TOKEN || !ownerIds(env).size)
       return json({error: "service not configured"}, 503);
     const authenticated = path === "/webhook"
@@ -103,6 +107,13 @@ export class TelegramBot {
 
   async handle(request) {
     const path = new URL(request.url).pathname;
+    if (path === '/status' && request.method === 'GET') {
+      const updates = [...(await this.ctx.storage.list({prefix: 'update:'})).values()];
+      return json({subscriber_protocol: 1,
+        subscribers_initialized: Boolean(await this.ctx.storage.get('subscribers_initialized')),
+        snapshot_at: await this.ctx.storage.get('snapshot_at') || null,
+        pending_updates: updates.filter(s => !['done', 'rejected'].includes(s.stage)).length});
+    }
     let payload;
     try {
       if (Number(request.headers.get("Content-Length") || 0) > 2_000_000) return json({error: "too large"}, 413);
@@ -119,11 +130,12 @@ export class TelegramBot {
     const message = callback?.message || update.message;
     const owners = ownerIds(this.env);
     const owner = owners.has(String(message?.chat?.id));
-    const publicChat = !callback && message?.chat?.type === 'private' &&
+    const publicChat = message?.chat?.type === 'private' &&
       Number.isSafeInteger(message?.chat?.id) && message.chat.id > 0 &&
-      message.from?.id === message.chat.id;
+      (callback?.from?.id ?? message.from?.id) === message.chat.id;
     if (!message || (!owner && !publicChat) ||
-        (callback && !owners.has(String(callback.from?.id)))) return json({ok: true, ignored: true});
+        (callback && !owners.has(String(callback.from?.id)) &&
+          !(publicChat && String(callback.data || '').startsWith('sub:')))) return json({ok: true, ignored: true});
     const question = callback ? null : aiQuestion(message);
     if (question !== null && question.trim() && question.length <= 1000 &&
         this.env.AI_ENABLED !== 'false' && (owner || this.env.PUBLIC_AI_ENABLED === 'true'))
@@ -184,6 +196,8 @@ export class TelegramBot {
     if (!claimed) return json({ok: true, replay: true});
     try {
       if(typeof claimed==='object'&&claimed.stage==='prepared')await this.sendPrepared(key,claimed);
+      else if (callback && String(callback.data || '').startsWith('sub:'))
+        await subscriberUpdate(this,message,callback,key);
       else if (callback) await this.callback(callback,key);
       else {
         const question = aiQuestion(message);
@@ -279,6 +293,23 @@ export class TelegramBot {
       if (!HASH.test(hash) || !mark || !STATUS.has(mark.status) || !Number.isFinite(Date.parse(mark.at)))
         return json({error: "invalid mark"}, 400);
     }
+    const subscribers = payload.subscribers || {};
+    const careers = payload.career_listings || [];
+    const sourceStatus = payload.source_status || {};
+    if (!sourceStatus || typeof sourceStatus !== 'object' || Array.isArray(sourceStatus) ||
+        Object.entries(sourceStatus).some(([lang, text]) => !['en', 'fa'].includes(lang) ||
+          typeof text !== 'string' || text.length > 4000)) return json({error: 'invalid source status'}, 400);
+    if (!Array.isArray(careers) || careers.length > 2000 || careers.some(r =>
+      !r || typeof r.title !== 'string' || typeof r.employer !== 'string' || !safeUrl(r.url) ||
+      typeof r.category !== 'string' || typeof r.scope !== 'string' ||
+      !Number.isFinite(Date.parse(r.first_seen_at)) || JSON.stringify(r).length > 16000))
+      return json({error: 'invalid career snapshot'}, 400);
+    if (payload.subscriber_protocol !== undefined && payload.subscriber_protocol !== 1)
+      return json({error: 'unsupported subscriber protocol'}, 400);
+    if (!subscribers || typeof subscribers !== 'object' || Array.isArray(subscribers) ||
+        Object.keys(subscribers).length > 1000 || Object.entries(subscribers).some(([id, member]) =>
+          !/^[1-9]\d{0,15}$/.test(id) || !validPreferences(member)))
+      return json({error: 'invalid subscriber preferences'}, 400);
     const replaced = await this.ctx.storage.transaction(async tx => {
       const previous = await tx.get('snapshot_at');
       if (previous && Date.parse(previous) > Date.parse(payload.generated_at)) return false;
@@ -292,6 +323,12 @@ export class TelegramBot {
         await tx.put("initialized", true);
       }
       await tx.put("snapshot_at", payload.generated_at);
+      await tx.put('career_listings', careers);
+      await tx.put('source_status', sourceStatus);
+      if (payload.subscriber_protocol === 1 && !await tx.get('subscribers_initialized')) {
+        for (const [id, member] of Object.entries(subscribers)) await tx.put(`subscriber:${id}`, member);
+        await tx.put('subscribers_initialized', true);
+      }
       return true;
     });
     if (!replaced) return json({error:'snapshot is older than the stored inventory'},409);
@@ -304,17 +341,21 @@ export class TelegramBot {
     });
     const marks = Object.fromEntries([...(await this.ctx.storage.list({prefix: "mark:"}))]
       .map(([key, value]) => [key.slice(5), value]));
-    return json({marks, snapshot_at: payload.generated_at});
+    const profiles = Object.fromEntries([...(await this.ctx.storage.list({prefix: 'subscriber:'}))]
+      .map(([key, value]) => [key.slice('subscriber:'.length), value]));
+    return json({marks, snapshot_at: payload.generated_at, subscriber_protocol: 1, subscribers: profiles});
   }
 
   async api(method, payload) {
-    for(let attempt=0;attempt<3;attempt++){
+    const acknowledgement = method === 'answerCallbackQuery';
+    for(let attempt=0;attempt<(acknowledgement ? 1 : 3);attempt++){
     const response = await fetch(`https://api.telegram.org/bot${this.env.TELEGRAM_BOT_TOKEN}/${method}`, {
       method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(acknowledgement ? 2000 : 15_000),
     });
     const result = await response.json();
     if(response.status===429){
+      if (acknowledgement) throw new Error('Callback acknowledgement unavailable');
       const raw=Number(result?.parameters?.retry_after);
       const retryAfter=Number.isFinite(raw)&&raw>=0?raw:5;
       if(attempt<2&&retryAfter<=5){await new Promise(resolve=>setTimeout(resolve,retryAfter*1000+500));continue;}
@@ -352,14 +393,13 @@ export class TelegramBot {
     const now = Date.now();
     const open = r => !r.closed_at && !r.expired_at && (!r.deadline || Date.parse(r.deadline) >= now);
     const available = rows.filter(r => open(r) && !["invalid", "applied"].includes(marks.get(r.url_hash)));
-    if (kind === "menu") return {text: '🎓 <b>Collegeum · your research shortlist</b>\n\n' +
+    if (kind === "menu") return {text: '<b>Collegeum · Positions and applications</b>\n\n' +
       `<b>${available.length} open</b> · ${rows.filter(r => open(r) && marks.get(r.url_hash) === "valid").length} saved · ` +
       `${rows.filter(r => marks.get(r.url_hash) === "applied").length} applied\n\n` +
-      'Browse, save promising roles, and track applications.\n🔎 <code>/search economics London</code>\n\n' +
-      `Snapshot: ${esc((await this.ctx.storage.get("snapshot_at")) || "not uploaded yet")}`, reply_markup: menu()};
+      'Search with <code>/search economics London</code>.\n\n' +
+      `Listings updated: ${esc((await this.ctx.storage.get("snapshot_at")) || "Waiting for first sync")}`, reply_markup: menu()};
     if (kind === "more") return {text: '⚙️ <b>More options</b>\n\n' +
-      'See recently added roles, revisit hidden jobs, or get help.\n' +
-      'Use <code>/search economics London</code> to filter by keywords.', reply_markup: moreMenu()};
+      'View recent or hidden positions, or open help.', reply_markup: moreMenu()};
     if (kind === "help" || (kind === "search" && !query)) return {text:
       '🎓 <b>Collegeum bot</b>\n\n/menu · /positions · /saved · /applied · /hidden\n' +
       '/new: added this week · /closing: deadlines within 7 days\n' +
@@ -392,8 +432,10 @@ export class TelegramBot {
     if (page + 1 < count) navigation.push(nav("Next →", kind, page + 1));
     buttons.push(navigation);
     return {text: `<b>${esc(labels[kind])} · ${selected.length}</b>\n\n` +
-      (blocks.join("\n\n") || "No matches. Try another view or search.") +
-      `\n\nPage ${page + 1} of ${count} · Dates shown as supplied by the advert`, reply_markup: {inline_keyboard: buttons}};
+      (blocks.join("\n\n") || (kind === 'valid' ? 'No saved positions yet. Open a position and tap Save.' :
+        kind === 'search' ? 'No matches. Try fewer words or a different location.' :
+          'No positions in this view. Try Open positions.')) +
+      (count > 1 ? `\n\nPage ${page + 1} of ${count}` : ''), reply_markup: {inline_keyboard: buttons}};
   }
 
   feedback(row, status, number = "") {
@@ -406,6 +448,11 @@ export class TelegramBot {
     const [word, ...words] = String(message.text || "/menu").trim().split(/\s+/);
     const aliases = {start: "menu", home: "menu", saved: "valid", interested: "valid", jobs: "positions", list: "positions"};
     let kind = word.replace(/^\//, "").split("@")[0].toLowerCase();
+    if ((subscriberCommand(kind) && (kind !== 'start' || !owner)) ||
+        (!owner && ['help', 'more', 'menu', 'home'].includes(kind))) {
+      await subscriberUpdate(this,message,null,updateKey);
+      return;
+    }
     kind = aliases[kind] || kind;
     const naturalQuestion = !word.startsWith('/') && kind !== 'ask' && !VIEWS.has(kind) && !['menu','help','more'].includes(kind);
     if (kind === 'forget') {

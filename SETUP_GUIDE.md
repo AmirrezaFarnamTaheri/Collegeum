@@ -76,7 +76,7 @@ The scheduled `predoc-pipeline` workflow runs at **00:07, 04:07, 08:07,
 12:07, 16:07, and 20:07 UTC** (four-hour source cohorts). GitHub scheduling,
 runner queues and network outages can delay execution.
 
-The `telegram-sync` workflow checks private commands at **:15 and :45
+In polling mode, `telegram-sync` checks private commands at **:15 and :45
 every hour, UTC**, throughout the day—but only if
 `ENABLE_TELEGRAM_SYNC=true` and required encryption/bot secrets are
 present. GitHub Actions is not an always-on service; a scheduled check may
@@ -86,7 +86,11 @@ not promise immediate or infallible command delivery.
 The optional Cloudflare Telegram Worker is deployed separately through
 **Actions → deploy-telegram-worker** on `main`, after configuring its
 Cloudflare account, tokens, secret and Owner IDs. Deploying Worker code
-does **not** automatically switch Telegram's webhook. Follow
+does **not** automatically switch Telegram's webhook. The workflow defaults
+to a read-only connection check. After deployment, the explicit
+`activate_webhook` option seeds preferences, verifies readiness and registers
+the webhook. Menus then reply through Cloudflare; scheduled GitHub runs refresh
+listings, import preferences and send reserved vacancy alerts. Follow
 [Telegram operations](docs/TELEGRAM_OPERATIONS.md) to review ownership,
 webhook activation, unknown-send reconciliation and rollback.
 

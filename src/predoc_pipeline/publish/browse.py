@@ -30,13 +30,13 @@ def more() -> tuple[str, dict[str, Any]]:
     """Secondary owner-only pages: visible but not crowding the primary menu."""
     return (
         '⚙️ <b>More options</b>\n\n'
-        'See recently added roles, revisit hidden jobs, or get help.\n'
-        'Use <code>/search economics London</code> to filter by keywords.',
+        'View recent or hidden positions, or open help.',
         {'inline_keyboard': [
             [{'text': '🆕 New this week', 'callback_data': 'view|new|0'},
              {'text': '🙈 Hidden', 'callback_data': 'view|hidden|0'}],
             [{'text': '❔ Help', 'callback_data': 'view|help|0'},
              {'text': '← Home', 'callback_data': 'view|menu|0'}],
+            [{'text': 'Alert settings', 'callback_data': 'sub:p:home'}],
         ]},
     )
 
@@ -46,12 +46,10 @@ def home(rows: list[sqlite3.Row], store: FeedbackStore) -> tuple[str, dict[str, 
 
     counts = {kind: len(select_rows(kind, rows, store))
               for kind in ('positions', 'valid', 'applied', 'hidden')}
-    text = ('🎓 <b>Collegeum · your research shortlist</b>\n\n'
+    text = ('<b>Collegeum · Positions and applications</b>\n\n'
             f"<b>{counts['positions']} open</b> · {counts['valid']} saved · "
             f"{counts['applied']} applied\n\n"
-            'Browse vacancies, save promising roles, and track applications.\n'
-            '🔎 Try <code>/search economics London</code>\n\n'
-            'Dates and eligibility come from the advert. Check the original before applying.')
+            'Search with <code>/search economics London</code>.')
     return text, menu_keyboard()
 
 
