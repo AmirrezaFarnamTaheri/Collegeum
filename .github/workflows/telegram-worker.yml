@@ -4,6 +4,11 @@ name: deploy-telegram-worker
 # This deploys Worker code/secrets but does not change Telegram's webhook.
 on:
   workflow_dispatch:
+    inputs:
+      inspect_only:
+        description: 'Only inspect accessible Cloudflare accounts; do not deploy'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -13,8 +18,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  inspect:
+    if: inputs.inspect_only == true
+    runs-on: ubuntu-latest
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Inspect accounts accessible to existing tokens
+        env:
+          CF_TOKEN_PRIMARY: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
+          CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
+        run: node cloudflare/telegram/inspect-accounts.mjs
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && inputs.inspect_only == false
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
