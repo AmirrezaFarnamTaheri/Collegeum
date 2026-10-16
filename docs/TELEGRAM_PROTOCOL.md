@@ -1,11 +1,18 @@
 # Telegram database chat protocol
 
-After integration with current main, subscriber commands (`/start`, `/settings`,
-`/latest`, `/stop`, `/delete`, and administrator controls) keep their existing
-polling behavior. AI commands are added alongside those controls. Webhook mode
-is refused while subscriber records exist, because this optional Worker does
-not implement their subscription and unsubscribe protocol. Keep polling enabled
-for the current subscriber bot until a complete webhook migration is validated.
+Subscriber commands (`/start`, `/settings`, `/latest`, `/stop`, `/delete`) and
+their native callbacks work through polling or the Worker. Worker subscriber
+panels support English and Persian. The first protocol-v1 snapshot seeds
+preferences; subsequent snapshots import Cloudflare's authoritative choices
+without overwriting encrypted delivery receipts. Explicit deletion tombstones
+remove active subscriptions and cannot be reversed by stale uploads.
+
+Worker menus reply immediately. Vacancy discovery and private notification
+delivery still follow scheduled GitHub runs. Polling and webhook delivery must
+never consume the same bot's updates simultaneously. Inspect the connection
+with `tools/telegram_connection.py`; activation is explicit and preserves pending
+Telegram updates. Operational delivery reconciliation remains in the Python
+administrator tools; the Worker does not mutate delivery receipts.
 
 The Telegram bot is the only user interface for AI database questions. It has
 two audiences: configured owners can browse and track vacancies without product

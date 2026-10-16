@@ -252,9 +252,6 @@ def telegram_sync(
     if settings.telegram_webhook_enabled:
         from .cloud import sync_cloud
 
-        store = FeedbackStore.from_settings(settings)
-        if store.subscribers:
-            raise ValueError("Webhook mode cannot replace active subscriber polling")
         return sync_cloud(settings, http_client=http_client)
     tg_prefs = load_preferences(settings.preferences_config).telegram
     page_size = max(1, page_size or tg_prefs.list_page_size)

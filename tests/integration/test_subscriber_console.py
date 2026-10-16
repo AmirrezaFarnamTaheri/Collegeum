@@ -1308,7 +1308,7 @@ def test_privacy_notice_is_available_in_both_languages():
     assert "/delete" in english and "historical" in english
     assert "حریم خصوصی" in persian and "/delete" in persian
     home, keyboard = menu(None)
-    assert "/privacy" in home
+    assert "Fernet" not in home  # Storage details belong on the dedicated Privacy screen.
     assert "sub:p:more" in str(keyboard)
     _, more = menu(None, "more")
     assert "sub:p:privacy" in str(more)

@@ -31,7 +31,7 @@ def _safe_admin_render(
     except (OSError, RuntimeError, ValueError, sqlite3.DatabaseError) as exc:
         log.warning("telegram_admin_snapshot_unavailable", error=type(exc).__name__)
         return (
-            "<b>Collegeum · Admin</b>\\n"
+            "<b>Collegeum · Admin</b>\n"
             "Status is temporarily unavailable. Inspect pipeline logs or "
             "restore the local cache. Subscriber commands remain active."
         )

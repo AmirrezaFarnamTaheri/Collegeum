@@ -81,7 +81,7 @@ def menu(
             if fa else
             "Predoc = before a PhD; PhD = doctoral student openings; "
             "postdoc and research staff may require a completed PhD. "
-            "Choose topics separately. Alerts start with newly discovered jobs."
+            "Tap a role to turn its alerts on or off."
         )
         for key in ACADEMIC:
             buttons.append([_button(
@@ -296,12 +296,7 @@ def menu(
             f"🧬 Life Sciences PhD: {'On' if life_active else 'Off'}\n"
             f"🌍 Markets: {escape(market_line)}\n"
             f"🔔 Alerts: {delivery_status_en}\n\n"
-            "Choose a category to tailor your alerts."
-        )
-        body += (
-            "\n\n🔒 داده‌های اشتراک رمزگذاری می‌شوند؛ /privacy"
-            if fa else
-            "\n\n🔒 Preferences are encrypted · /privacy"
+            "Choose roles below. Latest matches lets you browse before subscribing."
         )
         if careers and not selected_markets:
             body += (
@@ -355,7 +350,8 @@ def latest_panel(
             f"{label}</a>\n   {employer} · {market} · {source}"
         )
     if not jobs:
-        lines.append("موردی یافت نشد." if fa else "No matching listings yet.")
+        lines.append("موردی یافت نشد. موضوع‌ها را تغییر دهید یا بعداً بررسی کنید."
+                     if fa else "No matching listings yet. Change your roles or check again later.")
     keyboard: list[list[dict[str, str]]] = []
     nav = []
     if current:

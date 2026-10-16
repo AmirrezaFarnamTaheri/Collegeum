@@ -43,6 +43,39 @@ function bot() {
 }
 const snapshot = {listings: [record], marks: {}, generated_at: new Date().toISOString()};
 
+test('subscriber preferences respond immediately and stale sync cannot undo unsubscribe', async () => {
+  const instance = bot();
+  const seed = {...snapshot, subscriber_protocol: 1, subscribers: {}};
+  await instance.fetch(post('/sync', seed));
+  const message = {chat: {id: 999, type: 'private'}, from: {id: 999}, text: '/start'};
+  await instance.fetch(post('/webhook', {update_id: 9000, message}));
+  assert.match(instance.calls.at(-1).payload.text, /Choose/);
+  const tap = (id, data) => ({update_id: id, callback_query: {id: String(id),
+    from: {id: 999}, message: {...message, message_id: 900}, data}});
+  const choice = tap(9001, 'sub:t:predoc');
+  await instance.fetch(post('/webhook', choice));
+  await instance.fetch(post('/webhook', choice));
+  let synced = await (await instance.fetch(post('/sync', seed))).json();
+  assert.ok(synced.subscribers['999'].topics.predoc);
+  const earlier = structuredClone(synced.subscribers);
+  await instance.fetch(post('/webhook', tap(9002, 'sub:stop:yes')));
+  synced = await (await instance.fetch(post('/sync', {...seed, subscribers: earlier}))).json();
+  assert.equal(synced.subscribers['999'], null);
+  assert.equal(instance.calls.filter(c => c.method === 'editMessageText').length, 2);
+});
+
+test('subscriber callbacks cannot change another private chat or owner marks', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', {...snapshot, subscriber_protocol: 1, subscribers: {}}));
+  for (const [index, data] of ['sub:t:predoc', 'fb|v|' + 'a'.repeat(16)].entries()) {
+    await instance.fetch(post('/webhook', {update_id: 9100 + index,
+      callback_query: {id: String(index), from: {id: 999},
+        message: {chat: {id: 42, type: 'private'}, message_id: 1}, data}}));
+  }
+  assert.equal(instance.calls.length, 0);
+  assert.equal((await instance.dataset()).marks.size, 0);
+});
+
 test('invalid AI questions consume neither public nor user quota', async () => {
   const instance = bot();
   for (const [index, text] of ['/ask', '/ask ' + 'x'.repeat(1001), 'x'.repeat(1001),
@@ -156,7 +189,7 @@ test('slow public AI never blocks owner browsing, including the same owner chat'
     await started;
     const menu = await instance.fetch(post('/webhook',{update_id:11,message:{chat:{id:42},text:'/menu'}}));
     assert.equal(menu.status,200);
-    assert.match(instance.calls.find(c => c.method==='sendMessage').payload.text,/research shortlist/);
+    assert.match(instance.calls.find(c => c.method==='sendMessage').payload.text,/Positions and applications/);
     release(); await slow;
   } finally {release();globalThis.fetch=original;}
 });

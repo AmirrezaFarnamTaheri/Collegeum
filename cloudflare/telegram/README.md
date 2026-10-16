@@ -1,9 +1,15 @@
 # Collegeum Telegram webhook worker
 
-The current subscriber bot must remain in polling mode. This Worker does not
-implement subscriber preferences, alerts or unsubscribe handling. Snapshot sync
-refuses activation when private subscriber records exist; do not switch the
-production bot's webhook until those flows have been migrated and validated.
+The Worker answers owner browsing and private subscriber controls immediately.
+Subscribers can choose roles and markets, change delivery preferences, switch
+English/Persian, pause and unsubscribe. GitHub still collects vacancies and sends
+checkpointed alerts on its schedule. Fast menus do not make collection continuous.
+
+The first authenticated protocol-v1 sync seeds existing preferences. Afterward,
+Cloudflare owns preference edits; the encrypted Python journal keeps delivery
+receipts. Sync imports preferences without replacing receipts. Unsubscribe
+tombstones prevent stale snapshots from reactivating a removed subscription.
+Older Workers are rejected before local private state changes.
 
 Optional instant Telegram browsing and database chat, backed by a SQLite Durable
 Object. Valid AI questions are durably queued and acknowledged before the
@@ -89,6 +95,23 @@ resources and need the user's explicit approval.
 6. Confirm `getWebhookInfo` reports the intended URL and no delivery error.
    Test an owner question, public refusal, public rate limit, mark/undo and the
    next scheduled feedback synchronization with the real bot.
+
+`deploy-telegram-worker` defaults to **inspect only**. This read-only mode checks
+accounts accessible to existing credentials and reports Telegram's current
+delivery mode. Set `inspect_only=false` to deploy reviewed main code. Set
+`activate_webhook=true` only after the Worker URL, sync token and webhook secret
+are configured and webhook mode is enabled. Activation seeds the snapshot and
+preferences, checks authenticated `/status`, registers the webhook without
+dropping pending updates, and verifies Telegram reports the intended URL.
+`python -S tools/telegram_connection.py` performs the same read-only diagnosis;
+`--activate` explicitly enables the checked webhook.
+
+One bot has one Telegram webhook URL. Independent Durable Objects in separate
+accounts are not a replicated database. Cross-account load balancing requires
+a shared public hostname, health checks and one authoritative state service;
+do not point unrelated accounts at the bot and rotate webhook URLs per request.
+The three existing tokens belong to different accounts and only credentials
+authorized for the selected account can deploy that account's Worker.
 
 Polling and webhooks must not consume updates simultaneously. For rollback,
 remove the webhook without dropping pending updates, run a final authenticated

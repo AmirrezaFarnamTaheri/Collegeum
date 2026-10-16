@@ -3,8 +3,9 @@ name: telegram-sync
 # Processes opt-in subscriptions, owner feedback, administrator recovery,
 # encrypted send intents, and verified delivery acknowledgements.
 #
-# There is no always-on server: this checks for new messages every 30 minutes
-# throughout the day, including overnight (subject to GitHub cron delays).
+# Polling mode checks messages every 30 minutes. In webhook mode this only
+# refreshes the Worker's listings and imports preferences/feedback; the Worker
+# answers commands immediately, independently of GitHub scheduling.
 # Telegram only retains unconsumed updates for at most 24 hours, so prolonged
 # runner outages can still lose updates. Source and inbox jobs are serialized.
 on:

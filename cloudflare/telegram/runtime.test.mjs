@@ -31,7 +31,8 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
     assert.equal((await send('/webhook',{},false)).status,401);
     const row={id:42,url_hash:'a'.repeat(64),title:'Economics RA',institution:'Example University',
       country:'Canada',apply_url:'https://example.org/job',first_seen_at:'2026-10-12T00:00:00Z'};
-    const snapshot={listings:[row],marks:{},generated_at:'2026-10-12T00:00:00Z'};
+    const snapshot={listings:[row],marks:{},generated_at:'2026-10-12T00:00:00Z',
+      subscriber_protocol:1,subscribers:{}};
     assert.equal((await send('/sync',snapshot)).status,200);
     assert.equal((await send('/sync',{...snapshot,listings:[],generated_at:'2026-10-11T00:00:00Z'})).status,409);
     await send('/webhook',{update_id:1,message:{chat:{id:42},text:'/menu'}});
@@ -40,6 +41,19 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
       message:{chat:{id:42},message_id:900},data:'fb|v|'+row.url_hash.slice(0,16)}});
     const marked=await (await send('/sync',snapshot)).json();
     assert.equal(marked.marks[row.url_hash].status,'valid');
+    const preference = {update_id:3,callback_query:{id:'subscriber-choice',from:{id:777},
+      message:{chat:{id:777,type:'private'},message_id:901},data:'sub:t:predoc'}};
+    assert.equal((await send('/webhook',preference)).status,200);
+    assert.equal((await send('/webhook',preference)).status,200);
+    const choices=await (await send('/sync',snapshot)).json();
+    assert.ok(choices.subscribers['777'].topics.predoc);
+    assert.equal(calls.filter(c=>c.url.endsWith('/editMessageText')&&c.body.chat_id===777).length,1);
+    assert.equal((await mf.dispatchFetch('https://worker.example/status')).status,401);
+    const status=await (await mf.dispatchFetch('https://worker.example/status',{
+      headers:{Authorization:'Bearer offline-sync'},
+    })).json();
+    assert.equal(status.subscribers_initialized,true);
+    assert.equal(status.subscribers,undefined);
     // Distinct valid IDs execute concurrently against the actual DO transaction API.
     await Promise.all(Array.from({length:6},(_,i)=>send('/webhook',{update_id:100+i,
       message:{chat:{id:1000+i,type:'private'},from:{id:1000+i},text:'/ask Count open roles'}})));
