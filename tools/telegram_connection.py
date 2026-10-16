@@ -24,7 +24,9 @@ class _NoRedirects(HTTPRedirectHandler):
 
 def request_json(url: str, *, payload: dict | None = None, bearer: str = '',
                  webhook_secret: str = '') -> dict:
-    headers = {'Content-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json',
+               'User-Agent': 'Collegeum-ConnectionCheck/1.0 '
+                             '(+https://github.com/AmirrezaFarnamTaheri/Collegeum)'}
     if bearer:
         headers['Authorization'] = f'Bearer {bearer}'
     if webhook_secret:
