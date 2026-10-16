@@ -1,0 +1,31 @@
+name: export-life-sciences
+
+# On-demand public data export. No Telegram or subscriber-state credentials.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Collect vetted public positions and write CSV
+        run: uv run --no-sync python tools/export_life_sciences.py --discover
+      - name: Preserve CSV and source diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: life-sciences-export
+          path: exports/life_sciences_positions.*
+          if-no-files-found: error
+          retention-days: 14
