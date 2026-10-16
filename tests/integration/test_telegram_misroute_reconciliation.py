@@ -4,7 +4,9 @@ from __future__ import annotations
 import pytest
 
 from tools.reconcile_telegram_misroutes import (
-    apply_corrections, correction_html, plan_records,
+    apply_corrections,
+    correction_html,
+    plan_records,
 )
 
 
@@ -106,6 +108,7 @@ def test_corrective_copy_escapes_advert_and_does_not_relink_broken_template():
 def test_historical_journal_is_never_modified_by_planning(tmp_path):
     import hashlib
     import json
+
     from tools.reconcile_telegram_misroutes import plan_file
 
     file = tmp_path / "listings.ndjson"
