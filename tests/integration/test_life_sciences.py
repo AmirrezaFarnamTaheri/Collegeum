@@ -447,6 +447,7 @@ def test_discovery_errors_preserve_safe_cause_details(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import asyncio
+
     from predoc_pipeline.boards.scrapers.base import DiscoveryFetchError
 
     board = tmp_path / "source.toml"
