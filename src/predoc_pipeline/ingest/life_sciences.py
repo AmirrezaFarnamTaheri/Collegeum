@@ -76,6 +76,12 @@ ADDITIONAL_DOCTORAL_ROLE = re.compile(
     r"tes[iie]\s+de\s+doutoramento|promotionsstelle)\b",
     re.I,
 )
+OUT_OF_SCOPE_TITLE = re.compile(
+    r"\b(?:experimental physics|physics|statistics|statistical sciences|"
+    r"classroom|educational science|education research|social science|"
+    r"economics|econometrics|business administration|political science)\b",
+    re.I,
+)
 
 
 def _doctoral_title(title: str) -> bool:
@@ -94,6 +100,14 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     if not _doctoral_title(post.title):
         return None
     if WRONG_ROLE.search(post.title):
+        return None
+    # Board and university boilerplate often mentions unrelated research
+    # (for example, a university's CRISPR discovery). Don't let that text
+    # turn an explicitly non-life-science title into a life-sciences match.
+    title_is_life_science = bool(
+        PRIMARY_FIELD.search(post.title) or RELATED_FIELD.search(post.title)
+    )
+    if OUT_OF_SCOPE_TITLE.search(post.title) and not title_is_life_science:
         return None
     context = " ".join(x for x in (
         post.title, post.department, post.fields_of_research,
@@ -231,7 +245,12 @@ async def discover(
                         scraper.run(), timeout=min(http_config.source_timeout, 120),
                     )
                 except Exception as exc:  # noqa: BLE001 - isolate provider outages
-                    return [], [f"{source.name}: {type(exc).__name__}"]
+                    # Preserve a useful, bounded cause in the export report
+                    # while removing URLs that could contain query tokens.
+                    detail = re.sub(r"https?://\S+", "<source URL>", str(exc))
+                    detail = " ".join(detail.split())[:240]
+                    suffix = f": {detail}" if detail else ""
+                    return [], [f"{source.name}: {type(exc).__name__}{suffix}"]
                 # Indexes can contain hundreds of unrelated staff jobs.
                 # Give actual doctoral listings first access to the per-source
                 # budget before applying the cap.

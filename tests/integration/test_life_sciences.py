@@ -62,6 +62,20 @@ def test_unrelated_or_ineligible_positions_are_excluded(title: str) -> None:
     assert life_sciences.classify_post(post(title=title), today=TODAY) is None
 
 
+@pytest.mark.parametrize("title", [
+    "PhD position in Experimental Physics with a focus on photonics",
+    "PhD students in Statistics",
+    "PhD Position: Curiosity in the Classroom",
+])
+def test_unrelated_phd_titles_are_not_rescued_by_university_boilerplate(
+    title: str,
+) -> None:
+    unrelated = post(title=title, description=(
+        "The university is known for CRISPR-Cas9 and world-leading research."
+    ))
+    assert life_sciences.classify_post(unrelated, today=TODAY) is None
+
+
 @pytest.mark.parametrize("country,location", [
     ("United Kingdom", "London"),
     ("United States", "Cambridge, MA"),
@@ -427,6 +441,51 @@ def test_detail_fetch_adds_missing_research_evidence_without_network(
     assert len(jobs) == 1
     assert "chromatin architecture" in jobs[0].description_snippet
     assert life_sciences.classify_post(jobs[0], today=TODAY) is not None
+
+
+def test_discovery_errors_preserve_safe_cause_details(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import asyncio
+
+    from predoc_pipeline.boards.scrapers.base import DiscoveryFetchError
+
+    board = tmp_path / "source.toml"
+    board.write_text(
+        '[[board]]\nname="life_aalto_university"\n'
+        'type="link_scan"\nurl="https://example.org/jobs"\n'
+        'link_pattern="example.org"\n', encoding="utf-8",
+    )
+
+    class HttpContext:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+    class FailingScraper:
+        discovery_fetch_errors: list[str] = []
+        discovery_parse_errors: list[str] = []
+        discovery_limits: list[str] = []
+
+        def __init__(self, _config, _http):
+            pass
+
+        async def run(self):
+            raise DiscoveryFetchError(
+                "https://example.org/jobs?api_key=secret: ConnectTimeout: timed out"
+            )
+
+    monkeypatch.setattr(life_sciences, "build_http", lambda _cfg: HttpContext())
+    monkeypatch.setattr(life_sciences, "SCRAPERS", {"link_scan": FailingScraper})
+    _, errors = asyncio.run(life_sciences.discover(board, HttpConfig()))
+
+    assert len(errors) == 1
+    assert "life_aalto_university: DiscoveryFetchError" in errors[0]
+    assert "ConnectTimeout" in errors[0]
+    assert "api_key" not in errors[0]
+    assert "secret" not in errors[0]
 
 
 def test_high_volume_sources_cannot_monopolize_discovery_candidates(
