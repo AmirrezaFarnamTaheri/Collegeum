@@ -13,7 +13,7 @@ def styles():
 
 
 def rule(css, selector):
-    return re.findall(r"(?m)^\\s*" + re.escape(selector) + r"\\s*\\{([^{}]*)\\}", css)
+    return re.findall(r"(?m)^\s*" + re.escape(selector) + r"\s*\{([^{}]*)\}", css)
 
 
 def test_long_compensation_cannot_force_a_narrow_title_column():
