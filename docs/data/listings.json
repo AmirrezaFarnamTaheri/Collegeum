@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-19T15:47:34Z",
+ "generated_at": "2026-10-19T21:09:02Z",
  "count": 152,
  "listings": [
   {
@@ -636,7 +636,7 @@
   {
    "id": 216,
    "title": "Post-doctoral Fellow (HKU Stone Centre on Socio-Economic Inequality in Asia)",
-   "institution": "The University of Hong Kong",
+   "institution": "THE UNIVERSITY OF HONG KONG",
    "principal_investigator": "Professor Tarani Chandola",
    "country": "Hong Kong",
    "city": "Pok Fu Lam",
@@ -645,16 +645,15 @@
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 88,
    "disciplines": [
-    "Labor Economics",
-    "Development Economics",
-    "Political Economy"
+    "Econometrics",
+    "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "The University of Hong Kong is recruiting a Post-doctoral Fellow for the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia on a full-time, one- to three-year temporary contract. The post requires a PhD in economics or a related discipline and suits researchers specialising in labour economics, trade, development, or political economy who will conduct quantitative and qualitative analysis and prepare manuscripts.",
+   "summary": "This is a post-doctoral fellowship position at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia at the University of Hong Kong. The role seeks a PhD-level researcher skilled in labor economics, trade, development, or political economy with expertise in large-scale data analysis and causal inference methods.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
-   "confidence": 0.977,
+   "confidence": 0.962,
    "first_seen_at": "2026-10-15T13:28:02Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2306,19 +2305,19 @@
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2027-01-15T23:59:59Z",
+   "deadline": "2027-01-15T00:00:00Z",
    "days_left": 88,
    "disciplines": [
     "Applied Microeconomics",
-    "Public Policy",
-    "Quantitative Social Sciences"
+    "Development Economics",
+    "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "The Post-doctoral Associate will conduct independent and collaborative research on educational inequalities and social stratification in the Global South, working with Professor Luca Maria Pesando. The position is suitable for candidates with a recent Ph.D. in sociology, demography, international development, public policy, economics or related fields and expertise in large‑scale data analysis.",
+   "summary": "The Post-doctoral Associate will conduct independent research and collaborative work with Professor Luca Maria Pesando on educational inequalities and social stratification in the Global South, focusing on learning and school segregation. The role suits candidates with a recent PhD in sociology, demography, international development, public policy, economics or a related field, and expertise in large‑scale assessment data, household surveys, censuses, and data analysis using R, Stata, Python, GIS.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/415847/post-doctoral-associate-in-the-division-of-social-science-social-research-and-public-policy-?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.953,
    "first_seen_at": "2026-10-11T10:10:23Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2851,7 +2850,7 @@
    "id": 124,
    "title": "Predoctoral Researcher",
    "institution": "Blueprint Labs",
-   "principal_investigator": "Josh Angrist",
+   "principal_investigator": "Josh Angrist, Parag Pathak, Nikhil Agarwal, David Autor, Daron Acemoglu, and Simon Johnson",
    "country": "United States",
    "city": "Cambridge, MA",
    "is_remote": false,
@@ -2859,12 +2858,12 @@
    "deadline": "2027-07-15T00:00:00Z",
    "days_left": 269,
    "disciplines": [
-    "Quantitative Social Sciences",
-    "Public Policy",
-    "Labor Economics"
+    "Labor Economics",
+    "Applied Microeconomics",
+    "Public Policy"
    ],
    "visa": "not_offered",
-   "summary": "Blueprint Labs is hiring Predoctoral Researchers based at MIT in Cambridge, MA. The position involves research projects with faculty on education, workforce, and policy, requiring advanced data analysis and collaboration with leading researchers.",
+   "summary": "This is a full-time, one-year renewable predoctoral research appointment at Blueprint Labs supporting MIT projects on education and the workforce. It is suitable for candidates with at least a bachelor's degree, some economics training, and data-analysis skills; applicants must have US work authorization because this position is not eligible for visa sponsorship.",
    "language": "en",
    "apply_url": "https://blueprintlabs.mit.edu/careers/predoctoral-researcher",
    "source_url": "https://blueprintlabs.mit.edu/careers/predoctoral-researcher",
@@ -2872,7 +2871,9 @@
    "first_seen_at": "2026-10-11T10:03:51Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://blueprintlabs.mit.edu/careers/predoctoral-researcher"
+   ],
    "salary_min": 69294.0,
    "salary_max": 69294.0,
    "salary_currency": "USD",
@@ -2884,9 +2885,9 @@
     "R"
    ],
    "tools_preferred": [],
-   "min_degree": "unstated",
+   "min_degree": "bachelors",
    "degree_note": "unstated",
-   "start_term": "July 15, 2027",
+   "start_term": "By July 15, 2027",
    "start_date": "2027-07-15",
    "kind": "predoc",
    "sector": "academic"
@@ -4078,7 +4079,7 @@
    "id": 84,
    "title": "Predoctoral Research Associate",
    "institution": "Harvard Business School",
-   "principal_investigator": "Ray Kluender, Zoe Cullen",
+   "principal_investigator": "Zoe Cullen",
    "country": "United States",
    "city": "Boston",
    "is_remote": false,
@@ -4086,12 +4087,12 @@
    "deadline": "2026-10-20T23:59:59Z",
    "days_left": 1,
    "disciplines": [
-    "Business and Management",
+    "Labor Economics",
     "Finance",
-    "Labor Economics"
+    "Behavioral/Experimental Economics"
    ],
    "visa": "unknown",
-   "summary": "Harvard Business School is recruiting Predoctoral Research Associates for a two-year role starting Summer 2027 to support faculty research in units such as Finance, Accounting, and Labor Economics. Candidates gain empirical research experience intended to prepare them for PhD programs, working under supervisors such as Professor Ray Kluender or Professor Zoe Cullen.",
+   "summary": "The position is a Pre-doctoral Research Associate at Harvard Business School beginning Summer 2027, supporting faculty research across multiple units. It seeks candidates with subject-matter expertise and research skills for a two-year assignment.",
    "language": "en",
    "apply_url": "https://bit.ly/3Vn96MG",
    "source_url": "https://bit.ly/3Vn96MG",
