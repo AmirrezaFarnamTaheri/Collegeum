@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-20T04:50:48Z",
+ "generated_at": "2026-10-20T13:43:17Z",
  "count": 150,
  "listings": [
   {
@@ -560,17 +560,19 @@
    "city": "Berlin",
    "is_remote": false,
    "duration_years": 5.0,
-   "deadline": "2027-01-15T00:00:00Z",
+   "deadline": "2027-01-15T23:59:59Z",
    "days_left": 87,
    "disciplines": [
-    "Other"
+    "Applied Microeconomics",
+    "Macroeconomics",
+    "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "The DIW Graduate Center offers a five-year funded PhD program in Economics, providing a monthly stipend of 1,650 euros in the first year and a work contract thereafter, with coursework and research training at DIW Berlin. The position is suited for applicants holding a master's degree in Economics or a related quantitative field, with English proficiency and interest in empirical research.",
+   "summary": "The DIW Graduate Center offers a five-year structured doctoral program in Economics leading to a PhD from a Berlin university, with a first-year stipend of €1,650/month followed by a work contract. Applicants must hold or be completing a master's degree in Economics or a related quantitative field and demonstrate English proficiency.",
    "language": "de",
    "apply_url": "https://www.academics.com/jobs/doctoral-students-for-the-diw-graduate-center-phd-program-in-economics-diw-berlin-deutsches-institut-fuer-wirtschaftsforschung-e-v-berlin-1111897",
    "source_url": "https://www.academics.com/jobs/doctoral-students-for-the-diw-graduate-center-phd-program-in-economics-diw-berlin-deutsches-institut-fuer-wirtschaftsforschung-e-v-berlin-1111897",
-   "confidence": 0.972,
+   "confidence": 0.95,
    "first_seen_at": "2026-10-15T23:07:00Z",
    "deadline_note": null,
    "visa_note": null,
@@ -581,7 +583,7 @@
    "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
-   "salary_raw": "1,650 euros per month (first year)",
+   "salary_raw": "1,650 euros per month in the first year and a work contract in subsequent years",
    "tools_required": [],
    "tools_preferred": [],
    "min_degree": "masters",
@@ -636,8 +638,8 @@
   {
    "id": 216,
    "title": "Post-doctoral Fellow (HKU Stone Centre on Socio-Economic Inequality in Asia)",
-   "institution": "THE UNIVERSITY OF HONG KONG",
-   "principal_investigator": "Professor Tarani Chandola",
+   "institution": "The University of Hong Kong",
+   "principal_investigator": "Professor Tarani Chandola, Professor Uta Schönberg, Professor Ming Wen",
    "country": "Hong Kong",
    "city": "Pok Fu Lam",
    "is_remote": false,
@@ -645,11 +647,12 @@
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 87,
    "disciplines": [
-    "Econometrics",
-    "Business and Management"
+    "Applied Microeconomics",
+    "Political Economy",
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "This is a post-doctoral fellowship position at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia at the University of Hong Kong. The role seeks a PhD-level researcher skilled in labor economics, trade, development, or political economy with expertise in large-scale data analysis and causal inference methods.",
+   "summary": "Post-doctoral Fellow position at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia at the University of Hong Kong. The role seeks a researcher with a PhD in economics or a related field, specializing in labour economics, trade, development, or political economy, with experience in large-scale data analysis and causal inference methods.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
@@ -669,7 +672,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "as soon as possible",
+   "start_term": "As soon as possible",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
