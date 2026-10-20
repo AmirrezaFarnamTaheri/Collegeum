@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-20T13:43:17Z",
- "count": 150,
+ "generated_at": "2026-10-20T19:59:23Z",
+ "count": 149,
  "listings": [
   {
    "id": 242,
@@ -2384,48 +2384,6 @@
    "start_term": "February 2027 or by agreement",
    "start_date": null,
    "kind": "phd",
-   "sector": "academic"
-  },
-  {
-   "id": 138,
-   "title": "Health Economics Lead Research Analyst",
-   "institution": "Brown University",
-   "principal_investigator": null,
-   "country": "United States",
-   "city": "Providence",
-   "is_remote": false,
-   "duration_years": 3.0,
-   "deadline": null,
-   "days_left": null,
-   "disciplines": [
-    "Econometrics",
-    "Labor Economics",
-    "Environmental and Energy Economics"
-   ],
-   "visa": "not_offered",
-   "summary": "The Health Economics Lead Research Analyst at the School of Public Health’s Department of Health Services Policy & Practice joins a vibrant team supporting the activities of the Department and its research centers. The role is involved in health services and economics research to better understand and develop policies that will lower spending growth, improve patient outcomes, and drive structural change in U.S. health care delivery. Core topic areas include payment reform, long term care, the evolving...",
-   "language": "en",
-   "apply_url": "https://brown.wd5.myworkdayjobs.com/staff-careers-brown/job/121-South-Main-Street/Health-Economics-Lead-Research-Analyst_REQ210857",
-   "source_url": "https://brown.wd5.myworkdayjobs.com/staff-careers-brown/job/121-South-Main-Street/Health-Economics-Lead-Research-Analyst_REQ210857",
-   "confidence": 0.924,
-   "first_seen_at": "2026-10-11T10:10:20Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [
-    "https://brown.wd5.myworkdayjobs.com/staff-careers-brown/job/121-South-Main-Street/Health-Economics-Lead-Research-Analyst_REQ210857"
-   ],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "bachelors",
-   "degree_note": "bachelor",
-   "start_term": "2026-08-18",
-   "start_date": "2026-08-18",
-   "kind": "predoc",
    "sector": "academic"
   },
   {
