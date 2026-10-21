@@ -443,8 +443,6 @@ def test_ejm_stops_before_paging_when_every_advert_link_is_a_template():
     """The [nid] state must be detected on page 1, not after 12 pages."""
     import asyncio
 
-    import pytest
-
     from predoc_pipeline.boards.config import SourceConfig
     from predoc_pipeline.boards.scrapers.base import SourceSkipped
     from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
