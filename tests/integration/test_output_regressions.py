@@ -493,15 +493,18 @@ def test_a_page_with_one_real_link_is_not_mistaken_for_a_template_page():
         link_pattern=r"europeanjobmarketofeconomists\.org/job-listing/",
         pagination_param="page",
         pagination_zero_based=True,
-        max_pages=12,
+        max_pages=2,
         skip_unresolved_link_templates=True,
     )
+
+    fetched: list[str] = []
 
     class MixedHttp:
         def set_host_interval(self, *_args):
             pass
 
         async def get_text(self, url: str) -> str:
+            fetched.append(url)
             return (
                 '<a href="/job-listing/role-one/%5Bnid%5D">Postdoctoral Fellow</a>'
                 '<a href="/job-listing/role-two/98765">Research Assistant</a>'
@@ -509,7 +512,11 @@ def test_a_page_with_one_real_link_is_not_mistaken_for_a_template_page():
 
     scraper = LinkScanScraper(source, MixedHttp())
     raw = asyncio.run(scraper.fetch_raw_postings())
-    assert len(raw) == 1
+
+    # Page 1 carries a usable advert link, so the source is not in the
+    # unresolved-template state and pagination must continue to page 2.
+    assert len(fetched) == 2, fetched
+    assert len(raw) == 2
 
 
 def test_a_page_with_no_matching_links_is_not_a_template_page():
@@ -537,7 +544,11 @@ def test_a_page_with_no_matching_links_is_not_a_template_page():
 
     scraper = LinkScanScraper(source, EmptyHttp())
     raw = asyncio.run(scraper.fetch_raw_postings())
-    assert raw == []
+
+    # One page was read and the scan stopped: an empty page is empty, not the
+    # known upstream template state, so the source is not reported as skipped.
+    assert len(raw) == 1
+    assert scraper.discovery_parse_errors == []
 
 
 def test_failed_source_discovery_is_recoverable_from_dlq_without_secret_leak():

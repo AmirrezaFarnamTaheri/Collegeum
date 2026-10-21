@@ -152,6 +152,10 @@ class LinkScanScraper(BaseScraper):
         errors: list[str] = []
         pattern = re.compile(self.opt("link_pattern", r".+"), re.IGNORECASE)
         skip_templates = bool(self.opt("skip_unresolved_link_templates", False))
+        # Advert links found so far that carry a real, unique identity. Only
+        # when nothing usable has been found at all may the source be
+        # declared an unresolved-template state.
+        usable_links = 0
         for base_url in self.urls():
             for page in range(1, max_pages + 1):
                 page_url = self._format_page_url(base_url, param, page)
@@ -166,14 +170,19 @@ class LinkScanScraper(BaseScraper):
                     self.discovery_fetch_errors.append(f"{type(exc).__name__} at page {page}")
                     log.warning("%s: page %d (%s) failed: %s", self.name, page, page_url, exc)
                     break
-                if skip_templates and self._page_is_all_templates(page_url, html, pattern):
-                    # Every advert link on this page is an unresolved template
-                    # (EJME emits ".../[nid]"). There is no vacancy to fetch and
-                    # no unique identity to publish, so stop before paging:
-                    # the remaining pages would be the same template links.
-                    self.discovery_parse_errors.clear()
-                    self.discovery_limits.clear()
-                    raise SourceSkipped("upstream advert links have unresolved IDs")
+                if skip_templates:
+                    matched, usable = self._link_template_state(page_url, html, pattern)
+                    if matched and not usable and not usable_links:
+                        # Every advert link on this page is an unresolved
+                        # template (EJME emits ".../[nid]") and nothing usable
+                        # has been seen anywhere on this source. There is no
+                        # vacancy to fetch and no unique identity to publish,
+                        # so stop before paging: the remaining pages would be
+                        # the same template links.
+                        self.discovery_parse_errors.clear()
+                        self.discovery_limits.clear()
+                        raise SourceSkipped("upstream advert links have unresolved IDs")
+                    usable_links += usable
                 out.append((page_url, html))
                 soup = BeautifulSoup(html, "lxml")
                 matching = [
@@ -193,11 +202,14 @@ class LinkScanScraper(BaseScraper):
             raise RuntimeError("; ".join(errors)[:500])
         return out
 
-    def _page_is_all_templates(self, page_url: str, html: str, pattern: re.Pattern[str]) -> bool:
-        """True when every matching link on the page is an unresolved template.
+    def _link_template_state(
+        self, page_url: str, html: str, pattern: re.Pattern[str]
+    ) -> tuple[int, int]:
+        """(matching links, matching links that are not unresolved templates).
 
-        Requires at least one matching link, so an empty page is never
-        mistaken for a template page.
+        A page with no matching link at all is not a template page: an empty
+        page is simply empty, and it must not be reported as the known
+        upstream template state.
         """
         soup = BeautifulSoup(html, "lxml")
         matched = [
@@ -206,8 +218,12 @@ class LinkScanScraper(BaseScraper):
             if pattern.search(absolutize(page_url, str(a["href"])))
         ]
         if not matched:
-            return False
-        return all(application_url_issue(href) == "unresolved-url-template" for href in matched)
+            return 0, 0
+        usable = sum(
+            1 for href in matched
+            if application_url_issue(href) != "unresolved-url-template"
+        )
+        return len(matched), usable
 
     def _format_page_url(self, base_url: str, param: str | None, page: int) -> str:
         if "{page}" in base_url:
