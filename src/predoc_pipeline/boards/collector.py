@@ -216,6 +216,31 @@ def to_raw_item(post: JobPostSchema, verdict: Verdict, *, detail: str = "",
     )
 
 
+def _is_duplicate_in_run(
+    candidates: dict[str, tuple[SourceResult, JobPostSchema, Verdict]],
+    by_url: dict[str, str],
+    post: JobPostSchema,
+    verdict: Verdict,
+) -> bool:
+    """True when `post` duplicates a posting already kept in this run.
+
+    ``by_url`` can outlive its candidate: a duplicate URL under a second job id
+    removes the earlier candidate, while ``by_url`` keeps a stale id under
+    another URL key. Indexing ``candidates`` blindly then raises KeyError and
+    fails the whole board, so the lookup is defensive.
+    """
+    other_id = by_url.get(post.url)
+    if not other_id or other_id == post.job_id:
+        return False
+    prior = candidates.get(other_id)
+    if prior is None:
+        return False
+    if verdict.score <= prior[2].score:
+        return True
+    del candidates[other_id]
+    return False
+
+
 async def _collect(
     sources: list[SourceConfig],
     prefs: Preferences,
@@ -254,12 +279,9 @@ async def _collect(
                 out.reject(why)
                 continue
             res.n_relevant += 1
-            other_id = by_url.get(post.url)
-            if other_id and other_id != post.job_id:
-                if verdict.score <= candidates[other_id][2].score:
-                    out.reject("duplicate-in-run")
-                    continue
-                del candidates[other_id]
+            if _is_duplicate_in_run(candidates, by_url, post, verdict):
+                out.reject("duplicate-in-run")
+                continue
             by_url[post.url] = post.job_id
             prev = candidates.get(post.job_id)
             if not prev or verdict.score > prev[2].score:

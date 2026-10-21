@@ -11,10 +11,42 @@ by editing one variable rather than shipping code.
 
 from __future__ import annotations
 
+import json
 import re
+from typing import Any
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+#: A list of API keys may arrive as `a,b`, `a;b`, `a b`, a JSON list, or an
+#: actual list. pydantic-settings JSON-decodes complex settings, so a plain
+#: `OPENROUTER_API_KEYS=key1,key2` would raise a settings error while the
+#: object is being built -- the whole CLI would refuse to start. The field is
+#: therefore kept as a plain string and split here.
+#:
+#: Only API keys are handled this way. A search query or any other
+#: comma-bearing string must keep JSON decoding, or a query containing a
+#: comma would be split into two broken queries.
+_KEY_SPLIT = re.compile(r"[,;\s]+")
+
+
+def _split_keys(value: Any) -> Any:
+    """Normalise a key list (string, JSON list or list) to one comma-joined string."""
+    if isinstance(value, (list, tuple)):
+        return ",".join(str(part) for part in value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return ""
+        if text.startswith("["):
+            try:
+                parsed = json.loads(text)
+            except ValueError:
+                return text
+            if isinstance(parsed, list):
+                return ",".join(str(part) for part in parsed)
+        return text
+    return value
 
 
 class Settings(BaseSettings):
@@ -78,7 +110,10 @@ class Settings(BaseSettings):
     anthropic_base_url: str = "https://api.anthropic.com"
 
     openrouter_api_key: str = ""
-    openrouter_api_keys: list[str] = Field(default_factory=list)
+    openrouter_api_keys: str = Field(
+        default="",
+        description="Additional OpenRouter keys; comma, semicolon or space separated.",
+    )
     openrouter_model: str = "openrouter/free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
@@ -238,6 +273,11 @@ class Settings(BaseSettings):
             raise ValueError(f"extraction_backend must be one of {sorted(allowed)}")
         return value
 
+    @field_validator("openrouter_api_keys", mode="before")
+    @classmethod
+    def _normalise_openrouter_keys(cls, value: Any) -> Any:
+        return _split_keys(value)
+
     @property
     def telegram_configured(self) -> bool:
         return bool(self.telegram_bot_token and self.telegram_public_channel_id)
@@ -288,11 +328,10 @@ class Settings(BaseSettings):
         return admin
 
     def get_openrouter_keys(self) -> list[str]:
+        """Every configured OpenRouter key, in order, without duplicates."""
         keys: list[str] = []
-        if self.openrouter_api_keys:
-            keys.extend(self.openrouter_api_keys)
-        if self.openrouter_api_key:
-            for part in re.split(r"[,;\s]+", self.openrouter_api_key.strip()):
+        for source in (self.openrouter_api_keys, self.openrouter_api_key):
+            for part in _KEY_SPLIT.split((source or "").strip()):
                 if part and part not in keys:
                     keys.append(part)
         return keys

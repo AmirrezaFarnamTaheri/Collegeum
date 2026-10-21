@@ -95,6 +95,14 @@ def collect_feeds(
         stat = SourceStats(source.name)
         result = client.get(source.url)
         stat.fetched = 1
+        if result.robots_blocked:
+            # A robots.txt refusal is a policy block, not an unchanged source.
+            # Reporting it as "unchanged" hid blocked sources from the failure
+            # streak and from the maintainer alert.
+            stat.errors = 1
+            stat.messages.append(result.error or "blocked by robots.txt")
+            stats.append(stat)
+            continue
         if result.skipped:
             stat.unchanged = 1
             stats.append(stat)
@@ -378,6 +386,14 @@ def collect_portals(
         cap = source.max_items or max_items
         result = client.get(source.url)
         stat.fetched = 1
+        if result.robots_blocked:
+            # A robots.txt refusal is a policy block, not an unchanged source.
+            # Reporting it as "unchanged" hid blocked sources from the failure
+            # streak and from the maintainer alert.
+            stat.errors = 1
+            stat.messages.append(result.error or "blocked by robots.txt")
+            stats.append(stat)
+            continue
         if result.skipped:
             stat.unchanged = 1
             stats.append(stat)
@@ -404,6 +420,10 @@ def collect_portals(
             ):
                 detail = client.get(link)
                 stat.fetched += 1
+                if detail.robots_blocked:
+                    stat.errors += 1
+                    stat.messages.append(detail.error or "blocked by robots.txt")
+                    continue
                 if detail.skipped:
                     stat.unchanged += 1
                     continue

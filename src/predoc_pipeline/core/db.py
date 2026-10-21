@@ -507,6 +507,12 @@ class Database:
 
         The caller must establish that the new evidence describes the same
         vacancy. Reopening and cohort changes require separate lifecycle actions.
+
+        ``values`` may contain an explicit ``None`` for a fact that was
+        previously observed wrongly (a year parsed as a salary, a deadline
+        that has since been withdrawn). Such a key clears the stored value
+        instead of being ignored, so a corrected extraction actually
+        replaces the old one. Keys that are absent are left untouched.
         """
         allowed = {
             "title", "institution", "principal_investigator", "country", "city",
@@ -526,6 +532,33 @@ class Database:
             result = self.conn.execute(
                 f"UPDATE listings SET {','.join(assignments)} WHERE id=?",
                 (*[values[column] for column in columns], now(), listing_id),
+            )
+            if result.rowcount != 1:
+                raise ValueError(f"listing {listing_id} does not exist")
+
+    def clear_listing_facts(self, listing_id: int, columns: Sequence[str]) -> None:
+        """Reset named fact columns to NULL for a listing.
+
+        Used when a later, better extraction proves a previously stored value
+        was a parse artefact (a year read as a salary, a stale deadline). The
+        journal is the durable record, so a wrong value must be correctable;
+        dropping the key from a refresh would leave it wrong forever.
+        """
+        allowed = {
+            "deadline", "deadline_note", "salary_min", "salary_max", "salary_currency",
+            "salary_period", "salary_raw", "duration_years", "start_term", "start_date",
+            "tools_required", "tools_preferred",
+        }
+        invalid = set(columns) - allowed
+        if invalid:
+            raise ValueError(f"not clearable fact columns: {', '.join(sorted(invalid))}")
+        if not columns:
+            return
+        assignments = ", ".join(f"{column}=NULL" for column in sorted(columns))
+        with self.transaction():
+            result = self.conn.execute(
+                f"UPDATE listings SET {assignments}, last_seen_at=? WHERE id=?",
+                (now(), listing_id),
             )
             if result.rowcount != 1:
                 raise ValueError(f"listing {listing_id} does not exist")
@@ -955,7 +988,18 @@ class Database:
             "published": int(
                 q("SELECT COUNT(*) FROM listings WHERE status='published'").fetchone()[0]
             ),
-            "pending": int(q("SELECT COUNT(*) FROM listings WHERE status='pending'").fetchone()[0]),
+            # "pending" here means *retryable*: a row that was inserted but
+            # never delivered AND is not closed or expired. A pending row that
+            # was later closed (dead link, "position filled") is not a
+            # backlog item, and counting it as one overstates the queue.
+            "pending": int(q(
+                "SELECT COUNT(*) FROM listings WHERE status='pending' "
+                "AND closed_at IS NULL AND expired_at IS NULL"
+            ).fetchone()[0]),
+            "pending_closed": int(q(
+                "SELECT COUNT(*) FROM listings WHERE status='pending' "
+                "AND (closed_at IS NOT NULL OR expired_at IS NOT NULL)"
+            ).fetchone()[0]),
             "expired": int(
                 q("SELECT COUNT(*) FROM listings WHERE expired_at IS NOT NULL").fetchone()[0]
             ),

@@ -413,6 +413,44 @@ class TestTimeParse(unittest.TestCase):
         self.assertIsNone(parse_datetime("rolling basis"))
         self.assertIsNone(parse_datetime(None))
 
+    def test_label_prefixed_deadline_is_parsed(self):
+        # A model that echoes the advert's own wording returns the label with
+        # the date. The label hid a perfectly good deadline from the parser.
+        for value in ("Deadline: 15 March 2027", "Deadline: 15 March 2027, 17:00",
+                      "Closing date: 15 March 2027", "Application deadline: 15 March 2027",
+                      "Apply by 15 March 2027", "Deadline for applications: 15 March 2027"):
+            with self.subTest(value=value):
+                parsed = parse_datetime(value)
+                self.assertIsNotNone(parsed, value)
+                assert parsed is not None
+                self.assertEqual((parsed.year, parsed.month, parsed.day), (2027, 3, 15))
+                self.assertEqual(parsed.tzinfo, UTC)
+
+    def test_label_prefixed_iso_follows_the_same_strict_rules(self):
+        # Stripping the label must not weaken the ISO validation.
+        self.assertIsNone(parse_datetime("Deadline: 2026-10-15junk"))
+        self.assertIsNone(parse_datetime("Deadline: 2026-10-15T99:00:00Z"))
+        self.assertIsNone(parse_datetime("Deadline: 2026-02-30"))
+        self.assertIsNone(parse_datetime("Deadline: 0001-01-01T00:00:00+14:00"))
+        self.assertIsNone(parse_datetime("Deadline: 9999-12-31T23:59:59-12:00"))
+
+    def test_label_only_and_unknown_labels_stay_none(self):
+        self.assertIsNone(parse_datetime("Deadline:"))
+        self.assertIsNone(parse_datetime("Salary: 15 March 2027"))
+
+    def test_trailing_garbage_is_not_manufactured_into_a_date(self):
+        self.assertIsNone(parse_datetime("2026-10-15junk"))
+        self.assertIsNone(parse_datetime("2026-10-15T99:00:00Z"))
+        self.assertIsNone(parse_datetime("2026-02-30"))
+        self.assertIsNone(parse_datetime("0001-01-01T00:00:00+14:00"))
+        self.assertIsNone(parse_datetime("9999-12-31T23:59:59-12:00"))
+
+    def test_day_first_numeric_order_is_kept(self):
+        parsed = parse_datetime("01-03-2060")
+        self.assertIsNotNone(parsed)
+        assert parsed is not None
+        self.assertEqual((parsed.year, parsed.month, parsed.day), (2060, 3, 1))
+
     def test_days_between_mixed_awareness_does_not_raise(self):
         naive = datetime(2027, 3, 1)
         aware = datetime(2027, 3, 15, tzinfo=UTC)

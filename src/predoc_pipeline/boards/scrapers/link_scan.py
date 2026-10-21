@@ -151,6 +151,7 @@ class LinkScanScraper(BaseScraper):
         out: list[tuple[str, str]] = []
         errors: list[str] = []
         pattern = re.compile(self.opt("link_pattern", r".+"), re.IGNORECASE)
+        skip_templates = bool(self.opt("skip_unresolved_link_templates", False))
         for base_url in self.urls():
             for page in range(1, max_pages + 1):
                 page_url = self._format_page_url(base_url, param, page)
@@ -165,6 +166,14 @@ class LinkScanScraper(BaseScraper):
                     self.discovery_fetch_errors.append(f"{type(exc).__name__} at page {page}")
                     log.warning("%s: page %d (%s) failed: %s", self.name, page, page_url, exc)
                     break
+                if skip_templates and self._page_is_all_templates(page_url, html, pattern):
+                    # Every advert link on this page is an unresolved template
+                    # (EJME emits ".../[nid]"). There is no vacancy to fetch and
+                    # no unique identity to publish, so stop before paging:
+                    # the remaining pages would be the same template links.
+                    self.discovery_parse_errors.clear()
+                    self.discovery_limits.clear()
+                    raise SourceSkipped("upstream advert links have unresolved IDs")
                 out.append((page_url, html))
                 soup = BeautifulSoup(html, "lxml")
                 matching = [
@@ -183,6 +192,22 @@ class LinkScanScraper(BaseScraper):
         if errors and not out:
             raise RuntimeError("; ".join(errors)[:500])
         return out
+
+    def _page_is_all_templates(self, page_url: str, html: str, pattern: re.Pattern[str]) -> bool:
+        """True when every matching link on the page is an unresolved template.
+
+        Requires at least one matching link, so an empty page is never
+        mistaken for a template page.
+        """
+        soup = BeautifulSoup(html, "lxml")
+        matched = [
+            absolutize(page_url, str(a["href"]))
+            for a in soup.find_all("a", href=True)
+            if pattern.search(absolutize(page_url, str(a["href"])))
+        ]
+        if not matched:
+            return False
+        return all(application_url_issue(href) == "unresolved-url-template" for href in matched)
 
     def _format_page_url(self, base_url: str, param: str | None, page: int) -> str:
         if "{page}" in base_url:

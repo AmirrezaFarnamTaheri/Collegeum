@@ -38,6 +38,7 @@ import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
+from html import escape as escape_attribute
 from pathlib import Path
 from typing import Any, cast
 
@@ -314,6 +315,92 @@ def _dedupe_institution(listing: PredocListing, item: RawItem) -> str:
     return listing.institution
 
 
+#: A stored salary that the corrected parser can no longer produce is a bare
+#: calendar year read as an amount, or a value outside a plausible range.
+#: A bare year is only plausible-looking when the advert's own salary text
+#: contains that number as a standalone four-digit year: "£2,000 per month"
+#: must not be mistaken for a year, so the token check is what decides.
+_YEAR_TOKEN = re.compile(r"(?<!\d)(19\d{2}|20\d{2})(?!\d)")
+_PERIOD_AFTER_NUMBER = re.compile(
+    r"\s*(?:per|a\s+|/)\s*(?:month|monthly|year|annum|annually|hour|hourly|day|daily|week|weekly)\b",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_year(value: object, raw: str) -> bool:
+    """True when `value` is a calendar year that the salary text mentions."""
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    number = int(float(value))
+    if not 1900 <= number <= 2100 or float(value) != number:
+        return False
+    if not raw:
+        return False
+    for match in _YEAR_TOKEN.finditer(raw):
+        if int(match.group(1)) != number:
+            continue
+        # "2000 per month" is an amount, not a year, whatever it looks like.
+        if _PERIOD_AFTER_NUMBER.match(raw, match.end()):
+            continue
+        return True
+    return False
+
+
+def _implausible_salary(value: object, raw: str) -> bool:
+    """True when a stored salary bound cannot be a real amount."""
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    number = float(value)
+    if number < 0 or number > 2_000_000:
+        return True
+    return _looks_like_year(value, raw)
+
+
+def _clear_stale_salary(
+    db: Database,
+    listing_id: int,
+    stored: Any,
+    listing: PredocListing,
+    facts: dict[str, Any],
+) -> None:
+    """Erase a stored salary that the corrected parser would never produce.
+
+    The refresh path drops ``None`` values on purpose, so a fixed parser
+    cannot overwrite a value it has since learned is wrong. This restores that
+    ability: when the advert still quotes a salary but the stored bounds look
+    like a year or an out-of-range number, the stored bounds are cleared so
+    the corrected value (or the absence of one) is what the journal records.
+    """
+    raw = str(stored["salary_raw"] or listing.salary_raw or "")
+    # Only a bound that is still wrong may be cleared: a bound the new
+    # extraction replaced with a real amount is corrected by the refresh
+    # itself, and a bound that was always plausible must survive.
+    stale: list[str] = []
+    for column, fresh in (("salary_min", listing.salary_min),
+                           ("salary_max", listing.salary_max)):
+        if fresh is not None:
+            continue
+        if _implausible_salary(stored[column], raw):
+            stale.append(column)
+    if not stale:
+        return
+    if not raw:
+        # Without the advert's own words there is no evidence that the stored
+        # number is a misparse. A transient parse failure must not erase a
+        # salary that may well be correct.
+        return
+    columns = stale + ["salary_currency", "salary_period"]
+    # A currency or period the new extraction *did* observe is evidence, not
+    # an artefact: it must survive the refresh.
+    for column in ("salary_currency", "salary_period"):
+        if facts.get(column) is not None:
+            columns.remove(column)
+    db.clear_listing_facts(listing_id, columns)
+    for column in columns:
+        facts.pop(column, None)
+    log.info("stale_salary_cleared", listing_id=listing_id, columns=columns)
+
+
 def _pre_extract(
     item: RawItem,
     *,
@@ -585,6 +672,13 @@ def _post_extract(
             # Partial extraction must not erase previously observed nullable facts.
             facts = {key: value for key, value in facts.items()
                      if value not in (None, "", "[]", "unknown")}
+            # ...but a *corrected* extraction must be able to replace a value
+            # that was previously wrong. When the new evidence carries a
+            # salary but the stored row has a number, the stored number is a
+            # parse artefact (a year read as an amount) and must be cleared.
+            # Otherwise the fixed parser returns None, None is dropped as
+            # "not observed", and the wrong number survives forever.
+            _clear_stale_salary(db, int(existing["id"]), existing, listing, facts)
             db.refresh_listing_facts(int(existing["id"]), facts)
             stats.refreshed += 1
         db.add_alternate_source(int(existing["id"]), listing.source_url)
@@ -1019,7 +1113,10 @@ def _broadcast(
                     raise
                 # Telegram refuses the whole message when one button URL is
                 # malformed; the link is also in the text, so send it without.
-                link = escape_telegram_html(listing.apply_url)
+                # The URL goes in an HTML attribute, so it must be escaped
+                # for attribute context (quotes included) -- not merely for
+                # text context. escape_telegram_html leaves quotes intact.
+                link = escape_attribute(listing.apply_url, quote=True)
                 message_id = telegram.send_message(
                     chat_id=settings.telegram_public_channel_id,
                     html=render_card(listing) + f'\n\n<a href="{link}">Open the advert</a>',
@@ -1764,4 +1861,9 @@ def _maybe_alert(
         messages.append("Stopped early: model request budget exhausted.")
 
     for message in messages:
-        notify_admin(settings, message)
+        if not notify_admin(settings, message):
+            # An alert that could not be delivered is a failed run, not a
+            # quiet one. Recording it as an error keeps the run outcome
+            # honest: the pipeline published nothing AND nobody was told.
+            stats.errors += 1
+            log.error("alert_not_delivered", message=message)

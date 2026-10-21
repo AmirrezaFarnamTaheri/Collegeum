@@ -484,9 +484,17 @@ def eval(
     """Score the deterministic gate against a labelled fixture set.
 
     Each fixture line is ``{"text": ..., "title": ..., "expect_pass": bool}``.
+    A fixture may also declare ``"known_vacancy": true`` (plus optional
+    ``"allow_phd"`` / ``"allow_postdoc"``) to be scored on the job-board path,
+    which is how every board posting is evaluated in production. Without that
+    key a fixture is scored on the strict feed/web path.
+
     Reports precision and recall for the gate alone -- the cheap, always-on
     layer -- so a change to the lexicon or the reject patterns has a number
-    attached to it rather than a vibe.
+    attached to it rather than a vibe. The summary names the paths that were
+    actually measured: the board path awards an unconditional role-term and
+    hiring-intent score floor, so a fixture set that never exercises it cannot
+    be quoted as a score for it.
     """
     import json as _json
 
@@ -498,12 +506,33 @@ def eval(
         raise typer.Exit(1)
 
     tp = fp = tn = fn = 0
+    paths: dict[str, int] = {}
+    settings_used: dict[tuple[str, bool, bool], int] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
         record = _json.loads(line)
-        result = gating.evaluate(record["text"], title=record.get("title", ""))
+        known_vacancy = bool(record.get("known_vacancy", False))
+        path_name = "board" if known_vacancy else "strict"
+        paths[path_name] = paths.get(path_name, 0) + 1
+        # Production evaluates board items with allow_postdoc=True and
+        # allow_phd=True (the shipped preferences set exclude_phd_positions =
+        # false, so pipeline.py derives allow_phd=True from them), so the
+        # board path defaults to that configuration. The strict path keeps the
+        # reject-PhD/postdoc baseline the fixture set was written against; a
+        # fixture can override either flag.
+        allow_phd = bool(record.get("allow_phd", known_vacancy))
+        allow_postdoc = bool(record.get("allow_postdoc", known_vacancy))
+        key = (path_name, allow_phd, allow_postdoc)
+        settings_used[key] = settings_used.get(key, 0) + 1
+        result = gating.evaluate(
+            record["text"],
+            title=record.get("title", ""),
+            known_vacancy=known_vacancy,
+            allow_phd=allow_phd,
+            allow_postdoc=allow_postdoc,
+        )
         expected = bool(record["expect_pass"])
         if expected and result.passed:
             tp += 1
@@ -523,6 +552,19 @@ def eval(
         f"\nn={total} tp={tp} fp={fp} tn={tn} fn={fn} "
         f"precision={precision:.3f} recall={recall:.3f}"
     )
+    measured = ", ".join(f"{name}={count}" for name, count in sorted(paths.items()))
+    typer.echo(f"paths measured: {measured or 'none'}")
+    for (path_name, allow_phd, allow_postdoc), count in sorted(settings_used.items()):
+        typer.echo(
+            f"  {path_name}: allow_phd={allow_phd} allow_postdoc={allow_postdoc} "
+            f"({count} fixture(s))"
+        )
+    if "board" not in paths:
+        typer.secho(
+            "no board-path fixtures: the job-board gate (known_vacancy) was NOT measured, "
+            "so these numbers do not describe board postings.",
+            fg=typer.colors.YELLOW,
+        )
 
 
 @app.command("telegram-sync")
