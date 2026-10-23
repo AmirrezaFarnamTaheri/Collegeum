@@ -187,4 +187,3 @@ sources (blocked to runner IPs), two HTTP 418 sources, Workday JSON parse
 failures, and the placeholder-producing `board:european_job_market` path, whose
 links end in an unresolved `[nid]` template. That source is skipped rather than
 published, and the skip is retried on a later run.
-
