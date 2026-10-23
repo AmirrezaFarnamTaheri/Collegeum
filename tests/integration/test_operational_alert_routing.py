@@ -75,7 +75,7 @@ def test_disabled_operational_alerts_do_not_fail_a_run(monkeypatch):
         def source_failure_streaks(self):
             return {}
 
-    settings = configured(empty_run_alert_threshold=0)
+    settings = configured(empty_run_alert_threshold=1)
     stats = RunStats()
     monkeypatch.setattr("predoc_pipeline.alerts.notify_admin", lambda *_: False)
 
@@ -97,7 +97,7 @@ def test_enabled_but_undelivered_operational_alert_fails_a_run(monkeypatch):
     settings = configured(
         telegram_operational_alerts_enabled=True,
         telegram_admin_chat_id="99999",
-        empty_run_alert_threshold=0,
+        empty_run_alert_threshold=1,
     )
     stats = RunStats()
     monkeypatch.setattr("predoc_pipeline.alerts.notify_admin", lambda *_: False)
