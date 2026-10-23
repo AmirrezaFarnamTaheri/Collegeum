@@ -161,6 +161,7 @@ def settings(tmp_path, monkeypatch):
         telegram_state_path=str(tmp_path / "data" / "telegram_state.json"),
         dashboard_json=str(tmp_path / "docs" / "data" / "listings.json"),
         health_json=str(tmp_path / "docs" / "data" / "health.json"),
+        career_health_path=str(tmp_path / "data" / "career_health.json"),
         feed_path=str(tmp_path / "docs" / "feed.xml"),
         dlq_path=str(tmp_path / "dlq.json"),
         enable_feeds=False,

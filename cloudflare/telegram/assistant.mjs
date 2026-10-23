@@ -4,6 +4,31 @@ export const refusal = 'Ask about the listed research vacancies: locations, dead
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'})[c]);
 
+export function openrouterKeys(env) {
+  let additional = env.OPENROUTER_API_KEYS ?? '';
+  if (typeof additional === 'string') {
+    additional = additional.trim();
+    if (additional.startsWith('[')) {
+      try { additional = JSON.parse(additional); }
+      catch { throw new Error('OpenRouter API keys must be a valid JSON array'); }
+    }
+  }
+  if (Array.isArray(additional)) {
+    if (additional.some(key => typeof key !== 'string')) {
+      throw new Error('OpenRouter API key arrays must contain only strings');
+    }
+    additional = additional.join(',');
+  }
+  const primary = env.OPENROUTER_API_KEY ?? '';
+  if (typeof additional !== 'string' || typeof primary !== 'string') {
+    throw new Error('OpenRouter API keys must be strings');
+  }
+  // Match Python Settings: plural keys first, then the singular setting,
+  // retaining the first occurrence of each credential.
+  return [...new Set([additional, primary].flatMap(value =>
+    value.split(/[,;\s]+/).filter(Boolean)))];
+}
+
 export function validateQuery(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('invalid query');
   const properties = protocol.tool.function.parameters.properties;
@@ -98,7 +123,9 @@ export async function ask(instance, question, userId, owner, admitted = false, u
   if(prepared?.ai_result)return prepared.ai_result;
   if (!question.trim()) return '📚 Try /ask Which economics roles close this month?';
   if (question.length > 1000) return 'Please keep your database question under 1,000 characters.';
-  const keys = [...new Set([instance.env.OPENROUTER_API_KEY, instance.env.OPENROUTER_API_KEYS].filter(Boolean).join(',').split(/[,;\s]+/).filter(Boolean))];
+  let keys;
+  try { keys = openrouterKeys(instance.env); }
+  catch { return 'Vacancy questions are temporarily unavailable. Please try again later.'; }
   if (!keys.length) return 'Database chat is not configured yet. OpenRouter must be connected.';
   const storage = instance.ctx.storage;
   const now = Date.now();

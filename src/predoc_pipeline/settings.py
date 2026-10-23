@@ -32,20 +32,21 @@ _KEY_SPLIT = re.compile(r"[,;\s]+")
 
 def _split_keys(value: Any) -> Any:
     """Normalise a key list (string, JSON list or list) to one comma-joined string."""
-    if isinstance(value, (list, tuple)):
-        return ",".join(str(part) for part in value)
     if isinstance(value, str):
         text = value.strip()
         if not text:
             return ""
         if text.startswith("["):
             try:
-                parsed = json.loads(text)
-            except ValueError:
-                return text
-            if isinstance(parsed, list):
-                return ",".join(str(part) for part in parsed)
-        return text
+                value = json.loads(text)
+            except ValueError as exc:
+                raise ValueError("OpenRouter API keys must be a valid JSON array") from exc
+        else:
+            return text
+    if isinstance(value, (list, tuple)):
+        if any(not isinstance(part, str) for part in value):
+            raise ValueError("OpenRouter API key arrays must contain only strings")
+        return ",".join(value)
     return value
 
 

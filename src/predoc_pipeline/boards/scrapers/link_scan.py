@@ -156,6 +156,7 @@ class LinkScanScraper(BaseScraper):
         # when nothing usable has been found at all may the source be
         # declared an unresolved-template state.
         usable_links = 0
+        template_page_seen = False
         for base_url in self.urls():
             for page in range(1, max_pages + 1):
                 page_url = self._format_page_url(base_url, param, page)
@@ -170,20 +171,16 @@ class LinkScanScraper(BaseScraper):
                     self.discovery_fetch_errors.append(f"{type(exc).__name__} at page {page}")
                     log.warning("%s: page %d (%s) failed: %s", self.name, page, page_url, exc)
                     break
+                out.append((page_url, html))
                 if skip_templates:
                     matched, usable = self._link_template_state(page_url, html, pattern)
                     if matched and not usable and not usable_links:
-                        # Every advert link on this page is an unresolved
-                        # template (EJME emits ".../[nid]") and nothing usable
-                        # has been seen anywhere on this source. There is no
-                        # vacancy to fetch and no unique identity to publish,
-                        # so stop before paging: the remaining pages would be
-                        # the same template links.
-                        self.discovery_parse_errors.clear()
-                        self.discovery_limits.clear()
-                        raise SourceSkipped("upstream advert links have unresolved IDs")
+                        # Stop this endpoint's template-only pagination, but
+                        # still inspect other configured URLs. A later URL may
+                        # have real vacancies or expose a fetch failure.
+                        template_page_seen = True
+                        break
                     usable_links += usable
-                out.append((page_url, html))
                 soup = BeautifulSoup(html, "lxml")
                 matching = [
                     a["href"]
@@ -200,6 +197,8 @@ class LinkScanScraper(BaseScraper):
                     )
         if errors and not out:
             raise RuntimeError("; ".join(errors)[:500])
+        if template_page_seen and not usable_links and not self.discovery_fetch_errors:
+            raise SourceSkipped("upstream advert links have unresolved IDs")
         return out
 
     def _link_template_state(
@@ -252,6 +251,7 @@ class LinkScanScraper(BaseScraper):
         if (
             not posts
             and self.opt("skip_unresolved_link_templates", False)
+            and not self.discovery_fetch_errors
             and self.discovery_parse_errors
             and all("Unresolved application URL" in reason
                     for reason in self.discovery_parse_errors)
@@ -296,11 +296,7 @@ class LinkScanScraper(BaseScraper):
             href = absolutize(base, str(a["href"]))
             if not pattern.search(href) or href in seen or _EXCLUDED_URL_RX.search(href):
                 continue
-            if application_url_issue(href):
-                # A literal %5Bnid%5D is a template, not a unique vacancy.
-                # Surface parser degradation without leaking untrusted URLs.
-                if not self.discovery_parse_errors:
-                    self.discovery_parse_errors.append("Unresolved application URL in listing")
+            if not self._valid_application_url(href):
                 continue
             title = clean_ws(a.get_text(" "))
             if self.opt("prefer_card_heading"):
@@ -341,6 +337,20 @@ class LinkScanScraper(BaseScraper):
             seen.add(href)
             posts.append(self._post_from_card(href, title, find_card(a)))
         return posts
+
+    def _valid_application_url(self, href: str) -> bool:
+        issue = application_url_issue(href)
+        if issue is None:
+            return True
+        # Only an unresolved template qualifies for the known upstream skip.
+        # Keep other failure categories without retaining untrusted URLs.
+        reason = (
+            "Unresolved application URL in listing" if issue == "unresolved-url-template"
+            else f"Invalid application URL in listing: {issue}"
+        )
+        if reason not in self.discovery_parse_errors:
+            self.discovery_parse_errors.append(reason)
+        return False
 
     def _post_from_card(self, href: str, title: str, card: Tag) -> JobPostSchema:
         lines = card_lines(card)
@@ -383,9 +393,7 @@ class LinkScanScraper(BaseScraper):
             link_el = item.select_one(sel.get("link", "a[href]"))
             if not link_el or not link_el.get("href"):
                 continue
-            if application_url_issue(absolutize(base, str(link_el["href"]))):
-                if not self.discovery_parse_errors:
-                    self.discovery_parse_errors.append("Unresolved application URL in listing")
+            if not self._valid_application_url(absolutize(base, str(link_el["href"]))):
                 continue
             title = pick(item, "title") or clean_ws(link_el.get_text(" "))
             if not title:

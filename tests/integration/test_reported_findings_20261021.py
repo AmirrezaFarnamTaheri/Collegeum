@@ -33,6 +33,7 @@ from __future__ import annotations
 import calendar
 import json
 import logging
+import os
 import time
 import tomllib
 from datetime import UTC, date, datetime
@@ -129,33 +130,53 @@ def _entry_with_date(stamp: time.struct_time) -> dict:
     return {"published_parsed": stamp}
 
 
-def test_rss_entry_date_is_read_as_utc_not_local_time():
-    """feedparser normalises `*_parsed` to UTC; mktime() would shift the day."""
+@pytest.fixture
+def non_utc_runner():
+    if not hasattr(time, "tzset"):
+        pytest.skip("time.tzset is not available on this platform")
+    previous = os.environ.get("TZ")
+    try:
+        # A POSIX TZ rule avoids depending on the host's zoneinfo database.
+        # Feedparser sets tm_isdst=0 for UTC; interpreting that as local
+        # standard time during DST can move a late-night date to tomorrow.
+        os.environ["TZ"] = "EST5EDT,M3.2.0,M11.1.0"
+        time.tzset()
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = previous
+        time.tzset()
+
+
+def test_rss_entry_date_is_read_as_utc_not_local_time(non_utc_runner):
+    """A feedparser UTC tuple must not be interpreted with the local DST rule."""
     from predoc_pipeline.boards.scrapers.rss import _entry_date
 
-    # 2026-10-20 23:30 UTC. On a UTC+3:30 runner this is already the 21st
-    # locally; read as local time the date would come out one day early.
-    stamp = time.struct_time((2026, 10, 20, 23, 30, 0, 0, 1, -1))
+    stamp = time.struct_time((2026, 10, 20, 23, 30, 0, 1, 293, 0))
+    assert date.fromtimestamp(time.mktime(stamp)) == date(2026, 10, 21)
     assert _entry_date(_entry_with_date(stamp)) == date(2026, 10, 20)
 
 
-def test_rss_entry_date_agrees_with_calendar_timegm():
+def test_rss_entry_date_agrees_with_calendar_timegm(non_utc_runner):
     """The date must be the UTC calendar day, not the runner's local day."""
     from predoc_pipeline.boards.scrapers.rss import _entry_date
 
-    stamp = time.struct_time((2026, 1, 1, 0, 30, 0, 0, 1, -1))
+    stamp = time.struct_time((2026, 7, 1, 23, 30, 0, 2, 182, 0))
     expected = datetime.fromtimestamp(calendar.timegm(stamp), tz=UTC).date()
+    assert date.fromtimestamp(time.mktime(stamp)) != expected
     assert _entry_date(_entry_with_date(stamp)) == expected
 
 
-def test_rss_entry_date_does_not_follow_the_runner_timezone():
+def test_rss_entry_date_does_not_follow_the_runner_timezone(non_utc_runner):
     """23:30 UTC is still the 20th, whatever the runner's local time is."""
     from predoc_pipeline.boards.scrapers.rss import _entry_date
 
-    stamp = time.struct_time((2026, 10, 20, 23, 30, 0, 0, 1, -1))
+    stamp = time.struct_time((2026, 10, 20, 23, 30, 0, 1, 293, 0))
+    assert date.fromtimestamp(time.mktime(stamp)) != date(2026, 10, 20)
     assert _entry_date(_entry_with_date(stamp)) == date(2026, 10, 20)
-    # The UTC instant is the one the old code produced; only the conversion
-    # back to a calendar date was wrong.
+    # The instant represented by the UTC fields is unchanged by TZ.
     assert calendar.timegm(stamp) == int(
         datetime(2026, 10, 20, 23, 30, tzinfo=UTC).timestamp()
     )
@@ -358,26 +379,15 @@ def test_the_journal_holds_no_year_shaped_salary():
 
 
 def _is_year_shaped_amount(value: float, raw: str) -> bool:
-    """A local copy of the year test, so the journal check needs no import."""
-    import re
+    """Check bare calendar years without flagging currency-qualified amounts."""
+    from predoc_pipeline.models import salary_value_is_artifact
 
     if not isinstance(value, (int, float)) or isinstance(value, bool):
         return False
     number = int(float(value))
     if not 1900 <= number <= 2100 or float(value) != number:
         return False
-    for match in re.finditer(r"(?<!\d)(19\d{2}|20\d{2})(?!\d)", raw):
-        if int(match.group(1)) != number:
-            continue
-        if re.match(
-            r"\s*(?:per|a\s+|/)\s*(?:month|monthly|year|annum|annually|hour|hourly|"
-            r"day|daily|week|weekly)\b",
-            raw[match.end():],
-            re.IGNORECASE,
-        ):
-            continue
-        return True
-    return False
+    return salary_value_is_artifact(value, raw)
 
 
 # ---------------------------------------------------------------------------

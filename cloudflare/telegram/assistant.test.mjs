@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {ask, queryRecords, refusal, renderAnswer, validateQuery} from './assistant.mjs';
+import {ask, openrouterKeys, queryRecords, refusal, renderAnswer, validateQuery} from './assistant.mjs';
 
 const row = {id:42, url_hash:'a'.repeat(64), title:'<script>Economics RA</script>', institution:'Example',
   apply_url:'https://example.org/job', country:'Canada', kind:'predoc', visa:'unknown'};
@@ -24,6 +24,54 @@ function instance(keys = 'a,b') {
     async dataset() { return {rows: [row], marks: new Map()}; },
   };
 }
+
+test('key formats and ordered deduplication match Python configuration', () => {
+  for (const additional of ['first,second', ' first; second\n', '["first", "second"]',
+    ['first', 'second']]) {
+    assert.deepEqual(openrouterKeys({OPENROUTER_API_KEYS: additional,
+      OPENROUTER_API_KEY: 'second, third'}), ['first', 'second', 'third']);
+  }
+  assert.deepEqual(openrouterKeys({OPENROUTER_API_KEY: 'first; second'}), ['first', 'second']);
+  assert.deepEqual(openrouterKeys({OPENROUTER_API_KEYS: '[]'}), []);
+  assert.deepEqual(openrouterKeys({OPENROUTER_API_KEYS: ' , ;\n'}), []);
+  assert.deepEqual(openrouterKeys({}), []);
+});
+
+test('JSON array credentials reach the provider without quotes or duplicate attempts', async () => {
+  const original = globalThis.fetch;
+  const credentials = [];
+  globalThis.fetch = async (_url, options) => {
+    credentials.push(options.headers.Authorization);
+    if (credentials.length < 3) return new Response('', {status: 429});
+    return Response.json({choices: [{message: {tool_calls: [{function: {
+      name: 'query_database', arguments: '{"action":"count"}',
+    }}]}}]});
+  };
+  try {
+    const bot = instance('["first", "second", "first"]');
+    bot.env.OPENROUTER_API_KEY = 'second, third';
+    const answer = await ask(bot, 'Count roles', 42, true);
+    assert.match(answer, /1 matching record/);
+    assert.deepEqual(credentials, ['Bearer first', 'Bearer second', 'Bearer third']);
+  } finally { globalThis.fetch = original; }
+});
+
+test('invalid key arrays are unavailable without sending manufactured credentials', async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; throw new Error('must not call provider'); };
+  try {
+    for (const invalid of ['["first", "second"', '[first]', '["first", null]',
+      '["first", 42]', '["first", true]', '["first", {"key":"second"}]',
+      '["first", ["second"]]', ['first', null], ['first', 42], {key: 'first'}]) {
+      const bot = instance(invalid);
+      bot.env.OPENROUTER_API_KEY = 'valid-single';
+      const answer = await ask(bot, 'Count roles', 42, true);
+      assert.match(answer, /temporarily unavailable/);
+    }
+    assert.equal(calls, 0);
+  } finally { globalThis.fetch = original; }
+});
 
 test('provider transport failure rotates keys and preserves a grounded answer', async () => {
   const original = globalThis.fetch;

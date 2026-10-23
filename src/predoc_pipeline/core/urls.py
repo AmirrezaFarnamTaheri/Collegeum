@@ -161,10 +161,9 @@ def clean_url(url: str) -> str:
     # Encode only what is invalid in a URL (spaces, non-ASCII); reserved
     # characters and existing %XX escapes are left exactly as they were.
     path = quote(parts.path or "/", safe="/:@!$&'()*+,;=%~-._")
-    # A bare "?" inside a query value is data, not a separator. Leaving it
-    # unescaped means the value is re-parsed as another key/value pair by
-    # every consumer, so the query no longer round-trips.
-    query = quote(parts.query, safe="=&%/:@!$'()*+,;~-._")
+    # RFC 3986 section 3.4 permits '?' as query data. Preserve its spelling
+    # here too: changing a legal request target can invalidate signed links.
+    query = quote(parts.query, safe="=&%/:?@!$'()*+,;~-._")
     fragment = quote(parts.fragment, safe="/:?@!$&'()*+,;=%~-._") if (
         parts.fragment.startswith(("/", "!/"))
     ) else ""

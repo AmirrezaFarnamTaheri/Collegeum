@@ -153,6 +153,12 @@ make eval               # gate precision/recall against tests/fixtures/golden.js
 make smoke              # offline self-check without network or credentials
 ```
 
+The evaluation command reports separate results for the strict feed and
+job-board paths. It exits with an error if a fixture is misclassified, the
+fixture set is empty, or a fixture has invalid fields, so the CI evaluation
+step detects regressions. These scores describe the labelled fixture set;
+they are not an estimate of accuracy across all live sources.
+
 Core tests run with standard Python 3 and no installed packages:
 
 ```bash

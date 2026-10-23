@@ -36,6 +36,7 @@ def clean_llm_env(monkeypatch):
         "OPENAI_API_KEY",
         "ANTHROPIC_API_KEY",
         "OPENROUTER_API_KEY",
+        "OPENROUTER_API_KEYS",
         "MISTRAL_API_KEY",
         "MEMO_API_KEY",
         "CUSTOM_LLM_API_KEY",

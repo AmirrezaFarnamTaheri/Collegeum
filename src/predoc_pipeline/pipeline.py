@@ -64,6 +64,7 @@ from .ingest.rotation import load_rotation, save_rotation, scheduled_sources
 from .ingest.sources import load_sources
 from .logging_setup import get_logger
 from .models import CoercionError, ExtractionResult, PredocListing, RawItem, coerce
+from .models import salary_value_is_artifact as _implausible_salary
 from .policy import Policy
 from .publish.feedback import FeedbackStore
 from .publish.telegram import (
@@ -315,47 +316,6 @@ def _dedupe_institution(listing: PredocListing, item: RawItem) -> str:
     return listing.institution
 
 
-#: A stored salary that the corrected parser can no longer produce is a bare
-#: calendar year read as an amount, or a value outside a plausible range.
-#: A bare year is only plausible-looking when the advert's own salary text
-#: contains that number as a standalone four-digit year: "£2,000 per month"
-#: must not be mistaken for a year, so the token check is what decides.
-_YEAR_TOKEN = re.compile(r"(?<!\d)(19\d{2}|20\d{2})(?!\d)")
-_PERIOD_AFTER_NUMBER = re.compile(
-    r"\s*(?:per|a\s+|/)\s*(?:month|monthly|year|annum|annually|hour|hourly|day|daily|week|weekly)\b",
-    re.IGNORECASE,
-)
-
-
-def _looks_like_year(value: object, raw: str) -> bool:
-    """True when `value` is a calendar year that the salary text mentions."""
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
-        return False
-    number = int(float(value))
-    if not 1900 <= number <= 2100 or float(value) != number:
-        return False
-    if not raw:
-        return False
-    for match in _YEAR_TOKEN.finditer(raw):
-        if int(match.group(1)) != number:
-            continue
-        # "2000 per month" is an amount, not a year, whatever it looks like.
-        if _PERIOD_AFTER_NUMBER.match(raw, match.end()):
-            continue
-        return True
-    return False
-
-
-def _implausible_salary(value: object, raw: str) -> bool:
-    """True when a stored salary bound cannot be a real amount."""
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
-        return False
-    number = float(value)
-    if number < 0 or number > 2_000_000:
-        return True
-    return _looks_like_year(value, raw)
-
-
 def _clear_stale_salary(
     db: Database,
     listing_id: int,
@@ -389,12 +349,18 @@ def _clear_stale_salary(
         # number is a misparse. A transient parse failure must not erase a
         # salary that may well be correct.
         return
-    columns = stale + ["salary_currency", "salary_period"]
-    # A currency or period the new extraction *did* observe is evidence, not
-    # an artefact: it must survive the refresh.
-    for column in ("salary_currency", "salary_period"):
-        if facts.get(column) is not None:
-            columns.remove(column)
+    columns = list(stale)
+    remaining_amount = any(
+        facts.get(column, stored[column]) is not None
+        for column in ("salary_min", "salary_max") if column not in stale
+    )
+    if not remaining_amount:
+        # Metadata belongs to both bounds. Preserve it when one valid bound
+        # survives, or when the new extraction observed it independently.
+        columns.extend(
+            column for column in ("salary_currency", "salary_period")
+            if facts.get(column) is None
+        )
     db.clear_listing_facts(listing_id, columns)
     for column in columns:
         facts.pop(column, None)
@@ -673,9 +639,9 @@ def _post_extract(
             facts = {key: value for key, value in facts.items()
                      if value not in (None, "", "[]", "unknown")}
             # ...but a *corrected* extraction must be able to replace a value
-            # that was previously wrong. When the new evidence carries a
-            # salary but the stored row has a number, the stored number is a
-            # parse artefact (a year read as an amount) and must be cleared.
+            # that was previously wrong. Clear a stored bound only when its
+            # salary text establishes a parse artefact, such as a calendar
+            # year read as an amount.
             # Otherwise the fixed parser returns None, None is dropped as
             # "not observed", and the wrong number survives forever.
             _clear_stale_salary(db, int(existing["id"]), existing, listing, facts)
@@ -928,6 +894,110 @@ def _retry_x_publications(
         _publish_to_x(x_client, lid, listing, db, stats)
 
 
+def _group_broadcast_candidates(
+    listings: list[tuple[int, PredocListing]], db: Database,
+) -> tuple[list[tuple[int, PredocListing]], dict[int, list[int]]]:
+    """Group connected URL aliases before considering any send or receipt."""
+    from .core.urls import canonicalize_url
+
+    message_by_url: dict[str, int] = {}
+    uncertain_urls: set[str] = set()
+    stored_group_by_url: dict[str, int] = {}
+    for group_id, group in enumerate(db.publication_alias_groups()):
+        message_id = next((int(row["telegram_message_id"]) for row in group
+                           if row["telegram_message_id"]), None)
+        uncertain = any(row["status"] == "delivery-uncertain" for row in group)
+        for row in group:
+            for value in (row["apply_url"], row["source_url"]):
+                if key := canonicalize_url(value or ""):
+                    stored_group_by_url[key] = group_id
+                    if message_id is not None:
+                        message_by_url[key] = message_id
+                    elif uncertain:
+                        uncertain_urls.add(key)
+
+    parents: dict[int, int] = {}
+    order: dict[int, int] = {}
+    candidates: dict[int, PredocListing] = {}
+    owner_by_url: dict[str, int] = {}
+    owner_by_stored_group: dict[int, int] = {}
+    receipts: dict[int, int] = {}
+    own_receipts: set[int] = set()
+    held_members: set[int] = set()
+
+    def representative_of(listing_id: int) -> int:
+        while parents[listing_id] != listing_id:
+            parents[listing_id] = parents[parents[listing_id]]
+            listing_id = parents[listing_id]
+        return listing_id
+
+    for lid, listing in listings:
+        parents.setdefault(lid, lid)
+        order.setdefault(lid, len(order))
+        candidates.setdefault(lid, listing)
+        keys = tuple(dict.fromkeys(
+            key for value in (listing.apply_url, listing.source_url)
+            if (key := canonicalize_url(value))
+        ))
+        connected = {representative_of(lid)}
+        connected.update(representative_of(owner_by_url[key]) for key in keys
+                         if key in owner_by_url)
+        stored_groups = {stored_group_by_url[key] for key in keys if key in stored_group_by_url}
+        connected.update(representative_of(owner_by_stored_group[group]) for group in stored_groups
+                         if group in owner_by_stored_group)
+        representative = min(connected, key=order.__getitem__)
+        for other in connected:
+            parents[other] = representative
+        for key in keys:
+            owner_by_url[key] = representative
+        for stored_group_id in stored_groups:
+            owner_by_stored_group[stored_group_id] = representative
+        if any(key in uncertain_urls for key in keys):
+            held_members.add(lid)
+
+        stored = db.listing(lid)
+        if stored is not None and stored["telegram_message_id"]:
+            receipts[lid] = int(stored["telegram_message_id"])
+            own_receipts.add(lid)
+            continue
+        message_id = next((message_by_url[key] for key in keys if key in message_by_url), None)
+        if message_id is None:
+            existing = db.listing_by_url(listing.apply_url) if listing.apply_url else None
+            if existing is None and listing.source_url:
+                existing = db.listing_by_url(listing.source_url)
+            if existing is not None and existing["telegram_message_id"]:
+                message_id = int(existing["telegram_message_id"])
+        if message_id is not None:
+            receipts[lid] = message_id
+
+    groups: dict[int, list[int]] = {}
+    for lid in candidates:
+        groups.setdefault(representative_of(lid), []).append(lid)
+
+    kept: list[tuple[int, PredocListing]] = []
+    aliases: dict[int, list[int]] = {}
+    for representative, members in groups.items():
+        message_id = next((receipts[lid] for lid in members if lid in receipts), None)
+        if message_id is not None:
+            # A later candidate can connect a queued group to a prior receipt.
+            # Wait until grouping is complete so that group is never re-sent.
+            with db.transaction():
+                for lid in members:
+                    if lid not in own_receipts:
+                        db.mark_published(lid, message_id)
+            log.info("skip_delivered_duplicate_group", listing_ids=members)
+            continue
+        if any(lid in held_members for lid in members):
+            with db.transaction():
+                for lid in members:
+                    db.mark_status(lid, "delivery-uncertain", inherited_hold=True)
+            log.info("skip_uncertain_duplicate_group", listing_ids=members)
+            continue
+        kept.append((representative, candidates[representative]))
+        aliases[representative] = [lid for lid in members if lid != representative]
+    return kept, aliases
+
+
 def _broadcast(
     listings: list[tuple[int, PredocListing]],
     telegram: TelegramClient | None,
@@ -962,57 +1032,20 @@ def _broadcast(
     status_of = feedback.status if feedback is not None else (lambda _h: None)
     send_kw: dict[str, Any] = {"sleep": sleep} if sleep else {}
 
-    from .core.urls import canonicalize_url
+    kept, aliases = _group_broadcast_candidates(listings, db)
 
-    # Track URLs already broadcast to prevent any repeated Telegram post
-    seen_urls: set[str] = set()
-
-    for pub_row in db.published_listings():
-        if pub_row["telegram_message_id"]:
-            if pub_row["apply_url"]:
-                seen_urls.add(canonicalize_url(pub_row["apply_url"]))
-            if pub_row["source_url"]:
-                seen_urls.add(canonicalize_url(pub_row["source_url"]))
-
-    kept: list[tuple[int, PredocListing]] = []
-    for lid, lst in listings:
-        row = db.listing(lid)
-        if row is not None and row["telegram_message_id"]:
-            log.info("skip_already_published", listing_id=lid)
-            continue
-
-        canon_apply = canonicalize_url(lst.apply_url)
-        canon_source = canonicalize_url(lst.source_url)
-        keys = {k for k in (canon_apply, canon_source) if k}
-        if keys & seen_urls:
-            log.info(
-                "skip_duplicate_post_url",
-                listing_id=lid,
-                url=canon_apply or canon_source,
-            )
-            db.mark_status(lid, "published")
-            continue
-
-        existing = None
-        if lst.apply_url:
-            existing = db.listing_by_url(lst.apply_url)
-        if existing is None and lst.source_url:
-            existing = db.listing_by_url(lst.source_url)
-        if (
-            existing is not None
-            and int(existing["id"]) != lid
-            and existing["telegram_message_id"]
-        ):
-            log.info(
-                "skip_duplicate_post_existing_db",
-                listing_id=lid,
-                existing_id=existing["id"],
-            )
-            db.mark_published(lid, existing["telegram_message_id"])
-            continue
-
-        seen_urls |= keys
-        kept.append((lid, lst))
+    def record_delivery(
+        listing_id: int, status: str, message_id: int | None = None,
+        x_post_id: str | None = None,
+    ) -> None:
+        # Persist the whole group atomically. In particular, no pending alias
+        # may escape a delivery-uncertain hold and resend the same vacancy.
+        with db.transaction():
+            for related_id in (listing_id, *aliases.get(listing_id, [])):
+                if status == "published":
+                    db.mark_published(related_id, message_id, x_post_id=x_post_id)
+                else:
+                    db.mark_status(related_id, status)
 
     listings = kept
     if not listings:
@@ -1030,7 +1063,7 @@ def _broadcast(
     # logged to the dead-letter table and does not hold the listing back.
     for listing_id, listing in web:
         x_post_id = _publish_to_x(x_client, listing_id, listing, db, stats) if x_client else None
-        db.mark_published(listing_id, None, x_post_id=x_post_id)
+        record_delivery(listing_id, "published", x_post_id=x_post_id)
         stats.published += 1
         log.info(
             "published_web", listing_id=listing_id, institution=truncate(listing.institution, 60)
@@ -1040,7 +1073,7 @@ def _broadcast(
         return
     if telegram is None:
         for listing_id, _ in listings:
-            db.mark_status(listing_id, "unpublished")
+            record_delivery(listing_id, "unpublished")
         log.warning("telegram_not_configured", held=len(listings))
         return
 
@@ -1081,7 +1114,7 @@ def _broadcast(
                     # A message may have been delivered without its acknowledgement.
                     # Never automatically resend any member of this digest.
                     for listing_id, _ in chunk:
-                        db.mark_status(listing_id, "delivery-uncertain")
+                        record_delivery(listing_id, "delivery-uncertain")
                     log.error("telegram_digest_needs_reconciliation",
                               listing_ids=[lid for lid, _ in chunk])
                     continue
@@ -1090,7 +1123,7 @@ def _broadcast(
                     return
                 continue  # a definite failed send can be retried next run
             for listing_id, _ in chunk:
-                db.mark_published(listing_id, message_id)
+                record_delivery(listing_id, "published", message_id)
             stats.published += len(chunk)
         return
 
@@ -1136,7 +1169,7 @@ def _broadcast(
             if getattr(exc, "uncertain", False):
                 # Preserve a durable hold instead of duplicating a possibly
                 # delivered message after a crash or a later scheduled run.
-                db.mark_status(listing_id, "delivery-uncertain")
+                record_delivery(listing_id, "delivery-uncertain")
                 log.error("telegram_card_needs_reconciliation", listing_id=listing_id)
                 continue
             if _chat_level(exc):
@@ -1145,10 +1178,10 @@ def _broadcast(
                 _telegram_setup_problem(settings, exc)
                 return
             if exc.permanent:
-                db.mark_status(listing_id, "undeliverable")
+                record_delivery(listing_id, "undeliverable")
             continue
 
-        db.mark_published(listing_id, message_id)
+        record_delivery(listing_id, "published", message_id)
         stats.published += 1
         log.info(
             "published",
@@ -1751,13 +1784,16 @@ def run(
             db, settings.feed_path, site_url=settings.site_url, hidden=hidden, router=router
         )
 
+        _maybe_alert(db, settings, stats, source_stats, prefs)
+        if (stats.errors or stats.source_errors) and stats.outcome == "ok":
+            stats.outcome = "partial"
+
         log.info(
             "run_complete",
             **{k: v for k, v in stats.as_dict().items() if k != "gate_reasons"},
             journal=journal,
             dashboard=dashboard,
         )
-        _maybe_alert(db, settings, stats, source_stats, prefs)
         return stats
 
     except Exception:

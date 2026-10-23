@@ -685,6 +685,15 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
     if backend == "null":
         return NullExtractor()
 
+    openrouter_keys = (
+        settings.get_openrouter_keys()
+        if hasattr(settings, "get_openrouter_keys")
+        else [
+            key for key in re.split(
+                r"[,;\s]+", (getattr(settings, "openrouter_api_key", "") or "").strip()
+            ) if key
+        ]
+    )
     provider = backend
     if backend == "auto":
         if getattr(settings, "groq_api_key", None):
@@ -695,7 +704,7 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
             provider = "openai"
         elif getattr(settings, "anthropic_api_key", None):
             provider = "anthropic"
-        elif getattr(settings, "openrouter_api_key", None):
+        elif openrouter_keys:
             provider = "openrouter"
         elif getattr(settings, "mistral_api_key", None):
             provider = "mistral"
@@ -794,15 +803,10 @@ def build_extractor(settings: Any, *, store: Any | None = None, prefs: Any | Non
         )
 
     if provider == "openrouter":
-        keys = (
-            settings.get_openrouter_keys()
-            if hasattr(settings, "get_openrouter_keys")
-            else []
-        )
-        primary_key = keys[0] if keys else settings.openrouter_api_key
+        primary_key = openrouter_keys[0] if openrouter_keys else settings.openrouter_api_key
         return Extractor(
             api_key=primary_key,
-            api_keys=keys or None,
+            api_keys=openrouter_keys or None,
             model=settings.openrouter_model,
             base_url=settings.openrouter_base_url,
             limiter=limiter,

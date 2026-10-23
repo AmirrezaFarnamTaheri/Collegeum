@@ -71,7 +71,7 @@ production, which is worse.
 | M6 | `datasketch` pulls in `numpy` (and transitively, on some platform/version combinations, `scipy`) for what is fundamentally about ninety lines of modular arithmetic | Replaced with a from-scratch, pure-stdlib MinHash + banded LSH implementation (`core/minhash.py`), with the banding math (`_choose_bands`) documented and unit-tested against the analytic `P(candidate\|s)` curve. |
 | M7 | Heavy, ToS-sensitive dependencies (`python-jobspy`, `twscrape`) declared as hard requirements | Moved to optional extras (`boards`, `social` in `pyproject.toml`); `ingest/collectors.py` imports them lazily inside the collector function and degrades to "source skipped, extra not installed" rather than failing the whole install. Both collectors are also **disabled by default** in `settings.py` — see `COMPLIANCE.md`. |
 | M8 | `respx` declared as a test dependency but never actually used in a test | `tests/integration/test_extraction.py` and `test_telegram.py` use `respx` to mock the provider and Telegram APIs and assert on the retry/backoff/fallback behavior directly (backend fallback on 404, 429 `RetryInfo` handling, permanent-error non-retry). Both files skip cleanly via `unittest.skipUnless` when the optional dependencies aren't installed. |
-| M9 | No evaluation harness; gate/prompt changes had no regression signal | `tests/fixtures/golden.jsonl` (37 labeled real-world-shaped examples, covering every false-positive class identified in this review, including 7 job-board examples) plus `predoc-pipeline eval`, reporting precision/recall for the deterministic gate. The command also prints which paths it measured (`paths measured: board=7, strict=30`) and the per-fixture `allow_phd` / `allow_postdoc` configuration, because the board path (`known_vacancy=True`) awards an unconditional role-term + hiring-intent score floor of 0.55 and is therefore *not* the same measurement as the strict feed path. A fixture set that never exercises the board path cannot be quoted as a board score; `eval` says so explicitly ("the job-board gate (known_vacancy) was NOT measured"). The board path's defaults mirror production (`allow_phd=True`, `allow_postdoc=True`, derived from `exclude_phd_positions = false` and `pipeline.py`), and a fixture that needs a different configuration states it. Regenerate the numbers with `make eval` -- the score is a property of the fixture set, not a constant to be copied into this file. |
+| M9 | No evaluation harness; gate/prompt changes had no regression signal | `tests/fixtures/golden.jsonl` (37 labeled real-world-shaped examples, covering every false-positive class identified in this review, including 7 job-board examples) plus `predoc-pipeline eval`, reporting precision/recall for the deterministic gate. The command also prints separate confusion matrices and precision/recall for each path (`paths measured: board=7, strict=30`), fails on misclassifications or invalid/empty fixture sets, and reports the per-fixture `allow_phd` / `allow_postdoc` configuration, because the board path (`known_vacancy=True`) awards an unconditional role-term + hiring-intent score floor of 0.55 and is therefore *not* the same measurement as the strict feed path. A fixture set that never exercises the board path cannot be quoted as a board score; `eval` says so explicitly ("the job-board gate (known_vacancy) was NOT measured"). The board path's defaults mirror production (`allow_phd=True`, `allow_postdoc=True`, derived from `exclude_phd_positions = false` and `pipeline.py`), and a fixture that needs a different configuration states it. Regenerate the numbers with `make eval` -- the score is a property of the fixture set, not a constant to be copied into this file. |
 | M10 | Daily commit of a binary SQLite file to the repository | Addressed at the design level — see Architectural change A1 below. |
 | M11 | Workflow used `continue-on-error: true` at the job level, so a failing run still showed green | `.github/workflows/pipeline.yml` uses `continue-on-error` only on the run step itself (so a partial failure doesn't block committing the state that *did* succeed), then has a separate "Evaluate outcome" step that fails the job for anything worse than `outcome=partial`. |
 
@@ -139,10 +139,11 @@ the findings were about.
 
 `exclude_phd_positions = false` combined with `allow_phd=True` is deliberate
 and consistent: the deterministic gate skips the `phd-studentship` reject for
-board postings, and the model prompt still asks for doctoral positions to be
-rejected. Setting it to `true` flips both layers together, because
-`pipeline.py` derives `allow_phd` from the same preference rather than from a
-second, independent switch. The two layers cannot disagree.
+board postings, and the model prompt extracts doctoral and postdoctoral
+research vacancies without imposing a separate category policy. Setting the
+preference to `true` changes the deterministic gate and downstream policy;
+`pipeline.py` derives `allow_phd` from that preference. The routing layer still
+keeps doctoral and PhD-qualified appointments out of the predoc Telegram feed.
 
 `regions_include` and `routing.web_regions` are different things and are not
 in conflict: the first says which postings may be *considered*, the second
@@ -167,7 +168,7 @@ says which of the considered postings are also published to the website and X.
 |---|---|---|
 | Source registry | `config/sources.toml` declared `enabled` twice in the `trinity_cambridge_jobs` and `bruegel_jobs` tables. A duplicate key in one TOML table is a **fatal parse error**, so every run aborted while loading sources. | One `enabled = false` per table, with the reason recorded in the entry's `note`. Covered by `tests/integration/test_reported_findings_20261021.py::test_a_board_table_declares_enabled_at_most_once`. |
 | Deadline parsing | A deadline written as `Deadline: 15 March 2027` was not parsed at all: the label stayed in the string and every date pattern failed, so a real deadline was silently dropped. | `core/timeparse.py::parse_datetime` strips **one** anchored leading label before parsing. Anchoring means a date that merely contains the word elsewhere is untouched, and the rest of the string is still validated, so trailing garbage is still rejected. |
-| RSS dates | `boards/scrapers/rss.py::_entry_date` read feedparser's `*_parsed` values with `time.mktime()`, i.e. as **local** time, although feedparser normalises them to UTC. On a runner that is not on UTC the calendar day shifted, which corrupted the `max_age_days` staleness check. | `calendar.timegm()` reads the UTC instant, and the date is then taken in UTC (`datetime.fromtimestamp(..., tz=UTC).date()`), so the runner's timezone cannot move a posting to the next day. |
+| RSS dates | `boards/scrapers/rss.py::_entry_date` read feedparser's `*_parsed` values with `time.mktime()`, i.e. as **local** time, although feedparser normalises them to UTC. Interpreting feedparser's UTC tuple (`tm_isdst=0`) as local time during daylight saving can shift a late-night posting into the next calendar day, corrupting the `max_age_days` staleness check. | `calendar.timegm()` reads the UTC instant, and the date is then taken in UTC (`datetime.fromtimestamp(..., tz=UTC).date()`), so the runner's timezone cannot move a posting to the next day. |
 | OpenRouter keys | `OPENROUTER_API_KEYS=key1,key2` could not be loaded: pydantic-settings JSON-decodes list settings, so a plain comma-separated value raised while the settings object was being built and the CLI refused to start. | `settings.py` keeps the field as a string and splits it in `get_openrouter_keys()`. A JSON list still works. Only the key field is split -- a search query containing a comma keeps its commas. |
 | Log format | stdlib `logging` records were written by `basicConfig` as bare text while structlog wrote JSON, so one CI log file held two formats and half the lines had no level or timestamp. | `logging_setup.py` gives both worlds one renderer: a `_RenderedHandler` writes stdlib records through the same structlog renderer, so a record has an `event`, a `level` and a `timestamp` whichever path produced it. |
 | Workday sources | `mcgill`, `ubc` and `uchicago_bfi` reported only "Response could not be parsed", which named neither the endpoint nor the shape that arrived. | `boards/scrapers/university_ats.py` names the endpoint and the missing key, and raises a `DiscoveryParseError` when a posting body has no `jobPostingInfo`. |
@@ -175,8 +176,38 @@ says which of the considered postings are also published to the website and X.
 | Robots.txt refusal | A source blocked by `robots.txt` was reported as *unchanged*, so it never reached the failure streak or the maintainer alert -- a source blocked for months looked healthy. | `ingest/http.py::FetchResult.robots_blocked` separates a refusal from an unchanged body, and the collectors report the refusal as a failure. |
 | Evaluation coverage | `predoc-pipeline eval` scored only the strict feed path, so the number quoted for the gate never described the job-board path that production uses. | `eval` reads `known_vacancy` / `allow_phd` / `allow_postdoc` from each fixture and prints which paths it measured. A fixture set with no board fixtures is explicitly reported as not measuring the board path. |
 | Source disables | The working-tree change that disabled sources returning HTTP 403 broke an unrelated assertion in `tests/boards/test_official_sources.py`, which assumed exactly one disabled board. | The test names the disabled set explicitly instead of deriving it from a single exception. |
-| EJME template links | EJME publishes its adverts with placeholder `[nid]` URLs. The links were dropped during parsing, but the scraper still walked all 12 pages first, and the "nothing found" state was only detected *after* pagination. | `boards/scrapers/link_scan.py::_link_template_state` counts, per page, the advert links that match the source's pattern and how many of them are not unresolved templates. When a page has matching links, none of them is usable, and no usable link has been seen on any earlier page of this source, the scraper raises `SourceSkipped` and the remaining pages are not fetched. A page with at least one usable advert link, or with no matching link at all, is never mistaken for a template page. |
-| Stale salary | Listing 148 stored `salary_min = salary_max = 2026.0`, because the advert said "2026 rates" and the parser read the year as an amount. The refresh path drops `None` facts on purpose, so a corrected parser could never replace the wrong number: the journal kept the artefact forever. | `pipeline.py::_clear_stale_salary` erases a stored bound that the corrected parser could not produce -- a bare calendar year, or an out-of-range number -- but only when the advert's own words still quote a salary. A bound the new extraction replaced is left to the refresh. The journal entry for 148 was corrected in place; `salary_raw` is kept, so the advert's own wording is not lost. Covered by `tests/integration/test_reported_findings_20261021.py`. |
+| EJME template links | EJME publishes its adverts with placeholder `[nid]` URLs. The links were dropped during parsing, but the scraper still walked all 12 pages first, and the "nothing found" state was only detected *after* pagination. | `boards/scrapers/link_scan.py::_link_template_state` counts, per page, the advert links that match the source's pattern and how many of them are not unresolved templates. When a page has matching links, none of them is usable, and no usable link has been seen on any earlier page of this source, the remaining pages of that endpoint are not fetched. Other configured endpoints are still checked; `SourceSkipped` is raised only when no non-template advert links or endpoint failures were found. A page with at least one usable advert link, or with no matching link at all, is never mistaken for a template page. |
+| Stale salary | Listing 148 stored `salary_min = salary_max = 2026.0`, because the advert said "2026 rates" and the parser read the year as an amount. The refresh path drops `None` facts on purpose, so a corrected parser could never replace the wrong number: the journal kept the artefact forever. | `pipeline.py::_clear_stale_salary` uses shared salary-artifact detection to erase a bound proven invalid by the source wording, while preserving currency-qualified amounts and metadata for surviving valid bounds. The journal correction for 148 is also applied to existing caches by `state.restore_if_needed()`: an explicit null may clear an equal-timestamp cached bound only when unchanged, nonempty salary wording independently establishes the artifact. Newer observations and unproven corrections preserve local facts. Subsequent export retains the correction and the original `salary_raw` wording. Covered by `tests/integration/test_reported_findings_20261021.py` and `tests/integration/test_review_state_and_alerts.py`. |
+
+### PR review follow-ups
+
+The logging regressions now cover console and JSON tracebacks from both stdlib
+logging and structlog. Reconfiguration removes conflicting stdout/stderr handlers
+while preserving independent file and capture handlers.
+
+OpenRouter key normalization is shared by provider selection and rotation. The
+Python workflows and Telegram Worker deployment both accept plural-only keys,
+including JSON arrays, and reject malformed arrays without manufacturing
+credentials. The Worker deployment replaces both key bindings from the current
+validated configuration so removed keys do not remain active.
+
+Telegram delivery groups are formed from connected application/source URLs before
+any send. An existing receipt suppresses the entire group; successful delivery
+records the receipt for every alias, and an uncertain result holds every alias
+for reconciliation. A later listing that connects two earlier groups therefore
+cannot cause a duplicate send. These outcomes are persisted atomically per group.
+Later runs respect existing uncertainty holds; operator reconciliation applies
+the verified outcome to connected held aliases together so an approved retry
+cannot be held again by an unresolved sibling.
+Delivery revisions preserve that explicit decision when a journal is replayed
+into an older cache, and preserve a later ambiguous send in either replay
+direction. Ordinary factual refreshes and inherited holds do not advance this
+revision, so they cannot manufacture a newer delivery event.
+
+Enabled admin-alert failures now contribute to the final run outcome before it is
+logged and saved. Pending counts use the same eligibility rules as the retry queue,
+including held unpublished rows and excluding closed, expired, or past-deadline
+records.
 
 ### What the stored artifacts say
 

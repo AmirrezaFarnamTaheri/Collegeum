@@ -19,6 +19,7 @@ parse failures.
 
 from __future__ import annotations
 
+import math
 import re
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -40,6 +41,7 @@ __all__ = [
     "EXTRACTION_JSON_SCHEMA",
     "CANONICAL_TOOLS",
     "parse_salary",
+    "salary_value_is_artifact",
     "normalize_tools",
     "normalize_degree",
     "normalize_start_date",
@@ -581,6 +583,63 @@ def parse_salary(
     if any(amount <= 0 or amount > 2_000_000 for amount in amounts):
         return (None, None, currency, period)
     return (min(amounts), max(amounts), currency, period)
+
+
+_SALARY_YEAR_TOKEN = re.compile(r"(?<!\d)(19\d{2}|20\d{2})(?!\d)")
+_SALARY_CURRENCY_MARKER = (
+    r"(?:\b(?:GBP|EUR|USD|CHF|CAD|AUD|NZD|HKD|SGD|SEK|NOK|DKK|JPY|CNY|RMB|INR)\b"
+    r"|[£€$¥₹₩₽₺₫฿₪])"
+)
+_SALARY_RANGE_ENDPOINT = r"\d+(?:[.,]\d+)*(?:\s*k\b)?"
+_SALARY_CURRENCY_BEFORE_NUMBER = re.compile(
+    _SALARY_CURRENCY_MARKER + r"\s*(?:" + _SALARY_RANGE_ENDPOINT + r"\s*(?:-|–|—|to)\s*)?$",
+    re.IGNORECASE,
+)
+_SALARY_CURRENCY_AFTER_NUMBER = re.compile(
+    r"\s*(?:(?:-|–|—|to)\s*" + _SALARY_RANGE_ENDPOINT + r"\s*)?" + _SALARY_CURRENCY_MARKER,
+    re.IGNORECASE,
+)
+_SALARY_PAY_BEFORE_NUMBER = re.compile(
+    r"\b(?:salary|stipend|pay|compensation|monthly|hourly|weekly|daily|annual)"
+    r"\s*(?:(?:of|from|to|up\s+to|is|:|=)\s*)?$",
+    re.IGNORECASE,
+)
+_SALARY_PERIOD_AFTER_NUMBER = re.compile(
+    r"\s*(?:(?:per|a|/)\s*)?(?:month|monthly|year|yearly|annum|annual|annually|"
+    r"hour|hourly|day|daily|week|weekly|pcm|stipend|salary|pay|compensation)\b",
+    re.IGNORECASE,
+)
+
+
+def salary_value_is_artifact(value: object, raw: str | None) -> bool:
+    """Identify impossible amounts or a bare salary-text year misread as pay.
+
+    Currency-qualified four-digit compensation is common for monthly salaries
+    and stipends. Check each matching token: the salary parser deliberately
+    declines alternatives and may select a different amount from the wording.
+    """
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    number = float(value)
+    if not math.isfinite(number) or number < 0 or number > 2_000_000:
+        return True
+    if not raw or not 1900 <= number <= 2100 or not number.is_integer():
+        return False
+    salary_min, salary_max, _, _ = parse_salary(raw)
+    if number in (salary_min, salary_max):
+        return False
+    matches = [match for match in _SALARY_YEAR_TOKEN.finditer(raw)
+               if int(match.group(1)) == number]
+    for match in matches:
+        before, after = raw[:match.start()], raw[match.end():]
+        if (_SALARY_CURRENCY_BEFORE_NUMBER.search(before)
+                or _SALARY_CURRENCY_AFTER_NUMBER.match(after)
+                or _SALARY_PAY_BEFORE_NUMBER.search(before)
+                or _SALARY_PERIOD_AFTER_NUMBER.match(after)):
+            # One real pay occurrence is enough to make clearing this amount
+            # unsafe, even if the same number also appears as a calendar year.
+            return False
+    return bool(matches)
 
 
 def normalize_tools(

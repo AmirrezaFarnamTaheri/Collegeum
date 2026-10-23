@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from .timeparse import format_ts
+from .urls import canonicalize_url
 
 _log = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ __all__ = [
     "Database",
 ]
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -81,6 +82,8 @@ CREATE TABLE IF NOT EXISTS listings (
   signature                 BLOB,
   alternate_sources         TEXT    NOT NULL DEFAULT '[]',
   telegram_message_id       INTEGER,
+  telegram_delivery_revision INTEGER NOT NULL DEFAULT 0
+    CHECK(typeof(telegram_delivery_revision) = 'integer' AND telegram_delivery_revision >= 0),
   x_post_id                 TEXT,
   status                    TEXT    NOT NULL DEFAULT 'pending',
   first_seen_at             TEXT    NOT NULL,
@@ -245,6 +248,8 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("listings", "department", "TEXT"),
     ("listings", "fields", "TEXT"),
     ("listings", "x_post_id", "TEXT"),
+    ("listings", "telegram_delivery_revision", "INTEGER NOT NULL DEFAULT 0 "
+     "CHECK(typeof(telegram_delivery_revision) = 'integer' AND telegram_delivery_revision >= 0)"),
     ("listings", "salary_min", "REAL"),
     ("listings", "salary_max", "REAL"),
     ("listings", "salary_currency", "TEXT"),
@@ -597,7 +602,9 @@ class Database:
         """Resolve a manually verified ambiguous Telegram submission.
 
         Never infer remote delivery from a timeout. The operator must inspect
-        the destination chat before supplying either explicit outcome.
+        the destination chat before supplying either explicit outcome. Resolve
+        connected held aliases together so a verified retry is not re-held by
+        another row representing the same submission.
         """
         if (message_id is None) == (not confirmed_not_delivered):
             raise ValueError("Provide a verified message ID or confirm no delivery")
@@ -614,21 +621,44 @@ class Database:
                         and row["telegram_message_id"] == message_id):
                     return  # verified resolution may be safely repeated
                 raise ValueError(f"Listing {listing_id} is not delivery-uncertain")
-            if message_id is not None:
-                self.conn.execute(
-                    "UPDATE listings SET status='published', telegram_message_id=?, "
-                    "published_at=COALESCE(published_at, ?) WHERE id=?",
-                    (message_id, now(), listing_id),
-                )
-            else:
-                self.conn.execute(
-                    "UPDATE listings SET status='pending' WHERE id=?",
-                    (listing_id,),
-                )
+            connected = next(
+                group for group in self.publication_alias_groups()
+                if any(candidate["id"] == listing_id for candidate in group)
+            )
+            revision = max(candidate["telegram_delivery_revision"] for candidate in connected) + 1
+            for related in connected:
+                if related["telegram_message_id"]:
+                    continue
+                if message_id is not None:
+                    if related["status"] != "delivery-uncertain":
+                        continue
+                    self.conn.execute(
+                        "UPDATE listings SET status='published', telegram_message_id=?, "
+                        "published_at=COALESCE(published_at, ?), "
+                        "telegram_delivery_revision=? WHERE id=?",
+                        (message_id, now(), revision, related["id"]),
+                    )
+                elif related["status"] in {"pending", "unpublished", "delivery-uncertain"}:
+                    # An older cache may already hold an alias that this
+                    # journal still lists as pending. Record the operator's
+                    # verification for every retryable alias, without changing
+                    # the status of unrelated published/rejected records.
+                    self.conn.execute(
+                        "UPDATE listings SET status=CASE WHEN status='delivery-uncertain' "
+                        "THEN 'pending' ELSE status END, telegram_delivery_revision=? WHERE id=?",
+                        (revision, related["id"]),
+                    )
 
-    def mark_status(self, listing_id: int, status: str) -> None:
+    def mark_status(self, listing_id: int, status: str, *, inherited_hold: bool = False) -> None:
         with self.transaction():
-            self.conn.execute("UPDATE listings SET status=? WHERE id=?", (status, listing_id))
+            # Repeating or propagating a hold copies evidence. Only a new
+            # uncertain submission advances the delivery revision.
+            self.conn.execute(
+                "UPDATE listings SET telegram_delivery_revision=telegram_delivery_revision + "
+                "CASE WHEN ?='delivery-uncertain' AND status!='delivery-uncertain' "
+                "AND ?=0 THEN 1 ELSE 0 END, status=? WHERE id=?",
+                (status, inherited_hold, status, listing_id),
+            )
 
     def touch_listing(self, listing_id: int) -> None:
         with self.transaction():
@@ -711,6 +741,42 @@ class Database:
         return self.conn.execute(
             "SELECT * FROM listings WHERE status='published' ORDER BY id"
         ).fetchall()
+
+    def publication_alias_groups(self) -> list[list[sqlite3.Row]]:
+        """Stored URL components, including aliases omitted from today's sends.
+
+        Publication and manual reconciliation share this identity. Pending,
+        closed, or filtered rows can still connect a known receipt or uncertain
+        submission to an eligible alias; discovering them never changes state.
+        """
+        rows = self.conn.execute(
+            "SELECT id, apply_url, source_url, status, telegram_message_id, "
+            "telegram_delivery_revision "
+            "FROM listings ORDER BY id"
+        ).fetchall()
+        by_url: dict[str, list[sqlite3.Row]] = {}
+        for row in rows:
+            for value in (row["apply_url"], row["source_url"]):
+                if key := canonicalize_url(value or ""):
+                    by_url.setdefault(key, []).append(row)
+        remaining = {row["id"] for row in rows}
+        groups: list[list[sqlite3.Row]] = []
+        for row in rows:
+            if row["id"] not in remaining:
+                continue
+            remaining.remove(row["id"])
+            members = [row]
+            pending = [row]
+            while pending:
+                current = pending.pop()
+                for value in (current["apply_url"], current["source_url"]):
+                    for candidate in by_url.pop(canonicalize_url(value or ""), []):
+                        if candidate["id"] in remaining:
+                            remaining.remove(candidate["id"])
+                            members.append(candidate)
+                            pending.append(candidate)
+            groups.append(members)
+        return groups
 
     def listings_by_hash_prefix(self, prefix: str) -> list[sqlite3.Row]:
         """Telegram buttons carry a 16-character prefix of ``url_hash``."""
@@ -989,16 +1055,20 @@ class Database:
                 q("SELECT COUNT(*) FROM listings WHERE status='published'").fetchone()[0]
             ),
             # "pending" here means *retryable*: a row that was inserted but
-            # never delivered AND is not closed or expired. A pending row that
-            # was later closed (dead link, "position filled") is not a
-            # backlog item, and counting it as one overstates the queue.
+            # never delivered AND is not closed, expired, or past its deadline.
+            # This must match pending_listings(), including rows held while
+            # publication credentials were unavailable ("unpublished").
             "pending": int(q(
-                "SELECT COUNT(*) FROM listings WHERE status='pending' "
-                "AND closed_at IS NULL AND expired_at IS NULL"
+                "SELECT COUNT(*) FROM listings WHERE status IN ('pending', 'unpublished') "
+                "AND closed_at IS NULL AND expired_at IS NULL "
+                "AND (deadline IS NULL OR deadline = '' OR "
+                "     deadline >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))"
             ).fetchone()[0]),
             "pending_closed": int(q(
-                "SELECT COUNT(*) FROM listings WHERE status='pending' "
-                "AND (closed_at IS NOT NULL OR expired_at IS NOT NULL)"
+                "SELECT COUNT(*) FROM listings WHERE status IN ('pending', 'unpublished') "
+                "AND (closed_at IS NOT NULL OR expired_at IS NOT NULL OR "
+                "     (deadline IS NOT NULL AND deadline != '' AND "
+                "      deadline < strftime('%Y-%m-%dT%H:%M:%SZ', 'now')))"
             ).fetchone()[0]),
             "expired": int(
                 q("SELECT COUNT(*) FROM listings WHERE expired_at IS NOT NULL").fetchone()[0]
@@ -1058,6 +1128,9 @@ class Database:
 
         local_status = str(existing["status"])
         saved_status = str(incoming.get("status") or local_status)
+        local_revision = existing["telegram_delivery_revision"]
+        saved_revision = incoming.get("telegram_delivery_revision", 0)
+        updates["telegram_delivery_revision"] = max(local_revision, saved_revision)
         statuses = {local_status, saved_status}
         if "rejected" in statuses:
             # A human-curated rejection (for instance a fundraising rather
@@ -1066,7 +1139,14 @@ class Database:
             updates["status"] = "rejected"
         elif "published" in statuses:
             updates["status"] = "published"
+        elif local_revision != saved_revision:
+            # Only explicit delivery transitions advance this revision. A
+            # verified retry can supersede an old hold, and a subsequent
+            # uncertain send can supersede that retry, in either replay order.
+            updates["status"] = local_status if local_revision > saved_revision else saved_status
         elif "delivery-uncertain" in statuses:
+            # Legacy journals and equal-revision conflicts carry no proof that
+            # a hold was resolved. Keep them safely withheld from publication.
             updates["status"] = "delivery-uncertain"
         elif "undeliverable" in statuses:
             updates["status"] = "undeliverable"
@@ -1086,6 +1166,7 @@ class Database:
             # Lifecycle receipts and closure evidence are merged separately.
             protected = {
                 "id", "url_hash", "signature", "status", "telegram_message_id",
+                "telegram_delivery_revision",
                 "x_post_id", "published_at", "expired_at", "closed_at",
                 "closed_reason", "first_seen_at", "last_seen_at",
                 "last_checked_at", "missing_404_at", "missing_404_observations",
@@ -1128,6 +1209,11 @@ class Database:
                     raise ValueError("listing id must be a positive integer")
                 if not isinstance(data.get("url_hash"), str) or not data["url_hash"]:
                     raise ValueError("listing url_hash must be a nonempty string")
+                revision = data.get("telegram_delivery_revision", 0)
+                if type(revision) is not int or not 0 <= revision < 2**63:
+                    raise ValueError(
+                        "Telegram delivery revision must be a nonnegative 64-bit integer"
+                    )
                 data["disciplines"] = json.dumps(data.get("disciplines") or [])
                 data["alternate_sources"] = json.dumps(data.get("alternate_sources") or [])
                 data["is_remote"] = int(bool(data.get("is_remote")))

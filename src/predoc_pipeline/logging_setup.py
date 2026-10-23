@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 import structlog
-from structlog.typing import FilteringBoundLogger
+from structlog.typing import EventDict, FilteringBoundLogger
 
 _CONFIGURED = False
 
@@ -33,6 +33,15 @@ def _timestamp(epoch: float) -> str:
     return datetime.fromtimestamp(epoch, UTC).strftime("%Y-%m-%dT%H:%M:%S.%f") + "Z"
 
 
+def _render_event(logger: Any, method_name: str, event_dict: EventDict) -> str:
+    # ConsoleRenderer needs the original exception tuple for its traceback
+    # formatter. JSON needs a serializable traceback, not exc_info=True or a
+    # tuple containing an opaque traceback object.
+    if not isinstance(_RENDERER, structlog.dev.ConsoleRenderer):
+        structlog.processors.format_exc_info(logger, method_name, event_dict)
+    return cast(str, _RENDERER(logger, method_name, event_dict))
+
+
 def render_record(record: logging.LogRecord) -> str:
     """Render one stdlib record exactly as a structlog record is rendered.
 
@@ -45,12 +54,17 @@ def render_record(record: logging.LogRecord) -> str:
         "timestamp": _timestamp(record.created),
     }
     if record.exc_info:
-        event_dict["exc_info"] = logging.Formatter().formatException(record.exc_info)
+        event_dict["exc_info"] = record.exc_info
+    elif record.exc_text:
+        event_dict["exception"] = record.exc_text
+    if record.stack_info:
+        event_dict["stack"] = record.stack_info
     try:
-        return cast(str, _RENDERER(None, record.name, event_dict))
+        return _render_event(None, record.levelname.lower(), event_dict.copy())
     except Exception:  # pragma: no cover - a renderer must never break logging
         # A renderer that insists on a real logger object still gets a
         # readable line, which is what a log reader needs.
+        structlog.processors.format_exc_info(None, record.levelname.lower(), event_dict)
         return json.dumps(event_dict, default=str, ensure_ascii=False)
 
 
@@ -84,13 +98,25 @@ def configure(level: int = logging.INFO) -> None:
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso", utc=True),
             structlog.processors.StackInfoRenderer(),
-            _RENDERER,
+            _render_event,
         ],
         wrapper_class=structlog.make_filtering_bound_logger(level),
         logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
         cache_logger_on_first_use=True,
     )
     root = logging.getLogger()
+    # The CLI owns console output, but other destinations (files and test
+    # harness capture handlers) must remain attached.
+    console_streams = (sys.stderr, sys.stdout, sys.__stderr__, sys.__stdout__)
+    for existing in root.handlers[:]:
+        if (
+            isinstance(existing, logging.StreamHandler)
+            and not isinstance(existing, logging.FileHandler)
+            and any(existing.stream is stream for stream in console_streams)
+            and not getattr(existing, "_predoc_rendered", False)
+        ):
+            root.removeHandler(existing)
+            existing.close()
     if not any(getattr(handler, "_predoc_rendered", False) for handler in root.handlers):
         handler = _RenderedHandler()
         handler._predoc_rendered = True  # type: ignore[attr-defined]

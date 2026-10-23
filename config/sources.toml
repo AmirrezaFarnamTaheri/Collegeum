@@ -305,6 +305,7 @@ link_pattern = 'parisschoolofeconomics\.eu/en/job-opportunities/[^/]+/?$'
 institution = "Paris School of Economics"
 country = "France"
 field_implied = true
+note = "OFF: the job-opportunities endpoint returns HTTP 418 in recorded pipeline runs; re-enable after access and vacancy parsing are verified."
 
 [[board]]
 name = "mannheim_econ"
@@ -775,7 +776,7 @@ link_pattern = 'parisschoolofeconomics\.eu/.*job'
 institution = "Paris School of Economics"
 country = "France"
 field_implied = true
-note = "Paris School of Economics predocs, research assistants, and project vacancies."
+note = "OFF: the recruitment/job-offers endpoint returns HTTP 418 in recorded pipeline runs; re-enable after access and vacancy parsing are verified."
 
 [[board]]
 name = "cemfi_madrid"

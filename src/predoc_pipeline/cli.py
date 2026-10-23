@@ -232,6 +232,8 @@ def telegram_reconcile(
     """Reconcile an uncertain Telegram send after manually checking the chat.
 
     Never choose the 'not delivered' outcome merely because an API timed out.
+    The verified outcome also applies to related uncertain listings connected
+    through their application or source URLs.
     The recovered state is written to the tracked journal for the next run.
     """
     from . import state
@@ -487,11 +489,12 @@ def eval(
     A fixture may also declare ``"known_vacancy": true`` (plus optional
     ``"allow_phd"`` / ``"allow_postdoc"``) to be scored on the job-board path,
     which is how every board posting is evaluated in production. Without that
-    key a fixture is scored on the strict feed/web path.
+    key a fixture is scored on the strict feed/web path. An optional ``"url"``
+    exercises the same URL-based rejection rules as production.
 
     Reports precision and recall for the gate alone -- the cheap, always-on
-    layer -- so a change to the lexicon or the reject patterns has a number
-    attached to it rather than a vibe. The summary names the paths that were
+    layer. A mismatch or invalid fixture fails the command so CI catches
+    regressions. The summary names the paths that were
     actually measured: the board path awards an unconditional role-term and
     hiring-intent score floor, so a fixture set that never exercises it cannot
     be quoted as a score for it.
@@ -501,21 +504,42 @@ def eval(
     from .core import gating
 
     path = Path(fixtures)
-    if not path.exists():
-        typer.secho(f"no fixtures at {path}", fg=typer.colors.YELLOW)
-        raise typer.Exit(1)
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        typer.secho(f"could not read fixtures at {path}: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(1) from exc
 
     tp = fp = tn = fn = 0
-    paths: dict[str, int] = {}
+    paths: dict[str, dict[str, int]] = {}
     settings_used: dict[tuple[str, bool, bool], int] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line_number, line in enumerate(lines, 1):
         line = line.strip()
         if not line or line.startswith("#"):
             continue
-        record = _json.loads(line)
+        try:
+            record = _json.loads(line)
+            if not isinstance(record, dict):
+                raise ValueError("expected a JSON object")
+            if not isinstance(record.get("text"), str) or not record["text"].strip():
+                raise ValueError("text must be a nonempty string")
+            if not isinstance(record.get("title", ""), str):
+                raise ValueError("title must be a string")
+            if not isinstance(record.get("url", ""), str):
+                raise ValueError("url must be a string")
+            if "expect_pass" not in record:
+                raise ValueError("expect_pass is required")
+            for field in ("expect_pass", "known_vacancy", "allow_phd", "allow_postdoc"):
+                if field in record and not isinstance(record[field], bool):
+                    raise ValueError(f"{field} must be a JSON boolean")
+        except ValueError as exc:
+            typer.secho(
+                f"invalid fixture at line {line_number}: {exc}", fg=typer.colors.RED, err=True,
+            )
+            raise typer.Exit(1) from exc
         known_vacancy = bool(record.get("known_vacancy", False))
         path_name = "board" if known_vacancy else "strict"
-        paths[path_name] = paths.get(path_name, 0) + 1
+        counts = paths.setdefault(path_name, {"tp": 0, "fp": 0, "tn": 0, "fn": 0})
         # Production evaluates board items with allow_postdoc=True and
         # allow_phd=True (the shipped preferences set exclude_phd_positions =
         # false, so pipeline.py derives allow_phd=True from them), so the
@@ -529,31 +553,49 @@ def eval(
         result = gating.evaluate(
             record["text"],
             title=record.get("title", ""),
+            url=record.get("url", ""),
             known_vacancy=known_vacancy,
             allow_phd=allow_phd,
             allow_postdoc=allow_postdoc,
         )
-        expected = bool(record["expect_pass"])
+        expected = record["expect_pass"]
         if expected and result.passed:
             tp += 1
+            counts["tp"] += 1
         elif expected and not result.passed:
             fn += 1
+            counts["fn"] += 1
             typer.echo(f"FN reason={result.reason}: {record['text'][:80]!r}")
         elif not expected and result.passed:
             fp += 1
+            counts["fp"] += 1
             typer.echo(f"FP score={result.score:.2f}: {record['text'][:80]!r}")
         else:
             tn += 1
+            counts["tn"] += 1
 
     total = tp + fp + tn + fn
+    if not total:
+        typer.secho("no labelled fixtures were found", fg=typer.colors.RED, err=True)
+        raise typer.Exit(1)
     precision = tp / (tp + fp) if (tp + fp) else float("nan")
     recall = tp / (tp + fn) if (tp + fn) else float("nan")
     typer.echo(
         f"\nn={total} tp={tp} fp={fp} tn={tn} fn={fn} "
         f"precision={precision:.3f} recall={recall:.3f}"
     )
-    measured = ", ".join(f"{name}={count}" for name, count in sorted(paths.items()))
-    typer.echo(f"paths measured: {measured or 'none'}")
+    measured = ", ".join(f"{name}={sum(counts.values())}" for name, counts in sorted(paths.items()))
+    typer.echo(f"paths measured: {measured}")
+    for path_name, counts in sorted(paths.items()):
+        positives = counts["tp"] + counts["fp"]
+        expected_positives = counts["tp"] + counts["fn"]
+        path_precision = counts["tp"] / positives if positives else float("nan")
+        path_recall = counts["tp"] / expected_positives if expected_positives else float("nan")
+        typer.echo(
+            f"  {path_name}: n={sum(counts.values())} "
+            f"tp={counts['tp']} fp={counts['fp']} tn={counts['tn']} fn={counts['fn']} "
+            f"precision={path_precision:.3f} recall={path_recall:.3f}"
+        )
     for (path_name, allow_phd, allow_postdoc), count in sorted(settings_used.items()):
         typer.echo(
             f"  {path_name}: allow_phd={allow_phd} allow_postdoc={allow_postdoc} "
@@ -565,6 +607,12 @@ def eval(
             "so these numbers do not describe board postings.",
             fg=typer.colors.YELLOW,
         )
+    if fp or fn:
+        typer.secho(
+            f"{fp + fn} fixture(s) did not match the expected gate result",
+            fg=typer.colors.RED, err=True,
+        )
+        raise typer.Exit(1)
 
 
 @app.command("telegram-sync")
