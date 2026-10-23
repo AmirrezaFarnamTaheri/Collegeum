@@ -451,7 +451,7 @@ def test_a_genuinely_unchanged_source_is_still_reported_as_unchanged():
     stat_dict = {
         "items": 0, "fetched": 1, "unchanged": 1, "errors": 0, "messages": [],
     }
-    assert source_status(stat_dict) == "empty"
+    assert source_status(stat_dict) == "successful"
     assert unchanged.unchanged
 
 

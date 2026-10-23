@@ -190,7 +190,8 @@ def test_ingestion_feed_reports_invalid_entries_and_retains_siblings(bad_entry):
 
     class Client:
         def get(self, url):
-            return SimpleNamespace(ok=True, skipped=False, text=xml, content=xml.encode(),
+            return SimpleNamespace(ok=True, skipped=False, robots_blocked=False,
+                                   text=xml, content=xml.encode(),
                                    url='https://example.org/redirected/feed')
 
     items, stats = collect_feeds([Source('test', 'feed', 'https://original.org/feed')],
@@ -225,7 +226,8 @@ def test_command_checks_feed_and_portal_parsing_not_only_http_success(monkeypatc
                     '<title>Research Assistant</title><link>https://example.org/job/1</link>'
                     '</item></channel></rss>' if url.endswith('/good') else
                     '<html><body>Sign in</body></html>')
-            return SimpleNamespace(ok=True, skipped=False, text=text, content=text.encode(),
+            return SimpleNamespace(ok=True, skipped=False, robots_blocked=False,
+                                   text=text, content=text.encode(),
                                    status=200, error=None, url=url)
 
     monkeypatch.setattr('predoc_pipeline.cli.PoliteClient', Client)
@@ -256,7 +258,8 @@ def test_portal_retains_valid_jsonld_and_reports_neighboring_parse_failures(monk
 
     class Client:
         def get(self, url):
-            return SimpleNamespace(ok=True, skipped=False, text=html, url=url)
+            return SimpleNamespace(ok=True, skipped=False, robots_blocked=False,
+                                   text=html, url=url)
 
     items, stats = collect_portals([Source('test', 'portal', 'https://example.org/jobs')],
                                   Client(), max_items=5)
@@ -332,7 +335,8 @@ def test_portal_duplicates_do_not_consume_vacancy_capacity(monkeypatch):
             seen.append(url)
             html = index if url.endswith('/jobs') else markup(
                 first if url.endswith('/1') else second)
-            return SimpleNamespace(ok=True, skipped=False, text=html, url=url)
+            return SimpleNamespace(ok=True, skipped=False, robots_blocked=False,
+                                   text=html, url=url)
 
     source = Source('test', 'portal', 'https://example.org/jobs',
                     follow_links=True, link_pattern=r'/job/\d+')
@@ -356,7 +360,7 @@ def test_empty_portal_details_keep_request_limit(monkeypatch):
     class Client:
         def get(self, url):
             requested.append(url)
-            return SimpleNamespace(ok=True, skipped=False,
+            return SimpleNamespace(ok=True, skipped=False, robots_blocked=False,
                                    text=index if url.endswith('/jobs') else '<html></html>',
                                    url=url)
 
