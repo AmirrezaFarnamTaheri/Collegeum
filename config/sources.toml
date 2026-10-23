@@ -298,6 +298,7 @@ field_implied = true
 name = "pse"
 type = "link_scan"
 enabled = false
+note = "OFF: source disabled in audit; revalidate access before enabling."
 group = "university"
 url = "https://www.parisschoolofeconomics.eu/en/job-opportunities/"
 may_be_empty = true
