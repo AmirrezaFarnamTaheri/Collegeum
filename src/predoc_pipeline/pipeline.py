@@ -1861,9 +1861,10 @@ def _maybe_alert(
         messages.append("Stopped early: model request budget exhausted.")
 
     for message in messages:
-        if not notify_admin(settings, message):
+        if not notify_admin(settings, message) and settings.telegram_operational_alerts_enabled:
             # An alert that could not be delivered is a failed run, not a
-            # quiet one. Recording it as an error keeps the run outcome
-            # honest: the pipeline published nothing AND nobody was told.
+            # quiet one. When alerts are disabled, no delivery was requested;
+            # the warning from notify_admin is sufficient and must not turn a
+            # deliberately alert-free run into a failed run.
             stats.errors += 1
             log.error("alert_not_delivered", message=message)
