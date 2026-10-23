@@ -180,9 +180,9 @@ says which of the considered postings are also published to the website and X.
 
 ### What the stored artifacts say
 
-The last recorded run (`docs/data/health.json`, run `39544437832`) covered 81
-sources: 50 successful, 24 failed, 3 partial, 3 empty, 1 skipped, and 31
-source errors, with zero publications. The failure cluster is nine HTTP 403
+The last recorded run (`docs/data/health.json`, run `39901018638`) covered 81
+sources: 48 successful, 26 failed, 3 partial, 3 empty, 1 skipped, and 36
+source errors, with one publication. The failure cluster is nine HTTP 403
 sources (blocked to runner IPs), two HTTP 418 sources, Workday JSON parse
 failures, and the placeholder-producing `board:european_job_market` path, whose
 links end in an unresolved `[nid]` template. That source is skipped rather than
