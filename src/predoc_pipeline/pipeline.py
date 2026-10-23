@@ -51,7 +51,7 @@ from .core.dedupe import Deduplicator
 from .core.health import public_failure, source_error_count, source_status, source_summary
 from .core.output_quality import application_url_issue, authentication_page_text
 from .core.ratelimit import QuotaExceeded
-from .core.textproc import escape_telegram_html, truncate
+from .core.textproc import truncate
 from .core.timeparse import format_ts, parse_datetime, utcnow
 from .core.urls import url_hash
 from .extract import ExtractionError, RateLimited, build_extractor
