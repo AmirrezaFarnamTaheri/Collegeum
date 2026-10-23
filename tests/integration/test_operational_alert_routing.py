@@ -63,3 +63,45 @@ def test_negative_channel_id_is_not_a_valid_operational_admin_recipient():
     with patch("predoc_pipeline.alerts.TelegramClient") as sender:
         notify_admin(settings, "debug log")
     sender.assert_not_called()
+
+
+def test_disabled_operational_alerts_do_not_fail_a_run(monkeypatch):
+    from predoc_pipeline.pipeline import RunStats, _maybe_alert
+
+    class EmptyRunDatabase:
+        def consecutive_empty_runs(self):
+            return 0
+
+        def source_failure_streaks(self):
+            return {}
+
+    settings = configured(empty_run_alert_threshold=1)
+    stats = RunStats()
+    monkeypatch.setattr("predoc_pipeline.alerts.notify_admin", lambda *_: False)
+
+    _maybe_alert(EmptyRunDatabase(), settings, stats, {})
+
+    assert stats.errors == 0
+
+
+def test_enabled_but_undelivered_operational_alert_fails_a_run(monkeypatch):
+    from predoc_pipeline.pipeline import RunStats, _maybe_alert
+
+    class EmptyRunDatabase:
+        def consecutive_empty_runs(self):
+            return 0
+
+        def source_failure_streaks(self):
+            return {}
+
+    settings = configured(
+        telegram_operational_alerts_enabled=True,
+        telegram_admin_chat_id="99999",
+        empty_run_alert_threshold=1,
+    )
+    stats = RunStats()
+    monkeypatch.setattr("predoc_pipeline.alerts.notify_admin", lambda *_: False)
+
+    _maybe_alert(EmptyRunDatabase(), settings, stats, {})
+
+    assert stats.errors == 1

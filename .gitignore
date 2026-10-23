@@ -65,3 +65,5 @@ data/.private_delivery_batch.json.tmp
 cloudflare/telegram/node_modules/
 cloudflare/telegram/.wrangler/
 cloudflare/telegram/.dev.vars
+/.statamcp
+/.serena

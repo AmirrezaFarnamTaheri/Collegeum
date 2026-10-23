@@ -77,7 +77,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           activate-environment: true
           enable-cache: true
@@ -97,6 +97,13 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_PUBLIC_CHANNEL_ID: ${{ secrets.TELEGRAM_PUBLIC_CHANNEL_ID }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
+          # Operational alerts are opt-in for safety (they need a distinct
+          # private admin chat), but the scheduled workflow IS the operator, so
+          # it must enable them explicitly. Without this the source-failure and
+          # zero-publish alerts are computed and then dropped, and the only
+          # trace is a log line -- exactly the silent failure the README warns
+          # about. Set to 'false' to silence maintainer alerts.
+          TELEGRAM_OPERATIONAL_ALERTS_ENABLED: ${{ vars.TELEGRAM_OPERATIONAL_ALERTS_ENABLED || 'true' }}
           FEEDBACK_ENCRYPTION_KEY: ${{ secrets.FEEDBACK_ENCRYPTION_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -104,6 +111,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_API_KEYS: ${{ secrets.OPENROUTER_API_KEYS }}
           OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openrouter/free' }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
           MEMO_API_KEY: ${{ secrets.MEMO_API_KEY }}

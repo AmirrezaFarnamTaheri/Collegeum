@@ -439,6 +439,116 @@ def test_link_scan_rejects_ejm_placeholders_before_model_extraction():
     assert scraper.discovery_parse_errors
 
 
+def test_ejm_stops_before_paging_when_every_advert_link_is_a_template():
+    """The [nid] state must be detected on page 1, not after 12 pages."""
+    import asyncio
+
+    from predoc_pipeline.boards.config import SourceConfig
+    from predoc_pipeline.boards.scrapers.base import SourceSkipped
+    from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+    source = SourceConfig(
+        name="european_job_market", type="link_scan",
+        url="https://www.europeanjobmarketofeconomists.org/job-listings",
+        link_pattern=r"europeanjobmarketofeconomists\.org/job-listing/",
+        pagination_param="page",
+        pagination_zero_based=True,
+        max_pages=12,
+        skip_unresolved_link_templates=True,
+    )
+
+    fetched: list[str] = []
+
+    class RecordingHttp:
+        def set_host_interval(self, *_args):
+            pass
+
+        async def get_text(self, url: str) -> str:
+            fetched.append(url)
+            return (
+                '<a href="/job-listing/role-one/%5Bnid%5D">Postdoctoral Fellow</a>'
+                '<a href="/job-listing/role-two/%5Bnid%5D">Research Assistant</a>'
+            )
+
+    scraper = LinkScanScraper(source, RecordingHttp())
+    with pytest.raises(SourceSkipped):
+        asyncio.run(scraper.fetch_raw_postings())
+
+    # One page fetched, not twelve: the rest would be the same templates.
+    assert len(fetched) == 1, fetched
+
+
+def test_a_page_with_one_real_link_is_not_mistaken_for_a_template_page():
+    """The early abort must not fire when a usable advert link is present."""
+    import asyncio
+
+    from predoc_pipeline.boards.config import SourceConfig
+    from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+    source = SourceConfig(
+        name="european_job_market", type="link_scan",
+        url="https://www.europeanjobmarketofeconomists.org/job-listings",
+        link_pattern=r"europeanjobmarketofeconomists\.org/job-listing/",
+        pagination_param="page",
+        pagination_zero_based=True,
+        max_pages=2,
+        skip_unresolved_link_templates=True,
+    )
+
+    fetched: list[str] = []
+
+    class MixedHttp:
+        def set_host_interval(self, *_args):
+            pass
+
+        async def get_text(self, url: str) -> str:
+            fetched.append(url)
+            return (
+                '<a href="/job-listing/role-one/%5Bnid%5D">Postdoctoral Fellow</a>'
+                '<a href="/job-listing/role-two/98765">Research Assistant</a>'
+            )
+
+    scraper = LinkScanScraper(source, MixedHttp())
+    raw = asyncio.run(scraper.fetch_raw_postings())
+
+    # Page 1 carries a usable advert link, so the source is not in the
+    # unresolved-template state and pagination must continue to page 2.
+    assert len(fetched) == 2, fetched
+    assert len(raw) == 2
+
+
+def test_a_page_with_no_matching_links_is_not_a_template_page():
+    """An empty page must not be reported as an unresolved-template state."""
+    import asyncio
+
+    from predoc_pipeline.boards.config import SourceConfig
+    from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+    source = SourceConfig(
+        name="european_job_market", type="link_scan",
+        url="https://www.europeanjobmarketofeconomists.org/job-listings",
+        link_pattern=r"europeanjobmarketofeconomists\.org/job-listing/",
+        pagination_param="page",
+        max_pages=12,
+        skip_unresolved_link_templates=True,
+    )
+
+    class EmptyHttp:
+        def set_host_interval(self, *_args):
+            pass
+
+        async def get_text(self, url: str) -> str:
+            return "<html><body><p>No vacancies listed.</p></body></html>"
+
+    scraper = LinkScanScraper(source, EmptyHttp())
+    raw = asyncio.run(scraper.fetch_raw_postings())
+
+    # One page was read and the scan stopped: an empty page is empty, not the
+    # known upstream template state, so the source is not reported as skipped.
+    assert len(raw) == 1
+    assert scraper.discovery_parse_errors == []
+
+
 def test_failed_source_discovery_is_recoverable_from_dlq_without_secret_leak():
     class Recorder:
         rows = []

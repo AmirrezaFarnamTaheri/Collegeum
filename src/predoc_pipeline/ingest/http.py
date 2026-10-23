@@ -60,6 +60,15 @@ class FetchResult:
         return self.status == 200 and not self.error
 
     @property
+    def robots_blocked(self) -> bool:
+        """True when robots.txt refused the fetch.
+
+        A refusal is a policy block, not an unchanged source: the bytes were
+        never read, so nothing about this source can be compared to last run.
+        """
+        return self.status == 999
+
+    @property
     def skipped(self) -> bool:
         """304, an unchanged body, or a robots.txt refusal."""
         return self.unchanged or self.status in (304, 999)

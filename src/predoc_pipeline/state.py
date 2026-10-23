@@ -26,7 +26,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from .core.output_quality import application_url_issue, authentication_page_text, excluded_by_audit
 from .core.timeparse import format_ts, parse_datetime, utcnow
-from .models import parse_salary
+from .models import parse_salary, salary_value_is_artifact
 
 __all__ = [
     "write_journal",
@@ -100,6 +100,37 @@ def write_seen(db: Any, path: str | Path) -> int:
     return len(records)
 
 
+def _reconcile_salary_corrections(db: Any, records: list[dict[str, Any]]) -> None:
+    """Apply proven null corrections that predate correction timestamps.
+
+    Equal-timestamp journal/cache conflicts normally preserve local facts.
+    The narrow exception is an explicitly cleared salary bound whose unchanged
+    source wording proves the cached amount is a parsing artifact. Never use an
+    older journal or changed/missing wording to erase newer local evidence.
+    """
+    bounds = ("salary_min", "salary_max")
+    for record in records:
+        raw = record.get("salary_raw")
+        if not isinstance(raw, str) or not raw or not record.get("last_seen_at"):
+            continue
+        cleared = [column for column in bounds if column in record and record[column] is None]
+        if not cleared:
+            continue
+        stored = db.listing_by_url_hash(record["url_hash"])
+        if (stored is None or stored["last_seen_at"] != record["last_seen_at"]
+                or stored["salary_raw"] != raw):
+            continue
+        stale = [column for column in cleared if salary_value_is_artifact(stored[column], raw)]
+        if not stale:
+            continue
+        if not any(stored[column] is not None for column in bounds if column not in stale):
+            stale.extend(
+                column for column in ("salary_currency", "salary_period")
+                if column in record and record[column] is None
+            )
+        db.clear_listing_facts(int(stored["id"]), stale)
+
+
 def restore_if_needed(db: Any, path: str | Path, seen_path: str | Path | None = None) -> int:
     """Reconcile the derived database with complete committed journals.
 
@@ -112,6 +143,7 @@ def restore_if_needed(db: Any, path: str | Path, seen_path: str | Path | None = 
         records = read_journal(path)
         if records:
             restored = db.import_rows(records)
+            _reconcile_salary_corrections(db, records)
         if seen:
             db.import_seen(seen)
     return restored

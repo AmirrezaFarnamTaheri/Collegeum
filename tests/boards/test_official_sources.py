@@ -17,6 +17,16 @@ from predoc_pipeline.boards.http import HttpClient
 from predoc_pipeline.boards.scrapers import SCRAPERS
 from tests.boards.conftest import ROOT, fixture_text
 
+#: Boards in SOURCES that are switched off in config/sources.toml. Each one is
+#: disabled for a recorded reason (403 to runner IPs, or an unvalidated detail
+#: contract), not by accident -- so the test states the set explicitly instead
+#: of deriving it from a single exception.
+DISABLED_OFFICIAL_SOURCES = {
+    'nhh_jobs',              # detail extraction returned only 'Laster...'
+    'trinity_cambridge_jobs',  # HTTP 403 to runner IPs
+    'bruegel_jobs',          # HTTP 403 to runner IPs
+}
+
 # Fixture, advert count, representative URL fragment, expected advert facts.
 SOURCES = {
     'nuffield_jobs': ('source_expansion/nuffield', 1, '', {'deadline': date(2026, 10, 18)}),
@@ -74,7 +84,7 @@ def test_official_discovery_identity_and_metadata(name):
     fixture, count, needle, expected = SOURCES[name]
     cfg = config(name)
     result = collect(cfg, payload=fixture_text(f'{fixture}.html'))
-    assert cfg.enabled == (name != 'nhh_jobs') and not cfg.field_implied
+    assert cfg.enabled == (name not in DISABLED_OFFICIAL_SOURCES) and not cfg.field_implied
     assert result.ok
     assert len(result.posts) == len({p.job_id for p in result.posts}) == count
     assert all((p.institution, p.field_implied) == (cfg.institution, False) for p in result.posts)

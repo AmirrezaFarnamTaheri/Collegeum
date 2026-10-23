@@ -17,7 +17,7 @@ from urllib.parse import urlsplit
 from ..models import JobPostSchema
 from ..utils.dates import parse_iso_datetime, parse_posted, today
 from ..utils.text import clean_ws, html_to_text
-from .base import BaseScraper, register
+from .base import BaseScraper, DiscoveryParseError, register
 from .link_scan import LinkScanScraper
 
 log = logging.getLogger(__name__)
@@ -62,7 +62,12 @@ class WorkdayScraper(BaseScraper):
                     self.discovery_fetch_errors.append(type(exc).__name__)
                     break
                 if not isinstance(data, dict) or not isinstance(data.get("jobPostings"), list):
-                    self.discovery_parse_errors.append("invalid Workday posting payload")
+                    # Workday answers a non-JSON body (an HTML error page or a
+                    # bot check) with HTTP 200. Say which shape arrived, so the
+                    # run log names the cause instead of a generic "parse".
+                    self.discovery_parse_errors.append(
+                        "Workday jobs endpoint returned no jobPostings list"
+                    )
                     break
                 batch = data.get("jobPostings", []) or []
                 raw.extend(batch)
@@ -137,7 +142,11 @@ async def workday_api_detail(http: Any, host: str, tenant: str, site: str, path:
     """
     data = await http.get_json(f"https://{host}/wday/cxs/{tenant}/{site}{path}",
                                headers={"Accept": "application/json"})
-    info = data.get("jobPostingInfo", {}) or {}
+    if not isinstance(data, dict):
+        raise DiscoveryParseError("Workday posting endpoint returned a non-object body")
+    info = data.get("jobPostingInfo")
+    if not isinstance(info, dict):
+        raise DiscoveryParseError("Workday posting endpoint returned no jobPostingInfo")
     end = parse_iso_datetime(info.get("endDate"))
     if info.get("canApply") is False:
         post.extra["closed"] = "applications closed (Workday says it can no longer be applied to)"

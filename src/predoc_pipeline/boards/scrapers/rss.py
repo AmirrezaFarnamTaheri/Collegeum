@@ -1,8 +1,8 @@
 """Generic RSS/Atom scraper (Inomics, The Economic Misfit, Substack job digests, jobs.ac.uk feeds...)."""
 from __future__ import annotations
 
-import time
-from datetime import date
+import calendar
+from datetime import UTC, date, datetime
 from typing import Any
 
 import feedparser
@@ -17,7 +17,13 @@ def _entry_date(entry: Any) -> date | None:
     for key in ("published_parsed", "updated_parsed"):
         st = entry[key] if key in entry else None
         if st:
-            return date.fromtimestamp(time.mktime(st))
+            # feedparser normalises *_parsed to a UTC struct_time. timegm()
+            # reads those fields as UTC, and the date is then taken in UTC as
+            # well: the runner's own timezone must not move a posting to the
+            # next day. Reading the fields as local time (mktime) and then
+            # converting back happens to cancel out, but it breaks across a
+            # DST boundary; naming the timezone removes the ambiguity.
+            return datetime.fromtimestamp(calendar.timegm(st), tz=UTC).date()
     return parse_date(entry.get("published") or entry.get("updated"))
 
 

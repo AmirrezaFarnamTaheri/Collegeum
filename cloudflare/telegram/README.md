@@ -74,7 +74,9 @@ Worker secrets:
 
 - `TELEGRAM_BOT_TOKEN`: the existing bot token.
 - `OPENROUTER_API_KEY`: reuse the existing OpenRouter token. Optional
-  `OPENROUTER_API_KEYS` supports additional comma-separated tokens.
+  `OPENROUTER_API_KEYS` accepts comma, semicolon or whitespace separated tokens,
+  or a JSON array of strings. Either setting can be used alone. Plural keys are
+  tried first and duplicates are removed, matching the Python pipeline.
 - `WEBHOOK_SECRET`: a random Telegram-compatible secret (letters, digits,
   underscores/hyphens; 1–256 characters) used in the webhook header.
 - `SYNC_TOKEN`: a separate random secret used only by the pipeline.
@@ -84,10 +86,13 @@ scoped `CLOUDFLARE_API_TOKEN` with Workers/appropriate storage permissions.
 It is never used by the runtime bot and must not be copied into user messages.
 Verify the target account with `wrangler whoami` before deployment.
 The manual `deploy-telegram-worker` workflow reuses the repository's existing
-`OPENROUTER_API_KEY` and `TELEGRAM_BOT_TOKEN`. Supply Cloudflare authentication,
+`OPENROUTER_API_KEY`, optional `OPENROUTER_API_KEYS`, and `TELEGRAM_BOT_TOKEN`.
+Supply at least one OpenRouter key through either key setting, Cloudflare authentication,
 `TELEGRAM_WEBHOOK_SECRET`, and `TELEGRAM_WORKER_SYNC_TOKEN` as GitHub Actions
 secrets; set account ID and owner IDs as workflow variables. It is restricted to
 reviewed `main` code and never registers the Telegram webhook automatically.
+Each deployment replaces the Worker's OpenRouter keys with the keys currently
+configured in GitHub, so switching between the two settings cannot retain old keys.
 
 ## Activation order
 

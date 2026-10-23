@@ -27,6 +27,27 @@ _DATE_PATTERNS = (
 _TIME_SPLIT = re.compile(r"[T ]\d{1,2}:\d{2}")
 _YMD_REGEX = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 
+#: A label that introduces the date, as in "Deadline: 15 March 2027". A model
+#: that echoes the advert's own wording returns the label with the date, and a
+#: label is not part of the date -- but dropping the whole string loses a
+#: perfectly good deadline. Only a *leading* label is stripped (the regex is
+#: anchored), so a date that merely contains the word elsewhere is untouched.
+_LABEL_PREFIX = re.compile(
+    r"^(?:"
+    r"application\s+deadline|deadline(?:\s+for\s+applications?)?|"
+    r"closing\s+date|closing|closes?|"
+    r"apply\s+by|apply\s+before|apply\s+no\s+later\s+than|"
+    r"submit(?:\s+your)?(?:\s+application)?\s+by|"
+    r"applications?\s+(?:close|are\s+due|are\s+invited\s+until|"
+    r"must\s+be\s+received(?:\s+by)?)\s*(?:on|by)?|"
+    r"last\s+(?:application\s+)?date|"
+    r"bewerbungsfrist|sista\s+ans[öo]kningsdag|ans[öo]k(?:an)?\s+senast|"
+    r"s[øo]knadsfrist|ans[øo]gningsfrist|"
+    r"date\s+limite|fecha\s+l[ií]mite|scadenza"
+    r")\s*[:\-–—]?\s*",
+    re.IGNORECASE,
+)
+
 
 def valid_iso_offset(text: str) -> bool:
     """Reject overflowing offset components that fromisoformat normalizes."""
@@ -70,6 +91,11 @@ def parse_datetime(value: str | datetime | None) -> datetime | None:
         except (ValueError, OverflowError):
             return None
     text = str(value).strip()
+    # "Deadline: 15 March 2027" is a date with a label, not a date and a
+    # label. Strip one leading label and parse what is left; everything after
+    # it is still validated by the same rules, so trailing garbage stays
+    # rejected.
+    text = _LABEL_PREFIX.sub("", text, count=1).strip()
     if not text:
         return None
     if not valid_iso_offset(text):
