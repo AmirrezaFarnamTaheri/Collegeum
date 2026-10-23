@@ -90,7 +90,7 @@ def test_eval_reports_metrics_for_each_gate_path(tmp_path):
     fixtures.write_text(
         "\n".join(json.dumps(row) for row in [
             {
-                "text": "Economics department hiring a full-time research assistant.",
+                "text": "The economics department is hiring a full-time research assistant.",
                 "title": "Research Assistant",
                 "expect_pass": True,
             },
