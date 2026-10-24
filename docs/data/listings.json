@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-24T04:35:53Z",
+ "generated_at": "2026-10-24T12:46:42Z",
  "count": 162,
  "listings": [
   {
@@ -1521,7 +1521,7 @@
    "id": 216,
    "title": "Post-doctoral Fellow (HKU Stone Centre on Socio-Economic Inequality in Asia)",
    "institution": "THE UNIVERSITY OF HONG KONG",
-   "principal_investigator": "Professor Tarani Chandola, Professor Uta Schönberg, Professor Ming Wen (co-directors)",
+   "principal_investigator": "Professor Tarani Chandola",
    "country": "Hong Kong",
    "city": "Pok Fu Lam",
    "is_remote": false,
@@ -1529,15 +1529,16 @@
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 83,
    "disciplines": [
-    "Econometrics",
-    "Business and Management"
+    "Labor Economics",
+    "Development Economics",
+    "Political Economy"
    ],
    "visa": "unknown",
-   "summary": "This is a post-doctoral research position at the University of Hong Kong's Stone Centre focusing on socio-economic inequality in Asia. The role requires a PhD in economics or a related field with expertise in labour economics, trade, development, or political economy.",
+   "summary": "The role is a post-doctoral fellow at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia, jointly hosted by the Faculty of Social Sciences and the HKU Business School, with a temporary contract of one to three years. It seeks candidates holding a PhD in economics or a related discipline with experience in large-scale data analysis, web crawling, and causal inference methods.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.993,
    "first_seen_at": "2026-10-15T13:28:02Z",
    "deadline_note": null,
    "visa_note": null,
