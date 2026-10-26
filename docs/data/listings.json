@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-26T15:19:57Z",
- "count": 165,
+ "generated_at": "2026-10-26T21:08:40Z",
+ "count": 166,
  "listings": [
   {
    "id": 273,
@@ -4895,13 +4895,13 @@
    "city": "Princeton",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2027-01-15T00:00:00Z",
+   "deadline": "2027-01-15T23:59:59Z",
    "days_left": 81,
    "disciplines": [
     "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "Full-time predoctoral research position at Princeton University working with Ilyana Kuziemko, Henrik Kleven, and Evan Soltas on public economics research. Suitable for candidates seeking pre-doctoral research experience in public economics.",
+   "summary": "Full-time predoctoral research role at Princeton University working with Ilyana Kuziemko, Henrik Kleven, and Evan Soltas in the field of public economics. The position is open until January 15, 2027.",
    "language": "en",
    "apply_url": "https://bit.ly/4xP280Q",
    "source_url": "https://bit.ly/4xP280Q",
@@ -5056,16 +5056,16 @@
    "deadline": "2026-11-01T23:59:59Z",
    "days_left": 6,
    "disciplines": [
-    "Econometrics",
     "Labor Economics",
-    "Public Policy"
+    "Public Policy",
+    "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "Title Research Fellow Salary Range £40,000 - £50,000 Staff Category Academic Contract Type Indefinite Department Institute for Employment Research Title Research Fellow Title Research Fellow Select with space bar to view the full contents of the job information.",
+   "summary": "The University of Warwick's Institute for Employment Research is hiring a full-time Research Fellow to conduct rigorous labour market and public policy research using large-scale data. The role requires a PhD (or near-completion) in labour economics or a relevant social science with strong quantitative and econometric skills, and offers a tenure-track path pending successful probation.",
    "language": "en",
    "apply_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1437467533",
    "source_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1437467533",
-   "confidence": 0.924,
+   "confidence": 0.962,
    "first_seen_at": "2026-10-11T09:45:12Z",
    "deadline_note": null,
    "visa_note": null,
@@ -5492,22 +5492,25 @@
    "city": "Coventry",
    "is_remote": false,
    "duration_years": 2.0,
-   "deadline": "2026-11-05T00:00:00Z",
+   "deadline": "2026-11-05T23:59:59Z",
    "days_left": 10,
    "disciplines": [
-    "Quantitative Social Sciences",
-    "Other"
+    "Applied Microeconomics",
+    "Public Policy",
+    "Political Economy"
    ],
    "visa": "unknown",
-   "summary": "This role involves conducting qualitative research on the intersection of religion and extractive industry struggles in Brazil for an ERC-funded project. It is designed for activist-scholars experienced in participatory research methods and working with marginalised communities.",
+   "summary": "A two-year Research Fellow position on the ERC-funded RAIDS project examining religion in extractive industry struggles in Brazil. The role requires a PhD (or near-submission) candidate with expertise in Brazil, Latin America, extractive industries, religion, and Indigenous or marginalized communities, and involves participatory research with mine-affected communities.",
    "language": "en",
    "apply_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28Brazil%29-CV4-7AL/1442021533",
    "source_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28Brazil%29-CV4-7AL/1442021533",
-   "confidence": 0.96,
+   "confidence": 0.924,
    "first_seen_at": "2026-10-11T09:44:08Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28Brazil%29-CV4-7AL/1442021533"
+   ],
    "salary_min": 35608.0,
    "salary_max": 46049.0,
    "salary_currency": "GBP",
@@ -5560,6 +5563,48 @@
    "start_term": null,
    "start_date": null,
    "kind": "phd",
+   "sector": "academic"
+  },
+  {
+   "id": 61,
+   "title": "Research Fellow (USA)",
+   "institution": "University of Warwick",
+   "principal_investigator": "Professor Claire Blencowe",
+   "country": "United Kingdom",
+   "city": "Coventry",
+   "is_remote": false,
+   "duration_years": 2.0,
+   "deadline": "2026-11-05T23:59:59Z",
+   "days_left": 10,
+   "disciplines": [
+    "Political Economy",
+    "Development Economics",
+    "Environmental and Energy Economics"
+   ],
+   "visa": "unknown",
+   "summary": "This is a 24-month fixed-term postdoctoral research position on the ERC-funded RAIDS project examining religious authority in extractive industry struggles in the USA. The role involves participatory research with mine-affected communities, co-production of outputs, and requires a PhD (or near completion) with expertise in qualitative methods and relevant thematic areas.",
+   "language": "en",
+   "apply_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28USA%29-CV4-7AL/1442020233",
+   "source_url": "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28USA%29-CV4-7AL/1442020233",
+   "confidence": 0.924,
+   "first_seen_at": "2026-10-11T09:44:08Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": [
+    "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-%28USA%29-CV4-7AL/1442020233"
+   ],
+   "salary_min": 35608.0,
+   "salary_max": 46049.0,
+   "salary_currency": "GBP",
+   "salary_period": "year",
+   "salary_raw": "£35,608.00 - £46,049.00 per annum (Research Fellow); £34,610 per annum (Research Assistant level if PhD not yet conferred)",
+   "tools_required": [],
+   "tools_preferred": [],
+   "min_degree": "phd",
+   "degree_note": "unstated",
+   "start_term": "January 2027",
+   "start_date": "2027-01-01",
+   "kind": "research",
    "sector": "academic"
   },
   {
