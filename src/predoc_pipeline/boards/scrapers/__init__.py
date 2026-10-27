@@ -1,6 +1,7 @@
 """Importing this package registers every scraper type in ``SCRAPERS``."""
 
 from . import (  # noqa: F401
+    bite_jobs,
     emply_embedded,
     link_scan,
     linkedin_scraper,

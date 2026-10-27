@@ -461,14 +461,21 @@ note = "OFF: diw.de returns HTTP 403 to GitHub runner IPs (persistent across eve
 
 [[board]]
 name = "zew"
-type = "link_scan"
+type = "bite_jobs"
 group = "research_institute"
 url = "https://www.zew.de/karriere/stellenangebote"
-link_pattern = 'zew\.de/.*karriere/.*(?:detail|stelle|job|\d+)'
+# The official page renders its vacancies using B-ite, not HTML anchors.
+# The client key is read dynamically from this public first-party widget definition.
+widget_url = "https://cs-assets.b-ite.com/zew/jobs-api/mitarbeiter.js"
+api_url = "https://jobs.b-ite.com/api/v1/postings/search"
+origin = "https://www.zew.de/karriere/stellenangebote"
+category = "mitarbeiter"
+job_host = "jobs.zew.de"
+max_pages = 10
 institution = "ZEW Mannheim"
 country = "Germany"
 field_implied = true
-note = "ZEW Leibniz Centre for European Economic Research (Mannheim)."
+note = "ZEW Leibniz Centre for European Economic Research (Mannheim); public B-ite vacancy API."
 
 [[board]]
 name = "wzb"
