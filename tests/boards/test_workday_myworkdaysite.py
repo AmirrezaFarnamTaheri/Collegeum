@@ -80,3 +80,39 @@ def test_only_exact_workday_hosts_and_well_formed_paths_are_accepted():
         "https://example.invalid/redirect?next=https://wd1.myworkdaysite.com/job/RA",
     ]
     assert all(workday_parts_from_url(url) is None for url in bad)
+
+def test_redirected_predoc_shortlink_also_uses_workday_detail_api():
+    """PREDOC.org posts often redirect through bit.ly to Penn's alternate Workday host."""
+    class FakeResponse:
+        url = PENN
+
+    class FakeHTTP:
+        def __init__(self):
+            self.requested = []
+
+        async def request(self, method, url):
+            assert method == "GET"
+            assert url == "https://bit.ly/4example"
+            self.requested.append(("redirect", url))
+            return FakeResponse()
+
+        async def get_json(self, url, **_kwargs):
+            self.requested.append(("api", url))
+            return {"jobPostingInfo": {
+                "title": "Pre-Doctoral Research Specialist",
+                "jobDescription": "<p>Research project in finance and economics.</p>",
+                "canApply": True,
+            }}
+
+    http = FakeHTTP()
+    post = JobPostSchema(
+        title="Pre-Doctoral Research Specialist", source="predoc_org",
+        url="https://bit.ly/4example",
+    )
+    result = asyncio.run(generic_fetch_detail(http, post))
+    assert "Research project in finance and economics" in result
+    assert post.extra["final_url"] == PENN
+    assert http.requested == [
+        ("redirect", "https://bit.ly/4example"),
+        ("api", "https://wd1.myworkdaysite.com/wday/cxs/upenn/Wharton" + EXPECTED_PATH),
+    ]
