@@ -1,0 +1,66 @@
+name: zew-public-source-probe-temporary
+on:
+  push:
+    branches: [fix/zew-source-discovery-20261028]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Inspect ZEW official page link structure and existing parser result
+        env:
+          PYTHONPATH: src
+        run: |
+          python3 - <<'PY'
+          import asyncio
+          import re
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+          URLS = [
+            "https://www.zew.de/karriere/stellenangebote",
+            "https://www.zew.de/en/career/job-offers",
+            "https://jobs.zew.de/",
+            "https://jobs.zew.de/jobposting/59d305f789137a7d333cd8da49ae09925b3bcc05",
+          ]
+
+          async def main():
+              cfg=next(x for x in load_board_sources("config/sources.toml") if x.name=="zew")
+              async with HttpClient(timeout=17, max_retries=0, default_min_interval=0.3) as client:
+                  for url in URLS:
+                      print("=== SOURCE",url,flush=True)
+                      try:
+                          resp=await client.request("GET",url)
+                          html=resp.text
+                          soup=BeautifulSoup(html,"lxml")
+                          print("HTTP",resp.status_code,"BYTES",len(html),"TITLE",soup.title.get_text(" ",strip=True) if soup.title else "-",flush=True)
+                          for a in soup.find_all(href=True)[:600]:
+                              href=str(a.get("href") or "")
+                              txt=a.get_text(" ",strip=True)[:90]
+                              if re.search(r"jobposting|jobs\\.zew|stellenangebot|doctoral|postdoc|vacancy|karriere",href+" "+txt,re.I):
+                                  print("LINK",a.name,repr(txt),repr(href[:250]),"CARD",a.parent.get_text(" ",strip=True)[:120],flush=True)
+                          for node in soup.find_all(string=re.compile("Postdoctoral|Doctoral Researcher|Gesundheitsmärkte",re.I))[:7]:
+                              parent=node.parent
+                              print("MATCH",parent.name,repr(parent.get_text(" ",strip=True)[:100]),"HTML",repr(str(parent.parent)[:1300]),flush=True)
+                          for tag in soup.find_all("script",src=True):
+                              if re.search("job|karriere|stellen|career",tag.get("src",""),re.I):
+                                  print("SCRIPT",tag["src"][:250],flush=True)
+                          parser=LinkScanScraper(cfg,client)
+                          posts=parser.parse_postings([(url,html)])
+                          print("PARSER",[(p.title,p.url) for p in posts[:12]],"errors",parser.discovery_parse_errors,flush=True)
+                      except Exception as exc:
+                          print("FETCH_ERROR",type(exc).__name__,str(exc)[:300],flush=True)
+          asyncio.run(main())
+          PY
