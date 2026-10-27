@@ -82,3 +82,13 @@ def test_iies_does_not_match_generic_university_jobs_index():
 def test_rwi_essen_routes_to_official_jobs_page_not_general_career_landing():
     cfg = source("rwi_essen")
     assert cfg.opt("url") == "https://www.rwi-essen.de/rwi/karriere/jobs"
+
+def test_bis_official_vacancy_links_are_discovered():
+    """The BIS migrated its vacancies to /vacancy/jrNNNNNN (verified 2026-10-28)."""
+    import re
+
+    cfg = source("bis")
+    assert cfg.opt("url") == "https://www.bis.org/about/careers/vacancies"
+    assert re.search(cfg.opt("link_pattern"), "https://www.bis.org/vacancy/jr100491")
+    assert re.search(cfg.opt("link_pattern"), "https://www.bis.org/vacancy/jr100516")
+    assert not re.search(cfg.opt("link_pattern"), "https://www.bis.org/about/careers/vacancies")
