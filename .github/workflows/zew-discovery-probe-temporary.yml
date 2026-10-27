@@ -28,11 +28,11 @@ jobs:
 
           async def main():
               async with HttpClient(timeout=20,max_retries=0,default_min_interval=0.2) as http:
-                  s=await http.get_text("https://static.b-ite.com/jobs-api/v5/api-v5.js")
-                  for term in ["postingSearchUrl", "apiKey", "this.key", "client.config.key", "Client = function", "Client.prototype", "prototype.search", "searchPostings", "function Client", "new HttpClient", "requestPostings", "post(config", "this.http.post", "key: this.config.key", "this.config.postingSearchUrl"]:
-                      hits=list(re.finditer(re.escape(term),s,re.I))
-                      print("TERM",term,"COUNT",len(hits),flush=True)
-                      for m in hits[:5]:
-                          print("EXCERPT",term,"OFFSET",m.start(),repr(s[max(0,m.start()-500):m.end()+900]),flush=True)
+                  js=await http.get_text("https://static.b-ite.com/jobs-api/v5/api-v5.js")
+                  for token in ["Client.prototype.prepareRequestConfig = ", "function createDefaultSearchConfig()", "function validateSearchConfig(config)", "Client.prototype.getUrl = "]:
+                      at=js.find(token)
+                      print("SYMBOL",token,"INDEX",at,flush=True)
+                      if at>=0:
+                          print("CODE",repr(js[at:at+2100]),flush=True)
           asyncio.run(main())
           PY
