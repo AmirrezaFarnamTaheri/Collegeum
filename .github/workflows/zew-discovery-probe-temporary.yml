@@ -27,12 +27,37 @@ jobs:
           from predoc_pipeline.boards.http import HttpClient
 
           async def main():
-              async with HttpClient(timeout=20,max_retries=0,default_min_interval=0.2) as http:
-                  js=await http.get_text("https://static.b-ite.com/jobs-api/v5/api-v5.js")
-                  for token in ["Client.prototype.prepareRequestConfig = ", "function createDefaultSearchConfig()", "function validateSearchConfig(config)", "Client.prototype.getUrl = "]:
-                      at=js.find(token)
-                      print("SYMBOL",token,"INDEX",at,flush=True)
-                      if at>=0:
-                          print("CODE",repr(js[at:at+2100]),flush=True)
+              async with HttpClient(timeout=22,max_retries=0,default_min_interval=0.5) as http:
+                  script=await http.get_text("https://cs-assets.b-ite.com/zew/jobs-api/mitarbeiter.js")
+                  match=re.search(r'key:\\s*"([A-Za-z0-9]+)"',script)
+                  if not match:
+                      print("KEY_MISSING",flush=True)
+                      return
+                  key=match.group(1)
+                  print("PUBLIC_CLIENT_KEY_DISCOVERED",len(key),flush=True)
+                  payload={
+                      "key":key,
+                      "channel":0,
+                      "locale":"de",
+                      "sort":{"by":"startsOn","order":"desc"},
+                      "filter":{"custom.zuordnung_homepage":{"in":["mitarbeiter"]},"locale":{"in":["*"]}},
+                      "origin":"https://www.zew.de/karriere/stellenangebote",
+                  }
+                  try:
+                      data=await http.post_json("https://jobs.b-ite.com/api/v1/postings/search",payload)
+                      print("RESPONSE_TYPE",type(data).__name__,"KEYS",list(data)[:35] if isinstance(data,dict) else None,flush=True)
+                      if isinstance(data,dict):
+                          for key2,val in data.items():
+                              if key2=="jobPostings":
+                                  print("JOB_POSTINGS",len(val) if isinstance(val,list) else type(val).__name__,flush=True)
+                                  if isinstance(val,list):
+                                      for item in val[:8]:
+                                          if isinstance(item,dict):
+                                              public={p:item.get(p) for p in ["id","title","url","applyUrl","locale","startsOn","endsOn","endsAt","deadline","custom"] }
+                                              print("POSTING",str(public)[:1200],flush=True)
+                              else:
+                                  print("METRIC",key2,repr(val)[:250],flush=True)
+                  except Exception as e:
+                      print("POST_FAIL",type(e).__name__,str(e)[:400],flush=True)
           asyncio.run(main())
           PY
