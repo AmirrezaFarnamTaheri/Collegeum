@@ -61,6 +61,8 @@ def public_failure(message: Any) -> str:
         return "Unsupported board adapter"
     if "parse" in lowered or "decode" in lowered or "invalid json" in lowered:
         return "Response could not be parsed"
+    if "discovery limit" in lowered or "pagination cap" in lowered:
+        return "Discovery truncated by configured limit"
     if "skipped" in lowered:
         return "Source skipped by its adapter"
     return "Source request failed"
@@ -76,6 +78,22 @@ def public_source_stats(stats: dict[str, Any]) -> dict[str, Any]:
             "kind", "items", "raw", "relevant", "new", "fetched", "errors", "ok",
             "skipped", "may_be_empty", "seconds", "unchanged", "known", "deferred", "rejected",
         }}
+        # Structured, allowlisted diagnostics avoid publishing untrusted URLs or
+        # exception bodies while preserving the distinction between fetch,
+        # parsing and bounded-pagination failures.
+        counts = data.get("failure_counts")
+        if isinstance(counts, dict):
+            public["failure_counts"] = {
+                name: value if type(value) is int and value >= 0 else 0
+                for name in ("fetch", "parse", "limit")
+                for value in (counts.get(name),)
+            }
+        stage = data.get("failure_stage")
+        if isinstance(stage, str) and stage and all(
+            part in {"fetch", "parse", "limit", "timeout", "discovery"}
+            for part in stage.split("/")
+        ):
+            public["failure_stage"] = stage
         public["messages"] = list(dict.fromkeys(
             public_failure(message) for message in (data.get("messages") or [])[:5]
         ))
