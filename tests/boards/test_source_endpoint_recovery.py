@@ -110,3 +110,62 @@ def test_uzh_department_jobs_page_exposes_current_predoc():
     assert result.ok
     assert [post.url for post in result.posts] == [link]
     assert "Pre-Doctoral" in result.posts[0].title
+
+
+def test_niesr_uses_actual_careers_page_and_treats_advertised_empty_period_as_normal():
+    """The old /about/vacancies route now opens an unrelated economics news article."""
+    cfg = source("niesr")
+    assert cfg.opt("url") == "https://niesr.ac.uk/careers"
+    assert cfg.may_be_empty is True
+    html = "<h2>Current vacancies</h2><p>Sorry, we do not have any vacancies at the moment</p>"
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert result.ok and result.as_stats()["errors"] == 0
+    assert result.posts == []
+
+
+def test_niesr_preserves_future_official_research_vacancy_discovery():
+    cfg = source("niesr")
+    url = "https://niesr.ac.uk/vacancy/research-assistant-in-economics"
+    html = '<a href="/vacancy/research-assistant-in-economics">Research Assistant in Economics</a>'
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert result.ok
+    assert [post.url for post in result.posts] == [url]
+
+
+def test_academictransfer_recovers_job_cards_with_empty_overlay_anchor():
+    """Current cards have a full-area empty anchor and the real title in a sibling h3."""
+    cfg = source("academictransfer")
+    assert cfg.country is None  # Search is international; never invent a Dutch location.
+    page = cfg.urls()[0] if hasattr(cfg, "urls") else cfg.opt("urls")[0]
+    html = """
+    <article class="text-aqua-500 relative grid grid-cols-10 gap-6">
+      <a class="absolute inset-0" href="/en/jobs/364701/assistant-professor-in-economics/"></a>
+      <div class="col-span-10 md:col-span-6"><div>
+        <h3>Assistant Professor in Economics</h3>
+        <p class="organization">University of Groningen</p>
+      </div></div>
+    </article>
+    <article class="text-aqua-500 relative grid grid-cols-10 gap-6">
+      <a class="absolute inset-0" href="/en/jobs/363610/researcher-economics-of-eu-common-agricultural-policy/"></a>
+      <div><h3>Researcher - Economics of EU Common Agricultural Policy</h3>
+        <p class="organization">Wageningen University &amp; Research</p>
+      </div>
+    </article>
+    """
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(page, html))
+    ], 1, 5))[0]
+    assert result.ok
+    assert [post.title for post in result.posts] == [
+        "Assistant Professor in Economics",
+        "Researcher - Economics of EU Common Agricultural Policy",
+    ]
+    assert result.posts[0].url == (
+        "https://www.academictransfer.com/en/jobs/364701/assistant-professor-in-economics/"
+    )
+    assert all(post.country is None for post in result.posts)
+    assert all("University" in post.institution for post in result.posts)
