@@ -439,13 +439,13 @@ name = "ifo"
 type = "link_scan"
 group = "research_institute"
 url = "https://www.ifo.de/karriere-am-ifo"
-link_pattern = 'ifo\.de/stellenangebot(?:/|-)'
-prefer_card_heading = true
-card_title = true
+# The 2026 ifo site renders its vacancy links as <qz-link>, not standard <a>.
+# Use the established structured-selector path for both live and legacy cards.
+selectors = { item = "div.bg-theme-primary-fg, div.views-row, article.teaser", title = "h5", link = "qz-link[href*='stellenangebot'], a[href*='stellenangebot']" }
 institution = "ifo Institute"
 country = "Germany"
 field_implied = true
-note = "Leibniz Institute for Economic Research at the University of Munich; current vacancy cards link to /stellenangebot/."
+note = "Leibniz Institute for Economic Research at the University of Munich; matches official job-card custom elements and older HTML links."
 
 [[board]]
 name = "diw_berlin"
