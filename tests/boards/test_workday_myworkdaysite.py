@@ -4,8 +4,6 @@ The collection logs contain wd1.myworkdaysite.com/recruiting/upenn/... URLs;
 these are JavaScript job shells, not trustworthy detail text.
 """
 
-from __future__ import annotations
-
 import asyncio
 
 from predoc_pipeline.boards.models import JobPostSchema
