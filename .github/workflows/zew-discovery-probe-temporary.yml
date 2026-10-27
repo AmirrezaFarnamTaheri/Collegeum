@@ -21,46 +21,40 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          python3 - <<'PY'
+python3 - <<'PY'
           import asyncio
           import re
           from bs4 import BeautifulSoup
           from predoc_pipeline.boards.http import HttpClient
-          from predoc_pipeline.boards.config import load_board_sources
-          from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
-
-          URLS = [
-            "https://www.zew.de/karriere/stellenangebote",
-            "https://www.zew.de/en/career/job-offers",
-            "https://jobs.zew.de/",
-            "https://jobs.zew.de/jobposting/59d305f789137a7d333cd8da49ae09925b3bcc05",
-          ]
 
           async def main():
-              cfg=next(x for x in load_board_sources("config/sources.toml") if x.name=="zew")
-              async with HttpClient(timeout=17, max_retries=0, default_min_interval=0.3) as client:
-                  for url in URLS:
-                      print("=== SOURCE",url,flush=True)
-                      try:
-                          resp=await client.request("GET",url)
-                          html=resp.text
-                          soup=BeautifulSoup(html,"lxml")
-                          print("HTTP",resp.status_code,"BYTES",len(html),"TITLE",soup.title.get_text(" ",strip=True) if soup.title else "-",flush=True)
-                          for a in soup.find_all(href=True)[:600]:
-                              href=str(a.get("href") or "")
-                              txt=a.get_text(" ",strip=True)[:90]
-                              if re.search(r"jobposting|jobs\\.zew|stellenangebot|doctoral|postdoc|vacancy|karriere",href+" "+txt,re.I):
-                                  print("LINK",a.name,repr(txt),repr(href[:250]),"CARD",a.parent.get_text(" ",strip=True)[:120],flush=True)
-                          for node in soup.find_all(string=re.compile("Postdoctoral|Doctoral Researcher|Gesundheitsmärkte",re.I))[:7]:
-                              parent=node.parent
-                              print("MATCH",parent.name,repr(parent.get_text(" ",strip=True)[:100]),"HTML",repr(str(parent.parent)[:1300]),flush=True)
-                          for tag in soup.find_all("script",src=True):
-                              if re.search("job|karriere|stellen|career",tag.get("src",""),re.I):
-                                  print("SCRIPT",tag["src"][:250],flush=True)
-                          parser=LinkScanScraper(cfg,client)
-                          posts=parser.parse_postings([(url,html)])
-                          print("PARSER",[(p.title,p.url) for p in posts[:12]],"errors",parser.discovery_parse_errors,flush=True)
-                      except Exception as exc:
-                          print("FETCH_ERROR",type(exc).__name__,str(exc)[:300],flush=True)
+              async with HttpClient(timeout=22,max_retries=0,default_min_interval=0.2) as http:
+                  page=await http.get_text("https://www.zew.de/karriere/stellenangebote")
+                  soup=BeautifulSoup(page,"lxml")
+                  for tag in soup.find_all(True):
+                      classes=" ".join(tag.get("class") or [])
+                      attrs=" ".join(tag.attrs)
+                      if any(s in (classes+" "+attrs).lower() for s in ["bite", "b-ite", "job-widget", "job-api"]):
+                          tagname=tag.name
+                          keys=list(tag.attrs)
+                          safe_attrs={k:v for k,v in tag.attrs.items() if k in {"id","class","src","type","data-app-id","data-api-url","data-company-id","data-job-language"}}
+                          print("WIDGET",tagname,keys,repr(safe_attrs)[:350],flush=True)
+                  for token in ["jobs-api","api-loader-v1","bite-job","jobposting","b-ite.com","job-list"]:
+                      ix=page.find(token)
+                      if ix>=0:
+                          print("MARKER",token,"CONTEXT",repr(page[max(0,ix-110):ix+190]),flush=True)
+                  script_url="https://static.b-ite.com/jobs-api/loader-v1/api-loader-v1.min.js"
+                  try:
+                      script=await http.get_text(script_url)
+                      print("LOADER_BYTES",len(script),flush=True)
+                      urls=list(dict.fromkeys(re.findall(r'https?://[a-zA-Z0-9._/-]+',script)))
+                      print("LOADER_URLS",urls[:25],flush=True)
+                      for token in ["/jobs", "/jobposting", "companyId", "api/v1", "baseUrl", "joboffers", "api/v2", "/list"]:
+                          matches=list(re.finditer(re.escape(token),script,re.I))
+                          print("JS_MARKER",token,"COUNT",len(matches),flush=True)
+                          for m in matches[:2]:
+                              print("JS_CONTEXT",token,repr(script[max(0,m.start()-150):m.end()+170]),flush=True)
+                  except Exception as e:
+                      print("SCRIPT_ERROR",type(e).__name__,str(e)[:200],flush=True)
           asyncio.run(main())
           PY
