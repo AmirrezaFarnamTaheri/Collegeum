@@ -29,7 +29,7 @@ jobs:
           async def main():
               async with HttpClient(timeout=22,max_retries=0,default_min_interval=0.5) as http:
                   script=await http.get_text("https://cs-assets.b-ite.com/zew/jobs-api/mitarbeiter.js")
-                  match=re.search(r'key:\\s*"([A-Za-z0-9]+)"',script)
+                  match=re.search(r'key:\s*"([A-Za-z0-9]+)"',script)
                   if not match:
                       print("KEY_MISSING",flush=True)
                       return
