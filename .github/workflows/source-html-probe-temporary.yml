@@ -61,7 +61,11 @@ jobs:
                                   print("TOKEN",needle,html.lower().count(needle.lower()),flush=True)
                               if key == "academictransfer":
                                   for article in soup.select("article")[:3]:
-                                      print("ARTICLE",str(article)[:2600],flush=True)
+                                      print("ARTICLE_TEXT",article.get_text(" ",strip=True)[:950],flush=True)
+                                      for tag in article.find_all(["span","p","div"],limit=130):
+                                          txt=tag.get_text(" ",strip=True)
+                                          if ("Utrecht" in txt or "Tilburg" in txt or "Wageningen" in txt) and len(txt)<160:
+                                              print("EMPLOYER_TAG",tag.name,str(tag.get("class"))[:180],repr(txt),flush=True)
                               if key == "niesr":
                                   tx=soup.get_text(" ",strip=True)
                                   ix=tx.lower().find("current vacancies")
