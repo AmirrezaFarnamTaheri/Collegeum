@@ -267,7 +267,9 @@ country = "Denmark"
 name = "uzh"
 type = "link_scan"
 group = "university"
-url = "https://jobs.uzh.ch/"
+# jobs.uzh.ch redirects to an iframe-backed university-wide JS job board.
+# The Economics department has actionable canonical job links in plain HTML.
+url = "https://www.econ.uzh.ch/en/about/jobs.html"
 link_pattern = 'jobs\.uzh\.ch/job-vacancies/'
 institution = "University of Zurich"
 country = "Switzerland"
