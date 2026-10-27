@@ -134,6 +134,7 @@ def test_niesr_preserves_future_official_research_vacancy_discovery():
     ], 1, 5))[0]
     assert result.ok
     assert [post.url for post in result.posts] == [url]
+    assert result.posts[0].field_implied is True  # NIESR remains an economics institute.
 
 
 def test_academictransfer_recovers_job_cards_with_empty_overlay_anchor():
