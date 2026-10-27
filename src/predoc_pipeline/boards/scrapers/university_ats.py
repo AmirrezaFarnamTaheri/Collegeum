@@ -160,14 +160,45 @@ async def workday_api_detail(http: Any, host: str, tenant: str, site: str, path:
 
 
 def workday_parts_from_url(url: str) -> tuple[str, str, str, str] | None:
-    """https://ubc.wd10.myworkdayjobs.com/en-US/ubcstaffjobs/job/X/Y_JR1 -> (host, tenant, site, '/job/X/Y_JR1')."""
-    if "myworkdayjobs.com" not in urlsplit(url).netloc or "/job/" not in url:
-        return None
+    """Parse the two public Workday job-URL families into a CXS detail endpoint.
+
+    myworkdayjobs.com: /[locale/]site/job/location/title_req
+    myworkdaysite.com: /[locale/]recruiting/tenant/site/job/location/title_req
+
+    Do not use substring matching on an untrusted netloc: a lookalike host must
+    never be treated as a Workday API destination.
+    """
     try:
-        host, tenant, site, _ = parse_workday_url(url)
+        parts = urlsplit(url)
+        host = (parts.hostname or "").lower()
+        if (
+            parts.scheme != "https"
+            or parts.username is not None
+            or parts.password is not None
+            or parts.port not in (None, 443)
+        ):
+            return None
     except ValueError:
         return None
-    return host, tenant, site, "/job/" + urlsplit(url).path.split("/job/", 1)[1]
+
+    segments = [part for part in parts.path.split("/") if part]
+    if segments and _LOCALE.fullmatch(segments[0]):
+        segments.pop(0)
+
+    if re.fullmatch(r"[a-z0-9][a-z0-9-]*\.wd\d+\.myworkdayjobs\.com", host):
+        if len(segments) < 3 or segments[1] != "job":
+            return None
+        tenant, site, posting = host.split(".", 1)[0], segments[0], segments[2:]
+    elif re.fullmatch(r"wd\d+\.myworkdaysite\.com", host):
+        if len(segments) < 5 or segments[0] != "recruiting" or segments[3] != "job":
+            return None
+        tenant, site, posting = segments[1], segments[2], segments[4:]
+    else:
+        return None
+
+    if any(part in {".", ".."} for part in (tenant, site, *posting)):
+        return None
+    return host, tenant, site, "/job/" + "/".join(posting)
 
 
 @register
