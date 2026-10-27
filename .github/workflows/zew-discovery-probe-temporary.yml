@@ -31,31 +31,21 @@ jobs:
               async with HttpClient(timeout=22,max_retries=0,default_min_interval=0.2) as http:
                   page=await http.get_text("https://www.zew.de/karriere/stellenangebote")
                   soup=BeautifulSoup(page,"lxml")
-                  for tag in soup.find_all(True):
-                      classes=" ".join(tag.get("class") or [])
-                      attrs=" ".join(tag.attrs)
-                      if any(s in (classes+" "+attrs).lower() for s in ["bite", "b-ite", "job-widget", "job-api"]):
-                          tagname=tag.name
-                          keys=list(tag.attrs)
-                          safe_attrs={k:v for k,v in tag.attrs.items() if k in {"id","class","src","type","data-app-id","data-api-url","data-company-id","data-job-language"}}
-                          print("WIDGET",tagname,keys,repr(safe_attrs)[:350],flush=True)
-                  for token in ["jobs-api","api-loader-v1","bite-job","jobposting","b-ite.com","job-list"]:
-                      ix=page.find(token)
-                      if ix>=0:
-                          print("MARKER",token,"CONTEXT",repr(page[max(0,ix-110):ix+190]),flush=True)
-                  script_url="https://static.b-ite.com/jobs-api/loader-v1/api-loader-v1.min.js"
-                  try:
-                      script=await http.get_text(script_url)
-                      print("LOADER_BYTES",len(script),flush=True)
-                      print("LOADER_SRC",script,flush=True)
-                      urls=list(dict.fromkeys(re.findall(r'https?://[a-zA-Z0-9._/-]+',script)))
-                      print("LOADER_URLS",urls[:25],flush=True)
-                      for token in ["/jobs", "/jobposting", "companyId", "api/v1", "baseUrl", "joboffers", "api/v2", "/list"]:
-                          matches=list(re.finditer(re.escape(token),script,re.I))
-                          print("JS_MARKER",token,"COUNT",len(matches),flush=True)
-                          for m in matches[:2]:
-                              print("JS_CONTEXT",token,repr(script[max(0,m.start()-150):m.end()+170]),flush=True)
-                  except Exception as e:
-                      print("SCRIPT_ERROR",type(e).__name__,str(e)[:200],flush=True)
+                  print("LISTING_CATEGORIES",[t.get("data-bite-jobs-api-listing") for t in soup.select("[data-bite-jobs-api-listing]")],flush=True)
+                  for name in ["mitarbeiter.min.js","mitarbeiter.js"]:
+                      endpoint="https://cs-assets.b-ite.com/zew/jobs-api/"+name
+                      try:
+                          code=await http.get_text(endpoint)
+                          print("SOURCE",endpoint,"BYTES",len(code),"PREFIX",repr(code[:2600]),flush=True)
+                          print("SUFFIX",repr(code[-2300:]),flush=True)
+                          allurls=list(dict.fromkeys(re.findall(r'https?://[a-zA-Z0-9._/-]+',code)))
+                          print("URLS",allurls[:40],flush=True)
+                          for token in ["jobposting","api/v5","api/v1","jobportal","filters","openings","jobOffer","Postdoctoral","b-ite.com","jobs.zew.de","document.write","fetch("]:
+                              matches=list(re.finditer(re.escape(token),code,re.I))
+                              print("TOKEN",token,"N",len(matches),flush=True)
+                              for m in matches[:2]:
+                                  print("EXCERPT",token,repr(code[max(0,m.start()-130):m.end()+210]),flush=True)
+                      except Exception as e:
+                          print("FETCH_ERROR",name,type(e).__name__,str(e)[:250],flush=True)
           asyncio.run(main())
           PY
