@@ -27,6 +27,7 @@ jobs:
           from predoc_pipeline.boards.config import load_board_sources
           from predoc_pipeline.boards.http import HttpClient
           from predoc_pipeline.boards.scrapers.university_ats import WorkdayScraper,parse_workday_url
+          from predoc_pipeline.boards.collector import _scrape_all
           NAMES = ("ubc","mcgill","uchicago_bfi")
           configs = {s.name:s for s in load_board_sources("config/sources.toml")}
           async def main():
@@ -61,6 +62,11 @@ jobs:
                               print("PAGE",name,repr(term),"total",data.get("total"),"count",len(batch),"parsed",len(posts),"parse_errors",dict(Counter(reasons)),"anomalies",dict(anomalies),flush=True)
                           except Exception as exc:
                               print("FETCH",name,repr(term),type(exc).__name__,str(exc)[:130],flush=True)
+                      report=(await _scrape_all([WorkdayScraper(source,http)],1,150))[0]
+                      stats=report.as_stats()
+                      print("FULL",name,"items",len(report.posts),"ok",report.ok,
+                            "failure_stage",stats["failure_stage"],
+                            "failure_counts",stats["failure_counts"],"error",report.error,flush=True)
                       print("END",name,flush=True)
           asyncio.run(main())
           PY
