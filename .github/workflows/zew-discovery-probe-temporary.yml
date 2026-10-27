@@ -21,3 +21,26 @@ jobs:
         env:
           PYTHONPATH: src
         run: uv run pytest -q tests/boards/test_bite_jobs.py
+
+      - name: Verify official ZEW B-ite adapter (read-only; no persistence or sending)
+        env:
+          PYTHONPATH: src
+        run: |
+          uv run python - <<'PY'
+          import asyncio
+          from predoc_pipeline.boards.collector import _scrape_all
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.scrapers import SCRAPERS
+
+          async def main():
+              source=next(x for x in load_board_sources("config/sources.toml") if x.name=="zew")
+              async with HttpClient(timeout=22,max_retries=0,default_min_interval=0.5) as http:
+                  result=(await _scrape_all([SCRAPERS[source.type](source,http)],1,40))[0]
+                  print("LIVE_ZEW_HEALTH",result.as_stats(),flush=True)
+                  print("LIVE_ZEW_POSITIONS",[(p.title,p.url,str(p.deadline)) for p in result.posts],flush=True)
+                  assert result.ok, "ZEW endpoint degraded; inspect source-level error"
+                  assert len(result.posts)>=4, "ZEW jobs still missing despite current official adverts"
+                  assert any("Postdoctoral" in p.title for p in result.posts)
+          asyncio.run(main())
+          PY
