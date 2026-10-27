@@ -167,7 +167,7 @@ def test_academictransfer_recovers_job_cards_with_empty_overlay_anchor():
         "Researcher - Economics of EU Common Agricultural Policy",
     ]
     assert result.posts[0].url == (
-        "https://www.academictransfer.com/en/jobs/364701/assistant-professor-in-economics/"
+        "https://www.academictransfer.com/en/jobs/364701/assistant-professor-in-economics"
     )
     assert all(post.country is None for post in result.posts)
     assert [post.institution for post in result.posts] == [
