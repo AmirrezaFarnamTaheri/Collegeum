@@ -47,6 +47,7 @@ jobs:
                   try:
                       script=await http.get_text(script_url)
                       print("LOADER_BYTES",len(script),flush=True)
+                      print("LOADER_SRC",script,flush=True)
                       urls=list(dict.fromkeys(re.findall(r'https?://[a-zA-Z0-9._/-]+',script)))
                       print("LOADER_URLS",urls[:25],flush=True)
                       for token in ["/jobs", "/jobposting", "companyId", "api/v1", "baseUrl", "joboffers", "api/v2", "/list"]:
