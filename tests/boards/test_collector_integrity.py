@@ -76,3 +76,26 @@ def test_link_scan_pagination_cap_is_visible_when_more_jobs_may_exist():
     assert health["ok"] is False
     assert health["errors"] >= 1
     assert "limit" in str(health["failure_stage"])
+
+def test_stalled_source_uses_its_own_bounded_timeout():
+    """A blocked provider must not occupy a collector slot for the global timeout."""
+    class SlowScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+            self.name = cfg.name
+            self.discovery_fetch_errors = []
+            self.discovery_parse_errors = []
+            self.discovery_limits = []
+
+        async def run(self):
+            await asyncio.sleep(0.05)
+            return [], 0
+
+    cfg = SourceConfig(
+        name="slow", type="link_scan", url="https://example.org/jobs",
+        source_timeout_seconds=0.005,
+    )
+    result = asyncio.run(collector._scrape_all([SlowScraper(cfg)], 1, 10))[0]
+    assert not result.ok
+    assert result.failure_stage == "timeout"
+    assert "timed out" in result.error

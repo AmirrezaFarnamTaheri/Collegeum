@@ -255,6 +255,9 @@ name = "copenhagen"
 type = "link_scan"
 group = "university"
 url = "https://employment.ku.dk/all-vacancies/"
+# This endpoint repeatedly consumed ~136s per scheduled run without a usable result.
+# Preserve the failure in health; free the scrape slot after one minute.
+source_timeout_seconds = 60
 link_pattern = 'all-vacancies/?\?show=\d+'
 bare_date_is_deadline = true
 institution = "University of Copenhagen"
@@ -264,7 +267,9 @@ country = "Denmark"
 name = "uzh"
 type = "link_scan"
 group = "university"
-url = "https://jobs.uzh.ch/"
+# jobs.uzh.ch redirects to an iframe-backed university-wide JS job board.
+# The Economics department has actionable canonical job links in plain HTML.
+url = "https://www.econ.uzh.ch/en/about/jobs.html"
 link_pattern = 'jobs\.uzh\.ch/job-vacancies/'
 institution = "University of Zurich"
 country = "Switzerland"
@@ -617,8 +622,8 @@ note = "Bank of England Research Assistants and Analysts in monetary policy and 
 name = "bis"
 type = "link_scan"
 group = "central_bank"
-url = "https://www.bis.org/careers/vacancies.htm"
-link_pattern = 'bis\.org/.*vacancies/'
+url = "https://www.bis.org/about/careers/vacancies"
+link_pattern = 'bis\.org/vacancy/jr\d+$'
 institution = "Bank for International Settlements"
 country = "Switzerland"
 field_implied = true

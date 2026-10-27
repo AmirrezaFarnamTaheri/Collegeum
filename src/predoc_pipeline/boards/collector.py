@@ -71,6 +71,11 @@ class SourceResult:
             "seconds": round(self.seconds, 1),
             "messages": [self.error] if self.error else [],
             "failure_stage": self.failure_stage,
+            "failure_counts": {
+                "fetch": len(self.scraper.discovery_fetch_errors),
+                "parse": len(self.scraper.discovery_parse_errors),
+                "limit": len(self.scraper.discovery_limits),
+            },
         }
 
 
@@ -127,8 +132,11 @@ async def _scrape_all(
         async with sem:
             t0 = time.monotonic()
             res = SourceResult(s)
+            # Cap slow/problematic endpoints without weakening the global safety limit.
+            configured = s.cfg.source_timeout_seconds
+            source_timeout = min(timeout, configured) if configured is not None else timeout
             try:
-                res.posts, _ = await asyncio.wait_for(s.run(), timeout=timeout)
+                res.posts, _ = await asyncio.wait_for(s.run(), timeout=source_timeout)
                 if s.discovery_fetch_errors:
                     res.ok = False
                     res.failure_stage = "fetch"
@@ -146,7 +154,7 @@ async def _scrape_all(
                     note = f"{len(s.discovery_limits)} discovery limit(s) reached"
                     res.error = f"{res.error}; {note}" if res.error else note
             except TimeoutError:
-                res.ok, res.error = False, f"timed out after {timeout:.0f}s"
+                res.ok, res.error = False, f"timed out after {source_timeout:g}s"
                 res.failure_stage = "timeout"
             except SourceSkipped as exc:
                 res.skipped, res.error = True, f"skipped: {exc}"

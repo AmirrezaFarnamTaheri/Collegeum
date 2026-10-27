@@ -45,6 +45,8 @@ class SourceConfig(BaseModel):
     field_implied: bool = False
     min_interval: float | None = None  # seconds between requests to this host
     may_be_empty: bool = False  # small department pages: "no jobs right now" is normal
+    source_timeout_seconds: float | None = Field(default=None, gt=0, allow_inf_nan=False)
+    # Optional tighter ceiling for known-unresponsive providers; global timeout still caps it.
 
     def opt(self, key: str, default: Any = None) -> Any:
         return (self.model_extra or {}).get(key, default)
