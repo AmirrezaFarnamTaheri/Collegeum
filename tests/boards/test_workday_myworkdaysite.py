@@ -6,6 +6,9 @@ these are JavaScript job shells, not trustworthy detail text.
 
 import asyncio
 
+from predoc_pipeline.boards.models import JobPostSchema
+from predoc_pipeline.boards.scrapers.base import generic_fetch_detail
+from predoc_pipeline.boards.scrapers.university_ats import workday_parts_from_url
 
 PENN = (
     "https://wd1.myworkdaysite.com/en-US/recruiting/upenn/Wharton/job/"
@@ -18,8 +21,6 @@ EXPECTED_PATH = (
 
 
 def test_myworkdaysite_recruiting_job_url_resolves_to_correct_cxs_tenant():
-    from predoc_pipeline.boards.scrapers.university_ats import workday_parts_from_url
-
     assert workday_parts_from_url(PENN) == (
         "wd1.myworkdaysite.com", "upenn", "Wharton", EXPECTED_PATH
     )
@@ -33,9 +34,6 @@ def test_myworkdaysite_recruiting_job_url_resolves_to_correct_cxs_tenant():
 
 
 def test_workday_detail_reader_uses_job_api_not_javascript_shell():
-    from predoc_pipeline.boards.models import JobPostSchema
-    from predoc_pipeline.boards.scrapers.base import generic_fetch_detail
-
     class FakeHTTP:
         def __init__(self):
             self.requests = []
