@@ -76,6 +76,9 @@ jobs:
           PYTHONPATH=src python3 tools/audit_pipeline_outputs.py \
             --output build/output-audit.json
 
+      - name: Diagnose import formatter (temporary)
+        run: ruff check --diff tests/boards/test_workday_myworkdaysite.py || true
+
       - name: Lint
         run: ruff check src tests tools
 
