@@ -172,3 +172,15 @@ def test_academictransfer_recovers_job_cards_with_empty_overlay_anchor():
     assert [post.institution for post in result.posts] == [
         "Utrecht University", "Wageningen University & Research",
     ]
+
+
+def test_niesr_unrelated_news_page_must_not_be_treated_as_a_valid_empty_jobs_page():
+    """Redirects or markup drift must not silently mask real vacancies."""
+    cfg = source("niesr")
+    html = "<h1>Vacancies Fall by Fastest Pace in Two Years</h1><p>Economic news</p>"
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert not result.ok
+    assert result.as_stats()["errors"] > 0
+    assert "parse" in result.as_stats()["failure_stage"]
