@@ -71,6 +71,11 @@ class SourceResult:
             "seconds": round(self.seconds, 1),
             "messages": [self.error] if self.error else [],
             "failure_stage": self.failure_stage,
+            "failure_counts": {
+                "fetch": len(self.scraper.discovery_fetch_errors),
+                "parse": len(self.scraper.discovery_parse_errors),
+                "limit": len(self.scraper.discovery_limits),
+            },
         }
 
 
