@@ -62,8 +62,6 @@ def test_workday_detail_reader_uses_job_api_not_javascript_shell():
 
 
 def test_only_exact_workday_hosts_and_well_formed_paths_are_accepted():
-    from predoc_pipeline.boards.scrapers.university_ats import workday_parts_from_url
-
     assert workday_parts_from_url(
         "https://ubc.wd10.myworkdayjobs.com/en-US/ubcstaffjobs/job/UBC/RA_JR26112"
     ) == (
@@ -80,6 +78,7 @@ def test_only_exact_workday_hosts_and_well_formed_paths_are_accepted():
         "https://example.invalid/redirect?next=https://wd1.myworkdaysite.com/job/RA",
     ]
     assert all(workday_parts_from_url(url) is None for url in bad)
+
 
 def test_redirected_predoc_shortlink_also_uses_workday_detail_api():
     """PREDOC.org posts often redirect through bit.ly to Penn's alternate Workday host."""
