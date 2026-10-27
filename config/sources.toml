@@ -394,7 +394,9 @@ type = "workday"
 group = "university"
 url = "https://mcgill.wd3.myworkdayjobs.com/McGill_Careers"
 search_terms = ["predoctoral", "research assistant economics", "research assistant finance", "economics"]
-max_pages = 2
+# 2026-10-28 live result: 42 finance postings; two pages (40) dropped jobs.
+# Five pages allow headroom; Workday stops early at the reported total.
+max_pages = 5
 institution = "McGill University"
 country = "Canada"
 
@@ -658,6 +660,9 @@ type = "workday"
 group = "university"
 url = "https://uchicago.wd5.myworkdayjobs.com/External"
 search_terms = ["research professional", "research assistant economics", "pre-doctoral"]
+# The live research-professional query returned 220 results; implicit 3-page limit
+# stopped after 60. Allow 16 pages (320) while preserving explicit cap warnings.
+max_pages = 16
 institution = "University of Chicago"
 country = "United States"
 field_implied = false
