@@ -92,3 +92,21 @@ def test_bis_official_vacancy_links_are_discovered():
     assert re.search(cfg.opt("link_pattern"), "https://www.bis.org/vacancy/jr100491")
     assert re.search(cfg.opt("link_pattern"), "https://www.bis.org/vacancy/jr100516")
     assert not re.search(cfg.opt("link_pattern"), "https://www.bis.org/about/careers/vacancies")
+
+def test_uzh_department_jobs_page_exposes_current_predoc():
+    """The university-wide jobs URL redirects to a JavaScript-only portal."""
+    url = "https://www.econ.uzh.ch/en/about/jobs.html"
+    link = (
+        "https://jobs.uzh.ch/job-vacancies/"
+        "pre-doctoral-program-global-talent-common-application/"
+        "de0df20a-d294-46c1-8e4a-77db716745dc"
+    )
+    cfg = source("uzh")
+    assert cfg.opt("url") == url
+    html = f'<a href="{link}">Pre-Doctoral Program – Global Talent Common Application</a>'
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(url, html))
+    ], 1, 5))[0]
+    assert result.ok
+    assert [post.url for post in result.posts] == [link]
+    assert "Pre-Doctoral" in result.posts[0].title
