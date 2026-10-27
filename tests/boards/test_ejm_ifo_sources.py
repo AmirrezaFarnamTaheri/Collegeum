@@ -122,7 +122,7 @@ def test_ifo_live_qz_link_custom_element_recovers_postdoc_advert():
     """
     transport = FixtureHttp("https://www.ifo.de/karriere-am-ifo", html)
     result = asyncio.run(_scrape_all([SCRAPERS[config.type](config, transport)], 1, 5))[0]
-    assert config.opt("include_qz_links") is True
+    assert "qz-link" in config.opt("selectors")["link"]
     assert result.ok
     assert result.as_stats()["errors"] == 0
     assert len(result.posts) == 2
