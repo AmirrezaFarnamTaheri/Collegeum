@@ -143,7 +143,7 @@ def test_other_link_scan_sources_ignore_qz_links_by_default():
 
     url = "https://example.org/jobs"
     scraper = LinkScanScraper(SourceConfig(
-        name="unrelated", type="link_scan", url=url, link_pattern=r"/job/\\d+"
+        name="unrelated", type="link_scan", url=url, link_pattern=r"/job/\d+"
     ), FixtureHttp(url, ""))
     html = '<qz-link href="/job/123" title="Research Assistant">Learn more</qz-link>'
     assert scraper.parse_postings([(url, html)]) == []
