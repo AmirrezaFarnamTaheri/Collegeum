@@ -248,6 +248,17 @@ class LinkScanScraper(BaseScraper):
                 posts.extend(self._parse_selectors(base, soup))
             else:
                 posts.extend(self._parse_links(base, soup))
+        # Opt-in for small providers that explicitly say when there are no
+        # current vacancies. A redirected article or layout regression must
+        # not silently masquerade as a healthy empty listing page.
+        marker = self.opt("verified_empty_marker")
+        if marker and not posts:
+            expected = clean_ws(str(marker)).casefold()
+            if not any(
+                expected in clean_ws(BeautifulSoup(html, "lxml").get_text(" ", strip=True)).casefold()
+                for _, html in raw_data
+            ):
+                self.discovery_parse_errors.append("Verified no-vacancies notice missing")
         if (
             not posts
             and self.opt("skip_unresolved_link_templates", False)
