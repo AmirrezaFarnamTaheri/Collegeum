@@ -1,0 +1,65 @@
+name: ecb-public-portal-probe-temporary
+on:
+  push:
+    branches: [fix/ecb-official-portal-20261028]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Inspect official ECB recruitment portal and current vacancy source
+        env:
+          PYTHONPATH: src
+        run: |
+          python3 - <<'PY'
+          import asyncio
+          import re
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.http import HttpClient
+
+          URLS = [
+              "https://jobs.ecb.europa.eu/search/?createNewAlert=false&q=trainee",
+              "https://talent.ecb.europa.eu/careers",
+              "https://talent.ecb.europa.eu/careers/SpecificFolder?jobId=15107",
+              "https://www.ecb.europa.eu/careers/vacancies/html/index.en.html",
+              "https://ecb.impactpool.org/vacancies",
+              "https://ecb.impactpool.org/vacancies/1243510",
+          ]
+
+          async def main():
+              async with HttpClient(timeout=18, max_retries=0, default_min_interval=0.2) as http:
+                  for url in URLS:
+                      print("=== SOURCE", url, flush=True)
+                      try:
+                          resp = await http.request("GET", url)
+                          html = resp.text
+                          soup = BeautifulSoup(html, "lxml")
+                          print("RESULT", resp.status_code, "REQUEST", resp.request.url,
+                                "BYTES", len(html),
+                                "TITLE", soup.title.get_text(" ", strip=True) if soup.title else None, flush=True)
+                          candidates = []
+                          for tag in soup.find_all(href=True):
+                              href = str(tag.get("href") or "")
+                              txt = tag.get_text(" ", strip=True)[:70]
+                              if re.search(r"job|trainee|career|vacanc|talent|apply", href + " " + txt, re.I):
+                                  candidates.append((tag.name, txt, href[:170]))
+                          print("LINKS", candidates[:35], "TOTAL", len(candidates), flush=True)
+                          scripts = [x.get("src", "") for x in soup.select("script[src]")]
+                          print("SCRIPTS", scripts[:25], "TOTAL", len(scripts), flush=True)
+                          for token in ["window.__INITIAL_STATE__", "__NEXT_DATA__", "jobId", "Traineeship in",
+                                        "specificfolder", "api/v1", "careerjet", "successfactors", "talent"]:
+                              print("TOKEN", token, len(list(re.finditer(re.escape(token), html, re.I))), flush=True)
+                      except Exception as exc:
+                          print("FETCH_ERROR", type(exc).__name__, str(exc)[:250], flush=True)
+          asyncio.run(main())
+          PY
