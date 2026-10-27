@@ -59,6 +59,13 @@ jobs:
                                   print("LINK",repr(entry),flush=True)
                               for needle in ["jobposting","jobs.zew.de","Doctoral Researcher","no vacancies","Current vacancies"]:
                                   print("TOKEN",needle,html.lower().count(needle.lower()),flush=True)
+                              if key == "academictransfer":
+                                  for article in soup.select("article")[:3]:
+                                      print("ARTICLE",str(article)[:2600],flush=True)
+                              if key == "niesr":
+                                  tx=soup.get_text(" ",strip=True)
+                                  ix=tx.lower().find("current vacancies")
+                                  print("VACANCY_SECTION",tx[ix:ix+550] if ix>=0 else "missing",flush=True)
                               cfg=configs[key]
                               scraper=LinkScanScraper(cfg,http)
                               posts=scraper.parse_postings([(url,html)])
