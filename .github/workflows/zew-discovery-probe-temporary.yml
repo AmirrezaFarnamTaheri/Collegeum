@@ -21,7 +21,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-python3 - <<'PY'
+          python3 - <<'PY'
           import asyncio
           import re
           from bs4 import BeautifulSoup
