@@ -147,13 +147,13 @@ def test_academictransfer_recovers_job_cards_with_empty_overlay_anchor():
       <a class="absolute inset-0" href="/en/jobs/364701/assistant-professor-in-economics/"></a>
       <div class="col-span-10 md:col-span-6"><div>
         <h3>Assistant Professor in Economics</h3>
-        <p class="organization">University of Groningen</p>
+        <div class="col-start-1 col-end-11 md:col-start-8 md:col-end-11"><span class="text-at-small text-gray-700 md:text-right">Utrecht University</span></div>
       </div></div>
     </article>
     <article class="text-aqua-500 relative grid grid-cols-10 gap-6">
       <a class="absolute inset-0" href="/en/jobs/363610/researcher-economics-of-eu-common-agricultural-policy/"></a>
       <div><h3>Researcher - Economics of EU Common Agricultural Policy</h3>
-        <p class="organization">Wageningen University &amp; Research</p>
+        <div class="col-start-1 col-end-11 md:col-start-8 md:col-end-11"><span class="text-at-small text-gray-700 md:text-right">Wageningen University &amp; Research</span></div>
       </div>
     </article>
     """
@@ -169,4 +169,6 @@ def test_academictransfer_recovers_job_cards_with_empty_overlay_anchor():
         "https://www.academictransfer.com/en/jobs/364701/assistant-professor-in-economics/"
     )
     assert all(post.country is None for post in result.posts)
-    assert all("University" in post.institution for post in result.posts)
+    assert [post.institution for post in result.posts] == [
+        "Utrecht University", "Wageningen University & Research",
+    ]
