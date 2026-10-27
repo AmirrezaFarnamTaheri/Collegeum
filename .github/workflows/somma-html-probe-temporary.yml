@@ -1,0 +1,62 @@
+name: somma-html-probe-temporary
+on:
+  push:
+    branches: [fix/somma-vacancy-recovery-20261028]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Inspect public SOMMa job listing HTML, no publishing
+        env:
+          PYTHONPATH: src
+        run: |
+          python3 - <<'PY'
+          import asyncio
+          import re
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+          async def main():
+              source = next(s for s in load_board_sources("config/sources.toml") if s.name == "somma")
+              for url in ("https://somma.es/jobs/", "https://somma.es/job/2026-i-research-assistant-pre-doc/"):
+                  print("=== SOURCE", url,flush=True)
+                  try:
+                      async with HttpClient(timeout=18,max_retries=0,default_min_interval=0.1) as http:
+                          resp=await http.request("GET",url)
+                          html=resp.text
+                          soup=BeautifulSoup(html,"lxml")
+                          print("HTTP",resp.status_code,"BYTES",len(html),"FINAL",str(resp.url),
+                                "TITLE",soup.title.get_text(" ",strip=True) if soup.title else "-",flush=True)
+                          print("TEXT",soup.get_text(" ",strip=True)[:700],flush=True)
+                          matches=[]
+                          for a in soup.find_all(["a","button","qz-link"],href=True):
+                              href=str(a.get("href",""));txt=a.get_text(" ",strip=True)[:100]
+                              if re.search(r"somma|research|2026|job|cemfi|info",href+" "+txt,re.I):
+                                  matches.append((txt,href,a.parent.name,str(a.parent.get("class"))[:85]))
+                          print("ALL_LINKS",len(soup.find_all("a",href=True)),"SELECTED",len(matches),flush=True)
+                          for x in matches[:45]:
+                              print("LINK",repr(x),flush=True)
+                          parser=LinkScanScraper(source,http)
+                          posts=parser.parse_postings([(url,html)])
+                          print("PARSER",[(p.title,p.url,p.institution) for p in posts[:15]],"ERRORS",parser.discovery_parse_errors,flush=True)
+                          from urllib.parse import urljoin
+                          for target in ("https://somma.es/job/2026-i-research-assistant-pre-doc/",):
+                              print("TARGET_LINK_COUNT",target,sum(1 for a in soup.find_all("a",href=True)
+                                    if urljoin(url,a["href"]).rstrip("/")==target.rstrip("/")),flush=True)
+                  except Exception as ex:
+                      print("FETCH_ERROR",type(ex).__name__,str(ex)[:250],flush=True)
+          asyncio.run(main())
+          PY
