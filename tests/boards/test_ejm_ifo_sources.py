@@ -88,3 +88,63 @@ def test_ifo_scrapes_current_careers_page_and_uses_job_titles_not_link_labels():
         "Research Economist (w/m/d) in Education", "Postdoctoral Researcher (f/m/d)",
     }
     assert all("stellenangebot" in p.url for p in result.posts)
+
+
+def test_ifo_live_qz_link_custom_element_recovers_postdoc_advert():
+    """ifo's October 2026 page puts real vacancy URLs in <qz-link>, not <a>."""
+    config = _production("ifo")
+    html = """
+    <section>
+      <div class="bg-theme-primary-fg py-sm px-6 text-base mb-sm flex w-full gap-sm">
+        <div class="w-54 flex flex-col"><qz-tag size="small">
+          <a href="/karriere-am-ifo">Stellenangebot</a>
+        </qz-tag></div>
+        <div class="w-full">
+          <h5><span>Postdoctoral Researcher (f/m/d) for the ifo Center for
+          International Economics</span></h5>
+          <div class="field field--text"><p>
+            We seek a Postdoctoral Researcher (f/m/d) focused on international economics.
+          </p></div>
+          <qz-link
+             href="/stellenangebot-deprecated/postdoctoral-researcher-fmd-ifo-center-international-economics"
+             aria-label="Postdoctoral Researcher (f/m/d) for the ifo Center for International Economics"
+             title="Postdoctoral Researcher (f/m/d) for the ifo Center for International Economics"
+             variant="news-card">Mehr erfahren <qz-icon name="arrow-right"></qz-icon></qz-link>
+        </div>
+      </div>
+      <div class="bg-theme-primary-fg py-sm px-6 text-base mb-sm flex w-full gap-sm">
+        <div class="w-full"><h5>Praktikant*innen (VWL, BWL)</h5>
+          <qz-link href="/stellenangebot-deprecated/praktikantinnen"
+                   title="Praktikant*innen (VWL, BWL)">Mehr erfahren</qz-link>
+        </div>
+      </div>
+    </section>
+    """
+    transport = FixtureHttp("https://www.ifo.de/karriere-am-ifo", html)
+    result = asyncio.run(_scrape_all([SCRAPERS[config.type](config, transport)], 1, 5))[0]
+    assert config.opt("include_qz_links") is True
+    assert result.ok
+    assert result.as_stats()["errors"] == 0
+    assert len(result.posts) == 2
+    assert result.posts[0].title == (
+        "Postdoctoral Researcher (f/m/d) for the ifo Center for International Economics"
+    )
+    assert result.posts[0].url == (
+        "https://www.ifo.de/stellenangebot-deprecated/"
+        "postdoctoral-researcher-fmd-ifo-center-international-economics"
+    )
+    assert "international economics" in result.posts[0].description_snippet.lower()
+    assert transport.requests == ["https://www.ifo.de/karriere-am-ifo"]
+
+
+def test_other_link_scan_sources_ignore_qz_links_by_default():
+    """ifo's custom element must not silently change unrelated board discovery."""
+    from predoc_pipeline.boards.config import SourceConfig
+    from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+    url = "https://example.org/jobs"
+    scraper = LinkScanScraper(SourceConfig(
+        name="unrelated", type="link_scan", url=url, link_pattern=r"/job/\\d+"
+    ), FixtureHttp(url, ""))
+    html = '<qz-link href="/job/123" title="Research Assistant">Learn more</qz-link>'
+    assert scraper.parse_postings([(url, html)]) == []
