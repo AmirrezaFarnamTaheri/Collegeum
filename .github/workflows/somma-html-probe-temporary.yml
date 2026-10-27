@@ -53,6 +53,11 @@ jobs:
                           posts=parser.parse_postings([(url,html)])
                           print("PARSER",[(p.title,p.url,p.institution) for p in posts[:15]],"ERRORS",parser.discovery_parse_errors,flush=True)
                           from urllib.parse import urljoin
+                          for a in soup.find_all("a",href=True):
+                              if "/job/2026-i-research-assistant-pre-doc/" in str(a.get("href")):
+                                  row=a.find_parent("tr")
+                                  print("TARGET_TR",str(row)[:4800] if row else "not in tr",flush=True)
+                                  print("TARGET_COLS",[(td.get("class"),td.get_text(" ",strip=True)[:190]) for td in row.find_all("td")] if row else [],flush=True)
                           for target in ("https://somma.es/job/2026-i-research-assistant-pre-doc/",):
                               print("TARGET_LINK_COUNT",target,sum(1 for a in soup.find_all("a",href=True)
                                     if urljoin(url,a["href"]).rstrip("/")==target.rstrip("/")),flush=True)
