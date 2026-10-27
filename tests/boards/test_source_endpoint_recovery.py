@@ -140,7 +140,8 @@ def test_academictransfer_recovers_job_cards_with_empty_overlay_anchor():
     """Current cards have a full-area empty anchor and the real title in a sibling h3."""
     cfg = source("academictransfer")
     assert cfg.country is None  # Search is international; never invent a Dutch location.
-    page = cfg.urls()[0] if hasattr(cfg, "urls") else cfg.opt("urls")[0]
+    page = cfg.opt("urls")[0]
+    cfg = cfg.model_copy(update={"urls": [page]})  # Isolate one configured search endpoint.
     html = """
     <article class="text-aqua-500 relative grid grid-cols-10 gap-6">
       <a class="absolute inset-0" href="/en/jobs/364701/assistant-professor-in-economics/"></a>
