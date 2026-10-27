@@ -135,10 +135,10 @@ type = "link_scan"
 enabled = true
 group = "aggregator"
 urls = ["https://www.academictransfer.com/en/jobs/?q=research+assistant+economics", "https://www.academictransfer.com/en/jobs/?q=predoc"]
-link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
-institution_from_context = true
-country = "Netherlands"
-note = "AcademicTransfer - Dutch universities and research institutes clearinghouse."
+# Live job cards use empty full-card <a> overlays with titles and employers in siblings.
+selectors = { item = "article", title = "h3", link = "a[href*='/en/jobs/']", institution = "div[class*='md:col-start-8'] span.text-at-small.text-gray-700", location = "span.text-at-small.flex.items-center.gap-1.text-gray-500" }
+# This multi-employer portal is not limited to Dutch employers; do not infer country.
+note = "AcademicTransfer research openings, including economics and predoctoral search results; selector mode handles empty overlay anchors."
 
 [[board]]
 name = "jobbnorge"
@@ -552,12 +552,15 @@ note = "RWI empirical economics, labor, energy, health economics."
 name = "niesr"
 type = "link_scan"
 group = "research_institute"
-url = "https://www.niesr.ac.uk/about/vacancies"
-link_pattern = 'niesr\.ac\.uk/.*vacancies/'
+url = "https://niesr.ac.uk/careers"
+link_pattern = 'niesr\.ac\.uk/vacancy/[^/?#]+/?$'
 institution = "National Institute of Economic and Social Research"
 country = "United Kingdom"
 field_implied = true
-note = "NIESR UK oldest independent economic research institute (macro, public policy)."
+may_be_empty = true
+# Only accept an empty page if the official careers page explicitly says no vacancies.
+verified_empty_marker = "Sorry, we do not have any vacancies at the moment"
+note = "NIESR careers; former /about/vacancies path redirects to an unrelated news article."
 
 [[board]]
 name = "eui_florence"
