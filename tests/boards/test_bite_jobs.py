@@ -8,7 +8,6 @@ from predoc_pipeline.boards.collector import _scrape_all
 from predoc_pipeline.boards.config import SourceConfig, load_board_sources
 from predoc_pipeline.boards.scrapers.bite_jobs import BiteJobsScraper
 
-
 KEY = "a" * 40
 WIDGET = "https://cs-assets.b-ite.com/zew/jobs-api/mitarbeiter.js"
 API = "https://jobs.b-ite.com/api/v1/postings/search"
