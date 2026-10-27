@@ -185,11 +185,11 @@ def workday_parts_from_url(url: str) -> tuple[str, str, str, str] | None:
     if segments and _LOCALE.fullmatch(segments[0]):
         segments.pop(0)
 
-    if re.fullmatch(r"[a-z0-9][a-z0-9-]*\\.wd\\d+\\.myworkdayjobs\\.com", host):
+    if re.fullmatch(r"[a-z0-9][a-z0-9-]*\.wd\d+\.myworkdayjobs\.com", host):
         if len(segments) < 3 or segments[1] != "job":
             return None
         tenant, site, posting = host.split(".", 1)[0], segments[0], segments[2:]
-    elif re.fullmatch(r"wd\\d+\\.myworkdaysite\\.com", host):
+    elif re.fullmatch(r"wd\d+\.myworkdaysite\.com", host):
         if len(segments) < 5 or segments[0] != "recruiting" or segments[3] != "job":
             return None
         tenant, site, posting = segments[1], segments[2], segments[4:]
