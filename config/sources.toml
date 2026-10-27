@@ -255,6 +255,9 @@ name = "copenhagen"
 type = "link_scan"
 group = "university"
 url = "https://employment.ku.dk/all-vacancies/"
+# This endpoint repeatedly consumed ~136s per scheduled run without a usable result.
+# Preserve the failure in health; free the scrape slot after one minute.
+source_timeout_seconds = 60
 link_pattern = 'all-vacancies/?\?show=\d+'
 bare_date_is_deadline = true
 institution = "University of Copenhagen"
