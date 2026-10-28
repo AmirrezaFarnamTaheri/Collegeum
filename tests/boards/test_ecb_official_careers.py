@@ -8,6 +8,7 @@ from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers import SCRAPERS
 
 CAREERS = "https://talent.ecb.europa.eu/careers"
+SEARCH = CAREERS + "/SearchJobs"
 ECON_ROLE = (
     CAREERS + "/JobDetail/PhD-Traineeship-in-the-Directorate-General-Economics-"
     "Supply-Side-Labour-and-Surveillance-Division/15381"
@@ -25,7 +26,7 @@ class FixtureHttp:
 
     async def get_text(self, url):
         self.requested.append(url)
-        assert url == CAREERS
+        assert url == SEARCH
         return self.html
 
 
@@ -39,7 +40,7 @@ def source():
 def test_ecb_official_url_replaces_non_resolving_legacy_host():
     cfg = source()
     assert cfg.type == "link_scan"
-    assert cfg.opt("url") == CAREERS
+    assert cfg.opt("url") == SEARCH
     assert "jobs.ecb.europa.eu" not in cfg.opt("url")
     assert cfg.institution == "European Central Bank"
 
@@ -75,7 +76,7 @@ def test_ecb_parses_real_vacancy_cards_and_rejects_social_links():
     )
     assert result.posts[0].institution == "European Central Bank"
     assert result.posts[0].country == "Germany"
-    assert client.requested == [CAREERS]
+    assert client.requested == [SEARCH]
 
 
 def test_ecb_blank_portal_or_login_shell_is_source_failure_not_benign_empty():
