@@ -187,6 +187,40 @@ class TestExtractorBackendProbing(unittest.TestCase):
         self.assertEqual(second.call_count, 1)
 
     @respx_mock
+    def test_cached_auto_backend_still_recovers_from_invalid_json(self):
+        first = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/interactions"
+        ).mock(return_value=httpx.Response(200, json={"output_text": "User Safety: safe"}))
+        second = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            "gemini-flash-lite-latest:generateContent"
+        ).mock(return_value=httpx.Response(200, json=_generate_content_success(VALID_RESULT)))
+
+        class CachedStore:
+            def __init__(self):
+                self.saved = None
+
+            def get_meta(self, _key):
+                return "interactions"
+
+            def set_meta(self, _key, value):
+                self.saved = value
+
+        class FallbackMustNotRun:
+            def extract(self, **kwargs):
+                raise AssertionError("Cached primary backend must not disable failover")
+
+        store = CachedStore()
+        extractor = self._extractor(
+            backend="auto", store=store, fallback_extractor=FallbackMustNotRun()
+        )
+        result = extractor.extract(text="a" * 100, source_url="https://example.org/job")
+        self.assertEqual(result.title, VALID_RESULT["title"])
+        self.assertEqual(store.saved, "generate_content")
+        self.assertEqual(first.call_count, 1)
+        self.assertEqual(second.call_count, 1)
+
+    @respx_mock
     def test_429_raises_rate_limited_with_retry_delay(self):
         respx.post("https://generativelanguage.googleapis.com/v1beta/interactions").mock(
             return_value=httpx.Response(
