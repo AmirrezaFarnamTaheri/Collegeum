@@ -7,7 +7,6 @@ from predoc_pipeline.boards.collector import _scrape_all
 from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers import SCRAPERS
 
-
 CAREERS = "https://opportunityinsights.org/joinourteam/"
 DATA_SCIENTIST_PDF = (
     "https://opportunityinsights.org/wp-content/uploads/2026/07/"
