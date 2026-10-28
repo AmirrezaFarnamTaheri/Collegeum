@@ -618,7 +618,7 @@ type = "link_scan"
 group = "central_bank"
 # ECB moved recruitment to the employer-owned talent portal. The former
 # jobs.ecb.europa.eu host no longer resolves on GitHub Actions runners.
-url = "https://talent.ecb.europa.eu/careers"
+url = "https://talent.ecb.europa.eu/careers/SearchJobs"
 link_pattern = '^https://talent\.ecb\.europa\.eu/careers/JobDetail/[^/?#]+/[0-9]+
 
 [[board]]
