@@ -1,0 +1,52 @@
+name: Copenhagen official jobportal alternate (temporary)
+on:
+  push:
+    branches: [verify/official-source-routes-20261029]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Probe university-owned alternate jobportal (read-only GET)
+        env:
+          PYTHONPATH: src
+        run: |
+          python3 - <<'PY'
+          import asyncio
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+          URLS=["https://jobportal.ku.dk/alle-opslag/","https://jobportal.ku.dk/alle-opslag/?pxs_search=economics"]
+          async def main():
+              cfg=next(s for s in load_board_sources("config/sources.toml") if s.name=="copenhagen")
+              cfg=cfg.model_copy(update={"url":URLS[0],"link_pattern":r"^https://jobportal\\.ku\\.dk/alle-opslag/\\?show=\\d+$"})
+              async with HttpClient(timeout=12,max_retries=0,default_min_interval=0.3) as http:
+                  for url in URLS:
+                      try:
+                          html=await http.get_text(url)
+                          soup=BeautifulSoup(html,"lxml")
+                          anchors=soup.select("a[href*='show=']")
+                          print("PAGE",url,"LEN",len(html),"TITLE",soup.title.get_text(" ",strip=True) if soup.title else "-","VACANCY_ANCHORS",len(anchors),flush=True)
+                          for a in anchors[:16]:
+                              print("LINK",repr(a.get_text(" ",strip=True)[:145]),repr(a.get("href","")[:180]),"CARD",repr(a.parent.parent.get_text(" ",strip=True)[:240]),flush=True)
+                          parser=LinkScanScraper(cfg,http)
+                          parsed=parser.parse_postings([(url,html)])
+                          print("PARSED",len(parsed),"ISSUES",parser.discovery_parse_errors,flush=True)
+                          for p in parsed[:12]:
+                              print("VACANCY",repr(p.title[:120]),repr(p.url[:170]),repr(str(p.deadline)),flush=True)
+                      except Exception as e:
+                          print("ERROR",url,type(e).__name__,str(e)[:240],flush=True)
+          asyncio.run(main())
+          PY
