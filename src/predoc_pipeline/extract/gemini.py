@@ -538,6 +538,7 @@ class Extractor:
         for key_attempt in range(max_key_attempts):
             current_key = self.rotator.get_key()
             key_had_rate_limit = False
+            invalid_output_seen = False
             for index, backend in enumerate(self._candidates):
                 req_body = backend.request(self.model, SYSTEM_PROMPT, user)
                 day = self.limiter.acquire()
@@ -619,10 +620,10 @@ class Extractor:
                     raise
                 except Exception as exc:
                     self.limiter.record(tokens=tokens, error=True, day=day)
-                    self.rotator.mark_error(current_key)
-                    # HTTP 200 does not imply a valid extraction. Keep trying the
-                    # remaining configured structured backends/keys before falling
-                    # back to heuristic output. The quota limiter bounds attempts.
+                    invalid_output_seen = True
+                    # HTTP 200 does not imply a valid extraction. Try remaining
+                    # structured backends on this key, but do not spend other API
+                    # keys on malformed output from an otherwise working model.
                     kind = (
                         "non-JSON" if isinstance(exc, json.JSONDecodeError)
                         else type(exc).__name__
@@ -638,6 +639,10 @@ class Extractor:
                     )
                     continue
 
+            if invalid_output_seen and not key_had_rate_limit:
+                # Changing credentials will not repair an incompatible output
+                # format; reserve key rotation for quota and transport failures.
+                break
             if not key_had_rate_limit and last_error is None:
                 break
 
