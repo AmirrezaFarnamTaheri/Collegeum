@@ -76,3 +76,14 @@ def test_ecb_parses_real_vacancy_cards_and_rejects_social_links():
     assert result.posts[0].institution == "European Central Bank"
     assert result.posts[0].country == "Germany"
     assert client.requested == [CAREERS]
+
+
+def test_ecb_blank_portal_or_login_shell_is_source_failure_not_benign_empty():
+    cfg = source()
+    html = '<h1>Job Search</h1><a href="/careers/Login">Login</a>'
+    result = asyncio.run(
+        _scrape_all([SCRAPERS[cfg.type](cfg, FixtureHttp(html))], 1, 5)
+    )[0]
+    assert not result.ok
+    assert result.posts == []
+    assert result.as_stats()["failure_counts"]["parse"] > 0
