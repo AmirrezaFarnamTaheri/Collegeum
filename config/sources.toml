@@ -769,11 +769,330 @@ name = "iies_stockholm"
 type = "link_scan"
 group = "research_institute"
 url = "https://www.su.se/english/divisions/institute-for-international-economic-studies/about-the-institute/work-with-us"
-link_pattern = 'iies\.su\.se/'
+# IIES's official page directs applicants to SU/Varbi and EJM directories;
+# an empty directory is not evidence that a scraper failed. Do not ingest
+# institution-wide job indexes or faculty-only EJM links as predoctoral ads.
+may_be_empty = true
+verified_empty_marker = "At the IIES we hire most of our junior faculty"
+link_pattern = '^https://su\.varbi\.com/(?:en/)?what(?::|%3A)job/jobID(?::|%3A)\d+/?
+
+[[board]]
+name = "nber_ras"
+type = "link_scan"
+enabled = false
+group = "aggregator"
+url = "https://www.nber.org/career-resources/research-assistant-positions-not-nber"
+link_pattern = 'apply\.interfolio\.com|myworkday|smartrecruiters|chicagobooth\.edu|princeton\.edu|harvard\.edu|stanford\.edu|mit\.edu|northwestern\.edu|berkeley\.edu|wharton|yale\.edu|nber\.org/sites/default/files'
+card_title = true
+institution_from_context = true
+field_implied = true
+note = "OFF: nber.org returns HTTP 403 to GitHub runner IPs (persistent across every run since September 2026). NBER predoctoral posts are also carried by the individual university boards."
+
+# PREDOC is registered once above with its dedicated metadata-aware adapter.
+
+[[board]]
+name = "tobin_yale"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://tobin.yale.edu/programs/pre-doctoral-fellows-program"
+link_pattern = 'tobin\.yale\.edu/|apply\.interfolio\.com'
+institution = "Yale University (Tobin Center for Economic Policy)"
+country = "United States"
+field_implied = true
+note = "OFF: tobin.yale.edu returns HTTP 403 to GitHub runner IPs (persistent across every run since September 2026)."
+
+[[board]]
+name = "pse_paris"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.parisschoolofeconomics.eu/en/about-pse/recruitment/job-offers/"
+link_pattern = 'parisschoolofeconomics\.eu/.*job'
+institution = "Paris School of Economics"
+country = "France"
+field_implied = true
+note = "OFF: the recruitment/job-offers endpoint returns HTTP 418 in recorded pipeline runs; re-enable after access and vacancy parsing are verified."
+
+[[board]]
+name = "cemfi_madrid"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.cemfi.es/news/"
+link_pattern = 'cemfi\.es/(?:news/|all_news|job|vacancy|position|call)'
+institution = "CEMFI"
+country = "Spain"
+field_implied = true
+note = "OFF: cemfi.es returns HTTP 403 to GitHub runner IPs. The 'cemfi' board (cemfi.es/all_news.asp) covers the same institute."
+
+[[board]]
+name = "bocconi_igier"
+type = "link_scan"
+group = "research_institute"
+url = "https://igier.unibocconi.it/"
+link_pattern = 'igier\.unibocconi\.it/|unibocconi\.eu/'
+institution = "Bocconi University (IGIER)"
+country = "Italy"
+field_implied = true
+note = "Innocenzo Gasparini Institute for Economic Research (IGIER) at Bocconi University."
+
+[[board]]
+name = "fed_board"
+type = "link_scan"
+group = "central_bank"
+url = "https://www.federalreserve.gov/careers-research-assistants.htm"
+link_pattern = 'federalreserve\.gov/|taleo\.net'
+institution = "Federal Reserve Board of Governors"
+country = "United States"
+field_implied = true
+note = "Federal Reserve Board of Governors Research Assistant Program."
+
+[[board]]
+name = "poverty_action"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://poverty-action.org/careers"
+link_pattern = 'poverty-action\.org/|job-boards\.greenhouse\.io/innovationsforpovertyaction'
+institution = "Innovations for Poverty Action (IPA)"
+country = "United States"
+field_implied = true
+note = "OFF: poverty-action.org returns HTTP 403 to GitHub runner IPs. J-PAL positions are excluded by preferences.toml (excluded_employers) regardless of source."
+
+
+# --- official source expansion (validated 10 October 2026) -----------------
+# Discovery success is not a claim of eligible/open vacancies. Narrow selectors
+# exclude menus, programme descriptions and CREST placement biographies.
+
+[[board]]
+name = "nuffield_jobs"
+type = "link_scan"
+enabled = true
+group = "university"
+url = "https://www.nuffield.ox.ac.uk/the-college/jobs-and-vacancies/"
+institution = "Nuffield College, University of Oxford"
+country = "United Kingdom"
+may_be_empty = true
+selectors = { item = 'article.cont-card:has(a[href*="/jobs-and-vacancies/"])', title = "h3", link = 'a[href*="/jobs-and-vacancies/"]', deadline = ".feature-block-bar p" }
+note = "Official vacancy cards only. Research-engineer and administrative roles still face configured role/field gates; seasonal empty index is normal."
+
+[[board]]
+name = "crest_jobs"
+type = "link_scan"
+enabled = true
+group = "research_institute"
+url = "https://crest.science/opportunities-2/"
+institution = "CREST"
+country = "France"
+may_be_empty = true
+selectors = { item = '#onglet3 p:has(a[href^="https://crest.science/wp-content/uploads/"][href$=".pdf"])', title = 'a[href$=".pdf"]', link = 'a[href$=".pdf"]' }
+note = "Recruitment-tab official PDF adverts only; excludes placement biographies, papers and contact links. No blanket economics field default: statistics/computing roles must pass detail field checks."
+
+[[board]]
+name = "essec_jobs"
+type = "link_scan"
+enabled = true
+group = "university"
+url = "https://job.essec.edu/jobs"
+institution = "ESSEC Business School"
+may_be_empty = true
+selectors = { item = 'li.block-grid-item:has(a[href^="https://job.essec.edu/jobs/"])', title = "span[title]", link = 'a[href^="https://job.essec.edu/jobs/"]' }
+note = "Server-rendered Teamtailor job cards. No headquarters country or economics default; infer workplace and research field from each advert. Current index has 14 cards with no pagination links; recheck pagination if the site changes."
+
+[[board]]
+name = "nhh_jobs"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://www.nhh.no/om-nhh/ledige-stillinger/"
+institution = "NHH Norwegian School of Economics"
+country = "Norway"
+may_be_empty = true
+selectors = { item = "article.article", title = "h2", link = 'h2 a[href^="https://www.jobbnorge.no/ledige-stillinger/stilling/"]' }
+note = "STAGED: official index discovery works, but production Jobbnorge detail extraction returned only 'Laster...' on 10 October 2026. Keep disabled until structured detail/PDF support is validated. Faculty/admin roles must still be rejected; programme-wide PhD dates must not create listings."
+
+[[board]]
+name = "warwick_jobs"
+type = "link_scan"
+enabled = true
+group = "university"
+url = "https://workwithus.warwick.ac.uk/search/?q=economics"
+institution = "University of Warwick"
+country = "United Kingdom"
+may_be_empty = true
+selectors = { item = 'li.job-tile:has(a.jobTitle-link[href^="/job/"])', title = "a.jobTitle-link", link = 'a.jobTitle-link[href^="/job/"]' }
+note = "Official SuccessFactors job tiles, including desktop/mobile duplicates. Economics search currently returns all 48 vacancies, so every advert must pass role/field checks; no blanket economics default. All 48 appear in one response; revalidate pagination when volume grows."
+
+[[board]]
+name = "bank_canada_jobs"
+type = "link_scan"
+enabled = true
+group = "research_institute"
+url = "https://careers.bankofcanada.ca/go/All-Job-Opportunities/2400817/"
+institution = "Bank of Canada"
+country = "Canada"
+may_be_empty = true
+selectors = { item = 'tr.data-row:has(a.jobTitle-link[href^="/job/"])', title = "a.jobTitle-link", link = 'a.jobTitle-link[href^="/job/"]', location = ".colLocation .jobLocation", deadline = ".colFacility .jobFacility" }
+note = "Official SuccessFactors vacancy table, currently all 16 jobs on one page. Research and PhD job-market adverts retain their actual titles and degree requirements; IT/admin roles must pass existing gates. Deadline text preserves timezone/time although normalized deadline is date-only. Revalidate pagination when volume grows."
+
+[[board]]
+name = "sciencespo_jobs"
+type = "link_scan"
+enabled = true
+group = "university"
+url = "https://www.sciencespo.fr/recherche/en/faculty/vacancies/"
+institution = "Sciences Po"
+country = "France"
+may_be_empty = true
+selectors = { item = '[id^="Ongoing Recruitments"] li:has(a[href^="https://www.sciencespo.fr/"][href*="/actualites/"])', title = 'a[href^="https://www.sciencespo.fr/"][href*="/actualites/"]', link = 'a[href^="https://www.sciencespo.fr/"][href*="/actualites/"]' }
+note = "Ongoing-recruitment tab official department adverts only. Excludes past recruitment, faculty biographies and Drive-only PDFs until their detail contract is validated. French titles are retained, with no role relabelling or field override. Coverage is explicitly partial: three HTML adverts, two Drive adverts omitted on 10 October 2026."
+
+# --- Additional missing institutional pages (validated 10 October 2026) ---
+
+[[board]]
+name = "gothenburg_jobs"
+type = "link_scan"
+enabled = true
+group = "university"
+url = "https://www.gu.se/en/work-at-the-university-of-gothenburg/vacancies"
+institution = "University of Gothenburg"
+country = "Sweden"
+may_be_empty = true
+selectors = { item = 'table.table--vacancies tr:has(a[href*="rmpage=job"][href*="rmjob="])', title = 'a[href*="rmjob="]', link = 'a[href*="rmjob="]', deadline = "td:nth-child(4) .description" }
+note = "Official university vacancy table with substantive ReachMee detail pages. Broad academic/administrative mix; no implied research field. Swedish/English translations can share a reference number; downstream duplicate handling remains necessary. Current response contains 62 rows."
+
+[[board]]
+name = "umea_usbe_jobs"
+type = "link_scan"
+enabled = true
+group = "university"
+url = "https://www.umu.se/en/usbe/about-us/open-positions/"
+institution = "Umeå University, School of Business, Economics and Statistics"
+country = "Sweden"
+may_be_empty = true
+selectors = { item = '.jobbitem:has(a.Title), .textblock p:has(a[href*="/postdoctoral-scholarships/"])', title = "a", link = "a[href]", deadline = ".jobbitem > div > span" }
+note = "Department's official English PhD job cards and postdoctoral scholarship paragraphs; three adverts observed. PhD card deadline comes from the index, scholarship deadlines from detail enrichment. Scholarships retain their actual status; no presumption of salaried employment. Does not cover every university vacancy or Swedish-only advert."
+
+[[board]]
+name = "linkoping_jobs"
+type = "text_table"
+enabled = true
+group = "university"
+url = "https://liu.se/en/work-at-liu/vacancies"
+institution = "Linköping University"
+country = "Sweden"
+may_be_empty = true
+table_selector = "#jobListingsTable"
+job_path_prefix = "/en/work-at-liu/vacancies/"
+columns = { title = 0, deadline = 1, location = 4, department = 5, url = 8 }
+note = "Official server-rendered ReachMee table, including plain-text URL column; 19 rows observed. Published To is the application closing date, not publication/start date. Missing/malformed table is a parse failure, not seasonal emptiness. Whole-university field/role gates remain active."
+
+[[board]]
+name = "duke_jobs"
+type = "link_scan"
+enabled = true
+group = "university"
+url = "https://careers.duke.edu/search/?q=economics"
+institution = "Duke University"
+country = "United States"
+may_be_empty = true
+selectors = { item = 'tr.data-row:has(a.jobTitle-link[href^="/job/"])', title = "a.jobTitle-link", link = 'a.jobTitle-link[href^="/job/"]', location = ".colLocation .jobLocation", posted = ".colDate .jobDate" }
+note = "Official SuccessFactors economics-keyword search, currently 24 distinct jobs on one page. Date column is publication date, not deadline. Includes policy/administrative/senior roles; no blanket economics field default. Revalidate pagination if results exceed one page."
+
+[[board]]
+name = "trinity_cambridge_jobs"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://www.trin.cam.ac.uk/hr/vacancies/"
+institution = "Trinity College, University of Cambridge"
+country = "United Kingdom"
+may_be_empty = true
+selectors = { item = ".vc_gitem-post-data-source-post_title", title = "h4", link = 'h4 a[href^="https://www.trin.cam.ac.uk/vacancies/"]' }
+note = "OFF: trin.cam.ac.uk returns HTTP 403 to GitHub runner IPs (persistent across every run since September 2026). The two advertised roles are non-research and would fail role policy anyway."
+
+[[board]]
+name = "bruegel_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.bruegel.org/careers"
+institution = "Bruegel"
+country = "Belgium"
+may_be_empty = true
+selectors = { item = '.o-content-from-editor li:has(a[href^="https://www.bruegel.org/about/careers/"])', title = 'a[href^="https://www.bruegel.org/about/careers/"]', link = 'a[href^="https://www.bruegel.org/about/careers/"]' }
+note = "OFF: bruegel.org returns HTTP 403 to GitHub runner IPs (persistent across every run since September 2026). Rolling visiting fellowships are not predoc vacancies anyway."
+
+[[board]]
+name = "aarhus_jobs"
+type = "emply_embedded"
+enabled = true
+group = "university"
+url = "https://international.au.dk/about/profile/vacant-positions"
+institution = "Aarhus University"
+country = "Denmark"
+may_be_empty = true
+job_path_prefix = "/about/profile/vacant-positions/job/"
+note = "Official Emply vacancy JSON embedded in HTML, decoded without executing JavaScript. All 60 embedded adverts observed; retain deadline_date separately from contract start/end and registered_date. University-wide field/role gates remain active; separate graduate-school PhD competition pages are not included."
+
+# --- social ------------------------------------------------------------
+
+[[board]]
+name = "linkedin"
+type = "linkedin"
+group = "social"
+min_interval = 4
+employer_required = true
+keywords = ["predoc economics", "pre-doctoral economics", "predoctoral", "pre-doctoral fellow", "research assistant economics university", "research assistant business school"]
+locations = ["European Union", "United Kingdom", "Canada", "Switzerland", "Norway"]
+f_TPR = "r604800"
+max_pages = 1
+backend = "guest"
+note = "LinkedIn always names the employer, so it must be academic (employer_required)."
+
+# ===========================================================================
+# Feeds (templates, OFF)
+# ===========================================================================
+
+[[feed]]
+name = "nber-jobs"
+url = "https://www.nber.org/RePEc/CGI-Bin/AutoRSS/entries.rss"
+country = "International"
+enabled = false
+verified = false
+note = "Placeholder. NBER's job-market RSS moves between paths across site redesigns; confirm the current feed path before enabling."
+tags = ["economics"]
+
+[[feed]]
+name = "example-university-jobs"
+url = "https://jobs.example.ac.uk/rss/rss.aspx?cat=607"
+country = "United Kingdom"
+enabled = false
+verified = false
+note = "Template for the common per-institution RSS pattern: /rss/rss.aspx?cat=<category-id>. Replace with a real institution and category id, then verify."
+tags = ["template"]
+
+# ===========================================================================
+# Portals (templates, OFF). INOMICS, EconJobMarket and EURAXESS are read by
+# the [[board]] entries above instead.
+# ===========================================================================
+
+[[portal]]
+name = "example-econ-department"
+url = "https://econ.example.org/jobs/"
+country = "International"
+enabled = false
+verified = false
+follow_links = true
+link_pattern = "/jobs/[0-9]+/?$"
+note = "Template portal entry. Point at a real department listings page, set link_pattern to match that site's detail-page URLs, then run predoc-pipeline sources verify."
+tags = ["template"]
+
 institution = "Institute for International Economic Studies (IIES)"
 country = "Sweden"
 field_implied = true
-note = "IIES Stockholm University research assistants and predocs in quantitative economics."
+note = "IIES Stockholm University research assistants and predocs in quantitative economics; official careers directory with conditional Varbi vacancy links."
 
 [[board]]
 name = "nber_ras"
