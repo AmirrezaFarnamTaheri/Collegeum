@@ -192,6 +192,9 @@ def test_iies_directory_official_links_are_not_false_vacancies():
     cfg = source("iies_stockholm")
     assert cfg.may_be_empty is True
     assert cfg.opt("verified_empty_marker") == "At the IIES we hire most of our junior faculty"
+    assert cfg.institution == "Institute for International Economic Studies (IIES)"
+    assert cfg.country == "Sweden"
+    assert cfg.field_implied is True
     html = """
     <h1>Work with us</h1>
     <p>At the IIES we hire most of our junior faculty via the international
@@ -250,6 +253,8 @@ def test_iies_url_pattern_rejects_non_vacancy_or_lookalike_varbi_urls():
         "https://su.varbi.com.evil.invalid/en/what:job/jobID:910396/",
         "https://www.su.se/english/about-the-university/work-at-su/available-jobs",
         "https://econjobmarket.org/positions/12840",
+        "https://su.varbi.com/en/what:job/jobID:910396/other",
+        "https://su.varbi.com/en/what:job/jobID:910396/?ref=redirect",
     ):
         assert not rx.search(url), url
 
