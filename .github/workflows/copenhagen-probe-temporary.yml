@@ -1,0 +1,59 @@
+name: Copenhagen official source probe (temporary)
+on:
+  push:
+    branches: [fix/copenhagen-official-vacancies-20261028]
+    paths: [.github/workflows/copenhagen-probe-temporary.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Inspect official Copenhagen career sources (read only)
+        env:
+          PYTHONPATH: src
+        run: |
+          uv run python - <<'PY'
+          import asyncio
+          import re
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.http import HttpClient
+
+          SITES = [
+              "https://employment.ku.dk/all-vacancies/",
+              "https://employment.ku.dk/all-vacancies/?pxs_search=economics",
+              "https://jobportal.ku.dk/alle-opslag/",
+              "https://jobportal.ku.dk/alle-opslag/?pxs_search=economics",
+              "https://employment.ku.dk/faculty-positions/",
+          ]
+
+          async def check(http, url):
+              try:
+                  html = await asyncio.wait_for(http.get_text(url), timeout=12)
+                  soup = BeautifulSoup(html, "lxml")
+                  title = soup.title.get_text(" ", strip=True) if soup.title else "-"
+                  matches = []
+                  for a in soup.select("a[href]"):
+                      href = str(a.get("href", ""))
+                      text = a.get_text(" ", strip=True)
+                      if re.search("show=|job|position|postdoc|research|vakanc|ans", href + " " + text, re.I):
+                          matches.append((text[:100], href[:180]))
+                  print("RESULT", url, "OK", len(html), "TITLE", title[:100], "MATCHES",
+                        len(matches), "EXAMPLE", matches[:9], flush=True)
+              except Exception as exc:
+                  print("RESULT", url, "ERROR", type(exc).__name__, str(exc)[:170], flush=True)
+
+          async def main():
+              async with HttpClient(timeout=9,max_retries=0,default_min_interval=0) as http:
+                  await asyncio.gather(*(check(http,u) for u in SITES))
+          asyncio.run(main())
+          PY
