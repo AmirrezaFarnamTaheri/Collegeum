@@ -1,0 +1,68 @@
+name: Official source routes read-only probe (temporary)
+on:
+  push:
+    branches: [verify/official-source-routes-20261029]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Check official vacancy sources (GET only)
+        env:
+          PYTHONPATH: src
+        run: |
+          python3 - <<'PY'
+          import asyncio
+          import feedparser
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.http import HttpClient
+
+          URLS = {
+            "ecb_replacement": "https://talent.ecb.europa.eu/careers",
+            "ecb_own_careers": "https://www.ecb.europa.eu/careers/all-about-careers/html/index.en.html",
+            "su_varbi_feed": "https://su.varbi.com/what:rssfeed/",
+            "su_varbi_feed_en": "https://su.varbi.com/en/what:rssfeed/",
+            "su_varbi_jobs": "https://su.varbi.com/en/",
+            "crest_recruitment": "https://crest.science/opportunities-2/",
+            "copenhagen_official": "https://employment.ku.dk/all-vacancies/",
+          }
+
+          async def inspect(label, url):
+              async with HttpClient(timeout=11,max_retries=0,default_min_interval=0.2) as client:
+                  try:
+                      r=await client.request("GET",url)
+                      print("SOURCE",label,"HTTP",r.status_code,"LEN",len(r.content),"FINAL",str(r.url),flush=True)
+                      if r.status_code>=400:
+                          return
+                      ct=r.headers.get("content-type","")
+                      parsed=feedparser.parse(r.text)
+                      if parsed.version:
+                          print("FEED",label,"VERSION",parsed.version,"ITEMS",len(parsed.entries),"BOZO",bool(parsed.bozo),flush=True)
+                          for entry in parsed.entries[:12]:
+                              print("ENTRY",label,repr(entry.get("title"))[:110],repr(entry.get("link"))[:160],repr(entry.get("summary"))[:200],flush=True)
+                      else:
+                          soup=BeautifulSoup(r.text,"lxml")
+                          print("HTML",label,"TITLE",soup.title.get_text(" ",strip=True)[:140] if soup.title else "", "ANCHORS",len(soup.find_all("a",href=True)),flush=True)
+                          for a in soup.find_all("a",href=True):
+                              text=a.get_text(" ",strip=True)
+                              href=a.get("href","")
+                              if any(z in (text+" "+href).lower() for z in ("iies","economic","jobid:","research","trainee","vacanc","talent.ecb","varbi.com")):
+                                  print("LINK",label,repr(text[:85]),repr(href[:170]),flush=True)
+                      print("DONE",label,flush=True)
+                  except Exception as e:
+                      print("ERROR",label,type(e).__name__,str(e)[:210],flush=True)
+          async def main():
+              await asyncio.gather(*(inspect(name,url) for name,url in URLS.items()))
+          asyncio.run(main())
+          PY
