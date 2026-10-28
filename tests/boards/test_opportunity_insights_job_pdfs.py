@@ -52,6 +52,10 @@ def test_opportunity_insights_rejects_unrelated_or_offsite_pdfs():
         '<a href="https://evil.invalid/?next=https://opportunityinsights.org/'
         'wp-content/uploads/2026/07/OI-Associate-Data-Scientist-JD-Website-.pdf">'
         'Fake redirect</a>'
+        '<a href="https://harvardcareers.harvard.edu/job/99999?next='
+        'https://evil.invalid">Untrusted redirect suffix</a>'
+        '<a href="https://harvardcareers.harvard.edu/job/99999#fragment">'
+        'Untrusted fragment suffix</a>'
     )
     result = scrape(html)
     assert result.ok
