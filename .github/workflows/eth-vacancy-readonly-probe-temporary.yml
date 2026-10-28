@@ -17,46 +17,46 @@ jobs:
         with:
           activate-environment: true
       - run: uv sync --locked --extra dev
-      - name: Inspect official ETH vacancy HTML and original scraper result
+      - name: Inspect official ETH Softfactors vacancy feed schema (read-only)
         env:
           PYTHONPATH: src
         run: |
           python3 - <<'PY'
           import asyncio
-          import re
-          from bs4 import BeautifulSoup
-          from predoc_pipeline.boards.config import load_board_sources
+          import json
           from predoc_pipeline.boards.http import HttpClient
-          from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
 
-          URL = "https://lawecon.ethz.ch/group/open-positions.html"
+          URL = ("https://lawecon.ethz.ch/group/open-positions/"
+                 "_jcr_content/par/jobs.softfactors.json")
+          ORGS = ("https://lawecon.ethz.ch/group/open-positions/"
+                  "_jcr_content/par/jobs.getorg.json?lzdesc=")
 
           async def main():
-              source = next(s for s in load_board_sources("config/sources.toml") if s.name == "eth_lawecon")
-              async with HttpClient(timeout=18, max_retries=0, default_min_interval=0.2) as http:
-                  try:
-                      html = await http.get_text(URL)
-                  except Exception as e:
-                      print("FETCH_ERROR", type(e).__name__, str(e)[:240], flush=True)
-                      return
-                  soup = BeautifulSoup(html, "lxml")
-                  print("FETCHED_BYTES", len(html), "TITLE", soup.title.get_text(" ",strip=True) if soup.title else "-", flush=True)
-                  for a in soup.select("a[href]"):
-                      href = str(a.get("href"))
-                      name = a.get_text(" ",strip=True)
-                      if re.search("jobs.ethz|job/view|assistant|doktorand|vacanc", href + " " + name, re.I):
-                          print("A",repr(name[:110]),repr(href[:220]),flush=True)
-                  for e in soup.select("iframe[src], script[src], [data-url], [data-src], [data-component], [data-type]"):
-                      descr = str(e.attrs)
-                      if re.search("job|vacanc|recruit|eth|iframe|careers",descr,re.I):
-                          print("EMBED",e.name,repr(descr[:330]),flush=True)
-                  for term in ["Research Assistants", "Current Jobs at the Center", "Doktorand", "jobs.ethz.ch"]:
-                      print("TERM",repr(term),"COUNT",len(list(re.finditer(re.escape(term),html,re.I))),flush=True)
-                      pos=html.find(term)
-                      if pos>=0:print("NEAR",term,repr(html[max(0,pos-250):pos+600]),flush=True)
-                  scraper=LinkScanScraper(source,http)
-                  posts=scraper.parse_postings([(URL,html)])
-                  print("PARSED",len(posts),[(p.title,p.url) for p in posts[:12]],flush=True)
-                  print("DISCOVERY_ERRORS",scraper.discovery_parse_errors,flush=True)
+              async with HttpClient(timeout=20, max_retries=0, default_min_interval=0.2) as http:
+                  for url in [URL, ORGS]:
+                      try:
+                          response=await http.get_text(url)
+                          print("ENDPOINT",url,"BYTES",len(response),flush=True)
+                          try:
+                              data=json.loads(response)
+                              if isinstance(data, dict):
+                                  print("KEYS",list(data)[:25],flush=True)
+                                  for k,v in data.items():
+                                      print("FIELD",k,"TYPE",type(v).__name__,"LEN",len(v) if isinstance(v,(dict,list,str)) else "-",flush=True)
+                                      if isinstance(v,list):
+                                          for item in v[:2]:
+                                              print("ITEM",repr(item)[:1600],flush=True)
+                                      elif isinstance(v,dict):
+                                          print("DICT_SAMPLE",repr(list(v.items())[:2])[:1500],flush=True)
+                              elif isinstance(data,list):
+                                  print("LIST_ITEMS",len(data),flush=True)
+                                  for item in data[:3]:
+                                      print("ITEM",repr(item)[:2200],flush=True)
+                              else:
+                                  print("SCALAR",repr(data)[:1000],flush=True)
+                          except json.JSONDecodeError:
+                              print("NOT_JSON",repr(response[:1000]),flush=True)
+                      except Exception as e:
+                          print("FETCH_ERROR",url,type(e).__name__,str(e)[:230],flush=True)
           asyncio.run(main())
           PY
