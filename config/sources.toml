@@ -616,12 +616,16 @@ note = "Abdul Latif Jameel Poverty Action Lab (J-PAL) global, North America, and
 name = "ecb"
 type = "link_scan"
 group = "central_bank"
-url = "https://jobs.ecb.europa.eu/search/?createNewAlert=false&q=trainee"
-link_pattern = 'jobs\.ecb\.europa\.eu/job/'
+# ECB moved recruitment to the employer-owned talent portal. The former
+# jobs.ecb.europa.eu host no longer resolves on GitHub Actions runners.
+url = "https://talent.ecb.europa.eu/careers/SearchJobs"
+link_pattern = '^https://talent\.ecb\.europa\.eu/careers/JobDetail/[^/?#]+/[0-9]+$'
+# Reject an unexpected empty response instead of treating login/site drift as healthy.
+verified_empty_marker = "No matching jobs found"
 institution = "European Central Bank"
 country = "Germany"
 field_implied = true
-note = "ECB Student Research Assistant Traineeship Programme in Directorate General Research."
+note = "Official ECB recruitment portal with job-specific numeric requisition IDs."
 
 [[board]]
 name = "bank_of_england"
