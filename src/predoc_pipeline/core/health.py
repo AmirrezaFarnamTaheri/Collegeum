@@ -97,8 +97,13 @@ def public_source_stats(stats: dict[str, Any]) -> dict[str, Any]:
         public["messages"] = list(dict.fromkeys(
             public_failure(message) for message in (data.get("messages") or [])[:5]
         ))
+        # Successful transport is not the same as healthy source coverage.
+        # For example, an expected-nonempty provider may return zero postings
+        # without raising. Publish an explicit derived outcome so consumers
+        # don't mistake raw ok=True for a healthy source.
+        public["status"] = source_status(public)
         if (
-            source_status(public) == "failed"
+            public["status"] == "failed"
             and not public["messages"]
             and public.get("fetched")
             and not public.get("items")
