@@ -404,7 +404,11 @@ class LinkScanScraper(BaseScraper):
             link_el = item.select_one(sel.get("link", "a[href]"))
             if not link_el or not link_el.get("href"):
                 continue
-            if not self._valid_application_url(absolutize(base, str(link_el["href"]))):
+            href = absolutize(base, str(link_el["href"]))
+            pattern = self.opt("link_pattern")
+            if pattern and not re.search(pattern, href, re.IGNORECASE):
+                continue
+            if not self._valid_application_url(href):
                 continue
             title = pick(item, "title") or clean_ws(link_el.get_text(" "))
             if not title:
@@ -412,7 +416,7 @@ class LinkScanScraper(BaseScraper):
             deadline_raw = pick(item, "deadline")
             deadline, deadline_text = extract_deadline(f"deadline: {deadline_raw}") if deadline_raw else (None, None)
             posts.append(self.make(
-                title=title, url=absolutize(base, str(link_el["href"])),
+                title=title, url=href,
                 institution=pick(item, "institution") or self.cfg.institution or "",
                 location=pick(item, "location"), deadline=deadline, deadline_text=deadline_text or deadline_raw,
                 date_posted=parse_posted(pick(item, "posted")),
