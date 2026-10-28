@@ -690,7 +690,14 @@ name = "ny_fed"
 type = "link_scan"
 group = "central_bank"
 url = "https://www.newyorkfed.org/research/careers/research_analysts"
-link_pattern = 'myworkdayjobs\.com/FRS|newyorkfed\.org/research/careers'
+# Seasonal official RA recruitment (Summer 2027: 24 Aug–14 Sep 2026) is closed.
+# Verify the RA cohort row and expire the exception before August 2027.
+# A closed internship notice by itself does not establish RA hiring status.
+may_be_empty = true
+verified_empty_marker = "Research Analyst Summer 2027"
+verified_empty_after = "2026-09-14"
+verified_empty_before = "2027-08-01"
+link_pattern = 'myworkdayjobs\.com/FRS/job/'
 institution = "Federal Reserve Bank of New York"
 country = "United States"
 field_implied = true
