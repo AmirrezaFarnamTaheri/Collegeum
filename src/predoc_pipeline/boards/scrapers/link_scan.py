@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import date
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
@@ -25,7 +26,7 @@ from bs4 import BeautifulSoup, Tag
 
 from ...core.output_quality import application_url_issue
 from ..models import JobPostSchema
-from ..utils.dates import extract_deadline, find_dates, parse_posted
+from ..utils.dates import extract_deadline, find_dates, parse_posted, today
 from ..utils.geo import detect_location
 from ..utils.text import absolutize, clean_ws, truncate
 from .base import BaseScraper, SourceSkipped, register
@@ -254,11 +255,31 @@ class LinkScanScraper(BaseScraper):
         marker = self.opt("verified_empty_marker")
         if marker and not posts:
             expected = clean_ws(str(marker)).casefold()
-            if not any(
+            found = any(
                 expected in clean_ws(BeautifulSoup(html, "lxml").get_text(" ", strip=True)).casefold()
                 for _, html in raw_data
-            ):
+            )
+            if not found:
                 self.discovery_parse_errors.append("Verified no-vacancies notice missing")
+            else:
+                # Annual hiring cycles must not remain permanently 'healthy
+                # empty' because last year's page still contains a closed
+                # cohort. Bounds are optional for other seasonal sources.
+                after = self.opt("verified_empty_after")
+                before = self.opt("verified_empty_before")
+                if after or before:
+                    try:
+                        current = today()
+                        if (after and current <= date.fromisoformat(after)) or (
+                            before and current >= date.fromisoformat(before)
+                        ):
+                            self.discovery_parse_errors.append(
+                                "Verified no-vacancies notice outside its hiring cycle"
+                            )
+                    except (ValueError, TypeError):
+                        self.discovery_parse_errors.append(
+                            "Invalid verified no-vacancies hiring cycle dates"
+                        )
         if (
             not posts
             and self.opt("skip_unresolved_link_templates", False)
