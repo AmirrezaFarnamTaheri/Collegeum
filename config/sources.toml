@@ -108,10 +108,12 @@ name = "somma"
 type = "link_scan"
 group = "aggregator"
 url = "https://somma.es/jobs/"
-link_pattern = 'somma\.es/job/[^/]+/?$'
-institution_from_context = true
+# Restrict structured selection to a real vacancy slug, never the /job/ root.
+link_pattern = '^https://somma\.es/job/[a-z0-9][a-z0-9-]*/?$'
+# The official SOMMa table stores job titles and metadata in separate cells.
+selectors = { item = "tbody tr", title = "td.title", link = "td.actions a[href^='https://somma.es/job/']:not([href='https://somma.es/job/']), td.actions a[href^='/job/']:not([href='/job/'])", institution = "td.institution", location = "td.province", deadline = "td.deadline" }
 country = "Spain"
-note = "Spanish centres of excellence (CEMFI, BSE, CREI...) - all sciences, so fields are checked."
+note = "Spanish centres of excellence including CEMFI; read vacancy titles, links, and metadata from official jobs table."
 
 [[board]]
 name = "jobs_ac_uk"
