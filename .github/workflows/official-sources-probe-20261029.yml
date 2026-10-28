@@ -41,7 +41,7 @@ jobs:
               cfg=next(x for x in load_board_sources("config/sources.toml") if x.name=="ecb")
               cfg=cfg.model_copy(update={
                 "url":HOST+"/careers/SearchJobs",
-                "link_pattern":r"^https://talent\\.ecb\\.europa\\.eu/careers/JobDetail/[^/?#]+/\\d+$"
+                "link_pattern":r"^https://talent\.ecb\.europa\.eu/careers/JobDetail/[^/?#]+/\d+$"
               })
               async with HttpClient(timeout=14,max_retries=0,default_min_interval=0.2) as http:
                   for url in URLS:
