@@ -22,8 +22,12 @@ JOB = "https://www.jobs.ethz.ch/job/en/12022?mw_source=jobs_ethz"
 
 
 class FixtureHttp:
-    def __init__(self, records, url_path="/group/open-positions/_jcr_content/par/jobs.softfactors.json",
-                 orgs="09629,09627,03795"):
+    def __init__(
+        self,
+        records,
+        url_path="/group/open-positions/_jcr_content/par/jobs.softfactors.json",
+        orgs="09629,09627,03795",
+    ):
         self.records = records
         self.requests = []
         self.page = (
@@ -47,7 +51,9 @@ def record(ident="0z7L6XHbhhGWTMZS1r", classification="09629", title=None, url=J
     return {
         "id": ident,
         "description": {
-            "title": {"en": title or "Research Assistants (Law, Computer Science, or related fields)"},
+            "title": {
+                "en": title or "Research Assistants (Law, Computer Science, or related fields)"
+            },
             "eth_area": {"en": "Center for Law & Economics (D-GESS)"},
             "eth_intro": {"en": "<p>Data collection and AI research on law and society.</p>"},
         },
