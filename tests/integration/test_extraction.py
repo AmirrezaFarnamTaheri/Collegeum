@@ -393,6 +393,30 @@ class TestExtractorBackendProbing(unittest.TestCase):
         self.assertIn(k, ("key1", "key2"))
 
     @respx_mock
+    def test_malformed_response_does_not_spend_other_keys_on_same_bad_model(self):
+        route = respx.post("https://api.openai.com/v1/chat/completions").mock(
+            return_value=httpx.Response(
+                200, json={"choices": [{"message": {"content": "User Safety: safe"}}]}
+            )
+        )
+        from predoc_pipeline.extract.heuristic import HeuristicExtractor
+
+        extractor = Extractor(
+            api_keys=["first-test-key", "second-test-key"],
+            model="gpt-4o-mini",
+            base_url="https://api.openai.com",
+            limiter=RateLimiter(requests_per_minute=600, requests_per_day=1000),
+            backend="openai",
+            fallback_extractor=HeuristicExtractor(),
+        )
+        result = extractor.extract(
+            text="Predoctoral Research Assistant at Example University.",
+            source_url="https://example.org/job",
+        )
+        self.assertTrue(result.is_heuristic_fallback)
+        self.assertEqual(route.call_count, 1)
+
+    @respx_mock
     def test_schema_failure_fallback_sets_heuristic_flag(self):
         respx.post("https://api.openai.com/v1/chat/completions").mock(
             return_value=httpx.Response(
