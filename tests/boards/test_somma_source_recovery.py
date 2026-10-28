@@ -79,3 +79,24 @@ def test_somma_does_not_invent_job_from_navigation_or_generic_more_info_link():
         SCRAPERS[cfg.type](cfg, FixtureHttp(url, html))
     ], 1, 5))[0]
     assert result.posts == []
+
+def test_somma_rejects_job_index_links_with_query_or_fragment():
+    """Placeholder index links must not become listings, even with a valid row title."""
+    cfg = source()
+    url = cfg.opt("url")
+    html = """
+    <table><tbody>
+      <tr><td class="title">Pre-Doctoral Research Assistant</td>
+        <td class="institution">CEMFI</td>
+        <td class="deadline">November 10, 2026</td>
+        <td class="actions"><a href="/job/?utm_source=jobs">More info</a></td></tr>
+      <tr><td class="title">Research Economist</td>
+        <td class="institution">Example Institute</td>
+        <td class="deadline">November 11, 2026</td>
+        <td class="actions"><a href="https://somma.es/job/#jobs">More info</a></td></tr>
+    </tbody></table>
+    """
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(url, html))
+    ], 1, 5))[0]
+    assert result.posts == []
