@@ -138,6 +138,55 @@ class TestExtractorBackendProbing(unittest.TestCase):
         self.assertTrue(result.is_vacancy)
 
     @respx_mock
+    def test_invalid_interactions_json_tries_valid_generate_content_before_heuristic(self):
+        first = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/interactions"
+        ).mock(return_value=httpx.Response(200, json={"output_text": "User Safety: safe"}))
+        second = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            "gemini-flash-lite-latest:generateContent"
+        ).mock(return_value=httpx.Response(200, json=_generate_content_success(VALID_RESULT)))
+
+        class FallbackMustNotRun:
+            def extract(self, **kwargs):
+                raise AssertionError("The second structured backend has not been tried")
+
+        extractor = self._extractor(backend="auto", fallback_extractor=FallbackMustNotRun())
+        result = extractor.extract(text="a" * 100, source_url="https://example.org/job")
+        self.assertTrue(result.is_vacancy)
+        self.assertEqual(result.institution, "Example University")
+        self.assertFalse(result.is_heuristic_fallback)
+        self.assertEqual(first.call_count, 1)
+        self.assertEqual(second.call_count, 1)
+
+    @respx_mock
+    def test_all_invalid_structured_backends_use_one_heuristic_fallback(self):
+        first = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/interactions"
+        ).mock(return_value=httpx.Response(200, json={"output_text": "User Safety: safe"}))
+        second = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            "gemini-flash-lite-latest:generateContent"
+        ).mock(return_value=httpx.Response(
+            200,
+            json={"candidates": [{"content": {"parts": [{"text": "not JSON"}]}}]},
+        ))
+
+        from predoc_pipeline.extract.heuristic import HeuristicExtractor
+
+        extractor = self._extractor(
+            backend="auto",
+            fallback_extractor=HeuristicExtractor(),
+        )
+        result = extractor.extract(
+            text="Predoctoral Research Assistant in Economics at LSE. Apply now.",
+            source_url="https://example.org/job",
+        )
+        self.assertTrue(result.is_heuristic_fallback)
+        self.assertEqual(first.call_count, 1)
+        self.assertEqual(second.call_count, 1)
+
+    @respx_mock
     def test_429_raises_rate_limited_with_retry_delay(self):
         respx.post("https://generativelanguage.googleapis.com/v1beta/interactions").mock(
             return_value=httpx.Response(
