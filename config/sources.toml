@@ -691,8 +691,8 @@ type = "link_scan"
 group = "central_bank"
 url = "https://www.newyorkfed.org/research/careers/research_analysts"
 # Seasonal official RA recruitment (Summer 2027: 24 Aug–14 Sep 2026) is closed.
-# Treat its own explicit 2027 closed-hiring notice as a valid empty cycle.
-# If the notice disappears, missing vacancies surface a parse failure.
+# Verify the RA cohort row and expire the exception before August 2027.
+# A closed internship notice by itself does not establish RA hiring status.
 may_be_empty = true
 verified_empty_marker = "Research Analyst Summer 2027"
 verified_empty_after = "2026-09-14"
