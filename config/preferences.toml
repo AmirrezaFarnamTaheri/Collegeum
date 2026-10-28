@@ -62,7 +62,7 @@ field_exclude_terms = [
   "radiology", "surgery", "cardiology", "pediatric*", "paediatric*", "arts",
   "art history", "humanities", "philosophy", "history", "literature", "linguistics",
   "music", "theatre", "theater", "film", "journalism", "editorial",
-  "architecture",
+  "architecture", "archaeolog*", "archeolog*", "mathematics",
 ]
 
 # Rejected when found in the TITLE (unless a strong role/predoc term is there too).
