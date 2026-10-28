@@ -1,0 +1,47 @@
+name: verify-ETH-source-readonly-temporary
+on:
+  push:
+    branches: [verify/eth-softfactors-live-20261029]
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Recheck focused fixture regressions
+        env:
+          PYTHONPATH: src
+        run: uv run pytest -q tests/boards/test_eth_softfactors_source.py
+      - name: Inspect official ETH unit-filtered JSON read-only
+        env:
+          PYTHONPATH: src
+        run: |
+          uv run python - <<'PY'
+          import asyncio
+          from predoc_pipeline.boards.collector import _scrape_all
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.scrapers import SCRAPERS
+
+          async def main():
+              cfg=next(s for s in load_board_sources("config/sources.toml") if s.name=="eth_lawecon")
+              async with HttpClient(timeout=22,max_retries=0,default_min_interval=0.3) as http:
+                  outcome=(await _scrape_all([SCRAPERS[cfg.type](cfg,http)],1,45))[0]
+              print("ETH_HEALTH",outcome.as_stats(),flush=True)
+              print("ETH_MATCHED",[(p.title,p.url,p.institution,str(p.deadline)) for p in outcome.posts[:15]],flush=True)
+              assert outcome.ok, "ETH adapter returned partial/failed source status"
+              assert any("Research Assistant" in p.title for p in outcome.posts), "Expected official ETH Law & Economics RA missing"
+              assert all("jobs.ethz.ch" in p.url for p in outcome.posts)
+              assert all(p.deadline is None for p in outcome.posts), "Publication date was interpreted as a deadline"
+              assert len(outcome.posts) <= 12, "Likely accidentally imported unrelated ETH faculty jobs"
+          asyncio.run(main())
+          PY
