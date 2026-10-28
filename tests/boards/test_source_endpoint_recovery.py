@@ -185,3 +185,77 @@ def test_niesr_unrelated_news_page_must_not_be_treated_as_a_valid_empty_jobs_pag
     assert not result.ok
     assert result.as_stats()["errors"] > 0
     assert "parse" in result.as_stats()["failure_stage"]
+
+
+def test_iies_directory_official_links_are_not_false_vacancies():
+    """IIES's own careers page is a directory; a quiet season is expected."""
+    cfg = source("iies_stockholm")
+    assert cfg.may_be_empty is True
+    assert cfg.opt("verified_empty_marker") == "At the IIES we hire most of our junior faculty"
+    assert cfg.institution == "Institute for International Economic Studies (IIES)"
+    assert cfg.country == "Sweden"
+    assert cfg.field_implied is True
+    html = """
+    <h1>Work with us</h1>
+    <p>At the IIES we hire most of our junior faculty via the international
+    Job Market for economists.</p>
+    <a href="https://www.su.se/english/about-the-university/work-at-su/available-jobs">
+      Available jobs at Stockholm University</a>
+    <a href="https://econjobmarket.org/positions">Econ Job Market</a>
+    """
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert result.ok
+    assert result.posts == []
+    assert result.as_stats()["errors"] == 0
+
+
+def test_iies_future_specific_varbi_advert_is_discovered_not_directory_link():
+    """Support direct SU recruitment links while excluding university-wide indexes."""
+    cfg = source("iies_stockholm")
+    # The shared scraper canonicalizes trailing slashes from vacancy URLs.
+    url = "https://su.varbi.com/en/what:job/jobID:910396"
+    html = """
+    <p>At the IIES we hire most of our junior faculty via the international
+    Job Market for economists.</p>
+    <a href="https://www.su.se/english/about-the-university/work-at-su/available-jobs">
+      Available jobs at Stockholm University</a>
+    <a href="https://su.varbi.com/en/what:job/jobID:910396/">
+      Research Assistant in Applied Econometrics and Data Science</a>
+    """
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert result.ok
+    assert [p.url for p in result.posts] == [url]
+    assert all("available-jobs" not in p.url for p in result.posts)
+
+
+def test_iies_directory_drift_is_reported_not_marked_healthy_empty():
+    cfg = source("iies_stockholm")
+    html = "<html><title>Unrelated redirect</title><body>Page moved</body></html>"
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert not result.ok
+    assert result.as_stats()["failure_counts"]["parse"] >= 1
+
+
+def test_iies_url_pattern_rejects_non_vacancy_or_lookalike_varbi_urls():
+    import re
+
+    cfg = source("iies_stockholm")
+    rx = re.compile(cfg.opt("link_pattern"), re.IGNORECASE)
+    assert rx.search("https://su.varbi.com/en/what%3Ajob/jobID%3A925436/")
+    for url in (
+        "https://su.varbi.com/",
+        "https://su.varbi.com/en/",
+        "https://su.varbi.com.evil.invalid/en/what:job/jobID:910396/",
+        "https://www.su.se/english/about-the-university/work-at-su/available-jobs",
+        "https://econjobmarket.org/positions/12840",
+        "https://su.varbi.com/en/what:job/jobID:910396/other",
+        "https://su.varbi.com/en/what:job/jobID:910396/?ref=redirect",
+    ):
+        assert not rx.search(url), url
+

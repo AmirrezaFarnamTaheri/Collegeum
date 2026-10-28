@@ -769,11 +769,14 @@ name = "iies_stockholm"
 type = "link_scan"
 group = "research_institute"
 url = "https://www.su.se/english/divisions/institute-for-international-economic-studies/about-the-institute/work-with-us"
-link_pattern = 'iies\.su\.se/'
+# Directory may contain no direct jobs; missing official text still reports source drift.
+may_be_empty = true
+verified_empty_marker = "At the IIES we hire most of our junior faculty"
+link_pattern = '^https://su\.varbi\.com/(?:en/)?what(?::|%3A)job/jobID(?::|%3A)\d+/?$'
 institution = "Institute for International Economic Studies (IIES)"
 country = "Sweden"
 field_implied = true
-note = "IIES Stockholm University research assistants and predocs in quantitative economics."
+note = "Official IIES careers directory; only direct Varbi job-specific vacancies are candidates."
 
 [[board]]
 name = "nber_ras"
