@@ -17,46 +17,28 @@ jobs:
         with:
           activate-environment: true
       - run: uv sync --locked --extra dev
-      - name: Inspect official ETH Softfactors vacancy feed schema (read-only)
+      - name: Verify official ETH source parser against public JSON (read only)
         env:
           PYTHONPATH: src
         run: |
-          python3 - <<'PY'
+          uv run pytest -q tests/boards/test_eth_softfactors_source.py
+          uv run python - <<'PY'
           import asyncio
-          import json
+          from predoc_pipeline.boards.collector import _scrape_all
+          from predoc_pipeline.boards.config import load_board_sources
           from predoc_pipeline.boards.http import HttpClient
-
-          URL = ("https://lawecon.ethz.ch/group/open-positions/"
-                 "_jcr_content/par/jobs.softfactors.json")
-          ORGS = ("https://lawecon.ethz.ch/group/open-positions/"
-                  "_jcr_content/par/jobs.getorg.json?lzdesc=")
+          from predoc_pipeline.boards.scrapers import SCRAPERS
 
           async def main():
-              async with HttpClient(timeout=20, max_retries=0, default_min_interval=0.2) as http:
-                  for url in [URL, ORGS]:
-                      try:
-                          response=await http.get_text(url)
-                          print("ENDPOINT",url,"BYTES",len(response),flush=True)
-                          try:
-                              data=json.loads(response)
-                              if isinstance(data, dict):
-                                  print("KEYS",list(data)[:25],flush=True)
-                                  for k,v in data.items():
-                                      print("FIELD",k,"TYPE",type(v).__name__,"LEN",len(v) if isinstance(v,(dict,list,str)) else "-",flush=True)
-                                      if isinstance(v,list):
-                                          for item in v[:2]:
-                                              print("ITEM",repr(item)[:1600],flush=True)
-                                      elif isinstance(v,dict):
-                                          print("DICT_SAMPLE",repr(list(v.items())[:2])[:1500],flush=True)
-                              elif isinstance(data,list):
-                                  print("LIST_ITEMS",len(data),flush=True)
-                                  for item in data[:3]:
-                                      print("ITEM",repr(item)[:2200],flush=True)
-                              else:
-                                  print("SCALAR",repr(data)[:1000],flush=True)
-                          except json.JSONDecodeError:
-                              print("NOT_JSON",repr(response[:1000]),flush=True)
-                      except Exception as e:
-                          print("FETCH_ERROR",url,type(e).__name__,str(e)[:230],flush=True)
+              source=next(s for s in load_board_sources("config/sources.toml")
+                          if s.name=="eth_lawecon")
+              async with HttpClient(timeout=25,max_retries=0,default_min_interval=0.3) as http:
+                  res=(await _scrape_all([SCRAPERS[source.type](source,http)],1,50))[0]
+                  print("ETH_SOURCE_HEALTH",res.as_stats(),flush=True)
+                  print("ETH_MATCHED_POSTINGS",[(p.title,p.url,p.field_implied)
+                                                for p in res.posts],flush=True)
+                  assert res.ok, "ETH official adapter returned partial source errors"
+                  assert any("Research Assistants" in p.title for p in res.posts)
+                  assert all(p.field_implied is False for p in res.posts)
           asyncio.run(main())
           PY
