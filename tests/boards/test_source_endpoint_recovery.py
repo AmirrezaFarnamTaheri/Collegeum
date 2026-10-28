@@ -214,7 +214,8 @@ def test_iies_directory_official_links_are_not_false_vacancies():
 def test_iies_future_specific_varbi_advert_is_discovered_not_directory_link():
     """Support direct SU recruitment links while excluding university-wide indexes."""
     cfg = source("iies_stockholm")
-    url = "https://su.varbi.com/en/what:job/jobID:910396/"
+    # The shared scraper canonicalizes trailing slashes from vacancy URLs.
+    url = "https://su.varbi.com/en/what:job/jobID:910396"
     html = """
     <p>At the IIES we hire most of our junior faculty via the international
     Job Market for economists.</p>
