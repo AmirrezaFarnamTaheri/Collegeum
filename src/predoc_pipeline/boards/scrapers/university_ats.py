@@ -54,6 +54,7 @@ class WorkdayScraper(BaseScraper):
             raise ValueError("Workday max_pages must be positive")
         raw: list[dict[str, Any]] = []
         for term in self.opt("search_terms", [""]):
+            initial_total: int | None = None
             for page in range(max_pages):
                 payload = {"appliedFacets": {}, "limit": self.PAGE, "offset": page * self.PAGE, "searchText": term}
                 try:
@@ -72,11 +73,20 @@ class WorkdayScraper(BaseScraper):
                 batch = data.get("jobPostings", []) or []
                 raw.extend(batch)
                 total = data.get("total")
+                # Workday's live API reports the accurate search total on the
+                # first page, then total=0 on subsequent offsets even while
+                # returning valid postings. Reuse the first-page total only
+                # for this documented later-page placeholder (not for a
+                # genuine empty first page, malformed metadata, or empty batch).
+                if page > 0 and total == 0 and batch and initial_total is not None:
+                    total = initial_total
                 if total is not None and (
                     isinstance(total, bool) or not isinstance(total, int) or total < 0
                 ):
                     self.discovery_parse_errors.append("invalid Workday total")
                     total = None
+                if page == 0 and isinstance(total, int) and total > 0:
+                    initial_total = total
                 consumed = page * self.PAGE + len(batch)
                 if total is not None and total < consumed:
                     self.discovery_parse_errors.append("inconsistent Workday total")
