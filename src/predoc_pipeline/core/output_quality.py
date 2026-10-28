@@ -64,12 +64,20 @@ def application_url_issue(url: object) -> str | None:
     return None
 
 
-# One evidence-reviewed, out-of-scope historical vacancy. The original journal
-# and delivery receipts are retained; do not invent a vacancy closure. This
-# University of Chicago general-ATS requisition describes Freedman Lab
-# neuroscience, not economics. Identity is stable across dashboard rebuilds.
+# Source-evidence-reviewed, out-of-scope historical vacancies. Never infer
+# a vacancy closed from a subject mismatch. Preserve the durable journal and
+# any delivery receipts; prevent re-publication in web, RSS and subscriptions.
+# Hashes are stable URL identities and are reviewed individually (not inferred
+# from title similarity or project affiliation).
 _REVIEWED_WRONG_FIELD_URL_HASHES = frozenset({
+    # University of Chicago Freedman Lab neuroscience, not economics.
     "b35dfeb8c8a0c10d4d2c9f95a273b4e8a614087f943840bdc8dcbb20444cdc5f",
+    # University of Copenhagen: pure mathematics postdoc (listing ID 170).
+    # Distinct from its mathematics of insurance and economics postdoc.
+    "d702a7eee570446b9e41c7493d7403550bbbd7a4b25e9dc20297b398f0ba24cd",
+    # Cambridge McDonald Institute: digital archaeological-site documentation
+    # research assistant (listing ID 259; prior Telegram receipt retained).
+    "60d312d334ece3e229027c162db2d87e991933e97639467b3688b0e19065aa59",
 })
 
 
