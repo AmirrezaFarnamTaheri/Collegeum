@@ -517,14 +517,16 @@ note = "EIEF research assistantships and predoctoral appointments in Rome."
 
 [[board]]
 name = "eth_lawecon"
-type = "link_scan"
+type = "eth_softfactors"
 group = "research_institute"
 url = "https://lawecon.ethz.ch/group/open-positions.html"
-link_pattern = '(?:jobs\.ethz\.ch/|lawecon\.ethz\.ch/group/open-positions/)'
+# The official HTML loads an ETH-wide Softfactors JSON feed. Use only the
+# page's current data-orgs unit IDs; never attribute unrelated ETH postings.
+may_be_empty = true
 institution = "ETH Zurich Center for Law & Economics"
 country = "Switzerland"
-field_implied = true
-note = "Empirical data science, experimental economics, and law & economics predoc/RA program."
+field_implied = false
+note = "Official Center for Law & Economics vacancies; job descriptions must pass discipline filtering."
 
 [[board]]
 name = "ifw_kiel"
