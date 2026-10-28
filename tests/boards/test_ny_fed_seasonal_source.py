@@ -13,7 +13,6 @@ from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers import SCRAPERS
 from predoc_pipeline.core.health import source_status
 
-
 CLOSED = "Applications for intern positions with a summer 2027 start date are now closed."
 
 
