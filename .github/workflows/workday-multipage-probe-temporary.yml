@@ -82,3 +82,25 @@ jobs:
                       print("END_SOURCE",name,flush=True)
           asyncio.run(main())
           PY
+      - name: Validate complete Workday source health without publication
+        env:
+          PYTHONPATH: src
+        run: |
+          uv run python - <<'PY'
+          import asyncio
+          from predoc_pipeline.boards.collector import _scrape_all
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.scrapers.university_ats import WorkdayScraper
+
+          async def main():
+              configs={c.name:c for c in load_board_sources("config/sources.toml")}
+              async with HttpClient(timeout=24,max_retries=0,default_min_interval=0.2) as http:
+                  for name in ("ubc","mcgill","uchicago_bfi"):
+                      item=(await _scrape_all([WorkdayScraper(configs[name],http)],1,115))[0]
+                      stats=item.as_stats()
+                      print("WORKDAY_LIVE_ACCEPT",name,"RAW",stats["raw"],"ERRORS",stats["errors"],
+                            "FAILURE_COUNTS",stats["failure_counts"],"STAGE",stats["failure_stage"],flush=True)
+                      assert item.ok and stats["raw"]>0, (name,stats)
+          asyncio.run(main())
+          PY
