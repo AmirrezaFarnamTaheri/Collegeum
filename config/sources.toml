@@ -769,12 +769,14 @@ name = "iies_stockholm"
 type = "link_scan"
 group = "research_institute"
 url = "https://www.su.se/english/divisions/institute-for-international-economic-studies/about-the-institute/work-with-us"
-# IIES's official page directs applicants to SU/Varbi and EJM directories;
-# an empty directory is not evidence that a scraper failed. Do not ingest
-# institution-wide job indexes or faculty-only EJM links as predoctoral ads.
+# Directory is seasonally empty; a missing source-page marker still reports parsing drift.
 may_be_empty = true
 verified_empty_marker = "At the IIES we hire most of our junior faculty"
-link_pattern = '^https://su\.varbi\.com/(?:en/)?what(?::|%3A)job/jobID(?::|%3A)\d+/?
+link_pattern = '^https://su\.varbi\.com/(?:en/)?what(?::|%3A)job/jobID(?::|%3A)\d+/?$'
+institution = "Institute for International Economic Studies (IIES)"
+country = "Sweden"
+field_implied = true
+note = "IIES Stockholm University: official careers directory; only linked employer-specific Varbi job IDs count as vacancies."
 
 [[board]]
 name = "nber_ras"
