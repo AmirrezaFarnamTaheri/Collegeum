@@ -17,9 +17,10 @@ from predoc_pipeline.boards.scrapers.university_ats import WorkdayScraper
 
 
 class WorkdayFixtureHttp:
-    def __init__(self, term: str, total: int):
+    def __init__(self, term: str, total: int, *, later_pages_zero_total: bool = False):
         self.term = term
         self.total = total
+        self.later_pages_zero_total = later_pages_zero_total
         self.offsets = []
 
     async def post_json(self, url, payload):
@@ -39,7 +40,10 @@ class WorkdayFixtureHttp:
             }
             for i in range(count)
         ]
-        return {"jobPostings": batch, "total": self.total if term == self.term else 0}
+        total = self.total if term == self.term else 0
+        if offset > 0 and self.later_pages_zero_total:
+            total = 0
+        return {"jobPostings": batch, "total": total}
 
 
 def _source(name):
@@ -63,5 +67,23 @@ def test_live_observed_search_results_are_not_truncated(name, term, total):
     assert result.as_stats()["failure_counts"] == {"fetch": 0, "parse": 0, "limit": 0}
     assert len(result.posts) == total
     assert len({post.url for post in result.posts}) == total
+    offsets = [offset for search, offset in http.offsets if search == term]
+    assert offsets == [page * 20 for page in range(ceil(total / 20))]
+
+@pytest.mark.parametrize(("name", "term", "total"), [
+    ("ubc", "research assistant finance", 36),
+    ("mcgill", "research assistant finance", 42),
+    ("uchicago_bfi", "research professional", 220),
+])
+def test_workday_later_pages_report_zero_total_but_still_have_valid_jobs(name, term, total):
+    """Observed 2026-10-28: Workday sets total=0 on offsets >0, with valid rows."""
+    source = _source(name)
+    http = WorkdayFixtureHttp(term, total, later_pages_zero_total=True)
+    result = asyncio.run(_scrape_all([WorkdayScraper(source, http)], 1, 30))[0]
+
+    assert result.ok, (name, result.as_stats())
+    assert len(result.posts) == total
+    assert len({post.url for post in result.posts}) == total
+    assert result.as_stats()["failure_counts"] == {"fetch": 0, "parse": 0, "limit": 0}
     offsets = [offset for search, offset in http.offsets if search == term]
     assert offsets == [page * 20 for page in range(ceil(total / 20))]
