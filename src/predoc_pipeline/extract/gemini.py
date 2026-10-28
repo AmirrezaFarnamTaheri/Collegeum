@@ -455,6 +455,18 @@ class Extractor:
                 cached = self.store.get_meta(_BACKEND_META_KEY)
             except Exception:  # pragma: no cover - meta lookup is advisory
                 cached = None
+        if backend == "auto" and cached in ("interactions", "generate_content"):
+            # A successful probe only determines preference. Retain the other
+            # supported endpoint for a future 200/invalid-response or schema drift.
+            primary = (
+                _InteractionsBackend() if cached == "interactions"
+                else _GenerateContentBackend()
+            )
+            alternate = (
+                _GenerateContentBackend() if cached == "interactions"
+                else _InteractionsBackend()
+            )
+            return [primary, alternate]
         chosen = cached if backend == "auto" and cached else backend
         if chosen == "interactions":
             return [_InteractionsBackend()]
@@ -526,6 +538,7 @@ class Extractor:
         for key_attempt in range(max_key_attempts):
             current_key = self.rotator.get_key()
             key_had_rate_limit = False
+            invalid_output_seen = False
             for index, backend in enumerate(self._candidates):
                 req_body = backend.request(self.model, SYSTEM_PROMPT, user)
                 day = self.limiter.acquire()
@@ -607,25 +620,29 @@ class Extractor:
                     raise
                 except Exception as exc:
                     self.limiter.record(tokens=tokens, error=True, day=day)
-                    if self.fallback_extractor is not None:
-                        log.warning(
-                            "model_extraction_failed_fallback_heuristic",
-                            error=str(exc),
-                            raw=raw[:200] if "raw" in locals() and isinstance(raw, str) else "",
-                        )
-                        fallback_hints = dict(hints or {})
-                        fallback_hints["is_heuristic_fallback"] = True
-                        res = self.fallback_extractor.extract(
-                            text=text, source_url=source_url, title=title, hints=fallback_hints
-                        )
-                        res.is_heuristic_fallback = True
-                        return ExtractionResult.model_validate(res)
-                    if isinstance(exc, json.JSONDecodeError):
-                        raise ExtractionError(f"model returned non-JSON: {exc}") from exc
-                    if isinstance(exc, ExtractionError):
-                        raise
-                    raise ExtractionError(f"schema validation failed: {exc}") from exc
+                    invalid_output_seen = True
+                    # HTTP 200 does not imply a valid extraction. Try remaining
+                    # structured backends on this key, but do not spend other API
+                    # keys on malformed output from an otherwise working model.
+                    kind = (
+                        "non-JSON" if isinstance(exc, json.JSONDecodeError)
+                        else type(exc).__name__
+                    )
+                    last_error = ExtractionError(
+                        f"{backend.name}: invalid structured response ({kind})"
+                    )
+                    # Never log raw model output; it can echo vacancy/applicant data.
+                    log.warning(
+                        "model_extraction_invalid_candidate",
+                        backend=backend.name,
+                        error_kind=kind,
+                    )
+                    continue
 
+            if invalid_output_seen and not key_had_rate_limit:
+                # Changing credentials will not repair an incompatible output
+                # format; reserve key rotation for quota and transport failures.
+                break
             if not key_had_rate_limit and last_error is None:
                 break
 

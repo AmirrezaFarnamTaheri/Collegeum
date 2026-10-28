@@ -138,6 +138,89 @@ class TestExtractorBackendProbing(unittest.TestCase):
         self.assertTrue(result.is_vacancy)
 
     @respx_mock
+    def test_invalid_interactions_json_tries_valid_generate_content_before_heuristic(self):
+        first = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/interactions"
+        ).mock(return_value=httpx.Response(200, json={"output_text": "User Safety: safe"}))
+        second = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            "gemini-flash-lite-latest:generateContent"
+        ).mock(return_value=httpx.Response(200, json=_generate_content_success(VALID_RESULT)))
+
+        class FallbackMustNotRun:
+            def extract(self, **kwargs):
+                raise AssertionError("The second structured backend has not been tried")
+
+        extractor = self._extractor(backend="auto", fallback_extractor=FallbackMustNotRun())
+        result = extractor.extract(text="a" * 100, source_url="https://example.org/job")
+        self.assertTrue(result.is_vacancy)
+        self.assertEqual(result.institution, "Example University")
+        self.assertFalse(result.is_heuristic_fallback)
+        self.assertEqual(first.call_count, 1)
+        self.assertEqual(second.call_count, 1)
+
+    @respx_mock
+    def test_all_invalid_structured_backends_use_one_heuristic_fallback(self):
+        first = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/interactions"
+        ).mock(return_value=httpx.Response(200, json={"output_text": "User Safety: safe"}))
+        second = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            "gemini-flash-lite-latest:generateContent"
+        ).mock(return_value=httpx.Response(
+            200,
+            json={"candidates": [{"content": {"parts": [{"text": "not JSON"}]}}]},
+        ))
+
+        from predoc_pipeline.extract.heuristic import HeuristicExtractor
+
+        extractor = self._extractor(
+            backend="auto",
+            fallback_extractor=HeuristicExtractor(),
+        )
+        result = extractor.extract(
+            text="Predoctoral Research Assistant in Economics at LSE. Apply now.",
+            source_url="https://example.org/job",
+        )
+        self.assertTrue(result.is_heuristic_fallback)
+        self.assertEqual(first.call_count, 1)
+        self.assertEqual(second.call_count, 1)
+
+    @respx_mock
+    def test_cached_auto_backend_still_recovers_from_invalid_json(self):
+        first = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/interactions"
+        ).mock(return_value=httpx.Response(200, json={"output_text": "User Safety: safe"}))
+        second = respx.post(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            "gemini-flash-lite-latest:generateContent"
+        ).mock(return_value=httpx.Response(200, json=_generate_content_success(VALID_RESULT)))
+
+        class CachedStore:
+            def __init__(self):
+                self.saved = None
+
+            def get_meta(self, _key):
+                return "interactions"
+
+            def set_meta(self, _key, value):
+                self.saved = value
+
+        class FallbackMustNotRun:
+            def extract(self, **kwargs):
+                raise AssertionError("Cached primary backend must not disable failover")
+
+        store = CachedStore()
+        extractor = self._extractor(
+            backend="auto", store=store, fallback_extractor=FallbackMustNotRun()
+        )
+        result = extractor.extract(text="a" * 100, source_url="https://example.org/job")
+        self.assertEqual(result.title, VALID_RESULT["title"])
+        self.assertEqual(store.saved, "generate_content")
+        self.assertEqual(first.call_count, 1)
+        self.assertEqual(second.call_count, 1)
+
+    @respx_mock
     def test_429_raises_rate_limited_with_retry_delay(self):
         respx.post("https://generativelanguage.googleapis.com/v1beta/interactions").mock(
             return_value=httpx.Response(
@@ -308,6 +391,30 @@ class TestExtractorBackendProbing(unittest.TestCase):
         # Should pick earliest without deadlock
         k = rotator.get_key()
         self.assertIn(k, ("key1", "key2"))
+
+    @respx_mock
+    def test_malformed_response_does_not_spend_other_keys_on_same_bad_model(self):
+        route = respx.post("https://api.openai.com/v1/chat/completions").mock(
+            return_value=httpx.Response(
+                200, json={"choices": [{"message": {"content": "User Safety: safe"}}]}
+            )
+        )
+        from predoc_pipeline.extract.heuristic import HeuristicExtractor
+
+        extractor = Extractor(
+            api_keys=["first-test-key", "second-test-key"],
+            model="gpt-4o-mini",
+            base_url="https://api.openai.com",
+            limiter=RateLimiter(requests_per_minute=600, requests_per_day=1000),
+            backend="openai",
+            fallback_extractor=HeuristicExtractor(),
+        )
+        result = extractor.extract(
+            text="Predoctoral Research Assistant at Example University.",
+            source_url="https://example.org/job",
+        )
+        self.assertTrue(result.is_heuristic_fallback)
+        self.assertEqual(route.call_count, 1)
 
     @respx_mock
     def test_schema_failure_fallback_sets_heuristic_flag(self):
