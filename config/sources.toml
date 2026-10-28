@@ -109,7 +109,8 @@ type = "link_scan"
 group = "aggregator"
 url = "https://somma.es/jobs/"
 # Accept only job-specific employer paths (no root links or query/fragment).
-link_pattern = '^https://somma\\.es/job/[a-z0-9][a-z0-9-]*/? a generic "More info" anchor; the job title, employer,
+link_pattern = '^https://somma\.es/job/[a-z0-9][a-z0-9-]*/?$'
+# Live SOMMa table uses a generic "More info" anchor; the job title, employer,
 # province and deadline are separate cells in the same <tr>.
 selectors = { item = "tbody tr", title = "td.title", link = "td.actions a[href^='https://somma.es/job/']:not([href='https://somma.es/job/']), td.actions a[href^='/job/']:not([href='/job/'])", institution = "td.institution", location = "td.province", deadline = "td.deadline" }
 country = "Spain"
