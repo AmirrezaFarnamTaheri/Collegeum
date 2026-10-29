@@ -13,6 +13,8 @@ from predoc_pipeline.boards.scrapers import SCRAPERS
 from predoc_pipeline.core.health import source_status
 
 
+LIVE_SOURCES = {"yale_egc_jobs", "wharton_predoc"}
+
 SOURCES = {
     "yale_egc_jobs": "https://egc.yale.edu/opportunities/jobs-research-fellowships",
     "wharton_predoc": "https://upenn.wd1.myworkdayjobs.com/Wharton",
@@ -46,7 +48,7 @@ def scrape(name, html):
 def test_official_source_is_enabled_with_distinct_employer_url(name, url):
     sources = load_board_sources(Path("config/sources.toml"))
     cfg = source(name)
-    assert cfg.enabled is True
+    assert cfg.enabled is (name in LIVE_SOURCES)
     assert cfg.opt("url") == url
     assert cfg.may_be_empty is True
     assert cfg.field_implied is False
@@ -155,3 +157,28 @@ def test_wharton_uses_its_official_workday_api_with_real_requisition_identity():
     )
     assert source_status(result.as_stats()) == "successful"
     assert all(post.field_implied is False for post in result.posts)
+
+def test_yale_egc_student_internships_navigation_is_not_a_job():
+    cfg = source("yale_egc_jobs")
+    html = """
+    <h1>Current job openings</h1>
+    <a href="/opportunities/internships-yale-students">
+      Internships for Yale students
+    </a>
+    <a href="/opportunities/development-economics-research-fellow-2">
+      Development Economics Research Fellow
+    </a>
+    """
+    result = scrape(cfg.name, html)
+    assert result.ok
+    assert [p.title for p in result.posts] == ["Development Economics Research Fellow"]
+
+
+def test_new_sources_that_failed_readonly_runner_probe_are_not_enabled():
+    assert {name for name in SOURCES if name not in LIVE_SOURCES} == {
+        "princeton_rpde_jobs", "brookings_jobs", "ucl_management_jobs"
+    }
+    for name in SOURCES:
+        if name not in LIVE_SOURCES:
+            assert source(name).enabled is False
+
