@@ -24,6 +24,15 @@ _GENERIC_ROOTS = frozenset({
     "academictransfer.com", "www.academictransfer.com",
     "jobicy.com", "www.jobicy.com",
 })
+# An employer-verified case where the URL is program information, not an
+# actionable vacancy application. Avoid broad /about/ filtering: some official
+# advertisements legitimately live under that path.
+_NON_ACTIONABLE_PROGRAM_PAGES = frozenset({
+    ("epic.uchicago.edu",
+     "/about/jobs-fellowships/fellowships/predoctoral-fellows/"
+     "predoctoral-fellowship-program/about"),
+})
+
 _AUTH_HOSTS = frozenset({
     "accounts.google.com", "login.microsoftonline.com",
     "login.live.com", "appleid.apple.com",
@@ -50,6 +59,8 @@ def application_url_issue(url: object) -> str | None:
     decoded = unquote(parts.path)
     if _TEMPLATE.search(decoded):
         return "unresolved-url-template"
+    if (hostname, decoded.rstrip("/")) in _NON_ACTIONABLE_PROGRAM_PAGES:
+        return "generic-program-information-page"
     if hostname == "job-boards.greenhouse.io" and "true" in (
         value.lower() for value in parse_qs(parts.query).get("error", [])
     ):
