@@ -1052,6 +1052,79 @@ may_be_empty = true
 job_path_prefix = "/about/profile/vacant-positions/job/"
 note = "Official Emply vacancy JSON embedded in HTML, decoded without executing JavaScript. All 60 embedded adverts observed; retain deadline_date separately from contract start/end and registered_date. University-wide field/role gates remain active; separate graduate-school PhD competition pages are not included."
 
+# --- additional official economics and quantitative research employers -----
+# Advert URLs identify actual employer requisitions; keep all existing
+# eligibility, PhD-exclusion, deduplication, and Telegram filters in place.
+
+[[board]]
+name = "yale_egc_jobs"
+type = "link_scan"
+enabled = true
+group = "research_institute"
+url = "https://egc.yale.edu/opportunities/jobs-research-fellowships"
+institution = "Yale University Economic Growth Center"
+may_be_empty = true
+verified_empty_marker = "Current job openings"
+link_pattern = '^https://egc\.yale\.edu/opportunities/(?!(?:jobs-research-fellowships|(?:internships-for-yale-students|internships-yale-students)|faculty-research-support|egc-incubation-fund|support-for-graduate-students)(?:/|$))[a-z0-9-]+/?$'
+field_implied = false
+note = "Official Yale EGC openings; vacancy details must establish the role, field and workplace. Excludes programme and navigation pages."
+
+[[board]]
+name = "wharton_predoc"
+type = "workday"
+enabled = true
+group = "university"
+url = "https://upenn.wd1.myworkdayjobs.com/Wharton"
+institution = "University of Pennsylvania (Wharton School)"
+country = "United States"
+search_terms = ["predoctoral", "pre-doctoral", "research specialist economics"]
+max_pages = 6
+may_be_empty = true
+field_implied = false
+note = "Official Wharton Workday requisitions. Open/closed status is verified using application availability and end date on job details."
+
+[[board]]
+name = "princeton_rpde_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://rpde.princeton.edu/opportunities/jobs"
+institution = "Princeton University (Research Program in Development Economics)"
+country = "United States"
+may_be_empty = true
+verified_empty_marker = "Open Positions"
+link_pattern = '^https://main-princeton\.icims\.com/jobs/[0-9]+/[^?#]+'
+field_implied = false
+note = "OFF: Official RPDE jobs index returned HTTP 403 on the GitHub runner on 2026-10-29; retain configuration for later verified recovery."
+
+[[board]]
+name = "brookings_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://careers-brookings.icims.com/jobs/search?hashed=-435682078&ss=1"
+institution = "Brookings Institution"
+country = "United States"
+may_be_empty = true
+verified_empty_marker = "Search Results Page"
+link_pattern = '^https://careers-brookings\.icims\.com/jobs/[0-9]+/[^?#]+'
+field_implied = false
+note = "OFF: Official Brookings iCIMS search returned a parse failure in read-only collection on 2026-10-29; requires validated adapter/parser."
+
+[[board]]
+name = "ucl_management_jobs"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://www.mgmt.ucl.ac.uk/vacancies"
+institution = "University College London (School of Management)"
+country = "United Kingdom"
+may_be_empty = true
+verified_empty_marker = "Job vacancies"
+link_pattern = '^https://(?:(?:www\.)?mgmt|management)\.ucl\.ac\.uk/vacancies/[a-z0-9-]+/?$'
+field_implied = false
+note = "OFF: Official UCL School of Management vacancies page returned HTTP 403 on the GitHub runner on 2026-10-29."
+
 # --- social ------------------------------------------------------------
 
 [[board]]
