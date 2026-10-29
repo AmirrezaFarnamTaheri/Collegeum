@@ -1247,12 +1247,22 @@ note = "Candidate only; runner validation and vacancy-level eligibility required
 [[board]]
 name = "tamu_public_policy"
 type = "workday"
-enabled = false
+enabled = true
 group = "university"
 url = "https://tamus.wd1.myworkdayjobs.com/TAMU_External"
 institution = "Texas A&M University"
 country = "United States"
 field_implied = false
+# Source-specific position admission. Other ATS categories are rejected before the
+# downstream economics-field and PhD-degree checks.
+title_allow_pattern = '^Predoctoral Research Assistant
+may_be_empty = true
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+
 may_be_empty = false
 source_timeout_seconds = 60.0
 search_terms = ["predoctoral","research assistant economics","research analyst economics"]
@@ -1262,13 +1272,16 @@ note = "Candidate only; runner validation and vacancy-level eligibility required
 [[board]]
 name = "brandeis_business_econ"
 type = "workday"
-enabled = false
+enabled = true
 group = "university"
 url = "https://brandeis.wd5.myworkdayjobs.com/Jobs"
 institution = "Brandeis University"
 country = "United States"
 field_implied = false
-may_be_empty = false
+# Source-specific position admission. Other ATS categories are rejected before the
+# downstream economics-field and PhD-degree checks.
+title_allow_pattern = '^Temporary Research Assistant\b.*School of Business and Economics'
+may_be_empty = true
 source_timeout_seconds = 60.0
 search_terms = ["predoctoral","research assistant economics","research analyst economics"]
 max_pages = 8
@@ -1277,13 +1290,16 @@ note = "Candidate only; runner validation and vacancy-level eligibility required
 [[board]]
 name = "urban_institute_policy"
 type = "workday"
-enabled = false
+enabled = true
 group = "research_institute"
 url = "https://urban.wd115.myworkdayjobs.com/Urban-Careers"
 institution = "Urban Institute"
 country = "United States"
 field_implied = false
-may_be_empty = false
+# Source-specific position admission. Other ATS categories are rejected before the
+# downstream economics-field and PhD-degree checks.
+title_allow_pattern = '^Research Assistant\s*[-–—]\s*Quantitative\b'
+may_be_empty = true
 source_timeout_seconds = 60.0
 search_terms = ["predoctoral","research assistant economics","research analyst economics"]
 max_pages = 8
@@ -1382,12 +1398,22 @@ note = "Candidate only; runner validation and vacancy-level eligibility required
 [[board]]
 name = "federal_reserve_system_jobs"
 type = "workday"
-enabled = false
+enabled = true
 group = "central_bank"
 url = "https://rb.wd5.myworkdayjobs.com/FRS"
 institution = "Federal Reserve System (all regional Reserve Banks)"
 country = "United States"
 field_implied = false
+# Source-specific position admission. Other ATS categories are rejected before the
+# downstream economics-field and PhD-degree checks.
+title_allow_pattern = '^Research Assistant(?:/Sr[.] Research Assistant)?
+may_be_empty = true
+source_timeout_seconds = 60.0
+search_terms = ["research assistant","research associate economics","predoctoral"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: overlap_ny_fed."
+
+
 may_be_empty = false
 source_timeout_seconds = 60.0
 search_terms = ["research assistant","research associate economics","predoctoral"]
@@ -1841,12 +1867,21 @@ note = "Unverified candidate; official_finance_ra_examples; peoplesoft_job_links
 [[board]]
 name = "nus_policy_research"
 type = "link_scan"
-enabled = false
+enabled = true
 group = "university"
 url = "https://lkyspp.nus.edu.sg/careers/jobs-career-listing"
 institution = "National University of Singapore (Lee Kuan Yew School)"
 country = "Singapore"
 field_implied = false
+# Source-specific position admission. Other ATS categories are rejected before the
+# downstream economics-field and PhD-degree checks.
+title_allow_pattern = '^Research Assistant \((?:Policy Lab|Society & Governance|Social Lab)\)
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^https://lkyspp\\.nus\\.edu\\.sg/(?:careers/jobs-career-listing|ips/about-us/jobs-at-ips)/research-(?:assistant|associate)[^?#]*$"
+note = "Unverified candidate; official_policy_ra; qualitative_vs_quant_check; only activate after stable job-identity parser and eligibility checks."
+
+
 may_be_empty = false
 source_timeout_seconds = 45.0
 link_pattern = "^https://lkyspp\\.nus\\.edu\\.sg/(?:careers/jobs-career-listing|ips/about-us/jobs-at-ips)/research-(?:assistant|associate)[^?#]*$"
