@@ -1177,3 +1177,448 @@ follow_links = true
 link_pattern = "/jobs/[0-9]+/?$"
 note = "Template portal entry. Point at a real department listings page, set link_pattern to match that site's detail-page URLs, then run predoc-pipeline sources verify."
 tags = ["template"]
+
+# ---------------------------------------------------------------------------
+# 2026-10-29 | 100-source milestone candidates (NOT runner verified)
+# Activation is guarded by tools/activate_source_expansion.py.
+# The evidence URLs establish candidate identity, not current vacancies.
+# No wide university board may imply economics from the employer alone.
+# ---------------------------------------------------------------------------
+[[board]]
+name = "psu_staff_research"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://psu.wd1.myworkdayjobs.com/PSU_Staff"
+institution = "Pennsylvania State University"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: part_time_check."
+
+[[board]]
+name = "barnard_economics"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://barnard.wd1.myworkdayjobs.com/Staff"
+institution = "Barnard College"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: general."
+
+[[board]]
+name = "georgetown_mccourt"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://georgetown.wd1.myworkdayjobs.com/Georgetown_Admin_Careers"
+institution = "Georgetown University"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: temporary_check."
+
+[[board]]
+name = "uottawa_economics"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://uottawa.wd3.myworkdayjobs.com/uottawa_external_career_site"
+institution = "University of Ottawa"
+country = "Canada"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+[[board]]
+name = "tamu_public_policy"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://tamus.wd1.myworkdayjobs.com/TAMU_External"
+institution = "Texas A&M University"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+[[board]]
+name = "brandeis_business_econ"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://brandeis.wd5.myworkdayjobs.com/Jobs"
+institution = "Brandeis University"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: temporary_check."
+
+[[board]]
+name = "urban_institute_policy"
+type = "workday"
+enabled = false
+group = "research_institute"
+url = "https://urban.wd115.myworkdayjobs.com/Urban-Careers"
+institution = "Urban Institute"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: health_policy_check."
+
+[[board]]
+name = "rfcuny_research"
+type = "workday"
+enabled = false
+group = "research_institute"
+url = "https://rfcuny.wd108.myworkdayjobs.com/RFCUNY"
+institution = "Research Foundation of CUNY"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+[[board]]
+name = "new_school_social_research"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://newschool.wd1.myworkdayjobs.com/External"
+institution = "The New School"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: student_only_evidence."
+
+[[board]]
+name = "ua_little_rock_econ"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://uasys.wd5.myworkdayjobs.com/uasys"
+institution = "University of Arkansas at Little Rock"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+[[board]]
+name = "sydney_econ_research"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://usyd.wd105.myworkdayjobs.com/USYD_EXTERNAL_CAREER_SITE"
+institution = "University of Sydney"
+country = "Australia"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+[[board]]
+name = "ntu_econ_policy"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://ntu.wd3.myworkdayjobs.com/Careers"
+institution = "Nanyang Technological University"
+country = "Singapore"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+[[board]]
+name = "ohio_state_research"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://osu.wd1.myworkdayjobs.com/OSUCareers"
+institution = "Ohio State University"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: unrelated_medical_evidence."
+
+[[board]]
+name = "federal_reserve_system_jobs"
+type = "workday"
+enabled = false
+group = "central_bank"
+url = "https://rb.wd5.myworkdayjobs.com/FRS"
+institution = "Federal Reserve System (all regional Reserve Banks)"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["research assistant","research associate economics","predoctoral"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: overlap_ny_fed."
+
+[[board]]
+name = "unlv_economics_jobs"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://nshe.wd1.myworkdayjobs.com/UNLV-External"
+institution = "University of Nevada Las Vegas"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: professor_evidence_only."
+
+[[board]]
+name = "ut_austin_staff_research"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://utaustin.wd1.myworkdayjobs.com/UTstaff"
+institution = "University of Texas at Austin"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+[[board]]
+name = "colorado_state_policy"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://csusystem.wd12.myworkdayjobs.com/fortcollins_careers"
+institution = "Colorado State University"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: open_pool_off_field_evidence."
+
+[[board]]
+name = "melbourne_business_econ"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://unimelb.wd105.myworkdayjobs.com/UoM_External_Career"
+institution = "University of Melbourne"
+country = "Australia"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: discipline_check."
+
+[[board]]
+name = "queensland_social_research"
+type = "workday"
+enabled = false
+group = "university"
+url = "https://uq.wd3.myworkdayjobs.com/uqcareers"
+institution = "University of Queensland"
+country = "Australia"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+search_terms = ["predoctoral","research assistant economics","research analyst economics"]
+max_pages = 8
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: seniority_and_discipline_check."
+
+[[board]]
+name = "michigan_econ_staff"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://careers.umich.edu/search-jobs"
+institution = "University of Michigan"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://careers\\.umich\\.edu/job_detail/\\d+(?:[/?#]|$)"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: parser_acceptance_required."
+
+[[board]]
+name = "gwu_policy_staff"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://www.gwu.jobs/postings/search"
+institution = "George Washington University"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://www\\.gwu\\.jobs/postings/\\d+(?:[/?#]|$)"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: directory_only."
+
+[[board]]
+name = "yale_inclusion_economics"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://ie.yale.edu/opportunities-ie"
+institution = "Inclusion Economics at Yale"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://ie\\.yale\\.edu/(?:opportunities|jobs?)/[^?#]*(?:research|predoc|assistant|analyst)[^?#]*$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: directory_only."
+
+[[board]]
+name = "unu_wider_opportunities"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.wider.unu.edu/opportunities?f%5B0%5D=field_opportunity_status%3Acurrent"
+institution = "UNU-WIDER"
+country = "Finland"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://(?:www\\.)?wider\\.unu\\.edu/(?:vacanc(?:y|ies)|jobs?|opportunities)/[^?#]*(?:research|job|position|vacanc)[^?#]*$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: directory_only."
+
+[[board]]
+name = "seo_amsterdam_economics"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.seo.nl/en/vacancies/"
+institution = "SEO Amsterdam Economics"
+country = "Netherlands"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://(?:www\\.)?seo\\.nl/en/vacancies/[^/?#]+/?$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: directory_only."
+
+[[board]]
+name = "cepr_uk_internal_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://cepr.org/about/jobs-at-cepr"
+institution = "Centre for Economic Policy Research"
+country = "United Kingdom"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://cepr\\.org/(?:about/jobs-at-cepr/|jobs?/)[^/?#]+/?$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: directory_only."
+
+[[board]]
+name = "cgdev_careers"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.cgdev.org/careers"
+institution = "Center for Global Development"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://centerforglobaldevelopment\\.applytojob\\.com/apply/[A-Za-z0-9]+/[^/?#]+/?$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: external_ats_identity_check."
+
+[[board]]
+name = "blavatnik_gov_research_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.bsg.ox.ac.uk/workforus"
+institution = "Oxford Blavatnik School of Government"
+country = "United Kingdom"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://(?:www\\.)?bsg\\.ox\\.ac\\.uk/(?:workforus/|job/|vacancies/)[^/?#]+/?$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: directory_only."
+
+[[board]]
+name = "igc_economics_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.theigc.org/pt-pt/node/97"
+institution = "International Growth Centre"
+country = "United Kingdom"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://(?:www\\.)?theigc\\.org/(?:jobs?|careers|opportunities)/[^/?#]+/?$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: locale_route_check."
+
+[[board]]
+name = "rand_research_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.rand.org/jobs.html"
+institution = "RAND Corporation"
+country = "United States"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://(?:www\\.)?rand\\.org/jobs/[^/?#]+/?$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: nonvacancy_pdf_evidence."
+
+[[board]]
+name = "bocconi_clean_predocs"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://clean.unibocconi.eu/jobs/vacancies"
+institution = "Bocconi University CLEAN Research Unit"
+country = "Italy"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 60.0
+link_pattern = "^https://clean\\.unibocconi\\.eu/jobs/vacancies/[^/?#]+/?$"
+note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: directory_only."
