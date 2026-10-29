@@ -79,7 +79,7 @@ ADDITIONAL_DOCTORAL_ROLE = re.compile(
 OUT_OF_SCOPE_TITLE = re.compile(
     r"\b(?:experimental physics|physics|statistics|statistical sciences|"
     r"classroom|educational science|education research|social science|"
-    r"economics|econometrics|business administration|political science)\b",
+    r"economic\w*|econometrics|business administration|political science)\b",
     re.I,
 )
 
