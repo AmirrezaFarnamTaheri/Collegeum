@@ -12,7 +12,6 @@ from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers import SCRAPERS
 from predoc_pipeline.core.health import source_status
 
-
 LIVE_SOURCES = {"yale_egc_jobs", "wharton_predoc"}
 
 SOURCES = {
