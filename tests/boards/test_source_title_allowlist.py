@@ -33,7 +33,7 @@ def _run(pattern=None):
 
 
 def test_opt_in_title_allowlist_removes_off_role_ads_without_guessing_fields():
-    posts, count = _run(r"^(?:Predoctoral Research Assistant|Research Assistant/Sr\\. Research Assistant)$")
+    posts, count = _run(r"^(?:Predoctoral Research Assistant|Research Assistant/Sr\. Research Assistant)$")
     assert count == 2
     assert {p.title for p in posts} == {
         "Predoctoral Research Assistant",
