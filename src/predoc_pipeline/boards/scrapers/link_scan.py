@@ -97,7 +97,7 @@ _VACANCY_LINK_LABEL = re.compile(
     r"|research\s+(?:assistant|associate|analyst|fellow|scientist)\b"
     r"|data\s+scientist\b)"
     r"|\b(?:job|position|vacancy)\s+(?:opening|posting|application)\b"
-    r"|\bapply\s+(?:now|online|for\s+(?:the|this|a))\b",
+    r"|\bapply\s+(?:now|online|for\s+(?:the|this|a))\b"
     r"|\b(?:hiring|recruiting|openings?|vacanc(?:y|ies)|"
     r"jobs?|positions?|roles?|opportunit(?:y|ies))\b.{0,90}?"
     r"\b(?:pre[-\s]?doc(?:toral)?|post[-\s]?doc(?:toral)?|"
