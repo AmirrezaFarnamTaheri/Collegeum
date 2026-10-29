@@ -1,0 +1,65 @@
+name: source-public-probe-temporary
+on:
+  push:
+    branches: [fix/remaining-official-sources-20261029]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Inspect official public source markup and existing parser behavior
+        env:
+          PYTHONPATH: src
+        run: |
+          uv run python - <<'PY'
+          import asyncio
+          import re
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.scrapers import SCRAPERS
+
+          SOURCES = {"iies_stockholm", "ny_fed", "opportunity_insights"}
+
+          async def main():
+              configs = {x.name:x for x in load_board_sources("config/sources.toml")}
+              async with HttpClient(timeout=20,max_retries=0,default_min_interval=0.2) as http:
+                  for name in SOURCES:
+                      cfg = configs[name]
+                      url = cfg.opt("url")
+                      print("SOURCE", name, "URL", url, flush=True)
+                      try:
+                          html = await http.get_text(url)
+                          soup = BeautifulSoup(html,"lxml")
+                          body = soup.get_text(" ",strip=True)
+                          print("PAGE",name,"LENGTH",len(html),"TITLE",soup.title.get_text(" ",strip=True) if soup.title else "-",flush=True)
+                          marker = cfg.opt("verified_empty_marker")
+                          print("MARKER",name,repr(marker),"PRESENT",bool(marker and marker.casefold() in body.casefold()),flush=True)
+                          anchors = []
+                          for a in soup.find_all("a",href=True):
+                              href = a.get("href") or ""
+                              title = a.get_text(" ",strip=True)
+                              if re.search(r"job|data.scientist|research|career|vacanc|pdf|apply|predoc",href+" "+title,re.I):
+                                  anchors.append((title[:85],href[:220]))
+                          print("LINKS",name,"COUNT",len(soup.find_all("a",href=True)),"MATCHING",anchors[:24],flush=True)
+                          scraper = SCRAPERS[cfg.type](cfg,http)
+                          posts = scraper.parse_postings([(url,html)])
+                          print("PARSED",name,[(p.title[:100],p.url) for p in posts[:15]],"errors",scraper.discovery_parse_errors,flush=True)
+                          for term in ["Research Analyst Summer 2027", "At the IIES we hire most of our junior faculty", "Associate Data Scientist", "OI-Associate-Data-Scientist"]:
+                              idx = body.casefold().find(term.casefold())
+                              if idx>=0:
+                                  print("CONTEXT",name,term,repr(body[max(0,idx-80):idx+155]),flush=True)
+                      except Exception as e:
+                          print("FETCH_ERROR",name,type(e).__name__,str(e)[:220],flush=True)
+          asyncio.run(main())
+          PY
