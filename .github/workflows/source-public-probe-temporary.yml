@@ -17,6 +17,10 @@ jobs:
         with:
           activate-environment: true
       - run: uv sync --locked --extra dev
+      - name: Focused regression RED before source fixes
+        env:
+          PYTHONPATH: src
+        run: uv run pytest -q tests/boards/test_live_official_source_states.py
       - name: Inspect official public source markup and existing parser behavior
         env:
           PYTHONPATH: src
