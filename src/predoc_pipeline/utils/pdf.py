@@ -20,12 +20,12 @@ def _looks_like_markup(content: bytes | str) -> bool:
     empty content.
     """
     if isinstance(content, bytes):
-        prefix = content[:512].lstrip()
-        prefix = prefix.removeprefix(bytes.fromhex("efbbbf")).lstrip()
-        return prefix.startswith(b"<")
-    prefix = content[:512].lstrip()
-    prefix = prefix.removeprefix(chr(0xfeff)).lstrip()
-    return prefix.startswith("<")
+        byte_start = content[:512].lstrip()
+        byte_start = byte_start.removeprefix(bytes.fromhex("efbbbf")).lstrip()
+        return byte_start.startswith(b"<")
+    text_start = content[:512].lstrip()
+    text_start = text_start.removeprefix(chr(0xfeff)).lstrip()
+    return text_start.startswith("<")
 
 
 def is_pdf(content: bytes | str, content_type: str = "", url: str = "") -> bool:
