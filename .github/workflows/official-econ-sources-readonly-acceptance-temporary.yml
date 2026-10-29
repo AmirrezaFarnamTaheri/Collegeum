@@ -23,7 +23,9 @@ jobs:
         with:
           activate-environment: true
           enable-cache: true
-      - run: uv sync --locked --extra portals
+      - run: uv sync --locked --extra portals --extra dev
+      - name: Show exact import-order correction before review
+        run: ruff check --select I001 --diff tests/boards/test_official_econ_source_expansion.py || true
       - name: Collect official source discovery only (no publication, AI, or database)
         shell: bash
         run: |
