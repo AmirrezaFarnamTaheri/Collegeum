@@ -101,6 +101,42 @@ dashboard looks stale:
    copy of `data/predocs.db` (or after `restore_if_needed` rebuilds it from
    the journal) to regenerate the JSON files without a full pipeline run.
 
+### The ingestion snapshot is over eight hours old
+
+The `ingestion-freshness-recovery.yml` workflow checks the latest public
+`docs/data/health.json` after a successful `main` CI push or a successful
+scheduled `telegram-sync`. It is **not** an additional GitHub cron: scheduled
+events can be delayed or dropped by GitHub. The fallback uses only GitHub's
+built-in `GITHUB_TOKEN` (Actions write permission) to request a **new**
+`workflow_dispatch` on `main`; it cannot directly publish or change journals.
+
+Recovery is deliberately conservative:
+
+- It requests a new ingestion only if the published health timestamp is **older
+  than eight hours**, the Actions API is readable, and **all** known ingestion
+  runs predate that health timestamp and are completed.
+- If an ingestion is already queued/running, it leaves it alone.
+- If a newer run completed but failed to update the public snapshot, it **does
+  not retry**: investigate logs, state checkpointing, and dashboard persistence.
+  Likewise, malformed timestamps or unavailable run history never authorize a
+  duplicate publish.
+- Any requested run uses the normal `predoc-pipeline` workflow (not an old
+  rerun) and existing `predoc-bot` concurrency and idempotent publication
+  journals. A successful watchdog **does not** prove an ingestion succeeded.
+
+For a manual read-only watchdog check, select **Actions → ingestion-freshness-
+recovery → Run workflow**, retaining `check_only=true`. For targeted collection
+acceptance without Telegram sends, select **Actions → predoc-pipeline → Run
+workflow** on `main` with `dry_run=true`; enable a normal production run only
+after verifying the checks. Inspect the ensuing new run ID and the fresh health
+timestamp, not just the watchdog status.
+
+This is a **best-effort in-repository fallback**, not an independent scheduler.
+If both main CI and Telegram sync stop running, GitHub supplies no further
+`workflow_run` event. For a strict ingestion freshness SLA, use a separate
+external observer/scheduler with a narrowly scoped GitHub Actions dispatch
+credential and the same no-newer-run safety gate. See issue #52.
+
 ### Duplicate listings appearing in the channel
 
 This should be structurally very hard to hit (see `REVIEW.md` C3 and C5),
