@@ -1622,3 +1622,302 @@ may_be_empty = false
 source_timeout_seconds = 60.0
 link_pattern = "^https://clean\\.unibocconi\\.eu/jobs/vacancies/[^/?#]+/?$"
 note = "Candidate only; runner validation and vacancy-level eligibility required. Risk: directory_only."
+
+# ---------------------------------------------------------------------------
+# 2026-10-29 | Non-US official source research wave (ALL DISABLED)
+# Institution/portal authenticity checked; vacancy-parser acceptance pending.
+# A no-match regex intentionally fails closed when a vacancy path isn't known.
+# ---------------------------------------------------------------------------
+[[board]]
+name = "wifo_austria_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.wifo.ac.at/en/latest-news/career/"
+institution = "Austrian Institute of Economic Research (WIFO)"
+country = "Austria"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_predoc_advert; pattern_pending; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "ceps_brussels_research"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.ceps.eu/about-ceps/career-opportunities/"
+institution = "Centre for European Policy Studies"
+country = "Belgium"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_ra_adverts; pattern_pending; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "iab_germany_labour"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://iab.de/karriere/"
+institution = "Institute for Employment Research (IAB)"
+country = "Germany"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_research_jobs; pattern_pending; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "ifau_sweden_labour"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.ifau.se/en/About-IFAU/available-positions/"
+institution = "IFAU Sweden"
+country = "Sweden"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_seasonal_empty; empty_marker_pending; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "liser_luxembourg_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://jobs.liser.lu/"
+institution = "Luxembourg Institute of Socio-Economic Research"
+country = "Luxembourg"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_recruitment_portal; pattern_pending; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "esri_ireland_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://www.esri.ie/careers"
+institution = "Economic and Social Research Institute"
+country = "Ireland"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_recruitment_directory; pattern_pending; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "bank_finland_jobs"
+type = "link_scan"
+enabled = false
+group = "central_bank"
+url = "https://www.suomenpankki.fi/en/bank-of-finland/bank-of-finland-as-an-employer/job-opportunities/"
+institution = "Bank of Finland"
+country = "Finland"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_recruitment_directory; external_laura_parser; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "norges_bank_research"
+type = "link_scan"
+enabled = false
+group = "central_bank"
+url = "https://www.norges-bank.no/en/topics/about/Careers/"
+institution = "Norges Bank"
+country = "Norway"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_careers; external_recruitment_parser; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "riksbank_careers"
+type = "link_scan"
+enabled = false
+group = "central_bank"
+url = "https://www.riksbank.se/en-gb/about-the-riksbank/come-work-with-us/available-vacancies/"
+institution = "Sveriges Riksbank"
+country = "Sweden"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_careers; external_recruitment_parser; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "ebrd_research_careers"
+type = "link_scan"
+enabled = false
+group = "central_bank"
+url = "https://jobs.ebrd.com/"
+institution = "European Bank for Reconstruction and Development"
+country = "United Kingdom"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^https://jobs\\.ebrd\\.com/job/[^?#]+/\\d+/?$"
+note = "Unverified candidate; official_ats_job; analyst_vs_econ_check; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "eib_economics_careers"
+type = "link_scan"
+enabled = false
+group = "central_bank"
+url = "https://erecruitment.eib.org/psc/hr/EIBJOBS/CAREERS/c/HRS_HRAM_FL.HRS_CG_SEARCH_FL.GBL?Page=HRS_APP_SCHJOB_FL&focus=Applicant"
+institution = "European Investment Bank Group"
+country = "Luxembourg"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^https://erecruitment\\.eib\\.org/psc/hr/EIBJOBS/CAREERS/c/HRS_HRAM_FL\\.HRS_CG_SEARCH_FL\\.GBL\\?.*JobOpeningId=\\d+"
+note = "Unverified candidate; official_ats_job; complex_peoplesoft_query; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "vatt_finland_jobs"
+type = "link_scan"
+enabled = false
+group = "research_institute"
+url = "https://valtiolle.fi/fi/tyopaikat/valtion-taloudellinen-tutkimuskeskus-vatt/"
+institution = "VATT Institute for Economic Research"
+country = "Finland"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_government_recruitment; nonresearch_adverts_check; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "aalto_finland_research"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://www.aalto.fi/fi/avoimet-tyopaikat"
+institution = "Aalto University"
+country = "Finland"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_econ_ra_example; universitywide_mixed_field; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "hku_econ_social_jobs"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://jobs.hku.hk/en/listing/"
+institution = "University of Hong Kong"
+country = "Hong Kong"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^https://jobs\\.hku\\.hk/(?:en|cw/en)/job/\\d+/[^?#]+$"
+note = "Unverified candidate; official_ats_economics_ra; universitywide_mixed_field; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "hkust_business_research"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://hkustcareers.hkust.edu.hk/join-us/current-opening/teaching-support"
+institution = "Hong Kong University of Science and Technology"
+country = "Hong Kong"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_finance_ra_examples; peoplesoft_job_links; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "nus_policy_research"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://lkyspp.nus.edu.sg/careers/jobs-career-listing"
+institution = "National University of Singapore (Lee Kuan Yew School)"
+country = "Singapore"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^https://lkyspp\\.nus\\.edu\\.sg/(?:careers/jobs-career-listing|ips/about-us/jobs-at-ips)/research-(?:assistant|associate)[^?#]*$"
+note = "Unverified candidate; official_policy_ra; qualitative_vs_quant_check; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "smu_financial_econ"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://skbi.smu.edu.sg/about-skbi/job-openings"
+institution = "Singapore Management University (SKBI)"
+country = "Singapore"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_research_advert; mixed_seniority_master_or_phd; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "anu_australia_jobs"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://jobs.anu.edu.au/jobs/search"
+institution = "Australian National University"
+country = "Australia"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^https://jobs\\.anu\\.edu\\.au/jobs/[^/?#]+$"
+note = "Unverified candidate; official_ats_job; example_is_psychology; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "curtin_bcec_assistants"
+type = "link_scan"
+enabled = false
+group = "central_bank"
+url = "https://bcec.edu.au/about/career-opportunities/"
+institution = "Bankwest Curtin Economics Centre"
+country = "Australia"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_ra_expression_of_interest; email_only_no_requisition; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "sarb_south_africa_jobs"
+type = "link_scan"
+enabled = false
+group = "central_bank"
+url = "https://www.resbank.co.za/en/home/about-us/Careers"
+institution = "South African Reserve Bank"
+country = "South Africa"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_careers; external_ats_locator_pending; only activate after stable job-identity parser and eligibility checks."
+
+[[board]]
+name = "queens_canada_research"
+type = "link_scan"
+enabled = false
+group = "university"
+url = "https://www.queensu.ca/humanresources/apply-jobs"
+institution = "Queen's University"
+country = "Canada"
+field_implied = false
+may_be_empty = false
+source_timeout_seconds = 45.0
+link_pattern = "^$"
+note = "Unverified candidate; official_research_recruitment; careerq_link_parser_pending; only activate after stable job-identity parser and eligibility checks."
