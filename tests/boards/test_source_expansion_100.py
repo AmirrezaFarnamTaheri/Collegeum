@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from predoc_pipeline.boards.config import load_board_sources
-from tools.probe_source_expansion import read_candidates, probe_candidates
+from tools.probe_source_expansion import probe_candidates, read_candidates
 
 MANIFEST = Path("config/source_expansion_20261029.csv")
 REGISTRY = Path("config/sources.toml")
