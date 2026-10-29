@@ -5,6 +5,7 @@ but arbitrary successful HTTP responses must never be treated as healthy.
 """
 
 import asyncio
+from datetime import date
 from pathlib import Path
 
 from predoc_pipeline.boards.collector import _scrape_all
@@ -38,7 +39,9 @@ def collect(name, html):
     return result
 
 
-def test_ny_fed_canonical_index_avoids_http_200_redirect_to_error_page():
+def test_ny_fed_canonical_index_avoids_http_200_redirect_to_error_page(monkeypatch):
+    monkeypatch.setattr("predoc_pipeline.boards.scrapers.link_scan.today",
+                        lambda: date(2026, 10, 29))
     """The path without /index currently returns the NY Fed's /errors/500 page."""
     cfg = source("ny_fed")
     assert cfg.opt("url") == (
@@ -102,3 +105,39 @@ def test_opportunity_insights_arbitrary_non_careers_page_is_not_valid_empty():
     result = collect("opportunity_insights", "<h1>New research report</h1>")
     assert not result.ok
     assert source_status(result.as_stats()) == "failed"
+
+
+def test_opportunity_insights_discovers_new_official_harvard_academic_posting():
+    """Harvard's ARIeS portal has carried an OI predoctoral recruitment link."""
+    href = "https://academicpositions.harvard.edu/postings/16734"
+    html = (
+        "<h1>Join Our Team</h1><p>Keep an eye on our openings</p>"
+        f'<a href="{href}">Predoctoral Fellowship — Opportunity Insights</a>'
+    )
+    result = collect("opportunity_insights", html)
+    assert result.ok
+    assert [p.url for p in result.posts] == [href]
+
+
+def test_opportunity_insights_unrecognized_application_link_cannot_look_empty():
+    """A new applicant-tracking host must alert until verified and admitted."""
+    html = (
+        "<h1>Join Our Team</h1><p>Keep an eye on our openings</p>"
+        '<a href="https://hiring.example.org/positions/123">'
+        'Predoctoral Research Fellow — Opportunity Insights</a>'
+    )
+    result = collect("opportunity_insights", html)
+    assert not result.ok
+    assert result.posts == []
+    assert result.as_stats()["failure_counts"]["parse"] >= 1
+
+
+def test_opportunity_insights_harvard_hostname_spoof_is_not_an_advert():
+    html = (
+        "<h1>Join Our Team</h1><p>Keep an eye on our openings</p>"
+        '<a href="https://academicpositions.harvard.edu.evil.invalid/postings/16734">'
+        'Predoctoral Fellowship — Opportunity Insights</a>'
+    )
+    result = collect("opportunity_insights", html)
+    assert result.posts == []
+    assert not result.ok

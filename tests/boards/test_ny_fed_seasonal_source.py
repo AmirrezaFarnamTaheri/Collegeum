@@ -9,6 +9,8 @@ import asyncio
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from predoc_pipeline.boards.collector import _scrape_all
 from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers import SCRAPERS
@@ -21,6 +23,13 @@ RA_ROW = (
     "<tr><td>Research Analyst</td><td>Summer 2027</td>"
     "<td>2 years</td><td>Aug. 24 – Sept. 14</td></tr>"
 )
+
+
+@pytest.fixture(autouse=True)
+def fixed_ny_fed_date(monkeypatch):
+    """The seasonal checks must be deterministic beyond the 2027 guard window."""
+    monkeypatch.setattr("predoc_pipeline.boards.scrapers.link_scan.today",
+                        lambda: date(2026, 10, 29))
 
 
 def source():
@@ -110,3 +119,33 @@ def test_future_real_ny_fed_application_link_is_collected_without_closed_marker(
     assert result.ok
     assert [post.url for post in result.posts] == [href]
     assert source_status(result.as_stats()) == "successful"
+
+
+def test_ra_deadline_changed_but_cohort_marker_kept_must_not_claim_empty():
+    html = (
+        "<table><tr><td>Research Analyst</td><td>Summer 2027</td>"
+        "<td>2 years</td><td>Aug. 24 – Nov. 30</td></tr></table>"
+    )
+    result = scrape(html)
+    assert result.posts == []
+    assert not result.ok
+    assert result.as_stats()["failure_counts"]["parse"] >= 1
+
+
+def test_new_ra_cohort_row_alongside_expired_one_must_alert():
+    html = (
+        f"<table>{RA_ROW}"
+        "<tr><td>Research Analyst</td><td>Summer 2028</td>"
+        "<td>2 years</td><td>Aug. 25 – Sept. 15</td></tr></table>"
+    )
+    result = scrape(html)
+    assert result.posts == []
+    assert not result.ok
+    assert source_status(result.as_stats()) == "failed"
+
+
+def test_old_ra_marker_outside_the_cohort_row_is_not_no_vacancy_proof():
+    result = scrape("<h1>Research Analyst Summer 2027</h1>")
+    assert result.posts == []
+    assert not result.ok
+    assert source_status(result.as_stats()) == "failed"
