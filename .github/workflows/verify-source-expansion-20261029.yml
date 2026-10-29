@@ -1,0 +1,47 @@
+name: verify-source-expansion-20261029
+
+# Read-only: this never runs pipeline publication or receives Telegram secrets.
+on:
+  workflow_dispatch:
+    inputs:
+      offset:
+        description: "Candidate offset; run 0, 10 and 20 for all 30"
+        type: choice
+        required: true
+        default: "0"
+        options: ["0", "10", "20"]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked --extra dev
+      - name: Read-only probe
+        env:
+          OFFSET: ${{ inputs.offset }}
+        run: |
+          PYTHONPATH=src python3 tools/probe_source_expansion.py \
+            --offset "$OFFSET" --limit 10 --output build/source-expansion-probe.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: source-expansion-probe-${{ github.run_id }}-${{ inputs.offset }}
+          path: build/source-expansion-probe.json
+          retention-days: 14
+          if-no-files-found: warn
