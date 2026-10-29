@@ -69,6 +69,8 @@ jobs:
                       "may_be_empty": stats["may_be_empty"],
                       "failure_stage": result.failure_stage,
                       "error": result.error,
+                      "parse_issues": result.scraper.discovery_parse_errors,
+                      "fetch_issues": result.scraper.discovery_fetch_errors,
                       "seconds": stats["seconds"],
                       "samples": sample,
                   }, ensure_ascii=True), flush=True)
