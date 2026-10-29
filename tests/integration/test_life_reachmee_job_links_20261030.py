@@ -11,6 +11,7 @@ import pytest
 
 from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+from predoc_pipeline.boards.utils.text import canonical_url
 
 LIU = (
     "https://web103.reachmee.com/ext/I011/853/job"
@@ -84,6 +85,6 @@ def test_public_university_reachmee_job_anchor_preserves_identity_and_origin(
     rows, _ = asyncio.run(LinkScanScraper(cfg, StubHttp(html)).run())
     assert len(rows) == 1
     assert rows[0].title == title
-    assert rows[0].url == url
+    assert rows[0].url == canonical_url(url)
     assert rows[0].country == "Sweden"
     assert not rows[0].field_implied
