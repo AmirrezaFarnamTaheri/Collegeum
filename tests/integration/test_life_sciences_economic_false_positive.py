@@ -26,5 +26,5 @@ def test_economic_climate_phd_does_not_inherit_biology_from_employer_boilerplate
 
 
 def test_actual_biological_phd_still_qualifies_with_economic_secondary_subject():
-    post = _post("PhD in Molecular Biology and Economic Analysis of Biomanufacturing")
+    post = _post("PhD position in Molecular Biology and Economic Analysis of Biomanufacturing")
     assert classify_post(post, today=date(2026, 10, 29)) is not None
