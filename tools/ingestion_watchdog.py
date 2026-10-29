@@ -96,7 +96,9 @@ def evaluate(
     return Decision(True, "stale-without-newer-run", age)
 
 
-def _request(url: str, token: str, *, payload: dict[str, Any] | None = None) -> dict[str, Any] | None:
+def _request(
+    url: str, token: str, *, payload: dict[str, Any] | None = None
+) -> dict[str, Any] | None:
     body = None if payload is None else json.dumps(payload).encode("utf-8")
     headers = {
         "Accept": "application/vnd.github+json",
@@ -146,7 +148,10 @@ def _summary(decision: Decision, action: str) -> None:
             fh.write(f"- Health state: **{decision.reason}**\n")
             fh.write(f"- Age: **{age}** (threshold: 8h)\n")
             fh.write(f"- Dispatch: **{action}**\n")
-            fh.write("- This is not a publication success signal; check the ensuing pipeline run.\n")
+            fh.write(
+                "- This is not a publication success signal; "
+                "check the ensuing pipeline run.\n"
+            )
 
 
 def main(argv: list[str] | None = None) -> int:
