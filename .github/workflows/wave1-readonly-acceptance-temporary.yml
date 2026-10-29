@@ -4,7 +4,7 @@ name: wave1-readonly-acceptance-temporary
 on:
   push:
     branches: [feat/verified-econ-wave1-20261029]
-    paths: [.github/workflows/wave1-readonly-acceptance-temporary.yml]
+    paths: [.github/workflows/wave1-readonly-acceptance-temporary.yml, config/sources.toml]
 permissions:
   contents: read
 jobs:
