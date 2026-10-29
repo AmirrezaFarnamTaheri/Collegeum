@@ -1,0 +1,57 @@
+name: life-history-export-readonly-temporary
+
+# One-time branch acceptance: no discovery, no state updates, no Telegram.
+on:
+  push:
+    branches: [fix/life-sciences-history-integrity-20261029]
+    paths: [.github/workflows/life-history-export-readonly-temporary.yml]
+permissions:
+  contents: read
+jobs:
+  export-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Generate and audit career journal export WITHOUT live discovery
+        run: |
+          PYTHONPATH=src python3 tools/export_life_sciences.py --output build/life-phd.csv
+          python - <<'PY'
+          import csv
+          import json
+          from collections import Counter
+          with open("build/life-phd.csv",encoding="utf-8-sig",newline="") as fh:
+              rows=list(csv.DictReader(fh))
+          journal=[json.loads(line) for line in open("data/career_jobs.ndjson", encoding="utf-8") if line.strip()]
+          life=[r for r in journal if r.get("category")=="life_sciences_phd"]
+          report={
+            "journal_phd":len(life), "exported":len(rows),
+            "unique_urls":len(set(r["application_url"] for r in rows)),
+            "countries_populated":sum(bool(r["country"]) for r in rows),
+            "funding":dict(Counter(r["funding_status"] for r in rows)),
+            "excluded_climate":not any("Economic Impacts from Complex Climate Risks" in r["title"] for r in rows),
+          }
+          print(json.dumps(report,indent=2))
+          assert report["journal_phd"]==61
+          assert report["exported"]==report["unique_urls"]==report["countries_populated"]==60
+          assert report["funding"]=={"unverified":60}
+          assert report["excluded_climate"]
+          PY
+      - name: Retain clean life export for inspection
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: life-history-export-${{ github.run_id }}
+          path: |
+            build/life-phd.csv
+            build/life-phd.json
+          retention-days: 14
+          if-no-files-found: warn
