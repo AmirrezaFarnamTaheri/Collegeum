@@ -27,7 +27,13 @@ def stored_positions(path: Path) -> list[dict[str, Any]]:
             if line.strip()]
     if not all(isinstance(row, dict) for row in rows):
         raise ValueError('Position journal contains a non-object record')
-    return [row for row in rows if row.get('category') == 'life_sciences_phd']
+    from predoc_pipeline.ingest.life_sciences import historical_life_title_disqualified
+
+    return [
+        row for row in rows
+        if row.get('category') == 'life_sciences_phd'
+        and not historical_life_title_disqualified(str(row.get('title') or ''))
+    ]
 
 
 def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
