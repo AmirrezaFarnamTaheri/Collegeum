@@ -5098,11 +5098,11 @@
     "R"
    ],
    "tools_preferred": [],
-   "min_degree": "phd",
-   "degree_note": "unstated",
+   "min_degree": "bachelors",
+   "degree_note": "Bachelor's degree with GPA above 3.5 required; graduate degree not required",
    "start_term": "Summer 2027",
    "start_date": null,
-   "kind": "research",
+   "kind": "predoc",
    "sector": "academic"
   },
   {
