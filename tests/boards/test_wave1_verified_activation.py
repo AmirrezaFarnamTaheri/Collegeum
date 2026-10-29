@@ -8,6 +8,7 @@ from tools.probe_source_expansion import NON_US_MANIFEST, read_candidates
 
 ACTIVATIONS = Path("config/approved_research_sources_wave1_20261029.csv")
 REGISTRY = Path("config/sources.toml")
+WAVE2 = {"wifo_austria_jobs", "ceps_brussels_research"}
 EXPECTED = {
     "tamu_public_policy": ("Predoctoral Research Assistant", "Postdoctoral Research Assistant"),
     "brandeis_business_econ": (
@@ -44,7 +45,7 @@ def test_only_approved_candidate_sources_are_enabled_and_title_guarded():
     sources = {x.name: x for x in load_board_sources(REGISTRY)}
     candidates = {r["name"] for r in read_candidates()}
     candidates |= {r["name"] for r in read_candidates(NON_US_MANIFEST)}
-    assert {x for x in candidates if sources[x].enabled} == set(EXPECTED)
+    assert {x for x in candidates if sources[x].enabled} == (set(EXPECTED) | WAVE2)
     assert sources["yale_inclusion_economics"].enabled is False  # overlaps Yale EGC
     for name, (positive, negative) in EXPECTED.items():
         source = sources[name]

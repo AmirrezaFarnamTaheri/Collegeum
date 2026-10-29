@@ -1,0 +1,4 @@
+name,country,type,vacancy_evidence_url,observed_title,scope,probe_date,remarks
+wifo_austria_jobs,Austria,link_scan,https://www.wifo.ac.at/en/news/wifo-is-looking-for-a-phd-candidate-prae-doc-m-f-d-30-hours-week/,WIFO is Looking for a PhD Candidate Prae-Doc,Economics predoctoral research,2026-10-29,Official WIFO autumn 2026 opening; 30 hours/week; requires full-detail eligibility verification
+ceps_brussels_research,Belgium,link_scan,https://cdn.ceps.eu/2026/10/ERCC_Vacancy_Research-Assistant_October-2026.pdf,Research Assistant - Green transition and sustainable societies,Applied policy research,2026-10-29,Official CEPS PDF linked on careers page; field and degree eligibility still gated
+ceps_brussels_research,Belgium,link_scan,https://cdn.ceps.eu/2026/10/Job-advert-enlargement-programme.pdf,Research Assistant - Enlargement Programme,International policy research,2026-10-29,Official CEPS PDF linked on careers page; apply address may be within PDF
