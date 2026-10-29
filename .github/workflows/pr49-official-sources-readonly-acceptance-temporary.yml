@@ -16,7 +16,7 @@ jobs:
       - name: Checkout latest production code (never persist state)
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: fix/ny-fed-unrelated-speech-false-positive-20261029
           persist-credentials: false
       - uses: actions/setup-python@v7
         with:
@@ -27,6 +27,7 @@ jobs:
           enable-cache: true
       - name: Install locked scraper dependencies
         run: uv sync --locked --extra portals
+      - run: git rev-parse HEAD
       - name: Collect only the three official PR49 sources (no publication, model or database)
         shell: bash
         run: |
