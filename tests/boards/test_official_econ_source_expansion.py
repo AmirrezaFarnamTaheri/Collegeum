@@ -1,5 +1,4 @@
 """Official-source expansion: real vacancy links, safe empty periods, no directory links."""
-
 from __future__ import annotations
 
 import asyncio
