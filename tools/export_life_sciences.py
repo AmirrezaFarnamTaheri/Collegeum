@@ -32,6 +32,8 @@ def stored_positions(path: Path) -> list[dict[str, Any]]:
 
 def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
     """Keep known facts, preserve historical rows, and escape spreadsheet formulas."""
+    from predoc_pipeline.boards.utils.geo import detect_location
+
     unique: dict[str, dict[str, Any]] = {}
     for item in positions:
         url = str(item.get('url') or item.get('application_url') or '')
@@ -48,6 +50,12 @@ def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
             row = {}
             for column in COLUMNS:
                 value = str(item.get(column, item.get(aliases.get(column, column), '')) or '')
+                if column == 'country' and not value:
+                    # Legacy journal rows retained location but omitted country.
+                    # Recover only an identifiable country; never infer one
+                    # from the employer or the job-board host.
+                    inferred, _ = detect_location(item.get('location'))
+                    value = inferred if inferred not in (None, 'Europe', 'Other') else ''
                 if value.lstrip().startswith(('=', '+', '-', '@')):
                     value = "'" + value
                 row[column] = value
