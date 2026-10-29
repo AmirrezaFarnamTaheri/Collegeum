@@ -52,7 +52,8 @@ def test_wifo_live_energy_economics_predoc_is_admitted_but_staff_is_not():
         'economist-30-39-hours-week/">WIFO is Looking for an Economist</a>'
     )
     rows = collect(source.name, html)
-    assert [row.url for row in rows] == [WIFO_JOB]
+    # JobPostSchema canonicalizes a trailing slash in vacancy identity.
+    assert [row.url for row in rows] == [WIFO_JOB.rstrip("/")]
     assert all(row.field_implied is False for row in rows)
 
 
