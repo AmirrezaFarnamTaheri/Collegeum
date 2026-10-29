@@ -264,7 +264,7 @@ source_timeout_seconds = 60
 link_pattern = 'all-vacancies/?\?show=\d+'
 bare_date_is_deadline = true
 institution = "University of Copenhagen"
-$1
+country = "Denmark"
 note = "Temporarily disabled 2026-10-30: production run 40953929832 failed; robots-aware GH runner 40958027338 returned policy-denied/unknown (999) for both employment.ku.dk and jobportal.ku.dk. Do not bypass; require permitted vacancy endpoint and acceptance tests before re-enabling."
 
 [[board]]
