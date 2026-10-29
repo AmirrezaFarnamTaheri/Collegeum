@@ -1,0 +1,92 @@
+name: official-fallback-readonly-probe-temporary
+
+on:
+  push:
+    branches: [investigate/official-fallback-endpoints-20261029]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check official CREST partner and EU vacancy endpoints (no writes)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import concurrent.futures
+          import re
+          import time
+          import urllib.error
+          import urllib.request
+          import xml.etree.ElementTree as ET
+          from html.parser import HTMLParser
+
+          URLS = [
+              ("crest", "https://crest.science/opportunities-2/"),
+              ("ensae", "https://www.ensae.fr/lecole/recrutements-en-cours"),
+              ("cnrs", "https://emploi.cnrs.fr/Unites/UMR9194/Default.aspx"),
+              ("cnrs-rss", "https://emploi.cnrs.fr/Rss/Offres.ashx?CodeUnite=umr9194"),
+              ("euraxess", "https://euraxess.ec.europa.eu/jobs/search"),
+          ]
+
+          class Links(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.hrefs = []
+              def handle_starttag(self, tag, attrs):
+                  if tag == "a":
+                      href = dict(attrs).get("href", "")
+                      if href: self.hrefs.append(href)
+
+          def probe(item):
+              name, url = item
+              start = time.monotonic()
+              request = urllib.request.Request(
+                  url, headers={"User-Agent":"Collegeum-source-health-check/1.0",
+                                "Accept":"text/html,application/xml;q=0.9"}
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=12) as response:
+                      payload = response.read(1800000)
+                      status = response.status
+                      final = response.geturl()
+                  body = payload.decode("utf-8", errors="replace")
+                  if name == "cnrs-rss" and ("<rss" in body.lower() or "<feed" in body.lower()):
+                      try:
+                          root = ET.fromstring(body)
+                          titles = [node.text for node in root.findall(".//item/title")][:4]
+                          count = len(root.findall(".//item"))
+                      except ET.ParseError:
+                          count, titles = -1, []
+                      print(f"PROBE {name} status={status} final={final} rss_items={count} "
+                            f"titles={titles} elapsed={time.monotonic()-start:.1f}s",
+                            flush=True)
+                  else:
+                      parser = Links()
+                      parser.feed(body)
+                      links = [
+                          href for href in parser.hrefs
+                          if re.search(r"(emploi|jobs?|recrut|offer|offres?|vacanc|crest|cnrs|\.pdf)", href, re.I)
+                      ]
+                      print(f"PROBE {name} status={status} final={final} bytes={len(payload)} "
+                            f"anchors={len(parser.hrefs)} job_like={len(links)} "
+                            f"mentions_crest={bool(re.search('CREST', body, re.I))} "
+                            f"elapsed={time.monotonic()-start:.1f}s", flush=True)
+                      for href in links[:9]:
+                          print(f"LINK {name} {href[:220]}", flush=True)
+              except urllib.error.HTTPError as exc:
+                  print(f"PROBE {name} http={exc.code} "
+                        f"elapsed={time.monotonic()-start:.1f}s", flush=True)
+              except (urllib.error.URLError, TimeoutError, OSError) as exc:
+                  reason = getattr(exc, "reason", exc)
+                  print(f"PROBE {name} failure={type(exc).__name__} "
+                        f"cause={type(reason).__name__} elapsed={time.monotonic()-start:.1f}s",
+                        flush=True)
+
+          with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
+              list(pool.map(probe, URLS))
+          PY
