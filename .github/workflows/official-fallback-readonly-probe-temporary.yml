@@ -35,6 +35,7 @@ jobs:
               ("ifs-applied", "https://app.beapplied.com/org/institute-for-fiscal-studies"),
               ("cep-lse", "https://cep.lse.ac.uk/_new/about/work/"),
               ("unu-wider", "https://www.wider.unu.edu/opportunities?f%5B0%5D=field_opportunity_status%3Acurrent"),
+              ("unu-wider-all", "https://www.wider.unu.edu/opportunities"),
               ("cepr-us", "https://cepr.net/about/careers/"),
               ("minneapolis-fed", "https://www.minneapolisfed.org/about-us/careers"),
 
@@ -80,6 +81,13 @@ jobs:
                   else:
                       parser = Links()
                       parser.feed(body)
+                      if name.startswith("unu-wider"):
+                          opportunities = [
+                              href for href in parser.hrefs
+                              if re.search(r"/opportunity/[^/?#]+", href, re.I)
+                          ]
+                          print(f"OPPORTUNITY {name} count={len(opportunities)} "
+                                f"samples={opportunities[:15]}", flush=True)
                       matched_jobs = [
                           href for href in parser.hrefs
                           if re.search(r"^/jobs/\\d+$", href)
