@@ -24,6 +24,7 @@ from predoc_pipeline.ingest.life_sciences import load_life_sources
 
 MAX_PROBE_SOURCES = 16
 MAX_PARSE_CHARS = 650_000
+MAX_QUERY_URLS = 4  # maximum number of configured URLs per enabled source
 REGIONS = frozenset((
     "all", "core", "nordics", "dach", "benelux", "france_iberia",
     "central_south", "aggregator_topics", "eastern_balkans",
@@ -35,8 +36,8 @@ PROBE_USER_AGENT = (
 )
 
 
-def candidate_links(content: str, url: str, pattern: str) -> int:
-    """Count actual unique HTTPS job anchors, not script-only substrings."""
+def candidate_job_urls(content: str, url: str, pattern: str) -> set[str]:
+    """Recognize unique public HTTPS vacancy anchors, not script-only substrings."""
     soup = BeautifulSoup(content[:MAX_PARSE_CHARS], "lxml")
     matcher = re.compile(pattern, re.I)
     found: set[str] = set()
@@ -52,8 +53,12 @@ def candidate_links(content: str, url: str, pattern: str) -> int:
             and matcher.search(link)
         ):
             found.add(link)
-    return len(found)
+    return found
 
+
+def candidate_links(content: str, url: str, pattern: str) -> int:
+    """Retain the count API used by existing fixtures and health checks."""
+    return len(candidate_job_urls(content, url, pattern))
 
 def feed_entries(content: str) -> int:
     """Count actual RSS/Atom entries, ignoring metadata and shell pages."""
@@ -101,34 +106,83 @@ def check_sources(
         urls = source.opt("urls") or (
             [source.opt("url")] if source.opt("url") else []
         )
+        # One source may expose multiple subject-search URLs. Checking only
+        # urls[0] both misses vacancies and conceals failures on later pages.
         if not urls:
             report["sources"][source.name] = {
                 "status": "missing_url", "http_status": 0, "vacancy_links": 0,
+                "urls_total": 0, "urls_checked": 0, "endpoints": [],
             }
+            report["checked"] += 1
             continue
-        response = client.get(urls[0], use_cache=False)
-        status = "blocked_robots" if response.status == 999 else (
-            "http_error" if not response.ok else "ok"
-        )
-        links = 0
-        if response.ok:
-            if source.type == "rss":
-                links = feed_entries(response.text)
-            elif source.type == "link_scan":
-                try:
-                    links = candidate_links(
-                        response.text, urls[0],
-                        source.opt("link_pattern", "^$"),
-                    )
-                except re.error:
-                    status = "invalid_pattern"
-            else:
-                status = "unsupported_scraper"
-            if status == "ok" and not links:
-                status = "no_recognized_vacancy_links"
+        if len(urls) > MAX_QUERY_URLS:
+            # Do not silently scan only a subset or make unbounded requests.
+            report["sources"][source.name] = {
+                "status": "too_many_urls", "http_status": 0, "vacancy_links": 0,
+                "urls_total": len(urls), "urls_checked": 0, "endpoints": [],
+            }
+            report["checked"] += 1
+            continue
+
+        endpoints: list[dict[str, Any]] = []
+        vacancy_urls: set[str] = set()
+        rss_entry_count = 0
+        for url in urls:
+            try:
+                response = client.get(url, use_cache=False)
+            except Exception as exc:  # noqa: BLE001 - keep other query pages observable
+                endpoints.append({
+                    "url": url, "status": "http_error", "http_status": 0,
+                    "vacancy_links": 0, "failure_type": type(exc).__name__,
+                })
+                continue
+            status = (
+                "blocked_robots" if response.status == 999 else
+                "http_error" if not response.ok else "ok"
+            )
+            matched = 0
+            if response.ok:
+                if source.type == "rss":
+                    matched = feed_entries(response.text)
+                    rss_entry_count += matched
+                elif source.type == "link_scan":
+                    try:
+                        links = candidate_job_urls(
+                            response.text, url, source.opt("link_pattern", "^$"),
+                        )
+                        matched = len(links)
+                        vacancy_urls.update(links)
+                    except re.error:
+                        status = "invalid_pattern"
+                else:
+                    status = "unsupported_scraper"
+                if status == "ok" and matched == 0:
+                    status = "no_recognized_vacancy_links"
+            endpoints.append({
+                "url": url, "status": status, "http_status": response.status,
+                "vacancy_links": matched,
+            })
+
+        states = [item["status"] for item in endpoints]
+        problems = {"blocked_robots", "http_error", "invalid_pattern", "unsupported_scraper"}
+        if "ok" in states:
+            status = "partial" if any(s in problems for s in states) else "ok"
+        elif all(s == "no_recognized_vacancy_links" for s in states):
+            status = "no_recognized_vacancy_links"
+        elif all(s == states[0] for s in states):
+            status = states[0]
+        else:
+            status = "partial"
+
         report["sources"][source.name] = {
-            "status": status, "http_status": response.status,
-            "vacancy_links": links,
+            "status": status,
+            "http_status": endpoints[0]["http_status"],  # compatibility
+            "vacancy_links": (
+                len(vacancy_urls) if source.type == "link_scan"
+                else rss_entry_count
+            ),
+            "urls_total": len(urls), "urls_checked": len(endpoints),
+            "endpoints": endpoints,
         }
         report["checked"] += 1
     return report
