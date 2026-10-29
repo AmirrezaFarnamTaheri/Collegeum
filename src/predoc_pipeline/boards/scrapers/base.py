@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
@@ -116,6 +117,21 @@ class BaseScraper(ABC):
             raise
         except Exception as exc:
             raise DiscoveryParseError(str(exc)) from exc
+        # Optional source-scoped role guard. General-purpose university and
+        # central-bank ATS searches often return staff, faculty, and unrelated
+        # departments even when the search term is research assistant.
+        # Keep this separate from economics field checks on detail pages.
+        title_pattern = self.opt("title_allow_pattern")
+        if title_pattern is not None:
+            if not isinstance(title_pattern, str) or not title_pattern.strip():
+                raise DiscoveryParseError("empty or non-string title_allow_pattern")
+            try:
+                allowed_title = re.compile(title_pattern, re.IGNORECASE)
+            except re.error as exc:
+                raise DiscoveryParseError(
+                    f"{self.name}: invalid title_allow_pattern"
+                ) from exc
+            posts = [post for post in posts if allowed_title.search(post.title)]
         # de-duplicate within a single source run
         seen, unique = set(), []
         for p in posts:
