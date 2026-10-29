@@ -19,10 +19,10 @@ def _looks_like_markup(content: bytes | str) -> bool:
     Empty bodies still follow the historical metadata-only classification.
     """
     if isinstance(content, bytes):
-        start = content[:512].lstrip(b" \\t\\r\\n")
-        start = start.removeprefix(b"\\xef\\xbb\\xbf").lstrip(b" \\t\\r\\n")
+        start = content[:512].lstrip()
+        start = start.removeprefix(bytes.fromhex("efbbbf")).lstrip()
         return start.startswith(b"<")
-    start = content[:512].lstrip(" \\t\\r\\n\\ufeff")
+    start = content[:512].lstrip().removeprefix(chr(0xfeff)).lstrip()
     return start.startswith("<")
 
 
