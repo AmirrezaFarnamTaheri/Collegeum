@@ -147,7 +147,7 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         "title": post.title[:200],
         "employer": (post.institution or "Research institution")[:160],
         "location": (post.location or country)[:100],
-        "source": post.source[:80], "url": post.url,
+        "country": country, "source": post.source[:80], "url": post.url,
         "research_priority": "focus" if primary else "related",
         "funding_status": "unverified",
     }
