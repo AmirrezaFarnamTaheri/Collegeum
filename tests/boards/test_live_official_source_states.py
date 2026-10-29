@@ -141,3 +141,28 @@ def test_opportunity_insights_harvard_hostname_spoof_is_not_an_advert():
     result = collect("opportunity_insights", html)
     assert result.posts == []
     assert not result.ok
+
+
+def test_opportunity_insights_recruiting_sentence_on_new_host_blocks_empty():
+    """Hiring messages are job signals even if the label is not a job title."""
+    html = (
+        "<h1>Join Our Team</h1><p>Keep an eye on our openings</p>"
+        '<a href="https://hiring.example.org/opportunity/123">'
+        'We are hiring predoctoral researchers this winter</a>'
+    )
+    result = collect("opportunity_insights", html)
+    assert result.posts == []
+    assert not result.ok
+    assert source_status(result.as_stats()) == "failed"
+
+
+def test_opportunity_insights_new_postdoctoral_fellowship_link_blocks_empty():
+    html = (
+        "<h1>Join Our Team</h1><p>Keep an eye on our openings</p>"
+        '<a href="https://hiring.example.org/opportunity/456">'
+        'Now recruiting postdoctoral fellows</a>'
+    )
+    result = collect("opportunity_insights", html)
+    assert result.posts == []
+    assert not result.ok
+    assert source_status(result.as_stats()) == "failed"
