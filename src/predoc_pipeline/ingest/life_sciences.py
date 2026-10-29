@@ -134,7 +134,13 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         return None
     if UNFUNDED.search(context):
         return None
-    country, region = detect_location(post.country, post.location)
+    # Source-level country is only an institutional hint. A vacancy's
+    # specific workplace takes precedence, especially for universities
+    # advertising international and remote positions.
+    if post.extra.get("source_country_default"):
+        country, region = detect_location(post.location, post.country)
+    else:
+        country, region = detect_location(post.country, post.location)
     if not country and not post.country and not post.location:
         # A broad European research organization can recruit internationally.
         # Only a labelled location in the vacancy itself is evidence of where
