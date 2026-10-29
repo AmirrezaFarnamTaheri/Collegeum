@@ -1,0 +1,29 @@
+name: copenhagen-ipv4-ipv6-readonly-probe-temporary
+
+on:
+  push:
+    branches: [investigate/copenhagen-runner-source-20261029]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check DNS and HTTPS over IPv4 and IPv6 without credentials
+        shell: bash
+        run: |
+          for host in employment.ku.dk jobportal.ku.dk www.economics.ku.dk www.ku.dk; do
+            echo "DNS $host (IPv4)"
+            getent ahostsv4 "$host" | head -n 2 || true
+            echo "DNS $host (IPv6)"
+            getent ahostsv6 "$host" | head -n 2 || true
+          done
+          for ip_family in 4 6; do
+            for url in               https://employment.ku.dk/all-vacancies/               https://jobportal.ku.dk/alle-opslag/               https://www.economics.ku.dk/jobs/               https://www.ku.dk/en; do
+              echo "TEST IPv$ip_family $url"
+              curl "-$ip_family" --silent --show-error --location                 --connect-timeout 6 --max-time 12 --max-filesize 1500000                 --output /dev/null                 --write-out 'status=%{http_code} remote_ip=%{remote_ip} connect=%{time_connect} total=%{time_total}\n'                 "$url" || true
+            done
+          done
