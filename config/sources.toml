@@ -1052,10 +1052,9 @@ may_be_empty = true
 job_path_prefix = "/about/profile/vacant-positions/job/"
 note = "Official Emply vacancy JSON embedded in HTML, decoded without executing JavaScript. All 60 embedded adverts observed; retain deadline_date separately from contract start/end and registered_date. University-wide field/role gates remain active; separate graduate-school PhD competition pages are not included."
 
-# --- new employer-run predoctoral and quantitative research sources ---------
-# Keep academic employers/roles subject to the existing field and degree gates.
-# Vacancy detail URLs (not programme bios, institution profiles or news) are
-# used as canonical identities; no new publication/Telegram routing rules.
+# --- additional official economics and quantitative research employers -----
+# Advert URLs identify actual employer requisitions; keep all existing
+# eligibility, PhD-exclusion, deduplication, and Telegram filters in place.
 
 [[board]]
 name = "yale_egc_jobs"
@@ -1066,61 +1065,9 @@ url = "https://egc.yale.edu/opportunities/jobs-research-fellowships"
 institution = "Yale University Economic Growth Center"
 may_be_empty = true
 verified_empty_marker = "Current job openings"
-link_pattern = '^https://egc\.yale\.edu/opportunities/(?!(?:jobs-research-fellowships|internships-for-yale-students|faculty-research-support|egc-incubation-fund|support-for-graduate-students)(?:/|$))[a-z0-9-]+/?
-
-[[board]]
-name = "linkedin"
-type = "linkedin"
-group = "social"
-min_interval = 4
-employer_required = true
-keywords = ["predoc economics", "pre-doctoral economics", "predoctoral", "pre-doctoral fellow", "research assistant economics university", "research assistant business school"]
-locations = ["European Union", "United Kingdom", "Canada", "Switzerland", "Norway"]
-f_TPR = "r604800"
-max_pages = 1
-backend = "guest"
-note = "LinkedIn always names the employer, so it must be academic (employer_required)."
-
-# ===========================================================================
-# Feeds (templates, OFF)
-# ===========================================================================
-
-[[feed]]
-name = "nber-jobs"
-url = "https://www.nber.org/RePEc/CGI-Bin/AutoRSS/entries.rss"
-country = "International"
-enabled = false
-verified = false
-note = "Placeholder. NBER's job-market RSS moves between paths across site redesigns; confirm the current feed path before enabling."
-tags = ["economics"]
-
-[[feed]]
-name = "example-university-jobs"
-url = "https://jobs.example.ac.uk/rss/rss.aspx?cat=607"
-country = "United Kingdom"
-enabled = false
-verified = false
-note = "Template for the common per-institution RSS pattern: /rss/rss.aspx?cat=<category-id>. Replace with a real institution and category id, then verify."
-tags = ["template"]
-
-# ===========================================================================
-# Portals (templates, OFF). INOMICS, EconJobMarket and EURAXESS are read by
-# the [[board]] entries above instead.
-# ===========================================================================
-
-[[portal]]
-name = "example-econ-department"
-url = "https://econ.example.org/jobs/"
-country = "International"
-enabled = false
-verified = false
-follow_links = true
-link_pattern = "/jobs/[0-9]+/?$"
-note = "Template portal entry. Point at a real department listings page, set link_pattern to match that site's detail-page URLs, then run predoc-pipeline sources verify."
-tags = ["template"]
-
+link_pattern = '^https://egc\.yale\.edu/opportunities/(?!(?:jobs-research-fellowships|internships-for-yale-students|faculty-research-support|egc-incubation-fund|support-for-graduate-students)(?:/|$))[a-z0-9-]+/?$'
 field_implied = false
-note = "Official Yale EGC openings; exclude programme/menu links and externally hosted partner jobs. Role/field and actual workplace must come from each advert, not from the department name."
+note = "Official Yale EGC openings; vacancy details must establish the role, field and workplace. Excludes programme and navigation pages."
 
 [[board]]
 name = "wharton_predoc"
@@ -1134,7 +1081,7 @@ search_terms = ["predoctoral", "pre-doctoral", "research specialist economics"]
 max_pages = 6
 may_be_empty = true
 field_implied = false
-note = "Official Wharton Workday requisition-level listings; use Workday /job/ identities and check canApply/closing dates on details. Non-economics research specialisms require field evidence."
+note = "Official Wharton Workday requisitions. Open/closed status is verified using application availability and end date on job details."
 
 [[board]]
 name = "princeton_rpde_jobs"
@@ -1148,7 +1095,7 @@ may_be_empty = true
 verified_empty_marker = "Open Positions"
 link_pattern = '^https://main-princeton\.icims\.com/jobs/[0-9]+/[^?#]+'
 field_implied = false
-note = "Official Princeton RPDE vacancies linked to Princeton's iCIMS requisitions; exclude the programme page, generic department navigation and faculty/postdoc announcements requiring a PhD."
+note = "Official RPDE jobs listing linked to Princeton iCIMS requisitions. Programme navigation, faculty biographies, and closed positions are not vacancies."
 
 [[board]]
 name = "brookings_jobs"
@@ -1162,7 +1109,7 @@ may_be_empty = true
 verified_empty_marker = "Search Results Page"
 link_pattern = '^https://careers-brookings\.icims\.com/jobs/[0-9]+/[^?#]+'
 field_implied = false
-note = "Brookings' official iCIMS job search, including Economic Studies research assistant openings. Only unique job-requisition links are extracted; operations and PhD-required posts remain subject to normal gates. Review pagination when the results exceed one page."
+note = "Official Brookings iCIMS requisitions. Only unique job-detail links; administrative and PhD-required roles remain subject to policy."
 
 [[board]]
 name = "ucl_management_jobs"
@@ -1174,61 +1121,9 @@ institution = "University College London (School of Management)"
 country = "United Kingdom"
 may_be_empty = true
 verified_empty_marker = "Job vacancies"
-link_pattern = '^https://(?:(?:www\.)?mgmt|management)\.ucl\.ac\.uk/vacancies/[a-z0-9-]+/?
-
-[[board]]
-name = "linkedin"
-type = "linkedin"
-group = "social"
-min_interval = 4
-employer_required = true
-keywords = ["predoc economics", "pre-doctoral economics", "predoctoral", "pre-doctoral fellow", "research assistant economics university", "research assistant business school"]
-locations = ["European Union", "United Kingdom", "Canada", "Switzerland", "Norway"]
-f_TPR = "r604800"
-max_pages = 1
-backend = "guest"
-note = "LinkedIn always names the employer, so it must be academic (employer_required)."
-
-# ===========================================================================
-# Feeds (templates, OFF)
-# ===========================================================================
-
-[[feed]]
-name = "nber-jobs"
-url = "https://www.nber.org/RePEc/CGI-Bin/AutoRSS/entries.rss"
-country = "International"
-enabled = false
-verified = false
-note = "Placeholder. NBER's job-market RSS moves between paths across site redesigns; confirm the current feed path before enabling."
-tags = ["economics"]
-
-[[feed]]
-name = "example-university-jobs"
-url = "https://jobs.example.ac.uk/rss/rss.aspx?cat=607"
-country = "United Kingdom"
-enabled = false
-verified = false
-note = "Template for the common per-institution RSS pattern: /rss/rss.aspx?cat=<category-id>. Replace with a real institution and category id, then verify."
-tags = ["template"]
-
-# ===========================================================================
-# Portals (templates, OFF). INOMICS, EconJobMarket and EURAXESS are read by
-# the [[board]] entries above instead.
-# ===========================================================================
-
-[[portal]]
-name = "example-econ-department"
-url = "https://econ.example.org/jobs/"
-country = "International"
-enabled = false
-verified = false
-follow_links = true
-link_pattern = "/jobs/[0-9]+/?$"
-note = "Template portal entry. Point at a real department listings page, set link_pattern to match that site's detail-page URLs, then run predoc-pipeline sources verify."
-tags = ["template"]
-
+link_pattern = '^https://(?:(?:www\.)?mgmt|management)\.ucl\.ac\.uk/vacancies/[a-z0-9-]+/?$'
 field_implied = false
-note = "Official UCL School of Management current job adverts. Broad faculty and teaching appointments require independent qualification and degree checks; old archived adverts must not be assumed open."
+note = "Official School of Management vacancy adverts. Teaching, senior and PhD-required posts still require independent qualification checks."
 
 # --- social ------------------------------------------------------------
 
