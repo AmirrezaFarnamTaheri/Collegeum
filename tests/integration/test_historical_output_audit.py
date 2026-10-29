@@ -218,6 +218,8 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
     published = {entry["id"]: entry for entry in output["listings"]}
     assert output["count"] == len(published)
     assert 28 not in published  # neuroscience is not economics
+    assert 170 not in published  # pure-mathematics postdoc is out of scope
+    assert 259 not in published  # digital heritage/archaeology RA is out of scope
     for identifier in (46, 77, 139):
         assert identifier in published
     assert 173 not in published  # source returned HTTP 410; durable record is retained
@@ -239,6 +241,8 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
     feed_by_guid = {entry.findtext("guid"): entry for entry in items}
     assert not any("Freedman Lab" in (item.findtext("description") or "")
                    for item in items)
+    assert not any("167780" in (item.findtext("guid") or "") for item in items)
+    assert not any("/job/DTJ282/" in (item.findtext("guid") or "") for item in items)
     for identifier in (46, 77, 139):
         item = published[identifier]
         guid = item["source_url"]
@@ -246,3 +250,25 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
         xml_item = feed_by_guid[guid]
         assert xml_item.findtext("link") == item["apply_url"]
         assert item["institution"] in (xml_item.findtext("title") or "")
+
+
+def test_reviewed_out_of_scope_positions_are_hidden_without_erasing_publication_history():
+    """Two actual adverts have evidence-reviewed fields outside the product scope."""
+    from predoc_pipeline.core.output_quality import excluded_by_audit
+
+    root = Path(__file__).resolve().parents[2]
+    rows = {
+        record["id"]: record
+        for line in (root / "data/listings.ndjson").read_text("utf-8").splitlines()
+        if (record := json.loads(line)) and record["id"] in {170, 259}
+    }
+    assert set(rows) == {170, 259}
+    assert rows[170]["title"] == "Postdoctoral Position in Mathematics"
+    assert rows[259]["title"] == "Research Assistant in Digital Heritage Documentation (Fixed Term)"
+    assert rows[259]["telegram_message_id"] == 71
+    for row in rows.values():
+        assert row["status"] == "published"
+        assert row["closed_at"] is None
+        assert row["expired_at"] is None
+        assert excluded_by_audit(row["url_hash"])
+    assert not excluded_by_audit("0" * 64)
