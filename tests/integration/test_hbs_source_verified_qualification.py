@@ -1,7 +1,7 @@
 """Employer-verified HBS 2027 predoctoral qualification and public routing.
 
 Official evidence (reviewed 2026-10-29):
-https://careers.harvard.edu/job/predoctoral-research-associate-summer-2027-division-of-research-and-faculty-development-in-boston-ma-united-states-jid-2162
+Harvard Careers requisition JID-2162 (bachelor's degree and GPA above 3.5 required).
 https://www.hbs.edu/ra/apply
 
 The original extraction incorrectly asserted that a completed PhD was required,
@@ -15,7 +15,6 @@ from predoc_pipeline import state
 from predoc_pipeline.boards.config import load_preferences
 from predoc_pipeline.core.db import Database, init
 from predoc_pipeline.routing import Router
-
 
 ROOT = Path(__file__).resolve().parents[2]
 HBS_ID = 88
