@@ -16,11 +16,29 @@ from pathlib import Path
 from predoc_pipeline.boards.collector import _scrape_all, build_http
 from predoc_pipeline.boards.config import HttpConfig, load_board_sources
 from predoc_pipeline.boards.scrapers import SCRAPERS
+from predoc_pipeline.boards.scrapers.university_ats import parse_workday_url
+from predoc_pipeline.ingest.http import PoliteClient
 
 MANIFEST = Path("config/source_expansion_20261029.csv")
 NON_US_MANIFEST = Path("config/non_us_sources_20261029.csv")
 REGISTRY = Path("config/sources.toml")
 MAX_BATCH = 10
+
+
+def robots_allow_source(source: object) -> bool:
+    """Fail closed if robots policy forbids either landing or Workday API access."""
+    listing = source.opt("url")
+    if not listing:
+        return False
+    urls = [listing]
+    if source.type == "workday":
+        host, tenant, site, _ = parse_workday_url(listing)
+        urls.append(f"https://{host}/wday/cxs/{tenant}/{site}/jobs")
+    with PoliteClient(
+        user_agent="CollegeumSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+        timeout=10, per_host_delay=2.0, respect_robots=True,
+    ) as client:
+        return all(client.allowed(url) for url in urls)
 
 
 def read_candidates(path: Path = MANIFEST) -> list[dict[str, str]]:
@@ -76,6 +94,9 @@ async def probe_candidates(
                 # Deliberately unimplemented ATS parsers must not issue network
                 # requests or be mistaken for healthy-empty sources.
                 results[name] = {"status": "parser_not_configured", "jobs": 0}
+                continue
+            if not await asyncio.to_thread(robots_allow_source, source):
+                results[name] = {"status": "blocked_by_robots_or_unknown", "jobs": 0}
                 continue
             response = (await _scrape_all([SCRAPERS[source.type](source, client)], 1, 75))[0]
             posts = response.posts
