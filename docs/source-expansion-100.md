@@ -10,14 +10,16 @@ boards would yield 100 enabled boards. It would **not** prove 100 healthy boards
 
 ## Probe safely
 
-1. Inspect the read-only branch workflow `verify-100-source-expansion-branch`
-   (six matrix cells: initial/0,10,20 and non-us/0,10,20), and reconcile
-   all **51 candidates** from JSON artifacts. This workflow runs on relevant
-   branch pushes; the default-branch `workflow_dispatch` workflow remains
-   available after merge. Do not count missing or partial reports as passes.
-   The probe checks robots policy before requesting source listings or
-   Workday APIs. `parser_not_configured` and `blocked_by_robots_or_unknown`
-   are blockers, **not** healthy empty periods.
+1. Run the permanent manual Actions workflow `verify-source-expansion-20261029`.
+   Choose each cohort (`initial` and `non-us`) and offsets **0, 10, 20**
+   (six bounded runs in total), then reconcile all **51 candidates** from JSON
+   artifacts. The temporary six-matrix branch acceptance already completed
+   successfully on run 40921413336; its artifacts remain available even
+   though the branch-only workflow was removed from the production diff.
+   Do not count missing or partial reports as passes. The probe checks robots
+   policy before requesting source listings or Workday APIs.
+   `parser_not_configured` and `blocked_by_robots_or_unknown` are
+   blockers, **not** healthy empty periods.
 2. Check discovery success, unique vacancy-specific HTTPS URLs, pagination
    completeness, stable vacancy IDs, valid descriptions, field relevance, no
    false empty reports, and any robot/HTTP errors. Results labelled
