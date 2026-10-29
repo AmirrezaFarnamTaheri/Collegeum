@@ -1,0 +1,104 @@
+"""Production source regressions verified against live official pages on 2026-10-29.
+
+An actual career directory with no targeted job links is legitimately empty,
+but arbitrary successful HTTP responses must never be treated as healthy.
+"""
+
+import asyncio
+from pathlib import Path
+
+from predoc_pipeline.boards.collector import _scrape_all
+from predoc_pipeline.boards.config import load_board_sources
+from predoc_pipeline.boards.scrapers import SCRAPERS
+from predoc_pipeline.core.health import source_status
+
+
+def source(name):
+    return next(
+        cfg for cfg in load_board_sources(Path("config/sources.toml"))
+        if cfg.name == name
+    )
+
+
+class FixtureHttp:
+    def __init__(self, expected_url, html):
+        self.expected_url = expected_url
+        self.html = html
+
+    async def get_text(self, url):
+        assert url == self.expected_url
+        return self.html
+
+
+def collect(name, html):
+    cfg = source(name)
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    return result
+
+
+def test_ny_fed_canonical_index_avoids_http_200_redirect_to_error_page():
+    """The path without /index currently returns the NY Fed's /errors/500 page."""
+    cfg = source("ny_fed")
+    assert cfg.opt("url") == (
+        "https://www.newyorkfed.org/research/careers/research_analysts/index"
+    )
+    html = """
+      <h1>Research Analysts</h1><table><tr>
+      <td>Research Analyst</td><td>Summer 2027</td>
+      <td>2 years</td><td>Aug. 24 – Sept. 14</td>
+      </tr></table>
+    """
+    result = collect("ny_fed", html)
+    assert result.ok
+    assert result.posts == []
+    assert source_status(result.as_stats()) == "empty"
+
+
+def test_iies_live_directory_only_with_tenure_track_notice_is_valid_empty():
+    """The live October page changed its introductory faculty recruitment text."""
+    cfg = source("iies_stockholm")
+    assert cfg.opt("verified_empty_marker") == (
+        "You can search for available positions at Stockholm University at the central website"
+    )
+    html = """
+      <h1>Work with us</h1>
+      <p>You can search for available positions at Stockholm University at the
+      central website:</p>
+      <a href="https://www.su.se/english/about-the-university/work-at-su/available-jobs">
+        Available jobs at Stockholm University</a>
+      <h2>Tenure-track Assistant Professor</h2>
+      <p>The Institute for International Economic Studies seeks to recruit
+      at the tenure-track assistant professor level.</p>
+    """
+    result = collect("iies_stockholm", html)
+    assert result.ok and result.posts == []
+    assert source_status(result.as_stats()) == "empty"
+
+
+def test_iies_unrecognized_replacement_page_remains_a_source_error():
+    result = collect("iies_stockholm", "<h1>University news</h1><p>Page moved</p>")
+    assert not result.ok
+    assert result.as_stats()["failure_counts"]["parse"] >= 1
+
+
+def test_opportunity_insights_verified_no_current_job_links_is_empty():
+    """Live official career page no longer links to its previous job-description PDF."""
+    cfg = source("opportunity_insights")
+    assert cfg.may_be_empty is True
+    assert cfg.opt("verified_empty_marker") == "Keep an eye on our openings"
+    html = """
+      <h1>Join Our Team</h1>
+      <p>Thank you for your interest in Opportunity Insights.</p>
+      <p>Interested in joining our team? Keep an eye on our openings</p>
+    """
+    result = collect("opportunity_insights", html)
+    assert result.ok and result.posts == []
+    assert source_status(result.as_stats()) == "empty"
+
+
+def test_opportunity_insights_arbitrary_non_careers_page_is_not_valid_empty():
+    result = collect("opportunity_insights", "<h1>New research report</h1>")
+    assert not result.ok
+    assert source_status(result.as_stats()) == "failed"
