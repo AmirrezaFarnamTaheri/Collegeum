@@ -2597,12 +2597,24 @@
       const age = diffH >= 48 ? `${Math.floor(diffH / 24)}d ago` : `${Math.max(0, Math.floor(diffH))}h ago`;
       if (outcome === 'fatal') return { cls: 'dead', label: `Pipeline failed · ${age}` };
       if (outcome === 'quota-stopped') return { cls: 'stale', label: `Pipeline stopped at request limit · ${age}` };
+      // After two nominal four-hour ingestion intervals, freshness takes
+      // priority over the old run's success or degradation: an old partial
+      // snapshot is a delayed pipeline, not merely a failed source check.
+      if (diffH >= 8) {
+        const incomplete = failed || outcome === 'partial' || outcome === 'degraded' ||
+          data.last_run?.errors > 0;
+        const detail = failed ? ` · ${failed} source checks failed` :
+          incomplete ? ' · previous run incomplete' :
+          outcome !== 'ok' ? ' · last outcome unknown' : '';
+        return {
+          cls: diffH >= 72 ? 'dead' : 'stale',
+          label: `Pipeline delayed · ${age}${detail}`
+        };
+      }
       if (failed || outcome === 'partial' || outcome === 'degraded' || data.last_run?.errors > 0) {
         return { cls: 'stale', label: `Pipeline incomplete${failed ? ` · ${failed} source checks failed` : ''} · ${age}` };
       }
       if (outcome !== 'ok') return { cls: 'stale', label: `Pipeline status unavailable · ${age}` };
-      if (diffH >= 72) return { cls: 'dead', label: `Pipeline delayed · ${age}` };
-      if (diffH >= 24) return { cls: 'stale', label: `Pipeline run · ${age}` };
       return { cls: '', label: `Pipeline active · updated ${age}` };
     }
 

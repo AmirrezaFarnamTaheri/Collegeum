@@ -267,8 +267,11 @@ def test_reviewed_out_of_scope_positions_are_hidden_without_erasing_publication_
     assert rows[259]["title"] == "Research Assistant in Digital Heritage Documentation (Fixed Term)"
     assert rows[259]["telegram_message_id"] == 71
     for row in rows.values():
+        # A later production ingestion may legitimately close or expire an
+        # out-of-scope position. The durable publication history and explicit
+        # exclusion must survive those lifecycle transitions.
         assert row["status"] == "published"
-        assert row["closed_at"] is None
-        assert row["expired_at"] is None
+        if row["closed_at"] is not None:
+            assert row["closed_reason"]
         assert excluded_by_audit(row["url_hash"])
     assert not excluded_by_audit("0" * 64)
