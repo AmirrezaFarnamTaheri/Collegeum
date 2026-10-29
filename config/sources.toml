@@ -1065,7 +1065,7 @@ url = "https://egc.yale.edu/opportunities/jobs-research-fellowships"
 institution = "Yale University Economic Growth Center"
 may_be_empty = true
 verified_empty_marker = "Current job openings"
-link_pattern = '^https://egc\.yale\.edu/opportunities/(?!(?:jobs-research-fellowships|internships-for-yale-students|faculty-research-support|egc-incubation-fund|support-for-graduate-students)(?:/|$))[a-z0-9-]+/?$'
+link_pattern = '^https://egc\.yale\.edu/opportunities/(?!(?:jobs-research-fellowships|(?:internships-for-yale-students|internships-yale-students)|faculty-research-support|egc-incubation-fund|support-for-graduate-students)(?:/|$))[a-z0-9-]+/?$'
 field_implied = false
 note = "Official Yale EGC openings; vacancy details must establish the role, field and workplace. Excludes programme and navigation pages."
 
@@ -1086,7 +1086,7 @@ note = "Official Wharton Workday requisitions. Open/closed status is verified us
 [[board]]
 name = "princeton_rpde_jobs"
 type = "link_scan"
-enabled = true
+enabled = false
 group = "research_institute"
 url = "https://rpde.princeton.edu/opportunities/jobs"
 institution = "Princeton University (Research Program in Development Economics)"
@@ -1095,12 +1095,12 @@ may_be_empty = true
 verified_empty_marker = "Open Positions"
 link_pattern = '^https://main-princeton\.icims\.com/jobs/[0-9]+/[^?#]+'
 field_implied = false
-note = "Official RPDE jobs listing linked to Princeton iCIMS requisitions. Programme navigation, faculty biographies, and closed positions are not vacancies."
+note = "OFF: Official RPDE jobs index returned HTTP 403 on the GitHub runner on 2026-10-29; retain configuration for later verified recovery."
 
 [[board]]
 name = "brookings_jobs"
 type = "link_scan"
-enabled = true
+enabled = false
 group = "research_institute"
 url = "https://careers-brookings.icims.com/jobs/search?hashed=-435682078&ss=1"
 institution = "Brookings Institution"
@@ -1109,12 +1109,12 @@ may_be_empty = true
 verified_empty_marker = "Search Results Page"
 link_pattern = '^https://careers-brookings\.icims\.com/jobs/[0-9]+/[^?#]+'
 field_implied = false
-note = "Official Brookings iCIMS requisitions. Only unique job-detail links; administrative and PhD-required roles remain subject to policy."
+note = "OFF: Official Brookings iCIMS search returned a parse failure in read-only collection on 2026-10-29; requires validated adapter/parser."
 
 [[board]]
 name = "ucl_management_jobs"
 type = "link_scan"
-enabled = true
+enabled = false
 group = "university"
 url = "https://www.mgmt.ucl.ac.uk/vacancies"
 institution = "University College London (School of Management)"
@@ -1123,7 +1123,7 @@ may_be_empty = true
 verified_empty_marker = "Job vacancies"
 link_pattern = '^https://(?:(?:www\.)?mgmt|management)\.ucl\.ac\.uk/vacancies/[a-z0-9-]+/?$'
 field_implied = false
-note = "Official School of Management vacancy adverts. Teaching, senior and PhD-required posts still require independent qualification checks."
+note = "OFF: Official UCL School of Management vacancies page returned HTTP 403 on the GitHub runner on 2026-10-29."
 
 # --- social ------------------------------------------------------------
 
