@@ -82,7 +82,7 @@ async def probe_candidates(
         for record in selected:
             name = record["name"]
             source = registered.get(name)
-            if source is None or source.enabled or source.type != record["type"] or (
+            if source is None or source.type != record["type"] or (
                 source.opt("url") != record["url"]
             ):
                 results[name] = {"status": "config_mismatch", "jobs": 0}
@@ -106,6 +106,7 @@ async def probe_candidates(
                       "needs_eligibility_review")
             results[name] = {
                 "status": status,
+                "enabled": source.enabled,
                 "jobs": len(valid),
                 "unique_job_urls": len({p.url for p in valid}),
                 "sample": [{"title": p.title, "url": p.url} for p in valid[:5]],
