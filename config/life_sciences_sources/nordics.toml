@@ -73,13 +73,15 @@ name = "life_nordic_linkoping"
 type = "link_scan"
 group = "life_sciences"
 enabled = true
-url = "https://liu.se/en/work-at-liu/vacancies?occupationarea=PhD+students"
-link_pattern = 'liu\.se/en/work-at-liu/vacancies/\d+(?:/|$)'
+url = "https://web103.reachmee.com/ext/I011/853/main?lang=UK&site=7&validator=d7a66c13be778ef950c393a904293789"
+link_pattern = '^https://web103[.]reachmee[.]com/ext/I011/853/job[?](?:[^#]*[&])?job_id=[0-9]+(?:[&#]|$)'
+# Only fetch doctoral vacancies; other research fields remain subject to full-text checks.
+title_allow_pattern = '^(?:Ph[.]?D[.]?|Doctoral|Doktorand)\b'
 country = "Sweden"
 institution = "Linkoping University"
 min_interval = 3.0
 verification = "listing_and_vacancy_url"
-note = "Official PhD-filtered university vacancies with numeric detail URLs verified."
+note = "Official Linkoping ReachMee English jobs, job_id is unique inside tenant I011/853. Institution landing page exposes only a listing shell. Observed 22 official job-specific links on a robots-aware GitHub runner 40961785241; doctoral-title guard retains only PhD positions. Revalidate stable job identities and field eligibility in production."
 
 [[board]]
 name = "life_nordic_kth"
@@ -99,13 +101,15 @@ name = "life_nordic_slu"
 type = "link_scan"
 group = "life_sciences"
 enabled = true
-url = "https://www.slu.se/en/about-slu/work-at-slu/jobs-and-vacancies/"
-link_pattern = 'slu\.se/en/about-slu/work-at-slu/jobs-and-vacancies/(?:doktorand|phd)[a-z0-9-]*(?:/|\?|$)'
+url = "https://web103.reachmee.com/ext/I017/1114/main?lang=UK&site=7&validator=87e4b706891e51f731ed44be28da8352"
+link_pattern = '^https://web103[.]reachmee[.]com/ext/I017/1114/job[?](?:[^#]*[&])?job_id=[0-9]+(?:[&#]|$)'
+# Only fetch doctoral vacancies; other research fields remain subject to full-text checks.
+title_allow_pattern = '^(?:Ph[.]?D[.]?|Doctoral|Doktorand)\b'
 country = "Sweden"
 institution = "Swedish University of Agricultural Sciences"
 min_interval = 3.0
 verification = "listing_and_vacancy_url"
-note = "Official 2026 doctoral listings link to named PhD job pages; ecology and genomics included."
+note = "Official SLU ReachMee English jobs, job_id unique inside tenant I017/1114. Institution landing page exposes no job records in server HTML. Observed 16 public job-specific links on robots-aware GitHub runner 40961785241; doctoral-title guard excludes postdocs, senior faculty and administrative jobs."
 
 [[board]]
 name = "life_nordic_oslo"
