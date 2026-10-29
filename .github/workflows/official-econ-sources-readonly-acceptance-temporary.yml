@@ -40,9 +40,6 @@ jobs:
           NAMES = {
               "yale_egc_jobs",
               "wharton_predoc",
-              "princeton_rpde_jobs",
-              "brookings_jobs",
-              "ucl_management_jobs",
           }
 
           async def main():
