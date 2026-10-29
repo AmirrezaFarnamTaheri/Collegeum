@@ -1,0 +1,53 @@
+name: copenhagen-official-fallback-probe-temporary
+on:
+  push:
+    branches: [fix/copenhagen-danish-portal-20261029]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked --extra dev
+      - name: Inspect official alternate University of Copenhagen job portal
+        env:
+          PYTHONPATH: src
+        run: |
+          uv run python - <<'PY'
+          import asyncio
+          import re
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+          url="https://jobportal.ku.dk/alle-opslag/"
+          pattern=r"^https://jobportal\.ku\.dk/alle-opslag/\?show=\d+$"
+
+          async def main():
+              cfg=next(s for s in load_board_sources("config/sources.toml") if s.name=="copenhagen")
+              async with HttpClient(timeout=18,max_retries=0,default_min_interval=0.2) as http:
+                  try:
+                      html=await http.get_text(url)
+                      soup=BeautifulSoup(html,"lxml")
+                      print("LIVE_PAGE_BYTES",len(html),"TITLE",soup.title.get_text(" ",strip=True) if soup.title else "-",flush=True)
+                      anchors=soup.find_all("a",href=True)
+                      print("TOTAL_ANCHORS",len(anchors),flush=True)
+                      print("EXAMPLE_LINKS",[(a.get_text(" ",strip=True)[:115],a.get("href","")[:185]) for a in anchors if "show=" in a.get("href","")][:15],flush=True)
+                      model=cfg.model_copy(update={"url":url,"link_pattern":pattern})
+                      scraper=LinkScanScraper(model,http)
+                      posts=scraper.parse_postings([(url,html)])
+                      print("PARSED_COUNT",len(posts),"PARSE_ERRORS",scraper.discovery_parse_errors,flush=True)
+                      print("POSITIONS",[(p.title,p.url,str(p.deadline)) for p in posts[:12]],flush=True)
+                  except Exception as exc:
+                      print("FETCH_ERROR",type(exc).__name__,str(exc)[:300],flush=True)
+          asyncio.run(main())
+          PY
