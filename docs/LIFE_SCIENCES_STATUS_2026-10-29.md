@@ -139,3 +139,25 @@ current qualifying doctoral vacancies; some may return faculty, staff,
 off-field or already-closed jobs. Nor does it verify the second,
 third or fourth search URL of sources with multi-URL configurations.
 Scraper/detail/eligibility verification remains separate.
+
+## Remediation after 17:30 UTC probe (separate PR)
+
+A later review disabled `life_copenhagen` due the read-only runner's
+robots-policy denial. **Current proposed catalogue: 36 enabled / 189
+disabled**; retain the 37-source numbers above as the earlier
+pre-remediation probe baseline. The previously accepted venue URL shape
+does **not** authorize collection when robots policy prohibits access.
+
+One already-stored Max Planck economics-climate PhD (explicitly outside
+life-sciences research) was identified by URL/title. Rather than rewrite
+`data/career_jobs.ndjson` or subscriber delivery state, title-only,
+field-specific filtering prevents it from appearing in new CSV exports
+and private subscriber previews. Ambiguous titles, including doctoral
+roles whose biological domain may only appear on their detail page,
+remain unmodified pending review. Existing journal records: 61;
+expected safely exported life-science rows from that snapshot: 60.
+
+Further action still needed: inspect failed or zero-link Bern, Linköping,
+SLU and AcademicTransfer epigenomics pages with permitted access;
+investigate IBEC transient transport; verify non-first aggregate query
+pages and actual PhD eligibility rather than relying on link counts.

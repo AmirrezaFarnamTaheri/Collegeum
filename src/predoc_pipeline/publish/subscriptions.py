@@ -137,7 +137,16 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
             "scope": "", "first_seen_at": when, "source": "Collegeum",
             "url": row["apply_url"],
         })
+    # Avoid showing already-stored, provably off-field doctoral records to
+    # private subscribers. Do not mutate their journal or delivery receipts.
+    from ..ingest.life_sciences import historical_life_title_disqualified
+
     for job in careers:
+        if (
+            job.get("category") == "life_sciences_phd"
+            and historical_life_title_disqualified(str(job.get("title") or ""))
+        ):
+            continue
         if job.get("availability") == "closed":
             continue
         when = job["first_seen_at"]

@@ -120,7 +120,7 @@ def test_separate_life_sciences_source_registry_keeps_economics_sources() -> Non
     enabled = {row.name for row in new_sources if row.enabled}
     assert enabled == {
         "life_euraxess", "life_academictransfer", "life_max_planck",
-        "life_uppsala", "life_karolinska", "life_copenhagen",
+        "life_uppsala", "life_karolinska",
         "life_vib", "life_epfl", "life_crg_phd",
         "life_vienna_doctoral",
     }
@@ -128,6 +128,7 @@ def test_separate_life_sciences_source_registry_keeps_economics_sources() -> Non
         "life_embl", "life_eth_bsse", "life_eth_jobs",
         "life_dkfz", "life_fmi_programme", "life_embl_phd_programme",
         "life_vienna_biocenter", "life_helsinki", "life_ista", "life_mdc",
+        "life_copenhagen",
     }.issubset({row.name for row in new_sources if not row.enabled})
     assert "euraxess" in {row.name for row in default_sources}
     assert "academictransfer" in {row.name for row in default_sources}
