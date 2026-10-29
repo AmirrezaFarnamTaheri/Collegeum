@@ -31,6 +31,13 @@ jobs:
               ("cnrs", "https://emploi.cnrs.fr/Unites/UMR9194/Default.aspx"),
               ("cnrs-rss", "https://emploi.cnrs.fr/Rss/Offres.ashx?CodeUnite=umr9194"),
               ("euraxess", "https://euraxess.ec.europa.eu/jobs/search"),
+              ("ifs", "https://ifs.org.uk/jobs"),
+              ("ifs-applied", "https://app.beapplied.com/org/institute-for-fiscal-studies"),
+              ("cep-lse", "https://cep.lse.ac.uk/_new/about/work/"),
+              ("unu-wider", "https://www.wider.unu.edu/opportunities?f%5B0%5D=field_opportunity_status%3Acurrent"),
+              ("cepr-us", "https://cepr.net/about/careers/"),
+              ("minneapolis-fed", "https://www.minneapolisfed.org/about-us/careers"),
+
               ("euraxess-filtered", "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Apredoctoral"),
               ("euraxess-predoc", "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Apre-doctoral"),
               ("euraxess-keys", "https://euraxess.ec.europa.eu/jobs/search?keys=predoctoral"),
