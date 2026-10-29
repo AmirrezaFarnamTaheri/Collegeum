@@ -74,9 +74,11 @@ def test_public_university_reachmee_job_anchor_preserves_identity_and_origin(
     name, url, other, title,
 ):
     cfg = source(name)
+    same_tenant_postdoc = url.rsplit("job_id=", 1)[0] + "job_id=99998"
     html = (
         f'<a href="{url}">{title}</a>'
         f'<a href="{other}">Unrelated university doctoral post</a>'
+        f'<a href="{same_tenant_postdoc}">Postdoctoral researcher in genomics</a>'
         '<a href="/ext/I011/853/subscribe?site=7">Subscribe</a>'
     )
     rows, _ = asyncio.run(LinkScanScraper(cfg, StubHttp(html)).run())
