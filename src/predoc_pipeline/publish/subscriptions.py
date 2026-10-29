@@ -193,6 +193,21 @@ def render_alert(job: dict[str, str], lang: str = "en") -> str:
         )
     except ValueError:
         valid = False
+    # Discovery is not availability verification. The majority of career
+    # sources do not expose a reliable per-vacancy active/closed API; mark
+    # these alerts as unverified rather than implying a confirmed opening.
+    # Academic publication rows use a separate checked-vacancy lifecycle.
+    is_career = (
+        str(job.get("key", "")).startswith("career:")
+        or job["category"] in CAREER_TOPICS
+        or job["category"] == "life_sciences_phd"
+    )
+    if is_career and job.get("availability") not in ("active", "closed"):
+        parts.append("ℹ️ " + (
+            "فعال بودن این فرصت تأیید نشده است؛ وضعیت را در وب‌سایت کارفرما بررسی کنید."
+            if fa else
+            "Availability has not been verified; confirm the vacancy on the employer site."
+        ))
     if job["category"] == "life_sciences_phd":
         if job.get("research_priority") == "focus":
             parts.append("🎯 " + (
