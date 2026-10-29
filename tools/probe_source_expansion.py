@@ -1,4 +1,4 @@
-"""Read-only runner verification of the 30 October 2026 source candidates.
+"""Read-only runner verification of the October 2026 source candidate cohorts.
 
 This is discovery evidence, NOT an authorization to enable a source. Never
 reads publication/subscriber state and never sends alerts. Partial Workday
@@ -18,20 +18,32 @@ from predoc_pipeline.boards.config import HttpConfig, load_board_sources
 from predoc_pipeline.boards.scrapers import SCRAPERS
 
 MANIFEST = Path("config/source_expansion_20261029.csv")
+NON_US_MANIFEST = Path("config/non_us_sources_20261029.csv")
 REGISTRY = Path("config/sources.toml")
 MAX_BATCH = 10
 
 
 def read_candidates(path: Path = MANIFEST) -> list[dict[str, str]]:
+    """Accept only the reviewed manifests and their fixed source-type counts."""
+    expected = {
+        MANIFEST: (30, 19, 11),
+        NON_US_MANIFEST: (21, 0, 21),
+    }
+    if path not in expected:
+        raise ValueError("Unknown source-expansion manifest")
     with path.open(newline="", encoding="utf-8") as file:
         records = list(csv.DictReader(file))
     names = [r["name"] for r in records]
-    if len(records) != 30 or len(names) != len(set(names)):
-        raise ValueError("Source candidate manifest must contain 30 unique names")
-    if sum(r["type"] == "workday" for r in records) != 19:
-        raise ValueError("Source candidate manifest must include 19 Workday sites")
-    if sum(r["type"] == "link_scan" for r in records) != 11:
-        raise ValueError("Source candidate manifest must include 11 link-scan sites")
+    total, workday, link_scan = expected[path]
+    if len(records) != total or len(names) != len(set(names)):
+        raise ValueError(f"Source manifest requires {total} unique names")
+    if sum(r["type"] == "workday" for r in records) != workday:
+        raise ValueError(f"Source manifest requires {workday} Workday sites")
+    if sum(r["type"] == "link_scan" for r in records) != link_scan:
+        raise ValueError(f"Source manifest requires {link_scan} link-scan sites")
+    for row in records:
+        if row.get("enabled") != "false" or not row.get("url", "").startswith("https://"):
+            raise ValueError("Source manifest includes active or invalid entries")
     return records
 
 
@@ -39,9 +51,9 @@ async def probe_candidates(
     *, manifest: Path = MANIFEST, registry: Path = REGISTRY,
     offset: int = 0, limit: int = MAX_BATCH,
 ) -> dict:
-    if limit < 1 or limit > MAX_BATCH or offset < 0 or offset > 30:
-        raise ValueError("invalid bounded probe selection")
     candidates = read_candidates(manifest)
+    if limit < 1 or limit > MAX_BATCH or offset < 0 or offset > len(candidates):
+        raise ValueError("invalid bounded probe selection")
     registered = {s.name: s for s in load_board_sources(registry)}
     selected = candidates[offset:offset + limit]
     http_cfg = HttpConfig(timeout=12, max_retries=0, backoff_base=1,
@@ -60,6 +72,11 @@ async def probe_candidates(
             if source.type not in SCRAPERS:
                 results[name] = {"status": "unsupported_type", "jobs": 0}
                 continue
+            if source.type == "link_scan" and source.opt("link_pattern") == "^$":
+                # Deliberately unimplemented ATS parsers must not issue network
+                # requests or be mistaken for healthy-empty sources.
+                results[name] = {"status": "parser_not_configured", "jobs": 0}
+                continue
             response = (await _scrape_all([SCRAPERS[source.type](source, client)], 1, 75))[0]
             posts = response.posts
             valid = [p for p in posts if p.url.startswith("https://") and p.title.strip()]
@@ -77,18 +94,23 @@ async def probe_candidates(
     return {
         "checked_at": datetime.now(UTC).isoformat(),
         "offset": offset, "limit": limit, "candidate_count": len(candidates),
-        "checked": len(selected), "next_offset": min(30, offset + limit)
-        if offset + limit < 30 else None, "sources": results,
+        "checked": len(selected), "manifest": str(manifest),
+        "next_offset": min(len(candidates), offset + limit)
+        if offset + limit < len(candidates) else None, "sources": results,
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest", type=Path, default=MANIFEST,
+                        choices=[MANIFEST, NON_US_MANIFEST])
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--output", type=Path, default=Path("build/source-expansion-probe.json"))
     args = parser.parse_args()
-    report = asyncio.run(probe_candidates(offset=args.offset, limit=args.limit))
+    report = asyncio.run(probe_candidates(
+        manifest=args.manifest, offset=args.offset, limit=args.limit,
+    ))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n",
                            encoding="utf-8")
