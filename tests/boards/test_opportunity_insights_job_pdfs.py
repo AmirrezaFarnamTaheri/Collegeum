@@ -59,8 +59,10 @@ def test_opportunity_insights_rejects_unrelated_or_offsite_pdfs():
         'Untrusted fragment suffix</a>'
     )
     result = scrape(html)
-    assert result.ok
     assert result.posts == []
+    # Unrecognized/spoofed job links on a careers page must never look healthy.
+    assert not result.ok
+    assert result.as_stats()["failure_counts"]["parse"] >= 1
 
 
 def test_opportunity_insights_preserves_employer_application_links():
