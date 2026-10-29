@@ -88,13 +88,13 @@ note = "Official KI vacancies; doctoral adverts link to Varbi applications."
 name = "life_copenhagen"
 type = "link_scan"
 group = "life_sciences"
-enabled = true
+enabled = false
 url = "https://employment.ku.dk/phd/"
 link_pattern = 'employment\.ku\.dk/(?:phd/|all-vacancies)\?show=\d+'
 institution = "University of Copenhagen"
 country = "Denmark"
 min_interval = 3.0
-note = "Official UCPH PhD-only vacancy table and ?show=ID detail URLs."
+note = "Disabled 2026-10-29: read-only GitHub runner reported robots policy denial (HTTP 999); do not circumvent access restrictions. Re-enable only with explicitly permissible interface, tested job URLs and approval."
 
 [[board]]
 name = "life_vib"
