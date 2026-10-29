@@ -149,7 +149,7 @@ assert.equal(intervals[0].delay,60000);
 clock = Date.parse('2026-10-08T12:00:00Z');
 intervals[0].fn();
 assert.ok($('#health-dot').className.includes('stale'));
-assert.ok($('#health-label').textContent.includes('Pipeline run'));
+assert.ok($('#health-label').textContent.includes('Pipeline delayed'));
 assert.ok($('#src').textContent.includes('4d old'));
 const priorTimers = timers.length;
 clock += 60000;

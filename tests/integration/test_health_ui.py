@@ -27,11 +27,19 @@ const cases = [
   [{...fresh, runs: [{outcome: 'ok', source_stats: {a: {ok: false}}}]},
     'stale', '1 source checks failed'],
   [{...fresh, status: 'ok'}, '', 'Pipeline active'],
+  [{generated_at: '2026-10-05T04:01:00Z', status: 'ok'}, '', 'Pipeline active'],
+  [{generated_at: '2026-10-05T04:00:00Z', status: 'ok'}, 'stale', 'Pipeline delayed'],
+  [{
+    generated_at: '2026-10-05T03:00:00Z',
+    last_run: {outcome: 'partial', errors: 1},
+    source_summary: {failed: 3}
+  }, 'stale', 'Pipeline delayed'],
+
   [{...fresh, status: 'ok', runs: [{source_stats: {a: {skipped: true, errors: 1}}}]},
     '', 'Pipeline active'],
   [{...fresh, status: 'ok', runs: [{finished_at: '2026-10-01T12:00:00Z'}]}, 'dead', 'delayed'],
   [{...fresh, status: 'ok', runs: [{finished_at: '2026-10-04T10:00:00Z'}]},
-    'stale', 'Pipeline run'],
+    'stale', 'Pipeline delayed'],
   [{...fresh}, 'stale', 'unavailable'],
   [{status: 'ok', generated_at: 'invalid'}, 'stale', 'unavailable'],
   [{status: 'ok', generated_at: '2026-10-06T12:00:00Z'}, 'stale', 'unavailable'],
