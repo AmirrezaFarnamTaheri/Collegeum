@@ -1,0 +1,68 @@
+name: ingestion-freshness-recovery
+
+# A successful CI or Telegram sync is an opportunity to notice a missed
+# ingestion schedule; this is deliberately NOT another GitHub cron. GH's
+# scheduler may delay/drop schedule events in periods of high load.
+on:
+  workflow_run:
+    workflows: ["ci", "telegram-sync"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      check_only:
+        description: "Only check freshness; do not request a production ingestion"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: write  # only permission required to request workflow_dispatch
+
+# Concurrent observers must never dispatch multiple recovery runs.
+concurrency:
+  group: collegeum-ingestion-freshness-recovery
+  cancel-in-progress: false
+
+jobs:
+  check:
+    # workflow_run can fire for untrusted PRs; NEVER run privileged code
+    # from those branches. Only trusted successful main push CI and scheduled
+    # Telegram sync can request a recovery. A manual check stays read-only by
+    # default and is restricted to this workflow on main.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        (
+          (github.event.workflow_run.name == 'ci' && github.event.workflow_run.event == 'push') ||
+          (github.event.workflow_run.name == 'telegram-sync' && github.event.workflow_run.event == 'schedule')
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Evaluate freshness and dispatch only if no newer ingestion exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CHECK_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.check_only || false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$CHECK_ONLY" = "true" ]; then
+            python3 -S tools/ingestion_watchdog.py
+          else
+            python3 -S tools/ingestion_watchdog.py --dispatch
+          fi
