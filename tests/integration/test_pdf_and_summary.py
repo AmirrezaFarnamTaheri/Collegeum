@@ -18,6 +18,28 @@ class TestPdfExtraction(unittest.TestCase):
         self.assertTrue(is_pdf(b"", url="https://example.org/job.PDF?query=1"))
         self.assertFalse(is_pdf(b"<html>hello</html>", content_type="text/html", url="https://example.org/job"))
 
+    def test_pdf_mime_or_filename_cannot_override_html_gateway_body(self):
+        html = b"<!DOCTYPE html><html><body>Access denied</body></html>"
+        self.assertFalse(is_pdf(html, "application/pdf", "https://example.org/vacancy.pdf"))
+        self.assertFalse(is_pdf(b"  <html>Unauthorized</html>", url="https://example.org/job.pdf"))
+        self.assertFalse(is_pdf(b"\\xef\\xbb\\xbf\\n  <!DOCTYPE html><html></html>",
+                                content_type="application/pdf"))
+        self.assertFalse(is_pdf("  <?xml version='1.0'?>", content_type="application/pdf"))
+        self.assertTrue(is_pdf(b"%PDF-1.7\\nvalid", content_type="text/html", url="https://example.org/jobs"))
+        # Metadata compatibility when no body is available.
+        self.assertTrue(is_pdf(b"", url="https://example.org/notice.pdf"))
+
+    def test_html_gateway_does_not_enter_pdf_parser_or_log_corruption(self):
+        from unittest.mock import patch
+
+        import pypdf
+
+        body = b"\\xef\\xbb\\xbf  <html><h1>503 Service Unavailable</h1></html>"
+        with patch.object(pypdf, "PdfReader") as reader:
+            with self.assertNoLogs("predoc_pipeline.utils.pdf", level="WARNING"):
+                self.assertEqual(extract_pdf_text(body), "")
+            reader.assert_not_called()
+
     def test_extract_pdf_text_with_pypdf(self):
         import pypdf
 
