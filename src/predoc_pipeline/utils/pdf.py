@@ -12,12 +12,28 @@ __all__ = ["is_pdf", "extract_pdf_text", "clean_pdf_text"]
 _PDF_MAGIC = b"%PDF-"
 
 
+def _looks_like_markup(content: bytes | str) -> bool:
+    """Ignore HTML/XML gateway documents masquerading as PDF downloads.
+
+    A response URL or advertised MIME type is weaker evidence than its body.
+    Empty bodies still follow the historical metadata-only classification.
+    """
+    if isinstance(content, bytes):
+        start = content[:512].lstrip(b" \\t\\r\\n")
+        start = start.removeprefix(b"\\xef\\xbb\\xbf").lstrip(b" \\t\\r\\n")
+        return start.startswith(b"<")
+    start = content[:512].lstrip(" \\t\\r\\n\\ufeff")
+    return start.startswith("<")
+
+
 def is_pdf(content: bytes | str, content_type: str = "", url: str = "") -> bool:
     """Check if binary payload, content-type header, or URL corresponds to a PDF."""
     if isinstance(content, bytes) and content.startswith(_PDF_MAGIC):
         return True
     if isinstance(content, str) and content.startswith("%PDF-"):
         return True
+    if content and _looks_like_markup(content):
+        return False
     if "application/pdf" in (content_type or "").lower():
         return True
     clean_url = (url or "").split("?")[0].lower()
@@ -29,7 +45,7 @@ def extract_pdf_text(content: bytes, max_chars: int = 20000) -> str:
 
     Returns an empty string if parsing fails or produces no usable text.
     """
-    if not content:
+    if not content or _looks_like_markup(content):
         return ""
     try:
         import pypdf
