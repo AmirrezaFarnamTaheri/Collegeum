@@ -85,11 +85,24 @@ _NON_INST_PREFIX_RX = re.compile(r"^(closes?|deadline|salary|location)")
 _DEPT_RX = re.compile(r"department|faculty|institute|school of|centre|center", re.IGNORECASE)
 
 
+# A role mention inside a news article is not a vacancy. Only treat role
+# titles at the start of a link label as job candidates. An explicit
+# application call to action or a recruiting announcement naming a role
+# also counts. URL paths identifying postings are checked separately.
 _VACANCY_LINK_LABEL = re.compile(
-    r"\b(?:pre[-\s]?doc(?:toral)?|post[-\s]?doc(?:toral)?|research\s+"
-    r"(?:assistant|associate|analyst|fellow|scientist)|data\s+scientist|"
-    r"(?:job|position|vacancy)\s+(?:opening|posting|application)|"
-    r"apply\s+(?:now|online|for\s+(?:the|this|a)))\b",
+    r"^\s*(?:(?:pre[-\s]?doc(?:toral)?|post[-\s]?doc(?:toral)?)\s+"
+    r"(?:research\s+)?(?:assistant|associate|analyst|fellow(?:ship)?|"
+    r"researcher|position|opportunity|vacancy|job|scholar|in\b|at\b)"
+    r"|(?:pre[-\s]?doc(?:toral)?|post[-\s]?doc(?:toral)?)\s*$"
+    r"|research\s+(?:assistant|associate|analyst|fellow|scientist)\b"
+    r"|data\s+scientist\b)"
+    r"|\b(?:job|position|vacancy)\s+(?:opening|posting|application)\b"
+    r"|\bapply\s+(?:now|online|for\s+(?:the|this|a))\b"
+    r"|\b(?:hiring|recruiting|openings?|vacanc(?:y|ies)|"
+    r"jobs?|positions?|roles?|opportunit(?:y|ies))\b.{0,90}?"
+    r"\b(?:pre[-\s]?doc(?:toral)?|post[-\s]?doc(?:toral)?|"
+    r"research\s+(?:assistant|associate|analyst|fellow|scientist)|"
+    r"data\s+scientist)\b",
     re.IGNORECASE,
 )
 _VACANCY_LINK_PATH = re.compile(

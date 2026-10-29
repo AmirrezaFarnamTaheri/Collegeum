@@ -149,3 +149,38 @@ def test_old_ra_marker_outside_the_cohort_row_is_not_no_vacancy_proof():
     assert result.posts == []
     assert not result.ok
     assert source_status(result.as_stats()) == "failed"
+
+
+def test_predoc_speech_link_does_not_masquerade_as_ny_fed_vacancy():
+    """Regression: live NY Fed 2024 speech is not a 2026 job application."""
+    speech = (
+        '<a href="https://www.newyorkfed.org/newsevents/speeches/2024/are240711">'
+        'spoke to pre-doctoral economics students</a>'
+    )
+    result = scrape(f"<h1>Research Analysts</h1><table>{RA_ROW}</table>{speech}")
+    assert result.posts == []
+    assert result.ok
+    assert source_status(result.as_stats()) == "empty"
+
+
+def test_research_analyst_interview_link_is_not_a_vacancy():
+    """An article mentioning a job title does not automatically reopen hiring."""
+    interview = (
+        '<a href="https://www.newyorkfed.org/research/people/interview">'
+        'Meet a research analyst at the NY Fed</a>'
+    )
+    result = scrape(f"<table>{RA_ROW}</table>{interview}")
+    assert result.ok
+    assert source_status(result.as_stats()) == "empty"
+
+
+def test_real_unrecognized_predoc_application_link_blocks_empty_health():
+    """Do not fix false positives by disabling detection of new hiring hosts."""
+    new_hiring_link = (
+        '<a href="https://hiring.example.org/opportunity/123">'
+        'Predoctoral Research Fellow</a>'
+    )
+    result = scrape(f"<table>{RA_ROW}</table>{new_hiring_link}")
+    assert result.posts == []
+    assert not result.ok
+    assert source_status(result.as_stats()) == "failed"
