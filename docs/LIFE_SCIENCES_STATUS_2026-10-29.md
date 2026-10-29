@@ -110,3 +110,32 @@ reported as an end-to-end source-health success.
   and records excluded by the biological-field policy.
 
 No source was enabled or automatically republished as a result of this audit.
+
+## Live, read-only GitHub-runner source probe (17:30–17:33 UTC)
+
+Runner: https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/40922025348
+
+The 3 matrix batches inspected **all 37 enabled sources** (offsets
+0, 16, 32; 16 + 16 + 5 = 37). A status of `ok` means only that the
+first landing page responded with at least one matching job URL.
+
+| First-page observation | Sources |
+|---|---:|
+| HTTP 200 and recognized vacancy URL(s) | **31** |
+| HTTP 200 but no recognized vacancy URL | **4** |
+| Blocked by robots.txt / unknown policy | **1** |
+| HTTP/transport error | **1** |
+
+Exceptions to investigate:
+- `life_academictransfer_epigenomics`: HTTP 200, zero recognized links
+- `life_dach_bern`: HTTP 200, zero recognized links
+- `life_nordic_linkoping`: HTTP 200, zero recognized links
+- `life_nordic_slu`: HTTP 200, zero recognized links
+- `life_copenhagen`: robots policy blocked; do not bypass
+- `life_ibec_barcelona`: transport/HTTP error
+
+This evidence **does not** prove that the 31 responding sources have
+current qualifying doctoral vacancies; some may return faculty, staff,
+off-field or already-closed jobs. Nor does it verify the second,
+third or fourth search URL of sources with multi-URL configurations.
+Scraper/detail/eligibility verification remains separate.
