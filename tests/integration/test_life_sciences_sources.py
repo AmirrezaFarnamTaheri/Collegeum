@@ -50,13 +50,14 @@ REGIONAL_EXAMPLES = [
     ),
     (
         "life_nordic_linkoping",
-        "https://liu.se/en/work-at-liu/vacancies/29467",
-        "PhD student in Medical Science",
+        "https://web103.reachmee.com/ext/I011/853/job?site=7&lang=UK&"
+        "validator=d7a66c13be778ef950c393a904293789&job_id=29874",
+        "PhD student in Medical Science, AI and Bioinformatics",
     ),
     (
         "life_nordic_slu",
-        "https://www.slu.se/en/about-slu/work-at-slu/jobs-and-vacancies/"
-        "doktorand-i-skogsskotsel",
+        "https://web103.reachmee.com/ext/I017/1114/job?site=7&lang=UK&"
+        "validator=87e4b706891e51f731ed44be28da8352&job_id=15978",
         "PhD student in silviculture of planted birch",
     ),
     (
