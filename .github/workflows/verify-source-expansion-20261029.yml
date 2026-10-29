@@ -1,0 +1,57 @@
+name: verify-source-expansion-20261029
+
+# Manual, read-only applicant-source verification on the default branch.
+# Does not read subscriber state or run publication/Telegram workflows.
+on:
+  workflow_dispatch:
+    inputs:
+      cohort:
+        description: "Choose one disabled source-candidate manifest"
+        type: choice
+        required: true
+        default: initial
+        options: [initial, non-us]
+      offset:
+        description: "Ten-candidate batch; run offsets 0, 10 and 20 for each cohort"
+        type: choice
+        required: true
+        default: "0"
+        options: ["0", "10", "20"]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Read-only applicant-site probe
+        env:
+          OFFSET: ${{ inputs.offset }}
+          COHORT: ${{ inputs.cohort }}
+        run: |
+          case "$COHORT" in
+            initial) MANIFEST="config/source_expansion_20261029.csv" ;;
+            non-us) MANIFEST="config/non_us_sources_20261029.csv" ;;
+            *) echo "Invalid cohort" >&2; exit 2 ;;
+          esac
+          PYTHONPATH=src python3 tools/probe_source_expansion.py \
+            --manifest "$MANIFEST" --offset "$OFFSET" --limit 10 \
+            --output build/source-expansion-probe.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: source-expansion-probe-${{ inputs.cohort }}-${{ inputs.offset }}-${{ github.run_id }}
+          path: build/source-expansion-probe.json
+          retention-days: 14
+          if-no-files-found: warn
