@@ -24,7 +24,7 @@ def test_non_us_candidates_have_no_implicit_economic_fields():
     board = {s.name: s for s in load_board_sources(REGISTRY)}
     for row in rows:
         cfg = board[row["name"]]
-        assert cfg.enabled is False
+        assert cfg.enabled is (row["name"] == "nus_policy_research")
         assert cfg.field_implied is False
         assert cfg.type == "link_scan"
         assert cfg.opt("url") == row["url"]
