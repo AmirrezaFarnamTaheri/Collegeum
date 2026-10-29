@@ -89,6 +89,22 @@ def _doctoral_title(title: str) -> bool:
         PHD_POSITION.search(title) or PHD_CALL.search(title)
         or ADDITIONAL_DOCTORAL_ROLE.search(title)
     )
+def historical_life_title_disqualified(title: str) -> bool:
+    """Quarantine unmistakably off-field historical titles without guessing.
+
+    Old journal rows lack the full vacancy detail used by classification.
+    Only rule out a title that explicitly names an excluded field *and*
+    does not itself name an allowed biological research domain. Ambiguous
+    titles remain eligible for separate human/detail review.
+    """
+    if WRONG_ROLE.search(title):
+        return True
+    return bool(
+        OUT_OF_SCOPE_TITLE.search(title)
+        and not (PRIMARY_FIELD.search(title) or RELATED_FIELD.search(title))
+    )
+
+
 EXPLICIT_LOCATION = re.compile(
     r"\b(?:location|workplace|place of work|work location|based in)"
     r"\s*[:\-]\s*([^;\n.]{2,90})", re.I,
