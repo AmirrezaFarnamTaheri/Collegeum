@@ -695,7 +695,9 @@ note = "Brown University economics and social sciences research assistants."
 name = "ny_fed"
 type = "link_scan"
 group = "central_bank"
-url = "https://www.newyorkfed.org/research/careers/research_analysts"
+# The shorter route redirects GitHub runners to a misleading HTTP-200 /errors/500 page.
+# The employer canonical /index route was verified read-only on 2026-10-29.
+url = "https://www.newyorkfed.org/research/careers/research_analysts/index"
 # Seasonal official RA recruitment (Summer 2027: 24 Aug–14 Sep 2026) is closed.
 # Verify the RA cohort row and expire the exception before August 2027.
 # A closed internship notice by itself does not establish RA hiring status.
@@ -725,6 +727,11 @@ name = "opportunity_insights"
 type = "link_scan"
 group = "research_institute"
 url = "https://opportunityinsights.org/joinourteam/"
+# Live employer page on 2026-10-29 has no hiring PDF or job-specific application link.
+# Keep the explicit official careers footer as evidence for a legitimate quiet period;
+# a changed/redirected page without it must still report source drift.
+may_be_empty = true
+verified_empty_marker = "Keep an eye on our openings"
 link_pattern = '^(?:https://(?:www\.)?opportunityinsights\.org/(?:wp-content/uploads/\d{4}/\d{2}/[^/?#]*(?:data[-_]scientist|research[-_]assistant|predoc|pre[-_]doctoral)[^/?#]*\.pdf|[^?#]*(?:job|career|apply)[^?#]*)|https://harvardcareers\.harvard\.edu/[^?#]+)$'
 institution = "Opportunity Insights (Harvard University)"
 country = "United States"
@@ -771,7 +778,9 @@ group = "research_institute"
 url = "https://www.su.se/english/divisions/institute-for-international-economic-studies/about-the-institute/work-with-us"
 # Directory may contain no direct jobs; missing official text still reports source drift.
 may_be_empty = true
-verified_empty_marker = "At the IIES we hire most of our junior faculty"
+# Live IIES page now includes faculty recruiting details; its stable university-wide
+# hiring-directory notice is the evidence for a quiet tracked-source period.
+verified_empty_marker = "You can search for available positions at Stockholm University at the central website"
 link_pattern = '^https://su\.varbi\.com/(?:en/)?what(?::|%3A)job/jobID(?::|%3A)\d+/?$'
 institution = "Institute for International Economic Studies (IIES)"
 country = "Sweden"

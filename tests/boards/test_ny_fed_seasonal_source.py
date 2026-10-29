@@ -35,7 +35,7 @@ class FixtureHttp:
         self.html = html
 
     async def get_text(self, url):
-        assert url == "https://www.newyorkfed.org/research/careers/research_analysts"
+        assert url == "https://www.newyorkfed.org/research/careers/research_analysts/index"
         return self.html
 
 

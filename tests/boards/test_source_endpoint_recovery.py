@@ -191,14 +191,15 @@ def test_iies_directory_official_links_are_not_false_vacancies():
     """IIES's own careers page is a directory; a quiet season is expected."""
     cfg = source("iies_stockholm")
     assert cfg.may_be_empty is True
-    assert cfg.opt("verified_empty_marker") == "At the IIES we hire most of our junior faculty"
+    assert cfg.opt("verified_empty_marker") == ("You can search for available positions at Stockholm "
+                                                "University at the central website")
     assert cfg.institution == "Institute for International Economic Studies (IIES)"
     assert cfg.country == "Sweden"
     assert cfg.field_implied is True
     html = """
     <h1>Work with us</h1>
-    <p>At the IIES we hire most of our junior faculty via the international
-    Job Market for economists.</p>
+    <p>You can search for available positions at Stockholm University at the
+    central website:</p>
     <a href="https://www.su.se/english/about-the-university/work-at-su/available-jobs">
       Available jobs at Stockholm University</a>
     <a href="https://econjobmarket.org/positions">Econ Job Market</a>
@@ -217,8 +218,8 @@ def test_iies_future_specific_varbi_advert_is_discovered_not_directory_link():
     # The shared scraper canonicalizes trailing slashes from vacancy URLs.
     url = "https://su.varbi.com/en/what:job/jobID:910396"
     html = """
-    <p>At the IIES we hire most of our junior faculty via the international
-    Job Market for economists.</p>
+    <p>You can search for available positions at Stockholm University at the
+    central website:</p>
     <a href="https://www.su.se/english/about-the-university/work-at-su/available-jobs">
       Available jobs at Stockholm University</a>
     <a href="https://su.varbi.com/en/what:job/jobID:910396/">
