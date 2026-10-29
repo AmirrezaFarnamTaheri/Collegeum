@@ -22,6 +22,7 @@ from tests.boards.conftest import ROOT, fixture_text
 #: contract), not by accident -- so the test states the set explicitly instead
 #: of deriving it from a single exception.
 DISABLED_OFFICIAL_SOURCES = {
+    'crest_jobs',           # production 503; runner cannot confirm robots permission
     'nhh_jobs',              # detail extraction returned only 'Laster...'
     'trinity_cambridge_jobs',  # HTTP 403 to runner IPs
     'bruegel_jobs',          # HTTP 403 to runner IPs
