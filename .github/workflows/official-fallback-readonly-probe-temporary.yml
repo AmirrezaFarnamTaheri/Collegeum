@@ -31,6 +31,11 @@ jobs:
               ("cnrs", "https://emploi.cnrs.fr/Unites/UMR9194/Default.aspx"),
               ("cnrs-rss", "https://emploi.cnrs.fr/Rss/Offres.ashx?CodeUnite=umr9194"),
               ("euraxess", "https://euraxess.ec.europa.eu/jobs/search"),
+              ("euraxess-filtered", "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Apredoctoral"),
+              ("euraxess-predoc", "https://euraxess.ec.europa.eu/jobs/search?f%5B0%5D=keywords%3Apre-doctoral"),
+              ("euraxess-keys", "https://euraxess.ec.europa.eu/jobs/search?keys=predoctoral"),
+              ("euraxess-search", "https://euraxess.ec.europa.eu/jobs/search?search=predoctoral"),
+              ("euraxess-sort", "https://euraxess.ec.europa.eu/jobs/search?sort%5Bname%5D=created&sort%5Bdirection%5D=DESC"),
           ]
 
           class Links(HTMLParser):
@@ -68,6 +73,13 @@ jobs:
                   else:
                       parser = Links()
                       parser.feed(body)
+                      matched_jobs = [
+                          href for href in parser.hrefs
+                          if re.search(r"^/jobs/\\d+$", href)
+                      ]
+                      print(f"JOBS {name} count={len(matched_jobs)} "
+                            f"sample={matched_jobs[:8]} "
+                            f"has_predoc={'predoc' in body.lower()}", flush=True)
                       links = [
                           href for href in parser.hrefs
                           if re.search(r"(emploi|jobs?|recrut|offer|offres?|vacanc|crest|cnrs|\.pdf)", href, re.I)
