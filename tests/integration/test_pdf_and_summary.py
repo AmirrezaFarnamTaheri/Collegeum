@@ -18,6 +18,28 @@ class TestPdfExtraction(unittest.TestCase):
         self.assertTrue(is_pdf(b"", url="https://example.org/job.PDF?query=1"))
         self.assertFalse(is_pdf(b"<html>hello</html>", content_type="text/html", url="https://example.org/job"))
 
+    def test_html_error_page_is_not_a_pdf_even_when_url_and_content_type_claim_pdf(self):
+        html = b"<!DOCTYPE html><html><body>Service Unavailable</body></html>"
+        self.assertFalse(is_pdf(html, content_type="application/pdf", url="https://example.org/job.pdf"))
+        self.assertFalse(is_pdf(html, url="https://example.org/job.pdf"))
+        self.assertFalse(is_pdf(b" <html><body>Access denied</body></html>",
+                                content_type="application/pdf"))
+        self.assertFalse(is_pdf(b"\xef\xbb\xbf<!doctype html><html></html>",
+                                content_type="application/pdf"))
+        self.assertTrue(is_pdf(b"%PDF-1.7\nvalid", content_type="text/html",
+                               url="https://example.org/download"))
+
+    def test_html_error_payload_never_enters_pypdf_or_logs_parser_corruption(self):
+        from unittest.mock import patch
+
+        import pypdf
+
+        html = b"<!DOCTYPE html><html><body>503 Service Unavailable</body></html>"
+        with patch.object(pypdf, "PdfReader") as pdf_reader:
+            with self.assertNoLogs("predoc_pipeline.utils.pdf", level="WARNING"):
+                self.assertEqual(extract_pdf_text(html), "")
+            pdf_reader.assert_not_called()
+
     def test_extract_pdf_text_with_pypdf(self):
         import pypdf
 
