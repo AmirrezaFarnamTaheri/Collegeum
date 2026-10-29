@@ -11,6 +11,8 @@ from tools.probe_source_expansion import probe_candidates, read_candidates
 
 MANIFEST = Path("config/source_expansion_20261029.csv")
 REGISTRY = Path("config/sources.toml")
+PROMOTED = {"tamu_public_policy", "brandeis_business_econ",
+            "urban_institute_policy", "federal_reserve_system_jobs"}
 
 
 def test_candidate_manifest_is_unique_complete_and_disabled():
@@ -23,7 +25,7 @@ def test_candidate_manifest_is_unique_complete_and_disabled():
     by_name = {s.name: s for s in configs}
     for r in records:
         cfg = by_name[r["name"]]
-        assert cfg.enabled is False
+        assert cfg.enabled is (r["name"] in PROMOTED)
         assert cfg.type == r["type"]
         assert cfg.opt("url") == r["url"]
         assert cfg.field_implied is False
@@ -48,5 +50,6 @@ def test_candidate_toml_is_parseable_and_counted_as_disabled():
     with REGISTRY.open("rb") as f:
         registry = tomllib.load(f)
     assert sum(not s.get("enabled", True) for s in registry["board"]) >= 30
-    assert all(s.get("enabled") is False for s in registry["board"]
+    assert all(s.get("enabled", True) is (s["name"] in PROMOTED)
+               for s in registry["board"]
                if s["name"] in {r["name"] for r in read_candidates()})
