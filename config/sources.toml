@@ -255,6 +255,7 @@ country = "Sweden"
 [[board]]
 name = "copenhagen"
 type = "link_scan"
+enabled = false
 group = "university"
 url = "https://employment.ku.dk/all-vacancies/"
 # This endpoint repeatedly consumed ~136s per scheduled run without a usable result.
@@ -264,6 +265,7 @@ link_pattern = 'all-vacancies/?\?show=\d+'
 bare_date_is_deadline = true
 institution = "University of Copenhagen"
 country = "Denmark"
+note = "Temporarily disabled 2026-10-30: production run 40953929832 failed; robots-aware GH runner 40958027338 returned policy-denied/unknown (999) for both employment.ku.dk and jobportal.ku.dk. Do not bypass; require permitted vacancy endpoint and acceptance tests before re-enabling."
 
 [[board]]
 name = "uzh"
@@ -896,14 +898,14 @@ note = "Official vacancy cards only. Research-engineer and administrative roles 
 [[board]]
 name = "crest_jobs"
 type = "link_scan"
-enabled = true
+enabled = false
 group = "research_institute"
 url = "https://crest.science/opportunities-2/"
 institution = "CREST"
 country = "France"
 may_be_empty = true
 selectors = { item = '#onglet3 p:has(a[href^="https://crest.science/wp-content/uploads/"][href$=".pdf"])', title = 'a[href$=".pdf"]', link = 'a[href$=".pdf"]' }
-note = "Recruitment-tab official PDF adverts only; excludes placement biographies, papers and contact links. No blanket economics field default: statistics/computing roles must pass detail field checks."
+note = "Temporarily disabled 2026-10-30: production run 40953929832 received HTTP 503; robots-aware GH runner 40958027338 returned policy-denied/unknown (999). Do not bypass; revalidate official URL or explicitly permitted replacement before re-enabling."
 
 [[board]]
 name = "essec_jobs"
