@@ -107,9 +107,7 @@ def test_employer_source_collects_only_specific_job_detail_links(
 ])
 def test_official_no_open_jobs_is_valid_only_on_expected_page(name, marker):
     cfg = source(name)
-    assert cfg.opt("verified_empty_marker") == marker.split(" Page")[0] if False else (
-        cfg.opt("verified_empty_marker") in marker
-    )
+    assert cfg.opt("verified_empty_marker") in marker
     result = scrape(name, f"<h1>{marker}</h1><p>No qualifying roles this cycle.</p>")
     assert result.ok
     assert result.posts == []
