@@ -24,6 +24,15 @@ _GENERIC_ROOTS = frozenset({
     "academictransfer.com", "www.academictransfer.com",
     "jobicy.com", "www.jobicy.com",
 })
+# Verified employer-specific exception: this EPIC page explains the
+# fellowship programme but is not a vacancy-specific application.
+# Do not reject all `/about/` paths: many official jobs use them.
+_NON_ACTIONABLE_PROGRAM_PAGES = frozenset({
+    ("epic.uchicago.edu",
+     "/about/jobs-fellowships/fellowships/predoctoral-fellows/"
+     "predoctoral-fellowship-program/about"),
+})
+
 _AUTH_HOSTS = frozenset({
     "accounts.google.com", "login.microsoftonline.com",
     "login.live.com", "appleid.apple.com",
@@ -50,6 +59,8 @@ def application_url_issue(url: object) -> str | None:
     decoded = unquote(parts.path)
     if _TEMPLATE.search(decoded):
         return "unresolved-url-template"
+    if (hostname, decoded.rstrip("/")) in _NON_ACTIONABLE_PROGRAM_PAGES:
+        return "generic-program-information-page"
     if hostname == "job-boards.greenhouse.io" and "true" in (
         value.lower() for value in parse_qs(parts.query).get("error", [])
     ):
