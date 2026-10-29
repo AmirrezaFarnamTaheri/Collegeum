@@ -1,7 +1,7 @@
 # Guarded expansion toward 100 official sources (2026-10-29)
 
 The candidate CSV is `config/source_expansion_20261029.csv`. The registry
-contains 30 additional **disabled** `[[board]]` sections (19 Workday, 11 link scans).
+contains 30 additional **disabled** `[[board]]` sections (19 Workday, 11 link scans). A separate non-US review cohort in `config/non_us_sources_20261029.csv` adds 21 more disabled official career leads. This makes **51 total new candidates**; none is activated.
 Evidence links are *historical candidate leads*, not verified current vacancies.
 
 At inspection, `main` had **71 enabled boards**, 22 disabled boards and
@@ -10,9 +10,14 @@ boards would yield 100 enabled boards. It would **not** prove 100 healthy boards
 
 ## Probe safely
 
-1. Run GitHub Actions `verify-source-expansion-20261029` on this branch
-   three times with offsets **0**, **10**, **20**. Download all three JSON
-   artifacts and reconcile the 30 names; do not count missing reports as passes.
+1. Inspect the read-only branch workflow `verify-100-source-expansion-branch`
+   (six matrix cells: initial/0,10,20 and non-us/0,10,20), and reconcile
+   all **51 candidates** from JSON artifacts. This workflow runs on relevant
+   branch pushes; the default-branch `workflow_dispatch` workflow remains
+   available after merge. Do not count missing or partial reports as passes.
+   The probe checks robots policy before requesting source listings or
+   Workday APIs. `parser_not_configured` and `blocked_by_robots_or_unknown`
+   are blockers, **not** healthy empty periods.
 2. Check discovery success, unique vacancy-specific HTTPS URLs, pagination
    completeness, stable vacancy IDs, valid descriptions, field relevance, no
    false empty reports, and any robot/HTTP errors. Results labelled
@@ -23,7 +28,7 @@ boards would yield 100 enabled boards. It would **not** prove 100 healthy boards
 4. Review overlapping existing sources (especially regional Federal Reserve
    pages and Yale/Oxford/other university aggregators). Deduplicate by
    canonical posting identity, not merely name or title.
-5. Only enable an accepted subset in a later, reviewed PR, with a dated
+5. Do not activate country-scoped pages merely because the institution is authentic: 16 of the 21 new non-US leads still require verified direct-job link patterns. Only enable an accepted subset in a later, reviewed PR, with a dated
    evidence matrix and regression tests. Run full CI and fresh production
    discovery, then count enabled **and** healthy sources separately.
 
@@ -47,3 +52,5 @@ API returns HTTP 200 or nonzero rows. Full university-wide ATS results
 include unrelated fields. The filter may retain PhD student positions because
 the current preferences explicitly set `exclude_phd_positions = false`;
 do not equate generic pipeline acceptance with *predoc* eligibility.
+
+See `docs/LIFE_SCIENCES_STATUS_2026-10-29.md` for the independent European life-sciences source/output audit (37 enabled sources, 188 disabled candidates, 61 stored PhD entries and known quality risks).
