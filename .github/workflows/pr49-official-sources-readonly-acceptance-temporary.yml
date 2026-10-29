@@ -53,6 +53,31 @@ jobs:
                   results = await _scrape_all(
                       [SCRAPERS[cfg.type](cfg, http) for cfg in sources], 3, 55
                   )
+                  # The generic empty-page guard flagged a job-like link.
+                  # Diagnose exact matching official-page anchors before changing
+                  # its behavior. Do not record cookies or response headers.
+                  from bs4 import BeautifulSoup
+                  from predoc_pipeline.boards.scrapers.link_scan import (
+                      _VACANCY_LINK_LABEL, _VACANCY_LINK_PATH
+                  )
+                  from predoc_pipeline.boards.utils.text import absolutize, clean_ws
+                  ny_cfg = next(cfg for cfg in sources if cfg.name == "ny_fed")
+                  ny_html = await http.get_text(ny_cfg.opt("url"))
+                  ny_soup = BeautifulSoup(ny_html, "lxml")
+                  offending = []
+                  for a in ny_soup.select("a[href]"):
+                      label = clean_ws(a.get_text(" ", strip=True))
+                      href = absolutize(ny_cfg.opt("url"), str(a["href"]))
+                      if _VACANCY_LINK_LABEL.search(label) or _VACANCY_LINK_PATH.search(href):
+                          parent = a.parent
+                          offending.append({
+                              "label": label[:125],
+                              "url": href[:250],
+                              "parent": parent.name if parent else "",
+                              "in_main": a.find_parent("main") is not None,
+                              "in_nav": a.find_parent("nav") is not None
+                          })
+                  print("NY_MATCHED_LINKS", json.dumps(offending[:35]), flush=True)
               failures = []
               for result in results:
                   stats = result.as_stats()
