@@ -1,0 +1,87 @@
+name: crest-copenhagen-availability-diagnostics-temporary
+
+# Public read-only diagnostic. No Telegram tokens, subscriber state, or modifications.
+on:
+  push:
+    branches: [investigate/crest-copenhagen-source-recovery-20261030]
+    paths: [.github/workflows/crest-copenhagen-availability-diagnostics-temporary.yml]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        site:
+          - crest_original
+          - ensea_crest
+          - copenhagen_original
+          - copenhagen_danish
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Probe official public landing page with robots-aware client
+        env:
+          SITE: ${{ matrix.site }}
+        run: |
+          PYTHONPATH=src python3 - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          from urllib.parse import urljoin
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.ingest.http import PoliteClient
+          from tools.probe_life_sciences_sources import PROBE_USER_AGENT
+          targets={
+            "crest_original":"https://crest.science/opportunities-2/",
+            "ensea_crest":"https://www.ensae.fr/en/school/current-job-opportunities",
+            "copenhagen_original":"https://employment.ku.dk/all-vacancies/",
+            "copenhagen_danish":"https://jobportal.ku.dk/",
+          }
+          key=os.environ["SITE"];url=targets[key]
+          report={"site":key,"url":url}
+          with PoliteClient(user_agent=PROBE_USER_AGENT,timeout=17,
+                            per_host_delay=3,respect_robots=True) as client:
+              try:
+                  response=client.get(url,use_cache=False)
+                  report["http_status"]=response.status
+                  report["ok"]=response.ok
+                  if response.ok:
+                      soup=BeautifulSoup(response.text[:650000],"lxml")
+                      report["html_chars"]=len(response.text)
+                      report["anchors"]=len(soup.select("a[href]"))
+                      report["candidate_links"]=[
+                          {"label":a.get_text(" ",strip=True)[:110],
+                           "url":urljoin(url,str(a.get("href") or ""))}
+                          for a in soup.select("a[href]")
+                          if re.search(
+                              r"research assistant|pre.?doc|phd|economics|job|offre|"
+                              r"recruit|vacanc|.pdf|all-vacancies/?show=|ons?ultant",
+                              a.get_text(" ",strip=True)+" "+str(a.get("href") or ""),re.I
+                          )
+                      ][:32]
+                      report["candidate_job_id_matches"]=len(
+                          re.findall(r"(?:all-vacancies/|phd/)??show=d+",response.text))
+              except Exception as exc:
+                  report["status"]="fetch_exception"
+                  report["exception"]=type(exc).__name__
+          print(json.dumps(report,indent=2,ensure_ascii=False))
+          path=Path("build")/("diag-"+key+".json")
+          path.parent.mkdir(exist_ok=True)
+          path.write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: source-availability-${{ matrix.site }}-${{ github.run_id }}
+          path: build/diag-*.json
+          retention-days: 14
+          if-no-files-found: warn
