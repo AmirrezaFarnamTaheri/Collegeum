@@ -3,6 +3,23 @@
 This independent, opt-in Telegram discovery track must not change economics
 preferences, public academic filters or unrelated career alerts.
 
+## Operational update (29 October 2026)
+
+After the dated 11 October catalogue snapshot below, `life_copenhagen`
+was disabled because a robots-aware GitHub runner received a disallow result
+(HTTP 999). Do not bypass site restrictions; use a permitted public feed or
+seek explicit permission before reconsidering. The current review branch has
+**36 enabled and 189 disabled** Life Sciences entries (225 total), with 9
+enabled in core. The previous 37/188 figures below are historical.
+
+The stored journal still contains 61 legacy PhD records. A conservative
+title-only quarantine suppresses the explicitly off-field Max Planck
+economic-climate PhD from exports and subscriber previews without deleting
+its journal row or touching any previous Telegram delivery receipt. Thus
+read-only exported rows are expected to be **60**, subject to later fresh
+collection. Funding remains unverified, and ambiguous scientific titles
+still require manual eligibility review.
+
 ## Coverage (11 October 2026)
 
 | Group | Enabled | Candidate (disabled) | Examples |
