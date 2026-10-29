@@ -1180,7 +1180,7 @@ tags = ["template"]
 
 # ---------------------------------------------------------------------------
 # 2026-10-29 | 100-source milestone candidates (NOT runner verified)
-# Activation is guarded by tools/activate_source_expansion.py.
+# Activation requires reviewed evidence and an explicit later configuration change.
 # The evidence URLs establish candidate identity, not current vacancies.
 # No wide university board may imply economics from the employer alone.
 # ---------------------------------------------------------------------------
