@@ -85,6 +85,54 @@ _NON_INST_PREFIX_RX = re.compile(r"^(closes?|deadline|salary|location)")
 _DEPT_RX = re.compile(r"department|faculty|institute|school of|centre|center", re.IGNORECASE)
 
 
+_VACANCY_LINK_LABEL = re.compile(
+    r"\b(?:pre[-\s]?doc(?:toral)?|post[-\s]?doc(?:toral)?|research\s+"
+    r"(?:assistant|associate|analyst|fellow|scientist)|data\s+scientist|"
+    r"(?:job|position|vacancy)\s+(?:opening|posting|application)|"
+    r"apply\s+(?:now|online|for\s+(?:the|this|a)))\b",
+    re.IGNORECASE,
+)
+_VACANCY_LINK_PATH = re.compile(
+    r"/(?:jobs?|jobpostings?|positions?|postings?|apply)/[^/?#]{3,}",
+    re.IGNORECASE,
+)
+
+
+def _verified_empty_cohort_rows(
+    raw_data: list[Any], required_cells: object,
+) -> bool:
+    """Match the *same* employer cohort row; reject changed or extra cohorts."""
+    if (
+        not isinstance(required_cells, list)
+        or len(required_cells) < 3
+        or not all(isinstance(x, str) and x.strip() for x in required_cells)
+    ):
+        return False
+
+    def norm(text: str) -> str:
+        return clean_ws(text).casefold().replace("–", "-").replace("—", "-")
+
+    required = [norm(x) for x in required_cells]
+    role, rows = required[0], []
+    for _, html in raw_data:
+        for tr in BeautifulSoup(html, "lxml").select("tr"):
+            cells = [norm(c.get_text(" ", strip=True)) for c in tr.find_all(["td", "th"])]
+            if role in cells:
+                rows.append(cells)
+    return bool(rows) and all(all(term in cells for term in required) for cells in rows)
+
+
+def _verified_empty_has_job_links(raw_data: list[Any]) -> bool:
+    """A careers-page footer cannot prove emptiness if a job-like link appears."""
+    for base, html in raw_data:
+        for anchor in BeautifulSoup(html, "lxml").select("a[href]"):
+            label = clean_ws(anchor.get_text(" ", strip=True))
+            href = absolutize(base, str(anchor["href"]))
+            if _VACANCY_LINK_LABEL.search(label) or _VACANCY_LINK_PATH.search(href):
+                return True
+    return False
+
+
 def find_card(a: Tag, max_chars: int = 1800) -> Tag:
     """Closest ancestor that looks like a listing card; falls back to the parent."""
     node: Tag | None = a
@@ -262,6 +310,19 @@ class LinkScanScraper(BaseScraper):
             if not found:
                 self.discovery_parse_errors.append("Verified no-vacancies notice missing")
             else:
+                required_cells = self.opt("verified_empty_row_cells")
+                if required_cells is not None and not _verified_empty_cohort_rows(
+                    raw_data, required_cells
+                ):
+                    self.discovery_parse_errors.append(
+                        "Verified no-vacancies cohort row changed or missing"
+                    )
+                if self.opt("verified_empty_reject_job_links") and _verified_empty_has_job_links(
+                    raw_data
+                ):
+                    self.discovery_parse_errors.append(
+                        "Job-like application link present on purported empty careers page"
+                    )
                 # Annual hiring cycles must not remain permanently 'healthy
                 # empty' because last year's page still contains a closed
                 # cohort. Bounds are optional for other seasonal sources.

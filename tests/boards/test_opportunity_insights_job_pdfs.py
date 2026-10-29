@@ -45,6 +45,7 @@ def test_opportunity_insights_official_job_description_pdf_is_discovered():
 
 def test_opportunity_insights_rejects_unrelated_or_offsite_pdfs():
     html = (
+        '<h1>Join Our Team</h1><p>Keep an eye on our openings</p>'
         '<a href="/wp-content/uploads/2026/07/economic-mobility-research-data.pdf">'
         'Economic mobility research paper</a>'
         '<a href="https://opportunityinsights.org.evil.invalid/wp-content/uploads/'
@@ -58,8 +59,10 @@ def test_opportunity_insights_rejects_unrelated_or_offsite_pdfs():
         'Untrusted fragment suffix</a>'
     )
     result = scrape(html)
-    assert result.ok
     assert result.posts == []
+    # Unrecognized/spoofed job links on a careers page must never look healthy.
+    assert not result.ok
+    assert result.as_stats()["failure_counts"]["parse"] >= 1
 
 
 def test_opportunity_insights_preserves_employer_application_links():
