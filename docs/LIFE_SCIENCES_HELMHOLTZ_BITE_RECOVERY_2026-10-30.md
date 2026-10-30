@@ -30,3 +30,9 @@ The source contributes **one functional enabled recruitment provider**, changing
 ## Remaining admissions/recovery queue
 
 University of Bern, DKFZ, ETH D-BSSE, Helsinki, ISTA and Vienna BioCenter still need official individual vacancy evidence; EMBL's winter PhD call closed October 12, 2026. Source-health rotation and export freshness require further production acceptance. Do not enable old programme pages or circumvent access denials.
+
+## 30 October follow-up: field provenance and empty-period evidence
+
+The official B-ite response provides posting-specific `custom.place` (worksite), `custom.Institut` (institute/department), and `custom.Forschungsbereich` (research area). Collegeum now preserves these when supplied as a string or list of strings, without coercing invalid structures or affecting the separate ZEW B-ite source. Doctoral eligibility still requires matching role, field, permitted European worksite and any documented application deadline.
+
+A genuinely empty season is now recognized only when **both** publisher-declared English and German cohorts give a valid, complete, zero-result response with no discovery or pagination errors. If either cohort fails, the source stays degraded rather than being reported healthy-empty. Tests reproduce both defects before the fix.

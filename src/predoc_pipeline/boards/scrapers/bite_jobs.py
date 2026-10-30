@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 from ..models import JobPostSchema
 from ..utils.dates import parse_iso_datetime
-from ..utils.text import html_to_text, truncate
+from ..utils.text import clean_ws, html_to_text, truncate
 from .base import BaseScraper, register
 
 _KEY = re.compile(r"""\bkey\s*:\s*["']([a-fA-F0-9]{40})["']""")
@@ -41,6 +41,17 @@ _HELMHOLTZ_COHORTS = (
     ("main-listing-de", "Homepage_deutsch", "de",
      _HELMHOLTZ_DE, _HELMHOLTZ_DE_SITE),
 )
+
+
+def _public_helmholtz_field(value: object) -> str:
+    """Use individual employer metadata only when its type is unambiguous."""
+    if isinstance(value, str):
+        return clean_ws(value)[:240]
+    if isinstance(value, list) and len(value) <= 20 and all(
+        isinstance(item, str) for item in value
+    ):
+        return clean_ws(", ".join(part for part in value if part.strip()))[:240]
+    return ""
 
 
 
@@ -91,6 +102,7 @@ class BiteJobsScraper(BaseScraper):
         if max_pages < 1 or max_pages > 10:
             raise ValueError("Helmholtz B-ite max_pages must be 1..10")
 
+        self.verified_empty_evidence = False
         unique: dict[str, Any] = {}
         valid_cohorts = 0
         for name, category, locale, widget, origin in _HELMHOLTZ_COHORTS:
@@ -171,6 +183,16 @@ class BiteJobsScraper(BaseScraper):
 
         if not valid_cohorts:
             raise ValueError("No valid public Helmholtz recruitment cohort")
+        # A true empty season must be confirmed by BOTH official cohorts.
+        # A partial outage, malformed response or exhausted pagination
+        # is never downgraded to a benign empty index.
+        self.verified_empty_evidence = bool(
+            valid_cohorts == len(_HELMHOLTZ_COHORTS)
+            and not unique
+            and not self.discovery_fetch_errors
+            and not self.discovery_parse_errors
+            and not self.discovery_limits
+        )
         return list(unique.values())
 
     async def fetch_raw_postings(self) -> list[Any]:
@@ -299,6 +321,19 @@ class BiteJobsScraper(BaseScraper):
                 if isinstance(description, str) else ""
             )
             deadline = parse_iso_datetime(ends_on)
+            employer_fields: dict[str, str] = {}
+            if profile == "helmholtz_munich":
+                # Individual posting custom fields are stronger evidence
+                # than an institution-wide default. Never stringify unknown
+                # metadata types or apply this profile to ZEW.
+                for origin, target in (
+                    ("place", "location"),
+                    ("Institut", "department"),
+                    ("Forschungsbereich", "fields_of_research"),
+                ):
+                    field = _public_helmholtz_field(custom.get(origin))
+                    if field:
+                        employer_fields[target] = field
             try:
                 posts.append(self.make(
                     title=title, url=url,
@@ -307,6 +342,7 @@ class BiteJobsScraper(BaseScraper):
                     deadline_text=f"Employer listing ends {deadline:%d %b %Y}" if deadline else None,
                     description_snippet=summary,
                     extra={"bite_job_id": job_id},
+                    **employer_fields,
                 ))
             except (TypeError, ValueError, OverflowError):
                 self.discovery_parse_errors.append("Unparseable B-ite vacancy")
