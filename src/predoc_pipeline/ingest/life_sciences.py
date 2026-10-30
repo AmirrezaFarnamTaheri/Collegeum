@@ -77,7 +77,7 @@ PHD_CALL = re.compile(
     r"\b(?:international\s+)?ph\.?d\.?\s+(?:call|recruitment|admissions?)\b",
     re.I,
 )
-SEASONAL_CALL = re.compile(r"\\b(?:autumn|spring|winter|summer)\\s+call\\b", re.I)
+SEASONAL_CALL = re.compile(r"\b(?:autumn|spring|winter|summer)\s+call\b", re.I)
 ADDITIONAL_DOCTORAL_ROLE = re.compile(
     r"\b(?:predoctoral|pre-doctoral)\s+(?:researcher|fellow|student)\b|"
     r"\b(?:offre\s+de\s+th[eè]se|doctorand[oa]|dottorand[oa]|"
