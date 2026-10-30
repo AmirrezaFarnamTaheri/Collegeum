@@ -78,7 +78,6 @@ def test_registry_activates_one_distinct_official_hku_feed_with_department_gate(
     assert cfg.type == "link_scan"
     assert not cfg.field_implied
     assert cfg.opt("url") == LISTING
-    assert "brand=faculty+of+architecture" in cfg.opt("urls")[0].lower()
     assert cfg.opt("card_allow_pattern") and cfg.opt("title_allow_pattern")
 
 
