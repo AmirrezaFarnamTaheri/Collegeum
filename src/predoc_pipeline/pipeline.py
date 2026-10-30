@@ -1528,7 +1528,6 @@ def run(
                         http_config=prefs.http,
                         rotation_path=settings.life_sciences_rotation_path,
                         health_path=settings.life_sciences_health_path,
-                        health_path=settings.life_sciences_health_path,
                     )
                     log.info(
                         "life_sciences_sources_polled",
