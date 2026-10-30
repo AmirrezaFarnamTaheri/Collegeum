@@ -445,8 +445,6 @@ def poll_life_sciences(
         item = classify_post(post)
         if item:
             matches.setdefault(item["key"], item)
-            if post.source in diagnostics:
-                diagnostics[post.source]["matched_candidates"] += 1
     previous = load_career(journal_path, tolerant=True)
     added = save_career(journal_path, previous, list(matches.values()))
     if health_path is not None and diagnostics is not None:
@@ -456,13 +454,6 @@ def poll_life_sciences(
             per_source[key] = per_source.get(key, 0) + 1
         for name, info in diagnostics.items():
             info["matched_candidates"] = per_source.get(name, 0)
-        write_life_health(
-            health_path, sources=load_life_sources(sources_path),
-            diagnostics=diagnostics, started=started,
-        )
-    if health_path is not None:
-        from .life_health import write_life_health
-
         write_life_health(
             health_path, sources=load_life_sources(sources_path),
             diagnostics=diagnostics, started=started,
