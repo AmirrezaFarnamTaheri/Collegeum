@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-30T15:10:51Z",
+ "generated_at": "2026-10-30T20:53:01Z",
  "count": 199,
  "listings": [
   {
@@ -264,7 +264,9 @@
    "first_seen_at": "2026-10-30T15:08:24Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://bit.ly/4BrObIO"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -6345,11 +6347,11 @@
     "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "Full-time predoctoral research position at Princeton University working with Ilyana Kuziemko, Henrik Kleven, and Evan Soltas on public economics research. Suitable for candidates with a strong background in economics or related fields seeking research experience before pursuing a PhD.",
+   "summary": "Princeton University offers a full-time predoctoral research position in public economics. The role involves working with supervisors Ilyana Kuziemko, Henrik Kleven, and Evan Soltas.",
    "language": "en",
    "apply_url": "https://bit.ly/4xP280Q",
    "source_url": "https://bit.ly/4xP280Q",
-   "confidence": 0.91,
+   "confidence": 0.939,
    "first_seen_at": "2026-10-11T09:50:44Z",
    "deadline_note": null,
    "visa_note": null,
