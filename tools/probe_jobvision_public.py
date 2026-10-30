@@ -69,6 +69,30 @@ def main() -> None:
                     row["data_script_id"] = str(script.get("id") or "")
                     row["data_script_size"] = len(script.get_text())
                     row["data_script_prefix"] = script.get_text()[:160]
+                    try:
+                        state = json.loads(script.get_text())
+                        if isinstance(state, dict):
+                            def shape(obj, depth=0):
+                                if depth > 2:
+                                    return type(obj).__name__
+                                if isinstance(obj, dict):
+                                    return {str(k)[:55]: shape(v, depth + 1)
+                                            for k, v in list(obj.items())[:8]}
+                                if isinstance(obj, list):
+                                    return {"count": len(obj),
+                                            "first": shape(obj[0], depth + 1)
+                                            if obj else None}
+                                return type(obj).__name__
+                            row["data_script_keys"] = [
+                                str(k)[:180] for k in list(state)[:20]
+                            ]
+                            row["data_script_job_shards"] = {
+                                str(k)[:155]: shape(v)
+                                for k, v in list(state.items())[:25]
+                                if "job" in str(k).lower()
+                            }
+                    except ValueError:
+                        row["data_script_parse"] = "invalid JSON"
                 ld = soup.select_one('script[type="application/ld+json"]')
                 if ld and "/jobs/" in url:
                     try:
