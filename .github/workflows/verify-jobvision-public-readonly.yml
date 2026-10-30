@@ -21,3 +21,5 @@ jobs:
       - run: uv sync --locked
       - name: Inspect Jobvision officially advertised public surfaces
         run: PYTHONPATH=src python3 tools/probe_jobvision_public.py
+      - name: Verify actual Jobvision sitemap and vacancy parser
+        run: PYTHONPATH=src python3 tools/verify_jobvision_adapter_live.py
