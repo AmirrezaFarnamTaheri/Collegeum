@@ -137,3 +137,20 @@ def test_specialized_bite_source_requires_adapter_probe_not_html_scraping() -> N
     assert entry["vacancy_links"] == 0
     assert entry["urls_checked"] == 0
     assert entry["probe_workflow"] == "verify-life-helmholtz-live"
+
+
+
+def test_dzne_sitemap_requires_its_xml_adapter_not_html_scanning() -> None:
+    """A valid XML sitemap is not an HTML page with job anchors."""
+    class DoNotFetch:
+        def get(self, *_args, **_kwargs):
+            raise AssertionError("Use the specialized DZNE XML acceptance probe")
+
+    report = check_sources(DoNotFetch(), CATALOG, region="specialist_institutes",
+                           limit=16)
+    node = report["sources"]["life_special_de_dzne"]
+    assert node["status"] == "requires_adapter_probe"
+    assert node["adapter"] == "dzne_sitemap"
+    assert node["probe_workflow"] == "verify-life-dzne-live"
+    assert node["vacancy_links"] == 0
+    assert node["urls_checked"] == 0
