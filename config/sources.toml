@@ -1825,16 +1825,19 @@ note = "Unverified candidate; official_econ_ra_example; universitywide_mixed_fie
 [[board]]
 name = "hku_econ_social_jobs"
 type = "link_scan"
-enabled = false
+enabled = true
 group = "university"
 url = "https://jobs.hku.hk/en/listing/"
 institution = "University of Hong Kong"
 country = "Hong Kong"
 field_implied = false
-may_be_empty = false
+may_be_empty = true
 source_timeout_seconds = 45.0
 link_pattern = "^https://jobs\\.hku\\.hk/(?:en|cw/en)/job/\\d+/[^?#]+$"
-note = "Unverified candidate; official_ats_economics_ra; universitywide_mixed_field; only activate after stable job-identity parser and eligibility checks."
+card_allow_pattern = "Department of Real Estate and Construction"
+title_allow_pattern = "^Research Assistant I(?:/II)?$"
+verified_empty_marker = "Search results"
+note = "HKU official PageUp research listing; only Real Estate and Construction research-assistant rows. Ref. 537693, 2026-10-21 to 2026-11-30, BA with 2 years experience or MA; econometric urban-regulation project. University-wide medical and admin jobs excluded by row and title guards."
 
 [[board]]
 name = "hkust_business_research"

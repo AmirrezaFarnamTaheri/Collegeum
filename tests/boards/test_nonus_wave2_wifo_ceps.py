@@ -90,6 +90,6 @@ def test_wave2_keeps_unverified_nonus_candidates_disabled():
         "wifo_austria_jobs": True,
         "ceps_brussels_research": True,
         "nus_policy_research": True,
-        "hku_econ_social_jobs": False,
+        "hku_econ_social_jobs": True,
         "liser_luxembourg_jobs": False,
     }

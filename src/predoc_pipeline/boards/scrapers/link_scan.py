@@ -398,7 +398,19 @@ class LinkScanScraper(BaseScraper):
                 self.discovery_parse_errors.append("Closed vacancy boundary not reachable")
                 return []
             anchors = [a for a in anchors if id(a) in allowed]
+        # Scope university-wide indexes to the advert's own department.
+        # Generic "Research Assistant" titles occur in unrelated faculties.
+        card_rule = self.opt("card_allow_pattern")
+        card_allow = None
+        if card_rule is not None:
+            if not isinstance(card_rule, str) or not card_rule.strip():
+                raise ValueError("empty or non-string card_allow_pattern")
+            card_allow = re.compile(card_rule, re.IGNORECASE)
         for a in anchors:
+            if card_allow is not None:
+                card_text = find_card(a).get_text(" ", strip=True)
+                if not card_allow.search(card_text):
+                    continue
             href = absolutize(base, str(a["href"]))
             if not pattern.search(href) or href in seen or _EXCLUDED_URL_RX.search(href):
                 continue

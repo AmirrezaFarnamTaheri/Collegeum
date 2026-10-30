@@ -1,0 +1,25 @@
+name: verify-hku-source-live
+on:
+  push:
+    branches: [feat/nonus-hku-research-source-20261030]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: HKU live read-only official recruitment acceptance
+        run: PYTHONPATH=src python3 tools/verify_hku_live.py
