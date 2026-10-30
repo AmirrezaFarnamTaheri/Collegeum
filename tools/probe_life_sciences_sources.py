@@ -103,6 +103,19 @@ def check_sources(
         "sources": {},
     }
     for source in sources[offset:offset + limit]:
+        if source.type == "helmholtz_bite_jobs":
+            # B-ite returns job postings through its public JSON search API;
+            # an HTML-only scanner would falsely report zero vacancy links.
+            # Leave this explicitly unverified here and delegate to the
+            # dedicated runner which exercises the production adapter.
+            report["sources"][source.name] = {
+                "status": "requires_adapter_probe", "http_status": 0,
+                "vacancy_links": 0, "urls_total": 1,
+                "urls_checked": 0, "endpoints": [],
+                "probe_workflow": "verify-life-helmholtz-bite-integration",
+            }
+            report["checked"] += 1
+            continue
         urls = source.opt("urls") or (
             [source.opt("url")] if source.opt("url") else []
         )
