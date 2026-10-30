@@ -123,6 +123,7 @@ def main() -> None:
                                 max(0, ix-180):ix+1350
                             ]
                     value["public_config_snippets"] = config_snips
+                    value["code_tail"] = asset.text[-3200:]
                 results[candidate] = value
     print(json.dumps(results, ensure_ascii=False, indent=2))
 
