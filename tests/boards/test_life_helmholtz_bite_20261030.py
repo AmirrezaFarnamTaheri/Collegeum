@@ -195,3 +195,51 @@ def test_bad_public_widget_fails_closed_instead_of_healthy_empty():
     assert not result.ok
     assert result.as_stats()["errors"] >= 1
     assert not http.payloads
+
+
+def test_helmholtz_preserves_employer_place_institute_and_research_field():
+    posts, _ = asyncio.run(BiteJobsScraper(source(), FixtureHTTP()).run())
+    phd = next(p for p in posts if p.title == PHD["title"])
+    assert phd.location == "Neuherberg near Munich"
+    assert phd.department == "Institute for Diabetes and Obesity"
+    assert phd.fields_of_research == "Cell Biology"
+
+
+def test_explicitly_empty_bilingual_official_feed_is_verified_not_broken():
+    scraper = BiteJobsScraper(source(), FixtureHTTP(en=[], de=[]))
+    posts, _ = asyncio.run(scraper.run())
+    assert posts == []
+    assert scraper.verified_empty_evidence is True
+    assert not scraper.discovery_fetch_errors
+    assert not scraper.discovery_parse_errors
+
+
+def test_failed_german_cohort_does_not_turn_empty_english_feed_into_success():
+    class BrokenGerman(FixtureHTTP):
+        async def get_text(self, url):
+            if url == DE:
+                raise RuntimeError("German recruitment widget unavailable")
+            return await super().get_text(url)
+
+    scraper = BiteJobsScraper(
+        source(), BrokenGerman(en=[], de=[]),
+    )
+    posts, _ = asyncio.run(scraper.run())
+    assert posts == []
+    assert not getattr(scraper, "verified_empty_evidence", False)
+    assert scraper.discovery_fetch_errors
+
+
+def test_unverified_api_metadata_does_not_invent_location_or_research_field():
+    malformed = job("d" * 40, PHD["title"])
+    malformed["custom"] = {
+        "place": ["Neuherberg", 99],
+        "Institut": 12345,
+        "Forschungsbereich": {"unknown": "Do not stringify"},
+    }
+    http = FixtureHTTP(en=[malformed], de=[])
+    posts, _ = asyncio.run(BiteJobsScraper(source(), http).run())
+    assert len(posts) == 1
+    assert posts[0].location is None
+    assert posts[0].department is None
+    assert posts[0].fields_of_research is None
