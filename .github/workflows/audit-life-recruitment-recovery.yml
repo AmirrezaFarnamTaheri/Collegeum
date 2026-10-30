@@ -1,7 +1,5 @@
 name: audit-life-recruitment-recovery
 on:
-  push:
-    branches: [feat/life-sciences-health-quality-20261030]
   workflow_dispatch:
 permissions:
   contents: read
