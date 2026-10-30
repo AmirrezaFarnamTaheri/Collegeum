@@ -222,3 +222,12 @@ def test_life_sciences_pipeline_accepts_official_adapter_without_publishing_staf
     assert diagnostics["life_special_de_helmholtz_munich"]["status"] == "discovered"
     assert diagnostics["life_special_de_helmholtz_munich"]["doctoral_candidates"] == 0
     assert all(classify_post(p, today=date(2026, 10, 30)) is None for p in posts)
+
+
+
+def test_provider_can_append_one_hex_character_to_a_40_char_vacancy_id():
+    """The live B-ite listing uses an ID and a 41-character application path."""
+    row = job(ID1, url="https://jobs.helmholtz-muenchen.de/jobposting/" + ID1 + "0")
+    posts, _ = run({0: {"jobPostings": [row], "page": {"offset": 0, "total": 1}}})
+    assert [p.url for p in posts] == [row["url"]]
+    assert posts[0].extra["bite_job_id"] == ID1
