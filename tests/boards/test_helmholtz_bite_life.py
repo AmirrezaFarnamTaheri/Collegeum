@@ -10,7 +10,10 @@ import asyncio
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from predoc_pipeline.boards.config import SourceConfig
+from predoc_pipeline.boards.scrapers.base import DiscoveryFetchError
 from predoc_pipeline.boards.scrapers.bite_jobs import HelmholtzBiteScraper
 from predoc_pipeline.ingest.life_sciences import classify_post, load_life_sources
 
@@ -155,8 +158,6 @@ def test_invalid_employer_hosts_and_mismatched_ids_are_rejected_as_parse_faults(
 def test_widget_key_or_listing_contract_change_fails_closed():
     fake = FixtureHttp({}, script="window.someOtherWidget = true;")
     scraper = HelmholtzBiteScraper(cfg(), fake)
-    from predoc_pipeline.boards.scrapers.base import DiscoveryFetchError
-    import pytest
     with pytest.raises(DiscoveryFetchError):
         asyncio.run(scraper.run())
     assert not any(c[0] == "POST" for c in fake.calls)
@@ -176,8 +177,6 @@ def test_bad_pagination_is_not_a_healthy_empty_source():
 def test_source_rejects_untrusted_origin_configuration():
     fake = FixtureHttp({})
     scraper = HelmholtzBiteScraper(cfg(origin="https://example.org/evil"), fake)
-    from predoc_pipeline.boards.scrapers.base import DiscoveryFetchError
-    import pytest
     with pytest.raises(DiscoveryFetchError):
         asyncio.run(scraper.run())
     assert fake.calls == []
