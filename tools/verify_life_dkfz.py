@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import json
 
+from bs4 import BeautifulSoup
+
 from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
 from predoc_pipeline.ingest.http import PoliteClient
@@ -34,7 +36,17 @@ def main() -> None:
             )
         scraper = LinkScanScraper(source, ParseOnlyHttp())
         jobs = scraper.parse_postings([(url, response.text)])
+        soup = BeautifulSoup(response.text, "lxml")
+        linked = [
+            (str(a.get("href") or "")[:180], a.get_text(" ", strip=True)[:110])
+            for a in soup.select("a[href]")
+            if "/jobs/" in str(a.get("href") or "")
+        ][:12]
         output = {
+            "html_bytes": len(response.content),
+            "anchors_total": len(soup.select("a[href]")),
+            "anchors_with_job_paths": linked,
+            "contains_doctoral_keyword": "PhD Student" in response.text,
             "source": source.name, "http_status": response.status,
             "doctoral_candidates": len(jobs),
             "official_job_urls": [job.url for job in jobs[:8]],
