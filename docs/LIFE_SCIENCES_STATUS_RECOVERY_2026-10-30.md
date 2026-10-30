@@ -17,9 +17,9 @@ The exporter is intentionally read-only. Do **not** delete historical rows, fabr
 - **University of Copenhagen** is disabled after a robots-denied request. Do not retry through an alternate host to evade that policy.
 - The 189 disabled specialist institutes, doctoral programmes and wider European universities are not approved functional feeds. Real employer vacancy identities, parser behavior and permitted access are required before promotion.
 
-## Implemented in this branch
+## Existing production safeguards (already integrated into main)
 
-1. A separate bounded `data/life_sciences_health.json` outcome journal, independent of the economics dashboard, career-market health and private Telegram data.
+1. A separate bounded `data/life_sources_health.json` outcome journal, independent of the economics dashboard, career-market health and private Telegram data.
 2. Source-specific `last_checked_at`, `last_success_at`, discovered URLs, doctoral candidates, eligible matches, discovery faults and detail fetch faults. Unselected sources retain *historical* observations rather than being incorrectly refreshed.
 3. `unverified_empty` when no vacancy was parsed; `verified_empty` only with an explicit configured empty marker. `partial` for fetch/detail faults, `failed` for scraper exceptions.
 4. Cohort-style PhD calls without a current closing date are withheld; an explicit qualification requirement that applicants *already possess a completed PhD* is rejected. Unknown funding stays unknown.
@@ -47,3 +47,7 @@ The [2026-10-30 read-only probe](https://github.com/AmirrezaFarnamTaheri/College
 | Vienna BioCenter | 42 | Cross-institute campus and recruitment/navigation links; no employer-level individual PhD identities validated |
 
 **Next adapter work:** inspect EMBL's official Workday requisition JSON and employer/site-specific career location before enabling; re-probe the fixed ReachMee Linköping/SLU vacancy URLs in full-text biology classification. For Bern/DKFZ/ETH/Helsinki/ISTA/Vienna BioCenter, do not count generic navigation/doctoral-programme pages as live vacancies. Explicitly maintain disabled candidates rather than inflating coverage.
+
+## Current EMBL application state, not an active source
+
+Official EMBL International PhD Programme application page: https://www.embl.org/about/info/embl-international-phd-programme/application/ . The 2027 Winter recruitment deadline was **12 October 2026** and applications are now closed. The 2027 Summer round is scheduled to open towards the end of January 2027. A public careers/Workday link does **not** make the closed doctoral cohort a presently eligible vacancy. The Workday opportunity index may list staff and postdocs; an EMBL feed should remain disabled until validated live individual PhD vacancy URL, applicant requirements, continental-European worksite, and open status are supported.
