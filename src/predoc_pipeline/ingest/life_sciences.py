@@ -296,7 +296,9 @@ async def discover(
 
         async def one(source: Any) -> tuple[list[JobPostSchema], list[str]]:
             nonlocal detail_remaining
-            if source.type not in ("rss", "link_scan"):
+            # B-ite's official public search is fully bounded and uses the
+            # same JobPostSchema and downstream doctoral eligibility gates.
+            if source.type not in ("rss", "link_scan", "helmholtz_bite_jobs"):
                 if diagnostics is not None:
                     diagnostics[source.name] = {
                         "status": "unsupported", "vacancy_links": 0,
