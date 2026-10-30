@@ -19,7 +19,7 @@ from predoc_pipeline.ingest.life_sciences import classify_post, discover, load_l
 NAME = "life_special_de_helmholtz_munich"
 API = "https://jobs.b-ite.com/api/v1/postings/search"
 UA = "Collegeum-LSSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)"
-JOB = re.compile(r"https://jobs\.helmholtz-muenchen\.de/jobposting/[a-f0-9]{40}/?$", re.I)
+JOB = re.compile(r"https://jobs\.helmholtz-muenchen\.de/jobposting/[a-f0-9]{40,41}/?$", re.I)
 
 
 async def main() -> None:
