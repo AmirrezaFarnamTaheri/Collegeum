@@ -1,0 +1,22 @@
+name: investigate-bern-life-source
+on:
+  push:
+    branches: [investigate/bern-life-source-20261030]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Verify official Bern recruitment discovery
+        run: PYTHONPATH=src python3 tools/probe_bern_life_20261030.py
