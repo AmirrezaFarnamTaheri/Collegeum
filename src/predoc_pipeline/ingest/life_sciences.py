@@ -21,9 +21,11 @@ from ..boards.config import HttpConfig, load_board_sources
 from ..boards.filter import PHD_POSITION
 from ..boards.models import JobPostSchema
 from ..boards.scrapers import SCRAPERS
+from ..boards.scrapers.base import SourceSkipped
 from ..boards.utils.dates import extract_deadline
 from ..boards.utils.geo import detect_location
 from .career import load_career, save_career
+from .life_health import write_life_health
 from .rotation import load_rotation, save_rotation
 
 CATEGORY = "life_sciences_phd"
@@ -65,6 +67,12 @@ WRONG_ROLE = re.compile(
     re.I,
 )
 COUNTRY_EXCLUDE = frozenset(("Europe", "United Kingdom", "United States", "Canada"))
+APPLICANT_REQUIRES_PHD = re.compile(
+    r"\b(?:applicants?|candidates?|you)\s+"
+    r"(?:must|should|need(?:s)?(?:\s+to)?)\s+"
+    r"(?:already\s+)?(?:hold|have|possess)\s+"
+    r"(?:an?\s+)?(?:completed\s+)?ph\.?d\.?(?:\s+degree)?\b", re.I,
+)
 PHD_CALL = re.compile(
     r"\b(?:international\s+)?ph\.?d\.?\s+(?:call|recruitment|admissions?)\b",
     re.I,
@@ -117,6 +125,8 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         return None
     if WRONG_ROLE.search(post.title):
         return None
+    if APPLICANT_REQUIRES_PHD.search(post.description_snippet or ""):
+        return None
     # Board and university boilerplate often mentions unrelated research
     # (for example, a university's CRISPR discovery). Don't let that text
     # turn an explicitly non-life-science title into a life-sciences match.
@@ -151,6 +161,10 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     if region != "Europe" or not country or country in COUNTRY_EXCLUDE:
         return None
     current = today or datetime.now(UTC).date()
+    # Cohort recruitment landing pages frequently remain indexed after
+    # applications close. A dated *current* deadline is mandatory for calls.
+    if PHD_CALL.search(post.title) and post.deadline is None:
+        return None
     if post.deadline and post.deadline < current:
         return None
     if post.date_posted and post.date_posted < current - timedelta(days=60):
@@ -240,6 +254,7 @@ def _needs_detail(post: JobPostSchema) -> bool:
 async def discover(
     sources_path: str | Path, http_config: HttpConfig, *,
     selected_names: set[str] | None = None,
+    diagnostics: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[list[JobPostSchema], list[str]]:
     """Discover bounded, fair interleaved candidates from selected boards."""
     configs = [
@@ -259,6 +274,12 @@ async def discover(
         async def one(source: Any) -> tuple[list[JobPostSchema], list[str]]:
             nonlocal detail_remaining
             if source.type not in ("rss", "link_scan"):
+                if diagnostics is not None:
+                    diagnostics[source.name] = {
+                        "status": "unsupported", "vacancy_links": 0,
+                        "doctoral_candidates": 0, "matched_candidates": 0,
+                        "discovery_issues": 1, "detail_failures": 0,
+                    }
                 return [], [f"{source.name}: unsupported scraper type"]
             scraper = SCRAPERS[source.type](source, http)
             async with semaphore:
@@ -266,7 +287,21 @@ async def discover(
                     result, _ = await asyncio.wait_for(
                         scraper.run(), timeout=min(http_config.source_timeout, 120),
                     )
+                except SourceSkipped:
+                    if diagnostics is not None:
+                        diagnostics[source.name] = {
+                            "status": "skipped", "vacancy_links": 0,
+                            "doctoral_candidates": 0, "matched_candidates": 0,
+                            "discovery_issues": 0, "detail_failures": 0,
+                        }
+                    return [], []
                 except Exception as exc:  # noqa: BLE001 - isolate provider outages
+                    if diagnostics is not None:
+                        diagnostics[source.name] = {
+                            "status": "failed", "vacancy_links": 0,
+                            "doctoral_candidates": 0, "matched_candidates": 0,
+                            "discovery_issues": 1, "detail_failures": 0,
+                        }
                     # Preserve a useful, bounded cause in the export report
                     # while removing URLs that could contain query tokens.
                     detail = re.sub(r"https?://\S+", "<source URL>", str(exc))
@@ -285,6 +320,7 @@ async def discover(
                 )
                 scoped = result[:MAX_PER_SOURCE]
                 detail_used = 0
+                detail_failures = 0
                 for post in scoped:
                     if detail_used >= MAX_DETAIL_PER_SOURCE or detail_remaining <= 0:
                         break
@@ -297,6 +333,7 @@ async def discover(
                             scraper.fetch_detail(post), timeout=DETAIL_TIMEOUT,
                         )
                     except Exception:  # noqa: BLE001 - keep listing-only evidence
+                        detail_failures += 1
                         continue
                     if full_text:
                         post.description_snippet = (
@@ -312,6 +349,22 @@ async def discover(
                 len(scraper.discovery_parse_errors) +
                 len(scraper.discovery_limits)
             )
+            if diagnostics is not None:
+                status = (
+                    "partial" if problems else
+                    "discovered" if result else
+                    "verified_empty" if getattr(scraper, "verified_empty_evidence", False)
+                    else "unverified_empty"
+                )
+                diagnostics[source.name] = {
+                    "status": status, "vacancy_links": len(result),
+                    "doctoral_candidates": sum(
+                        _doctoral_title(post.title) for post in scoped
+                    ),
+                    "matched_candidates": 0,
+                    "discovery_issues": problems,
+                    "detail_failures": detail_failures,
+                }
             warnings = [f"{source.name}: {problems} discovery issues"] if problems else []
             return scoped, warnings
 
@@ -332,6 +385,7 @@ def poll_life_sciences(
     journal_path: str | Path, *, sources_path: str | Path,
     http_config: HttpConfig,
     rotation_path: str | Path | None = None,
+    health_path: str | Path | None = None,
 ) -> tuple[int, list[str]]:
     """Append vetted life-sciences PhDs to the existing durable career journal.
 
@@ -344,8 +398,14 @@ def poll_life_sciences(
     selected = select_sources(sources_path, rotation_path)
     if not selected:
         return 0, ["No enabled life-sciences PhD providers"]
+    diagnostics: dict[str, dict[str, Any]] | None = (
+        {} if health_path is not None else None
+    )
+    discover_kwargs: dict[str, Any] = {"selected_names": selected}
+    if diagnostics is not None:
+        discover_kwargs["diagnostics"] = diagnostics
     posts, errors = asyncio.run(
-        discover(sources_path, http_config, selected_names=selected),
+        discover(sources_path, http_config, **discover_kwargs),
     )
     matches: dict[str, dict[str, str]] = {}
     for post in posts:
@@ -354,6 +414,17 @@ def poll_life_sciences(
             matches.setdefault(item["key"], item)
     previous = load_career(journal_path, tolerant=True)
     added = save_career(journal_path, previous, list(matches.values()))
+    if health_path is not None and diagnostics is not None:
+        per_source: dict[str, int] = {}
+        for match in matches.values():
+            key = match["source"]
+            per_source[key] = per_source.get(key, 0) + 1
+        for name, info in diagnostics.items():
+            info["matched_candidates"] = per_source.get(name, 0)
+        write_life_health(
+            health_path, sources=load_life_sources(sources_path),
+            diagnostics=diagnostics, started=started,
+        )
     if rotation_path is not None:
         save_rotation(rotation_path, selected, timestamp=started)
     return added, errors
