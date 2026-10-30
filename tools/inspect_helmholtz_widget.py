@@ -92,6 +92,22 @@ def main() -> None:
                     value["script_urls"] = list(dict.fromkeys(
                         LINK.findall(asset.text)
                     ))[:10]
+                    markers = (
+                        "api/v1/postings/search", "jobs.b-ite.com", "jobposting",
+                        "postings/search", "clientKey", "key:", "searchText",
+                        "fetch(", "XMLHttpRequest", "origin:", "locale:",
+                        "channel:", "/api/", "b-ite.com", "helmh",
+                    )
+                    fragments = {}
+                    for word in markers:
+                        offsets = [m.start() for m in list(re.finditer(
+                            re.escape(word), asset.text, re.I,
+                        ))[:4]]
+                        if offsets:
+                            fragments[word] = [
+                                asset.text[max(0, i - 140):i+170] for i in offsets
+                            ]
+                    value["public_api_shape"] = fragments
                 results[candidate] = value
     print(json.dumps(results, ensure_ascii=False, indent=2))
 
