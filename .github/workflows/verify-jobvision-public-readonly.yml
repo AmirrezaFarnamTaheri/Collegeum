@@ -1,0 +1,25 @@
+name: verify-jobvision-public-readonly
+on:
+  push:
+    branches: [feat/iran-jobvision-career-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Inspect Jobvision officially advertised public surfaces
+        run: PYTHONPATH=src python3 tools/probe_jobvision_public.py
+      - name: Verify actual Jobvision sitemap and vacancy parser
+        run: PYTHONPATH=src python3 tools/verify_jobvision_adapter_live.py

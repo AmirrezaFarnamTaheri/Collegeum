@@ -471,10 +471,17 @@ def poll_career(
     fresh: list[dict[str, str]] = []
     errors: list[str] = []
     started = datetime.now(UTC).isoformat()
+    # A provider is never activated on the strength of an HTTP 200 alone.
+    # Jobvision can be enabled after a live, read-only source acceptance proves
+    # public sitemap discovery and actual structured vacancy metadata.
+    jobvision_enabled = os.getenv("COLLEGEUM_JOBVISION_ENABLED", "0") == "1"
     sources: dict[str, dict[str, Any]] = {
         "jobicy": {"requested": needs_remote, "fetched": 0, "accepted": 0},
         "jobinja": {"requested": needs_iran, "fetched": 0, "accepted": 0},
         "irantalent": {"requested": needs_iran, "fetched": 0, "accepted": 0},
+        "jobvision": {
+            "requested": needs_iran and jobvision_enabled, "fetched": 0, "accepted": 0,
+        },
     }
     if needs_remote:
         cursor: str | None = None
@@ -540,6 +547,20 @@ def poll_career(
             fresh.extend(parsed)
         else:
             errors.append(f"IranTalent fetch: {other.error or other.status}")
+
+        if jobvision_enabled:
+            from .jobvision import collect_jobvision
+
+            # Never use user profiles or an undocumented candidate API.
+            # The public sitemap and each posting use PoliteClient's robots
+            # checks, bounded requests, pacing, and safe redirects.
+            try:
+                parsed, fetched = collect_jobvision(client)
+                sources["jobvision"]["fetched"] = fetched
+                sources["jobvision"]["accepted"] += len(parsed)
+                fresh.extend(parsed)
+            except ValueError as exc:
+                errors.append(f"Jobvision fetch: {str(exc)[:160]}")
     new_count = save_career(path, previous, fresh)
     for error in errors:
         log.warning("career_source_failed", error=truncate(error, 200))
@@ -552,7 +573,9 @@ def poll_career(
             issues = [error for error in errors if error.lower().startswith(name)]
             if name == "irantalent":
                 issues = [error for error in errors if error.startswith("IranTalent")]
-            if not info["requested"]:
+            if name == "jobvision" and needs_iran and not jobvision_enabled:
+                info["status"] = "pending_validation"
+            elif not info["requested"]:
                 info["status"] = "idle"
             elif issues:
                 info["status"] = "degraded" if info["accepted"] else "error"
@@ -602,7 +625,7 @@ def idle_career_health(path: str | Path) -> None:
     previous = _read_career_health(path)
     old = previous.get("sources", {})
     current = {}
-    for name in ("jobicy", "jobinja", "irantalent"):
+    for name in ("jobicy", "jobinja", "irantalent", "jobvision"):
         past = old.get(name, {}) if isinstance(old, dict) else {}
         success = past.get("last_success_at") if isinstance(past, dict) else None
         info: dict[str, Any] = {
