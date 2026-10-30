@@ -108,6 +108,21 @@ def main() -> None:
                                 asset.text[max(0, i - 140):i+170] for i in offsets
                             ]
                     value["public_api_shape"] = fragments
+                    config_markers = (
+                        "var channel =", "var lang =", "var apiKey =",
+                        "var zuordnung =", "Api.createSearchConfig(",
+                        "Api.createClient(", "var searchConfig =",
+                        "apiClient.search", "createControl(", "custom.Zuordnung",
+                        "control.load", "control.reload",
+                    )
+                    config_snips = {}
+                    for marker in config_markers:
+                        ix = source.find(marker)
+                        if ix >= 0:
+                            config_snips[marker] = source[
+                                max(0, ix-180):ix+1350
+                            ]
+                    value["public_config_snippets"] = config_snips
                 results[candidate] = value
     print(json.dumps(results, ensure_ascii=False, indent=2))
 
