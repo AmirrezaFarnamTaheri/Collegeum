@@ -117,9 +117,9 @@ def main() -> None:
                     )
                     config_snips = {}
                     for marker in config_markers:
-                        ix = source.find(marker)
+                        ix = asset.text.find(marker)
                         if ix >= 0:
-                            config_snips[marker] = source[
+                            config_snips[marker] = asset.text[
                                 max(0, ix-180):ix+1350
                             ]
                     value["public_config_snippets"] = config_snips
