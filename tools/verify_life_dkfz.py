@@ -12,6 +12,11 @@ from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
 from predoc_pipeline.ingest.http import PoliteClient
 
 
+class ParseOnlyHttp:
+    def set_host_interval(self, _url: str, _interval: float) -> None:
+        pass
+
+
 def main() -> None:
     source = next(
         board for board in load_board_sources("config/life_sciences.toml")
@@ -27,7 +32,7 @@ def main() -> None:
             raise RuntimeError(
                 f"DKFZ source not usable on runner: {response.error or response.status}"
             )
-        scraper = LinkScanScraper(source, http)
+        scraper = LinkScanScraper(source, ParseOnlyHttp())
         jobs = scraper.parse_postings([(url, response.text)])
         output = {
             "source": source.name, "http_status": response.status,
