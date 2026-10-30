@@ -1,6 +1,7 @@
 """DKFZ official recruitment recovery with strict closing-date evidence."""
 from __future__ import annotations
 
+import asyncio
 from datetime import date
 from pathlib import Path
 
@@ -15,7 +16,13 @@ MANAGEMENT = "https://jobs.dkfz.de/en/jobs/168899/division-head-in-cancer-early-
 
 
 class Http:
-    def set_host_interval(self, _url, _delay):
+    def __init__(self, html: str = "") -> None:
+        self.html = html
+
+    async def get_text(self, _url: str) -> str:
+        return self.html
+
+    def set_host_interval(self, _url: str, _delay: float) -> None:
         pass
 
 
@@ -35,13 +42,14 @@ def test_dkfz_is_one_existing_real_job_index_not_an_extra_candidate():
 
 
 def test_dkfz_index_accepts_doctoral_roles_only_and_propagates_deadline_gate():
-    scraper = LinkScanScraper(get_source(), Http())
     html = (
         f'<a href="{EXPIRED}">PhD Position in Computational Biology/Bioinformatics</a>'
         f'<a href="{POSTDOC}">Postdoc Position in Preclinical Development</a>'
         f'<a href="{MANAGEMENT}">Division Head in Cancer Early Detection Imaging</a>'
     )
-    posts = scraper.parse_postings([(scraper.urls()[0], html)])
+    # The narrow title filter is applied by BaseScraper.run(), not parse_postings.
+    scraper = LinkScanScraper(get_source(), Http(html))
+    posts, _ = asyncio.run(scraper.run())
     assert [job.url for job in posts] == [EXPIRED]
     assert posts[0].extra["require_deadline"] is True
     assert life_sciences._needs_detail(posts[0])
