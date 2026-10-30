@@ -13,8 +13,8 @@ from xml.sax.saxutils import escape
 import pytest
 
 from predoc_pipeline.boards.config import SourceConfig
-from predoc_pipeline.boards.scrapers.dzne_sitemap import DzneSitemapScraper
 from predoc_pipeline.boards.scrapers.base import DiscoveryFetchError
+from predoc_pipeline.boards.scrapers.dzne_sitemap import DzneSitemapScraper
 from predoc_pipeline.ingest.life_sciences import classify_post, load_life_sources
 
 SITEMAP = "https://jobs.dzne.de/sitemap.xml"
