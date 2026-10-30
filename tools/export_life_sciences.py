@@ -56,6 +56,8 @@ def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
             row = {}
             for column in COLUMNS:
                 value = str(item.get(column, item.get(aliases.get(column, column), '')) or '')
+                if column == 'availability' and not value:
+                    value = 'unknown'
                 if column == 'country' and not value:
                     # Legacy journal rows retained location but omitted country.
                     # Recover only an identifiable country; never infer one
@@ -67,6 +69,65 @@ def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
                 row[column] = value
             writer.writerow(row)
     return len(unique)
+
+
+def artifact_quality(
+    positions: list[dict[str, Any]], *, now: datetime | None = None,
+) -> dict[str, Any]:
+    """Inspect stored/exportable evidence, not infer current open vacancies."""
+    from predoc_pipeline.boards.utils.geo import detect_location
+
+    timestamp = (now or datetime.now(UTC)).astimezone(UTC)
+    country_counts = {"explicit": 0, "derived_from_location": 0, "unknown": 0}
+    availability = {"active": 0, "closed": 0, "unknown": 0}
+    funding_unverified = 0
+    older_than_week = 0
+    unseen_time = 0
+    urls: set[str] = set()
+    for item in positions:
+        country = str(item.get("country") or "").strip()
+        if country and country != "Europe":
+            country_counts["explicit"] += 1
+        else:
+            inferred, region = detect_location(str(item.get("location") or ""))
+            if inferred and region == "Europe" and inferred != "Europe":
+                country_counts["derived_from_location"] += 1
+            else:
+                country_counts["unknown"] += 1
+        status = str(item.get("availability") or "unknown")
+        if status not in availability:
+            status = "unknown"
+        availability[status] += 1
+        if str(item.get("funding_status") or "unverified") != "verified":
+            funding_unverified += 1
+        last_seen = item.get("last_seen_at") or item.get("first_seen_at")
+        try:
+            observed = datetime.fromisoformat(str(last_seen).replace("Z", "+00:00"))
+            if observed.tzinfo is None:
+                raise ValueError("timestamp must be timezone-aware")
+            if (timestamp - observed.astimezone(UTC)).days >= 7:
+                older_than_week += 1
+        except (TypeError, ValueError):
+            unseen_time += 1
+        link = str(item.get("url") or item.get("application_url") or "")
+        if link:
+            urls.add(link)
+    return {
+        "rows": len(positions), "unique_urls": len(urls),
+        "duplicate_url_rows": len(positions) - len(urls),
+        "country": country_counts,
+        "availability": availability,
+        "funding_unverified": funding_unverified,
+        "last_seen_older_than_7d": older_than_week,
+        "last_seen_missing_or_invalid": unseen_time,
+        "verified_open_count": 0,
+        "limits": {
+            "no_current_application_verification": True,
+            "current_availability_not_inferred": True,
+            "funding_status_is_not_independently_verified": True,
+            "seven_day_staleness_is_not_proof_of_closure": True,
+        },
+    }
 
 
 async def collect(config_path: Path, rows: list[dict[str, Any]], output: Path,
@@ -105,6 +166,7 @@ async def collect(config_path: Path, rows: list[dict[str, Any]], output: Path,
         report['batches'].append({'sources': selected, 'candidates': len(posts),
                                   'accepted': accepted, 'errors': errors})
         report['exported_positions'] = write_csv(output, rows)
+        report['artifact_quality'] = artifact_quality(rows)
         output.with_suffix('.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
         print(json.dumps({'sources_checked': min(offset + MAX_SOURCES, len(sources)),
                           'exported_positions': report['exported_positions'],
@@ -125,6 +187,7 @@ def main() -> None:
     if args.discover:
         asyncio.run(collect(args.config, rows, args.output, report))
     report['exported_positions'] = write_csv(args.output, rows)
+    report['artifact_quality'] = artifact_quality(rows)
     args.output.with_suffix('.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     print(json.dumps({'csv': str(args.output), 'positions': report['exported_positions']}))
 
