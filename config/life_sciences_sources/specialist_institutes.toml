@@ -66,15 +66,20 @@ note = "CANDIDATE ONLY: official institution/programme locator; actual recruitme
 
 [[board]]
 name = "life_special_de_dzne"
-type = "link_scan"
+type = "dzne_sitemap"
 group = "life_sciences"
-enabled = false
-url = "https://www.dzne.de/"
-link_pattern = '^$'
+enabled = true
+url = "https://jobs.dzne.de/sitemap.xml"
+max_details = 12
+min_interval = 2.0
+may_be_empty = true
+probe_workflow = "verify-life-dzne-live"
+source_timeout_seconds = 60
+field_implied = false
 country = "Germany"
 institution = "German Center for Neurodegenerative Diseases"
-verification = "candidate_unverified"
-note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
+verification = "official_dvinci_sitemap_xml_runner_20261030"
+note = "DZNE employer-controlled d.vinci sitemap had 15 live vacancy identities and one PhD Researcher role (101677), verified by read-only GitHub runner. Individual employer jobPublication XML includes vacancy ID, start/end dates, application link, PhD qualifications and research description; excludes postdocs. No funding inferred."
 
 [[board]]
 name = "life_special_de_helmholtz_munich"
