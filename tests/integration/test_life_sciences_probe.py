@@ -110,7 +110,8 @@ def test_probe_all_enabled_sources_across_disjoint_offset_pages() -> None:
         if report["next_offset"] is None:
             break
         offset = report["next_offset"]
-    assert len(ids) == 36
+    assert len(ids) == 37
+    assert "life_special_de_helmholtz_munich" in ids
 
 
 @pytest.mark.parametrize("offset", [-1, 257, 999])
