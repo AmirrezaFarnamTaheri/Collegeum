@@ -165,8 +165,10 @@ class DzneSitemapScraper(BaseScraper):
                     location=f"{city.group(1)}, Germany" if city else None,
                     extra={"dvinci_req_id": parts[1], "application_form_url": application},
                 ))
-            except (ValueError, TypeError, OverflowError):
-                self.discovery_parse_errors.append("Invalid DZNE vacancy detail/identity")
+            except (ValueError, TypeError, OverflowError) as exc:
+                self.discovery_parse_errors.append(
+                    "Invalid DZNE vacancy detail/identity: " + str(exc)[:100]
+                )
         return posts
 
     async def fetch_detail(self, post: JobPostSchema) -> str | None:
