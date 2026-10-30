@@ -1,0 +1,22 @@
+name: investigate-economics-source-candidates
+on:
+  push:
+    branches: [investigate/economics-official-ats-20261030]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Inspect existing official candidate registry sources (read-only)
+        run: PYTHONPATH=src python3 tools/probe_economics_candidates_20261030.py
