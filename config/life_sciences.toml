@@ -189,12 +189,17 @@ note = "OFF: listing loads dynamically and some ETH roles are outside Switzerlan
 name = "life_dkfz"
 type = "link_scan"
 group = "life_sciences"
-enabled = false
-url = "https://jobs.dkfz.de/en/jobs/iframe"
-link_pattern = 'jobs\.dkfz\.de/en/jobs/\d+/[^/?#]+'
+enabled = true
+url = "https://jobs.dkfz.de/en/jobs"
+link_pattern = '^https://jobs[.]dkfz[.]de/en/jobs/[0-9]+/[^?#]+$'
+title_allow_pattern = '^(?:Ph[.]?D[.]?|Doctoral)\b'
 institution = "German Cancer Research Center (DKFZ)"
 country = "Germany"
-note = "OFF: site lists doctoral roles but cancer-focused matches need lower priority."
+field_implied = false
+require_deadline = true
+may_be_empty = true
+min_interval = 3.0
+note = "Official d.vinci vacancy index, verified individual PhD job URLs. Expired job examples remain indexed; require a current deadline from detail before alert. No funding inferred."
 
 [[board]]
 name = "life_fmi_programme"
