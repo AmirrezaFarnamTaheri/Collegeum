@@ -385,6 +385,20 @@ async def discover(
                     "detail_failures": detail_failures,
                 }
             warnings = [f"{source.name}: {problems} discovery issues"] if problems else []
+            if diagnostics is not None:
+                status = (
+                    "partial" if problems or detail_failures else
+                    "discovered" if scoped else
+                    "verified_empty" if source.opt("verified_empty_marker")
+                    else "unverified_empty"
+                )
+                diagnostics[source.name] = {
+                    "status": status, "vacancy_links": len(result),
+                    "doctoral_candidates": sum(_doctoral_title(p.title) for p in scoped),
+                    "matched_candidates": 0,
+                    "discovery_issues": problems,
+                    "detail_failures": detail_failures,
+                }
             return scoped, warnings
 
         results = await asyncio.gather(*(one(config) for config in configs))
@@ -431,6 +445,8 @@ def poll_life_sciences(
         item = classify_post(post)
         if item:
             matches.setdefault(item["key"], item)
+            if post.source in diagnostics:
+                diagnostics[post.source]["matched_candidates"] += 1
     previous = load_career(journal_path, tolerant=True)
     added = save_career(journal_path, previous, list(matches.values()))
     if health_path is not None and diagnostics is not None:
@@ -440,6 +456,13 @@ def poll_life_sciences(
             per_source[key] = per_source.get(key, 0) + 1
         for name, info in diagnostics.items():
             info["matched_candidates"] = per_source.get(name, 0)
+        write_life_health(
+            health_path, sources=load_life_sources(sources_path),
+            diagnostics=diagnostics, started=started,
+        )
+    if health_path is not None:
+        from .life_health import write_life_health
+
         write_life_health(
             health_path, sources=load_life_sources(sources_path),
             diagnostics=diagnostics, started=started,
