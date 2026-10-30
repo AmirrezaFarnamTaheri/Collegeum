@@ -66,12 +66,33 @@ def main() -> None:
                 record = {"status": code.status, "error": code.error[:140], "bytes": len(code.content)}
                 if code.ok:
                     source = code.text
+                    i = source.find("csListingPath")
+                    record["loader_public_path_logic"] = source[max(0,i-120):i+1900]
                     record["urls"] = list(dict.fromkeys(LINK.findall(source)))[:24]
                     record["match_snippets"] = [
                         source[max(0, match.start()-80):match.start()+160]
                         for match in list(PAT.finditer(source))[:7]
                     ]
                 results[script_url] = record
+            customer = "helmholtz-zentrum-muenchen"
+            resource = "main-listing-en"
+            for suffix in ("", ".js", ".json"):
+                candidate = (
+                    "https://cs-assets.b-ite.com/" + customer +
+                    "/jobs-api/" + resource + suffix
+                )
+                asset = http.get(candidate, use_cache=False)
+                value = {
+                    "status": asset.status,
+                    "error": asset.error[:140],
+                    "length": len(asset.content),
+                }
+                if asset.ok:
+                    value["prefix"] = asset.text[:550]
+                    value["script_urls"] = list(dict.fromkeys(
+                        LINK.findall(asset.text)
+                    ))[:10]
+                results[candidate] = value
     print(json.dumps(results, ensure_ascii=False, indent=2))
 
 
