@@ -133,7 +133,10 @@ def test_jobvision_career_poll_is_staged_until_live_discovery_verified(
                 body = '<a href="/companies/x/jobs/12/accountant">Accountant</a>'
             else:
                 body = '<a href="/en/job/accountant/12345">Accountant</a>'
-            return SimpleNamespace(ok=True, status=200, text=body, error="")
+            return SimpleNamespace(
+                ok=True, status=200, text=body,
+                content=body.encode("utf-8"), error="",
+            )
 
     client = Client()
     journal, health = tmp_path / "careers.ndjson", tmp_path / "career-health.json"
@@ -168,7 +171,10 @@ def test_jobvision_opt_in_keeps_career_identity_dedupe_and_health(
                 body = '<a href="/companies/x/jobs/12/accountant">Accountant</a>'
             else:
                 body = '<a href="/en/job/accountant/12345">Accountant</a>'
-            return SimpleNamespace(ok=True, status=200, text=body, error="")
+            return SimpleNamespace(
+                ok=True, status=200, text=body,
+                content=body.encode("utf-8"), error="",
+            )
 
     client = Client()
     journal, health = tmp_path / "careers.ndjson", tmp_path / "career-health.json"
