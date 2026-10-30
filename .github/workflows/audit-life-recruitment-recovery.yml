@@ -1,0 +1,21 @@
+name: audit-life-recruitment-recovery
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Inspect seven official recruitment pages without publishing
+        run: PYTHONPATH=src python3 tools/audit_life_recruitment_recovery.py
