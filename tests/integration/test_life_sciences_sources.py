@@ -156,8 +156,8 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     assert len(names) == len(set(names))
     assert len(registered) == 225
     active = [source for source in registered if source.enabled]
-    assert len(active) == 36
-    assert len(registered) - len(active) == 189
+    assert len(active) == 37
+    assert len(registered) - len(active) == 188
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
     assert all(source.type in {"rss", "link_scan"} for source in active)
