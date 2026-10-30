@@ -193,5 +193,5 @@ def test_bad_public_widget_fails_closed_instead_of_healthy_empty():
     http = FixtureHTTP()
     result = asyncio.run(_scrape_all([BiteJobsScraper(cfg, http)], 1, 20))[0]
     assert not result.ok
-    assert result.as_stats()["failure_counts"]["fetch"] >= 1
+    assert result.as_stats()["errors"] >= 1
     assert not http.payloads
