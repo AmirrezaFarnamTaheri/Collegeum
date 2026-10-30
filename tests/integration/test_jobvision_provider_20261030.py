@@ -186,3 +186,16 @@ def test_jobvision_opt_in_keeps_career_identity_dedupe_and_health(
     assert len(records) == 1 and records[0]["source"] == "Jobvision"
     status = json.loads(health.read_text("utf-8"))["sources"]["jobvision"]
     assert status["status"] == "ok" and status["accepted"] == 1
+
+
+def test_jobvision_public_sitemap_utf16le_bom_can_reveal_nested_jobs_feed():
+    xml = (
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        "<sitemap><loc>https://jobvision.ir/sitemap/jobposts.xml</loc></sitemap>"
+        "</sitemapindex>"
+    )
+    malformed_decl = '<?xml version="1.0" encoding="utf-8"?>' + xml
+    raw = b"\xff\xfe" + malformed_decl.encode("utf-16-le")
+    jobs, nested = parse_jobvision_sitemap(raw)
+    assert jobs == []
+    assert nested == ["https://jobvision.ir/sitemap/jobposts.xml"]
