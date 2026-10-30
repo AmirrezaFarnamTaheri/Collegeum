@@ -119,6 +119,14 @@ def main() -> None:
                                 for tag in soup.select("h1")[:3]
                             ]
                             record["text_prefix"] = soup.get_text(" ", strip=True)[:850]
+                            record["html_prefix"] = detail.text[:750]
+                            record["script_blocks"] = [
+                                {
+                                    "type": tag.get("type"), "id": tag.get("id"),
+                                    "prefix": (tag.string or tag.get_text())[:400],
+                                }
+                                for tag in soup.select("script")[:8]
+                            ]
                             record["application_links"] = [
                                 urljoin(link, str(tag.get("href") or ""))[:190]
                                 for tag in soup.select("a[href]")[:100]
