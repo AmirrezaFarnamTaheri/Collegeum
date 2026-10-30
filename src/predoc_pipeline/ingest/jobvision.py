@@ -34,12 +34,22 @@ def _job_url(value: str) -> str | None:
     return f"https://jobvision.ir/jobs/{match.group(1)}"
 
 
-def parse_jobvision_sitemap(text: str) -> tuple[list[str], list[str]]:
+def parse_jobvision_sitemap(text: str | bytes) -> tuple[list[str], list[str]]:
     """Return canonical job IDs and same-host nested jobs sitemap URLs.
 
     Other domains, category indexes, search queries and SEO pages cannot
     become individual applications. XML external-entity declarations fail.
     """
+    if isinstance(text, bytes):
+        if len(text) > _MAX_XML_BYTES:
+            raise ValueError("Jobvision sitemap exceeds limit")
+        try:
+            if text.startswith((b"\xff\xfe", b"\xfe\xff")):
+                text = text.decode("utf-16")
+            else:
+                text = text.decode("utf-8-sig")
+        except UnicodeError as exc:
+            raise ValueError("Jobvision sitemap has invalid encoding") from exc
     if len(text.encode("utf-8")) > _MAX_XML_BYTES or "<!DOCTYPE" in text.upper():
         raise ValueError("Jobvision sitemap exceeds limit or contains a DTD")
     try:
@@ -153,17 +163,27 @@ def collect_jobvision(client: Any, *, max_details: int = 8) -> tuple[list[dict[s
         raise ValueError("Jobvision detail budget must be between one and eight")
     fetched = 0
 
+    def fetch_bytes(url: str) -> bytes:
+        nonlocal fetched
+        res = client.get(url, use_cache=False)
+        fetched += 1
+        if not res.ok:
+            raise ValueError(f"Jobvision official source unavailable: {res.error or res.status}")
+        return bytes(res.content)
+
     def fetch(url: str) -> str:
         nonlocal fetched
         res = client.get(url, use_cache=False)
         fetched += 1
         if not res.ok:
             raise ValueError(f"Jobvision official source unavailable: {res.error or res.status}")
-        return res.text
+        return str(res.text)
 
-    jobs, nested = parse_jobvision_sitemap(fetch(JOBVISION_SITEMAP))
+    # The official site currently serves a UTF-16LE sitemap with an
+    # inconsistent XML encoding declaration. Parse response bytes directly.
+    jobs, nested = parse_jobvision_sitemap(fetch_bytes(JOBVISION_SITEMAP))
     for sub in nested[:2]:
-        child_jobs, _ = parse_jobvision_sitemap(fetch(sub))
+        child_jobs, _ = parse_jobvision_sitemap(fetch_bytes(sub))
         jobs.extend(child_jobs)
     jobs = list(dict.fromkeys(jobs))
     if not jobs:
