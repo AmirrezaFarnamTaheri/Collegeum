@@ -189,7 +189,7 @@ note = "OFF: listing loads dynamically and some ETH roles are outside Switzerlan
 name = "life_dkfz"
 type = "link_scan"
 group = "life_sciences"
-enabled = true
+enabled = false
 url = "https://jobs.dkfz.de/en/jobs"
 link_pattern = '^https://jobs[.]dkfz[.]de/en/jobs/[0-9]+/[^?#]+$'
 title_allow_pattern = '^(?:Ph[.]?D[.]?|Doctoral)\b'
@@ -197,9 +197,9 @@ institution = "German Cancer Research Center (DKFZ)"
 country = "Germany"
 field_implied = false
 require_deadline = true
-may_be_empty = true
+may_be_empty = false
 min_interval = 3.0
-note = "Official d.vinci vacancy index, verified individual PhD job URLs. Expired job examples remain indexed; require a current deadline from detail before alert. No funding inferred."
+note = "OFF: official d.vinci individual job URLs verified, but runner 41050133340 returned HTTP 200 with zero raw anchors and no PhD text on /en/jobs. Requires a supported public discovery adapter, approved robots policy and live vacancy identifiers before enabling. Old PhD examples have passed deadlines. Keep strict require_deadline for future activation."
 
 [[board]]
 name = "life_fmi_programme"
