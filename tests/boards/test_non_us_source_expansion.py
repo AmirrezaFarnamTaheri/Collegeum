@@ -26,7 +26,7 @@ def test_non_us_candidates_have_no_implicit_economic_fields():
         cfg = board[row["name"]]
         assert cfg.enabled is (row["name"] in {
             "nus_policy_research", "wifo_austria_jobs",
-            "ceps_brussels_research",
+            "ceps_brussels_research", "ifau_sweden_labour",
         })
         assert cfg.field_implied is False
         assert cfg.type == "link_scan"

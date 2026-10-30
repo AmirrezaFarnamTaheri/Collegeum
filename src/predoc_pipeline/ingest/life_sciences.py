@@ -145,14 +145,6 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         return None
     if UNFUNDED.search(context):
         return None
-    if PHD_CALL.search(post.title) and post.deadline is None:
-        return None
-    if re.search(
-        r"\b(?:applicants?|candidates?)\s+(?:must|should|need)\s+"
-        r"(?:already\s+)?(?:hold|have|possess)\s+(?:an?\s+)?"
-        r"(?:completed\s+)?ph\.?d\.?\s+degree\b", context, re.I,
-    ):
-        return None
     # Source-level country is only an institutional hint. A vacancy's
     # specific workplace takes precedence, especially for universities
     # advertising international and remote positions.
@@ -320,12 +312,6 @@ async def discover(
                     detail = re.sub(r"https?://\S+", "<source URL>", str(exc))
                     detail = " ".join(detail.split())[:240]
                     suffix = f": {detail}" if detail else ""
-                    if diagnostics is not None:
-                        diagnostics[source.name] = {
-                            "status": "failed", "vacancy_links": 0,
-                            "doctoral_candidates": 0, "matched_candidates": 0,
-                            "discovery_issues": 1, "detail_failures": 0,
-                        }
                     return [], [f"{source.name}: {type(exc).__name__}{suffix}"]
                 # Indexes can contain hundreds of unrelated staff jobs.
                 # Give actual doctoral listings first access to the per-source
@@ -385,20 +371,6 @@ async def discover(
                     "detail_failures": detail_failures,
                 }
             warnings = [f"{source.name}: {problems} discovery issues"] if problems else []
-            if diagnostics is not None:
-                status = (
-                    "partial" if problems or detail_failures else
-                    "discovered" if scoped else
-                    "verified_empty" if source.opt("verified_empty_marker")
-                    else "unverified_empty"
-                )
-                diagnostics[source.name] = {
-                    "status": status, "vacancy_links": len(result),
-                    "doctoral_candidates": sum(_doctoral_title(p.title) for p in scoped),
-                    "matched_candidates": 0,
-                    "discovery_issues": problems,
-                    "detail_failures": detail_failures,
-                }
             return scoped, warnings
 
         results = await asyncio.gather(*(one(config) for config in configs))

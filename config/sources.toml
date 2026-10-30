@@ -1685,16 +1685,19 @@ note = "Unverified candidate; official_research_jobs; pattern_pending; only acti
 [[board]]
 name = "ifau_sweden_labour"
 type = "link_scan"
-enabled = false
+enabled = true
 group = "research_institute"
 url = "https://www.ifau.se/en/About-IFAU/available-positions/"
-institution = "IFAU Sweden"
+institution = "IFAU - Institute for Evaluation of Labour Market and Education Policy"
 country = "Sweden"
 field_implied = false
-may_be_empty = false
+may_be_empty = true
+verified_empty_marker = "We don't have any open positions at the moment"
+verified_empty_reject_job_links = true
 source_timeout_seconds = 45.0
-link_pattern = "^$"
-note = "Unverified candidate; official_seasonal_empty; empty_marker_pending; only activate after stable job-identity parser and eligibility checks."
+link_pattern = '^https://www[.]ifau[.]se/en/About-IFAU/available-positions/[^/?#]+/?$'
+title_allow_pattern = '^(?:(?:Pre-?doctoral|Research)\s+(?:Assistant|Analyst|Fellow|Officer|Associate)|Ph[.]?D[.]?\s+(?:Student|Candidate))\b'
+note = "Current IFAU official page explicitly reports no openings (2026-10-30). Strict contemporaneous empty-marker and closed-archive exclusion; never count archived postdocs as new RA vacancies."
 
 [[board]]
 name = "liser_luxembourg_jobs"

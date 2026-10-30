@@ -170,7 +170,6 @@ jobs:
           for f in data/listings.ndjson data/seen.ndjson data/x_threads.ndjson \
                    data/career_jobs.ndjson data/career_health.json \
                    data/source_rotation.json data/life_sources_rotation.json \
-                   data/life_sciences_health.json \
                    data/life_sources_health.json \
                    docs/data/listings.json \
                    docs/data/health.json docs/feed.xml; do
