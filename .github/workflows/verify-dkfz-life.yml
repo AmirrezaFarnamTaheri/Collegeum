@@ -1,0 +1,21 @@
+name: verify-dkfz-life-source
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Verify DKFZ index job URLs and deadline gate
+        run: PYTHONPATH=src python3 tools/verify_life_dkfz.py

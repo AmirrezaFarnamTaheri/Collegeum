@@ -282,10 +282,13 @@ def test_vib_recruitment_calls_are_real_phd_roles_not_generic_programme_pages() 
         title="2026-2027 International PhD Call VIB CNL",
         country="Belgium", location="Leuven",
         description="VIB-KU Leuven Center for Neuroscience",
+        deadline=TODAY + timedelta(days=30),
     )
     match = life_sciences.classify_post(call, today=TODAY)
     assert match is not None
     assert match["research_priority"] == "related"
+    call.deadline = None
+    assert life_sciences.classify_post(call, today=TODAY) is None
     assert life_sciences.classify_post(
         post(title="PhD Programme", country="Belgium"), today=TODAY,
     ) is None
@@ -557,7 +560,7 @@ def test_programme_and_university_autumn_calls_require_deadline_detail() -> None
     )
     assert life_sciences._needs_detail(crg)
     assert life_sciences._needs_detail(vienna)
-    assert life_sciences.classify_post(vienna, today=TODAY) is not None
+    assert life_sciences.classify_post(vienna, today=TODAY) is None
     crg.deadline = date(2026, 11, 22)
     assert life_sciences.classify_post(crg, today=TODAY) is not None
     assert life_sciences.classify_post(crg, today=date(2026, 11, 23)) is None
