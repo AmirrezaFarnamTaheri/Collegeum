@@ -104,6 +104,29 @@ def main() -> None:
                     item["sitemap_job_urls"] = len(postings)
                     item["sitemap_phd_slug_urls"] = len(phd)
                     item["doctoral_samples"] = phd[:16]
+                    details = {}
+                    for link in phd[:4]:
+                        if not re.search(r"/(?:phd-|doctoral-|doktorand)", urlsplit(link).path):
+                            continue
+                        detail = client.get(link, use_cache=False)
+                        record = {
+                            "status": detail.status, "error": detail.error[:110],
+                        }
+                        if detail.ok:
+                            soup = BeautifulSoup(detail.text[:300000], "lxml")
+                            record["headings"] = [
+                                tag.get_text(" ", strip=True)[:200]
+                                for tag in soup.select("h1")[:3]
+                            ]
+                            record["text_prefix"] = soup.get_text(" ", strip=True)[:850]
+                            record["application_links"] = [
+                                urljoin(link, str(tag.get("href") or ""))[:190]
+                                for tag in soup.select("a[href]")[:100]
+                                if "apply" in tag.get_text(" ", strip=True).lower()
+                                or "bewerben" in tag.get_text(" ", strip=True).lower()
+                            ][:5]
+                        details[link] = record
+                    item["current_doctoral_details"] = details
             info[url] = item
     print(json.dumps(info, indent=2, ensure_ascii=False))
 
