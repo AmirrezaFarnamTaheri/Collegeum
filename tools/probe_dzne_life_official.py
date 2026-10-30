@@ -120,6 +120,18 @@ def main() -> None:
                             ]
                             record["text_prefix"] = soup.get_text(" ", strip=True)[:850]
                             record["html_prefix"] = detail.text[:750]
+                            if detail.text.lstrip().startswith("<?xml"):
+                                try:
+                                    xml = ElementTree.fromstring(detail.text)
+                                    record["xml_fields"] = [
+                                        {
+                                            "tag": node.tag.rsplit("}", 1)[-1],
+                                            "value": (node.text or "").strip()[:230],
+                                        }
+                                        for node in list(xml)[:55]
+                                    ]
+                                except ElementTree.ParseError:
+                                    record["xml_error"] = "parse_failed"
                             record["script_blocks"] = [
                                 {
                                     "type": tag.get("type"), "id": tag.get("id"),
