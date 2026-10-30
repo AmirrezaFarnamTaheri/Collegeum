@@ -32,7 +32,7 @@ def test_ifau_reuses_existing_source_and_an_explicit_empty_notice():
     assert cfg.enabled
     assert cfg.country == "Sweden"
     assert cfg.field_implied is False
-    assert cfg.opt("may_be_empty")
+    assert cfg.may_be_empty
     assert cfg.opt("verified_empty_reject_job_links")
     assert cfg.opt("verified_empty_marker") == (
         "We don't have any open positions at the moment"
