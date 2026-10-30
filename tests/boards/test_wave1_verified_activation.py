@@ -8,7 +8,7 @@ from tools.probe_source_expansion import NON_US_MANIFEST, read_candidates
 
 ACTIVATIONS = Path("config/approved_research_sources_wave1_20261029.csv")
 REGISTRY = Path("config/sources.toml")
-WAVE2 = {"wifo_austria_jobs", "ceps_brussels_research"}
+WAVE2 = {"wifo_austria_jobs", "ceps_brussels_research", "ifau_sweden_labour"}
 EXPECTED = {
     "tamu_public_policy": ("Predoctoral Research Assistant", "Postdoctoral Research Assistant"),
     "brandeis_business_econ": (

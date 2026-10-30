@@ -303,6 +303,7 @@ class LinkScanScraper(BaseScraper):
 
     # ---------------------------------------------------------------------------------
     def parse_postings(self, raw_data: list[Any]) -> list[JobPostSchema]:
+        self.verified_empty_evidence = False
         posts: list[JobPostSchema] = []
         for base, html in raw_data:
             soup = BeautifulSoup(html, "lxml")
@@ -354,6 +355,8 @@ class LinkScanScraper(BaseScraper):
                         self.discovery_parse_errors.append(
                             "Invalid verified no-vacancies hiring cycle dates"
                         )
+                if not self.discovery_parse_errors and raw_data:
+                    self.verified_empty_evidence = True
         if (
             not posts
             and self.opt("skip_unresolved_link_templates", False)

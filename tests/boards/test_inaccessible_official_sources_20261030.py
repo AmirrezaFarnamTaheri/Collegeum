@@ -20,8 +20,8 @@ def test_inaccessible_copenhagen_and_crest_not_scheduled_as_healthy():
     assert all(boards[name].enabled for name in RETAIN)
 
 
-def test_verified_count_excludes_only_two_failed_sources():
+def test_ifau_joins_verified_empty_coverage_without_reenabling_failed_sources():
     boards = load_board_sources(REGISTRY)
     assert len(boards) == 144
-    assert sum(source.enabled for source in boards) == 76
+    assert sum(source.enabled for source in boards) == 77
     assert len({source.name for source in boards}) == 144
