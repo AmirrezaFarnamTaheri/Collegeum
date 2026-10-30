@@ -18,6 +18,7 @@ URLS = (
     "https://jobvision.ir/jobs",
     "https://jobvision.ir/sitemap.xml",
     "https://jobvision.ir/jobs/1454248",
+    "https://jobvision.ir/jobs/keyword/%D8%AF%D8%A7%D8%AF%D9%87",
 )
 JOB = re.compile(r"^/jobs/[1-9]\d{3,10}(?:/[^/?#]+)?/?$")
 
@@ -60,6 +61,21 @@ def main() -> None:
             row = {"status": res.status, "error": res.error[:140], "bytes": len(res.content)}
             if res.ok:
                 row.update(inspect(res.text, url))
+                if url.endswith("sitemap.xml"):
+                    row["preview"] = res.text[:600]
+                soup = BeautifulSoup(res.text, "lxml")
+                script = soup.select_one('script[type="application/json"]')
+                if script:
+                    row["data_script_id"] = str(script.get("id") or "")
+                    row["data_script_size"] = len(script.get_text())
+                    row["data_script_prefix"] = script.get_text()[:160]
+                ld = soup.select_one('script[type="application/ld+json"]')
+                if ld and "/jobs/" in url:
+                    try:
+                        data = json.loads(ld.get_text())
+                        row["ld_keys"] = list(data)[:24] if isinstance(data, dict) else []
+                    except ValueError:
+                        row["ld_error"] = "invalid JSON-LD"
             rows[url] = row
     print(json.dumps(rows, ensure_ascii=False, indent=2))
 
