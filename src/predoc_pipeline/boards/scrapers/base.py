@@ -88,6 +88,8 @@ class BaseScraper(ABC):
         kw.setdefault("field_implied", self.cfg.field_implied)
         if self.opt("employer_required"):
             extra["employer_required"] = True
+        if self.opt("require_deadline"):
+            extra["require_deadline"] = True
         return JobPostSchema(**kw)
 
     # -- contract ------------------------------------------------------------------------
