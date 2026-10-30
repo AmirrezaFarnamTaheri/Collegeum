@@ -31,3 +31,19 @@ The existing 12-sources-per-run, source interleaving, job identities, atomic car
 Run full Python 3.11/3.12 test, lint and type-check gates; inspect Life Sciences export workflow artifacts and fresh health output after merge. Use a read-only GitHub runner to inspect **Bern, EMBL, ETH D-BSSE, DKFZ, Vienna BioCenter, Helsinki, ISTA** for official individual vacancies. Keep programme-only and JS-only responses disabled or clearly failing; only promote when real job URLs and degree/field/deadline checks pass.
 
 The separate **economics** 100-source roadmap in #56 remains: ESRI Ireland, LISER Luxembourg, IAB Germany; IFAU Sweden, VATT, Bank of Finland; HKUST/SMU; ANU/Sydney/Melbourne/Queensland; UNU-WIDER/SEO/CEPR; and Princeton RPDE/UCL/Brookings/IFS recovery. Do not add economic RA feeds into the Life Sciences PhD registry or miscount them as biology sources.
+
+## Read-only candidate-source recovery probe (GitHub runner)
+
+The [2026-10-30 read-only probe](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/41054115571) fetched seven configured candidate or problematic pages with HTTP 200 and robots-aware requests. Its broad keyword-link counts are **not** vacancy counts:
+
+| Source | Broad keyword anchors | Evidence / activation decision |
+| --- | ---: | --- |
+| University of Bern | 5 | Navigation, YouTube, student jobs and language links only; no vacancy-level proof, retain issue |
+| DKFZ Germany | 0 | Public jobs page no qualifying HTML anchors; remain disabled pending supported dynamic adapter |
+| EMBL | 5 | Official page links to `embl.wd103.myworkdayjobs.com/EMBL`; candidate Workday ATS recovery (multi-country location cannot be inferred) |
+| ETH D-BSSE | 9 | Mostly navigation, departmental pages and generic doctoral info; no single PhD vacancy confirmed |
+| Helsinki | 10 | Doctoral admissions/careers help pages and navigation; no confirmed individual jobs in inspected anchors |
+| ISTA Austria | 57 | Multiple career and navigation links; no claim of 57 vacancies or an active doctoral cohort |
+| Vienna BioCenter | 42 | Cross-institute campus and recruitment/navigation links; no employer-level individual PhD identities validated |
+
+**Next adapter work:** inspect EMBL's official Workday requisition JSON and employer/site-specific career location before enabling; re-probe the fixed ReachMee Linköping/SLU vacancy URLs in full-text biology classification. For Bern/DKFZ/ETH/Helsinki/ISTA/Vienna BioCenter, do not count generic navigation/doctoral-programme pages as live vacancies. Explicitly maintain disabled candidates rather than inflating coverage.
