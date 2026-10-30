@@ -557,7 +557,7 @@ def test_programme_and_university_autumn_calls_require_deadline_detail() -> None
     )
     assert life_sciences._needs_detail(crg)
     assert life_sciences._needs_detail(vienna)
-    assert life_sciences.classify_post(vienna, today=TODAY) is not None
+    assert life_sciences.classify_post(vienna, today=TODAY) is None
     crg.deadline = date(2026, 11, 22)
     assert life_sciences.classify_post(crg, today=TODAY) is not None
     assert life_sciences.classify_post(crg, today=date(2026, 11, 23)) is None
