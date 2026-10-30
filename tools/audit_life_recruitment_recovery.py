@@ -45,7 +45,10 @@ def main() -> None:
                     label = anchor.get_text(" ", strip=True)
                     if (parts.scheme == "https" and parts.hostname and
                             any(word in (href + " " + label).lower()
-                                for word in ("phd", "doctoral", "doctorand", "predoc", "vacanc", "job", "position"))):
+                                for word in (
+                                    "phd", "doctoral", "doctorand", "predoc",
+                                    "vacanc", "job", "position",
+                                )):
                         links.append({"url": href[:240], "label": label[:90]})
                 row["relevant_anchor_count"] = len(links)
                 row["samples"] = links[:12]
