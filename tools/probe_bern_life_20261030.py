@@ -16,6 +16,7 @@ from predoc_pipeline.ingest.http import PoliteClient
 URLS = [
     "https://jobs.unibe.ch/",
     "https://jobs.unibe.ch/job-vacancies/",
+    "https://jobs.unibe.ch/sitemap.xml",
     "https://karriere.unibe.ch/",
     "https://www.unibe.ch/university/organization/careers/job_vacancies/index_eng.html",
 ]
@@ -35,6 +36,11 @@ def main() -> None:
             if res.ok:
                 soup = BeautifulSoup(res.text[:500000], "lxml")
                 anchors = soup.select("a[href]")
+                sitemap_links = [
+                    loc.get_text(" ", strip=True)
+                    for loc in soup.select("loc")[:2000]
+                    if PATTERN.search(loc.get_text(" ", strip=True))
+                ]
                 jobs = [
                     {"text": anchor.get_text(" ", strip=True)[:120],
                      "url": urljoin(url, anchor.get("href"))[:260]}
@@ -44,6 +50,8 @@ def main() -> None:
                 row.update({
                     "anchors": len(anchors),
                     "recognized_job_links": len(jobs),
+                    "sitemap_job_links": len(sitemap_links),
+                    "sitemap_samples": sitemap_links[:8],
                     "samples": jobs[:10],
                     "title": soup.title.get_text(" ", strip=True)[:200]
                              if soup.title else "",
