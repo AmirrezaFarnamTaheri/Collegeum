@@ -303,7 +303,8 @@ class HelmholtzBiteScraper(BiteJobsScraper):
         for item in raw_data:
             if not isinstance(item, dict):
                 continue
-            post = by_url.get(item.get("url")) if isinstance(item.get("url"), str) else None
+            item_url = item.get("url")
+            post = by_url.get(item_url) if isinstance(item_url, str) else None
             custom = item.get("custom")
             if post is None or not isinstance(custom, dict):
                 continue
