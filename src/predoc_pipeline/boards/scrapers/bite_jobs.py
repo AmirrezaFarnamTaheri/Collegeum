@@ -23,6 +23,26 @@ _PATH = re.compile(r"/jobposting/[a-f0-9]{40,41}/?$", re.I)
 _SEARCH_API = "https://jobs.b-ite.com/api/v1/postings/search"
 _WIDGET_HOST = "cs-assets.b-ite.com"
 
+_HELMHOLTZ_KEY = re.compile(r"""var\s+apiKey\s*=\s*['"]([a-fA-F0-9]{40})['"]""")
+_HELMHOLTZ_EN = (
+    "https://cs-assets.b-ite.com/helmholtz-zentrum-muenchen/"
+    "jobs-api/main-listing-en.js"
+)
+_HELMHOLTZ_DE = (
+    "https://cs-assets.b-ite.com/helmholtz-zentrum-muenchen/"
+    "jobs-api/main-listing-de.js"
+)
+_HELMHOLTZ_SITE = "https://www.helmholtz-munich.de/en/career/jobs"
+_HELMHOLTZ_DE_SITE = "https://www.helmholtz-munich.de/karriere/stellenangebote"
+_HELMHOLTZ_JOB_HOST = "jobs.helmholtz-muenchen.de"
+_HELMHOLTZ_COHORTS = (
+    ("main-listing-en", "Homepage_englisch", "en",
+     _HELMHOLTZ_EN, _HELMHOLTZ_SITE),
+    ("main-listing-de", "Homepage_deutsch", "de",
+     _HELMHOLTZ_DE, _HELMHOLTZ_DE_SITE),
+)
+
+
 
 def _valid_posting_url(url: object, host: str, job_id: str) -> bool:
     """Reject third-party/redirect links; require the provider's exact job identity."""
@@ -52,7 +72,113 @@ class BiteJobsScraper(BaseScraper):
 
     type_name = "bite_jobs"
 
+    async def _fetch_helmholtz(self) -> list[Any]:
+        """Read both publisher-declared job cohorts without duplicate identities.
+
+        The employer's public B-ite widget exposes the API key, locale,
+        listing channel, recruitment filter and exact official vacancy host.
+        A successful page with only staff roles is not a PhD match.
+        """
+        if (
+            self.opt("widget_url") != _HELMHOLTZ_EN
+            or self.opt("url") != _HELMHOLTZ_SITE
+            or self.opt("origin") != _HELMHOLTZ_SITE
+            or self.opt("api_url") != _SEARCH_API
+            or self.opt("job_host") != _HELMHOLTZ_JOB_HOST
+        ):
+            raise ValueError("Unexpected Helmholtz B-ite public source configuration")
+        max_pages = int(self.opt("max_pages", 3))
+        if max_pages < 1 or max_pages > 10:
+            raise ValueError("Helmholtz B-ite max_pages must be 1..10")
+
+        unique: dict[str, Any] = {}
+        valid_cohorts = 0
+        for name, category, locale, widget, origin in _HELMHOLTZ_COHORTS:
+            try:
+                script = await self.http.get_text(widget)
+            except Exception as exc:  # noqa: BLE001 - other language may still work
+                self.discovery_fetch_errors.append(type(exc).__name__)
+                continue
+            public_key = _HELMHOLTZ_KEY.search(script)
+            required_call = f'api("{name}", 0, "homepage", "{category}", "{locale}",'
+            if public_key is None or required_call not in script:
+                self.discovery_parse_errors.append(
+                    "Helmholtz public recruitment widget contract changed"
+                )
+                continue
+            offset = 0
+            cohort_valid = False
+            for _ in range(max_pages):
+                payload = {
+                    "key": public_key.group(1), "channel": 0,
+                    "locale": locale,
+                    "sort": {"by": "title", "order": "asc"},
+                    "filter": {
+                        "locale": {"in": ["en", "de"]},
+                        "custom.Zuordnung": {"in": [category]},
+                    },
+                    "origin": origin, "page": {"offset": offset},
+                }
+                try:
+                    data = await self.http.post_json(_SEARCH_API, payload)
+                except Exception as exc:  # noqa: BLE001 - retain valid other pages
+                    self.discovery_fetch_errors.append(type(exc).__name__)
+                    break
+                if not isinstance(data, dict) or not isinstance(
+                    data.get("jobPostings"), list
+                ):
+                    self.discovery_parse_errors.append(
+                        "Invalid Helmholtz public recruitment response"
+                    )
+                    break
+                page = data.get("page")
+                if not isinstance(page, dict):
+                    self.discovery_parse_errors.append("Missing Helmholtz pagination")
+                    break
+                total = page.get("total")
+                if (
+                    type(total) is not int or total < 0
+                    or type(page.get("offset")) is not int
+                    or page["offset"] != offset
+                ):
+                    self.discovery_parse_errors.append(
+                        "Invalid Helmholtz pagination metadata"
+                    )
+                    break
+                cohort_valid = True
+                batch = data["jobPostings"]
+                for item in batch:
+                    # Invalid objects remain visible to the common parser,
+                    # rather than disappearing as a false healthy-empty feed.
+                    identity = item.get("id") if isinstance(item, dict) else None
+                    key = identity if isinstance(identity, str) else (
+                        f"invalid-{len(unique)}"
+                    )
+                    if key not in unique:
+                        unique[key] = item
+                offset += len(batch)
+                if offset >= total:
+                    break
+                if not batch:
+                    self.discovery_parse_errors.append(
+                        "Incomplete Helmholtz pagination"
+                    )
+                    break
+            else:
+                self.discovery_limits.append("Helmholtz B-ite page cap reached")
+            if cohort_valid:
+                valid_cohorts += 1
+
+        if not valid_cohorts:
+            raise ValueError("No valid public Helmholtz recruitment cohort")
+        return list(unique.values())
+
     async def fetch_raw_postings(self) -> list[Any]:
+        profile = self.opt("site_profile")
+        if profile == "helmholtz_munich":
+            return await self._fetch_helmholtz()
+        if profile not in (None, "zew"):
+            raise ValueError("Unknown B-ite source profile")
         widget = self.opt("widget_url")
         api = self.opt("api_url", _SEARCH_API)
         origin = self.opt("origin")
@@ -135,8 +261,13 @@ class BiteJobsScraper(BaseScraper):
         return rows
 
     def parse_postings(self, raw_data: list[Any]) -> list[JobPostSchema]:
-        host = self.opt("job_host", "jobs.zew.de")
-        if host != "jobs.zew.de":
+        profile = self.opt("site_profile")
+        expected = (
+            _HELMHOLTZ_JOB_HOST if profile == "helmholtz_munich"
+            else "jobs.zew.de"
+        )
+        host = self.opt("job_host", expected)
+        if host != expected:
             raise ValueError("Unexpected B-ite vacancy hostname")
         posts = []
         for item in raw_data:

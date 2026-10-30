@@ -110,10 +110,30 @@ def test_probe_all_enabled_sources_across_disjoint_offset_pages() -> None:
         if report["next_offset"] is None:
             break
         offset = report["next_offset"]
-    assert len(ids) == 36
+    assert len(ids) == 37
+    assert "life_special_de_helmholtz_munich" in ids
 
 
 @pytest.mark.parametrize("offset", [-1, 257, 999])
 def test_probe_rejects_unbounded_offsets(offset: int) -> None:
     with pytest.raises(ValueError, match="offset must be between"):
         check_sources(None, CATALOG, offset=offset)
+
+
+def test_specialized_bite_source_requires_adapter_probe_not_html_scraping() -> None:
+    """An ATS's JS shell must not produce an unsupported-source failure."""
+
+    class Client:
+        def get(self, _url: str, **_kwargs):
+            raise AssertionError("Do not GET a JS ATS shell as an HTML vacancy list")
+
+    report = check_sources(
+        Client(), CATALOG, region="specialist_institutes", limit=1,
+    )
+    entry = report["sources"]["life_special_de_helmholtz_munich"]
+    assert report["checked"] == 1
+    assert entry["status"] == "requires_adapter_probe"
+    assert entry["adapter"] == "bite_jobs"
+    assert entry["vacancy_links"] == 0
+    assert entry["urls_checked"] == 0
+    assert entry["probe_workflow"] == "verify-life-helmholtz-live"

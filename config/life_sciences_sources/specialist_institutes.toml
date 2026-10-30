@@ -78,16 +78,24 @@ note = "CANDIDATE ONLY: official institution/programme locator; actual recruitme
 
 [[board]]
 name = "life_special_de_helmholtz_munich"
-type = "link_scan"
+type = "bite_jobs"
 group = "life_sciences"
-enabled = false
-url = "https://www.helmholtz-munich.de/"
-link_pattern = '^$'
+enabled = true
+url = "https://www.helmholtz-munich.de/en/career/jobs"
+site_profile = "helmholtz_munich"
+probe_workflow = "verify-life-helmholtz-live"
+widget_url = "https://cs-assets.b-ite.com/helmholtz-zentrum-muenchen/jobs-api/main-listing-en.js"
+api_url = "https://jobs.b-ite.com/api/v1/postings/search"
+origin = "https://www.helmholtz-munich.de/en/career/jobs"
+job_host = "jobs.helmholtz-muenchen.de"
+max_pages = 3
+min_interval = 2.0
+may_be_empty = true
+field_implied = false
 country = "Germany"
 institution = "Helmholtz Munich"
-verification = "candidate_unverified"
-note = "CANDIDATE ONLY: official institution/programme locator; actual recruitment URL, doctoral-call dates and supported parser not verified."
-
+verification = "verified_bilingual_official_bite_api"
+note = "Official B-ite English+German employer vacancy feeds verified via read-only GitHub runners on 2026-10-30; 6 English and 10 German postings with overlapping identities, 0 current PhD roles. No subscriber publication unless doctoral criteria pass."
 [[board]]
 name = "life_special_de_leibniz_age"
 type = "link_scan"

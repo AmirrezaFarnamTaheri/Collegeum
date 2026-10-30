@@ -103,6 +103,21 @@ def check_sources(
         "sources": {},
     }
     for source in sources[offset:offset + limit]:
+        if source.type == "bite_jobs":
+            # This adapter reads a public JSON recruitment API through an
+            # employer-published widget; its landing page is a JS shell. Do
+            # not mistake raw HTML with no vacancy anchors for source failure,
+            # or claim a healthy source without running its real adapter.
+            report["sources"][source.name] = {
+                "status": "requires_adapter_probe",
+                "adapter": "bite_jobs",
+                "probe_workflow": str(source.opt("probe_workflow", "")),
+                "http_status": 0,
+                "vacancy_links": 0,
+                "urls_total": 1, "urls_checked": 0, "endpoints": [],
+            }
+            report["checked"] += 1
+            continue
         urls = source.opt("urls") or (
             [source.opt("url")] if source.opt("url") else []
         )
