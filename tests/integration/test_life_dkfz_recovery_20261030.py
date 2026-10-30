@@ -25,7 +25,7 @@ def get_source():
 
 def test_dkfz_is_one_existing_real_job_index_not_an_extra_candidate():
     source = get_source()
-    assert source.enabled
+    assert not source.enabled
     assert source.type == "link_scan"
     assert source.country == "Germany"
     assert source.opt("url") == "https://jobs.dkfz.de/en/jobs"
