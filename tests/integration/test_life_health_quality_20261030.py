@@ -5,8 +5,6 @@ import asyncio
 import json
 from datetime import date
 
-import pytest
-
 from predoc_pipeline.boards.config import HttpConfig
 from predoc_pipeline.boards.models import JobPostSchema
 from predoc_pipeline.ingest import life_sciences
@@ -26,7 +24,10 @@ def _config(tmp_path):
         "".join(
             '[[board]]\nname="life_' + name + '"\ntype="link_scan"\n'
             'url="https://example.org/jobs"\nlink_pattern="example.org/job/"\n'
-            + ('verified_empty_marker="No open PhD positions"\n' if name == "confirmed_empty" else "")
+            + (
+                'verified_empty_marker="No open PhD positions"\n'
+                if name == "confirmed_empty" else ""
+            )
             for name in ("live", "uncertain_empty", "confirmed_empty", "partial", "failed")
         ),
         encoding="utf-8",
