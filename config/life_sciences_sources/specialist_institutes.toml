@@ -83,6 +83,7 @@ group = "life_sciences"
 enabled = true
 url = "https://www.helmholtz-munich.de/en/career/jobs"
 site_profile = "helmholtz_munich"
+probe_workflow = "verify-life-helmholtz-live"
 widget_url = "https://cs-assets.b-ite.com/helmholtz-zentrum-muenchen/jobs-api/main-listing-en.js"
 api_url = "https://jobs.b-ite.com/api/v1/postings/search"
 origin = "https://www.helmholtz-munich.de/en/career/jobs"
