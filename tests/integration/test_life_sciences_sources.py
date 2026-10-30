@@ -160,7 +160,10 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     assert len(registered) - len(active) == 187
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
-    assert all(source.type in {"rss", "link_scan", "bite_jobs", "dzne_sitemap"} for source in active)
+    assert all(
+        source.type in {"rss", "link_scan", "bite_jobs", "dzne_sitemap"}
+        for source in active
+    )
     assert {s.name for s in active if s.type == "bite_jobs"} == {
         "life_special_de_helmholtz_munich"
     }
@@ -242,8 +245,13 @@ def test_duplicate_provider_name_across_catalogues_is_rejected(tmp_path: Path) -
     directory = tmp_path / "life_sciences_sources"
     directory.mkdir()
     original.write_text(
-        '[[board]]\nname = "life_same"\ntype = "link_scan"\n'
-        'url = "https://example.org/jobs"\nlink_pattern = "example.org"\n',
+        '[[board]]
+name = "life_same"
+type = "link_scan"
+'
+        'url = "https://example.org/jobs"
+link_pattern = "example.org"
+',
         encoding="utf-8",
     )
     (directory / "regional.toml").write_text(
@@ -280,8 +288,13 @@ def test_doctoral_posts_are_prioritized_when_a_board_has_many_staff_jobs(
 ) -> None:
     board = tmp_path / "feed.toml"
     board.write_text(
-        '[[board]]\nname="life_test"\ntype="link_scan"\n'
-        'url="https://example.org/jobs"\nlink_pattern="example.org"\n',
+        '[[board]]
+name="life_test"
+type="link_scan"
+'
+        'url="https://example.org/jobs"
+link_pattern="example.org"
+',
         encoding="utf-8",
     )
 
