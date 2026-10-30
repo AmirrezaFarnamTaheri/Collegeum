@@ -156,11 +156,11 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     assert len(names) == len(set(names))
     assert len(registered) == 225
     active = [source for source in registered if source.enabled]
-    assert len(active) == 37
-    assert len(registered) - len(active) == 188
+    assert len(active) == 38
+    assert len(registered) - len(active) == 187
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
-    assert all(source.type in {"rss", "link_scan", "bite_jobs"} for source in active)
+    assert all(source.type in {"rss", "link_scan", "bite_jobs", "dzne_sitemap"} for source in active)
     assert {s.name for s in active if s.type == "bite_jobs"} == {
         "life_special_de_helmholtz_munich"
     }
@@ -257,7 +257,7 @@ def test_duplicate_provider_name_across_catalogues_is_rejected(tmp_path: Path) -
 def test_source_round_robin_covers_every_enabled_provider(tmp_path: Path) -> None:
     journal = tmp_path / "life_rotation.json"
     enabled = {s.name for s in life_sciences.load_life_sources(CATALOG) if s.enabled}
-    assert len(enabled) == 37
+    assert len(enabled) == 38
     seen: set[str] = set()
     for iteration in range(4):
         selected = life_sciences.select_sources(CATALOG, journal)
@@ -373,7 +373,7 @@ def test_new_candidate_catalogues_remain_explicitly_disabled() -> None:
     assert len(target) == 105
     recovered = [entry for entry in target if entry.enabled]
     assert {entry.name for entry in recovered} == {
-        "life_special_de_helmholtz_munich"
+        "life_special_de_helmholtz_munich", "life_special_de_dzne"
     }
     candidates = [entry for entry in target if not entry.enabled]
     assert all(entry.opt("link_pattern") == "^$" for entry in candidates)
