@@ -126,6 +126,10 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         return None
     if WRONG_ROLE.search(post.title):
         return None
+    # The official job-detail API may explicitly close applications even
+    # before the advertised date, or without providing a date at all.
+    if post.extra.get("closed"):
+        return None
     if APPLICANT_REQUIRES_PHD.search(post.description_snippet or ""):
         return None
     # Board and university boilerplate often mentions unrelated research
@@ -183,7 +187,7 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     if not valid or len(post.url) > 1024 or not 5 <= len(post.title) <= 500:
         return None
     key = "career:" + hashlib.sha256(post.url.encode("utf-8")).hexdigest()[:32]
-    return {
+    result = {
         "key": key, "category": CATEGORY, "scope": "",
         "title": post.title[:200],
         "employer": (post.institution or "Research institution")[:160],
@@ -192,6 +196,20 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         "research_priority": "focus" if primary else "related",
         "funding_status": "unverified",
     }
+    # Retain authoritative vacancy metadata already extracted from the job
+    # detail. The CSV and later status audits cannot reconstruct discarded
+    # deadlines, application instructions or subject classifications.
+    # Do not set availability=active: a dated advertisement is not proof
+    # that a previously closed listing has reopened.
+    if post.deadline is not None:
+        result["deadline"] = post.deadline.isoformat()
+        if post.deadline_text:
+            result["deadline_note"] = post.deadline_text.strip()[:160]
+    if post.date_posted is not None:
+        result["date_posted"] = post.date_posted.isoformat()
+    if post.fields_of_research:
+        result["research_fields"] = post.fields_of_research.strip()[:240]
+    return result
 
 
 def load_life_sources(sources_path: str | Path) -> list[Any]:
