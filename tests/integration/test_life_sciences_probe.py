@@ -117,3 +117,20 @@ def test_probe_all_enabled_sources_across_disjoint_offset_pages() -> None:
 def test_probe_rejects_unbounded_offsets(offset: int) -> None:
     with pytest.raises(ValueError, match="offset must be between"):
         check_sources(None, CATALOG, offset=offset)
+
+
+
+def test_specialized_bite_feed_uses_dedicated_live_probe_not_html_link_scanner() -> None:
+    class NoGenericFetch:
+        def get(self, _url: str, **_kwargs):
+            raise AssertionError("The B-ite source is not an HTML link_scan endpoint")
+
+    report = check_sources(
+        NoGenericFetch(), CATALOG,
+        region="specialist_institutes", limit=16, offset=0,
+    )
+    result = report["sources"]["life_special_de_helmholtz_munich"]
+    assert result["status"] == "requires_adapter_probe"
+    assert result["vacancy_links"] == 0
+    assert result["urls_checked"] == 0
+    assert "verify-life-helmholtz-bite-integration" in result["probe_workflow"]
