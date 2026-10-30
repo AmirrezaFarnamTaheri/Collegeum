@@ -163,7 +163,7 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     current = today or datetime.now(UTC).date()
     # Cohort recruitment landing pages frequently remain indexed after
     # applications close. A dated *current* deadline is mandatory for calls.
-    if PHD_CALL.search(post.title) and post.deadline is None:
+    if (PHD_CALL.search(post.title) or post.extra.get("require_deadline")) and post.deadline is None:
         return None
     if post.deadline and post.deadline < current:
         return None
@@ -235,6 +235,8 @@ def _needs_detail(post: JobPostSchema) -> bool:
     """Only enrich a doctoral card if research field or location is incomplete."""
     if not _doctoral_title(post.title):
         return False
+    if post.extra.get("require_deadline") and post.deadline is None:
+        return True
     if PHD_CALL.search(post.title) or re.search(
         r"\b(?:autumn|spring|winter)\s+call\b", post.title, re.I,
     ):
