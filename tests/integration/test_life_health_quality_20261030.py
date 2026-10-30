@@ -54,6 +54,7 @@ def test_discovery_records_per_source_outcomes_without_false_healthy_empty(
             self.discovery_fetch_errors = []
             self.discovery_parse_errors = []
             self.discovery_limits = []
+            self.verified_empty_evidence = cfg.name.endswith('_confirmed_empty')
 
         async def run(self):
             if self.name.endswith("_failed"):
@@ -137,7 +138,8 @@ def test_health_journal_preserves_prior_outcomes_when_other_sources_rotate(
     )
     assert (count, errors) == (0, [])
     updated = read_life_health(health)
-    assert updated["sources"]["life_a"]["last_success_at"] == initial["sources"]["life_a"]["last_success_at"]
+    assert (updated["sources"]["life_a"]["last_success_at"]
+            == initial["sources"]["life_a"]["last_success_at"])
     assert updated["sources"]["life_b"]["status"] == "unverified_empty"
     assert updated["checked_this_run"] == 1
     assert updated["catalogue"]["enabled"] == 2
