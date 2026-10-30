@@ -12,10 +12,10 @@ from pathlib import Path
 
 import pytest
 
-from predoc_pipeline.boards.config import SourceConfig
+from predoc_pipeline.boards.config import HttpConfig, SourceConfig
 from predoc_pipeline.boards.scrapers.base import DiscoveryFetchError
 from predoc_pipeline.boards.scrapers.bite_jobs import HelmholtzBiteScraper
-from predoc_pipeline.ingest.life_sciences import classify_post, load_life_sources
+from predoc_pipeline.ingest.life_sciences import classify_post, discover, load_life_sources
 
 API = "https://jobs.b-ite.com/api/v1/postings/search"
 URL = "https://www.helmholtz-munich.de/karriere/stellenangebote"
@@ -180,3 +180,45 @@ def test_source_rejects_untrusted_origin_configuration():
     with pytest.raises(DiscoveryFetchError):
         asyncio.run(scraper.run())
     assert fake.calls == []
+
+
+
+def test_official_empty_total_is_verified_empty_not_failed():
+    fake = FixtureHttp({0: {"jobPostings": [], "page": {"offset": 0, "total": 0}}})
+    scraper = HelmholtzBiteScraper(cfg(), fake)
+    posts, _ = asyncio.run(scraper.run())
+    assert posts == []
+    assert scraper.verified_empty_evidence
+    assert not scraper.discovery_parse_errors
+
+
+def test_life_sciences_pipeline_accepts_official_adapter_without_publishing_staff(
+    monkeypatch,
+):
+    from predoc_pipeline.ingest import life_sciences
+
+    rows = [
+        job(ID1, title="Senior Scientist (f/m/x) in Metabolomics"),
+        job(ID2, title="Student Assistant in Bioinformatics"),
+    ]
+    fake = FixtureHttp({0: {"jobPostings": rows, "page": {"offset": 0, "total": 2}}})
+
+    class ClientContext:
+        async def __aenter__(self):
+            return fake
+
+        async def __aexit__(self, *args):
+            return None
+
+    monkeypatch.setattr(life_sciences, "build_http", lambda _cfg: ClientContext())
+    diagnostics = {}
+    posts, errors = asyncio.run(discover(
+        Path("config/life_sciences.toml"), HttpConfig(max_retries=0),
+        selected_names={"life_special_de_helmholtz_munich"},
+        diagnostics=diagnostics,
+    ))
+    assert not errors
+    assert [p.url for p in posts] == [row["url"] for row in rows]
+    assert diagnostics["life_special_de_helmholtz_munich"]["status"] == "discovered"
+    assert diagnostics["life_special_de_helmholtz_munich"]["doctoral_candidates"] == 0
+    assert all(classify_post(p, today=date(2026, 10, 30)) is None for p in posts)
