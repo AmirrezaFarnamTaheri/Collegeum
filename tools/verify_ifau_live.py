@@ -17,7 +17,8 @@ def main() -> None:
     ) as client:
         response = client.get(str(cfg.opt("url")), use_cache=False)
         if not response.ok:
-            raise RuntimeError(f"Official IFAU index unreachable: {response.error or response.status}")
+            detail = response.error or response.status
+            raise RuntimeError(f"Official IFAU index unreachable: {detail}")
         spider = LinkScanScraper(cfg, client)
         jobs = spider.parse_postings([(str(cfg.opt("url")), response.text)])
         outcome = {
