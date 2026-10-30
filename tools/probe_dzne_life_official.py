@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import re
 from urllib.parse import urljoin, urlsplit
+from xml.etree import ElementTree
 
 from bs4 import BeautifulSoup
 
@@ -81,6 +82,28 @@ def main() -> None:
                 item.update(analyze(response.text, url))
                 if url.endswith("sitemap.xml"):
                     item["xml_prefix"] = response.text[:350]
+                    try:
+                        root = ElementTree.fromstring(response.text)
+                        locs = [
+                            node.text.strip() for node in root.iter()
+                            if node.tag.rsplit("}", 1)[-1] == "loc"
+                            and isinstance(node.text, str) and node.text.strip()
+                        ]
+                    except ElementTree.ParseError:
+                        locs = []
+                    postings = [
+                        x for x in locs
+                        if urlsplit(x).hostname == "jobs.dzne.de"
+                        and re.search(r"/(?:de|en)/(?:p/[^/]+/)?jobs/\d+/", urlsplit(x).path)
+                    ]
+                    phd = [
+                        link for link in postings
+                        if re.search(r"phd|doktorand|doctoral|promotion", link, re.I)
+                    ]
+                    item["sitemap_total_urls"] = len(locs)
+                    item["sitemap_job_urls"] = len(postings)
+                    item["sitemap_phd_slug_urls"] = len(phd)
+                    item["doctoral_samples"] = phd[:16]
             info[url] = item
     print(json.dumps(info, indent=2, ensure_ascii=False))
 
