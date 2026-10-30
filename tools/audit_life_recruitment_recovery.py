@@ -48,7 +48,7 @@ def main() -> None:
                                 for word in (
                                     "phd", "doctoral", "doctorand", "predoc",
                                     "vacanc", "job", "position",
-                                )):
+                                ))):
                         links.append({"url": href[:240], "label": label[:90]})
                 row["relevant_anchor_count"] = len(links)
                 row["samples"] = links[:12]
