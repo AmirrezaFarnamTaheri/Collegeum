@@ -21,3 +21,5 @@ jobs:
       - run: uv sync --locked
       - name: Verify bounded official B-ite search JSON without publication
         run: PYTHONPATH=src python3 tools/verify_helmholtz_public_search.py
+      - name: Verify German official B-ite recruitment cohort
+        run: PYTHONPATH=src python3 tools/verify_helmholtz_german.py
