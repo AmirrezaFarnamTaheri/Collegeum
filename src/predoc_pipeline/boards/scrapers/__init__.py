@@ -2,6 +2,7 @@
 
 from . import (  # noqa: F401
     bite_jobs,
+    dzne_sitemap,
     emply_embedded,
     eth_softfactors,
     link_scan,
