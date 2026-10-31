@@ -65,3 +65,61 @@ def test_preserve_individual_employer_url_identities_and_delivery_receipts() -> 
     workflow = (ROOT / ".github/workflows/pipeline.yml").read_text()
     assert "data/telegram_state.json" in workflow
     assert "data/seen.ndjson" in workflow
+
+
+
+def test_life_journal_ack_only_releases_saved_not_unverified_candidates(
+    tmp_path, monkeypatch,
+) -> None:
+    from datetime import date
+
+    from predoc_pipeline.boards.config import HttpConfig
+    from predoc_pipeline.boards.models import JobPostSchema
+    from predoc_pipeline.boards.scrapers.linkedin_scheduler import QueryLedger
+    from predoc_pipeline.ingest import life_sciences
+
+    saved = tmp_path / "linkedin_life.json"
+    ledger = QueryLedger("life_linkedin", max_items=1500)
+    pair = ("PhD epigenetics", "Switzerland")
+    now = datetime(2026, 11, 1, 8, tzinfo=UTC)
+    ledger.request(pair, now=now)
+    ledger.accept_page(
+        pair,
+        [
+            {"id": "5980000000", "title": "PhD in Epigenetic Regulation"},
+            {"id": "5980000001", "title": "PhD in Epigenetic Regulation"},
+        ],
+        now=now,
+    )
+    ledger.save(saved)
+    registry = tmp_path / "life.toml"
+    registry.write_text(
+        '[[board]]\nname="life_linkedin"\ntype="linkedin"\n'
+        'enabled=true\nrequire_deadline=true\n'
+        f'checkpoint_path="{saved}"\nmax_replay_items=1500\n',
+        encoding="utf-8",
+    )
+
+    def post(ident: str, deadline: date | None) -> JobPostSchema:
+        return JobPostSchema(
+            source="life_linkedin", title="PhD in Epigenetic Regulation",
+            url=f"https://www.linkedin.com/jobs/view/{ident}",
+            institution="University of Zurich",
+            country="Switzerland", location="Zurich, Switzerland",
+            deadline=deadline, extra={"require_deadline": True},
+        )
+
+    async def discover(_path, _http, *, selected_names, **_extra):
+        assert selected_names == {"life_linkedin"}
+        return [post("5980000000", date(2026, 12, 15)),
+                post("5980000001", None)], []
+
+    monkeypatch.setattr(life_sciences, "discover", discover)
+    journal = tmp_path / "career.ndjson"
+    count, errors = life_sciences.poll_life_sciences(
+        journal, sources_path=registry, http_config=HttpConfig(),
+    )
+    assert count == 1 and errors == []
+    replay = QueryLedger.load(saved, "life_linkedin", max_items=1500)
+    assert {item["id"] for item in replay.items(now=now)} == {"5980000001"}
+    assert replay.counts()["acknowledged_seen"] == 1
