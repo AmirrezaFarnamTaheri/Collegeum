@@ -72,6 +72,7 @@ COUNTRY_EXCLUDE = frozenset(("Europe", "United Kingdom", "United States", "Canad
 # Match only exact employer vacancy identities, never broad project titles.
 REVIEWED_NON_LIFE_VACANCIES = frozenset((
     "https://jobs.unibe.ch/job-vacancies/phd-position-nccr-genesis-remote-sensing-of-microorganisms-in-extreme-environments/a5825edd-e430-405e-a30e-935d10b872db",
+    "https://jobs.unibe.ch/job-vacancies/phd-position-in-multisensory-development/63cc79b4-88b8-4d0b-b4df-67ad952ed3de",
 ))
 APPLICANT_REQUIRES_PHD = re.compile(
     r"\b(?:applicants?|candidates?|you)\s+"
