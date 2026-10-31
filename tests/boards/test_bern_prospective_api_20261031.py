@@ -180,9 +180,10 @@ def test_official_zero_total_is_healthy_empty_only_when_metadata_agrees():
 
 
 def test_fake_host_or_job_viewkey_mismatch_cannot_make_a_vacancy():
-    tampered = _job(url=PHD_URL.replace(
-        "jobs.unibe.ch", "jobs.unibe.ch.attacker.example"
-    ))
+    tampered = _job(
+        url=PHD_URL.replace("jobs.unibe.ch", "jobs.unibe.ch.attacker.example"),
+        viewkey="aaaa53ac-d531-4ac1-bc57-592090585e19",
+    )
     mismatch = _job(viewkey="ffffffff-ffff-ffff-ffff-ffffffffffff")
     scraper = SCRAPERS["prospective_jobs"](
         _config(), FakeHttp({0: _page(0, [tampered, mismatch, _job()], 3)})
