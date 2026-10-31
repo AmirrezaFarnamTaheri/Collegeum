@@ -176,6 +176,14 @@ class LinkedInScraper(BaseScraper):
         failures = 0
         try:
             while queue and self.search_diagnostics["requests"] < request_budget:
+                # Stop BEFORE downloading another page if all its candidates
+                # could not be saved in the atomic replay checkpoint.
+                if len(ledger.state["spool"]) >= ledger.max_items - 100:
+                    self.search_diagnostics["backpressure"] = True
+                    self.discovery_limits.append(
+                        "LinkedIn replay backlog requires downstream processing",
+                    )
+                    break
                 remaining = wall_seconds - (time.monotonic() - started)
                 if remaining <= 0.5:
                     self.search_diagnostics["time_budget_reached"] = True
@@ -226,10 +234,11 @@ class LinkedInScraper(BaseScraper):
                     self.discovery_fetch_errors.append("LinkedIn access challenge")
                     self.search_diagnostics["access_limited"] = True
                     break
-                if not cards and "data-entity-urn" in html:
+                if not cards and (not html.strip() or "data-entity-urn" in html):
+                    # Empty bodies are not verified empty job results.
                     ledger.fail(pair, now=self._scheduler_now())
                     self.discovery_parse_errors.append(
-                        "LinkedIn listing cards could not be parsed",
+                        "LinkedIn empty or unparseable vacancy response",
                     )
                     continue
                 try:
@@ -263,7 +272,8 @@ class LinkedInScraper(BaseScraper):
             # Replay before persisting so expiration and cursor advancement
             # live in the same atomic state checkpoint. The workflow commits
             # this file alongside the output journals, not separately.
-            raw = ledger.items(now=self._scheduler_now())
+            batch_size = int(self.opt("emit_per_run", 350))
+            raw = ledger.items(now=self._scheduler_now(), limit=batch_size)
             ledger.save(path)
         self.search_diagnostics.update(ledger.counts())
         self.search_diagnostics["unprocessed_selected"] = len(queue)
