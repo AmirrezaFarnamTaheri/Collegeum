@@ -116,6 +116,48 @@ jobs:
                   report[name] = data
           print(json.dumps(report, ensure_ascii=False, indent=2))
           PY
+      - name: Inspect public Prospective career medium feed safely
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee bern-medium-probe.json
+          import json
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          urls = {
+              "medium": "https://ohws.prospective.ch/public/v1/medium/1001892",
+              "legacy_job_center": "https://ohws.prospective.ch/public/v2/careercenter/1001892/?lang=en",
+          }
+          report = {}
+          with PoliteClient(
+              user_agent="Collegeum-BernSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=15, per_host_delay=3, respect_robots=True,
+          ) as http:
+              for name, url in urls.items():
+                  result = http.get(url, use_cache=False)
+                  entry = {"status": result.status, "ok": result.ok,
+                           "error": str(result.error)[:160],
+                           "bytes": len(result.content)}
+                  if result.ok:
+                      try:
+                          body = json.loads(result.text)
+                          entry["payload_type"] = type(body).__name__
+                          if isinstance(body, dict):
+                              entry["keys"] = list(body)[:35]
+                              entry["field_types"] = {
+                                  k: type(v).__name__ for k, v in list(body.items())[:20]
+                              }
+                              for k, v in list(body.items()):
+                                  if isinstance(v, list):
+                                      entry["array_" + k] = {"length": len(v),
+                                          "first_keys": list(v[0])[:15] if v and
+                                          isinstance(v[0], dict) else []}
+                          if isinstance(body, list):
+                              entry["count"] = len(body)
+                              entry["first_keys"] = list(body[0])[:25] if body and isinstance(body[0], dict) else []
+                      except (ValueError, TypeError):
+                          entry["text_start"] = result.text[:180]
+                  report[name] = entry
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -123,4 +165,5 @@ jobs:
           path: |
             bern-index-probe.json
             bern-api-hints.json
+            bern-medium-probe.json
           retention-days: 14
