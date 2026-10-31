@@ -66,6 +66,12 @@ def _econ_doctoral_admission_title(title: str) -> bool:
     )
 
 
+_DOCTORATE_REQUIRED = re.compile(
+    r"\b(?:ph\.?d\.?|doctoral degree)\s+(?:required|essential|mandatory)\b",
+    re.I,
+)
+
+
 @dataclass
 class Verdict:
     keep: bool
@@ -176,6 +182,14 @@ class RelevanceFilter:
         econ_doctoral_admission = (
             post.source == "linkedin" and _econ_doctoral_admission_title(title)
         )
+
+        # A PhD-qualified job is not a doctoral intake or a predoc. This
+        # remains true when its employer and subject are otherwise in scope.
+        if (
+            post.source == "linkedin" and not econ_doctoral_admission
+            and _DOCTORATE_REQUIRED.search(title)
+        ):
+            return Verdict(False, reason="requires-phd")
 
         if self._any(self.exclude, title) and not strong_t and not econ_doctoral_admission:
             return Verdict(False, reason="excluded-title")
