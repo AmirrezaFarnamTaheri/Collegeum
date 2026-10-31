@@ -209,7 +209,7 @@ class LinkedInScraper(BaseScraper):
                 self.search_diagnostics["requests"] += 1
                 try:
                     html = await asyncio.wait_for(
-                        self.http.get_text(url), timeout=remaining,
+                        self.http.get_text(url, stop_on_429=True), timeout=remaining,
                     )
                 except TimeoutError:
                     # No index advancement and no false full-coverage claim.
