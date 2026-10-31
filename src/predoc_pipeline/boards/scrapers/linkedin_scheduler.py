@@ -128,7 +128,7 @@ class QueryLedger:
                 raise ValueError("Invalid LinkedIn query checkpoint")
             if not isinstance(row.get("keyword"), str) or not isinstance(row.get("location"), str):
                 raise ValueError("Invalid LinkedIn query identity")
-            for field in ("last_complete_at", "last_attempt_at", "retry_after"):
+            for field in ("last_complete_at", "last_completed_at", "last_attempt_at", "retry_after"):
                 _read_time(row.get(field))
             pending = row.get("pending")
             if pending is not None:
@@ -200,7 +200,8 @@ class QueryLedger:
         key = query_key(self.source, keyword, location)
         return cast(dict[str, Any], self.state["queries"].setdefault(key, {
             "keyword": keyword, "location": location,
-            "last_complete_at": None, "last_attempt_at": None,
+            "last_complete_at": None, "last_completed_at": None,
+            "last_attempt_at": None,
             "retry_after": None, "pending": None, "status": "new",
             "coverage_gap": False,
         }))
@@ -237,7 +238,11 @@ class QueryLedger:
                 pending.append((attempt or datetime.min.replace(tzinfo=UTC), key, pair))
                 continue
             completed = _read_time(row.get("last_complete_at"))
-            if completed is None or now - completed >= timedelta(hours=cooldown_hours):
+            cooldown_anchor = _read_time(row.get("last_completed_at")) or completed
+            if completed is None or (
+                cooldown_anchor is not None
+                and now - cooldown_anchor >= timedelta(hours=cooldown_hours)
+            ):
                 fresh.append((completed or datetime.min.replace(tzinfo=UTC), key, pair))
         fresh.sort()
         pending.sort()
@@ -340,6 +345,7 @@ class QueryLedger:
         row["retry_after"] = None
         if len(cards) < PAGE_FULL_AT:
             row["last_complete_at"] = progress["started_at"]
+            row["last_completed_at"] = _stamp(now)
             row["coverage_gap"] = bool(progress.get("coverage_gap"))
             row["pending"] = None
             row["status"] = "complete_with_gap" if row["coverage_gap"] else "complete"
