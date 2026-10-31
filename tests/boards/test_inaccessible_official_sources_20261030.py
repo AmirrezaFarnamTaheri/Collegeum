@@ -4,7 +4,7 @@ from pathlib import Path
 from predoc_pipeline.boards.config import load_board_sources
 
 REGISTRY = Path("config/sources.toml")
-QUARANTINED = {"crest_jobs", "copenhagen"}
+QUARANTINED = {"crest_jobs", "copenhagen", "mannheim_econ"}
 RETAIN = {
     "tamu_public_policy", "brandeis_business_econ",
     "urban_institute_policy", "federal_reserve_system_jobs",
@@ -12,7 +12,7 @@ RETAIN = {
 }
 
 
-def test_inaccessible_copenhagen_and_crest_not_scheduled_as_healthy():
+def test_robots_denied_providers_are_not_scheduled_as_healthy():
     boards = {source.name: source for source in load_board_sources(REGISTRY)}
     for name in QUARANTINED:
         assert boards[name].enabled is False
@@ -23,5 +23,5 @@ def test_inaccessible_copenhagen_and_crest_not_scheduled_as_healthy():
 def test_ifau_joins_verified_empty_coverage_without_reenabling_failed_sources():
     boards = load_board_sources(REGISTRY)
     assert len(boards) == 144
-    assert sum(source.enabled for source in boards) == 77
+    # Mannheim was disabled after a recorded robots.txt policy denial.\n    assert sum(source.enabled for source in boards) == 76
     assert len({source.name for source in boards}) == 144
