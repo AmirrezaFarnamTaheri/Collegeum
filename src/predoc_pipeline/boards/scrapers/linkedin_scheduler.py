@@ -17,7 +17,7 @@ import tempfile
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Callable, cast
 
 VERSION = 1
 DAY = 86400
@@ -371,6 +371,35 @@ class QueryLedger:
             now + timedelta(hours=48 if status in (403, 429) else 4),
         )
 
+    def prune_known(self, known: Callable[[str], bool]) -> int:
+        """Release only items backed by the authoritative seen/listing journal.
+
+        Evaluate all decisions before mutating, so a broken journal lookup
+        cannot partially evict cards. If the workflow fails before its final
+        joint commit, neither the journal nor the ledger checkpoint advances.
+        """
+        spool = self.state["spool"]
+        discarded = [
+            ident for ident in spool
+            if known(f"https://www.linkedin.com/jobs/view/{ident}")
+        ]
+        for ident in discarded:
+            del spool[ident]
+        self.state["acknowledged_seen"] = (
+            int(self.state.get("acknowledged_seen", 0)) + len(discarded)
+        )
+        return len(discarded)
+
+    def evict(self, ident: str) -> bool:
+        """Release a card conclusively rejected by the board classifier."""
+        if ident not in self.state["spool"]:
+            return False
+        del self.state["spool"][ident]
+        self.state["acknowledged_filtered"] = (
+            int(self.state.get("acknowledged_filtered", 0)) + 1
+        )
+        return True
+
     def note_detail(self, ident: str, *, now: datetime) -> None:
         """Remember an enrichment attempt so other candidates are not starved."""
         entry = self.state["spool"].get(ident)
@@ -425,4 +454,6 @@ class QueryLedger:
             "coverage_gaps": sum(bool(r.get("coverage_gap")) for r in rows),
             "replay_candidates": len(self.state["spool"]),
             "expired_replay_candidates": int(self.state.get("dropped_age", 0)),
+            "acknowledged_seen": int(self.state.get("acknowledged_seen", 0)),
+            "acknowledged_filtered": int(self.state.get("acknowledged_filtered", 0)),
         }
