@@ -1,0 +1,86 @@
+name: diagnose-recruitment-sources-20261031
+
+# One-off, read-only live probe. No credentials, messages or publication writes.
+on:
+  push:
+    branches:
+      - diagnostics/source-integrity-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Probe bounded official sources without persisting data
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee source-probe.json
+          import asyncio
+          import json
+          from predoc_pipeline.boards.config import HttpConfig
+          from predoc_pipeline.ingest.http import PoliteClient
+          from predoc_pipeline.ingest.life_sciences import discover
+
+          targets = {
+              'life_vib', 'life_dach_bern',
+              'life_academictransfer', 'life_academictransfer_epigenomics',
+          }
+          observations = {}
+          config = HttpConfig(
+              timeout=12, max_retries=0, source_timeout=55,
+              max_concurrent_sources=2, default_min_interval=2.0,
+          )
+          try:
+              posts, errors = asyncio.run(discover(
+                  "config/life_sciences.toml", config,
+                  selected_names=targets, diagnostics=observations,
+              ))
+              result = {
+                  "source_health": observations,
+                  "errors": errors[:12],
+                  "sample_links": [
+                      {"source": p.source, "title": p.title[:120], "url": p.url[:240]}
+                      for p in posts[:35]
+                  ],
+              }
+          except Exception as exc:
+              result = {"exception": type(exc).__name__, "message": str(exc)[:160]}
+          with PoliteClient(
+              user_agent="Collegeum-SourceIntegrityProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=12, per_host_delay=3, respect_robots=True,
+          ) as client:
+              official = {
+                  "mannheim": "https://www.vwl.uni-mannheim.de/en/about/about-the-department/job-vacancies/",
+                  "bern_job_detail": "https://jobs.unibe.ch/job-vacancies/phd-position-in-bottom-up-bioenergetics-and-cell-metabolism/8ba13379-21aa-4373-97ab-a4a8f1aac815",
+              }
+              result["official_http"] = {}
+              for name, url in official.items():
+                  response = client.get(url, use_cache=False)
+                  result["official_http"][name] = {
+                      "status": response.status,
+                      "ok": response.ok,
+                      "error": str(response.error)[:120],
+                      "bytes": len(response.content),
+                      "has_empty_marker": "There are currently no vacancies in our Department." in response.text,
+                  }
+          print(json.dumps(result, ensure_ascii=False, indent=2))
+          PY
+      - name: Save read-only source observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-integrity-20261031
+          path: source-probe.json
+          retention-days: 14
+          if-no-files-found: warn
