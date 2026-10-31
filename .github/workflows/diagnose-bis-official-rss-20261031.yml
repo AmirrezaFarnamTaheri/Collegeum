@@ -1,0 +1,91 @@
+name: diagnose-bis-official-rss-20261031
+
+on:
+  push:
+    branches:
+      - diagnostics/bis-official-rss-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Polite, read-only BIS HTML and RSS representation comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          PYTHONPATH=src python3 - <<'PY' | tee build/bis-official-source-diagnostic.json
+          import json
+          from urllib.parse import urlsplit
+          import feedparser
+          from predoc_pipeline.ingest.http import PoliteClient
+          from predoc_pipeline.boards.config import load_board_sources
+          from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+
+          source = next(s for s in load_board_sources('config/sources.toml') if s.name == 'bis')
+          known = 'https://www.bis.org/about/careers/vacancies'
+          feed = (
+              'https://www.bis.org/doclist/vacancies.rss'
+              '?objid=vacancies&page=&paging_length=10&sort_list=date_desc'
+              '&theme=simple&ml=false&mlurl='
+              '&emptylisttext=There%20are%20currently%20no%20vacancies.'
+          )
+          output = {'source': 'bis', 'configured_html': known, 'feed_path': '/doclist/vacancies.rss'}
+          with PoliteClient(
+              user_agent='Collegeum-OfficialSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)',
+              timeout=16.0, per_host_delay=3, respect_robots=True,
+          ) as http:
+              for key, url in (('html', known), ('rss', feed)):
+                  response = http.get(url, use_cache=False)
+                  row = {'status': response.status, 'ok': response.ok,
+                         'error': response.error, 'bytes': len(response.content)}
+                  if response.ok:
+                      if key == 'rss':
+                          parsed = feedparser.parse(response.text)
+                          items = []
+                          for entry in parsed.entries:
+                              href = str(entry.get('link') or '')
+                              parts = urlsplit(href)
+                              items.append({'title': str(entry.get('title') or '')[:120],
+                                  'official_link': (
+                                      parts.scheme == 'https'
+                                      and parts.hostname in ('www.bis.org', 'bis.org')
+                                      and parts.path.startswith('/vacancy/jr')
+                                  ),
+                                  'path': parts.path[:120]})
+                          row.update({'feed_version': parsed.version,
+                                      'entries': len(parsed.entries),
+                                      'bozo': bool(parsed.bozo),
+                                      'items': items[:15]})
+                      else:
+                          class StubHttp:
+                              def set_host_interval(self, *_args): return None
+                          scraper = LinkScanScraper(source, StubHttp())
+                          posts = scraper.parse_postings([(url, response.text)])
+                          row.update({'existing_adapter_links': len(posts),
+                                      'existing_adapter_errors': scraper.discovery_parse_errors})
+                  output[key] = row
+          print(json.dumps(output, ensure_ascii=False, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bis-official-readonly-diagnostic
+          path: build/bis-official-source-diagnostic.json
+          retention-days: 14
+          if-no-files-found: warn
