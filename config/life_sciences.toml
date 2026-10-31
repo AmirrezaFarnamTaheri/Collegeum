@@ -35,9 +35,9 @@ urls = [
   "https://www.academictransfer.com/en/jobs/?q=neuroscience",
 ]
 link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
+selectors = { item = "article", title = "h3", link = "a[href*='/en/jobs/']", institution = "div[class*='md:col-start-8'] span.text-at-small.text-gray-700", location = "span.text-at-small.flex.items-center.gap-1.text-gray-500" }
 institution_from_context = true
-country = "Netherlands"
-note = "Dutch academic jobs; title and card description must support the match."
+note = "Official multi-country aggregator: use job-card workplace and deny unknown locations."
 
 [[board]]
 name = "life_max_planck"
@@ -101,8 +101,8 @@ name = "life_vib"
 type = "link_scan"
 group = "life_sciences"
 enabled = true
-url = "https://jobs.vib.be/"
-link_pattern = 'jobs\.vib\.be/j/\d+/[^?#\s]+'
+url = "https://jobs.vib.be/jobs"
+link_pattern = 'jobs\.vib\.be/(?:j/\d+/[^?#\s]+|PortalJob/IntegratedJobDetails\?(?:[^#\s]*&)?id=\d+)'
 institution = "VIB"
 country = "Belgium"
 min_interval = 3.0
