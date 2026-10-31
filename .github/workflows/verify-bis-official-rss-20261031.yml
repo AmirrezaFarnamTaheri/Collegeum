@@ -1,0 +1,94 @@
+name: verify-bis-official-rss-live-20261031
+
+on:
+  push:
+    branches:
+      - fix/bis-official-rss-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Verify official BIS RSS parsing, IDs and per-vacancy geography
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          PYTHONPATH=src python3 - <<'PY' | tee build/bis-rss-live.json
+          import asyncio
+          import json
+          import re
+          from urllib.parse import urlsplit
+
+          from predoc_pipeline.boards.collector import build_http
+          from predoc_pipeline.boards.config import HttpConfig, load_board_sources
+          from predoc_pipeline.boards.scrapers import SCRAPERS
+
+          src = next(s for s in load_board_sources("config/sources.toml") if s.name == "bis")
+          assert src.enabled and src.type == "rss"
+          assert src.country is None
+          assert src.opt("infer_country_from_summary") is True
+
+          async def collect():
+              async with build_http(
+                  HttpConfig(timeout=18, max_retries=0, source_timeout=90),
+              ) as http:
+                  scraper = SCRAPERS[src.type](src, http)
+                  posts, count = await scraper.run()
+                  return scraper, posts, count
+
+          scraper, posts, count = asyncio.run(collect())
+          result = {
+              "source": src.name, "registered_type": src.type,
+              "general_links": len(posts),
+              "distinct_employer_urls": len({post.url for post in posts}),
+              "index_count": count,
+              "discovery_parse_errors": scraper.discovery_parse_errors,
+              "discovery_fetch_errors": scraper.discovery_fetch_errors,
+              "discovery_limits": scraper.discovery_limits,
+              "role_samples": [
+                  {"title": post.title[:100],
+                   "country": post.country,
+                   "location": post.location}
+                  for post in posts[:12]
+              ],
+          }
+          print(json.dumps(result, ensure_ascii=False, indent=2))
+          assert len(posts) >= 5, result
+          assert len(posts) == count == len({post.url for post in posts}), result
+          assert not scraper.discovery_parse_errors, result
+          assert not scraper.discovery_fetch_errors, result
+          assert not scraper.discovery_limits, result
+          assert all(
+              urlsplit(p.url).scheme == "https"
+              and urlsplit(p.url).hostname in ("www.bis.org", "bis.org")
+              and re.fullmatch(r"/vacancy/jr\d+", urlsplit(p.url).path)
+              for p in posts
+          ), result
+          hong_kong = [p for p in posts if "Data Scientist / Research Analyst" in p.title]
+          assert hong_kong and all(p.country == "Hong Kong" for p in hong_kong), result
+          assert all(p.country != "Switzerland" for p in hong_kong), result
+          assert any(p.country == "Switzerland" for p in posts), result
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bis-official-rss-live
+          path: build/bis-rss-live.json
+          retention-days: 14
+          if-no-files-found: warn
