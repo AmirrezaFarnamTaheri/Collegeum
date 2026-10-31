@@ -52,3 +52,14 @@ def test_reviewed_social_work_doctorate_stays_out_of_economics_publication():
     identity = "07c9e135ca70ad498084d2521ac6fcf1c1fd54deefd52a702e696fa13f8278ef"
     assert excluded_by_audit(identity)
     assert not excluded_by_audit("f" * 64)
+
+
+def test_siepr_staff_directories_and_undergraduate_program_are_not_vacancies():
+    # Employer pages verified: two are existing-people directories; the third
+    # is an undergraduate-only program, not a post-baccalaureate RA vacancy.
+    reviewed = (
+        "3c0f5a1439671f2e2848d26aa519ac9a588e850b35dec70b7cc7dc85824f64a6",
+        "c838a6d783151ffaa97aa1942caeeddee0a39d9554c3aea0dc19afc4c09d3ec7",
+        "33eb1b1a810a3a66249a92008daab32a9b67b678f77d48e36db17c6761a932be",
+    )
+    assert all(excluded_by_audit(identity) for identity in reviewed)
