@@ -196,6 +196,42 @@ jobs:
                   result["contexts"] = samples
               print(json.dumps(result, ensure_ascii=False, indent=2))
           PY
+      - name: Probe actual public Prospective job endpoint discovered from shipped client
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee bern-job-feed-probe.json
+          import json
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          url = "https://ohws.prospective.ch/public/v1/medium/1001892/jobs?offset=0&limit=12&lang=en"
+          with PoliteClient(
+              user_agent="Collegeum-BernSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=18, per_host_delay=3, respect_robots=True,
+          ) as http:
+              response = http.get(url, use_cache=False)
+              data = {"status": response.status, "ok": response.ok,
+                      "error": str(response.error)[:130], "bytes": len(response.content)}
+              if response.ok:
+                  try:
+                      payload = json.loads(response.text)
+                      data["payload_type"] = type(payload).__name__
+                      data["top_keys"] = list(payload)[:35] if isinstance(payload, dict) else []
+                      data["arrays"] = {
+                          k: {"length": len(v), "first_keys": list(v[0])[:22]
+                              if v and isinstance(v[0], dict) else []}
+                          for k, v in payload.items() if isinstance(v, list)
+                      } if isinstance(payload, dict) else {}
+                      if isinstance(payload, list):
+                          data["array_count"] = len(payload)
+                          data["first_keys"] = list(payload[0])[:28] if payload and isinstance(payload[0], dict) else []
+                      if isinstance(payload, dict):
+                          data["scalars"] = {
+                              k: v for k, v in payload.items()
+                              if isinstance(v, (int, float, bool)) or v is None
+                          }
+                  except (ValueError, TypeError):
+                      data["text_start"] = response.text[:220]
+              print(json.dumps(data, indent=2))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -205,4 +241,5 @@ jobs:
             bern-api-hints.json
             bern-medium-probe.json
             bern-bundle-calls.json
+            bern-job-feed-probe.json
           retention-days: 14
