@@ -116,3 +116,21 @@ def test_source_specific_rss_identity_rejects_actual_header_newlines():
         scraper = RSSScraper(source, FakeHttp())
         with pytest.raises(ValueError, match="Invalid source-specific RSS bot identity"):
             asyncio.run(scraper.fetch_raw_postings())
+
+
+def test_official_feed_entry_must_use_normal_https_origin_port():
+    good = "https://jobs.dkfz.de/de/jobs/168938/good"
+    untrusted_port = "https://jobs.dkfz.de:8443/de/jobs/168939/untrusted-port"
+    xml = (
+        '<rss version="2.0"><channel><title>DKFZ jobs</title>'
+        f"<item><title>PhD Student in Biology</title><link>{good}</link></item>"
+        f"<item><title>PhD Student in Biology</title><link>{untrusted_port}</link></item>"
+        "</channel></rss>"
+    )
+    scraper = RSSScraper(_source(), FakeHttp(xml))
+    posts, count = asyncio.run(scraper.run())
+    assert count == 1
+    assert [post.url for post in posts] == [good]
+    assert scraper.discovery_parse_errors == [
+        "feed entry link host is not a trusted source hostname"
+    ]
