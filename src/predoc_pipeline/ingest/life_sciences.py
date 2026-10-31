@@ -222,7 +222,9 @@ def classify_post_decision(
         if match:
             country, region = detect_location(match.group(1))
     if region != "Europe" or not country or country in COUNTRY_EXCLUDE:
-        return None, ("non_europe_location" if country and (region != "Europe" or country in COUNTRY_EXCLUDE) else "unknown_location")
+        if country and (region != "Europe" or country in COUNTRY_EXCLUDE):
+            return None, "non_europe_location"
+        return None, "unknown_location"
     current = today or datetime.now(UTC).date()
     # Cohort recruitment landing pages frequently remain indexed after
     # applications close. A dated *current* deadline is mandatory for calls.
