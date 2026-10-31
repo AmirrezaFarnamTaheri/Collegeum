@@ -1150,12 +1150,88 @@ type = "linkedin"
 group = "social"
 min_interval = 4
 employer_required = true
-keywords = ["predoc economics", "pre-doctoral economics", "predoctoral", "pre-doctoral fellow", "research assistant economics university", "research assistant business school"]
-locations = ["European Union", "United Kingdom", "Canada", "Switzerland", "Norway"]
-f_TPR = "r604800"
-max_pages = 1
+# Broad supervised-discovery portfolio: research roles AND economics PhD
+# positions/programmes, with national-language formulations. 45 x 15 = 675
+# keyword/location pairs, rotated over 4-hour UTC slots. This does not crawl
+# LinkedIn feed posts; those require a separately permitted source.
+keywords = [
+  "predoc economics",
+  "pre-doctoral economics",
+  "predoctoral",
+  "pre-doctoral fellow",
+  "research assistant economics university",
+  "research assistant business school",
+  "research associate econometrics",
+  "research analyst economics",
+  "research fellow economics",
+  "junior researcher economics",
+  "pre-PhD economics",
+  "pre-doc political economy",
+  "PhD economics",
+  "PhD in economics",
+  "PhD program economics",
+  "PhD programme economics",
+  "economics doctoral programme",
+  "economics doctoral program",
+  "economics PhD admissions",
+  "PhD studentship economics",
+  "PhD scholarship economics",
+  "fully funded PhD economics",
+  "PhD fellowship economics",
+  "doctoral researcher economics",
+  "doctoral candidate economics",
+  "PhD position economics",
+  "DPhil economics",
+  "PhD econometrics",
+  "PhD political economy",
+  "PhD development economics",
+  "PhD environmental economics",
+  "PhD macroeconomics",
+  "PhD microeconomics",
+  "PhD public economics",
+  "PhD finance",
+  "PhD accounting",
+  "PhD business economics",
+  "PhD quantitative social science",
+  "PhD application economics",
+  "doktorand Volkswirtschaftslehre",
+  "Promotionsstelle VWL",
+  "doctorant économie",
+  "thèse économie",
+  "dottorato economia",
+  "doctorado economía",
+]
+locations = [
+  "European Union", "United Kingdom", "United States", "Canada",
+  "Switzerland", "Norway", "Sweden", "Denmark", "Germany",
+  "Netherlands", "France", "Italy", "Spain", "Austria", "Finland",
+]
+# Six core searches take priority only when their 48-hour cooldown expires.
+core_queries = [
+  { keyword = "predoc economics", location = "European Union" },
+  { keyword = "research assistant economics university", location = "United Kingdom" },
+  { keyword = "PhD economics", location = "European Union" },
+  { keyword = "PhD in economics", location = "United Kingdom" },
+  { keyword = "PhD economics", location = "United States" },
+  { keyword = "doctoral researcher economics", location = "Germany" },
+]
+# Economics / predoc partition: up to 96 LinkedIn requests per run.
+# The opt-in Life Sciences partition uses at most 24 more: combined 120.
+# Breadth-first pagination can use 16 calls after the 80 first pages.
+query_budget = 80
+request_budget = 96
+max_pages = 12
+# Finish early if there is no overdue work; otherwise check the time budget
+# before starting each network request. Unfinished offsets are replayed later.
+time_budget_seconds = 240
+cooldown_hours = 48
+checkpoint_path = "data/linkedin_econ_search_state.json"
+max_replay_items = 3000
+# The next query selects a supported window >= the elapsed gap + 1 day.
+f_TPR = "r2592000"
 backend = "guest"
-note = "LinkedIn always names the employer, so it must be academic (employer_required)."
+verified = false
+note = "Read-only bounded LinkedIn Jobs discovery, not feed posts; authorization/ToS restrictions apply. Source health is NOT completeness proof. Never bypass 403/429."
 
 # ===========================================================================
 # Feeds (templates, OFF)

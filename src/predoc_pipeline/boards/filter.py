@@ -39,6 +39,39 @@ HIRING_CUE = re.compile(
 )
 
 
+# A paid PhD intake is a possible research opportunity, not a predoc.
+# This narrow admission-title exception recovers explicit economics doctoral
+# searches on the LinkedIn Jobs board without accepting generic scholarships,
+# MBAs, senior PhD-qualified employment or unrelated degree programmes.
+_ECON_DOCTORAL_FIELD = re.compile(
+    r"\b(?:econom\w*|econometr\w*|political economy|"
+    r"financ\w*|accounting|business economics|quantitative social sciences?)\b", re.I,
+)
+_DOCTORAL_TITLE_START = re.compile(
+    r"^(?:(?:fully[- ]funded|funded|open|multiple)\s+|"
+    r"call for applications?\s*:?\s*)*"
+    r"(?:(?:ph\.?d\.?|doctoral|dphil)\b|"
+    r"(?:economics|econometrics|political economy)\b.{0,30}?\b"
+    r"(?:ph\.?d\.?|doctoral)\s+(?:program(?:me)?|position|studentship|"
+    r"scholarship|fellowship|candidate|researcher|student|admissions?|"
+    r"applications?|intake)\b)",
+    re.I,
+)
+
+
+def _econ_doctoral_admission_title(title: str) -> bool:
+    return bool(
+        _DOCTORAL_TITLE_START.search(title)
+        and _ECON_DOCTORAL_FIELD.search(title)
+    )
+
+
+_DOCTORATE_REQUIRED = re.compile(
+    r"\b(?:ph\.?d\.?|doctoral degree)\s+(?:required|essential|mandatory)\b",
+    re.I,
+)
+
+
 @dataclass
 class Verdict:
     keep: bool
@@ -146,8 +179,19 @@ class RelevanceFilter:
         strong_c = self._any(self.strong, context)
         role_t = self._any(self.roles, title)
         role_c = self._any(self.roles, context)
+        econ_doctoral_admission = (
+            post.source == "linkedin" and _econ_doctoral_admission_title(title)
+        )
 
-        if self._any(self.exclude, title) and not strong_t:
+        # A PhD-qualified job is not a doctoral intake or a predoc. This
+        # remains true when its employer and subject are otherwise in scope.
+        if (
+            post.source == "linkedin" and not econ_doctoral_admission
+            and _DOCTORATE_REQUIRED.search(title)
+        ):
+            return Verdict(False, reason="requires-phd")
+
+        if self._any(self.exclude, title) and not strong_t and not econ_doctoral_admission:
             return Verdict(False, reason="excluded-title")
         employer_problem = self.employer_verdict(post)
         if employer_problem:
@@ -173,11 +217,15 @@ class RelevanceFilter:
         if is_social:
             strong_t, role_t = strong_t or strong_c, role_t or role_c
 
-        if require_role and not (strong_t or role_t or (post.field_implied and (strong_c or role_c))):
+        if require_role and not (
+            strong_t or role_t or econ_doctoral_admission
+            or (post.field_implied and (strong_c or role_c))
+        ):
             return Verdict(False, reason="no-role-term")
 
         score = (50 if strong_t else 25 if strong_c else 0) + (30 if role_t else 10 if role_c else 0)
         score += 20 if field_t else 10 if (field_c or post.field_implied) else 0
+        score += 25 if econ_doctoral_admission else 0
 
         if post.date_posted and post.date_posted < ref - timedelta(days=self.cfg.max_age_days):
             return Verdict(False, score, reason="stale")

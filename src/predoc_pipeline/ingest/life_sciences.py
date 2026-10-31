@@ -79,6 +79,17 @@ PHD_CALL = re.compile(
     re.I,
 )
 SEASONAL_CALL = re.compile(r"\b(?:autumn|spring|winter|summer)\s+call\b", re.I)
+
+# LinkedIn/university advertisements also say "PhD in Epigenetics", not
+# "PhD student" or "PhD position". This is role evidence only; field,
+# employer, country and real closing date still gate the alert.
+PHD_IN_RESEARCH_FIELD = re.compile(
+    r"^\s*(?:fully[- ]funded\s+|funded\s+)?"
+    r"(?:ph\.?d\.?|dphil|doctoral)\s+in\s+"
+    r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s/&-]{2,90}$",
+    re.I,
+)
+
 ADDITIONAL_DOCTORAL_ROLE = re.compile(
     r"\b(?:predoctoral|pre-doctoral)\s+(?:researcher|fellow|student)\b|"
     r"\b(?:offre\s+de\s+th[eè]se|doctorand[oa]|dottorand[oa]|"
@@ -113,6 +124,7 @@ OUT_OF_SCOPE_TITLE = re.compile(
 def _doctoral_title(title: str) -> bool:
     return bool(
         PHD_POSITION.search(title) or PHD_CALL.search(title)
+        or PHD_IN_RESEARCH_FIELD.search(title)
         or ADDITIONAL_DOCTORAL_ROLE.search(title)
         or DUAL_DOCTORAL_ROLE.search(title)
     )
@@ -141,9 +153,21 @@ EXPLICIT_LOCATION = re.compile(
 
 
 def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str, str] | None:
-    """Fail closed on unknown geography, broad roles and unfunded adverts."""
+    """Return only employer-eligible Life Sciences vacancies (public API)."""
+    return classify_post_decision(post, today=today)[0]
+
+
+def classify_post_decision(
+    post: JobPostSchema, *, today: date | None = None,
+) -> tuple[dict[str, str] | None, str | None]:
+    """Return an eligible listing or the reason that needs review/exclusion.
+
+    Rejection reasons are intentionally more specific than a boolean so
+    permanently out-of-audience LinkedIn cards can be removed from the
+    replay buffer without losing missing-deadline and ambiguous-field jobs.
+    """
     if reviewed_non_life_vacancy(post.url):
-        return None
+        return None, "reviewed_non_life"
     # An index end date that the Bern adapter quarantined is never proof
     # of a deadline, even if later enrichment sets post.deadline from a
     # priority-review date. Manual verification needs a separate lifecycle.
@@ -152,20 +176,20 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         and "prospective_unverified_end_date" in post.extra
         and not post.extra.get("prospective_employer_deadline_verified")
     ):
-        return None
+        return None, "unverified_index_deadline"
     if not _doctoral_title(post.title):
-        return None
+        return None, "not_doctoral"
     dual_track = bool(DUAL_DOCTORAL_ROLE.search(post.title))
     if WRONG_ROLE.search(post.title) and not (
         dual_track and MASTERS_FOR_PHD.search(post.description_snippet or "")
     ):
-        return None
+        return None, ("needs_eligibility" if dual_track else "wrong_role")
     # The official job-detail API may explicitly close applications even
     # before the advertised date, or without providing a date at all.
     if post.extra.get("closed"):
-        return None
+        return None, "closed"
     if APPLICANT_REQUIRES_PHD.search(post.description_snippet or ""):
-        return None
+        return None, "requires_phd"
     # Board and university boilerplate often mentions unrelated research
     # (for example, a university's CRISPR discovery). Don't let that text
     # turn an explicitly non-life-science title into a life-sciences match.
@@ -173,16 +197,16 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         PRIMARY_FIELD.search(post.title) or RELATED_FIELD.search(post.title)
     )
     if OUT_OF_SCOPE_TITLE.search(post.title) and not title_is_life_science:
-        return None
+        return None, "out_of_scope_title"
     context = " ".join(x for x in (
         post.title, post.department, post.fields_of_research,
         post.description_snippet,
     ) if x)
     primary = bool(PRIMARY_FIELD.search(context))
     if not primary and not RELATED_FIELD.search(context):
-        return None
+        return None, "missing_research_field"
     if UNFUNDED.search(context):
-        return None
+        return None, "unfunded"
     # Source-level country is only an institutional hint. A vacancy's
     # specific workplace takes precedence, especially for universities
     # advertising international and remote positions.
@@ -198,7 +222,9 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         if match:
             country, region = detect_location(match.group(1))
     if region != "Europe" or not country or country in COUNTRY_EXCLUDE:
-        return None
+        if country and (region != "Europe" or country in COUNTRY_EXCLUDE):
+            return None, "non_europe_location"
+        return None, "unknown_location"
     current = today or datetime.now(UTC).date()
     # Cohort recruitment landing pages frequently remain indexed after
     # applications close. A dated *current* deadline is mandatory for calls.
@@ -208,25 +234,25 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         or dual_track
     )
     if needs_deadline and post.deadline is None:
-        return None
+        return None, "missing_deadline"
     if post.deadline and post.deadline < current:
-        return None
+        return None, "expired_deadline"
     # An unusually distant ATS end_date is not credible evidence of a
     # currently actionable application. Bern's live feed has an advert
     # claiming a 2036 closing date in October 2026. Preserve it in the
     # discovery journal, but require manual verification before publication.
     if post.deadline and post.deadline > current + timedelta(days=366 * 3):
-        return None
+        return None, "implausible_deadline"
     if post.date_posted and post.date_posted < current - timedelta(days=60):
-        return None
+        return None, "stale_posting"
     try:
         parsed = urlsplit(post.url)
         valid = parsed.scheme == "https" and bool(parsed.hostname)
         _ = parsed.port
     except ValueError:
-        return None
+        return None, "invalid_url"
     if not valid or len(post.url) > 1024 or not 5 <= len(post.title) <= 500:
-        return None
+        return None, "invalid_url"
     key = "career:" + hashlib.sha256(post.url.encode("utf-8")).hexdigest()[:32]
     result = {
         "key": key, "category": CATEGORY, "scope": "",
@@ -250,7 +276,7 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         result["date_posted"] = post.date_posted.isoformat()
     if post.fields_of_research:
         result["research_fields"] = post.fields_of_research.strip()[:240]
-    return result
+    return result, None
 
 
 def load_life_sources(sources_path: str | Path) -> list[Any]:
@@ -305,7 +331,19 @@ def select_sources(
         )
         return (int(observed), attempts.get(source.name, ""), source.name)
 
-    return {source.name for source in sorted(sources, key=priority)[:MAX_SOURCES]}
+    # Give the persistent Life Sciences query scheduler one slot in every
+    # four-hour cycle. Otherwise it would only be selected once per full
+    # regional-source rotation, leaving hundreds of query pairs stale for
+    # weeks despite having a durable due-query checkpoint.
+    dedicated = {
+        s.name for s in sources
+        if s.name == "life_linkedin"
+        and s.type == "linkedin"
+        and s.opt("checkpoint_path")
+    }
+    other_sources = [s for s in sources if s.name not in dedicated]
+    rotating = sorted(other_sources, key=priority)[:MAX_SOURCES - len(dedicated)]
+    return dedicated | {s.name for s in rotating}
 
 
 
@@ -389,7 +427,9 @@ async def discover(
 
         async def one(source: Any) -> tuple[list[JobPostSchema], list[str]]:
             nonlocal detail_remaining
-            if source.type not in ("rss", "link_scan", "bite_jobs", "prospective_jobs", "workday"):
+            if source.type not in (
+                "rss", "link_scan", "bite_jobs", "prospective_jobs", "workday", "linkedin",
+            ):
                 if diagnostics is not None:
                     diagnostics[source.name] = {
                         "status": "unsupported", "vacancy_links": 0,
@@ -401,7 +441,11 @@ async def discover(
             async with semaphore:
                 try:
                     result, _ = await asyncio.wait_for(
-                        scraper.run(), timeout=min(http_config.source_timeout, 120),
+                        scraper.run(),
+                        timeout=min(
+                            http_config.source_timeout,
+                            source.source_timeout_seconds or 120,
+                        ),
                     )
                 except SourceSkipped:
                     if diagnostics is not None:
@@ -432,18 +476,36 @@ async def discover(
                         not _doctoral_title(post.title),
                         not bool(PRIMARY_FIELD.search(post.haystack())
                                  or RELATED_FIELD.search(post.haystack())),
+                        # LinkedIn title cards often omit a closing date.
+                        # Give candidates without previous detail attempts
+                        # first access to the small per-run detail budget.
+                        (
+                            str(post.extra.get("linkedin_detail_last_attempt_at") or "")
+                            if source.name == "life_linkedin" else ""
+                        ),
                     ),
                 )
-                scoped = result[:MAX_PER_SOURCE]
+                source_cap = (
+                    min(MAX_TOTAL, 180)
+                    if source.name == "life_linkedin" else MAX_PER_SOURCE
+                )
+                scoped = result[:source_cap]
                 detail_used = 0
                 detail_failures = 0
                 for post in scoped:
-                    if detail_used >= MAX_DETAIL_PER_SOURCE or detail_remaining <= 0:
+                    per_source_details = (
+                        12 if source.name == "life_linkedin" else MAX_DETAIL_PER_SOURCE
+                    )
+                    if detail_used >= per_source_details or detail_remaining <= 0:
                         break
                     if not _needs_detail(post):
                         continue
                     detail_remaining -= 1
                     detail_used += 1
+                    if source.name == "life_linkedin":
+                        marker = getattr(scraper, "mark_detail_attempt", None)
+                        if callable(marker):
+                            marker(post)
                     try:
                         full_text = await asyncio.wait_for(
                             scraper.fetch_detail(post), timeout=DETAIL_TIMEOUT,
@@ -460,6 +522,10 @@ async def discover(
                             if deadline is not None:
                                 post.deadline = deadline
                                 post.deadline_text = deadline_text
+                if source.name == "life_linkedin":
+                    flush = getattr(scraper, "flush_checkpoint", None)
+                    if callable(flush):
+                        flush()
             problems = (
                 len(scraper.discovery_fetch_errors) +
                 len(scraper.discovery_parse_errors) +
@@ -481,6 +547,9 @@ async def discover(
                     "discovery_issues": problems,
                     "detail_failures": detail_failures,
                 }
+                search = getattr(scraper, "search_diagnostics", None)
+                if isinstance(search, dict):
+                    diagnostics[source.name]["search_diagnostics"] = search
             warnings = [f"{source.name}: {problems} discovery issues"] if problems else []
             return scoped, warnings
 
@@ -532,8 +601,19 @@ def poll_life_sciences(
         if identifier and old_job.get("key"):
             historical_vib_ids.setdefault(identifier, old_job["key"])
     matches: dict[str, dict[str, str]] = {}
+    # Only final, evidence-backed exclusions are evicted from LinkedIn
+    # replay. Missing deadlines, unknown fields or locations, and transient
+    # lifecycle uncertainty must remain eligible for future detail checks.
+    hard_rejection_reasons = {
+        "reviewed_non_life", "not_doctoral", "wrong_role",
+        "out_of_scope_title", "non_europe_location",
+        "requires_phd", "unfunded", "invalid_url",
+    }
+    hard_rejected_urls: set[str] = set()
     for post in posts:
-        item = classify_post(post)
+        item, reject_reason = classify_post_decision(post)
+        if post.source == "life_linkedin" and reject_reason in hard_rejection_reasons:
+            hard_rejected_urls.add(post.url)
         if item:
             if item.get("source") == "life_vib":
                 identifier = _vib_job_identifier(item["url"])
@@ -541,6 +621,38 @@ def poll_life_sciences(
                     item["key"] = _vib_career_key(identifier, historical_vib_ids)
             matches.setdefault(item["key"], item)
     added = save_career(journal_path, previous, list(matches.values()))
+    # A matched candidate now has a durable career record, and an earlier
+    # matched candidate already had one. Release only those exact URLs from
+    # the LinkedIn replay buffer; unmatched/undated candidates must retain
+    # their opportunity for later detail enrichment.
+    if "life_linkedin" in selected:
+        from ..boards.scrapers.linkedin_scheduler import QueryLedger
+
+        configs = {
+            source.name: source for source in load_life_sources(sources_path)
+        }
+        cfg = configs.get("life_linkedin")
+        checkpoint = cfg.opt("checkpoint_path") if cfg is not None else None
+        if isinstance(checkpoint, str) and checkpoint:
+            known_urls = {
+                str(row.get("url") or "") for row in
+                [*previous, *matches.values()]
+                if row.get("source") == "life_linkedin"
+            }
+            if cfg is not None and (known_urls or hard_rejected_urls):
+                ledger = QueryLedger.load(
+                    checkpoint, "life_linkedin",
+                    max_items=int(cfg.opt("max_replay_items", 1500)),
+                )
+                if known_urls:
+                    ledger.prune_known(lambda url: url in known_urls)
+                for ident in tuple(ledger.state["spool"]):
+                    if (
+                        f"https://www.linkedin.com/jobs/view/{ident}"
+                        in hard_rejected_urls
+                    ):
+                        ledger.evict(ident)
+                ledger.save(checkpoint)
     if health_path is not None and diagnostics is not None:
         per_source: dict[str, int] = {}
         for match in matches.values():

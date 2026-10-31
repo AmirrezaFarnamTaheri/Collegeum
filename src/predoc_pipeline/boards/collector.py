@@ -55,7 +55,7 @@ class SourceResult:
     n_new: int = 0
 
     def as_stats(self) -> dict[str, Any]:
-        return {
+        stats = {
             "kind": "board",
             "items": len(self.posts),
             "raw": len(self.posts),
@@ -77,6 +77,14 @@ class SourceResult:
                 "limit": len(self.scraper.discovery_limits),
             },
         }
+        # A successful LinkedIn guest response is NOT proof of search
+        # completeness. Preserve request/rotation/limit observations next
+        # to the usual source health, without marking intentional rotation
+        # as an outage or changing any publication identity.
+        search = getattr(self.scraper, "search_diagnostics", None)
+        if isinstance(search, dict):
+            stats["search_diagnostics"] = search
+        return stats
 
 
 @dataclass
@@ -263,7 +271,15 @@ async def _collect(
             out.stats[cfg.name] = {"kind": "board", "ok": False, "items": 0, "errors": 1,
                                    "messages": [f"unknown board type {cfg.type!r}"]}
             continue
-        scrapers.append(SCRAPERS[cfg.type](cfg, http))
+        scraper = SCRAPERS[cfg.type](cfg, http)
+        if cfg.type == "linkedin" and cfg.opt("checkpoint_path"):
+            # The already-restored seen journal is authoritative. Once a
+            # posting has a durable decision, no replay buffer should retain
+            # it indefinitely and prevent fresh query discovery.
+            register_known = getattr(scraper, "set_known_url", None)
+            if callable(register_known):
+                register_known(known)
+        scrapers.append(scraper)
     if not scrapers:
         return out
     results = await _scrape_all(scrapers, prefs.http.max_concurrent_sources,
@@ -275,16 +291,23 @@ async def _collect(
     # may have separate supervisors, deadlines and applications; later, the
     # enriched deduper checks actual job identity before combining candidates.
     by_url: dict[str, str] = {}
+    def release_filtered(res: SourceResult, post: JobPostSchema) -> None:
+        release = getattr(res.scraper, "drop_filtered", None)
+        if callable(release):
+            release(post)
+
     for res in results:
         for post in res.posts:
             verdict = flt.evaluate(post)
             if not verdict.keep:
                 out.reject(verdict.reason)
+                release_filtered(res, post)
                 continue
             flt.assign_region(post)
             ok, why = flt.region_ok(post)
             if not ok:
                 out.reject(why)
+                release_filtered(res, post)
                 continue
             res.n_relevant += 1
             if _is_duplicate_in_run(candidates, by_url, post, verdict):
@@ -357,6 +380,9 @@ async def _collect(
         )
 
     for res in results:
+        flush = getattr(res.scraper, "flush_checkpoint", None)
+        if callable(flush):
+            flush()
         out.stats[res.scraper.name] = res.as_stats()
     return out
 

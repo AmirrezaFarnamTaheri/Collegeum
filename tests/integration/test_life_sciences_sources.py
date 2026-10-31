@@ -150,17 +150,17 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
         "france_iberia.toml", "central_south.toml",
     }
     base = load_board_sources(CATALOG)
-    assert len(base) == 20
+    assert len(base) == 21
     registered = life_sciences.load_life_sources(CATALOG)
     names = [source.name for source in registered]
     assert len(names) == len(set(names))
-    assert len(registered) == 225
+    assert len(registered) == 226
     active = [source for source in registered if source.enabled]
-    assert len(active) == 39
+    assert len(active) == 40
     assert len(registered) - len(active) == 186
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
-    supported = {"rss", "link_scan", "bite_jobs", "prospective_jobs", "workday"}
+    supported = {"rss", "link_scan", "bite_jobs", "prospective_jobs", "workday", "linkedin"}
     assert all(source.type in supported for source in active)
     prospective_sources = {s.name for s in active if s.type == "prospective_jobs"}
     assert prospective_sources == {"life_dach_bern"}
@@ -275,13 +275,19 @@ def test_duplicate_provider_name_across_catalogues_is_rejected(tmp_path: Path) -
 def test_source_round_robin_covers_every_enabled_provider(tmp_path: Path) -> None:
     journal = tmp_path / "life_rotation.json"
     enabled = {s.name for s in life_sciences.load_life_sources(CATALOG) if s.enabled}
-    assert len(enabled) == 39
+    assert len(enabled) == 40
     seen: set[str] = set()
     for iteration in range(4):
         selected = life_sciences.select_sources(CATALOG, journal)
         assert len(selected) == life_sciences.MAX_SOURCES
+        assert "life_linkedin" in selected  # dedicated due-query worker each cycle
         unseen = enabled - seen
-        assert len(selected & unseen) == min(len(unseen), len(selected))
+        # One dedicated search source is repeated while all other source
+        # cohorts continue rotating fairly without starvation.
+        expected_fresh = min(
+            len(unseen - {"life_linkedin"}), life_sciences.MAX_SOURCES - 1,
+        )
+        assert len((selected & unseen) - {"life_linkedin"}) == expected_fresh
         seen.update(selected)
         save_rotation(
             journal, selected, timestamp=datetime.now(UTC) + timedelta(minutes=iteration),

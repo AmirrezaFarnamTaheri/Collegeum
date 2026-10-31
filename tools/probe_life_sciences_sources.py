@@ -103,14 +103,14 @@ def check_sources(
         "sources": {},
     }
     for source in sources[offset:offset + limit]:
-        if source.type == "bite_jobs":
-            # This adapter reads a public JSON recruitment API through an
-            # employer-published widget; its landing page is a JS shell. Do
-            # not mistake raw HTML with no vacancy anchors for source failure,
-            # or claim a healthy source without running its real adapter.
+        if source.type in {"bite_jobs", "linkedin"}:
+            # These adapters need provider-specific queries, not a static
+            # landing page GET. Never probe LinkedIn as an HTML vacancy page
+            # or confuse a missing static URL with failed source discovery.
+            # Provider access policies still apply to any later adapter run.
             report["sources"][source.name] = {
                 "status": "requires_adapter_probe",
-                "adapter": "bite_jobs",
+                "adapter": source.type,
                 "probe_workflow": str(source.opt("probe_workflow", "")),
                 "http_status": 0,
                 "vacancy_links": 0,

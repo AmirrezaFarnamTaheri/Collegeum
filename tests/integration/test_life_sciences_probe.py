@@ -56,9 +56,11 @@ def test_probe_distinguishes_robots_denials_and_vacancy_links() -> None:
                 error="",
             )
 
-    result = check_sources(Client(), CATALOG, region="core", limit=3)
-    assert result["enabled_in_scope"] == 11
-    assert result["checked"] == 3
+    result = check_sources(Client(), CATALOG, region="core", limit=4)
+    assert result["enabled_in_scope"] == 12
+    assert result["checked"] == 4
+    assert result["sources"]["life_linkedin"]["status"] == "requires_adapter_probe"
+    assert result["sources"]["life_linkedin"]["urls_checked"] == 0
     assert result["sources"]["life_euraxess"]["status"] == "ok"
     assert result["sources"]["life_academictransfer"]["status"] == "blocked_robots"
     assert result["sources"]["life_max_planck"]["vacancy_links"] == 1
@@ -75,9 +77,10 @@ def test_empty_javascript_shell_is_not_marked_working() -> None:
             )
 
     result = check_sources(Client(), CATALOG, region="core", limit=2)
+    assert result["sources"]["life_linkedin"]["status"] == "requires_adapter_probe"
     assert all(
         item["status"] == "no_recognized_vacancy_links"
-        for item in result["sources"].values()
+        for name, item in result["sources"].items() if name != "life_linkedin"
     )
 
 
@@ -110,7 +113,7 @@ def test_probe_all_enabled_sources_across_disjoint_offset_pages() -> None:
         if report["next_offset"] is None:
             break
         offset = report["next_offset"]
-    assert len(ids) == 39
+    assert len(ids) == 40
     assert "life_special_de_helmholtz_munich" in ids
 
 

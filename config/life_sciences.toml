@@ -9,6 +9,83 @@
 # Unknown location, UK/US/Canada, postdoc and explicitly self-funded adverts
 # are excluded. Salaries, fee waivers and full funding are NOT assumed.
 
+# Independent, opt-in Life Sciences PhD LinkedIn Jobs search. Unlike the
+# economics board, these observations only enter the private Life Sciences
+# category after research, geography, deadline and role checks. The guest
+# endpoint is ToS-sensitive, not a public admissions feed; permission/access
+# controls must be respected and no position is assumed available or funded.
+[[board]]
+name = "life_linkedin"
+type = "linkedin"
+group = "life_sciences"
+enabled = true
+employer_required = true
+require_deadline = true
+min_interval = 3.0
+source_timeout_seconds = 270.0
+keywords = [
+  "PhD epigenetics",
+  "PhD chromatin",
+  "PhD gene regulation",
+  "PhD genomics",
+  "PhD functional genomics",
+  "PhD regulatory genomics",
+  "PhD neurodevelopment",
+  "PhD psychiatric genetics",
+  "PhD molecular biology",
+  "PhD cell biology",
+  "PhD developmental biology",
+  "PhD biochemistry",
+  "PhD bioinformatics",
+  "PhD computational biology",
+  "PhD systems biology",
+  "PhD neuroscience",
+  "PhD molecular genetics",
+  "PhD microbiology",
+  "PhD single cell",
+  "PhD CRISPR",
+  "PhD stem cell",
+  "PhD transcriptomics",
+  "PhD synthetic biology",
+  "PhD cancer biology",
+  "PhD neurobiology",
+  "doctoral researcher life sciences",
+  "doctoral candidate molecular biology",
+  "fully funded PhD biology",
+  "PhD programme life sciences",
+  "PhD studentship genomics",
+  "doctoral programme molecular biology",
+  "doctorant biologie moléculaire",
+  "Doktorand Molekularbiologie",
+  "dottorato biologia molecolare",
+  "doctorado biología molecular",
+]
+locations = [
+  "European Union", "Germany", "Switzerland", "Austria",
+  "Netherlands", "Belgium", "France", "Sweden", "Denmark",
+  "Norway", "Finland", "Spain", "Italy", "Poland", "Portugal",
+]
+core_queries = [
+  { keyword = "PhD epigenetics", location = "European Union" },
+  { keyword = "PhD molecular biology", location = "Germany" },
+  { keyword = "PhD genomics", location = "Switzerland" },
+  { keyword = "doctoral researcher life sciences", location = "Netherlands" },
+]
+# At most 24 requests when this provider is selected by the Life Sciences
+# rotation (20 first pages, up to four additional second pages).
+query_budget = 20
+request_budget = 24
+max_pages = 12
+time_budget_seconds = 75
+cooldown_hours = 48
+checkpoint_path = "data/linkedin_life_search_state.json"
+max_replay_items = 1500
+emit_per_run = 120
+f_TPR = "r2592000"
+backend = "guest"
+verification = "discovery_only_employer_advert_required"
+note = "Jobs search discovery only; neither a LinkedIn hit nor an undated programme page proves current applications or funding. Stop at any 403/429."
+
 [[board]]
 name = "life_euraxess"
 type = "link_scan"

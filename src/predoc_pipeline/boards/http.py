@@ -162,6 +162,9 @@ class HttpClient:
             **DEFAULT_BROWSER_HEADERS,
         }
         headers = {**base_headers, **kw.pop("headers", {})}
+        # Explicit opt-in for third-party search adapters: provider 429
+        # is an access limit, not a signal to rotate user agents and retry.
+        stop_on_429 = kw.pop("stop_on_429", False) is True
         last_exc: Exception | None = None
         for attempt in range(self.max_retries + 1):
             await self._polite_wait(host)
@@ -171,6 +174,8 @@ class HttpClient:
                 last_exc = exc
                 log.debug("%s %s failed (%s), attempt %d", method, url, exc, attempt + 1)
             else:
+                if resp.status_code == 429 and stop_on_429:
+                    raise FetchError(f"HTTP 429 for {url}", status=429)
                 if resp.status_code not in RETRY_STATUS:
                     if resp.status_code >= 400:
                         raise FetchError(f"HTTP {resp.status_code} for {url}", status=resp.status_code)
