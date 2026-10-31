@@ -4,8 +4,8 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from predoc_pipeline.boards.models import JobPostSchema
 from predoc_pipeline.boards.config import load_board_sources
+from predoc_pipeline.boards.models import JobPostSchema
 from predoc_pipeline.ingest import life_sciences
 
 
