@@ -67,7 +67,9 @@ def test_recent_jobinja_robots_denial_suspends_retries_without_hiding_block(tmp_
     assert source["status"] == "blocked_robots"
     assert source["fetched"] == 0
     assert source["last_success_at"] == "2026-10-22T04:36:01+00:00"
-    assert source["last_robots_denial_at"] == prior["sources"]["jobinja"]["last_robots_denial_at"]
+    assert source["last_robots_denial_at"] == (
+        prior["sources"]["jobinja"]["last_robots_denial_at"]
+    )
     assert not errors
     assert not any("jobinja.ir" in url for url in client.calls)
     assert any("irantalent.com" in url for url in client.calls)
