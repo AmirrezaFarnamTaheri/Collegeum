@@ -205,7 +205,9 @@ def test_far_future_official_end_date_is_not_assumed_a_real_application_deadline
     )
     rows, _ = asyncio.run(scraper.run())
     assert len(rows) == 1
-    assert rows[0].deadline == date(2036, 10, 17)
+    assert rows[0].deadline is None
+    assert rows[0].deadline_text == "Unverified employer-index end date"
+    assert rows[0].extra["prospective_unverified_end_date"] == "2036-10-17T22:59:59Z"
     assert classify_post(rows[0], today=date(2026, 10, 31)) is None
 
     standard = _job(deadline="2027-10-17T22:59:59Z")

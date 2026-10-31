@@ -33,6 +33,10 @@ _PATH = re.compile(
 )
 _PAGE_SIZE = 12
 _MAX_PAGES = 8  # 96 index jobs per source; record a partial limit if more.
+_ROLLING_APPLICATION = re.compile(
+    r"\brolling\b|\buntil\s+(?:the\s+)?(?:position|role|post|job)\s+(?:is\s+)?filled\b"
+    r"|\buntil\s+filled\b", re.I,
+)
 
 
 def _official_url(value: object, viewkey: str) -> bool:
@@ -201,24 +205,51 @@ class ProspectiveJobsScraper(BaseScraper):
                 if isinstance(szas.get(key), str)
             ]
             description = clean_ws(" \n ".join(texts))[:4200]
+            posted = parse_iso_datetime(started)
+            close_date = parse_iso_datetime(closes)
+            # Prospective may use a decade-long administrative end_date for
+            # rolling or unspecified recruitment. This is NOT proof of an
+            # application cutoff. The classifier already rejects deadlines
+            # more than three years away; preserve the same fail-closed bound
+            # during extraction so downstream metadata is not misleading.
+            unverified_end = bool(
+                posted is not None
+                and close_date is not None
+                and (close_date - posted).days > 366 * 3
+            )
+            deadline_note: str | None
+            if unverified_end:
+                deadline = None
+                deadline_note = (
+                    "Rolling until filled" if _ROLLING_APPLICATION.search(description)
+                    else "Unverified employer-index end date"
+                )
+            else:
+                deadline = close_date
+                deadline_note = (
+                    f"Official UniBE posting ends {closes}" if closes else None
+                )
+            provenance: dict[str, Any] = {
+                "prospective_id": ident,
+                "prospective_viewkey": viewkey,
+                "prospective_full_text": description,
+            }
+            if unverified_end:
+                # The raw provider value remains auditable, but never becomes
+                # a verified deadline or accidentally passes a loose caller.
+                provenance["prospective_unverified_end_date"] = closes
+                provenance["require_deadline"] = True
             try:
                 posts.append(self.make(
                     title=title,
                     url=links["directlink"],
                     location=_workplace(szas),
                     department=_department(attributes),
-                    date_posted=parse_iso_datetime(started),
-                    deadline=parse_iso_datetime(closes),
-                    deadline_text=(
-                        f"Official UniBE posting ends {closes}"
-                        if closes else None
-                    ),
+                    date_posted=posted,
+                    deadline=deadline,
+                    deadline_text=deadline_note,
                     description_snippet=description,
-                    extra={
-                        "prospective_id": ident,
-                        "prospective_viewkey": viewkey,
-                        "prospective_full_text": description,
-                    },
+                    extra=provenance,
                 ))
             except (TypeError, ValueError, OverflowError):
                 self.discovery_parse_errors.append("Unparseable UniBE vacancy")
