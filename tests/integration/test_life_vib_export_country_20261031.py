@@ -30,9 +30,13 @@ def test_vib_recognizes_current_employer_jobsoid_detail_urls():
         if s.name == "life_vib"
     )
     assert cfg.opt("url") == "https://jobs.vib.be/jobs"
-    html = """
+    job_link = (
+        "/PortalJob/IntegratedJobDetails?dept=0&div=0&fun=0&group=3"
+        "&id=138253&loc=0&slug=phd-position-in-neuroimmunology&source=website"
+    )
+    html = f"""
     <article class="job-card">
-      <a href="/PortalJob/IntegratedJobDetails?dept=0&amp;div=0&amp;fun=0&amp;group=3&amp;id=138253&amp;loc=0&amp;slug=phd-position-in-neuroimmunology&amp;source=website">
+      <a href="{job_link}">
         PhD Position in Neuroimmunology
       </a>
       <span>VIB-UAntwerp Center for Molecular Neurology</span>
