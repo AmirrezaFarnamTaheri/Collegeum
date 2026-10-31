@@ -51,7 +51,10 @@ _DOCTORAL_TITLE_START = re.compile(
     r"^(?:(?:fully[- ]funded|funded|open|multiple)\s+|"
     r"call for applications?\s*:?\s*)*"
     r"(?:(?:ph\.?d\.?|doctoral|dphil)\b|"
-    r"(?:economics|econometrics|political economy)\b.{0,30}\b(?:ph\.?d\.?|doctoral)\b)",
+    r"(?:economics|econometrics|political economy)\b.{0,30}?\b"
+    r"(?:ph\.?d\.?|doctoral)\s+(?:program(?:me)?|position|studentship|"
+    r"scholarship|fellowship|candidate|researcher|student|admissions?|"
+    r"applications?|intake)\b)",
     re.I,
 )
 
