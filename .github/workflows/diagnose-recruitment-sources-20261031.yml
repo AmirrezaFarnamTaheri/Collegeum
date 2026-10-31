@@ -79,12 +79,26 @@ jobs:
                       "has_empty_marker": "There are currently no vacancies in our Department." in response.text,
                       "has_expected_job_term": "raptor" in response.text.lower() if name == "euraxess_job_476523" else None,
                       "sample_job_hrefs": [
-                          a.get("href", "")[:180] for a in
-                          __import__("bs4").BeautifulSoup(response.text, "lxml").select("a[href]")
+                          {
+                              "href": str(a.get("href", ""))[:180],
+                              "label": a.get_text(" ", strip=True)[:130],
+                              "title": str(a.get("title") or "")[:100],
+                              "aria": str(a.get("aria-label") or "")[:100],
+                              "card": a.parent.get_text(" ", strip=True)[:200],
+                          }
+                          for a in __import__("bs4").BeautifulSoup(
+                              response.text, "lxml"
+                          ).select("a[href]")
                           if any(marker in str(a.get("href", "")).lower() for marker in (
                               "/en/jobs/", "/job-vacancies/", "/jobs/4",
                           ))
                       ][:12] if response.ok and "search" in name else [],
+                      "iframes": [
+                          str(a.get("src", ""))[:190] for a in
+                          __import__("bs4").BeautifulSoup(
+                              response.text, "lxml"
+                          ).select("iframe[src]")
+                      ][:8] if response.ok and "bern_career" in name else [],
                   }
           print(json.dumps(result, ensure_ascii=False, indent=2))
           PY
