@@ -396,7 +396,11 @@ async def discover(
             async with semaphore:
                 try:
                     result, _ = await asyncio.wait_for(
-                        scraper.run(), timeout=min(http_config.source_timeout, 120),
+                        scraper.run(),
+                        timeout=min(
+                            http_config.source_timeout,
+                            source.source_timeout_seconds or 120,
+                        ),
                     )
                 except SourceSkipped:
                     if diagnostics is not None:
@@ -427,9 +431,20 @@ async def discover(
                         not _doctoral_title(post.title),
                         not bool(PRIMARY_FIELD.search(post.haystack())
                                  or RELATED_FIELD.search(post.haystack())),
+                        # LinkedIn title cards often omit a closing date.
+                        # Give candidates without previous detail attempts
+                        # first access to the small per-run detail budget.
+                        (
+                            str(post.extra.get("linkedin_detail_last_attempt_at") or "")
+                            if source.name == "life_linkedin" else ""
+                        ),
                     ),
                 )
-                scoped = result[:MAX_PER_SOURCE]
+                source_cap = (
+                    min(MAX_TOTAL, 180)
+                    if source.name == "life_linkedin" else MAX_PER_SOURCE
+                )
+                scoped = result[:source_cap]
                 detail_used = 0
                 detail_failures = 0
                 for post in scoped:
@@ -442,6 +457,10 @@ async def discover(
                         continue
                     detail_remaining -= 1
                     detail_used += 1
+                    if source.name == "life_linkedin":
+                        marker = getattr(scraper, "mark_detail_attempt", None)
+                        if callable(marker):
+                            marker(post)
                     try:
                         full_text = await asyncio.wait_for(
                             scraper.fetch_detail(post), timeout=DETAIL_TIMEOUT,
@@ -458,6 +477,10 @@ async def discover(
                             if deadline is not None:
                                 post.deadline = deadline
                                 post.deadline_text = deadline_text
+                if source.name == "life_linkedin":
+                    flush = getattr(scraper, "flush_checkpoint", None)
+                    if callable(flush):
+                        flush()
             problems = (
                 len(scraper.discovery_fetch_errors) +
                 len(scraper.discovery_parse_errors) +
