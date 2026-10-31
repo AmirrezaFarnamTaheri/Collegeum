@@ -18,6 +18,7 @@ import logging
 import re
 import time
 from collections import deque
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode
@@ -116,6 +117,10 @@ class LinkedInScraper(BaseScraper):
     def _scheduler_now(self) -> datetime:
         """Clock seam for offline scheduler tests."""
         return datetime.now(UTC)
+
+    def set_known_url(self, known: Callable[[str], bool]) -> None:
+        """Attach the restored authoritative seen-journal lookup."""
+        self._known_url = known
 
     def drop_filtered(self, post: JobPostSchema) -> None:
         """Retire a card conclusively excluded by the existing board filters."""
