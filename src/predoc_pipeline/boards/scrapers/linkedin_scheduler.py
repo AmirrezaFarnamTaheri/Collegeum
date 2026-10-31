@@ -17,7 +17,7 @@ import tempfile
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 VERSION = 1
 DAY = 86400
@@ -198,12 +198,12 @@ class QueryLedger:
     def _row(self, pair: tuple[str, str]) -> dict[str, Any]:
         keyword, location = pair
         key = query_key(self.source, keyword, location)
-        return self.state["queries"].setdefault(key, {
+        return cast(dict[str, Any], self.state["queries"].setdefault(key, {
             "keyword": keyword, "location": location,
             "last_complete_at": None, "last_attempt_at": None,
             "retry_after": None, "pending": None, "status": "new",
             "coverage_gap": False,
-        })
+        }))
 
     def plan(
         self, pairs: list[tuple[str, str]], *, now: datetime, limit: int,
