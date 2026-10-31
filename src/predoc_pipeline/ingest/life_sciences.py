@@ -17,6 +17,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 from ..boards.collector import build_http
+from ..boards.utils.bern_evidence import reviewed_non_life_vacancy
 from ..boards.config import HttpConfig, load_board_sources
 from ..boards.filter import PHD_POSITION
 from ..boards.models import JobPostSchema
@@ -67,13 +68,6 @@ WRONG_ROLE = re.compile(
     re.I,
 )
 COUNTRY_EXCLUDE = frozenset(("Europe", "United Kingdom", "United States", "Canada"))
-# Reviewed official employer advertisements whose biological keywords hide a
-# role requiring physics/engineering rather than an eligible life-science MSc.
-# Match only exact employer vacancy identities, never broad project titles.
-REVIEWED_NON_LIFE_VACANCIES = frozenset((
-    "https://jobs.unibe.ch/job-vacancies/phd-position-nccr-genesis-remote-sensing-of-microorganisms-in-extreme-environments/a5825edd-e430-405e-a30e-935d10b872db",
-    "https://jobs.unibe.ch/job-vacancies/phd-position-in-multisensory-development/63cc79b4-88b8-4d0b-b4df-67ad952ed3de",
-))
 APPLICANT_REQUIRES_PHD = re.compile(
     r"\b(?:applicants?|candidates?|you)\s+"
     r"(?:must|should|need(?:s)?(?:\s+to)?)\s+"
@@ -130,7 +124,7 @@ def historical_life_title_disqualified(title: str, url: str = "") -> bool:
     does not itself name an allowed biological research domain. Ambiguous
     titles remain eligible for separate human/detail review.
     """
-    if url in REVIEWED_NON_LIFE_VACANCIES:
+    if reviewed_non_life_vacancy(url):
         return True
     if WRONG_ROLE.search(title) and not DUAL_DOCTORAL_ROLE.search(title):
         return True
@@ -148,7 +142,7 @@ EXPLICIT_LOCATION = re.compile(
 
 def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str, str] | None:
     """Fail closed on unknown geography, broad roles and unfunded adverts."""
-    if post.url in REVIEWED_NON_LIFE_VACANCIES:
+    if reviewed_non_life_vacancy(post.url):
         return None
     # An index end date that the Bern adapter quarantined is never proof
     # of a deadline, even if later enrichment sets post.deadline from a
@@ -156,6 +150,7 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     if (
         post.source == "life_dach_bern"
         and "prospective_unverified_end_date" in post.extra
+        and not post.extra.get("prospective_employer_deadline_verified")
     ):
         return None
     if not _doctoral_title(post.title):
