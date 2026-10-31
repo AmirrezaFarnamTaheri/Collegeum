@@ -577,6 +577,31 @@ def poll_life_sciences(
                     item["key"] = _vib_career_key(identifier, historical_vib_ids)
             matches.setdefault(item["key"], item)
     added = save_career(journal_path, previous, list(matches.values()))
+    # A matched candidate now has a durable career record, and an earlier
+    # matched candidate already had one. Release only those exact URLs from
+    # the LinkedIn replay buffer; unmatched/undated candidates must retain
+    # their opportunity for later detail enrichment.
+    if "life_linkedin" in selected:
+        from ..boards.scrapers.linkedin_scheduler import QueryLedger
+
+        configs = {
+            source.name: source for source in load_life_sources(sources_path)
+        }
+        cfg = configs.get("life_linkedin")
+        checkpoint = cfg.opt("checkpoint_path") if cfg is not None else None
+        if isinstance(checkpoint, str) and checkpoint:
+            known_urls = {
+                str(row.get("url") or "") for row in
+                [*previous, *matches.values()]
+                if row.get("source") == "life_linkedin"
+            }
+            if known_urls:
+                ledger = QueryLedger.load(
+                    checkpoint, "life_linkedin",
+                    max_items=int(cfg.opt("max_replay_items", 1500)),
+                )
+                ledger.prune_known(lambda url: url in known_urls)
+                ledger.save(checkpoint)
     if health_path is not None and diagnostics is not None:
         per_source: dict[str, int] = {}
         for match in matches.values():
