@@ -46,7 +46,8 @@ def test_portfolio_covers_doctoral_programme_and_research_job_language() -> None
     assert "United Kingdom" in locations
     assert "Canada" in locations
     assert len(cfg.opt("core_queries")) >= 4
-    assert cfg.opt("request_budget") <= 30  # never multiply current request volume
+    assert cfg.opt("request_budget") == 96
+    assert cfg.opt("query_budget") == 80
 
 
 def test_rotation_is_deterministic_budgeted_and_reaches_every_portfolio_pair() -> None:
@@ -170,9 +171,9 @@ def test_slot_uses_utc_four_hour_schedule_not_random_order() -> None:
 
 
 def test_linkedin_academic_economics_phd_admissions_not_lost_to_role_filter() -> None:
+    from predoc_pipeline.boards.config import load_preferences
     from predoc_pipeline.boards.filter import RelevanceFilter
     from predoc_pipeline.boards.models import JobPostSchema
-    from predoc_pipeline.boards.config import load_preferences
 
     filt = RelevanceFilter(load_preferences(ROOT / "config/preferences.toml").filters)
     academic_titles = (
@@ -205,3 +206,74 @@ def test_linkedin_academic_economics_phd_admissions_not_lost_to_role_filter() ->
             location="Germany",
         )
         assert not filt.evaluate(post).keep, title
+
+
+
+def test_fourfold_shared_request_capacity_with_independent_life_science_feed() -> None:
+    from predoc_pipeline.ingest.life_sciences import load_life_sources
+
+    economic = _catalogue()
+    life = next(
+        x for x in load_life_sources(ROOT / "config/life_sciences.toml")
+        if x.name == "life_linkedin"
+    )
+    assert economic.opt("request_budget") == 96
+    assert life.opt("request_budget") == 24
+    assert economic.opt("request_budget") + life.opt("request_budget") == 120
+    assert life.type == "linkedin" and life.enabled
+    assert life.opt("query_budget") == 20
+    assert life.opt("require_deadline") is True
+    assert life.min_interval >= 3
+    assert "European Union" in life.opt("locations")
+    assert "United States" not in life.opt("locations")
+    keywords = " ".join(life.opt("keywords")).casefold()
+    for phrase in (
+        "phd epigenetics", "phd genomics", "phd neurodevelopment",
+        "phd molecular biology", "phd cell biology", "doctoral researcher",
+    ):
+        assert phrase in keywords
+
+
+def test_more_than_thirty_searches_are_possible_without_breaking_cap() -> None:
+    http = FakeHTTP()
+    cfg = SourceConfig(
+        name="linkedin", type="linkedin",
+        keywords=[f"economics PhD topic {i}" for i in range(115)],
+        locations=["European Union"],
+        core_queries=[{
+            "keyword": "economics PhD topic 0", "location": "European Union",
+        }],
+        query_slot=0, query_budget=96, request_budget=96, max_pages=1,
+    )
+    scraper = LinkedInScraper(cfg, http)
+    posts, n = asyncio.run(scraper.run())
+    assert len(http.calls) == 96
+    assert scraper.search_diagnostics["requests"] == 96
+    assert n == len(posts) == 10
+    # Truly distinct URLs are preserved even when found via different queries.
+    assert len(posts[0].extra["queries"]) > 30
+
+
+def test_life_sciences_programme_title_needs_field_country_and_deadline() -> None:
+    from datetime import date
+
+    from predoc_pipeline.boards.models import JobPostSchema
+    from predoc_pipeline.ingest.life_sciences import classify_post
+
+    post = JobPostSchema(
+        source="life_linkedin", title="PhD in Epigenetics and Chromatin Biology",
+        institution="University of Zurich", location="Zurich, Switzerland",
+        country="Switzerland",
+        url="https://www.linkedin.com/jobs/view/4980099999",
+        description_snippet="PhD in epigenetics and gene regulation, funded by an SNSF grant.",
+        deadline=date(2026, 12, 15), extra={"require_deadline": True},
+    )
+    match = classify_post(post, today=date(2026, 11, 1))
+    assert match is not None
+    assert match["category"] == "life_sciences_phd"
+    assert match["funding_status"] == "unverified"
+    post.deadline = None
+    assert classify_post(post, today=date(2026, 11, 1)) is None
+    post.title = "PhD in Econometrics"
+    post.deadline = date(2026, 12, 15)
+    assert classify_post(post, today=date(2026, 11, 1)) is None
