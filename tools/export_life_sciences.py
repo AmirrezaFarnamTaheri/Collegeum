@@ -32,7 +32,7 @@ def stored_positions(path: Path) -> list[dict[str, Any]]:
     return [
         row for row in rows
         if row.get('category') == 'life_sciences_phd'
-        and not historical_life_title_disqualified(str(row.get('title') or ''))
+        and not historical_life_title_disqualified(str(row.get('title') or ''), str(row.get('url') or ''))
     ]
 
 
