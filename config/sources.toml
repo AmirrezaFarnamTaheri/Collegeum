@@ -1206,7 +1206,7 @@ locations = [
   "Switzerland", "Norway", "Sweden", "Denmark", "Germany",
   "Netherlands", "France", "Italy", "Spain", "Austria", "Finland",
 ]
-# Six high-value searches always run; the other 18 first pages rotate.
+# Six high-value searches always run; the other 74 first pages rotate.
 core_queries = [
   { keyword = "predoc economics", location = "European Union" },
   { keyword = "research assistant economics university", location = "United Kingdom" },
@@ -1215,10 +1215,11 @@ core_queries = [
   { keyword = "PhD economics", location = "United States" },
   { keyword = "doctoral researcher economics", location = "Germany" },
 ]
-# Total requests remain <= 30 per pipeline run (the previous 6*5*1).
-# Breadth-first pagination may use the six remaining calls on full pages.
-query_budget = 24
-request_budget = 30
+# Economics / predoc partition: up to 96 LinkedIn requests per run.
+# The opt-in Life Sciences partition uses at most 24 more: combined 120.
+# Breadth-first pagination can use 16 calls after the 80 first pages.
+query_budget = 80
+request_budget = 96
 max_pages = 2
 # Four-week-old programme calls may still have future application deadlines.
 f_TPR = "r2592000"
