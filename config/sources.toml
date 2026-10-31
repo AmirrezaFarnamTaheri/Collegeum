@@ -1220,8 +1220,14 @@ core_queries = [
 # Breadth-first pagination can use 16 calls after the 80 first pages.
 query_budget = 80
 request_budget = 96
-max_pages = 2
-# Four-week-old programme calls may still have future application deadlines.
+max_pages = 12
+# Finish early if there is no overdue work; otherwise check the time budget
+# before starting each network request. Unfinished offsets are replayed later.
+time_budget_seconds = 240
+cooldown_hours = 48
+checkpoint_path = "data/linkedin_econ_search_state.json"
+max_replay_items = 3000
+# The next query selects a supported window >= the elapsed gap + 1 day.
 f_TPR = "r2592000"
 backend = "guest"
 note = "Read-only bounded LinkedIn Jobs discovery, not feed posts; authorization/ToS restrictions apply. Source health is NOT completeness proof. Never bypass 403/429."
