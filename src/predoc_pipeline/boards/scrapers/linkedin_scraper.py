@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import time
 from collections import deque
 from datetime import UTC, datetime
 from typing import Any
@@ -28,6 +29,7 @@ from ..models import JobPostSchema
 from ..utils.dates import parse_iso_datetime, parse_posted
 from ..utils.text import clean_ws, html_to_text
 from .base import BaseScraper, register
+from .linkedin_scheduler import QueryLedger
 
 log = logging.getLogger(__name__)
 
@@ -111,12 +113,153 @@ class LinkedInScraper(BaseScraper):
     def urls(self) -> list[str]:
         return [SEARCH]
 
+    def _scheduler_now(self) -> datetime:
+        """Clock seam for offline scheduler tests."""
+        return datetime.now(UTC)
+
+    async def _fetch_checkpointed(self) -> list[Any]:
+        """Time-boxed discovery; progress/candidates checkpoint in one ledger.
+
+        This ledger and the output journals are staged in the SAME git commit.
+        On a runner crash before commit, both revert to their previous state.
+        Replay cards protect against downstream detail or publication deferral.
+        """
+        path = self.opt("checkpoint_path")
+        if not isinstance(path, str) or not path.strip():
+            raise ValueError("LinkedIn checkpoint path is required")
+        keywords = list(self.opt("keywords", []))
+        locations = list(self.opt("locations", []))
+        query_budget = int(self.opt("query_budget", 24))
+        request_budget = int(self.opt("request_budget", 30))
+        wall_seconds = float(self.opt("time_budget_seconds", 180))
+        max_pages = int(self.opt("max_pages", 12))
+        cooldown = int(self.opt("cooldown_hours", 48))
+        if (
+            not 1 <= query_budget <= request_budget <= _MAX_REQUESTS
+            or not 1 <= max_pages <= 50
+            or not 1 <= wall_seconds <= 900
+        ):
+            raise ValueError("Invalid checkpointed LinkedIn request or runtime budget")
+        ledger = QueryLedger.load(
+            path, self.name, max_items=int(self.opt("max_replay_items", 3000)),
+        )
+        pairs = [(kw, loc) for kw in keywords for loc in locations]
+        selected = ledger.plan(
+            pairs, now=self._scheduler_now(),
+            limit=query_budget, cooldown_hours=cooldown,
+        )
+        queue = deque(selected)
+        self.search_diagnostics = {
+            "backend": "guest_checkpointed",
+            "total_pairs": len(set(pairs)), "plan_size": len(selected),
+            "request_budget": request_budget, "time_budget_seconds": wall_seconds,
+            "requests": 0, "completed_queries": 0, "failed_requests": 0,
+            "access_limited": False, "pages_with_more_possible": 0,
+            "time_budget_reached": False, "backpressure": False,
+        }
+        started = time.monotonic()
+        failures = 0
+        try:
+            while queue and self.search_diagnostics["requests"] < request_budget:
+                remaining = wall_seconds - (time.monotonic() - started)
+                if remaining <= 0.5:
+                    self.search_diagnostics["time_budget_reached"] = True
+                    break
+                pair = queue.popleft()
+                cursor = ledger.request(pair, now=self._scheduler_now())
+                params = {
+                    "keywords": pair[0], "location": pair[1],
+                    "f_TPR": f"r{cursor.window_seconds}", "start": cursor.offset,
+                }
+                url = f"{SEARCH}?{urlencode(params)}"
+                self.search_diagnostics["requests"] += 1
+                try:
+                    html = await asyncio.wait_for(
+                        self.http.get_text(url), timeout=remaining,
+                    )
+                except TimeoutError:
+                    # No index advancement and no false full-coverage claim.
+                    self.search_diagnostics["time_budget_reached"] = True
+                    break
+                except FetchError as exc:
+                    failures += 1
+                    ledger.fail(pair, now=self._scheduler_now(), status=exc.status)
+                    self.search_diagnostics["failed_requests"] += 1
+                    self.discovery_fetch_errors.append(
+                        f"LinkedIn search HTTP {exc.status or 'fetch error'}"
+                    )
+                    if exc.status in {403, 429}:
+                        self.search_diagnostics["access_limited"] = True
+                        break
+                    if failures >= 3:
+                        break
+                    continue
+                except Exception as exc:  # noqa: BLE001 - retain collected cards
+                    failures += 1
+                    ledger.fail(pair, now=self._scheduler_now())
+                    self.search_diagnostics["failed_requests"] += 1
+                    self.discovery_fetch_errors.append(type(exc).__name__)
+                    if failures >= 3:
+                        break
+                    continue
+                failures = 0
+                cards = parse_cards(html)
+                if not cards and re.search(
+                    r"captcha|sign[ -]?in.*(?:required|continue)", html, re.I,
+                ):
+                    ledger.fail(pair, now=self._scheduler_now(), status=403)
+                    self.discovery_fetch_errors.append("LinkedIn access challenge")
+                    self.search_diagnostics["access_limited"] = True
+                    break
+                if not cards and "data-entity-urn" in html:
+                    ledger.fail(pair, now=self._scheduler_now())
+                    self.discovery_parse_errors.append(
+                        "LinkedIn listing cards could not be parsed",
+                    )
+                    continue
+                try:
+                    outcome = ledger.accept_page(
+                        pair, cards, now=self._scheduler_now(),
+                        max_pages=max_pages,
+                    )
+                except ValueError:
+                    ledger.fail(pair, now=self._scheduler_now())
+                    self.discovery_parse_errors.append(
+                        "LinkedIn page failed checkpoint validation",
+                    )
+                    continue
+                if outcome == "backpressure":
+                    self.search_diagnostics["backpressure"] = True
+                    self.discovery_limits.append(
+                        "LinkedIn candidate replay buffer at capacity",
+                    )
+                    break
+                if outcome in {"complete", "complete_with_gap"}:
+                    self.search_diagnostics["completed_queries"] += 1
+                elif outcome == "pending":
+                    self.search_diagnostics["pages_with_more_possible"] += 1
+                    queue.append(pair)
+                elif outcome == "truncated":
+                    self.search_diagnostics["pages_with_more_possible"] += 1
+                    self.discovery_limits.append(
+                        "LinkedIn query reached bounded pagination depth",
+                    )
+        finally:
+            # Local save is atomic; workflow stages this alongside the
+            # publication journals, never in a separate post-processing commit.
+            ledger.save(path)
+        self.search_diagnostics.update(ledger.counts())
+        self.search_diagnostics["unprocessed_selected"] = len(queue)
+        return ledger.items(now=self._scheduler_now())
+
     async def fetch_raw_postings(self) -> list[Any]:
         if self.opt("backend", "guest") == "jobspy":
             self.search_diagnostics: dict[str, Any] = {
                 "backend": "jobspy", "coverage": "unverified",
             }
             return await asyncio.to_thread(self._jobspy)
+        if self.opt("checkpoint_path"):
+            return await self._fetch_checkpointed()
 
         keywords = list(self.opt("keywords", ["predoc"]))
         locations = list(self.opt("locations", ["European Union"]))
@@ -241,10 +384,18 @@ class LinkedInScraper(BaseScraper):
                 self.discovery_parse_errors.append("Invalid LinkedIn job identity")
                 continue
             query = card.get("_query") if isinstance(card.get("_query"), str) else ""
+            extra_queries = card.get("_queries")
+            matches = (
+                [value for value in extra_queries
+                 if isinstance(value, str) and value][:100]
+                if isinstance(extra_queries, list)
+                else [query] if query else []
+            )
             if ident in by_id:
                 queries = by_id[ident].extra["queries"]
-                if query and query not in queries:
-                    queries.append(query)
+                for value in matches:
+                    if value not in queries:
+                        queries.append(value)
                 continue
             post = self.make(
                 title=title, url=f"https://www.linkedin.com/jobs/view/{ident}",
@@ -255,7 +406,7 @@ class LinkedInScraper(BaseScraper):
                 description_snippet=(card.get("description") or "")[:600],
                 extra={
                     "linkedin_id": ident, "query": query or None,
-                    "queries": [query] if query else [],
+                    "queries": matches,
                 },
             )
             by_id[ident] = post
