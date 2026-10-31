@@ -194,6 +194,61 @@ jobs:
           assert report["all_job_urls_official"]
           assert not report["fetch_errors"] and not report["parse_errors"]
           PY
+      - name: Compare async and robots-aware RSS representations
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee dkfz-http-difference.json
+          import asyncio
+          import json
+          import feedparser
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          url = "https://jobs.dkfz.de/en/jobs"
+          async def fetch():
+              async with HttpClient(timeout=18, max_retries=0) as http:
+                  output = {}
+                  for name, headers in {
+                      "default": {},
+                      "rss_explicit": {
+                          "Accept": "application/rss+xml,application/xml;q=0.9,*/*;q=0.5"
+                      },
+                  }.items():
+                      try:
+                          response = await http.request(
+                              "GET", url, headers=headers,
+                          )
+                          xml = response.text
+                          parsed = feedparser.parse(xml)
+                          output[name] = {
+                              "status": response.status_code,
+                              "content_type": response.headers.get("content-type", ""),
+                              "content_start": xml[:320],
+                              "bytes": len(response.content),
+                              "feed_version": parsed.version,
+                              "entry_count": len(parsed.entries),
+                              "bozo": bool(parsed.bozo),
+                          }
+                      except Exception as exc:
+                          output[name] = {
+                              "error": type(exc).__name__, "reason": str(exc)[:150],
+                          }
+                  return output
+          result = {"async": asyncio.run(fetch())}
+          with PoliteClient(
+              user_agent="Collegeum-OfficialRecruitmentProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=18, per_host_delay=3, respect_robots=True,
+          ) as http:
+              response = http.get(url, use_cache=False)
+              parsed = feedparser.parse(response.text)
+              result["polite"] = {
+                  "status": response.status, "ok": response.ok,
+                  "content_start": response.text[:320],
+                  "feed_version": parsed.version,
+                  "entry_count": len(parsed.entries),
+                  "bozo": bool(parsed.bozo),
+              }
+          print(json.dumps(result, ensure_ascii=False, indent=2))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -202,5 +257,6 @@ jobs:
             providers.json
             provider-contracts.json
             dkfz-rss-contract.json
+            dkfz-http-difference.json
           if-no-files-found: warn
           retention-days: 14
