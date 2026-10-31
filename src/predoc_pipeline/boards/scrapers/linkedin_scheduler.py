@@ -385,6 +385,9 @@ class QueryLedger:
         if limit is not None:
             if not 1 <= limit <= self.max_items:
                 raise ValueError("Invalid LinkedIn replay batch size")
+            untouched = [row for row in rows if not row.get("last_replayed_at")]
+            if untouched:
+                rows = untouched
             rows.sort(key=lambda x: (
                 x.get("last_replayed_at") or "",
                 -(_read_time(x["observed_at"]) or _utc(now)).timestamp(),
