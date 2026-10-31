@@ -1,4 +1,4 @@
-"""DKFZ official recruitment recovery with strict closing-date evidence."""
+"""DKFZ official RSS discovery and evidence-based doctoral classification."""
 from __future__ import annotations
 
 import asyncio
@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from predoc_pipeline.boards.config import load_board_sources
-from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
+from predoc_pipeline.boards.scrapers.rss import RSSScraper
 from predoc_pipeline.ingest import life_sciences
 
 CONFIG = Path("config/life_sciences.toml")
@@ -16,11 +16,11 @@ MANAGEMENT = "https://jobs.dkfz.de/en/jobs/168899/division-head-in-cancer-early-
 
 
 class Http:
-    def __init__(self, html: str = "") -> None:
-        self.html = html
+    def __init__(self, xml: str = "") -> None:
+        self.xml = xml
 
-    async def get_text(self, _url: str) -> str:
-        return self.html
+    async def get_text(self, _url: str, **_kwargs: object) -> str:
+        return self.xml
 
     def set_host_interval(self, _url: str, _delay: float) -> None:
         pass
@@ -30,32 +30,62 @@ def get_source():
     return next(cfg for cfg in load_board_sources(CONFIG) if cfg.name == "life_dkfz")
 
 
-def test_dkfz_is_one_existing_real_job_index_not_an_extra_candidate():
+def _mixed_job_feed() -> str:
+    entries = [
+        (
+            "PhD Position in Computational Biology/Bioinformatics",
+            EXPIRED,
+            "Doctoral research in computational biology and molecular biology.",
+        ),
+        (
+            "Postdoc Position in Preclinical Development",
+            POSTDOC,
+            "A postdoctoral researcher with an existing PhD is required.",
+        ),
+        (
+            "Division Head in Cancer Early Detection Imaging",
+            MANAGEMENT,
+            "Leadership role requiring extensive work experience.",
+        ),
+    ]
+    items = "".join(
+        f"<item><title>{title}</title><link>{url}</link>"
+        f"<description>{description}</description></item>"
+        for title, url, description in entries
+    )
+    return f'<rss version="2.0"><channel><title>DKFZ Jobs</title>{items}</channel></rss>'
+
+
+def test_dkfz_is_one_enabled_official_rss_index_not_an_extra_candidate():
     source = get_source()
-    assert not source.enabled
-    assert source.type == "link_scan"
+    assert source.enabled
+    assert source.type == "rss"
     assert source.country == "Germany"
     assert source.opt("url") == "https://jobs.dkfz.de/en/jobs"
     assert source.opt("require_deadline") is True
     assert source.field_implied is False
-    assert source.opt("title_allow_pattern")
+    assert source.opt("rss_user_agent").startswith("Collegeum-")
+    assert source.opt("allowed_link_hosts") == ["jobs.dkfz.de"]
 
 
-def test_dkfz_index_accepts_doctoral_roles_only_and_propagates_deadline_gate():
-    html = (
-        f'<a href="{EXPIRED}">PhD Position in Computational Biology/Bioinformatics</a>'
-        f'<a href="{POSTDOC}">Postdoc Position in Preclinical Development</a>'
-        f'<a href="{MANAGEMENT}">Division Head in Cancer Early Detection Imaging</a>'
-    )
-    # The narrow title filter is applied by BaseScraper.run(), not parse_postings.
-    scraper = LinkScanScraper(get_source(), Http(html))
-    posts, _ = asyncio.run(scraper.run())
-    assert [job.url for job in posts] == [EXPIRED]
-    assert posts[0].extra["require_deadline"] is True
-    assert life_sciences._needs_detail(posts[0])
-    assert life_sciences.classify_post(posts[0], today=date(2026, 10, 30)) is None
+def test_dkfz_rss_can_list_general_jobs_without_publishing_ineligible_roles():
+    scraper = RSSScraper(get_source(), Http(_mixed_job_feed()))
+    posts, count = asyncio.run(scraper.run())
+    assert count == 3
+    assert {post.url for post in posts} == {EXPIRED, POSTDOC, MANAGEMENT}
 
-    posts[0].deadline = date(2026, 10, 29)
-    assert life_sciences.classify_post(posts[0], today=date(2026, 10, 30)) is None
-    posts[0].deadline = date(2026, 11, 30)
-    assert life_sciences.classify_post(posts[0], today=date(2026, 10, 30)) is not None
+    by_url = {post.url: post for post in posts}
+    phd = by_url[EXPIRED]
+    assert phd.extra["require_deadline"] is True
+    assert life_sciences._needs_detail(phd)
+    assert life_sciences.classify_post(phd, today=date(2026, 10, 30)) is None
+
+    phd.deadline = date(2026, 10, 29)
+    assert life_sciences.classify_post(phd, today=date(2026, 10, 30)) is None
+    phd.deadline = date(2026, 11, 30)
+    accepted = life_sciences.classify_post(phd, today=date(2026, 10, 30))
+    assert accepted is not None
+    assert accepted["deadline"] == "2026-11-30"
+    assert accepted["country"] == "Germany"
+    for url in (POSTDOC, MANAGEMENT):
+        assert life_sciences.classify_post(by_url[url], today=date(2026, 10, 30)) is None
