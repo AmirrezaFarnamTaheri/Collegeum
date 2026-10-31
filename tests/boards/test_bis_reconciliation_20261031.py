@@ -11,7 +11,6 @@ from pathlib import Path
 from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers.rss import RSSScraper
 
-
 ROOT = Path(__file__).resolve().parents[2]
 HK_JOB = "https://www.bis.org/vacancy/jr100491"
 BASEL_JOB = "https://www.bis.org/vacancy/jr100516"
