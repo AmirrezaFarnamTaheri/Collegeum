@@ -160,7 +160,8 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     assert len(registered) - len(active) == 188
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
-    assert all(source.type in {"rss", "link_scan", "bite_jobs"} for source in active)
+    assert all(source.type in {"rss", "link_scan", "bite_jobs", "prospective_jobs"} for source in active)
+    assert {source.name for source in active if source.type == "prospective_jobs"} == {"life_dach_bern"}
     assert {s.name for s in active if s.type == "bite_jobs"} == {
         "life_special_de_helmholtz_munich"
     }
@@ -169,7 +170,12 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
         assert source.name.startswith("life_")
         if source.name in {name for name, _, _ in REGIONAL_EXAMPLES}:
             assert source.enabled
-            assert source.opt("verification") == "listing_and_vacancy_url"
+            if source.name == "life_dach_bern":
+                assert source.opt("verification") == (
+                    "official_prospective_api_and_employer_directlink_20261031"
+                )
+            else:
+                assert source.opt("verification") == "listing_and_vacancy_url"
         if source.opt("verification") == "candidate_unverified":
             assert not source.enabled
             assert source.opt("link_pattern") == "^$"
@@ -186,6 +192,16 @@ def test_regional_vacancy_patterns_match_real_page_link_shapes(
 ) -> None:
     registry = {s.name: s for s in life_sciences.load_life_sources(CATALOG)}
     source = registry[name]
+    if name == "life_dach_bern":
+        from predoc_pipeline.boards.scrapers.prospective_jobs import _official_url
+
+        # UniBE now validates source-job identity in official JSON; a fabricated
+        # static HTML anchor is no longer the employer's recruitment contract.
+        assert source.type == "prospective_jobs"
+        assert _official_url(url, url.rsplit("/", 1)[-1])
+        assert not _official_url(url.replace("jobs.unibe.ch", "evil.example"),
+                                 url.rsplit("/", 1)[-1])
+        return
     pattern = re.compile(source.opt("link_pattern"), re.I)
     assert pattern.search(url)
     scraper = LinkScanScraper(source, StubHttp())
