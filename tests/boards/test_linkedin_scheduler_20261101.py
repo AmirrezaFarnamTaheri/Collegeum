@@ -280,3 +280,47 @@ def test_seen_pruning_never_loses_cards_when_predicate_raises() -> None:
     with pytest.raises(OSError):
         ledger.prune_known(broken)
     assert [x["id"] for x in ledger.items(now=START)] == ["4980000000"]
+
+
+
+def test_duplicate_page_does_not_reset_replay_and_detail_attempt_history() -> None:
+    """Cross-search duplicates must not monopolize the small detail quota."""
+    ledger = QueryLedger("life")
+    ledger.request(C, now=START)
+    ledger.accept_page(C, [_card("4980000000")], now=START)
+    ledger.note_detail("4980000000", now=START)
+    first = ledger.items(now=START, limit=1)
+    assert first[0]["_detail_last_attempt_at"] == START.isoformat()
+    later = START + timedelta(hours=4)
+    ledger.request(A, now=later)
+    ledger.accept_page(A, [_card("4980000000")], now=later)
+    row = ledger.state["spool"]["4980000000"]
+    assert row["observed_at"] == START.isoformat()
+    assert row["detail_last_attempt_at"] == START.isoformat()
+    assert row["last_replayed_at"] == START.isoformat()
+    assert len(row["queries"]) == 2
+
+
+def test_provider_429_pauses_entire_source_across_checkpoint_restarts(tmp_path) -> None:
+    """A provider limit is global to the source, not to one query's keyword."""
+    ledger = QueryLedger("econ")
+    ledger.request(A, now=START)
+    ledger.fail(A, now=START, status=429)
+    assert ledger.plan([B, C], now=START + timedelta(hours=4), limit=2) == []
+    path = tmp_path / "ratelimited.json"
+    ledger.save(path)
+    resumed = QueryLedger.load(path, "econ")
+    assert resumed.plan([B], now=START + timedelta(hours=47), limit=1) == []
+    assert resumed.plan([B], now=START + timedelta(hours=48), limit=1) == [B]
+
+
+def test_provider_403_also_blocks_distinct_queries_and_next_run(tmp_path) -> None:
+    ledger = QueryLedger("life")
+    ledger.request(C, now=START)
+    ledger.fail(C, now=START, status=403)
+    ledger.save(tmp_path / "blocked.json")
+    restored = QueryLedger.load(tmp_path / "blocked.json", "life")
+    assert restored.plan([A, B], now=START + timedelta(hours=8), limit=2) == []
+    assert restored.plan([A, B], now=START + timedelta(hours=48), limit=2) == [A, B] or set(
+        restored.plan([A, B], now=START + timedelta(hours=48), limit=2)
+    ) == {A, B}
