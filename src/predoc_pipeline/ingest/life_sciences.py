@@ -267,6 +267,32 @@ def select_sources(
     return {source.name for source in sorted(sources, key=priority)[:MAX_SOURCES]}
 
 
+def _vib_job_identifier(url: str) -> str | None:
+    """Employer Jobsoid requisition identity, independent of URL format/order."""
+    try:
+        parsed = urlsplit(url)
+        if parsed.scheme != "https" or parsed.hostname != "jobs.vib.be":
+            return None
+    except ValueError:
+        return None
+    old = _VIB_OLD_JOB_PATH.fullmatch(parsed.path)
+    if old:
+        return old.group(1)
+    if parsed.path != "/PortalJob/IntegratedJobDetails":
+        return None
+    ids = parse_qs(parsed.query).get("id", [])
+    if len(ids) != 1 or not _VIB_JOB_IDENTIFIER.fullmatch(ids[0]):
+        return None
+    return ids[0]
+
+
+def _vib_career_key(identifier: str, historical: dict[str, str]) -> str:
+    """Use the first recorded identity if this employer migrated URL formats."""
+    return historical.get(identifier) or (
+        "career:" + hashlib.sha256(f"vib:job:{identifier}".encode()).hexdigest()[:32]
+    )
+
+
 def _needs_detail(post: JobPostSchema) -> bool:
     """Only enrich a doctoral card if research field or location is incomplete."""
     if not _doctoral_title(post.title):
