@@ -171,6 +171,8 @@ jobs:
                    data/career_jobs.ndjson data/career_health.json \
                    data/source_rotation.json data/life_sources_rotation.json \
                    data/life_sources_health.json \
+                   data/linkedin_econ_search_state.json \
+                   data/linkedin_life_search_state.json \
                    docs/data/listings.json \
                    docs/data/health.json docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
