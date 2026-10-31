@@ -57,7 +57,7 @@ def test_probe_distinguishes_robots_denials_and_vacancy_links() -> None:
             )
 
     result = check_sources(Client(), CATALOG, region="core", limit=3)
-    assert result["enabled_in_scope"] == 9
+    assert result["enabled_in_scope"] == 10
     assert result["checked"] == 3
     assert result["sources"]["life_euraxess"]["status"] == "ok"
     assert result["sources"]["life_academictransfer"]["status"] == "blocked_robots"
