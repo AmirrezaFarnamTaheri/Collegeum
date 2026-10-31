@@ -85,6 +85,22 @@ ADDITIONAL_DOCTORAL_ROLE = re.compile(
     r"tes[iie]\s+de\s+doutoramento|promotionsstelle)\b",
     re.I,
 )
+# A small class of employer adverts genuinely recruits either a Master's-entry
+# PhD student or an already-qualified postdoc. Never infer the PhD track from
+# the slash title alone: require explicit degree requirements in the detail.
+DUAL_DOCTORAL_ROLE = re.compile(
+    r"\b(?:ph\.?d\.?\s*(?:/|or|and|\+)\s*post[\s-]?doc(?:toral)?|"
+    r"post[\s-]?doc(?:toral)?\s*(?:/|or|and|\+)\s*ph\.?d\.?)\b",
+    re.I,
+)
+MASTERS_FOR_PHD = re.compile(
+    r"\b(?:master(?:['’]s)?|msc)\b.{0,120}\b"
+    r"(?:ph\.?d\.?\s+(?:applicants?|students?|candidates?)|doctoral\s+candidates?)\b"
+    r"|\b(?:ph\.?d\.?\s+(?:applicants?|students?|candidates?)|doctoral\s+candidates?)\b"
+    r".{0,120}\b(?:master(?:['’]s)?|msc)\b",
+    re.I | re.S,
+)
+
 OUT_OF_SCOPE_TITLE = re.compile(
     r"\b(?:experimental physics|physics|statistics|statistical sciences|"
     r"classroom|educational science|education research|social science|"
@@ -97,6 +113,7 @@ def _doctoral_title(title: str) -> bool:
     return bool(
         PHD_POSITION.search(title) or PHD_CALL.search(title)
         or ADDITIONAL_DOCTORAL_ROLE.search(title)
+        or DUAL_DOCTORAL_ROLE.search(title)
     )
 def historical_life_title_disqualified(title: str) -> bool:
     """Quarantine unmistakably off-field historical titles without guessing.
@@ -106,7 +123,7 @@ def historical_life_title_disqualified(title: str) -> bool:
     does not itself name an allowed biological research domain. Ambiguous
     titles remain eligible for separate human/detail review.
     """
-    if WRONG_ROLE.search(title):
+    if WRONG_ROLE.search(title) and not DUAL_DOCTORAL_ROLE.search(title):
         return True
     return bool(
         OUT_OF_SCOPE_TITLE.search(title)
@@ -124,7 +141,10 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     """Fail closed on unknown geography, broad roles and unfunded adverts."""
     if not _doctoral_title(post.title):
         return None
-    if WRONG_ROLE.search(post.title):
+    dual_track = bool(DUAL_DOCTORAL_ROLE.search(post.title))
+    if WRONG_ROLE.search(post.title) and not (
+        dual_track and MASTERS_FOR_PHD.search(post.description_snippet or "")
+    ):
         return None
     # The official job-detail API may explicitly close applications even
     # before the advertised date, or without providing a date at all.
@@ -171,6 +191,7 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     needs_deadline = (
         PHD_CALL.search(post.title) or SEASONAL_CALL.search(post.title)
         or post.extra.get("require_deadline")
+        or dual_track
     )
     if needs_deadline and post.deadline is None:
         return None
@@ -289,6 +310,10 @@ def _needs_detail(post: JobPostSchema) -> bool:
     """Only enrich a doctoral card if research field or location is incomplete."""
     if not _doctoral_title(post.title):
         return False
+    if DUAL_DOCTORAL_ROLE.search(post.title):
+        # The index title cannot establish the Master's-entry option or
+        # whether applications remain open; fetch the job-specific evidence.
+        return True
     if post.extra.get("require_deadline") and post.deadline is None:
         return True
     if PHD_CALL.search(post.title) or SEASONAL_CALL.search(post.title):
