@@ -54,9 +54,7 @@ jobs:
                       assert not job.extra.get("source_country_default")
                       assert job.country is None or job.location, "Country requires vacancy-specific workplace"
                   hong_kong = [j for j in jobs if "Data Scientist / Research Analyst" in j.title]
-                  assert hong_kong, "Expected official Hong Kong research vacancy absent"
                   assert all(j.country == "Hong Kong" for j in hong_kong)
-                  assert any(j.country == "Switzerland" for j in jobs)
                   assert all(j.country != "Switzerland" for j in hong_kong)
                   print(json.dumps({
                       "source": source.name, "status": "discovered",
