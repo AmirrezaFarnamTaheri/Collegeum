@@ -1,21 +1,37 @@
 name: verify-dkfz-life-source
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - fix/life-dkfz-identifiable-rss-20261031
+
 permissions:
   contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
         with:
           activate-environment: true
-          enable-cache: true
       - run: uv sync --locked
-      - name: Verify DKFZ index job URLs and deadline gate
-        run: PYTHONPATH=src python3 tools/verify_life_dkfz.py
+      - name: Verify official DKFZ RSS and job-level eligibility (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python3 tools/verify_life_dkfz.py | tee dkfz-official-rss.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dkfz-official-rss-verification
+          path: dkfz-official-rss.json
+          retention-days: 14
+          if-no-files-found: warn
