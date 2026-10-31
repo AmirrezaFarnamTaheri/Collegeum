@@ -267,6 +267,10 @@ def select_sources(
     return {source.name for source in sorted(sources, key=priority)[:MAX_SOURCES]}
 
 
+
+_VIB_OLD_JOB_PATH = re.compile(r"/j/([1-9]\d{0,11})(?:/[^/?#]+)?/?$")
+_VIB_JOB_IDENTIFIER = re.compile(r"[1-9]\d{0,11}$")
+
 def _vib_job_identifier(url: str) -> str | None:
     """Employer Jobsoid requisition identity, independent of URL format/order."""
     try:
