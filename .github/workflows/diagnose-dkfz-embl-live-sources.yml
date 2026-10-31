@@ -77,10 +77,84 @@ jobs:
                   results[name] = info
           print(json.dumps(results, ensure_ascii=False, indent=2))
           PY
+      - name: Probe public EMBL Workday search adapter and DKFZ HTML job identities
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee provider-contracts.json
+          import asyncio
+          import json
+          import re
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.boards.config import SourceConfig
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.scrapers.university_ats import WorkdayScraper
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          async def workday():
+              source = SourceConfig(
+                  name="life_embl", type="workday",
+                  url="https://embl.wd103.myworkdayjobs.com/en-US/EMBL",
+                  institution="EMBL", max_pages=3, search_terms=[""],
+              )
+              async with HttpClient(timeout=18, max_retries=0,
+                                    default_min_interval=2.0) as http:
+                  scraper = WorkdayScraper(source, http)
+                  try:
+                      posts, count = await scraper.run()
+                      return {
+                          "ok": True, "vacancies": count,
+                          "fetch_errors": scraper.discovery_fetch_errors,
+                          "parse_errors": scraper.discovery_parse_errors,
+                          "pagination_limits": scraper.discovery_limits,
+                          "doctoral_titles": [
+                              {"title":p.title[:120],"url":p.url[:220],
+                               "location":p.location}
+                              for p in posts
+                              if re.search(r"(?i)(?:phd|doctoral|predoc|doctorand)",p.title)
+                          ][:15],
+                          "sample_jobs": [
+                              {"title":p.title[:100],"url":p.url[:200],
+                               "location":p.location} for p in posts[:7]
+                          ],
+                      }
+                  except Exception as error:
+                      return {"ok": False, "type": type(error).__name__,
+                              "detail":str(error)[:200]}
+          report = {"embl_workday_api": asyncio.run(workday())}
+          with PoliteClient(
+              user_agent="Collegeum-OfficialRecruitmentProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=18, per_host_delay=3, respect_robots=True,
+          ) as http:
+              for lang in ("en","de"):
+                  url = f"https://jobs.dkfz.de/{lang}/jobs"
+                  response = http.get(url, use_cache=False)
+                  item = {"status": response.status, "ok": response.ok}
+                  if response.ok:
+                      body = response.text
+                      soup = BeautifulSoup(body, "lxml")
+                      item["html_near_first_vacancy"] = body[
+                          max(0,body.find("Softwareentwickler")-300):
+                          body.find("Softwareentwickler")+460
+                      ]
+                      item["anchor_hrefs"] = [
+                          str(a.get("href", ""))[:160]
+                          for a in soup.select("a[href]")[:30]
+                      ]
+                      item["data_identity_tags"] = [
+                          {"name": t.name, "attrs": {
+                              k: str(v)[:110] for k,v in t.attrs.items()
+                              if k.startswith("data-") or k in ("onclick","href")
+                          }}
+                          for t in soup.find_all(attrs={"data-job-id": True})[:5]
+                      ]
+                  report[f"dkfz_{lang}"] = item
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: official-dkfz-embl-source-probe
-          path: providers.json
+          path: |
+            providers.json
+            provider-contracts.json
           if-no-files-found: warn
           retention-days: 14
