@@ -175,9 +175,22 @@ class LinkedInScraper(BaseScraper):
         if callable(seen_lookup):
             ledger.prune_known(seen_lookup)
         pairs = [(kw, loc) for kw in keywords for loc in locations]
+        core_config = self.opt("core_queries", [])
+        if not isinstance(core_config, list):
+            raise ValueError("LinkedIn core queries must be a list")
+        core: list[tuple[str, str]] = []
+        for item in core_config:
+            if (
+                not isinstance(item, dict)
+                or not isinstance(item.get("keyword"), str)
+                or not isinstance(item.get("location"), str)
+                or not item["keyword"].strip() or not item["location"].strip()
+            ):
+                raise ValueError("Invalid LinkedIn core query")
+            core.append((item["keyword"], item["location"]))
         selected = ledger.plan(
             pairs, now=self._scheduler_now(),
-            limit=query_budget, cooldown_hours=cooldown,
+            limit=query_budget, cooldown_hours=cooldown, core_pairs=core,
         )
         queue = deque(selected)
         self.search_diagnostics: dict[str, Any] = {
@@ -185,6 +198,7 @@ class LinkedInScraper(BaseScraper):
             "total_pairs": len(set(pairs)), "plan_size": len(selected),
             "request_budget": request_budget, "time_budget_seconds": wall_seconds,
             "requests": 0, "completed_queries": 0, "failed_requests": 0,
+            "unverified_empty": 0,
             "access_limited": False, "pages_with_more_possible": 0,
             "time_budget_reached": False, "backpressure": False,
         }
@@ -251,13 +265,14 @@ class LinkedInScraper(BaseScraper):
                     self.search_diagnostics["access_limited"] = True
                     break
                 if not cards:
-                    # No recognized card is not evidence that the provider
-                    # searched the entire query successfully. HTML may be a
-                    # sign-in page, an interstitial, or a blank guest result.
+                    # A blank body or interstitial is NOT verified zero results.
+                    # Keep it distinct from confirmed malformed card markup.
                     ledger.defer_unverified_empty(pair, now=self._scheduler_now())
-                    self.discovery_parse_errors.append(
-                        "LinkedIn unverified empty or unparseable search response",
-                    )
+                    self.search_diagnostics["unverified_empty"] += 1
+                    if "data-entity-urn" in html:
+                        self.discovery_parse_errors.append(
+                            "LinkedIn returned unparseable vacancy-card markup",
+                        )
                     continue
                 try:
                     outcome = ledger.accept_page(
