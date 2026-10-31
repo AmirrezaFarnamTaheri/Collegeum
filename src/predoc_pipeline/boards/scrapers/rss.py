@@ -88,6 +88,7 @@ class RSSScraper(BaseScraper):
                             parsed.scheme == "https"
                             and parsed.hostname is not None
                             and parsed.hostname.casefold() in permitted_hosts
+                            and parsed.port in (None, 443)
                             and parsed.username is None
                             and parsed.password is None
                         )
