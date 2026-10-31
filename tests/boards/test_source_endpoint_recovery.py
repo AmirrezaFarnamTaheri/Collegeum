@@ -84,14 +84,15 @@ def test_rwi_essen_routes_to_official_jobs_page_not_general_career_landing():
     assert cfg.opt("url") == "https://www.rwi-essen.de/rwi/karriere/jobs"
 
 def test_bis_official_vacancy_links_are_discovered():
-    """The BIS migrated its vacancies to /vacancy/jrNNNNNN (verified 2026-10-28)."""
-    import re
-
+    """The HTML endpoint is linkless; official RSS 1.0 supplies job identities."""
     cfg = source("bis")
-    assert cfg.opt("url") == "https://www.bis.org/about/careers/vacancies"
-    assert re.search(cfg.opt("link_pattern"), "https://www.bis.org/vacancy/jr100491")
-    assert re.search(cfg.opt("link_pattern"), "https://www.bis.org/vacancy/jr100516")
-    assert not re.search(cfg.opt("link_pattern"), "https://www.bis.org/about/careers/vacancies")
+    assert cfg.type == "rss"
+    assert cfg.opt("url").startswith("https://www.bis.org/doclist/vacancies.rss?")
+    assert cfg.opt("allowed_link_hosts") == ["www.bis.org", "bis.org"]
+    assert cfg.opt("include_url_contains") == ["/vacancy/jr"]
+    assert cfg.country is None
+    assert cfg.field_implied
+
 
 def test_uzh_department_jobs_page_exposes_current_predoc():
     """The university-wide jobs URL redirects to a JavaScript-only portal."""
