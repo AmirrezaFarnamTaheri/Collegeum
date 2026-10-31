@@ -102,3 +102,16 @@ def test_default_rss_source_keeps_existing_http_request_contract():
     assert len(jobs) == 3
     assert http.calls[0][1] == {}
     assert not scraper.discovery_parse_errors
+
+
+def test_source_specific_rss_identity_rejects_actual_header_newlines():
+    import pytest
+
+    for bad in ("Collegeum-test\\rInjected: yes", "Collegeum-test\\nInjected: yes"):
+        source = SourceConfig(
+            name="unsafe_identity", type="rss",
+            url="https://feed.example.org/jobs", rss_user_agent=bad,
+        )
+        scraper = RSSScraper(source, FakeHttp())
+        with pytest.raises(ValueError, match="Invalid source-specific RSS bot identity"):
+            asyncio.run(scraper.fetch_raw_postings())
