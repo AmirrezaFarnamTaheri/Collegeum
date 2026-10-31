@@ -212,6 +212,10 @@ jobs:
                       "rss_explicit": {
                           "Accept": "application/rss+xml,application/xml;q=0.9,*/*;q=0.5"
                       },
+                      "bot_identity": {
+                          "User-Agent": "Collegeum-LifeSciencesCollector/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+                          "Accept": "application/rss+xml,application/xml;q=0.9,*/*;q=0.5",
+                      },
                   }.items():
                       try:
                           response = await http.request(
