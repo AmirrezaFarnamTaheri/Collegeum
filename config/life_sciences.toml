@@ -101,8 +101,8 @@ name = "life_vib"
 type = "link_scan"
 group = "life_sciences"
 enabled = true
-url = "https://jobs.vib.be/"
-link_pattern = 'jobs\.vib\.be/j/\d+/[^?#\s]+'
+url = "https://jobs.vib.be/jobs"
+link_pattern = 'jobs\.vib\.be/(?:j/\d+/[^?#\s]+|PortalJob/IntegratedJobDetails\?(?:[^#\s]*&)?id=\d+)'
 institution = "VIB"
 country = "Belgium"
 min_interval = 3.0
