@@ -283,3 +283,16 @@ def test_rolling_priority_review_not_reintroduced_by_detail_enrichment(monkeypat
     assert posts[0].deadline is None
     assert posts[0].deadline_text == "Rolling until filled"
     assert classify_post(posts[0], today=date(2026, 10, 31)) is None
+
+
+def test_quarantined_bern_end_date_stays_ineligible_even_if_later_code_sets_deadline() -> None:
+    """Fail closed even if another enrichment caller assigns a review date."""
+    post = _parse(
+        GENESIS_WET,
+        title="PhD position NCCR Genesis: combining remote and in-situ life detection techniques",
+        ends="2026-12-31T22:59:59Z",
+        application="Review continues until the position is filled.",
+    )
+    assert post.extra["prospective_unverified_end_date"] == "2026-12-31T22:59:59Z"
+    post.deadline = date(2026, 11, 30)
+    assert classify_post(post, today=date(2026, 10, 31)) is None
