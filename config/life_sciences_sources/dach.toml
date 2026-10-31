@@ -43,16 +43,21 @@ note = "Disabled: candidate institution or programme page, not a proven individu
 
 [[board]]
 name = "life_dach_bern"
-type = "link_scan"
+type = "prospective_jobs"
 group = "life_sciences"
 enabled = true
 url = "https://karriere.unibe.ch/offene_stellen/index_ger.html"
-link_pattern = 'jobs\.unibe\.ch/job-vacancies/[^/?#]+/[0-9a-f]{8}-[0-9a-f-]{27,36}'
+# The employer index embeds Prospective's JS-only portal. Its shipped client
+# reads this public JSON API; GitHub runner #41190504560 returned 62 jobs
+# with employer-hosted UUID directlinks, total and offset pagination.
+api_url = "https://ohws.prospective.ch/public/v1/medium/1001892/jobs"
+max_pages = 8
 country = "Switzerland"
 institution = "University of Bern"
+require_deadline = true
 min_interval = 3.0
-verification = "listing_and_vacancy_url"
-note = "Official UniBE job portal links to /job-vacancies/title/UUID doctoral recruitment."
+verification = "official_prospective_api_and_employer_directlink_20261031"
+note = "Official UniBE Prospective API; 62 general vacancies, not 62 PhDs."
 
 [[board]]
 name = "life_dach_eth_central"

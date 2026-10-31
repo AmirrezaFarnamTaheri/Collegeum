@@ -197,6 +197,12 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
         return None
     if post.deadline and post.deadline < current:
         return None
+    # An unusually distant ATS end_date is not credible evidence of a
+    # currently actionable application. Bern's live feed has an advert
+    # claiming a 2036 closing date in October 2026. Preserve it in the
+    # discovery journal, but require manual verification before publication.
+    if post.deadline and post.deadline > current + timedelta(days=366 * 3):
+        return None
     if post.date_posted and post.date_posted < current - timedelta(days=60):
         return None
     try:
@@ -364,7 +370,7 @@ async def discover(
 
         async def one(source: Any) -> tuple[list[JobPostSchema], list[str]]:
             nonlocal detail_remaining
-            if source.type not in ("rss", "link_scan", "bite_jobs"):
+            if source.type not in ("rss", "link_scan", "bite_jobs", "prospective_jobs"):
                 if diagnostics is not None:
                     diagnostics[source.name] = {
                         "status": "unsupported", "vacancy_links": 0,
