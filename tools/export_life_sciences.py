@@ -133,7 +133,6 @@ def artifact_quality(
 async def collect(config_path: Path, rows: list[dict[str, Any]], output: Path,
                   report: dict[str, Any]) -> None:
     from predoc_pipeline.boards.config import HttpConfig
-    from predoc_pipeline.boards.utils.geo import detect_location
     from predoc_pipeline.ingest.life_sciences import (
         MAX_SOURCES,
         classify_post,
@@ -153,9 +152,10 @@ async def collect(config_path: Path, rows: list[dict[str, Any]], output: Path,
             row = classify_post(post)
             if row is None:
                 continue
-            country, _ = detect_location(post.country, post.location)
+            # classify_post already derived and validated the European workplace.
+            # Re-detecting from sparse index fields can erase that evidence.
             row.update({
-                'country': country or '', 'research_fields': post.fields_of_research or '',
+                'research_fields': post.fields_of_research or '',
                 'deadline': post.deadline.isoformat() if post.deadline else '',
                 'deadline_note': post.deadline_text or '',
                 'first_seen_at': report['collected_at'], 'last_seen_at': report['collected_at'],
