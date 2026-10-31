@@ -52,6 +52,7 @@ jobs:
                       assert parsed.port in (None, 443)
                       assert re.fullmatch(r"/vacancy/jr[0-9]+", parsed.path)
                       assert not job.extra.get("source_country_default")
+                      assert job.country is None or job.location, "Country requires vacancy-specific workplace"
                   hong_kong = [j for j in jobs if "Data Scientist / Research Analyst" in j.title]
                   assert hong_kong, "Expected official Hong Kong research vacancy absent"
                   assert all(j.country == "Hong Kong" for j in hong_kong)
