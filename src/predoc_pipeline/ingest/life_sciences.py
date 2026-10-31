@@ -150,6 +150,14 @@ def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str
     """Fail closed on unknown geography, broad roles and unfunded adverts."""
     if post.url in REVIEWED_NON_LIFE_VACANCIES:
         return None
+    # An index end date that the Bern adapter quarantined is never proof
+    # of a deadline, even if later enrichment sets post.deadline from a
+    # priority-review date. Manual verification needs a separate lifecycle.
+    if (
+        post.source == "life_dach_bern"
+        and "prospective_unverified_end_date" in post.extra
+    ):
+        return None
     if not _doctoral_title(post.title):
         return None
     dual_track = bool(DUAL_DOCTORAL_ROLE.search(post.title))
@@ -337,6 +345,11 @@ def _vib_career_key(identifier: str, historical: dict[str, str]) -> str:
 
 def _needs_detail(post: JobPostSchema) -> bool:
     """Only enrich a doctoral card if research field or location is incomplete."""
+    # UniBE's official Prospective API already includes the full employer
+    # description. Its fetch_detail returns the SAME text, so a second pass
+    # can only duplicate it and reintroduce a review date as a hard cutoff.
+    if post.source == "life_dach_bern" and "prospective_full_text" in post.extra:
+        return False
     if not _doctoral_title(post.title):
         return False
     if DUAL_DOCTORAL_ROLE.search(post.title):
