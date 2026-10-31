@@ -160,8 +160,10 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     assert len(registered) - len(active) == 188
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
-    assert all(source.type in {"rss", "link_scan", "bite_jobs", "prospective_jobs"} for source in active)
-    assert {source.name for source in active if source.type == "prospective_jobs"} == {"life_dach_bern"}
+    supported = {"rss", "link_scan", "bite_jobs", "prospective_jobs"}
+    assert all(source.type in supported for source in active)
+    prospective_sources = {s.name for s in active if s.type == "prospective_jobs"}
+    assert prospective_sources == {"life_dach_bern"}
     assert {s.name for s in active if s.type == "bite_jobs"} == {
         "life_special_de_helmholtz_munich"
     }
