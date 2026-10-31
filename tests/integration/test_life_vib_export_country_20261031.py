@@ -16,6 +16,9 @@ class HtmlClient:
     def __init__(self, url: str, html: str):
         self.url, self.html = url, html
 
+    def set_host_interval(self, *_args):
+        pass
+
     async def get_text(self, url: str) -> str:
         assert url == self.url
         return self.html
