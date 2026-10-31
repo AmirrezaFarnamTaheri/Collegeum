@@ -321,6 +321,7 @@ name = "mannheim_econ"
 type = "link_scan"
 group = "university"
 url = "https://www.vwl.uni-mannheim.de/en/about/about-the-department/job-vacancies/"
+source_timeout_seconds = 45.0
 may_be_empty = true
 link_pattern = 'myjob\.uni-mannheim\.de/job/\d+'
 institution = "University of Mannheim, Department of Economics"
