@@ -49,7 +49,7 @@ jobs:
                       assert parsed.scheme == "https"
                       assert parsed.hostname in {"www.bis.org", "bis.org"}
                       assert parsed.port in (None, 443)
-                      assert re.fullmatch(r"/vacancy/jr\\d+", parsed.path)
+                      assert re.fullmatch(r"/vacancy/jr[0-9]+", parsed.path)
                       assert job.country is None, "RSS listing cannot assume Switzerland for all BIS offices"
                       assert not job.extra.get("source_country_default")
                   print(json.dumps({
