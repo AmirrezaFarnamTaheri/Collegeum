@@ -243,3 +243,43 @@ def test_historical_multisensory_exclusion_preserves_original_journal(tmp_path) 
     member = {"topics": {"life_sciences_phd": "2026-10-01T00:00:00Z"}, "scopes": {}}
     assert matching(member, [], [original], preview=True) == []
     assert journal.read_text(encoding="utf-8") == saved
+
+
+def test_rolling_priority_review_not_reintroduced_by_detail_enrichment(monkeypatch) -> None:
+    """The discover/detail handoff must not convert a review date into a cutoff.
+
+    Bern's API contains the full employer text, so calling fetch_detail
+    again must not rehydrate a quarantined index end date or a priority date.
+    """
+    from contextlib import asynccontextmanager
+    from pathlib import Path
+
+    from predoc_pipeline.boards.config import HttpConfig
+    from predoc_pipeline.ingest import life_sciences
+
+    job = _job(
+        title="PhD Student Position in Cell Biology",
+        deadline="2036-10-17T22:59:59Z",
+    )
+    job["szas"]["sza_application"] = (
+        "Applications are reviewed on a rolling basis until the position is filled. "
+        "Apply by 30 November 2026 for full consideration. "
+        "Later applications may still be considered."
+    )
+    fake_http = FakeHttp({0: _page(0, [job], 1)})
+
+    @asynccontextmanager
+    async def fake_build_http(_config):
+        yield fake_http
+
+    monkeypatch.setattr(life_sciences, "build_http", fake_build_http)
+    posts, errors = asyncio.run(life_sciences.discover(
+        Path("config/life_sciences.toml"),
+        HttpConfig(source_timeout=30.0),
+        selected_names={"life_dach_bern"},
+    ))
+    assert errors == []
+    assert len(posts) == 1
+    assert posts[0].deadline is None
+    assert posts[0].deadline_text == "Rolling until filled"
+    assert classify_post(posts[0], today=date(2026, 10, 31)) is None
