@@ -1,8 +1,9 @@
 """LinkedIn public (logged-out) job search.
 
-Uses the same guest endpoint that linkedin.com/jobs serves to anonymous visitors, so no account
-is involved and nothing can get banned. Keep request volume low (min_interval >= 3s): the endpoint
-answers 429 when hammered. LinkedIn's terms restrict automated access - use responsibly.
+Uses the public guest endpoint but this does not imply authorization to scrape.
+LinkedIn restricts unauthorized automated collection; never bypass access
+controls or increase the previous 30-request per-run ceiling. Guest job-search
+results do NOT include ordinary LinkedIn posts or admissions announcements.
 
     GET https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search
         ?keywords=predoc&location=European%20Union&f_TPR=r604800&start=0
@@ -15,11 +16,14 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+from collections import deque
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode
 
 from bs4 import BeautifulSoup
 
+from ..http import FetchError
 from ..models import JobPostSchema
 from ..utils.dates import parse_iso_datetime, parse_posted
 from ..utils.text import clean_ws, html_to_text
@@ -30,6 +34,47 @@ log = logging.getLogger(__name__)
 SEARCH = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 DETAIL = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{}"
 _ID = re.compile(r"(?:jobPosting:|/view/(?:[^/?]*-)?)(\d{6,})")
+
+
+_MAX_REQUESTS = 30  # Existing six terms x five locations x one page.
+_PAGE_FULL_AT = 10  # Full guest pages may have more matches.
+_SLOT_SECONDS = 4 * 60 * 60
+
+
+def utc_search_slot(now: datetime) -> int:
+    """Stable four-hour UTC rotation slot, independent of runner timezone."""
+    if now.tzinfo is None:
+        raise ValueError("UTC search slot requires timezone-aware clock")
+    return int(now.astimezone(UTC).timestamp()) // _SLOT_SECONDS
+
+
+def build_search_plan(
+    keywords: list[str], locations: list[str], core_queries: list[tuple[str, str]],
+    *, slot: int, query_budget: int,
+) -> list[tuple[str, str]]:
+    """Rotate a large portfolio without increasing traffic per run.
+
+    Every pair is scheduled in successive UTC slots, provided those runs
+    execute. Planning is not proof of search visibility or vacancy status.
+    """
+    if not 1 <= query_budget <= _MAX_REQUESTS or slot < 0:
+        raise ValueError("Invalid LinkedIn query budget or UTC slot")
+    if not keywords or not locations:
+        raise ValueError("LinkedIn portfolio requires keywords and locations")
+    if any(not isinstance(x, str) or not x.strip() for x in keywords + locations):
+        raise ValueError("Invalid LinkedIn search phrase or location")
+    fixed = list(dict.fromkeys(core_queries))
+    if len(fixed) >= query_budget:
+        raise ValueError("Core queries must leave room for rotation")
+    pool = list(dict.fromkeys(
+        (kw, loc) for kw in keywords for loc in locations
+        if (kw, loc) not in fixed
+    ))
+    if not pool:
+        return fixed
+    rotating_slots = min(query_budget - len(fixed), len(pool))
+    start = (slot * rotating_slots) % len(pool)
+    return fixed + [pool[(start + i) % len(pool)] for i in range(rotating_slots)]
 
 
 def parse_cards(html: str) -> list[dict[str, Any]]:
