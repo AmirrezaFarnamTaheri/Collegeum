@@ -7,7 +7,6 @@ from predoc_pipeline.boards.models import JobPostSchema
 from predoc_pipeline.ingest import life_sciences
 from predoc_pipeline.ingest.career import load_career, save_career
 
-
 LEGACY = "https://jobs.vib.be/j/138253/phd-position-in-neuroimmunology"
 CURRENT = (
     "https://jobs.vib.be/PortalJob/IntegratedJobDetails?"
