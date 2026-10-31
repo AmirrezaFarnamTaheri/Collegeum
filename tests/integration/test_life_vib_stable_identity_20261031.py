@@ -1,4 +1,5 @@
 """VIB Jobsoid URL migrations must not republish an existing doctoral vacancy."""
+
 from __future__ import annotations
 
 from predoc_pipeline.boards.config import HttpConfig
