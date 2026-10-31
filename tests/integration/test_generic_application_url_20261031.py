@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from predoc_pipeline import state
-from predoc_pipeline.core.output_quality import application_url_issue
+from predoc_pipeline.core.output_quality import application_url_issue, excluded_by_audit
 
 
 def test_euraxess_generic_search_is_not_individual_application():
@@ -44,3 +44,11 @@ def test_dashboard_excludes_preexisting_generic_search_application_without_mutat
     assert visible == [direct]
     assert generic["apply_url"] == "https://euraxess.ec.europa.eu/jobs/search"
     assert generic["telegram_message_id"] == 54321
+
+
+def test_reviewed_social_work_doctorate_stays_out_of_economics_publication():
+    # University of Gothenburg req PAR 2026/834 is a doctorate in Social Work,
+    # independently verified against its employer vacancy announcement.
+    identity = "07c9e135ca70ad498084d2521ac6fcf1c1fd54deefd52a702e696fa13f8278ef"
+    assert excluded_by_audit(identity)
+    assert not excluded_by_audit("f" * 64)
