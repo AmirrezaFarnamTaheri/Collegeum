@@ -113,35 +113,98 @@ class LinkedInScraper(BaseScraper):
 
     async def fetch_raw_postings(self) -> list[Any]:
         if self.opt("backend", "guest") == "jobspy":
+            self.search_diagnostics = {"backend": "jobspy", "coverage": "unverified"}
             return await asyncio.to_thread(self._jobspy)
-        max_pages = int(self.opt("max_pages", 2))
+
+        keywords = list(self.opt("keywords", ["predoc"]))
+        locations = list(self.opt("locations", ["European Union"]))
+        core_config = self.opt("core_queries", [])
+        if not isinstance(core_config, list):
+            raise ValueError("LinkedIn core_queries must be a list")
+        core: list[tuple[str, str]] = []
+        for entry in core_config:
+            if (
+                not isinstance(entry, dict)
+                or not isinstance(entry.get("keyword"), str)
+                or not isinstance(entry.get("location"), str)
+            ):
+                raise ValueError("Invalid LinkedIn core query")
+            core.append((entry["keyword"], entry["location"]))
+        query_budget = int(self.opt("query_budget", 24))
+        request_budget = int(self.opt("request_budget", _MAX_REQUESTS))
+        max_pages = int(self.opt("max_pages", 1))
+        if not 1 <= request_budget <= _MAX_REQUESTS:
+            raise ValueError("LinkedIn request budget must be 1..30")
+        if not 1 <= max_pages <= 2:
+            raise ValueError("LinkedIn max_pages must be 1..2")
+        if query_budget > request_budget:
+            raise ValueError("LinkedIn query budget exceeds request budget")
+        slot = int(self.opt("query_slot", utc_search_slot(datetime.now(UTC))))
+        plan = build_search_plan(
+            keywords, locations, core, slot=slot, query_budget=query_budget,
+        )
+        self.search_diagnostics = {
+            "backend": "guest", "rotation_slot": slot,
+            "total_pairs": len(set((kw, loc) for kw in keywords for loc in locations)),
+            "plan_size": len(plan), "query_budget": query_budget,
+            "request_budget": request_budget, "max_pages": max_pages,
+            "requests": 0, "completed_queries": 0,
+            "failed_requests": 0, "access_limited": False,
+            "pages_with_more_possible": 0,
+        }
+        queue = deque((kw, loc, 0, 0) for kw, loc in plan)
         raw: list[dict[str, Any]] = []
-        errors = consecutive = 0
-        for kw in self.opt("keywords", ["predoc"]):
-            for loc in self.opt("locations", ["European Union"]):
-                if consecutive >= 3:  # blocked / rate-limited: stop hammering, keep what we have
+        failures_in_a_row = 0
+        while queue and self.search_diagnostics["requests"] < request_budget:
+            kw, loc, start, depth = queue.popleft()
+            params = {
+                "keywords": kw, "location": loc,
+                "f_TPR": self.opt("f_TPR", "r604800"), "start": start,
+            }
+            self.search_diagnostics["requests"] += 1
+            try:
+                html = await self.http.get_text(f"{SEARCH}?{urlencode(params)}")
+            except FetchError as exc:
+                self.search_diagnostics["failed_requests"] += 1
+                self.discovery_fetch_errors.append(
+                    f"LinkedIn search HTTP {exc.status or 'fetch failure'}"
+                )
+                if exc.status in (403, 429):
+                    # Stop; never rotate UA/proxy/account or bypass access controls.
+                    self.search_diagnostics["access_limited"] = True
                     break
-                start = 0
-                for _ in range(max_pages):
-                    params = {"keywords": kw, "location": loc, "f_TPR": self.opt("f_TPR", "r604800"),
-                              "start": start}
-                    try:
-                        html = await self.http.get_text(f"{SEARCH}?{urlencode(params)}")
-                    except Exception as exc:  # noqa: BLE001 - keep other keyword/location combos going
-                        errors += 1
-                        consecutive += 1
-                        log.warning("linkedin %r/%r failed: %s", kw, loc, exc)
-                        break
-                    consecutive = 0
-                    cards = parse_cards(html)
-                    for c in cards:
-                        c["_query"] = f"{kw} @ {loc}"
-                    raw.extend(cards)
-                    if len(cards) < 10:
-                        break
-                    start += len(cards)
-        if errors and not raw:
-            raise RuntimeError(f"all {errors} LinkedIn requests failed (rate-limited?)")
+                failures_in_a_row += 1
+                if failures_in_a_row >= 3:
+                    break
+                continue
+            except Exception as exc:  # noqa: BLE001 - retain earlier observations
+                self.search_diagnostics["failed_requests"] += 1
+                self.discovery_fetch_errors.append(type(exc).__name__)
+                failures_in_a_row += 1
+                if failures_in_a_row >= 3:
+                    break
+                continue
+            failures_in_a_row = 0
+            cards = parse_cards(html)
+            if not cards and re.search(
+                r"captcha|sign[ -]?in.*(?:required|continue)", html, re.I,
+            ):
+                self.search_diagnostics["access_limited"] = True
+                self.discovery_fetch_errors.append("LinkedIn guest access challenge")
+                break
+            if not cards and "data-entity-urn" in html:
+                self.discovery_parse_errors.append("Unparseable LinkedIn job cards")
+            if depth == 0:
+                self.search_diagnostics["completed_queries"] += 1
+            for card in cards:
+                card["_query"] = f"{kw} @ {loc}"
+                raw.append(card)
+            if len(cards) >= _PAGE_FULL_AT:
+                self.search_diagnostics["pages_with_more_possible"] += 1
+                if depth + 1 < max_pages:
+                    # Breadth-first: first pages of selected searches before
+                    # follow-up pages, subject to the same total request limit.
+                    queue.append((kw, loc, start + len(cards), depth + 1))
         return raw
 
     def _jobspy(self) -> list[dict[str, Any]]:
