@@ -234,3 +234,22 @@ def test_replay_tracking_survives_restart_and_recovers_unprocessed(tmp_path) -> 
     restored = QueryLedger.load(path, "life")
     later = {x["id"] for x in restored.items(now=START + timedelta(hours=4), limit=2)}
     assert first.isdisjoint(later)
+
+
+
+def test_cooldown_begins_after_final_page_not_initial_scan_page() -> None:
+    ledger = QueryLedger("econ")
+    ledger.request(A, now=START)
+    ledger.accept_page(
+        A, [_card(str(4980000000 + i)) for i in range(10)], now=START,
+    )
+    later = START + timedelta(hours=4)
+    ledger.request(A, now=later)
+    ledger.accept_page(A, [], now=later)
+    # The lookback coverage point remains START but the 48h cooldown
+    # starts at the final page; do not repeat 44h after last query request.
+    assert ledger.plan([A], now=START + timedelta(hours=48), limit=1) == []
+    assert ledger.plan([A], now=START + timedelta(hours=52), limit=1) == [A]
+    record = ledger.state["queries"][query_key("econ", *A)]
+    assert record["last_complete_at"] == START.isoformat()
+    assert record["last_completed_at"] == later.isoformat()
