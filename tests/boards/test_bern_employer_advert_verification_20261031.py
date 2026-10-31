@@ -116,3 +116,42 @@ def test_employer_corresponding_explicit_closing_date_remains_trusted(
     assert post.deadline_text is not None and "Official UniBE posting ends" in post.deadline_text
     assert "prospective_unverified_end_date" not in post.extra
 
+
+
+def test_employer_review_excludes_physics_only_nccr_genesis_from_life_feed() -> None:
+    post = _parse(
+        GENESIS_OPTICS,
+        title="PhD position NCCR Genesis: remote sensing of microorganisms in extreme environments",
+        ends="2026-12-31T22:59:59Z",
+        application="Application deadline: 31 December 2026.",
+    )
+    # An explicit physics/engineering MSc in the employer advert excludes
+    # this particular opportunity from the biology-focused feed.
+    assert classify_post(post, today=date(2026, 10, 31)) is None
+
+
+def test_reviewed_exclusion_is_non_destructive_to_historical_journal(tmp_path) -> None:
+    import json
+
+    from predoc_pipeline.publish.subscriptions import matching
+    from tools.export_life_sciences import stored_positions
+
+    original = {
+        "key": "career:historical-bern-optics",
+        "category": "life_sciences_phd",
+        "scope": "",
+        "first_seen_at": "2026-10-31T19:55:26+00:00",
+        "url": GENESIS_OPTICS,
+        "title": "PhD position NCCR Genesis: remote sensing of microorganisms in extreme environments",
+        "employer": "University of Bern",
+        "location": "Bern, Switzerland",
+        "source": "life_dach_bern",
+        "funding_status": "unverified",
+    }
+    journal = tmp_path / "career_jobs.ndjson"
+    saved = json.dumps(original) + "\\n"
+    journal.write_text(saved, encoding="utf-8")
+    assert stored_positions(journal) == []
+    member = {"topics": {"life_sciences_phd": "2026-10-01T00:00:00Z"}, "scopes": {}}
+    assert matching(member, [], [original], preview=True) == []
+    assert journal.read_text(encoding="utf-8") == saved
