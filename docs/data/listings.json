@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-31T05:40:02Z",
+ "generated_at": "2026-10-31T14:20:49Z",
  "count": 188,
  "listings": [
   {
@@ -109,7 +109,9 @@
    "first_seen_at": "2026-10-30T15:08:44Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://www.academics.com/jobs/senior-research-associate-postdoc-in-health-economics-and-development-economics-leibniz-universitaet-hannover-1112284"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -2962,18 +2964,18 @@
    "institution": "THE UNIVERSITY OF HONG KONG",
    "principal_investigator": "Professor Tarani Chandola",
    "country": "Hong Kong",
-   "city": "Pok Fu Lam",
+   "city": "Hong Kong",
    "is_remote": false,
    "duration_years": 2.0,
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 76,
    "disciplines": [
-    "Econometrics",
+    "Applied Microeconomics",
     "Labor Economics",
-    "International Trade"
+    "Development Economics"
    ],
    "visa": "unknown",
-   "summary": "The role is a Post-doctoral Fellow at the University of Hong Kong's Stone Centre on Socio-Economic Inequality in Asia, involving research on income and wealth inequality using large-scale datasets and causal inference methods. Candidates are required to hold a PhD in economics or a related discipline and demonstrate expertise in web crawling, large language models, and text analysis techniques.",
+   "summary": "The position is a Post-doctoral Fellow at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia, where the incumbent will conduct quantitative and qualitative data analyses, prepare publications, and assist with project management. The role suits candidates with a PhD in economics or a related discipline and experience in large‑scale data analysis, causal inference, and text‑analysis techniques.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
