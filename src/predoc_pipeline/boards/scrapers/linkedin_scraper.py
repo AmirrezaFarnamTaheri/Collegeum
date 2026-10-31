@@ -113,7 +113,9 @@ class LinkedInScraper(BaseScraper):
 
     async def fetch_raw_postings(self) -> list[Any]:
         if self.opt("backend", "guest") == "jobspy":
-            self.search_diagnostics = {"backend": "jobspy", "coverage": "unverified"}
+            self.search_diagnostics: dict[str, Any] = {
+                "backend": "jobspy", "coverage": "unverified",
+            }
             return await asyncio.to_thread(self._jobspy)
 
         keywords = list(self.opt("keywords", ["predoc"]))
