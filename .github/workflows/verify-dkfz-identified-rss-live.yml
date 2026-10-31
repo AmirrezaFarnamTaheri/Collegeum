@@ -1,0 +1,74 @@
+name: verify-dkfz-identified-rss-live
+on:
+  push:
+    branches:
+      - diagnostics/dkfz-embl-recovery-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/life-dkfz-identifiable-rss-20261031
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Read-only DKFZ RSS application-identity and classifier verification
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee dkfz-life-live.json
+          import asyncio
+          import json
+          import subprocess
+          from urllib.parse import urlsplit
+          from predoc_pipeline.boards.config import HttpConfig
+          from predoc_pipeline.ingest.life_sciences import classify_post, discover
+
+          diagnostics = {}
+          posts, errors = asyncio.run(discover(
+              "config/life_sciences.toml",
+              HttpConfig(timeout=18, max_retries=0, source_timeout=90),
+              selected_names={"life_dkfz"}, diagnostics=diagnostics,
+          ))
+          matches = [row for p in posts if (row := classify_post(p))]
+          report = {
+              "head": subprocess.check_output(
+                  ["git", "rev-parse", "HEAD"], text=True).strip(),
+              "health": diagnostics.get("life_dkfz"),
+              "general_vacancies": len(posts),
+              "unique_urls": len({p.url for p in posts}),
+              "doctoral_matches": [
+                  {"title": row["title"], "deadline": row.get("deadline"),
+                   "url": row["url"]} for row in matches
+              ],
+              "sample": [{"title":p.title[:100],"url":p.url} for p in posts[:8]],
+              "errors": errors,
+          }
+          print(json.dumps(report, indent=2, ensure_ascii=False))
+          health = diagnostics["life_dkfz"]
+          assert health["status"] == "discovered", report
+          assert health["vacancy_links"] >= 10, report
+          assert health["discovery_issues"] == 0, report
+          assert health["detail_failures"] == 0, report
+          assert not errors, report
+          assert len(posts) == len({p.url for p in posts}), report
+          assert all(urlsplit(p.url).hostname == "jobs.dkfz.de" for p in posts)
+          assert all(row["country"] == "Germany" for row in matches)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dkfz-identified-rss-live
+          path: dkfz-life-live.json
+          retention-days: 14
+          if-no-files-found: warn
