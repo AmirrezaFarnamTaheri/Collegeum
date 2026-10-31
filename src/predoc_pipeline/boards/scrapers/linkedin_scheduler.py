@@ -110,6 +110,7 @@ class QueryLedger:
         self.state: dict[str, Any] = state if state is not None else {
             "version": VERSION, "source": source, "queries": {},
             "spool": {}, "dropped_age": 0,
+            "access_blocked_until": None,
         }
         self._validate()
 
@@ -120,6 +121,7 @@ class QueryLedger:
             or s.get("source") != self.source
         ):
             raise ValueError("Invalid LinkedIn ledger version or source")
+        _read_time(s.get("access_blocked_until"))
         if not isinstance(s.get("queries"), dict) or not isinstance(s.get("spool"), dict):
             raise ValueError("Invalid LinkedIn ledger query or buffer structure")
         if len(s["queries"]) > 5000 or len(s["spool"]) > self.max_items:
@@ -215,6 +217,11 @@ class QueryLedger:
         now = _utc(now)
         if not 1 <= limit <= 120 or not 2 <= cooldown_hours <= 720:
             raise ValueError("Invalid LinkedIn query scheduling policy")
+        block = _read_time(self.state.get("access_blocked_until"))
+        if block is not None and now < block:
+            # A provider 403/429 is host-wide, not a per-keyword failure.
+            # Preserve the queued work and resume only after a cooldown.
+            return []
         seen: set[str] = set()
         fresh: list[tuple[datetime, str, tuple[str, str]]] = []
         pending: list[tuple[datetime, str, tuple[str, str]]] = []
@@ -336,7 +343,10 @@ class QueryLedger:
             if label not in queries:
                 queries.append(label)
             spool[ident] = {
-                "card": card, "observed_at": _stamp(now),
+                **previous,
+                "card": card,
+                "observed_at": previous.get("observed_at") or _stamp(now),
+                "last_seen_at": _stamp(now),
                 "queries": queries[:100],
             }
         progress = row["pending"]
@@ -368,9 +378,12 @@ class QueryLedger:
         row = self._row(pair)
         row["status"] = "access_limited" if status in (403, 429) else "failed"
         row["last_attempt_at"] = _stamp(now)
-        row["retry_after"] = _stamp(
-            now + timedelta(hours=48 if status in (403, 429) else 4),
-        )
+        retry_at = now + timedelta(hours=48 if status in (403, 429) else 4)
+        row["retry_after"] = _stamp(retry_at)
+        if status in (403, 429):
+            previous_block = _read_time(self.state.get("access_blocked_until"))
+            if previous_block is None or previous_block < retry_at:
+                self.state["access_blocked_until"] = _stamp(retry_at)
 
     def prune_known(self, known: Callable[[str], bool]) -> int:
         """Release only items backed by the authoritative seen/listing journal.
