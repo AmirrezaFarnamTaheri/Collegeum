@@ -204,3 +204,50 @@ def test_rejected_card_removal_is_checkpointed_without_journal_mutation(tmp_path
     state = QueryLedger.load(tmp_path / "search.json", "linkedin")
     assert state.items(now=T0) == []
     assert state.counts()["acknowledged_filtered"] == 1
+
+
+
+def test_unknown_nonempty_html_cannot_complete_query_or_advance_cursor(tmp_path) -> None:
+    class InterstitialHTTP(FakeHTTP):
+        async def get_text(self, url: str, **_options) -> str:
+            self.urls.append(url)
+            return "<html><body><h1>Temporary search unavailable</h1></body></html>"
+
+    http = InterstitialHTTP()
+    worker = scraper(tmp_path, http)
+    posts, n = asyncio.run(worker.run())
+    assert n == 0 and posts == []
+    assert worker.discovery_parse_errors
+    ledger = QueryLedger.load(tmp_path / "search.json", "linkedin")
+    assert all(row["last_complete_at"] is None for row in ledger.state["queries"].values())
+    assert ledger.plan(
+        [("PhD economics", "Germany"), ("predoc economics", "Germany")],
+        now=T0 + timedelta(hours=4), limit=2,
+    ) == []
+
+
+def test_unknown_followup_page_retains_previous_cards_and_offset(tmp_path) -> None:
+    class PartialThenInterstitial(FakeHTTP):
+        async def get_text(self, url: str, **_options) -> str:
+            self.urls.append(url)
+            offset = int(parse_qs(urlsplit(url).query)["start"][0])
+            if offset:
+                return "<html><body>Sorry, the results could not be loaded.</body></html>"
+            return page(0)
+
+    src = SourceConfig(
+        name="linkedin", type="linkedin",
+        keywords=["PhD economics"], locations=["Germany"],
+        query_budget=1, request_budget=2,
+        max_pages=12, time_budget_seconds=40,
+        checkpoint_path=str(tmp_path / "partially-loaded.json"),
+    )
+    worker = LinkedInScraper(src, PartialThenInterstitial())
+    worker._scheduler_now = lambda: T0
+    posts, n = asyncio.run(worker.run())
+    assert n == len(posts) == 10
+    assert worker.discovery_parse_errors
+    state = QueryLedger.load(tmp_path / "partially-loaded.json", "linkedin")
+    row = state.state["queries"][query_key("linkedin", "PhD economics", "Germany")]
+    assert row["pending"]["offset"] == 10
+    assert row["last_complete_at"] is None
