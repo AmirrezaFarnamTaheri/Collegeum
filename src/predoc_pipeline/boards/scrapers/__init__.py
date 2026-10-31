@@ -7,6 +7,7 @@ from . import (  # noqa: F401
     link_scan,
     linkedin_scraper,
     predoc_org,
+    prospective_jobs,
     rss,
     text_table,
     university_ats,
