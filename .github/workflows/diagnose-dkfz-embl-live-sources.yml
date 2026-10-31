@@ -149,6 +149,51 @@ jobs:
                   report[f"dkfz_{lang}"] = item
           print(json.dumps(report, ensure_ascii=False, indent=2))
           PY
+      - name: Test existing RSS engine on official DKFZ XML feed
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee dkfz-rss-contract.json
+          import asyncio
+          import json
+          from urllib.parse import urlsplit
+          from predoc_pipeline.boards.config import SourceConfig
+          from predoc_pipeline.boards.http import HttpClient
+          from predoc_pipeline.boards.scrapers.rss import RSSScraper
+          from predoc_pipeline.ingest.life_sciences import _doctoral_title
+
+          async def verify():
+              source = SourceConfig(
+                  name="life_dkfz", type="rss",
+                  url="https://jobs.dkfz.de/en/jobs",
+                  institution="German Cancer Research Center (DKFZ)",
+                  country="Germany", min_interval=3.0,
+              )
+              async with HttpClient(timeout=15, max_retries=0,
+                                    default_min_interval=2.0) as http:
+                  scraper = RSSScraper(source, http)
+                  rows, count = await scraper.run()
+                  return {
+                      "vacancy_links": count,
+                      "distinct_urls": len({p.url for p in rows}),
+                      "all_job_urls_official": all(
+                          urlsplit(p.url).hostname == "jobs.dkfz.de"
+                          for p in rows
+                      ),
+                      "doctoral_titles": [
+                          {"title":p.title[:110], "url":p.url[:220]}
+                          for p in rows if _doctoral_title(p.title)
+                      ][:12],
+                      "sample": [
+                          {"title":p.title[:110], "url":p.url[:220]}
+                          for p in rows[:10]
+                      ],
+                      "fetch_errors": scraper.discovery_fetch_errors,
+                      "parse_errors": scraper.discovery_parse_errors,
+                  }
+          report = asyncio.run(verify())
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          assert report["all_job_urls_official"]
+          assert not report["fetch_errors"] and not report["parse_errors"]
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -156,5 +201,6 @@ jobs:
           path: |
             providers.json
             provider-contracts.json
+            dkfz-rss-contract.json
           if-no-files-found: warn
           retention-days: 14
