@@ -192,3 +192,26 @@ def test_fake_host_or_job_viewkey_mismatch_cannot_make_a_vacancy():
     assert len(rows) == 1
     assert rows[0].url == PHD_URL
     assert scraper.discovery_parse_errors
+
+def test_far_future_official_end_date_is_not_assumed_a_real_application_deadline():
+    # Observed on the real UniBE feed in #41190860083: one cell-biology
+    # advert claims a 2036 close. Do not advertise a ten-year application window.
+    candidate = _job(
+        title="PhD Student Position in Cell Biology",
+        deadline="2036-10-17T22:59:59Z",
+    )
+    scraper = SCRAPERS["prospective_jobs"](
+        _config(), FakeHttp({0: _page(0, [candidate], 1)})
+    )
+    rows, _ = asyncio.run(scraper.run())
+    assert len(rows) == 1
+    assert rows[0].deadline == date(2036, 10, 17)
+    assert classify_post(rows[0], today=date(2026, 10, 31)) is None
+
+    standard = _job(deadline="2027-10-17T22:59:59Z")
+    scraper = SCRAPERS["prospective_jobs"](
+        _config(), FakeHttp({0: _page(0, [standard], 1)})
+    )
+    rows, _ = asyncio.run(scraper.run())
+    assert len(rows) == 1
+    assert classify_post(rows[0], today=date(2026, 10, 31)) is not None
