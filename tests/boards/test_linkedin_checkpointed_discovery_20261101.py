@@ -8,8 +8,8 @@ from urllib.parse import parse_qs, urlsplit
 
 from predoc_pipeline.boards.config import SourceConfig
 from predoc_pipeline.boards.http import FetchError
-from predoc_pipeline.boards.scrapers.linkedin_scraper import LinkedInScraper
 from predoc_pipeline.boards.scrapers.linkedin_scheduler import QueryLedger, query_key
+from predoc_pipeline.boards.scrapers.linkedin_scraper import LinkedInScraper
 
 T0 = datetime(2026, 11, 1, 8, tzinfo=UTC)
 
