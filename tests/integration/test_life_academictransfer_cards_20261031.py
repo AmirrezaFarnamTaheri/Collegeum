@@ -68,7 +68,7 @@ def test_empty_anchor_overlay_still_yields_real_doctoral_job_and_location():
         s for s in load_life_sources(CATALOG) if s.name == "life_academictransfer"
     )
     parser = LinkScanScraper(source, NoFetchHttp())
-    postings = parser.parse_postings([(source.urls()[0], HTML)])
+    postings = parser.parse_postings([(source.opt("urls")[0], HTML)])
     assert len(postings) == 2
     assert all(p.url.startswith("https://www.academictransfer.com/en/jobs/") for p in postings)
     assert postings[0].title == "PhD Position in Epigenetics"
