@@ -144,7 +144,9 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
     for job in careers:
         if (
             job.get("category") == "life_sciences_phd"
-            and historical_life_title_disqualified(str(job.get("title") or ""), str(job.get("url") or ""))
+            and historical_life_title_disqualified(
+                str(job.get("title") or ""), str(job.get("url") or "")
+            )
         ):
             continue
         if job.get("availability") == "closed":
