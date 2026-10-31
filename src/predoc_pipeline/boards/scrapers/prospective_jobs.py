@@ -13,11 +13,12 @@ than declaring an empty hiring season.
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 from urllib.parse import urlsplit
 
 from ..models import JobPostSchema
-from ..utils.dates import extract_deadline, parse_iso_datetime
+from ..utils.dates import extract_deadline, parse_date, parse_iso_datetime
 from ..utils.text import clean_ws, html_to_text
 from .base import BaseScraper, register
 
@@ -37,6 +38,26 @@ _ROLLING_APPLICATION = re.compile(
     r"\brolling\b|\buntil\s+(?:the\s+)?(?:position|role|post|job)\s+(?:is\s+)?filled\b"
     r"|\buntil\s+filled\b", re.I,
 )
+
+# A few employer adverts say "submit your application including ... by DATE".
+# The generic extractor intentionally doesn't scan arbitrary intervening text;
+# this bounded pattern is restricted to UniBE's application-instructions field.
+_SUBMIT_BY_DATE = re.compile(
+    r"\\b(?:submit(?:ted)?|send|email)\\b.{0,230}?\\bby\\s+"
+    r"(?P<date>20\\d{2}-\\d{1,2}-\\d{1,2}|"
+    r"\\d{1,2}[./-]\\d{1,2}[./-]20\\d{2}|"
+    r"\\d{1,2}\\s+[A-Za-z]+\\s+20\\d{2})\\b",
+    re.I | re.S,
+)
+
+
+def _employer_application_cutoff(text: str) -> date | None:
+    # Review/start dates and administrative index dates are not hard cutoffs.
+    explicit, _ = extract_deadline(text)
+    if explicit is not None:
+        return explicit
+    submission = _SUBMIT_BY_DATE.search(text)
+    return parse_date(submission.group("date")) if submission else None
 
 
 def _official_url(value: object, viewkey: str) -> bool:
@@ -212,20 +233,30 @@ class ProspectiveJobsScraper(BaseScraper):
             # application cutoff. The classifier already rejects deadlines
             # more than three years away; preserve the same fail-closed bound
             # during extraction so downstream metadata is not misleading.
-            application_text = html_to_text(szas.get("sza_application", "")) if isinstance(szas.get("sza_application"), str) else ""
-            explicit_deadline, _ = extract_deadline(application_text)
-            rolling_application = bool(_ROLLING_APPLICATION.search(application_text))
-            # Some ordinary 2026 index dates are administrative too: a stated
-            # rolling application process takes precedence over the index.
-            # A date independently stated as the application cutoff is trusted
-            # only when it matches the index date.
-            unverified_end = bool(
+            application_raw = szas.get("sza_application")
+            application_text = (
+                html_to_text(application_raw)
+                if isinstance(application_raw, str) else ""
+            )
+            employer_cutoff = _employer_application_cutoff(application_text)
+            long_horizon = bool(
                 posted is not None
                 and close_date is not None
                 and (close_date - posted).days > 366 * 3
-            ) or rolling_application or bool(
-                close_date is not None and application_text
-                and explicit_deadline is not None and explicit_deadline != close_date
+            )
+            rolling_application = bool(
+                _ROLLING_APPLICATION.search(application_text)
+                or (long_horizon and _ROLLING_APPLICATION.search(description))
+            )
+            # Even a near-term Prospective end_date is only an index date
+            # until the employer explicitly corroborates a hard cutoff.
+            # Preserve discovery; do not manufacture publication eligibility.
+            unverified_end = bool(
+                close_date is not None
+                and (
+                    long_horizon or rolling_application
+                    or employer_cutoff != close_date
+                )
             )
             deadline_note: str | None
             if unverified_end:
