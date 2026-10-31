@@ -134,3 +134,43 @@ def test_replay_stable_jobs_across_queries_and_fail_closed_corrupt_checkpoint(tm
     else:
         raise AssertionError("Corrupt checkpoint must not be overwritten")
     assert (tmp_path / "search.json").read_text() == "{"
+
+
+
+def test_soft_wall_clock_deadline_returns_observed_cards_and_saves_cursor(tmp_path) -> None:
+    class SlowHTTP(FakeHTTP):
+        async def get_text(self, url: str) -> str:
+            await asyncio.sleep(0.65)
+            return await super().get_text(url)
+
+    http = SlowHTTP()
+    src = SourceConfig(
+        name="linkedin", type="linkedin",
+        keywords=["PhD economics", "predoc economics"],
+        locations=["Germany"], query_budget=2, request_budget=4,
+        max_pages=12, time_budget_seconds=1,
+        checkpoint_path=str(tmp_path / "slow.json"),
+    )
+    worker = LinkedInScraper(src, http)
+    worker._scheduler_now = lambda: T0
+    posts, n = asyncio.run(worker.run())
+    assert 1 <= len(http.urls) <= 2
+    assert n == 10 and len(posts) == 10
+    assert worker.search_diagnostics["time_budget_reached"] is True
+    state = QueryLedger.load(tmp_path / "slow.json", "linkedin")
+    assert len(state.items(now=T0)) == 10
+    assert sum(v["last_complete_at"] is not None for v in state.state["queries"].values()) == 0
+
+
+def test_blank_guest_response_never_means_verified_no_vacancies(tmp_path) -> None:
+    class BlankHTTP(FakeHTTP):
+        async def get_text(self, url: str) -> str:
+            self.urls.append(url)
+            return ""
+
+    worker = scraper(tmp_path, BlankHTTP())
+    posts, n = asyncio.run(worker.run())
+    assert posts == [] and n == 0
+    assert worker.discovery_parse_errors
+    state = QueryLedger.load(tmp_path / "search.json", "linkedin")
+    assert not any(row["last_complete_at"] for row in state.state["queries"].values())
