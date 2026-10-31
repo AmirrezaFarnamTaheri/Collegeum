@@ -374,7 +374,7 @@ async def discover(
             )
             if diagnostics is not None:
                 status = (
-                    "partial" if problems else
+                    "partial" if problems or detail_failures else
                     "discovered" if result else
                     "verified_empty" if getattr(scraper, "verified_empty_evidence", False)
                     else "unverified_empty"
