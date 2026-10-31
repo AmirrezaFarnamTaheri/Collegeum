@@ -80,6 +80,7 @@ time_budget_seconds = 75
 cooldown_hours = 48
 checkpoint_path = "data/linkedin_life_search_state.json"
 max_replay_items = 1500
+emit_per_run = 120
 f_TPR = "r2592000"
 backend = "guest"
 verification = "discovery_only_employer_advert_required"
