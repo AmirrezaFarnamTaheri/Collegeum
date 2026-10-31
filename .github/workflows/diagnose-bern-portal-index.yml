@@ -1,0 +1,81 @@
+name: diagnose-bern-portal-index
+on:
+  push:
+    branches:
+      - diagnostics/bern-portal-live-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Robots-aware read-only inspection of official career indexes
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee bern-index-probe.json
+          import json
+          import re
+          from urllib.parse import urljoin, urlsplit
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          pages = {
+              "official_career": "https://karriere.unibe.ch/offene_stellen/index_ger.html",
+              "employer_job_portal": "https://jobs.unibe.ch/",
+              "prospective_job_portal": "https://unibe.prospective.ch/",
+              "prospective_en": "https://unibe.prospective.ch/?lang=en",
+          }
+          report = {}
+          with PoliteClient(
+              user_agent="Collegeum-BernSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=15, per_host_delay=3, respect_robots=True,
+          ) as http:
+              for name, url in pages.items():
+                  response = http.get(url, use_cache=False)
+                  item = {
+                      "status": response.status,
+                      "ok": response.ok,
+                      "error": str(response.error)[:120],
+                      "bytes": len(response.content),
+                  }
+                  if response.ok:
+                      soup = BeautifulSoup(response.text, "lxml")
+                      item["scripts"] = [
+                          urljoin(url, src)[:240] for tag in soup.select("script[src]")
+                          if (src := tag.get("src"))
+                      ][:20]
+                      item["iframes"] = [
+                          urljoin(url, src)[:240] for tag in soup.select("iframe[src]")
+                          if (src := tag.get("src"))
+                      ][:10]
+                      item["matching_links"] = [
+                          {
+                              "href": urljoin(url, str(tag.get("href", "")))[:240],
+                              "title": tag.get_text(" ", strip=True)[:120],
+                          }
+                          for tag in soup.select("a[href]")
+                          if re.search(r"job-vacancies/|offene-stellen/|public/v1/jobs/|/jobs/\d+",
+                                       str(tag.get("href", "")), re.I)
+                      ][:25]
+                      item["text_start"] = soup.get_text(" ", strip=True)[:150]
+                      item["has_react_root"] = bool(soup.select("#root, #app"))
+                  report[name] = item
+          print(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bern-portal-index-probe
+          path: bern-index-probe.json
+          retention-days: 14
