@@ -42,7 +42,7 @@ TRANSLATIONAL = BASE + (
 )
 
 
-def _parse(url: str, *, title: str, ends: str, application: str | None):
+def _parse(url: str, *, title: str, ends: str | None, application: str | None):
     job = _job(title=title, url=url, viewkey=url.rsplit("/", 1)[-1], deadline=ends)
     if application is not None:
         job["szas"]["sza_application"] = application
@@ -113,7 +113,7 @@ def test_employer_corresponding_explicit_closing_date_remains_trusted(
 ) -> None:
     post = _parse(url, title=title, ends=ends, application=application)
     assert post.deadline == expected
-    assert post.deadline_text is not None and "Official UniBE posting ends" in post.deadline_text
+    assert post.deadline_text is not None and "Employer-stated application deadline" in post.deadline_text
     assert "prospective_unverified_end_date" not in post.extra
 
 
@@ -210,8 +210,9 @@ def test_explicit_employer_cutoff_conflicting_with_index_is_not_misrepresented()
         ends="2026-11-21T22:59:59Z",
         application="Applications close on 15 November 2026.",
     )
-    assert post.deadline is None
+    assert post.deadline == date(2026, 11, 15)
     assert post.extra["prospective_unverified_end_date"] == "2026-11-21T22:59:59Z"
+    assert post.extra["prospective_employer_deadline_verified"] is True
 
 
 def test_engineering_led_multisensory_role_excluded_even_with_biology_keywords() -> None:
