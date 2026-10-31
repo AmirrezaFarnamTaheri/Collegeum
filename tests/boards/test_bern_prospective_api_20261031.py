@@ -112,7 +112,9 @@ def test_bounded_public_api_preserves_real_employer_identity_and_deadline():
              "c5eefb95-70e2-43a8-b681-0c3724329fdc"),
         viewkey="c5eefb95-70e2-43a8-b681-0c3724329fdc",
     )
-    http = FakeHttp({0: _page(0, [_job(), staff], 2)})
+    dated = _job()
+    dated["szas"]["sza_application"] = "Applications close on 20 November 2026."
+    http = FakeHttp({0: _page(0, [dated, staff], 2)})
     scraper = SCRAPERS["prospective_jobs"](_config(), http)
     posts, count = asyncio.run(scraper.run())
     assert count == 2
@@ -211,6 +213,7 @@ def test_far_future_official_end_date_is_not_assumed_a_real_application_deadline
     assert classify_post(rows[0], today=date(2026, 10, 31)) is None
 
     standard = _job(deadline="2027-10-17T22:59:59Z")
+    standard["szas"]["sza_application"] = "Applications close on 17 October 2027."
     scraper = SCRAPERS["prospective_jobs"](
         _config(), FakeHttp({0: _page(0, [standard], 1)})
     )
