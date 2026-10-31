@@ -385,6 +385,19 @@ class QueryLedger:
             if previous_block is None or previous_block < retry_at:
                 self.state["access_blocked_until"] = _stamp(retry_at)
 
+    def defer_unverified_empty(self, pair: tuple[str, str], *, now: datetime) -> None:
+        """Preserve the prior successful coverage point on ambiguous empty HTML.
+
+        Guest endpoints can return a blank/error/interstitial body without
+        signalling that a keyword truly has zero vacancies. Do not advance a
+        previously discovered page offset or claim query completion.
+        """
+        now = _utc(now)
+        row = self._row(pair)
+        row["status"] = "unverified_empty"
+        row["last_attempt_at"] = _stamp(now)
+        row["retry_after"] = _stamp(now + timedelta(hours=48))
+
     def prune_known(self, known: Callable[[str], bool]) -> int:
         """Release only items backed by the authoritative seen/listing journal.
 
