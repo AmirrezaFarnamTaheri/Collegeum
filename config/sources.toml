@@ -320,6 +320,11 @@ note = "OFF: the job-opportunities endpoint returns HTTP 418 in recorded pipelin
 name = "mannheim_econ"
 type = "link_scan"
 group = "university"
+enabled = false
+# Official runner #41188593912 returned robots.txt denial (status 999).
+# No policy bypass or inference of an empty vacancy season is permitted.
+# Restore only when an authorized, tested official recruitment feed is available.
+note = "Disabled 2026-10-31: runner verified robots.txt denial."
 url = "https://www.vwl.uni-mannheim.de/en/about/about-the-department/job-vacancies/"
 source_timeout_seconds = 45.0
 may_be_empty = true

@@ -45,7 +45,29 @@ def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
         url = str(item.get('url') or item.get('application_url') or '')
         if not url:
             raise ValueError('Position has no application URL')
-        unique.setdefault(url, item)
+        original = unique.get(url)
+        if original is None:
+            unique[url] = dict(item)
+            continue
+        # Historical rows arrive before fresh discovery. A first-wins dedupe
+        # silently discards updated deadlines and workplaces from the actual
+        # employer advert. Combine evidence without erasing known old fields.
+        updated = dict(original)
+        updated.update({
+            name: value for name, value in item.items()
+            if value is not None and value != ''
+        })
+        if original.get('first_seen_at'):
+            updated['first_seen_at'] = original['first_seen_at']
+        # A fresh fetch alone does not verify that a previously closed advert
+        # reopened or that funding status has independently been established.
+        if (original.get('availability') == 'closed'
+                and item.get('availability') in (None, '', 'unknown')):
+            updated['availability'] = 'closed'
+        if (original.get('funding_status') == 'verified'
+                and item.get('funding_status') in (None, '', 'unverified')):
+            updated['funding_status'] = 'verified'
+        unique[url] = updated
     aliases = {'institution': 'employer', 'application_url': 'url',
                'position_type': 'category'}
     path.parent.mkdir(parents=True, exist_ok=True)

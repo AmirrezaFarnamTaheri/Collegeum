@@ -25,7 +25,7 @@ from ..boards.scrapers.base import SourceSkipped
 from ..boards.utils.dates import extract_deadline
 from ..boards.utils.geo import detect_location
 from .career import load_career, save_career
-from .life_health import write_life_health
+from .life_health import read_life_health, write_life_health
 from .rotation import load_rotation, save_rotation
 
 CATEGORY = "life_sciences_phd"
@@ -237,8 +237,14 @@ def load_life_sources(sources_path: str | Path) -> list[Any]:
 
 def select_sources(
     sources_path: str | Path, rotation_path: str | Path | None = None,
+    health_path: str | Path | None = None,
 ) -> set[str]:
-    """Pick oldest-attempt-first enabled providers; don't starve fresh sources."""
+    """Rotate oldest attempts, prioritizing feeds lacking a recorded health result.
+
+    An attempted but never-observed source should not be starved by sources
+    whose successful outcomes are already checkpointed. Once observed, a
+    provider returns to the normal oldest-attempt-first rotation.
+    """
     sources = [source for source in load_life_sources(sources_path) if source.enabled]
     if len(sources) > MAX_REGISTERED:
         raise ValueError("Too many enabled Life Sciences providers")
@@ -246,18 +252,24 @@ def select_sources(
         load_rotation(rotation_path).get("attempts", {})
         if rotation_path is not None else {}
     )
-    return {
-        source.name for source in sorted(
-            sources,
-            key=lambda source: (attempts.get(source.name, ""), source.name),
-        )[:MAX_SOURCES]
-    }
+    report = read_life_health(health_path).get("sources", {}) if health_path else {}
+    history = report if isinstance(report, dict) else {}
+
+    def priority(source: Any) -> tuple[int, str, str]:
+        result = history.get(source.name)
+        observed = (
+            isinstance(result, dict)
+            and isinstance(result.get("last_checked_at"), str)
+            and bool(result["last_checked_at"])
+        )
+        return (int(observed), attempts.get(source.name, ""), source.name)
+
+    return {source.name for source in sorted(sources, key=priority)[:MAX_SOURCES]}
 
 
 
 _VIB_OLD_JOB_PATH = re.compile(r"/j/([1-9]\d{0,11})(?:/[^/?#]+)?/?$")
 _VIB_JOB_IDENTIFIER = re.compile(r"[1-9]\d{0,11}$")
-
 
 def _vib_job_identifier(url: str) -> str | None:
     """Employer Jobsoid requisition identity, independent of URL format/order."""
@@ -449,7 +461,7 @@ def poll_life_sciences(
     started = datetime.now(UTC)
     # Always bound direct calls too; optional journaling must not disable
     # selection when the catalogue exceeds the per-run budget.
-    selected = select_sources(sources_path, rotation_path)
+    selected = select_sources(sources_path, rotation_path, health_path)
     if not selected:
         return 0, ["No enabled life-sciences PhD providers"]
     diagnostics: dict[str, dict[str, Any]] | None = (
