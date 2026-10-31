@@ -250,11 +250,13 @@ class LinkedInScraper(BaseScraper):
                     self.discovery_fetch_errors.append("LinkedIn access challenge")
                     self.search_diagnostics["access_limited"] = True
                     break
-                if not cards and (not html.strip() or "data-entity-urn" in html):
-                    # Empty bodies are not verified empty job results.
-                    ledger.fail(pair, now=self._scheduler_now())
+                if not cards:
+                    # No recognized card is not evidence that the provider
+                    # searched the entire query successfully. HTML may be a
+                    # sign-in page, an interstitial, or a blank guest result.
+                    ledger.defer_unverified_empty(pair, now=self._scheduler_now())
                     self.discovery_parse_errors.append(
-                        "LinkedIn empty or unparseable vacancy response",
+                        "LinkedIn unverified empty or unparseable search response",
                     )
                     continue
                 try:
@@ -293,6 +295,9 @@ class LinkedInScraper(BaseScraper):
             ledger.save(path)
         self.search_diagnostics.update(ledger.counts())
         self.search_diagnostics["pending_queries"] = self.search_diagnostics["incomplete_queries"]
+        self.search_diagnostics["access_blocked_until"] = ledger.state.get(
+            "access_blocked_until",
+        )
         self.search_diagnostics["unprocessed_selected"] = len(queue)
         return raw
 
