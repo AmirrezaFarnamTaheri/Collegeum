@@ -276,6 +276,7 @@ class LinkedInScraper(BaseScraper):
             raw = ledger.items(now=self._scheduler_now(), limit=batch_size)
             ledger.save(path)
         self.search_diagnostics.update(ledger.counts())
+        self.search_diagnostics["pending_queries"] = self.search_diagnostics["incomplete_queries"]
         self.search_diagnostics["unprocessed_selected"] = len(queue)
         return raw
 
