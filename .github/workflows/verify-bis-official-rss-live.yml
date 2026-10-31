@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - fix/bis-official-rss-multicountry-20261031
+      - fix/bis-rss-workplace-provenance-20261031
 permissions:
   contents: read
 jobs:
@@ -36,6 +36,7 @@ jobs:
 
           source = next(s for s in load_board_sources("config/sources.toml") if s.name == "bis")
           assert source.enabled and source.type == "rss" and source.country is None
+          assert source.opt("infer_country_from_summary") is True
 
           async def run():
               async with build_http(HttpConfig(timeout=18, max_retries=0)) as http:
@@ -50,8 +51,12 @@ jobs:
                       assert parsed.hostname in {"www.bis.org", "bis.org"}
                       assert parsed.port in (None, 443)
                       assert re.fullmatch(r"/vacancy/jr[0-9]+", parsed.path)
-                      assert job.country is None, "RSS listing cannot assume Switzerland for all BIS offices"
                       assert not job.extra.get("source_country_default")
+                  hong_kong = [j for j in jobs if "Data Scientist / Research Analyst" in j.title]
+                  assert hong_kong, "Expected official Hong Kong research vacancy absent"
+                  assert all(j.country == "Hong Kong" for j in hong_kong)
+                  assert any(j.country == "Switzerland" for j in jobs)
+                  assert all(j.country != "Switzerland" for j in hong_kong)
                   print(json.dumps({
                       "source": source.name, "status": "discovered",
                       "general_vacancies": len(jobs),
@@ -60,7 +65,10 @@ jobs:
                       "data_science_research_titles": sum(
                           "research analyst" in j.title.lower() for j in jobs),
                       "discovery_errors": scraper.discovery_parse_errors,
-                      "country_evidence": "unknown pending job-level detail",
+                      "country_evidence": "explicit RSS vacancy workplace where available",
+                      "hong_kong_analysts": len(hong_kong),
+                      "switzerland_jobs": sum(j.country == "Switzerland" for j in jobs),
+                      "unknown_location_jobs": sum(j.country is None for j in jobs),
                   }, indent=2))
           asyncio.run(run())
           PY
