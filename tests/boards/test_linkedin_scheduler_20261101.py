@@ -321,6 +321,4 @@ def test_provider_403_also_blocks_distinct_queries_and_next_run(tmp_path) -> Non
     ledger.save(tmp_path / "blocked.json")
     restored = QueryLedger.load(tmp_path / "blocked.json", "life")
     assert restored.plan([A, B], now=START + timedelta(hours=8), limit=2) == []
-    assert restored.plan([A, B], now=START + timedelta(hours=48), limit=2) == [A, B] or set(
-        restored.plan([A, B], now=START + timedelta(hours=48), limit=2)
-    ) == {A, B}
+    assert set(restored.plan([A, B], now=START + timedelta(hours=48), limit=2)) == {A, B}
