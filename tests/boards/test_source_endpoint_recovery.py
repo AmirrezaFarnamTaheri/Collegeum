@@ -84,14 +84,30 @@ def test_rwi_essen_routes_to_official_jobs_page_not_general_career_landing():
     assert cfg.opt("url") == "https://www.rwi-essen.de/rwi/karriere/jobs"
 
 def test_bis_official_vacancy_links_are_discovered():
-    """The BIS migrated its vacancies to /vacancy/jrNNNNNN (verified 2026-10-28)."""
-    import re
-
+    """BIS RSS preserves exact official JR identities, never navigation links."""
     cfg = source("bis")
-    assert cfg.opt("url") == "https://www.bis.org/about/careers/vacancies"
-    assert re.search(cfg.opt("link_pattern"), "https://www.bis.org/vacancy/jr100491")
-    assert re.search(cfg.opt("link_pattern"), "https://www.bis.org/vacancy/jr100516")
-    assert not re.search(cfg.opt("link_pattern"), "https://www.bis.org/about/careers/vacancies")
+    assert cfg.type == "rss"
+    assert cfg.opt("url").startswith("https://www.bis.org/doclist/vacancies.rss?")
+    assert cfg.opt("allowed_link_hosts") == ["bis.org", "www.bis.org"]
+    assert cfg.opt("include_url_contains") == ["/vacancy/jr"]
+    rss = (
+        '<rss version="2.0"><channel><title>BIS Jobs</title>'
+        "<item><title>Data Scientist / Research Analyst</title>"
+        "<link>https://www.bis.org/vacancy/jr100491</link></item>"
+        "<item><title>Research Assistant in Economics</title>"
+        "<link>https://www.bis.org/vacancy/jr100516</link></item>"
+        "<item><title>BIS Careers Navigation</title>"
+        "<link>https://www.bis.org/about/careers/vacancies</link></item>"
+        "</channel></rss>"
+    )
+    result = asyncio.run(_scrape_all(
+        [SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), rss))], 1, 5,
+    ))[0]
+    assert result.ok
+    assert [post.url for post in result.posts] == [
+        "https://www.bis.org/vacancy/jr100491",
+        "https://www.bis.org/vacancy/jr100516",
+    ]
 
 def test_uzh_department_jobs_page_exposes_current_predoc():
     """The university-wide jobs URL redirects to a JavaScript-only portal."""
