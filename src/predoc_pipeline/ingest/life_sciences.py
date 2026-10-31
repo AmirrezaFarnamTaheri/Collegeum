@@ -17,12 +17,12 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 from ..boards.collector import build_http
-from ..boards.utils.bern_evidence import reviewed_non_life_vacancy
 from ..boards.config import HttpConfig, load_board_sources
 from ..boards.filter import PHD_POSITION
 from ..boards.models import JobPostSchema
 from ..boards.scrapers import SCRAPERS
 from ..boards.scrapers.base import SourceSkipped
+from ..boards.utils.bern_evidence import reviewed_non_life_vacancy
 from ..boards.utils.dates import extract_deadline
 from ..boards.utils.geo import detect_location
 from .career import load_career, save_career
