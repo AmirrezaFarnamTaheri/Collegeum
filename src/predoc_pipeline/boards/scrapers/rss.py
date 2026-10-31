@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import calendar
+import re
 from datetime import UTC, date, datetime
 from typing import Any
 from urllib.parse import urlsplit
@@ -10,6 +11,7 @@ import feedparser
 
 from ..models import JobPostSchema
 from ..utils.dates import extract_deadline, parse_date
+from ..utils.geo import detect_location
 from ..utils.text import clean_ws, html_to_text, split_role_at_institution, truncate
 from .base import BaseScraper, register
 
@@ -28,6 +30,32 @@ def _entry_date(entry: Any) -> date | None:
     return parse_date(entry.get("published") or entry.get("updated"))
 
 
+# Deliberately job-specific: employers' RSS descriptions may start with a
+# headquarters address that is NOT the vacancy's actual workplace. Never
+# choose the first country mentioned in an entire description.
+_RSS_ROLE_BASED_IN = re.compile(
+    r"\b(?:this|the|our)\s+(?:role|position|job|vacancy|post)\s+"
+    r"(?:is|will\s+be)\s+(?:based|located)\s+in\s+"
+    r"(?P<place>[^.;\n]{2,100})", re.I,
+)
+_RSS_WORKPLACE_LABEL = re.compile(
+    r"\b(?:work\s+)?(?:location|workplace)\s*:\s*"
+    r"(?P<place>[^.;\n]{2,100})", re.I,
+)
+
+
+def _rss_job_workplace(text: str) -> tuple[str | None, str | None]:
+    """Return country and explicit job location, never employer headquarters."""
+    for pattern in (_RSS_ROLE_BASED_IN, _RSS_WORKPLACE_LABEL):
+        match = pattern.search(text)
+        if match:
+            location = clean_ws(match.group("place"))[:100]
+            country, _ = detect_location(location)
+            if country and country not in {"Europe", "Other"}:
+                return country, location
+    return None, None
+
+
 @register
 class RSSScraper(BaseScraper):
     """Options:
@@ -36,6 +64,7 @@ class RSSScraper(BaseScraper):
     exclude_url_contains       drop entries whose link contains any of these
     categories_exclude         drop entries tagged with any of these categories (substring, case-insens.)
     title_format               "plain" | "role_at_institution" ("RA in X at LSE (UK)")
+    infer_country_from_summary  only when an explicit job workplace appears in the item
     """
 
     type_name = "rss"
@@ -119,9 +148,15 @@ class RSSScraper(BaseScraper):
                     summary_html = e["content"][0].get("value", summary_html)
                 text = html_to_text(summary_html) if "<" in summary_html else clean_ws(summary_html)
                 deadline, deadline_text = extract_deadline(text)
+                country = None
+                if self.opt("infer_country_from_summary", False) is True:
+                    country, workplace = _rss_job_workplace(text)
+                    if workplace:
+                        location = workplace
                 try:
                     post = self.make(
-                        title=title, url=link, institution=institution or "", location=location,
+                        title=title, url=link, institution=institution or "",
+                        location=location, country=country,
                         date_posted=_entry_date(e), deadline=deadline, deadline_text=deadline_text,
                         description_snippet=truncate(text, 600),
                         extra={"categories": cats} if cats else {},
