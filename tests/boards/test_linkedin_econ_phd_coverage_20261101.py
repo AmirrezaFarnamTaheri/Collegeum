@@ -167,3 +167,41 @@ def test_slot_uses_utc_four_hour_schedule_not_random_order() -> None:
         utc_search_slot(datetime(2026, 11, 1, 0, 1, tzinfo=UTC)) + 1
     )
     assert cfg.opt("f_TPR") == "r2592000"  # moving 30-day window for long-lead PhD calls
+
+
+def test_linkedin_academic_economics_phd_admissions_not_lost_to_role_filter() -> None:
+    from predoc_pipeline.boards.filter import RelevanceFilter
+    from predoc_pipeline.boards.models import JobPostSchema
+    from predoc_pipeline.boards.config import load_preferences
+
+    filt = RelevanceFilter(load_preferences(ROOT / "config/preferences.toml").filters)
+    academic_titles = (
+        "PhD in Economics",
+        "PhD scholarships in Economics",
+        "Fully funded PhD programme in Econometrics",
+        "Doctoral programme in Political Economy",
+    )
+    for title in academic_titles:
+        post = JobPostSchema(
+            title=title, source="linkedin",
+            institution="University of Test City",
+            url="https://www.linkedin.com/jobs/view/4980000000",
+            location="Germany",
+        )
+        result = filt.evaluate(post)
+        assert result.keep, (title, result.reason)
+        assert not result.needs_field_check, title
+
+    unrelated = (
+        "MBA Scholarship in Finance",
+        "Professor of Economics with PhD required",
+        "PhD in Neuroscience",
+    )
+    for title in unrelated:
+        post = JobPostSchema(
+            title=title, source="linkedin",
+            institution="University of Test City",
+            url="https://www.linkedin.com/jobs/view/4980000000",
+            location="Germany",
+        )
+        assert not filt.evaluate(post).keep, title
