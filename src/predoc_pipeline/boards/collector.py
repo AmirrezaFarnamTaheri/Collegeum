@@ -55,7 +55,7 @@ class SourceResult:
     n_new: int = 0
 
     def as_stats(self) -> dict[str, Any]:
-        return {
+        stats = {
             "kind": "board",
             "items": len(self.posts),
             "raw": len(self.posts),
@@ -77,6 +77,14 @@ class SourceResult:
                 "limit": len(self.scraper.discovery_limits),
             },
         }
+        # A successful LinkedIn guest response is NOT proof of search
+        # completeness. Preserve request/rotation/limit observations next
+        # to the usual source health, without marking intentional rotation
+        # as an outage or changing any publication identity.
+        search = getattr(self.scraper, "search_diagnostics", None)
+        if isinstance(search, dict):
+            stats["search_diagnostics"] = search
+        return stats
 
 
 @dataclass
