@@ -51,7 +51,7 @@ class RSSScraper(BaseScraper):
         if (
             not isinstance(identity, str) or len(identity) > 200
             or not identity.startswith("Collegeum-")
-            or any(char in identity for char in ("\\r", "\\n"))
+            or any(char in identity for char in (chr(13), chr(10)))
         ):
             raise ValueError("Invalid source-specific RSS bot identity")
 
