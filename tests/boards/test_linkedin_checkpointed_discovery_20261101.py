@@ -79,7 +79,10 @@ def test_first_run_publishes_partial_pages_and_next_run_resumes_offset(tmp_path)
     second = scraper(tmp_path, http, budget=3)
     second._scheduler_now = lambda: T0 + timedelta(hours=4)
     posts2, n2 = asyncio.run(second.run())
-    assert n2 >= n
+    # Fair replay emits the newly discovered card first; previously emitted
+    # items remain in the durable spool for later retries if unresolved.
+    assert n2 == 1
+    assert posts2[0].extra["linkedin_id"] == "5000000010"
     assert any("start=10" in u for u in http.urls[2:])
     assert second.search_diagnostics["completed_queries"] == 2
     assert second.search_diagnostics["pending_queries"] == 0
