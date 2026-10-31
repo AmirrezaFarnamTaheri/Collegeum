@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: fix/bern-administrative-end-date-20261031
           persist-credentials: false
       - uses: actions/setup-python@v7
         with:
@@ -73,6 +74,15 @@ jobs:
                   for p in posts
                   if p.deadline and p.deadline.year >= 2030
               ][:4],
+              'administrative_date_samples': [
+                  {'title': p.title[:100],
+                   'raw_index_end_date': p.extra.get('prospective_unverified_end_date'),
+                   'deadline': p.deadline.isoformat() if p.deadline else None,
+                   'deadline_note': p.deadline_text,
+                   'require_deadline': p.extra.get('require_deadline')}
+                  for p in posts
+                  if p.extra.get('prospective_unverified_end_date')
+              ][:10],
               'eligible_sample': [
                   {'title': a.get('title'), 'url': a.get('url')}
                   for a in accepted[:8]
@@ -84,6 +94,13 @@ jobs:
           assert not health.get('discovery_issues'), report
           assert not health.get('detail_failures'), report
           assert not errors, report
+          administrative = [
+              p for p in posts
+              if p.extra.get('prospective_unverified_end_date')
+          ]
+          assert len(administrative) >= 3, report
+          assert all(p.deadline is None and p.extra.get('require_deadline') for p in administrative)
+          assert all(classify_post(p) is None for p in administrative)
           assert all(
               urlsplit(p.url).scheme == 'https'
               and urlsplit(p.url).hostname == 'jobs.unibe.ch'
