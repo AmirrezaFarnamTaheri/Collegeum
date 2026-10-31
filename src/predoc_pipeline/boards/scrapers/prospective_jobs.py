@@ -217,6 +217,7 @@ class ProspectiveJobsScraper(BaseScraper):
                 and close_date is not None
                 and (close_date - posted).days > 366 * 3
             )
+            deadline_note: str | None
             if unverified_end:
                 deadline = None
                 deadline_note = (
@@ -228,7 +229,7 @@ class ProspectiveJobsScraper(BaseScraper):
                 deadline_note = (
                     f"Official UniBE posting ends {closes}" if closes else None
                 )
-            provenance = {
+            provenance: dict[str, Any] = {
                 "prospective_id": ident,
                 "prospective_viewkey": viewkey,
                 "prospective_full_text": description,
