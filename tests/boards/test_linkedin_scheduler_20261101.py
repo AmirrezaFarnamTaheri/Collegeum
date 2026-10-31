@@ -191,3 +191,18 @@ def test_timestamps_and_replay_are_utc_serializable(tmp_path) -> None:
     assert parsed["version"] == 1
     assert parsed["source"] == "econ"
     assert parsed["spool"]["4980000011"]["card"]["id"] == "4980000011"
+
+
+
+def test_detail_attempt_fairness_is_durable_and_replayed(tmp_path) -> None:
+    ledger = QueryLedger("life")
+    ledger.request(C, now=START)
+    ledger.accept_page(C, [_card("4980000000"), _card("4980000001")], now=START)
+    assert all(not x["_detail_last_attempt_at"] for x in ledger.items(now=START))
+    ledger.note_detail("4980000000", now=START)
+    ledger.save(tmp_path / "life.json")
+    restored = QueryLedger.load(tmp_path / "life.json", "life")
+    attempted = next(x for x in restored.items(now=START) if x["id"] == "4980000000")
+    unattempted = next(x for x in restored.items(now=START) if x["id"] == "4980000001")
+    assert attempted["_detail_last_attempt_at"] == START.isoformat()
+    assert unattempted["_detail_last_attempt_at"] is None
