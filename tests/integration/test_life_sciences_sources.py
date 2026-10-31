@@ -156,11 +156,11 @@ def test_regional_catalogue_loads_with_distinct_stable_ids() -> None:
     assert len(names) == len(set(names))
     assert len(registered) == 225
     active = [source for source in registered if source.enabled]
-    assert len(active) == 37
-    assert len(registered) - len(active) == 188
+    assert len(active) == 38
+    assert len(registered) - len(active) == 187
     assert len(active) <= life_sciences.MAX_REGISTERED
     assert len(registered) <= life_sciences.MAX_CATALOG
-    supported = {"rss", "link_scan", "bite_jobs", "prospective_jobs"}
+    supported = {"rss", "link_scan", "bite_jobs", "prospective_jobs", "workday"}
     assert all(source.type in supported for source in active)
     prospective_sources = {s.name for s in active if s.type == "prospective_jobs"}
     assert prospective_sources == {"life_dach_bern"}
@@ -275,7 +275,7 @@ def test_duplicate_provider_name_across_catalogues_is_rejected(tmp_path: Path) -
 def test_source_round_robin_covers_every_enabled_provider(tmp_path: Path) -> None:
     journal = tmp_path / "life_rotation.json"
     enabled = {s.name for s in life_sciences.load_life_sources(CATALOG) if s.enabled}
-    assert len(enabled) == 37
+    assert len(enabled) == 38
     seen: set[str] = set()
     for iteration in range(4):
         selected = life_sciences.select_sources(CATALOG, journal)

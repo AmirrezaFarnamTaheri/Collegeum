@@ -370,7 +370,7 @@ async def discover(
 
         async def one(source: Any) -> tuple[list[JobPostSchema], list[str]]:
             nonlocal detail_remaining
-            if source.type not in ("rss", "link_scan", "bite_jobs", "prospective_jobs"):
+            if source.type not in ("rss", "link_scan", "bite_jobs", "prospective_jobs", "workday"):
                 if diagnostics is not None:
                     diagnostics[source.name] = {
                         "status": "unsupported", "vacancy_links": 0,
