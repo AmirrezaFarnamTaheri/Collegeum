@@ -2,7 +2,7 @@
 
 Uses the public guest endpoint but this does not imply authorization to scrape.
 LinkedIn restricts unauthorized automated collection; never bypass access
-controls or increase the previous 30-request per-run ceiling. Guest job-search
+controls or increase traffic beyond the configured request ceiling. Guest job-search
 results do NOT include ordinary LinkedIn posts or admissions announcements.
 
     GET https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search
@@ -36,7 +36,7 @@ DETAIL = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{}"
 _ID = re.compile(r"(?:jobPosting:|/view/(?:[^/?]*-)?)(\d{6,})")
 
 
-_MAX_REQUESTS = 30  # Existing six terms x five locations x one page.
+_MAX_REQUESTS = 120  # Shared configured budget across economics and Life Sciences.
 _PAGE_FULL_AT = 10  # Full guest pages may have more matches.
 _SLOT_SECONDS = 4 * 60 * 60
 
@@ -52,7 +52,7 @@ def build_search_plan(
     keywords: list[str], locations: list[str], core_queries: list[tuple[str, str]],
     *, slot: int, query_budget: int,
 ) -> list[tuple[str, str]]:
-    """Rotate a large portfolio without increasing traffic per run.
+    """Rotate a large portfolio within an explicitly bounded traffic budget.
 
     Every pair is scheduled in successive UTC slots, provided those runs
     execute. Planning is not proof of search visibility or vacancy status.
@@ -136,7 +136,7 @@ class LinkedInScraper(BaseScraper):
         request_budget = int(self.opt("request_budget", _MAX_REQUESTS))
         max_pages = int(self.opt("max_pages", 1))
         if not 1 <= request_budget <= _MAX_REQUESTS:
-            raise ValueError("LinkedIn request budget must be 1..30")
+            raise ValueError("LinkedIn request budget must be 1..120")
         if not 1 <= max_pages <= 2:
             raise ValueError("LinkedIn max_pages must be 1..2")
         if query_budget > request_budget:
