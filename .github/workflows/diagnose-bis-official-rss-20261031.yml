@@ -68,7 +68,10 @@ jobs:
                                       and parts.path.startswith('/vacancy/jr')
                                   ),
                                   'path': parts.path[:120],
-                                  'description_preview': str(entry.get('description') or entry.get('summary') or '')[:180]})
+                                  'description_preview': str(entry.get('description') or entry.get('summary') or '')[:180],
+                                  'description_length': len(str(entry.get('description') or entry.get('summary') or '')),
+                                  'mentions_hong_kong': 'hong kong' in str(entry.get('description') or entry.get('summary') or '').lower(),
+                                  'mentions_basel': 'basel' in str(entry.get('description') or entry.get('summary') or '').lower()})
                           row.update({'feed_version': parsed.version,
                                       'entries': len(parsed.entries),
                                       'bozo': bool(parsed.bozo),
