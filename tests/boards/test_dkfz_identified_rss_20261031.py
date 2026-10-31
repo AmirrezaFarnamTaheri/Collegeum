@@ -107,7 +107,8 @@ def test_default_rss_source_keeps_existing_http_request_contract():
 def test_source_specific_rss_identity_rejects_actual_header_newlines():
     import pytest
 
-    for bad in ("Collegeum-test\\rInjected: yes", "Collegeum-test\\nInjected: yes"):
+    for control in (chr(13), chr(10)):
+        bad = "Collegeum-test" + control + "Injected: yes"
         source = SourceConfig(
             name="unsafe_identity", type="rss",
             url="https://feed.example.org/jobs", rss_user_agent=bad,
