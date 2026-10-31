@@ -656,6 +656,8 @@ group = "central_bank"
 url = "https://www.bis.org/doclist/vacancies.rss?objid=vacancies&page=&paging_length=10&sort_list=date_desc&theme=simple&ml=false&mlurl=&emptylisttext=There%20are%20currently%20no%20vacancies."
 allowed_link_hosts = ["www.bis.org", "bis.org"]
 include_url_contains = ["/vacancy/jr"]
+# Only explicit vacancy-workplace phrases determine geography; unknown stays unknown.
+infer_country_from_summary = true
 may_be_empty = false
 min_interval = 3.0
 source_timeout_seconds = 45.0
