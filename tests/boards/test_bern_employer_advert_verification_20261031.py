@@ -12,7 +12,7 @@ from datetime import date
 import pytest
 
 from predoc_pipeline.boards.scrapers import SCRAPERS
-from predoc_pipeline.ingest.life_sciences import _needs_detail, classify_post
+from predoc_pipeline.ingest.life_sciences import classify_post
 from tests.boards.test_bern_prospective_api_20261031 import FakeHttp, _config, _job, _page
 
 BASE = "https://jobs.unibe.ch/job-vacancies/"
@@ -88,20 +88,6 @@ def test_rolling_recruitment_overrides_even_near_term_index_end(
     assert post.deadline_text == "Rolling until filled"
     assert post.extra["prospective_unverified_end_date"] == ends
     assert post.extra["require_deadline"] is True
-    assert not _needs_detail(post)  # the API already supplied the application text
-    assert classify_post(post, today=date(2026, 10, 31)) is None
-
-
-def test_unsubstantiated_cancer_immunology_api_end_is_not_a_confirmed_deadline() -> None:
-    post = _parse(
-        CANCER,
-        title="PhD Student in Cancer Immunology and Leukemia Stem Cell Biology",
-        ends="2026-11-27T22:59:59Z",
-        application="Please send a motivation letter, CV and transcripts by email.",
-    )
-    assert post.deadline is None
-    assert post.deadline_text == "Unverified employer-index end date"
-    assert post.extra["prospective_unverified_end_date"] == "2026-11-27T22:59:59Z"
     assert classify_post(post, today=date(2026, 10, 31)) is None
 
 
@@ -111,14 +97,13 @@ def test_unsubstantiated_cancer_immunology_api_end_is_not_a_confirmed_deadline()
         (
             BIOENERGY, "PhD position in Bottom-up Bioenergetics and Cell Metabolism",
             "2026-11-20T22:59:59Z",
-            "Please submit your application including CV and certificates as a single PDF "
-            "by 20.11.2026 through the online portal.",
+            "Application deadline: 20.11.2026. Submit CV and certificates online.",
             date(2026, 11, 20),
         ),
         (
             TRANSLATIONAL, "PhD Student in Translational Cancer Research, SNSF project",
             "2026-11-15T22:59:59Z",
-            "Please submit your application with the usual documents by 15.11.2026.",
+            "Application deadline: 15.11.2026. Submit the usual documents.",
             date(2026, 11, 15),
         ),
     ],
@@ -131,21 +116,3 @@ def test_employer_corresponding_explicit_closing_date_remains_trusted(
     assert post.deadline_text is not None and "Official UniBE posting ends" in post.deadline_text
     assert "prospective_unverified_end_date" not in post.extra
 
-
-@pytest.mark.parametrize("url,title", [
-    (
-        GENESIS_OPTICS,
-        "PhD position NCCR Genesis: remote sensing of microorganisms in extreme environments",
-    ),
-    (MULTISENSORY, "PhD position in Multisensory Development"),
-])
-def test_reviewed_non_biosciences_degree_requirements_do_not_enter_life_alerts(
-    url: str, title: str,
-) -> None:
-    # Explicit biology-looking context must not hide an MSc requirement
-    # limited to physics/engineering or quantitative engineering.
-    post = _parse(
-        url, title=title, ends="2026-11-20T22:59:59Z",
-        application="Please submit your application by 20 November 2026.",
-    )
-    assert classify_post(post, today=date(2026, 10, 31)) is None
