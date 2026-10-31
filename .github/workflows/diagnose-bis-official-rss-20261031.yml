@@ -50,12 +50,12 @@ jobs:
               user_agent='Collegeum-OfficialSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)',
               timeout=16.0, per_host_delay=3, respect_robots=True,
           ) as http:
-              for key, url in (('html', known), ('rss', feed)):
+              for key, url in (('html', known), ('rss', feed), ('rss50', feed.replace('paging_length=10', 'paging_length=50'))):
                   response = http.get(url, use_cache=False)
                   row = {'status': response.status, 'ok': response.ok,
                          'error': response.error, 'bytes': len(response.content)}
                   if response.ok:
-                      if key == 'rss':
+                      if key.startswith('rss'):
                           parsed = feedparser.parse(response.text)
                           items = []
                           for entry in parsed.entries:
@@ -67,7 +67,8 @@ jobs:
                                       and parts.hostname in ('www.bis.org', 'bis.org')
                                       and parts.path.startswith('/vacancy/jr')
                                   ),
-                                  'path': parts.path[:120]})
+                                  'path': parts.path[:120],
+                                  'description_preview': str(entry.get('description') or entry.get('summary') or '')[:180]})
                           row.update({'feed_version': parsed.version,
                                       'entries': len(parsed.entries),
                                       'bozo': bool(parsed.bozo),
