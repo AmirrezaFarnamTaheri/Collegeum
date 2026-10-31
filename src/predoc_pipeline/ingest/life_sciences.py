@@ -303,7 +303,19 @@ def select_sources(
         )
         return (int(observed), attempts.get(source.name, ""), source.name)
 
-    return {source.name for source in sorted(sources, key=priority)[:MAX_SOURCES]}
+    # Give the persistent Life Sciences query scheduler one slot in every
+    # four-hour cycle. Otherwise it would only be selected once per full
+    # regional-source rotation, leaving hundreds of query pairs stale for
+    # weeks despite having a durable due-query checkpoint.
+    dedicated = {
+        s.name for s in sources
+        if s.name == "life_linkedin"
+        and s.type == "linkedin"
+        and s.opt("checkpoint_path")
+    }
+    other_sources = [s for s in sources if s.name not in dedicated]
+    rotating = sorted(other_sources, key=priority)[:MAX_SOURCES - len(dedicated)]
+    return dedicated | {s.name for s in rotating}
 
 
 
