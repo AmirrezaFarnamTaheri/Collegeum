@@ -174,3 +174,30 @@ def test_blank_guest_response_never_means_verified_no_vacancies(tmp_path) -> Non
     assert worker.discovery_parse_errors
     state = QueryLedger.load(tmp_path / "search.json", "linkedin")
     assert not any(row["last_complete_at"] for row in state.state["queries"].values())
+
+
+
+def test_seen_listing_checkpoint_is_acknowledged_before_new_requests(tmp_path) -> None:
+    http = FakeHTTP(pages={("PhD economics", 0): 1, ("predoc economics", 0): 1})
+    first = scraper(tmp_path, http)
+    posts, count = asyncio.run(first.run())
+    assert count == len(posts) == 1
+    second = scraper(tmp_path, FakeHTTP())
+    second._scheduler_now = lambda: T0 + timedelta(hours=4)
+    second._known_url = lambda url: url == posts[0].url
+    _, count2 = asyncio.run(second.run())
+    assert count2 == 0
+    assert second.search_diagnostics["acknowledged_seen"] == 1
+    assert second.search_diagnostics["requests"] == 0
+
+
+def test_rejected_card_removal_is_checkpointed_without_journal_mutation(tmp_path) -> None:
+    http = FakeHTTP(pages={("PhD economics", 0): 1, ("predoc economics", 0): 1})
+    worker = scraper(tmp_path, http)
+    posts, count = asyncio.run(worker.run())
+    assert count == 1
+    worker.drop_filtered(posts[0])
+    worker.flush_checkpoint()
+    state = QueryLedger.load(tmp_path / "search.json", "linkedin")
+    assert state.items(now=T0) == []
+    assert state.counts()["acknowledged_filtered"] == 1
