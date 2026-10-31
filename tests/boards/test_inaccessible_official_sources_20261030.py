@@ -23,5 +23,6 @@ def test_robots_denied_providers_are_not_scheduled_as_healthy():
 def test_ifau_joins_verified_empty_coverage_without_reenabling_failed_sources():
     boards = load_board_sources(REGISTRY)
     assert len(boards) == 144
-    # Mannheim was disabled after a recorded robots.txt policy denial.\n    assert sum(source.enabled for source in boards) == 76
+    # Mannheim was disabled after a recorded robots.txt policy denial.
+    assert sum(source.enabled for source in boards) == 76
     assert len({source.name for source in boards}) == 144
