@@ -43,10 +43,10 @@ _ROLLING_APPLICATION = re.compile(
 # The generic extractor intentionally doesn't scan arbitrary intervening text;
 # this bounded pattern is restricted to UniBE's application-instructions field.
 _SUBMIT_BY_DATE = re.compile(
-    r"\\b(?:submit(?:ted)?|send|email)\\b.{0,230}?\\bby\\s+"
-    r"(?P<date>20\\d{2}-\\d{1,2}-\\d{1,2}|"
-    r"\\d{1,2}[./-]\\d{1,2}[./-]20\\d{2}|"
-    r"\\d{1,2}\\s+[A-Za-z]+\\s+20\\d{2})\\b",
+    r"\b(?:submit(?:ted)?|send|email)\b.{0,230}?\bby\s+"
+    r"(?P<date>20\d{2}-\d{1,2}-\d{1,2}|"
+    r"\d{1,2}[./-]\d{1,2}[./-]20\d{2}|"
+    r"\d{1,2}\s+[A-Za-z]+\s+20\d{2})\b",
     re.I | re.S,
 )
 
