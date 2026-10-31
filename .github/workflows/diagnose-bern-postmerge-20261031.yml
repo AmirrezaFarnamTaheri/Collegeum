@@ -1,0 +1,90 @@
+name: diagnose-bern-postmerge-20261031
+
+on:
+  push:
+    branches:
+      - diagnostics/bern-postmerge-readonly-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Verify Bern official Prospective API using production path, read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          PYTHONPATH=src python3 - <<'PY' | tee build/bern-postmerge-diagnostic.json
+          import asyncio
+          import json
+          from urllib.parse import urlsplit
+          from predoc_pipeline.boards.config import HttpConfig
+          from predoc_pipeline.ingest.life_sciences import discover, classify_post, _doctoral_title
+
+          name = 'life_dach_bern'
+          diagnostic = {}
+          posts, errors = asyncio.run(discover(
+              'config/life_sciences.toml',
+              HttpConfig(timeout=18, max_retries=0, source_timeout=110),
+              selected_names={name},
+              diagnostics=diagnostic,
+          ))
+          health = diagnostic.get(name, {})
+          candidates = [p for p in posts if _doctoral_title(p.title)]
+          accepted = [a for p in posts if (a := classify_post(p)) is not None]
+          report = {
+              'source': name,
+              'status': health.get('status'),
+              'vacancy_links': health.get('vacancy_links'),
+              'returned_under_source_cap': len(posts),
+              'doctoral_title_candidates': len(candidates),
+              'eligible_classifier_matches': len(accepted),
+              'discovery_issues': health.get('discovery_issues'),
+              'detail_failures': health.get('detail_failures'),
+              'errors': errors[:5],
+              'doctorates_sample': [
+                  {'title': p.title[:120], 'url': p.url,
+                   'deadline': p.deadline.isoformat() if p.deadline else None,
+                   'location': p.location}
+                  for p in candidates[:12]
+              ],
+              'eligible_sample': [
+                  {'title': a.get('title'), 'url': a.get('url')}
+                  for a in accepted[:8]
+              ],
+          }
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          assert health.get('status') == 'discovered', report
+          assert (health.get('vacancy_links') or 0) >= 10, report
+          assert not health.get('discovery_issues'), report
+          assert not health.get('detail_failures'), report
+          assert not errors, report
+          assert all(
+              urlsplit(p.url).scheme == 'https'
+              and urlsplit(p.url).hostname == 'jobs.unibe.ch'
+              and urlsplit(p.url).port in (None, 443)
+              for p in posts
+          ), report
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bern-readonly-postmerge
+          path: build/bern-postmerge-diagnostic.json
+          retention-days: 14
+          if-no-files-found: warn
