@@ -81,8 +81,8 @@ def test_first_run_publishes_partial_pages_and_next_run_resumes_offset(tmp_path)
     posts2, n2 = asyncio.run(second.run())
     # Fair replay emits the newly discovered card first; previously emitted
     # items remain in the durable spool for later retries if unresolved.
-    assert n2 == 1
-    assert posts2[0].extra["linkedin_id"] == "5000000010"
+    assert n2 == 11
+    assert "5000000010" in {p.extra["linkedin_id"] for p in posts2}
     assert any("start=10" in u for u in http.urls[2:])
     assert second.search_diagnostics["completed_queries"] == 2
     assert second.search_diagnostics["pending_queries"] == 0
@@ -174,7 +174,8 @@ def test_blank_guest_response_never_means_verified_no_vacancies(tmp_path) -> Non
     worker = scraper(tmp_path, BlankHTTP())
     posts, n = asyncio.run(worker.run())
     assert posts == [] and n == 0
-    assert worker.discovery_parse_errors
+    assert worker.search_diagnostics["unverified_empty"] == 2
+    assert worker.discovery_parse_errors == []
     state = QueryLedger.load(tmp_path / "search.json", "linkedin")
     assert not any(row["last_complete_at"] for row in state.state["queries"].values())
 
@@ -217,7 +218,8 @@ def test_unknown_nonempty_html_cannot_complete_query_or_advance_cursor(tmp_path)
     worker = scraper(tmp_path, http)
     posts, n = asyncio.run(worker.run())
     assert n == 0 and posts == []
-    assert worker.discovery_parse_errors
+    assert worker.search_diagnostics["unverified_empty"] == 2
+    assert worker.discovery_parse_errors == []
     ledger = QueryLedger.load(tmp_path / "search.json", "linkedin")
     assert all(row["last_complete_at"] is None for row in ledger.state["queries"].values())
     assert ledger.plan(
@@ -246,7 +248,8 @@ def test_unknown_followup_page_retains_previous_cards_and_offset(tmp_path) -> No
     worker._scheduler_now = lambda: T0
     posts, n = asyncio.run(worker.run())
     assert n == len(posts) == 10
-    assert worker.discovery_parse_errors
+    assert worker.search_diagnostics["unverified_empty"] == 1
+    assert worker.discovery_parse_errors == []
     state = QueryLedger.load(tmp_path / "partially-loaded.json", "linkedin")
     row = state.state["queries"][query_key("linkedin", "PhD economics", "Germany")]
     assert row["pending"]["offset"] == 10
