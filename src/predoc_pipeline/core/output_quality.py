@@ -72,6 +72,12 @@ def application_url_issue(url: object) -> str | None:
         return "authentication-redirect"
     if hostname in _GENERIC_ROOTS and decoded in ("", "/") and not parts.query:
         return "generic-job-board-homepage"
+    # The EURAXESS search route contains multiple vacancies and no
+    # position-specific application identity. Keep individual /jobs/<ID> links.
+    if hostname in {"euraxess.ec.europa.eu", "www.euraxess.ec.europa.eu"} and (
+        decoded.rstrip("/").casefold() == "/jobs/search"
+    ):
+        return "generic-job-board-search"
     return None
 
 
@@ -81,6 +87,14 @@ def application_url_issue(url: object) -> str | None:
 # Hashes are stable URL identities and are reviewed individually (not inferred
 # from title similarity or project affiliation).
 _REVIEWED_WRONG_FIELD_URL_HASHES = frozenset({
+    # SIEPR current staff/postdoc directory, not a vacancy index.
+    "3c0f5a1439671f2e2848d26aa519ac9a588e850b35dec70b7cc7dc85824f64a6",
+    # SIEPR directory of current predoctoral fellows, not open requisitions.
+    "c838a6d783151ffaa97aa1942caeeddee0a39d9554c3aea0dc19afc4c09d3ec7",
+    # Stanford-only Undergraduate Research Fellows, not a post-baccalaureate job.
+    "33eb1b1a810a3a66249a92008daab32a9b67b678f77d48e36db17c6761a932be",
+    # Gothenburg PAR 2026/834: doctoral Social Work / crime prevention, not economics.
+    "07c9e135ca70ad498084d2521ac6fcf1c1fd54deefd52a702e696fa13f8278ef",
     # University of Chicago Freedman Lab neuroscience, not economics.
     "b35dfeb8c8a0c10d4d2c9f95a273b4e8a614087f943840bdc8dcbb20444cdc5f",
     # University of Copenhagen: pure mathematics postdoc (listing ID 170).
