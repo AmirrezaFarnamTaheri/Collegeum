@@ -158,6 +158,44 @@ jobs:
                   report[name] = entry
           print(json.dumps(report, ensure_ascii=False, indent=2))
           PY
+      - name: Inspect published JavaScript request construction (read-only)
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee bern-bundle-calls.json
+          import json
+          import re
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          url = "https://unibe.prospective.ch/careercenter/1001892/static/index-CtgvSgPP.js"
+          with PoliteClient(
+              user_agent="Collegeum-BernSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=18, per_host_delay=3, respect_robots=True,
+          ) as http:
+              response = http.get(url, use_cache=False)
+              result = {"status": response.status, "ok": response.ok}
+              if response.ok:
+                  body = response.text
+                  samples = {}
+                  patterns = {
+                      "base_url": r"baseUrl",
+                      "medium_path": r"/medium/",
+                      "job_list": r"JobList|jobList",
+                      "job_path": r"/jobs",
+                      "search": r"searchParams|searchJobs|jobSearch",
+                      "axios": r"axios|\.get\(|\.post\(",
+                      "job_api": r"jobsPageS|jobAboSubscriptionFormUrl",
+                  }
+                  for key, pattern in patterns.items():
+                      found = []
+                      for match in re.finditer(pattern, body):
+                          snippet = body[max(0, match.start()-95):match.end()+130]
+                          if snippet not in found:
+                              found.append(snippet[:225])
+                          if len(found) >= 7:
+                              break
+                      samples[key] = found
+                  result["contexts"] = samples
+              print(json.dumps(result, ensure_ascii=False, indent=2))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -166,4 +204,5 @@ jobs:
             bern-index-probe.json
             bern-api-hints.json
             bern-medium-probe.json
+            bern-bundle-calls.json
           retention-days: 14
