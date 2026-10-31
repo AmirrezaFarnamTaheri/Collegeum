@@ -218,9 +218,10 @@ def test_bounded_replay_cycles_all_candidates_without_starving_old_items() -> No
         batch = ledger.items(
             now=START + timedelta(hours=cycle), limit=3,
         )
-        new_ids = {item["id"] for item in batch}
-        assert not (seen & new_ids)
-        seen |= new_ids
+        assert len(batch) == 3
+        seen |= {item["id"] for item in batch}
+    # Once fewer than the batch size remain untouched, fill the spare slots
+    # with oldest previously emitted records rather than shrinking the batch.
     assert len(seen) == 8
 
 
