@@ -62,3 +62,11 @@ def test_postdoc_only_title_remains_excluded():
         _post(title="Postdoctoral Researcher in CRISPR Screening"),
         today=date(2026, 10, 31),
     ) is None
+
+def test_dual_role_title_is_not_preemptively_deleted_from_historical_export():
+    assert not life_sciences.historical_life_title_disqualified(
+        "PhD/Postdoc in In Vivo CRISPR Screening"
+    )
+    assert life_sciences.historical_life_title_disqualified(
+        "Postdoctoral Researcher in In Vivo CRISPR Screening"
+    )
