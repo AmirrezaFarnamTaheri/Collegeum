@@ -1206,7 +1206,7 @@ locations = [
   "Switzerland", "Norway", "Sweden", "Denmark", "Germany",
   "Netherlands", "France", "Italy", "Spain", "Austria", "Finland",
 ]
-# Six high-value searches always run; the other 74 first pages rotate.
+# Six core searches take priority only when their 48-hour cooldown expires.
 core_queries = [
   { keyword = "predoc economics", location = "European Union" },
   { keyword = "research assistant economics university", location = "United Kingdom" },
@@ -1230,6 +1230,7 @@ max_replay_items = 3000
 # The next query selects a supported window >= the elapsed gap + 1 day.
 f_TPR = "r2592000"
 backend = "guest"
+verified = false
 note = "Read-only bounded LinkedIn Jobs discovery, not feed posts; authorization/ToS restrictions apply. Source health is NOT completeness proof. Never bypass 403/429."
 
 # ===========================================================================
