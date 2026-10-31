@@ -122,7 +122,7 @@ def test_separate_life_sciences_source_registry_keeps_economics_sources() -> Non
         "life_euraxess", "life_academictransfer", "life_max_planck",
         "life_uppsala", "life_karolinska",
         "life_vib", "life_epfl", "life_crg_phd", "life_embl",
-        "life_dkfz",
+        "life_dkfz", "life_linkedin",
         "life_vienna_doctoral",
     }
     assert {
