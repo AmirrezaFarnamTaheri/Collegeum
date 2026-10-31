@@ -45,7 +45,29 @@ def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
         url = str(item.get('url') or item.get('application_url') or '')
         if not url:
             raise ValueError('Position has no application URL')
-        unique.setdefault(url, item)
+        original = unique.get(url)
+        if original is None:
+            unique[url] = dict(item)
+            continue
+        # Historical rows arrive before fresh discovery. A first-wins dedupe
+        # silently discards updated deadlines and workplaces from the actual
+        # employer advert. Combine evidence without erasing known old fields.
+        updated = dict(original)
+        updated.update({
+            name: value for name, value in item.items()
+            if value is not None and value != ''
+        })
+        if original.get('first_seen_at'):
+            updated['first_seen_at'] = original['first_seen_at']
+        # A fresh fetch alone does not verify that a previously closed advert
+        # reopened or that funding status has independently been established.
+        if (original.get('availability') == 'closed'
+                and item.get('availability') in (None, '', 'unknown')):
+            updated['availability'] = 'closed'
+        if (original.get('funding_status') == 'verified'
+                and item.get('funding_status') in (None, '', 'unverified')):
+            updated['funding_status'] = 'verified'
+        unique[url] = updated
     aliases = {'institution': 'employer', 'application_url': 'url',
                'position_type': 'category'}
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -133,7 +155,6 @@ def artifact_quality(
 async def collect(config_path: Path, rows: list[dict[str, Any]], output: Path,
                   report: dict[str, Any]) -> None:
     from predoc_pipeline.boards.config import HttpConfig
-    from predoc_pipeline.boards.utils.geo import detect_location
     from predoc_pipeline.ingest.life_sciences import (
         MAX_SOURCES,
         classify_post,
@@ -153,9 +174,10 @@ async def collect(config_path: Path, rows: list[dict[str, Any]], output: Path,
             row = classify_post(post)
             if row is None:
                 continue
-            country, _ = detect_location(post.country, post.location)
+            # classify_post has already resolved the posting-level workplace
+            # against any weaker source-country default. Do not overwrite it.
             row.update({
-                'country': country or '', 'research_fields': post.fields_of_research or '',
+                'research_fields': post.fields_of_research or '',
                 'deadline': post.deadline.isoformat() if post.deadline else '',
                 'deadline_note': post.deadline_text or '',
                 'first_seen_at': report['collected_at'], 'last_seen_at': report['collected_at'],
