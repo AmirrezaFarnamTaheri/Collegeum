@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from predoc_pipeline.boards.config import SourceConfig, load_board_sources
+from predoc_pipeline.boards.config import load_board_sources
 from predoc_pipeline.boards.scrapers.rss import RSSScraper
 
 CONFIG = Path("config/sources.toml")
