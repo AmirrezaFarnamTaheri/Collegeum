@@ -164,7 +164,7 @@ class LinkedInScraper(BaseScraper):
             limit=query_budget, cooldown_hours=cooldown,
         )
         queue = deque(selected)
-        self.search_diagnostics = {
+        self.search_diagnostics: dict[str, Any] = {
             "backend": "guest_checkpointed",
             "total_pairs": len(set(pairs)), "plan_size": len(selected),
             "request_budget": request_budget, "time_budget_seconds": wall_seconds,
@@ -281,7 +281,7 @@ class LinkedInScraper(BaseScraper):
 
     async def fetch_raw_postings(self) -> list[Any]:
         if self.opt("backend", "guest") == "jobspy":
-            self.search_diagnostics: dict[str, Any] = {
+            self.search_diagnostics = {
                 "backend": "jobspy", "coverage": "unverified",
             }
             return await asyncio.to_thread(self._jobspy)
