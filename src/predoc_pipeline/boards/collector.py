@@ -276,7 +276,9 @@ async def _collect(
             # The already-restored seen journal is authoritative. Once a
             # posting has a durable decision, no replay buffer should retain
             # it indefinitely and prevent fresh query discovery.
-            setattr(scraper, "_known_url", known)
+            register_known = getattr(scraper, "set_known_url", None)
+            if callable(register_known):
+                register_known(known)
         scrapers.append(scraper)
     if not scrapers:
         return out
