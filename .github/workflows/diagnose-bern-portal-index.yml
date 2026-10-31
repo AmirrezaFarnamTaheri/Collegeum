@@ -232,6 +232,52 @@ jobs:
                       data["text_start"] = response.text[:220]
               print(json.dumps(data, indent=2))
           PY
+      - name: Inspect job identity and employer URL contract (no publishing)
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee bern-job-schema.json
+          import json
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          endpoint = "https://ohws.prospective.ch/public/v1/medium/1001892/jobs"
+          report = {}
+          with PoliteClient(
+              user_agent="Collegeum-BernSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=18, per_host_delay=3, respect_robots=True,
+          ) as http:
+              for offset in (0, 12):
+                  response = http.get(f"{endpoint}?offset={offset}&limit=12&lang=en",
+                                      use_cache=False)
+                  item = {"status": response.status, "ok": response.ok,
+                          "error": str(response.error)[:140]}
+                  if response.ok:
+                      body = json.loads(response.text)
+                      jobs = body.get("jobs", [])
+                      item["offset"] = body.get("offset")
+                      item["total"] = body.get("total")
+                      item["count"] = len(jobs)
+                      item["examples"] = [
+                          {"id": job.get("id"), "hk_id": job.get("hk_id"),
+                           "viewkey": job.get("viewkey"),
+                           "title": str(job.get("title"))[:120],
+                           "attributes": job.get("attributes"),
+                           "szas": job.get("szas"),
+                           "links": job.get("links"),
+                           "start_date": job.get("start_date"),
+                           "end_date": job.get("end_date"),
+                           "language": job.get("language")}
+                          for job in jobs[:4] if isinstance(job, dict)
+                      ]
+                      item["special_titles"] = [
+                          {"id":job.get("id"),"title":str(job.get("title"))[:120],
+                           "links":job.get("links")}
+                          for job in jobs if isinstance(job, dict)
+                          and any(x in str(job.get("title")).lower() for x in (
+                              "phd","doctoral","doktorand","doktorat","promotio",
+                          ))
+                      ][:10]
+                  report[str(offset)] = item
+          print(json.dumps(report, ensure_ascii=False, indent=2, default=str))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -242,4 +288,5 @@ jobs:
             bern-medium-probe.json
             bern-bundle-calls.json
             bern-job-feed-probe.json
+            bern-job-schema.json
           retention-days: 14
