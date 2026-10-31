@@ -13,11 +13,12 @@ than declaring an empty hiring season.
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 from urllib.parse import urlsplit
 
 from ..models import JobPostSchema
-from ..utils.dates import parse_iso_datetime
+from ..utils.dates import extract_deadline, parse_date, parse_iso_datetime
 from ..utils.text import clean_ws, html_to_text
 from .base import BaseScraper, register
 
@@ -37,6 +38,39 @@ _ROLLING_APPLICATION = re.compile(
     r"\brolling\b|\buntil\s+(?:the\s+)?(?:position|role|post|job)\s+(?:is\s+)?filled\b"
     r"|\buntil\s+filled\b", re.I,
 )
+
+# A few employer adverts say "submit your application including ... by DATE".
+# The generic extractor intentionally doesn't scan arbitrary intervening text;
+# this bounded pattern is restricted to UniBE's application-instructions field.
+_SUBMIT_BY_DATE = re.compile(
+    r"\b(?:submit(?:ted)?|send|email)\b.{0,230}?\bby\s+"
+    r"(?P<date>20\d{2}-\d{1,2}-\d{1,2}|"
+    r"\d{1,2}[./-]\d{1,2}[./-]20\d{2}|"
+    r"\d{1,2}\s+[A-Za-z]+\s+20\d{2})\b",
+    re.I | re.S,
+)
+
+
+# "By DATE for full consideration" and "later applications considered"
+# establish review priority, not a final cutoff. These are employer-authored
+# application instructions; index end_date must never override this context.
+_NONFINAL_REVIEW = re.compile(
+    r"\bfor\s+(?:full|priority)\s+consideration\b"
+    r"|\bpriority\s+(?:application|review|consideration)\s+date\b"
+    r"|\b(?:later|subsequent)\s+applications?\b.{0,110}?\b(?:accepted|considered)\b"
+    r"|\bapplications?\s+(?:received|submitted)\s+after\b"
+    r".{0,110}?\b(?:accepted|considered)\b",
+    re.I | re.S,
+)
+
+
+def _employer_application_cutoff(text: str) -> date | None:
+    # Review/start dates and administrative index dates are not hard cutoffs.
+    explicit, _ = extract_deadline(text)
+    if explicit is not None:
+        return explicit
+    submission = _SUBMIT_BY_DATE.search(text)
+    return parse_date(submission.group("date")) if submission else None
 
 
 def _official_url(value: object, viewkey: str) -> bool:
@@ -212,32 +246,60 @@ class ProspectiveJobsScraper(BaseScraper):
             # application cutoff. The classifier already rejects deadlines
             # more than three years away; preserve the same fail-closed bound
             # during extraction so downstream metadata is not misleading.
-            unverified_end = bool(
+            application_raw = szas.get("sza_application")
+            application_text = (
+                html_to_text(application_raw)
+                if isinstance(application_raw, str) else ""
+            )
+            employer_cutoff = _employer_application_cutoff(application_text)
+            long_horizon = bool(
                 posted is not None
                 and close_date is not None
                 and (close_date - posted).days > 366 * 3
             )
-            deadline_note: str | None
-            if unverified_end:
-                deadline = None
+            rolling_application = bool(
+                _ROLLING_APPLICATION.search(application_text)
+                or (long_horizon and _ROLLING_APPLICATION.search(description))
+            )
+            priority_review = bool(_NONFINAL_REVIEW.search(application_text))
+            # The employer advert is authoritative, independently of whether
+            # the recruitment index has the same date (or ANY end date).
+            # A review-priority date is never a hard cutoff; in particular,
+            # "apply by DATE for full consideration" may permit later filing.
+            credible_employer_cutoff = bool(
+                employer_cutoff is not None
+                and not rolling_application and not priority_review
+                and not (long_horizon and employer_cutoff == close_date)
+            )
+            deadline = employer_cutoff if credible_employer_cutoff else None
+            index_unverified = bool(
+                close_date is not None
+                and (long_horizon or deadline != close_date)
+            )
+            if rolling_application:
+                deadline_note = "Rolling until filled"
+            elif priority_review:
+                deadline_note = "Priority review date; no verified hard cutoff"
+            elif deadline is not None:
                 deadline_note = (
-                    "Rolling until filled" if _ROLLING_APPLICATION.search(description)
-                    else "Unverified employer-index end date"
+                    f"Employer-stated application deadline {deadline.isoformat()}"
                 )
+            elif close_date is not None:
+                deadline_note = "Unverified employer-index end date"
             else:
-                deadline = close_date
-                deadline_note = (
-                    f"Official UniBE posting ends {closes}" if closes else None
-                )
+                deadline_note = "No verified employer application deadline"
             provenance: dict[str, Any] = {
                 "prospective_id": ident,
                 "prospective_viewkey": viewkey,
                 "prospective_full_text": description,
             }
-            if unverified_end:
-                # The raw provider value remains auditable, but never becomes
-                # a verified deadline or accidentally passes a loose caller.
+            if credible_employer_cutoff:
+                provenance["prospective_employer_deadline_verified"] = True
+            if index_unverified:
+                # Keep the raw provider value for audit without promoting it
+                # to the user's actual submission deadline.
                 provenance["prospective_unverified_end_date"] = closes
+            if deadline is None:
                 provenance["require_deadline"] = True
             try:
                 posts.append(self.make(

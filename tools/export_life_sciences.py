@@ -19,7 +19,6 @@ COLUMNS = ('title', 'institution', 'country', 'location', 'position_type',
            'research_priority', 'application_url', 'source', 'first_seen_at',
            'last_seen_at', 'availability')
 
-
 def stored_positions(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
@@ -32,12 +31,17 @@ def stored_positions(path: Path) -> list[dict[str, Any]]:
     return [
         row for row in rows
         if row.get('category') == 'life_sciences_phd'
-        and not historical_life_title_disqualified(str(row.get('title') or ''))
+        and not historical_life_title_disqualified(
+            str(row.get('title') or ''), str(row.get('url') or '')
+        )
     ]
 
 
 def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
     """Keep known facts, preserve historical rows, and escape spreadsheet formulas."""
+    from predoc_pipeline.boards.utils.bern_evidence import (
+        sanitize_bern_historical_deadline,
+    )
     from predoc_pipeline.boards.utils.geo import detect_location
 
     unique: dict[str, dict[str, Any]] = {}
@@ -74,7 +78,10 @@ def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
     with path.open('w', encoding='utf-8-sig', newline='') as stream:
         writer = csv.DictWriter(stream, fieldnames=COLUMNS)
         writer.writeheader()
-        for item in sorted(unique.values(), key=lambda row: str(row.get('title', '')).casefold()):
+        for stored in sorted(unique.values(), key=lambda row: str(row.get('title', '')).casefold()):
+            # Keep the on-disk journal intact; share the same reviewed overlay
+            # with private subscription selection and historical previews.
+            item = sanitize_bern_historical_deadline(stored)
             row = {}
             for column in COLUMNS:
                 value = str(item.get(column, item.get(aliases.get(column, column), '')) or '')

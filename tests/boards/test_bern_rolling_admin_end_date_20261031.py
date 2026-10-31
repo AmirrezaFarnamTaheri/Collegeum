@@ -79,6 +79,6 @@ def test_normal_official_end_date_remains_structured_and_published_as_before():
         application_text="Applications close on 20 November 2026.",
     )
     assert post.deadline == date(2026, 11, 20)
-    assert post.deadline_text.startswith("Official UniBE posting ends")
+    assert post.deadline_text.startswith("Employer-stated application deadline")
     assert "prospective_unverified_end_date" not in post.extra
     assert classify_post(post, today=date(2026, 10, 31)) is not None

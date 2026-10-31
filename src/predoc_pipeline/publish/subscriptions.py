@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from html import escape
 from typing import Any
 
+from ..boards.utils.bern_evidence import sanitize_bern_historical_deadline
 from ..core.output_quality import (
     application_url_issue,
     authentication_page_text,
@@ -144,7 +145,9 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
     for job in careers:
         if (
             job.get("category") == "life_sciences_phd"
-            and historical_life_title_disqualified(str(job.get("title") or ""))
+            and historical_life_title_disqualified(
+                str(job.get("title") or ""), str(job.get("url") or "")
+            )
         ):
             continue
         if job.get("availability") == "closed":
@@ -154,7 +157,9 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
         if (parsed and parsed >= cutoff and
                 selected(member, job["category"], job["scope"]) and
                 (preview or eligible(member, job["category"], job["scope"], when))):
-            jobs.append(job)
+            # Existing rows can retain old API index deadlines. Never mutate
+            # the journal or receipts; sanitize the private result view only.
+            jobs.append(sanitize_bern_historical_deadline(job))
     jobs.sort(key=lambda item: (
         _instant(item["first_seen_at"]) or datetime.min.replace(tzinfo=UTC),
         item.get("research_priority") == "focus",

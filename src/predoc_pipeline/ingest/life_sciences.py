@@ -22,6 +22,7 @@ from ..boards.filter import PHD_POSITION
 from ..boards.models import JobPostSchema
 from ..boards.scrapers import SCRAPERS
 from ..boards.scrapers.base import SourceSkipped
+from ..boards.utils.bern_evidence import reviewed_non_life_vacancy
 from ..boards.utils.dates import extract_deadline
 from ..boards.utils.geo import detect_location
 from .career import load_career, save_career
@@ -115,7 +116,7 @@ def _doctoral_title(title: str) -> bool:
         or ADDITIONAL_DOCTORAL_ROLE.search(title)
         or DUAL_DOCTORAL_ROLE.search(title)
     )
-def historical_life_title_disqualified(title: str) -> bool:
+def historical_life_title_disqualified(title: str, url: str = "") -> bool:
     """Quarantine unmistakably off-field historical titles without guessing.
 
     Old journal rows lack the full vacancy detail used by classification.
@@ -123,6 +124,8 @@ def historical_life_title_disqualified(title: str) -> bool:
     does not itself name an allowed biological research domain. Ambiguous
     titles remain eligible for separate human/detail review.
     """
+    if reviewed_non_life_vacancy(url):
+        return True
     if WRONG_ROLE.search(title) and not DUAL_DOCTORAL_ROLE.search(title):
         return True
     return bool(
@@ -139,6 +142,17 @@ EXPLICIT_LOCATION = re.compile(
 
 def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str, str] | None:
     """Fail closed on unknown geography, broad roles and unfunded adverts."""
+    if reviewed_non_life_vacancy(post.url):
+        return None
+    # An index end date that the Bern adapter quarantined is never proof
+    # of a deadline, even if later enrichment sets post.deadline from a
+    # priority-review date. Manual verification needs a separate lifecycle.
+    if (
+        post.source == "life_dach_bern"
+        and "prospective_unverified_end_date" in post.extra
+        and not post.extra.get("prospective_employer_deadline_verified")
+    ):
+        return None
     if not _doctoral_title(post.title):
         return None
     dual_track = bool(DUAL_DOCTORAL_ROLE.search(post.title))
@@ -326,6 +340,11 @@ def _vib_career_key(identifier: str, historical: dict[str, str]) -> str:
 
 def _needs_detail(post: JobPostSchema) -> bool:
     """Only enrich a doctoral card if research field or location is incomplete."""
+    # UniBE's official Prospective API already includes the full employer
+    # description. Its fetch_detail returns the SAME text, so a second pass
+    # can only duplicate it and reintroduce a review date as a hard cutoff.
+    if post.source == "life_dach_bern" and "prospective_full_text" in post.extra:
+        return False
     if not _doctoral_title(post.title):
         return False
     if DUAL_DOCTORAL_ROLE.search(post.title):
