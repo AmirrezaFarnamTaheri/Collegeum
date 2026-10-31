@@ -19,28 +19,6 @@ COLUMNS = ('title', 'institution', 'country', 'location', 'position_type',
            'research_priority', 'application_url', 'source', 'first_seen_at',
            'last_seen_at', 'availability')
 
-# Exact employer identities audited on 2026-10-31. Historical journal rows
-# retained these API index dates before the employer instructions were reviewed.
-# Redact only the old unverified cutoff claim in presentation, never history.
-_BERN_JOBS = "https://jobs.unibe.ch/job-vacancies/"
-_REVIEWED_BERN_INDEX_ENDS = {
-    (
-        _BERN_JOBS
-        + "phd-student-in-cancer-immunology-and-leukemia-stem-cell-biology/"
-        + "0a6853ac-d531-4ac1-bc57-592090585e19"
-    ): (
-        "2026-11-27", "Unverified index end date; employer advert states no cutoff",
-    ),
-    (
-        _BERN_JOBS
-        + "phd-position-nccr-genesis-combining-remote-and-in-situ-life-detection-techniques/"
-        + "7e52c2be-b908-4dfd-b634-c72519d07262"
-    ): (
-        "2026-12-31", "Rolling until filled; not a confirmed hard deadline",
-    ),
-}
-
-
 def stored_positions(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
@@ -61,6 +39,9 @@ def stored_positions(path: Path) -> list[dict[str, Any]]:
 
 def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
     """Keep known facts, preserve historical rows, and escape spreadsheet formulas."""
+    from predoc_pipeline.boards.utils.bern_evidence import (
+        sanitize_bern_historical_deadline,
+    )
     from predoc_pipeline.boards.utils.geo import detect_location
 
     unique: dict[str, dict[str, Any]] = {}
@@ -97,29 +78,13 @@ def write_csv(path: Path, positions: list[dict[str, Any]]) -> int:
     with path.open('w', encoding='utf-8-sig', newline='') as stream:
         writer = csv.DictWriter(stream, fieldnames=COLUMNS)
         writer.writeheader()
-        for item in sorted(unique.values(), key=lambda row: str(row.get('title', '')).casefold()):
-            # Older Bern exports were stamped with unverified Prospective
-            # index end dates. Correct the view only where the precise old
-            # date and metadata are still present; verified future revisions
-            # and historical journal bytes remain untouched.
-            audited = (
-                _REVIEWED_BERN_INDEX_ENDS.get(str(item.get('url') or ''))
-                if item.get('source') == 'life_dach_bern' else None
-            )
-            stale_bern_end = bool(
-                audited is not None
-                and str(item.get('deadline') or '') == audited[0]
-                and str(item.get('deadline_note') or '').startswith(
-                    'Official UniBE posting ends'
-                )
-            )
+        for stored in sorted(unique.values(), key=lambda row: str(row.get('title', '')).casefold()):
+            # Keep the on-disk journal intact; share the same reviewed overlay
+            # with private subscription selection and historical previews.
+            item = sanitize_bern_historical_deadline(stored)
             row = {}
             for column in COLUMNS:
                 value = str(item.get(column, item.get(aliases.get(column, column), '')) or '')
-                if stale_bern_end and column == 'deadline':
-                    value = ''
-                elif stale_bern_end and column == 'deadline_note' and audited is not None:
-                    value = audited[1]
                 if column == 'availability' and not value:
                     value = 'unknown'
                 if column == 'country' and not value:
