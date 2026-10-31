@@ -206,3 +206,31 @@ def test_detail_attempt_fairness_is_durable_and_replayed(tmp_path) -> None:
     unattempted = next(x for x in restored.items(now=START) if x["id"] == "4980000001")
     assert attempted["_detail_last_attempt_at"] == START.isoformat()
     assert unattempted["_detail_last_attempt_at"] is None
+
+
+
+def test_bounded_replay_cycles_all_candidates_without_starving_old_items() -> None:
+    ledger = QueryLedger("econ")
+    ledger.request(A, now=START)
+    ledger.accept_page(A, [_card(str(4980000000 + i)) for i in range(8)], now=START)
+    seen: set[str] = set()
+    for cycle in range(3):
+        batch = ledger.items(
+            now=START + timedelta(hours=cycle), limit=3,
+        )
+        new_ids = {item["id"] for item in batch}
+        assert not (seen & new_ids)
+        seen |= new_ids
+    assert len(seen) == 8
+
+
+def test_replay_tracking_survives_restart_and_recovers_unprocessed(tmp_path) -> None:
+    ledger = QueryLedger("life")
+    ledger.request(C, now=START)
+    ledger.accept_page(C, [_card(str(4980000000 + i)) for i in range(6)], now=START)
+    first = {x["id"] for x in ledger.items(now=START, limit=2)}
+    path = tmp_path / "queue.json"
+    ledger.save(path)
+    restored = QueryLedger.load(path, "life")
+    later = {x["id"] for x in restored.items(now=START + timedelta(hours=4), limit=2)}
+    assert first.isdisjoint(later)
