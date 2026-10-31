@@ -595,7 +595,7 @@ def poll_life_sciences(
                 [*previous, *matches.values()]
                 if row.get("source") == "life_linkedin"
             }
-            if known_urls:
+            if known_urls and cfg is not None:
                 ledger = QueryLedger.load(
                     checkpoint, "life_linkedin",
                     max_items=int(cfg.opt("max_replay_items", 1500)),
