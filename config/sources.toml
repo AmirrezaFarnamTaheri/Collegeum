@@ -648,14 +648,20 @@ note = "Bank of England Research Assistants and Analysts in monetary policy and 
 
 [[board]]
 name = "bis"
-type = "link_scan"
+type = "rss"
 group = "central_bank"
-url = "https://www.bis.org/about/careers/vacancies"
-link_pattern = 'bis\.org/vacancy/jr\d+$'
+# The official RSS/Atom listing is consistently machine-readable from the
+# runner; the HTML index intermittently yielded zero links despite HTTP 200.
+url = "https://www.bis.org/doclist/vacancies.rss?objid=vacancies&page=&paging_length=50&sort_list=date_desc&theme=simple&ml=false&mlurl=&emptylisttext=There%20are%20currently%20no%20vacancies."
+include_url_contains = ["/vacancy/jr"]
+allowed_link_hosts = ["bis.org", "www.bis.org"]
+# BIS advertises both Basel and Hong Kong jobs. Location must be evidenced
+# in the vacancy itself, not inherited from the bank's Swiss headquarters.
+infer_country_from_summary = true
 institution = "Bank for International Settlements"
-country = "Switzerland"
 field_implied = true
-note = "BIS Research Assistant and Analyst positions in international banking and economics."
+verification = "official_bis_vacancies_rss_20261031"
+note = "Official BIS RSS with distinct employer requisition URLs; preserve job-level location, and treat programme/PhD-holders roles separately from predoctoral vacancies."
 
 [[board]]
 name = "oecd"
