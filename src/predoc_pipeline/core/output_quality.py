@@ -72,6 +72,12 @@ def application_url_issue(url: object) -> str | None:
         return "authentication-redirect"
     if hostname in _GENERIC_ROOTS and decoded in ("", "/") and not parts.query:
         return "generic-job-board-homepage"
+    # The EURAXESS search route contains multiple vacancies and no
+    # position-specific application identity. Keep individual /jobs/<ID> links.
+    if hostname in {"euraxess.ec.europa.eu", "www.euraxess.ec.europa.eu"} and (
+        decoded.rstrip("/").casefold() == "/jobs/search"
+    ):
+        return "generic-job-board-search"
     return None
 
 
@@ -81,6 +87,8 @@ def application_url_issue(url: object) -> str | None:
 # Hashes are stable URL identities and are reviewed individually (not inferred
 # from title similarity or project affiliation).
 _REVIEWED_WRONG_FIELD_URL_HASHES = frozenset({
+    # Gothenburg PAR 2026/834: doctoral Social Work / crime prevention, not economics.
+    "07c9e135ca70ad498084d2521ac6fcf1c1fd54deefd52a702e696fa13f8278ef",
     # University of Chicago Freedman Lab neuroscience, not economics.
     "b35dfeb8c8a0c10d4d2c9f95a273b4e8a614087f943840bdc8dcbb20444cdc5f",
     # University of Copenhagen: pure mathematics postdoc (listing ID 170).
