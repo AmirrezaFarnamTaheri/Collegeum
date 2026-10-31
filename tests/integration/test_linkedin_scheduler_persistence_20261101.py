@@ -123,3 +123,69 @@ def test_life_journal_ack_only_releases_saved_not_unverified_candidates(
     replay = QueryLedger.load(saved, "life_linkedin", max_items=1500)
     assert {item["id"] for item in replay.items(now=now)} == {"5980000001"}
     assert replay.counts()["acknowledged_seen"] == 1
+
+
+
+def test_life_hard_rejections_release_spool_without_losing_missing_deadline(
+    tmp_path, monkeypatch,
+) -> None:
+    from datetime import date
+
+    from predoc_pipeline.boards.config import HttpConfig
+    from predoc_pipeline.boards.models import JobPostSchema
+    from predoc_pipeline.boards.scrapers.linkedin_scheduler import QueryLedger
+    from predoc_pipeline.ingest import life_sciences
+
+    store = tmp_path / "life-ledger.json"
+    clock = datetime(2026, 11, 1, 8, tzinfo=UTC)
+    pair = ("PhD epigenetics", "Switzerland")
+    ledger = QueryLedger("life_linkedin", max_items=1500)
+    ledger.request(pair, now=clock)
+    ids = [f"598000000{i}" for i in range(5)]
+    ledger.accept_page(
+        pair,
+        [{"id": ident, "title": "PhD in Epigenetics"} for ident in ids],
+        now=clock,
+    )
+    ledger.save(store)
+    registry = tmp_path / "life.toml"
+    registry.write_text(
+        "[[board]]\nname='life_linkedin'\ntype='linkedin'\n"
+        "enabled=true\nrequire_deadline=true\n"
+        f"checkpoint_path='{store}'\nmax_replay_items=1500\n",
+        encoding="utf-8",
+    )
+    def post(ident: str, title: str, location: str, country: str,
+             deadline: date | None) -> JobPostSchema:
+        return JobPostSchema(
+            title=title, source="life_linkedin",
+            institution="University of Test",
+            url=f"https://www.linkedin.com/jobs/view/{ident}",
+            location=location, country=country, deadline=deadline,
+            extra={"require_deadline": True},
+        )
+
+    async def discover(_path, _http, *, selected_names, **_kwargs):
+        assert selected_names == {"life_linkedin"}
+        return [
+            post(ids[0], "PhD in Epigenetics", "Basel, Switzerland", "Switzerland",
+                 date(2026, 12, 15)),
+            post(ids[1], "PhD in Epigenetics", "Basel, Switzerland", "Switzerland", None),
+            post(ids[2], "PhD in Economics", "Basel, Switzerland", "Switzerland",
+                 date(2026, 12, 15)),
+            post(ids[3], "Postdoctoral Fellow in Epigenetics",
+                 "Basel, Switzerland", "Switzerland", date(2026, 12, 15)),
+            post(ids[4], "PhD in Epigenetics", "Boston, United States",
+                 "United States", date(2026, 12, 15)),
+        ], []
+
+    monkeypatch.setattr(life_sciences, "discover", discover)
+    saved, errors = life_sciences.poll_life_sciences(
+        tmp_path / "career.ndjson",
+        sources_path=registry, http_config=HttpConfig(),
+    )
+    assert saved == 1 and not errors
+    after = QueryLedger.load(store, "life_linkedin", max_items=1500)
+    assert {row["id"] for row in after.items(now=clock)} == {ids[1]}
+    assert after.counts()["acknowledged_seen"] == 1
+    assert after.counts()["acknowledged_filtered"] == 3
