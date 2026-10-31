@@ -61,6 +61,12 @@ def application_url_issue(url: object) -> str | None:
         return "unresolved-url-template"
     if (hostname, decoded.rstrip("/")) in _NON_ACTIONABLE_PROGRAM_PAGES:
         return "generic-program-information-page"
+    # EURAXESS /jobs/search is a search index, not a vacancy-specific
+    # application. In production #41172291157 it leaked as the "Apply" link
+    # for listing 322 despite a distinct official /jobs/476523 source URL.
+    # Keep position-specific /jobs/<id> links actionable.
+    if hostname == "euraxess.ec.europa.eu" and decoded.rstrip("/") == "/jobs/search":
+        return "generic-job-search-page"
     if hostname == "job-boards.greenhouse.io" and "true" in (
         value.lower() for value in parse_qs(parts.query).get("error", [])
     ):
