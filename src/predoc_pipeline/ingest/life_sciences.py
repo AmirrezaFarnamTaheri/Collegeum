@@ -78,6 +78,17 @@ PHD_CALL = re.compile(
     re.I,
 )
 SEASONAL_CALL = re.compile(r"\b(?:autumn|spring|winter|summer)\s+call\b", re.I)
+
+# LinkedIn/university advertisements also say "PhD in Epigenetics", not
+# "PhD student" or "PhD position". This is role evidence only; field,
+# employer, country and real closing date still gate the alert.
+PHD_IN_RESEARCH_FIELD = re.compile(
+    r"^\s*(?:fully[- ]funded\s+|funded\s+)?"
+    r"(?:ph\.?d\.?|dphil|doctoral)\s+in\s+"
+    r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s/&-]{2,90}$",
+    re.I,
+)
+
 ADDITIONAL_DOCTORAL_ROLE = re.compile(
     r"\b(?:predoctoral|pre-doctoral)\s+(?:researcher|fellow|student)\b|"
     r"\b(?:offre\s+de\s+th[eè]se|doctorand[oa]|dottorand[oa]|"
@@ -112,6 +123,7 @@ OUT_OF_SCOPE_TITLE = re.compile(
 def _doctoral_title(title: str) -> bool:
     return bool(
         PHD_POSITION.search(title) or PHD_CALL.search(title)
+        or PHD_IN_RESEARCH_FIELD.search(title)
         or ADDITIONAL_DOCTORAL_ROLE.search(title)
         or DUAL_DOCTORAL_ROLE.search(title)
     )
@@ -370,7 +382,9 @@ async def discover(
 
         async def one(source: Any) -> tuple[list[JobPostSchema], list[str]]:
             nonlocal detail_remaining
-            if source.type not in ("rss", "link_scan", "bite_jobs", "prospective_jobs", "workday"):
+            if source.type not in (
+                "rss", "link_scan", "bite_jobs", "prospective_jobs", "workday", "linkedin",
+            ):
                 if diagnostics is not None:
                     diagnostics[source.name] = {
                         "status": "unsupported", "vacancy_links": 0,
@@ -419,7 +433,10 @@ async def discover(
                 detail_used = 0
                 detail_failures = 0
                 for post in scoped:
-                    if detail_used >= MAX_DETAIL_PER_SOURCE or detail_remaining <= 0:
+                    per_source_details = (
+                        12 if source.name == "life_linkedin" else MAX_DETAIL_PER_SOURCE
+                    )
+                    if detail_used >= per_source_details or detail_remaining <= 0:
                         break
                     if not _needs_detail(post):
                         continue
@@ -462,6 +479,9 @@ async def discover(
                     "discovery_issues": problems,
                     "detail_failures": detail_failures,
                 }
+                search = getattr(scraper, "search_diagnostics", None)
+                if isinstance(search, dict):
+                    diagnostics[source.name]["search_diagnostics"] = search
             warnings = [f"{source.name}: {problems} discovery issues"] if problems else []
             return scoped, warnings
 
