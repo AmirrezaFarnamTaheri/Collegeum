@@ -51,6 +51,19 @@ _SUBMIT_BY_DATE = re.compile(
 )
 
 
+# "By DATE for full consideration" and "later applications considered"
+# establish review priority, not a final cutoff. These are employer-authored
+# application instructions; index end_date must never override this context.
+_NONFINAL_REVIEW = re.compile(
+    r"\bfor\s+(?:full|priority)\s+consideration\b"
+    r"|\bpriority\s+(?:application|review|consideration)\s+date\b"
+    r"|\b(?:later|subsequent)\s+applications?\b.{0,110}?\b(?:accepted|considered)\b"
+    r"|\bapplications?\s+(?:received|submitted)\s+after\b"
+    r".{0,110}?\b(?:accepted|considered)\b",
+    re.I | re.S,
+)
+
+
 def _employer_application_cutoff(text: str) -> date | None:
     # Review/start dates and administrative index dates are not hard cutoffs.
     explicit, _ = extract_deadline(text)
@@ -248,37 +261,45 @@ class ProspectiveJobsScraper(BaseScraper):
                 _ROLLING_APPLICATION.search(application_text)
                 or (long_horizon and _ROLLING_APPLICATION.search(description))
             )
-            # Even a near-term Prospective end_date is only an index date
-            # until the employer explicitly corroborates a hard cutoff.
-            # Preserve discovery; do not manufacture publication eligibility.
-            unverified_end = bool(
-                close_date is not None
-                and (
-                    long_horizon or rolling_application
-                    or employer_cutoff != close_date
-                )
+            priority_review = bool(_NONFINAL_REVIEW.search(application_text))
+            # The employer advert is authoritative, independently of whether
+            # the recruitment index has the same date (or ANY end date).
+            # A review-priority date is never a hard cutoff; in particular,
+            # "apply by DATE for full consideration" may permit later filing.
+            credible_employer_cutoff = bool(
+                employer_cutoff is not None
+                and not rolling_application and not priority_review
+                and not (long_horizon and employer_cutoff == close_date)
             )
-            deadline_note: str | None
-            if unverified_end:
-                deadline = None
+            deadline = employer_cutoff if credible_employer_cutoff else None
+            index_unverified = bool(
+                close_date is not None
+                and (long_horizon or deadline != close_date)
+            )
+            if rolling_application:
+                deadline_note = "Rolling until filled"
+            elif priority_review:
+                deadline_note = "Priority review date; no verified hard cutoff"
+            elif deadline is not None:
                 deadline_note = (
-                    "Rolling until filled" if rolling_application
-                    else "Unverified employer-index end date"
+                    f"Employer-stated application deadline {deadline.isoformat()}"
                 )
+            elif close_date is not None:
+                deadline_note = "Unverified employer-index end date"
             else:
-                deadline = close_date
-                deadline_note = (
-                    f"Official UniBE posting ends {closes}" if closes else None
-                )
+                deadline_note = "No verified employer application deadline"
             provenance: dict[str, Any] = {
                 "prospective_id": ident,
                 "prospective_viewkey": viewkey,
                 "prospective_full_text": description,
             }
-            if unverified_end:
-                # The raw provider value remains auditable, but never becomes
-                # a verified deadline or accidentally passes a loose caller.
+            if credible_employer_cutoff:
+                provenance["prospective_employer_deadline_verified"] = True
+            if index_unverified:
+                # Keep the raw provider value for audit without promoting it
+                # to the user's actual submission deadline.
                 provenance["prospective_unverified_end_date"] = closes
+            if deadline is None:
                 provenance["require_deadline"] = True
             try:
                 posts.append(self.make(
