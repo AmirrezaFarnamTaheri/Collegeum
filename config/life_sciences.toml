@@ -151,13 +151,20 @@ note = "University of Vienna predoctoral/doctoral-school vacancies; explicit lif
 # and recruitment links change and some listings are JavaScript-rendered.
 [[board]]
 name = "life_embl"
-type = "link_scan"
+type = "workday"
 group = "life_sciences"
-enabled = false
-url = "https://www.embl.org/careers/"
-link_pattern = 'embl\.org/(?:jobs|careers)/'
-country = "Germany"
-note = "OFF: EMBL recruits across several countries; single-country inference would be unsafe."
+enabled = true
+# Official EMBL career page links to this multi-country public Workday site.
+# Live runner #41191392906: 20 distinct jobs, zero errors. Some are based
+# in UK Hinxton; no default Germany country is allowed.
+url = "https://embl.wd103.myworkdayjobs.com/en-US/EMBL"
+institution = "EMBL"
+max_pages = 3
+search_terms = [""]
+require_deadline = true
+min_interval = 3.0
+verification = "official_workday_recruitment_20261031"
+note = "Official multi-country Workday site; a functional staff feed does not prove currently open doctoral positions."
 
 [[board]]
 name = "life_eth_bsse"
