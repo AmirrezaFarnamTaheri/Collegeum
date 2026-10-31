@@ -224,15 +224,40 @@ class LinkedInScraper(BaseScraper):
         return out
 
     def parse_postings(self, raw_data: list[Any]) -> list[JobPostSchema]:
-        posts = []
-        for c in raw_data:
-            posts.append(self.make(
-                title=c["title"], url=f"https://www.linkedin.com/jobs/view/{c['id']}",
-                institution=c.get("company") or "", location=c.get("location") or None,
-                date_posted=parse_iso_datetime(c.get("datetime")) or parse_posted(c.get("posted_text")),
-                description_snippet=(c.get("description") or "")[:600],
-                extra={"linkedin_id": c["id"], "query": c.get("_query")},
-            ))
+        posts: list[JobPostSchema] = []
+        by_id: dict[str, JobPostSchema] = {}
+        for card in raw_data:
+            if not isinstance(card, dict):
+                self.discovery_parse_errors.append("Malformed LinkedIn card")
+                continue
+            ident, title = card.get("id"), card.get("title")
+            if (
+                not isinstance(ident, str)
+                or not ident.isascii() or not ident.isdigit() or len(ident) < 6
+                or not isinstance(title, str) or not title.strip()
+            ):
+                self.discovery_parse_errors.append("Invalid LinkedIn job identity")
+                continue
+            query = card.get("_query") if isinstance(card.get("_query"), str) else ""
+            if ident in by_id:
+                queries = by_id[ident].extra["queries"]
+                if query and query not in queries:
+                    queries.append(query)
+                continue
+            post = self.make(
+                title=title, url=f"https://www.linkedin.com/jobs/view/{ident}",
+                institution=card.get("company") or "",
+                location=card.get("location") or None,
+                date_posted=parse_iso_datetime(card.get("datetime"))
+                or parse_posted(card.get("posted_text")),
+                description_snippet=(card.get("description") or "")[:600],
+                extra={
+                    "linkedin_id": ident, "query": query or None,
+                    "queries": [query] if query else [],
+                },
+            )
+            by_id[ident] = post
+            posts.append(post)
         return posts
 
     async def fetch_detail(self, post: JobPostSchema) -> str | None:
