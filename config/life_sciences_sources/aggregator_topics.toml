@@ -94,7 +94,7 @@ urls = [
   "https://www.academictransfer.com/en/jobs/?q=regulatory%20genomics",
 ]
 link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
-country = "Netherlands"
+selectors = { item = "article", title = "h3", link = "a[href*='/en/jobs/']", institution = "div[class*='md:col-start-8'] span.text-at-small.text-gray-700", location = "span.text-at-small.flex.items-center.gap-1.text-gray-500" }
 institution_from_context = true
 min_interval = 3.0
 verification = "official_aggregator_search_partition"
@@ -112,7 +112,7 @@ urls = [
   "https://www.academictransfer.com/en/jobs/?q=CRISPR",
 ]
 link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
-country = "Netherlands"
+selectors = { item = "article", title = "h3", link = "a[href*='/en/jobs/']", institution = "div[class*='md:col-start-8'] span.text-at-small.text-gray-700", location = "span.text-at-small.flex.items-center.gap-1.text-gray-500" }
 institution_from_context = true
 min_interval = 3.0
 verification = "official_aggregator_search_partition"
@@ -130,7 +130,7 @@ urls = [
   "https://www.academictransfer.com/en/jobs/?q=bioinformatics",
 ]
 link_pattern = 'academictransfer\.com/en/(jobs/)?\d+/'
-country = "Netherlands"
+selectors = { item = "article", title = "h3", link = "a[href*='/en/jobs/']", institution = "div[class*='md:col-start-8'] span.text-at-small.text-gray-700", location = "span.text-at-small.flex.items-center.gap-1.text-gray-500" }
 institution_from_context = true
 min_interval = 3.0
 verification = "official_aggregator_search_partition"
