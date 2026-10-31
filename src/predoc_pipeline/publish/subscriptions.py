@@ -7,12 +7,12 @@ from datetime import UTC, datetime, timedelta
 from html import escape
 from typing import Any
 
+from ..boards.utils.bern_evidence import sanitize_bern_historical_deadline
 from ..core.output_quality import (
     application_url_issue,
     authentication_page_text,
     excluded_by_audit,
 )
-from ..boards.utils.bern_evidence import sanitize_bern_historical_deadline
 from ..core.timeparse import parse_datetime, utcnow
 from ..routing import Router
 
