@@ -320,6 +320,11 @@ note = "OFF: the job-opportunities endpoint returns HTTP 418 in recorded pipelin
 name = "mannheim_econ"
 type = "link_scan"
 group = "university"
+enabled = false
+# Official endpoint returned robots.txt denial (status 999) from a read-only
+# GitHub runner probe #41188593912 on 2026-10-31. Do not evade policy.
+# Re-enable only after an explicitly permitted employer vacancy feed works.
+note = "Disabled 2026-10-31: source denied by robots.txt from GitHub runner."
 url = "https://www.vwl.uni-mannheim.de/en/about/about-the-department/job-vacancies/"
 may_be_empty = true
 # The official host occupied a collector worker for 165.9s in production
@@ -327,7 +332,6 @@ may_be_empty = true
 source_timeout_seconds = 35
 # An HTTP 200 or an unrelated faculty advert is not proof of an empty
 # relevant job index. Only the employer's explicit no-vacancies notice is.
-verified_empty_marker = "There are currently no vacancies in our Department."
 link_pattern = 'myjob\.uni-mannheim\.de/job/\d+'
 institution = "University of Mannheim, Department of Economics"
 country = "Germany"
