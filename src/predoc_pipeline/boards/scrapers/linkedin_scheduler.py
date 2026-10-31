@@ -212,8 +212,9 @@ class QueryLedger:
     def plan(
         self, pairs: list[tuple[str, str]], *, now: datetime, limit: int,
         cooldown_hours: int = 48,
+        core_pairs: list[tuple[str, str]] | None = None,
     ) -> list[tuple[str, str]]:
-        """Prefer never-searched and overdue work, reserve pending-page share."""
+        """Reserve due core queries; never bypass cooldown or starve pending pages."""
         now = _utc(now)
         if not 1 <= limit <= 120 or not 2 <= cooldown_hours <= 720:
             raise ValueError("Invalid LinkedIn query scheduling policy")
@@ -225,7 +226,10 @@ class QueryLedger:
         seen: set[str] = set()
         fresh: list[tuple[datetime, str, tuple[str, str]]] = []
         pending: list[tuple[datetime, str, tuple[str, str]]] = []
-        for pair in pairs:
+        core_pairs = core_pairs or []
+        # A configured core query is eligible even when it is absent from the
+        # Cartesian portfolio. Its separate identity still obeys cooldown.
+        for pair in [*pairs, *core_pairs]:
             if (
                 len(pair) != 2 or not all(isinstance(x, str) and x.strip() for x in pair)
             ):
@@ -254,12 +258,26 @@ class QueryLedger:
                 fresh.append((completed or datetime.min.replace(tzinfo=UTC), key, pair))
         fresh.sort()
         pending.sort()
-        # A large pagination backlog cannot starve never-tried searches.
-        reserved = max(1, limit // 4) if pending else 0
-        chosen = pending[:reserved]
-        chosen.extend(fresh[:limit - len(chosen)])
+        # Prioritize configured core searches *when due*, never every run.
+        # Do not promote a completed query before its 48-hour cooldown ends.
+        eligible = {key: item for item in [*pending, *fresh] for key in [item[1]]}
+        selected_keys: set[str] = set()
+        chosen: list[tuple[datetime, str, tuple[str, str]]] = []
+        for pair in core_pairs:
+            key = query_key(self.source, *pair)
+            if key in eligible and key not in selected_keys and len(chosen) < limit:
+                chosen.append(eligible[key])
+                selected_keys.add(key)
+        # Remaining capacity fairly mixes unfinished pages and never-searched
+        # or overdue pairs; core selections never appear twice in one plan.
+        fresh = [item for item in fresh if item[1] not in selected_keys]
+        pending = [item for item in pending if item[1] not in selected_keys]
+        remaining = limit - len(chosen)
+        reserved = max(1, remaining // 4) if pending and remaining else 0
+        chosen.extend(pending[:reserved])
+        chosen.extend(fresh[:remaining - reserved])
         if len(chosen) < limit:
-            chosen.extend(pending[reserved:reserved + limit - len(chosen)])
+            chosen.extend(pending[reserved:reserved + (limit - len(chosen))])
         return [pair for _, _, pair in chosen]
 
     def request(self, pair: tuple[str, str], *, now: datetime) -> SearchCursor:
@@ -447,10 +465,8 @@ class QueryLedger:
         if limit is not None:
             if not 1 <= limit <= self.max_items:
                 raise ValueError("Invalid LinkedIn replay batch size")
-            untouched = [row for row in rows if not row.get("last_replayed_at")]
-            if untouched:
-                rows = untouched
             rows.sort(key=lambda x: (
+                bool(x.get("last_replayed_at")),
                 x.get("last_replayed_at") or "",
                 -(_read_time(x["observed_at"]) or _utc(now)).timestamp(),
                 x["card"].get("id", ""),
