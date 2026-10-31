@@ -371,13 +371,32 @@ class QueryLedger:
         if entry is not None:
             entry["detail_last_attempt_at"] = _stamp(now)
 
-    def items(self, *, now: datetime) -> list[dict[str, Any]]:
-        """Replay previously observed cards until downstream can ingest them."""
+    def items(
+        self, *, now: datetime, limit: int | None = None,
+    ) -> list[dict[str, Any]]:
+        """Fairly replay candidate cards; never starve deferred enrichment.
+
+        A bounded replay marks returned cards only as *attempted for
+        downstream processing*, not published or delivered. Stable listing
+        identities are still owned by the career/publication journals.
+        """
         self._prune(now)
-        rows = sorted(
-            self.state["spool"].values(),
-            key=lambda x: x["observed_at"], reverse=True,
-        )
+        rows = list(self.state["spool"].values())
+        if limit is not None:
+            if not 1 <= limit <= self.max_items:
+                raise ValueError("Invalid LinkedIn replay batch size")
+            rows.sort(key=lambda x: (
+                x.get("last_replayed_at") or "",
+                -(_read_time(x["observed_at"]) or _utc(now)).timestamp(),
+                x["card"].get("id", ""),
+            ))
+            rows = rows[:limit]
+            for entry in rows:
+                entry["last_replayed_at"] = _stamp(now)
+        else:
+            rows.sort(
+                key=lambda x: x["observed_at"], reverse=True,
+            )
         return [
             {
                 **entry["card"],
