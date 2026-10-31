@@ -17,6 +17,12 @@ class BisLiveVerifierContractTests(unittest.TestCase):
         self.assertNotIn("assert job.country is None", content)
         self.assertIn("job.location", content)
 
+    def test_probe_survives_normal_recruitment_turnover(self):
+        """A closed job must not make a healthy employer feed fail verification."""
+        content = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn('assert hong_kong,', content)
+        self.assertNotIn('assert any(j.country == "Switzerland" for j in jobs)', content)
+
     def test_probe_still_forbids_implicit_employer_headquarters(self):
         content = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('source_country_default', content)
