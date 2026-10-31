@@ -77,13 +77,13 @@ def test_rotation_is_deterministic_budgeted_and_reaches_every_portfolio_pair() -
 
 def _cards(offset: int, *, count: int = 10, first_id: int = 4980000000) -> str:
     return "\n".join(
-        '<div class="base-card" data-entity-urn="urn:li:jobPosting:{id}">'
+        f'<div class="base-card" data-entity-urn="urn:li:jobPosting:{first_id + offset + n}">'
         '<a class="base-card__full-link" '
-        'href="https://www.linkedin.com/jobs/view/{id}"></a>'
+        f'href="https://www.linkedin.com/jobs/view/{first_id + offset + n}"></a>'
         '<h3 class="base-search-card__title">PhD in Economics</h3>'
         '<h4 class="base-search-card__subtitle">University of Test City</h4>'
         '<span class="job-search-card__location">Germany</span>'
-        '</div>'.format(id=first_id + offset + n)
+        '</div>'
         for n in range(count)
     )
 
