@@ -1,0 +1,86 @@
+name: diagnose-dkfz-embl-live-sources
+
+# Read-only official provider validation. No credentials or journal writes.
+on:
+  push:
+    branches:
+      - diagnostics/dkfz-embl-recovery-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Probe official recruitment indexes without publishing
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee providers.json
+          import json
+          import re
+          from urllib.parse import urljoin
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          pages = {
+              "dkfz_en": "https://jobs.dkfz.de/en/jobs",
+              "dkfz_de": "https://jobs.dkfz.de/de/jobs",
+              "embl_careers": "https://www.embl.org/careers/",
+              "embl_workday": "https://embl.wd103.myworkdayjobs.com/en-US/EMBL",
+          }
+          results = {}
+          with PoliteClient(
+              user_agent="Collegeum-OfficialRecruitmentProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=18, per_host_delay=3, respect_robots=True,
+          ) as http:
+              for name, url in pages.items():
+                  response = http.get(url, use_cache=False)
+                  info = {
+                      "url": url, "status": response.status, "ok": response.ok,
+                      "error": str(response.error)[:130],
+                      "bytes": len(response.content),
+                  }
+                  if response.ok:
+                      soup = BeautifulSoup(response.text, "lxml")
+                      links = [
+                          {
+                              "title": el.get_text(" ", strip=True)[:110],
+                              "url": urljoin(url, str(el.get("href", "")))[:220],
+                          }
+                          for el in soup.select("a[href]")
+                          if re.search(r"(?i)(jobs\\.dkfz\\.de/(?:en|de)/jobs/\\d+/|myworkdayjobs\\.com/|phd|doctoral)",
+                                       urljoin(url, str(el.get("href", "")))
+                                       + el.get_text(" ", strip=True))
+                      ]
+                      info["job_like_links"] = len(links)
+                      info["examples"] = links[:18]
+                      info["scripts"] = [
+                          urljoin(url, str(x.get("src")))[:200]
+                          for x in soup.select("script[src]")[:12]
+                      ]
+                      info["text_start"] = soup.get_text(" ", strip=True)[:180]
+                      info["html_contains_phd"] = bool(
+                          re.search(r"(?i)phd|doctoral|doktorand", response.text)
+                      )
+                  results[name] = info
+          print(json.dumps(results, ensure_ascii=False, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: official-dkfz-embl-source-probe
+          path: providers.json
+          if-no-files-found: warn
+          retention-days: 14
