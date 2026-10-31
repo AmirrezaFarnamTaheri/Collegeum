@@ -1,0 +1,76 @@
+name: verify-embl-workday-life-live
+on:
+  push:
+    branches:
+      - diagnostics/dkfz-embl-recovery-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/life-embl-workday-recovery-20261031
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Read-only official EMBL source discovery and eligibility
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee embl-workday-live.json
+          import asyncio
+          import json
+          import subprocess
+          from urllib.parse import urlsplit
+          from predoc_pipeline.boards.config import HttpConfig
+          from predoc_pipeline.ingest.life_sciences import classify_post, discover
+
+          outcomes = {}
+          posts, errors = asyncio.run(discover(
+              "config/life_sciences.toml",
+              HttpConfig(timeout=16, max_retries=0, source_timeout=90),
+              selected_names={"life_embl"}, diagnostics=outcomes,
+          ))
+          accepted = [match for post in posts if (match := classify_post(post))]
+          data = {
+              "head": subprocess.check_output(
+                  ["git", "rev-parse", "HEAD"], text=True).strip(),
+              "health": outcomes.get("life_embl"),
+              "total_cards": len(posts),
+              "unique_urls": len({p.url for p in posts}),
+              "countries": sorted({p.location or "unknown" for p in posts}),
+              "accepted": [
+                  {"title": x["title"], "url": x["url"],
+                   "country": x["country"], "deadline": x.get("deadline")}
+                  for x in accepted
+              ],
+              "errors": errors,
+          }
+          print(json.dumps(data, indent=2, ensure_ascii=False))
+          health = outcomes["life_embl"]
+          assert health["status"] == "discovered", data
+          assert health["vacancy_links"] >= 15, data
+          assert health["discovery_issues"] == 0, data
+          assert health["detail_failures"] == 0, data
+          assert not errors, data
+          assert len({p.url for p in posts}) == len(posts), data
+          assert all(urlsplit(p.url).hostname == "embl.wd103.myworkdayjobs.com"
+                     for p in posts)
+          assert all(x["country"] != "United Kingdom" for x in accepted)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: embl-workday-live
+          path: embl-workday-live.json
+          if-no-files-found: warn
+          retention-days: 14
