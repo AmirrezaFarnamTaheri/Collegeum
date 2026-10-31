@@ -22,7 +22,7 @@ enabled = true
 employer_required = true
 require_deadline = true
 min_interval = 3.0
-source_timeout_seconds = 120.0
+source_timeout_seconds = 270.0
 keywords = [
   "PhD epigenetics",
   "PhD chromatin",
@@ -75,7 +75,11 @@ core_queries = [
 # rotation (20 first pages, up to four additional second pages).
 query_budget = 20
 request_budget = 24
-max_pages = 2
+max_pages = 12
+time_budget_seconds = 75
+cooldown_hours = 48
+checkpoint_path = "data/linkedin_life_search_state.json"
+max_replay_items = 1500
 f_TPR = "r2592000"
 backend = "guest"
 verification = "discovery_only_employer_advert_required"
