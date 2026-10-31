@@ -54,16 +54,11 @@ def _read_time(raw: Any) -> datetime | None:
 
 def query_key(source: str, keyword: str, location: str) -> str:
     """Stable identity unaffected by harmless case/whitespace differences."""
-    data = json.dumps(
-        [str(x).split() for x in (source, keyword, location)],
-        ensure_ascii=False,
-    )
     # Canonicalize the token sequences, not provider request strings.
     canonical = json.dumps([
         " ".join(str(x).casefold().split())
         for x in (source, keyword, location)
     ], ensure_ascii=False, separators=(",", ":"))
-    _ = data  # canonical deliberately preserves distinct keyword wording
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:32]
 
 
@@ -370,6 +365,12 @@ class QueryLedger:
             now + timedelta(hours=48 if status in (403, 429) else 4),
         )
 
+    def note_detail(self, ident: str, *, now: datetime) -> None:
+        """Remember an enrichment attempt so other candidates are not starved."""
+        entry = self.state["spool"].get(ident)
+        if entry is not None:
+            entry["detail_last_attempt_at"] = _stamp(now)
+
     def items(self, *, now: datetime) -> list[dict[str, Any]]:
         """Replay previously observed cards until downstream can ingest them."""
         self._prune(now)
@@ -382,6 +383,7 @@ class QueryLedger:
                 **entry["card"],
                 "_query": entry["queries"][0] if entry["queries"] else "",
                 "_queries": entry["queries"][:],
+                "_detail_last_attempt_at": entry.get("detail_last_attempt_at"),
             }
             for entry in rows
         ]
