@@ -73,9 +73,54 @@ jobs:
                   report[name] = item
           print(json.dumps(report, indent=2))
           PY
+      - name: Inspect publicly shipped Prospective API hints (no credentials)
+        run: |
+          PYTHONPATH=src python3 - <<'PY' | tee bern-api-hints.json
+          import json
+          import re
+          from bs4 import BeautifulSoup
+          from predoc_pipeline.ingest.http import PoliteClient
+
+          locations = {
+              "public_client_bundle": "https://unibe.prospective.ch/careercenter/1001892/static/index-CtgvSgPP.js",
+              "official_iframe": "https://ohws.prospective.ch/public/v2/careercenter/1001892/?lang=de",
+          }
+          report = {}
+          with PoliteClient(
+              user_agent="Collegeum-BernSourceProbe/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)",
+              timeout=16, per_host_delay=3, respect_robots=True,
+          ) as client:
+              for name, address in locations.items():
+                  result = client.get(address, use_cache=False)
+                  data = {"ok": result.ok, "status": result.status,
+                          "error": str(result.error)[:120],
+                          "bytes": len(result.content)}
+                  if result.ok:
+                      body = result.text
+                      urls = re.findall(r'https?://[a-zA-Z0-9._-]+(?:/[a-zA-Z0-9/_-]{0,100})?', body)
+                      data["related_hosts_paths"] = sorted(set(
+                          x for x in urls if any(k in x.lower() for k in
+                          ("prospective", "jobs", "api", "careercenter"))
+                      ))[:30]
+                      data["context_samples"] = [
+                          body[max(0, m.start()-45):m.start()+90]
+                          for m in re.finditer(
+                              r'(?i)(?:graphql|/api/|/public/v\d/|/careercenter/|joblist|fetchjobs|vacancy)',
+                              body,
+                          )
+                      ][:16]
+                      data["script_paths"] = [
+                          str(tag.get("src", ""))[:160] for tag in
+                          BeautifulSoup(body, "lxml").select("script[src]")
+                      ][:10]
+                  report[name] = data
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: bern-portal-index-probe
-          path: bern-index-probe.json
+          path: |
+            bern-index-probe.json
+            bern-api-hints.json
           retention-days: 14
