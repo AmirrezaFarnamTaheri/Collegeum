@@ -253,3 +253,30 @@ def test_cooldown_begins_after_final_page_not_initial_scan_page() -> None:
     record = ledger.state["queries"][query_key("econ", *A)]
     assert record["last_complete_at"] == START.isoformat()
     assert record["last_completed_at"] == later.isoformat()
+
+
+
+def test_seen_journal_acknowledgement_prunes_only_matching_candidate_ids() -> None:
+    ledger = QueryLedger("econ")
+    ledger.request(A, now=START)
+    ledger.accept_page(A, [_card(str(4980000000 + i)) for i in range(3)], now=START)
+    purged = ledger.prune_known(
+        lambda url: url.endswith("/4980000000") or url.endswith("/4980000002")
+    )
+    assert purged == 2
+    assert {x["id"] for x in ledger.items(now=START)} == {"4980000001"}
+    assert ledger.counts()["acknowledged_seen"] == 2
+    assert ledger.evict("4980000001") is True
+    assert ledger.items(now=START) == []
+    assert ledger.counts()["acknowledged_filtered"] == 1
+
+
+def test_seen_pruning_never_loses_cards_when_predicate_raises() -> None:
+    ledger = QueryLedger("econ")
+    ledger.request(A, now=START)
+    ledger.accept_page(A, [_card("4980000000")], now=START)
+    def broken(_url: str) -> bool:
+        raise OSError("journal unavailable")
+    with pytest.raises(OSError):
+        ledger.prune_known(broken)
+    assert [x["id"] for x in ledger.items(now=START)] == ["4980000000"]
