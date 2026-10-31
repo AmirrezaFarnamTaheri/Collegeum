@@ -60,7 +60,7 @@ jobs:
                               "url": urljoin(url, str(el.get("href", "")))[:220],
                           }
                           for el in soup.select("a[href]")
-                          if re.search(r"(?i)(jobs\\.dkfz\\.de/(?:en|de)/jobs/\\d+/|myworkdayjobs\\.com/|phd|doctoral)",
+                          if re.search(r"(?i)(jobs[.]dkfz[.]de/(?:en|de)/jobs/[0-9]+/|myworkdayjobs[.]com/|phd|doctoral)",
                                        urljoin(url, str(el.get("href", "")))
                                        + el.get_text(" ", strip=True))
                       ]
