@@ -17,7 +17,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from ..models import JobPostSchema
-from ..utils.dates import parse_iso_datetime
+from ..utils.dates import extract_deadline, parse_iso_datetime
 from ..utils.text import clean_ws, html_to_text
 from .base import BaseScraper, register
 
@@ -212,16 +212,26 @@ class ProspectiveJobsScraper(BaseScraper):
             # application cutoff. The classifier already rejects deadlines
             # more than three years away; preserve the same fail-closed bound
             # during extraction so downstream metadata is not misleading.
+            application_text = html_to_text(szas.get("sza_application", "")) if isinstance(szas.get("sza_application"), str) else ""
+            explicit_deadline, _ = extract_deadline(application_text)
+            rolling_application = bool(_ROLLING_APPLICATION.search(application_text))
+            # Some ordinary 2026 index dates are administrative too: a stated
+            # rolling application process takes precedence over the index.
+            # A date independently stated as the application cutoff is trusted
+            # only when it matches the index date.
             unverified_end = bool(
                 posted is not None
                 and close_date is not None
                 and (close_date - posted).days > 366 * 3
+            ) or rolling_application or bool(
+                close_date is not None and application_text
+                and explicit_deadline is not None and explicit_deadline != close_date
             )
             deadline_note: str | None
             if unverified_end:
                 deadline = None
                 deadline_note = (
-                    "Rolling until filled" if _ROLLING_APPLICATION.search(description)
+                    "Rolling until filled" if rolling_application
                     else "Unverified employer-index end date"
                 )
             else:
