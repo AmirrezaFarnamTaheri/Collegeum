@@ -117,6 +117,14 @@ class LinkedInScraper(BaseScraper):
         """Clock seam for offline scheduler tests."""
         return datetime.now(UTC)
 
+    def drop_filtered(self, post: JobPostSchema) -> None:
+        """Retire a card conclusively excluded by the existing board filters."""
+        ledger = getattr(self, "_checkpoint_ledger", None)
+        if isinstance(ledger, QueryLedger):
+            ident = post.extra.get("linkedin_id")
+            if isinstance(ident, str):
+                ledger.evict(ident)
+
     def mark_detail_attempt(self, post: JobPostSchema) -> None:
         """Durably prioritize candidates not yet checked for real deadlines."""
         ledger = getattr(self, "_checkpoint_ledger", None)
@@ -158,6 +166,9 @@ class LinkedInScraper(BaseScraper):
             path, self.name, max_items=int(self.opt("max_replay_items", 3000)),
         )
         self._checkpoint_ledger = ledger
+        seen_lookup = getattr(self, "_known_url", None)
+        if callable(seen_lookup):
+            ledger.prune_known(seen_lookup)
         pairs = [(kw, loc) for kw in keywords for loc in locations]
         selected = ledger.plan(
             pairs, now=self._scheduler_now(),
