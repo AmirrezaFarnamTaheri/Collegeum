@@ -17,7 +17,8 @@ import tempfile
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, cast
+from collections.abc import Callable
+from typing import Any, cast
 
 VERSION = 1
 DAY = 86400
