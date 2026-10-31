@@ -121,11 +121,12 @@ def test_separate_life_sciences_source_registry_keeps_economics_sources() -> Non
     assert enabled == {
         "life_euraxess", "life_academictransfer", "life_max_planck",
         "life_uppsala", "life_karolinska",
-        "life_vib", "life_epfl", "life_crg_phd", "life_dkfz",
+        "life_vib", "life_epfl", "life_crg_phd", "life_embl",
+        "life_dkfz",
         "life_vienna_doctoral",
     }
     assert {
-        "life_embl", "life_eth_bsse", "life_eth_jobs",
+        "life_eth_bsse", "life_eth_jobs",
         "life_fmi_programme", "life_embl_phd_programme",
         "life_vienna_biocenter", "life_helsinki", "life_ista", "life_mdc",
         "life_copenhagen",
