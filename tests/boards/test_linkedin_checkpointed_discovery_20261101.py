@@ -37,7 +37,7 @@ class FakeHTTP:
     def set_host_interval(self, *_args) -> None:
         return None
 
-    async def get_text(self, url: str) -> str:
+    async def get_text(self, url: str, **_options) -> str:
         self.urls.append(url)
         if self.fail_at == len(self.urls):
             raise FetchError("HTTP 429", status=429)
@@ -139,7 +139,7 @@ def test_replay_stable_jobs_across_queries_and_fail_closed_corrupt_checkpoint(tm
 
 def test_soft_wall_clock_deadline_returns_observed_cards_and_saves_cursor(tmp_path) -> None:
     class SlowHTTP(FakeHTTP):
-        async def get_text(self, url: str) -> str:
+        async def get_text(self, url: str, **_options) -> str:
             await asyncio.sleep(0.65)
             return await super().get_text(url)
 
@@ -164,7 +164,7 @@ def test_soft_wall_clock_deadline_returns_observed_cards_and_saves_cursor(tmp_pa
 
 def test_blank_guest_response_never_means_verified_no_vacancies(tmp_path) -> None:
     class BlankHTTP(FakeHTTP):
-        async def get_text(self, url: str) -> str:
+        async def get_text(self, url: str, **_options) -> str:
             self.urls.append(url)
             return ""
 
