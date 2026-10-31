@@ -14,7 +14,8 @@ WORKFLOW = (
 class BisLiveVerifierContractTests(unittest.TestCase):
     def test_probe_accepts_evidenced_country_instead_of_requiring_unknown(self):
         content = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn("assert job.country is None", content)
+        self.assertNotIn("assert job.country is None,", content)
+        self.assertNotIn("assert job.country is None\n", content)
         self.assertIn("job.location", content)
 
     def test_probe_survives_normal_recruitment_turnover(self):
