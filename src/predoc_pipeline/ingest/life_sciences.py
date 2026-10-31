@@ -67,6 +67,12 @@ WRONG_ROLE = re.compile(
     re.I,
 )
 COUNTRY_EXCLUDE = frozenset(("Europe", "United Kingdom", "United States", "Canada"))
+# Reviewed official employer advertisements whose biological keywords hide a
+# role requiring physics/engineering rather than an eligible life-science MSc.
+# Match only exact employer vacancy identities, never broad project titles.
+REVIEWED_NON_LIFE_VACANCIES = frozenset((
+    "https://jobs.unibe.ch/job-vacancies/phd-position-nccr-genesis-remote-sensing-of-microorganisms-in-extreme-environments/a5825edd-e430-405e-a30e-935d10b872db",
+))
 APPLICANT_REQUIRES_PHD = re.compile(
     r"\b(?:applicants?|candidates?|you)\s+"
     r"(?:must|should|need(?:s)?(?:\s+to)?)\s+"
@@ -115,7 +121,7 @@ def _doctoral_title(title: str) -> bool:
         or ADDITIONAL_DOCTORAL_ROLE.search(title)
         or DUAL_DOCTORAL_ROLE.search(title)
     )
-def historical_life_title_disqualified(title: str) -> bool:
+def historical_life_title_disqualified(title: str, url: str = "") -> bool:
     """Quarantine unmistakably off-field historical titles without guessing.
 
     Old journal rows lack the full vacancy detail used by classification.
@@ -123,6 +129,8 @@ def historical_life_title_disqualified(title: str) -> bool:
     does not itself name an allowed biological research domain. Ambiguous
     titles remain eligible for separate human/detail review.
     """
+    if url in REVIEWED_NON_LIFE_VACANCIES:
+        return True
     if WRONG_ROLE.search(title) and not DUAL_DOCTORAL_ROLE.search(title):
         return True
     return bool(
@@ -139,6 +147,8 @@ EXPLICIT_LOCATION = re.compile(
 
 def classify_post(post: JobPostSchema, *, today: date | None = None) -> dict[str, str] | None:
     """Fail closed on unknown geography, broad roles and unfunded adverts."""
+    if post.url in REVIEWED_NON_LIFE_VACANCIES:
+        return None
     if not _doctoral_title(post.title):
         return None
     dual_track = bool(DUAL_DOCTORAL_ROLE.search(post.title))
