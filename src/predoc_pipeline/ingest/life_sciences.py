@@ -14,7 +14,7 @@ import re
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from ..boards.collector import build_http
 from ..boards.config import HttpConfig, load_board_sources
@@ -254,6 +254,37 @@ def select_sources(
     }
 
 
+
+_VIB_OLD_JOB_PATH = re.compile(r"/j/([1-9]\\d{0,11})(?:/[^/?#]+)?/?$")
+_VIB_JOB_IDENTIFIER = re.compile(r"[1-9]\\d{0,11}$")
+
+
+def _vib_job_identifier(url: str) -> str | None:
+    """Employer Jobsoid requisition identity, independent of URL format/order."""
+    try:
+        parsed = urlsplit(url)
+        if parsed.scheme != "https" or parsed.hostname != "jobs.vib.be":
+            return None
+    except ValueError:
+        return None
+    old = _VIB_OLD_JOB_PATH.fullmatch(parsed.path)
+    if old:
+        return old.group(1)
+    if parsed.path != "/PortalJob/IntegratedJobDetails":
+        return None
+    ids = parse_qs(parsed.query).get("id", [])
+    if len(ids) != 1 or not _VIB_JOB_IDENTIFIER.fullmatch(ids[0]):
+        return None
+    return ids[0]
+
+
+def _vib_career_key(identifier: str, historical: dict[str, str]) -> str:
+    """Use the first recorded identity if this employer migrated URL formats."""
+    return historical.get(identifier) or (
+        "career:" + hashlib.sha256(f"vib:job:{identifier}".encode()).hexdigest()[:32]
+    )
+
+
 def _needs_detail(post: JobPostSchema) -> bool:
     """Only enrich a doctoral card if research field or location is incomplete."""
     if not _doctoral_title(post.title):
@@ -430,12 +461,23 @@ def poll_life_sciences(
     posts, errors = asyncio.run(
         discover(sources_path, http_config, **discover_kwargs),
     )
+    previous = load_career(journal_path, tolerant=True)
+    historical_vib_ids: dict[str, str] = {}
+    for old_job in previous:
+        if old_job.get("source") != "life_vib":
+            continue
+        identifier = _vib_job_identifier(str(old_job.get("url") or ""))
+        if identifier and old_job.get("key"):
+            historical_vib_ids.setdefault(identifier, old_job["key"])
     matches: dict[str, dict[str, str]] = {}
     for post in posts:
         item = classify_post(post)
         if item:
+            if item.get("source") == "life_vib":
+                identifier = _vib_job_identifier(item["url"])
+                if identifier:
+                    item["key"] = _vib_career_key(identifier, historical_vib_ids)
             matches.setdefault(item["key"], item)
-    previous = load_career(journal_path, tolerant=True)
     added = save_career(journal_path, previous, list(matches.values()))
     if health_path is not None and diagnostics is not None:
         per_source: dict[str, int] = {}
