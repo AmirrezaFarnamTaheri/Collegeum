@@ -117,6 +117,20 @@ class LinkedInScraper(BaseScraper):
         """Clock seam for offline scheduler tests."""
         return datetime.now(UTC)
 
+    def mark_detail_attempt(self, post: JobPostSchema) -> None:
+        """Durably prioritize candidates not yet checked for real deadlines."""
+        ledger = getattr(self, "_checkpoint_ledger", None)
+        if isinstance(ledger, QueryLedger):
+            ident = post.extra.get("linkedin_id")
+            if isinstance(ident, str):
+                ledger.note_detail(ident, now=self._scheduler_now())
+
+    def flush_checkpoint(self) -> None:
+        """Called after Life Sciences detail attempts, before final git commit."""
+        ledger = getattr(self, "_checkpoint_ledger", None)
+        if isinstance(ledger, QueryLedger):
+            ledger.save(self.opt("checkpoint_path"))
+
     async def _fetch_checkpointed(self) -> list[Any]:
         """Time-boxed discovery; progress/candidates checkpoint in one ledger.
 
@@ -143,6 +157,7 @@ class LinkedInScraper(BaseScraper):
         ledger = QueryLedger.load(
             path, self.name, max_items=int(self.opt("max_replay_items", 3000)),
         )
+        self._checkpoint_ledger = ledger
         pairs = [(kw, loc) for kw in keywords for loc in locations]
         selected = ledger.plan(
             pairs, now=self._scheduler_now(),
@@ -245,12 +260,14 @@ class LinkedInScraper(BaseScraper):
                         "LinkedIn query reached bounded pagination depth",
                     )
         finally:
-            # Local save is atomic; workflow stages this alongside the
-            # publication journals, never in a separate post-processing commit.
+            # Replay before persisting so expiration and cursor advancement
+            # live in the same atomic state checkpoint. The workflow commits
+            # this file alongside the output journals, not separately.
+            raw = ledger.items(now=self._scheduler_now())
             ledger.save(path)
         self.search_diagnostics.update(ledger.counts())
         self.search_diagnostics["unprocessed_selected"] = len(queue)
-        return ledger.items(now=self._scheduler_now())
+        return raw
 
     async def fetch_raw_postings(self) -> list[Any]:
         if self.opt("backend", "guest") == "jobspy":
@@ -407,6 +424,10 @@ class LinkedInScraper(BaseScraper):
                 extra={
                     "linkedin_id": ident, "query": query or None,
                     "queries": matches,
+                    "linkedin_detail_last_attempt_at": (
+                        card.get("_detail_last_attempt_at")
+                        if isinstance(card.get("_detail_last_attempt_at"), str) else None
+                    ),
                 },
             )
             by_id[ident] = post
