@@ -4,6 +4,7 @@ from __future__ import annotations
 import calendar
 from datetime import UTC, date, datetime
 from typing import Any
+from urllib.parse import urlsplit
 
 import feedparser
 
@@ -40,12 +41,35 @@ class RSSScraper(BaseScraper):
     type_name = "rss"
 
     async def fetch_raw_postings(self) -> list[Any]:
-        return await self.fetch_each(self.http.get_text)
+        # Certain employer RSS endpoints negotiate their representation by
+        # User-Agent. A generic browser UA can receive a JavaScript/HTML
+        # index instead of XML. Declare the named, transparent collector
+        # identity only when explicitly configured for that feed.
+        identity = self.opt("rss_user_agent")
+        if not identity:
+            return await self.fetch_each(self.http.get_text)
+        if (
+            not isinstance(identity, str) or len(identity) > 200
+            or not identity.startswith("Collegeum-")
+            or any(char in identity for char in ("\\r", "\\n"))
+        ):
+            raise ValueError("Invalid source-specific RSS bot identity")
+
+        async def get(url: str) -> str:
+            return await self.http.get_text(url, headers={
+                "User-Agent": identity,
+                "Accept": "application/rss+xml,application/xml;q=0.9,*/*;q=0.5",
+            })
+        return await self.fetch_each(get)
 
     def parse_postings(self, raw_data: list[Any]) -> list[JobPostSchema]:
         inc = [s.lower() for s in self.opt("include_url_contains", [])]
         exc = [s.lower() for s in self.opt("exclude_url_contains", [])]
         cat_exc = [s.lower() for s in self.opt("categories_exclude", [])]
+        permitted_hosts = {
+            host.casefold() for host in self.opt("allowed_link_hosts", [])
+            if isinstance(host, str) and host
+        }
         split_title = self.opt("title_format", "plain") == "role_at_institution"
         posts: list[JobPostSchema] = []
         for xml in raw_data:
@@ -57,6 +81,23 @@ class RSSScraper(BaseScraper):
                 self.discovery_parse_errors.append("malformed feed with recoverable entries")
             for e in feed.entries:
                 link = e.get("link") or ""
+                if permitted_hosts:
+                    try:
+                        parsed = urlsplit(link)
+                        trusted = (
+                            parsed.scheme == "https"
+                            and parsed.hostname is not None
+                            and parsed.hostname.casefold() in permitted_hosts
+                            and parsed.username is None
+                            and parsed.password is None
+                        )
+                    except ValueError:
+                        trusted = False
+                    if not trusted:
+                        self.discovery_parse_errors.append(
+                            "feed entry link host is not a trusted source hostname"
+                        )
+                        continue
                 low = link.lower()
                 if inc and not any(s in low for s in inc):
                     continue
