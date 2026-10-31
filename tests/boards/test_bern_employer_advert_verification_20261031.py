@@ -155,3 +155,91 @@ def test_reviewed_exclusion_is_non_destructive_to_historical_journal(tmp_path) -
     member = {"topics": {"life_sciences_phd": "2026-10-01T00:00:00Z"}, "scopes": {}}
     assert matching(member, [], [original], preview=True) == []
     assert journal.read_text(encoding="utf-8") == saved
+
+
+def test_uncorroborated_cancer_immunology_index_date_is_not_an_employer_cutoff() -> None:
+    # Employer advert gives a direct email application, but no application
+    # deadline. The API's 27 November date is not independent deadline proof.
+    post = _parse(
+        CANCER,
+        title="PhD Student in Cancer Immunology and Leukemia Stem Cell Biology",
+        ends="2026-11-27T22:59:59Z",
+        application=(
+            "Please email a motivation letter, CV, academic transcripts "
+            "and contact details of two referees to ramin.radpour@unibe.ch."
+        ),
+    )
+    assert post.deadline is None
+    assert post.deadline_text == "Unverified employer-index end date"
+    assert post.extra["prospective_unverified_end_date"] == "2026-11-27T22:59:59Z"
+    assert classify_post(post, today=date(2026, 10, 31)) is None
+
+
+@pytest.mark.parametrize(
+    ("url", "title", "ends", "application", "expected"),
+    [
+        (
+            BIOENERGY, "PhD position in Bottom-up Bioenergetics and Cell Metabolism",
+            "2026-11-20T22:59:59Z",
+            "Please submit your application including a CV, Bachelor and Master "
+            "certificates and transcripts, and a letter of motivation as a single "
+            "PDF by 20.11.2026. Applications must be submitted online.",
+            date(2026, 11, 20),
+        ),
+        (
+            TRANSLATIONAL, "PhD Student in Translational Cancer Research, SNSF project",
+            "2026-11-15T22:59:59Z",
+            "Please submit your application with the usual documents via the "
+            "online Apply button / as a PDF by email by 15.11.2026.",
+            date(2026, 11, 15),
+        ),
+    ],
+)
+def test_actual_employer_submit_by_phrasing_is_detected(
+    url: str, title: str, ends: str, application: str, expected: date,
+) -> None:
+    post = _parse(url, title=title, ends=ends, application=application)
+    assert post.deadline == expected
+    assert "prospective_unverified_end_date" not in post.extra
+
+
+def test_explicit_employer_cutoff_conflicting_with_index_is_not_misrepresented() -> None:
+    post = _parse(
+        TRANSLATIONAL,
+        title="PhD Student in Translational Cancer Research, SNSF project",
+        ends="2026-11-21T22:59:59Z",
+        application="Applications close on 15 November 2026.",
+    )
+    assert post.deadline is None
+    assert post.extra["prospective_unverified_end_date"] == "2026-11-21T22:59:59Z"
+
+
+def test_engineering_led_multisensory_role_excluded_even_with_biology_keywords() -> None:
+    post = _parse(
+        MULTISENSORY,
+        title="PhD position in Multisensory Development",
+        ends="2026-11-14T22:59:59Z",
+        application="Application deadline: 14 November 2026.",
+    )
+    assert classify_post(post, today=date(2026, 10, 31)) is None
+
+
+def test_historical_multisensory_exclusion_preserves_original_journal(tmp_path) -> None:
+    import json
+
+    from predoc_pipeline.publish.subscriptions import matching
+    from tools.export_life_sciences import stored_positions
+
+    original = {
+        "key": "career:bern-multisensory", "category": "life_sciences_phd",
+        "title": "PhD position in Multisensory Development",
+        "url": MULTISENSORY, "scope": "", "source": "life_dach_bern",
+        "first_seen_at": "2026-10-31T19:55:26+00:00",
+    }
+    journal = tmp_path / "career_jobs.ndjson"
+    saved = json.dumps(original) + "\n"
+    journal.write_text(saved, encoding="utf-8")
+    assert stored_positions(journal) == []
+    member = {"topics": {"life_sciences_phd": "2026-10-01T00:00:00Z"}, "scopes": {}}
+    assert matching(member, [], [original], preview=True) == []
+    assert journal.read_text(encoding="utf-8") == saved
