@@ -14,10 +14,10 @@ import json
 import math
 import os
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from collections.abc import Callable
 from typing import Any, cast
 
 VERSION = 1
