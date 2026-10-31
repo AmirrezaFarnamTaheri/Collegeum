@@ -461,6 +461,38 @@ def _verify_remote_status(
         errors.append("Jobicy status response has an invalid schema")
 
 
+
+JOBINJA_ROBOTS_RETRY = timedelta(hours=24)
+
+
+def _recent_jobinja_robots_denial(
+    health_path: str | Path | None, now: datetime,
+) -> str | None:
+    """Avoid repeated disallowed traffic; never treat a policy block as empty."""
+    if health_path is None:
+        return None
+    report = _read_career_health(health_path)
+    sources = report.get("sources")
+    if not isinstance(sources, dict):
+        return None
+    previous = sources.get("jobinja")
+    if not isinstance(previous, dict) or previous.get("status") != "blocked_robots":
+        return None
+    stamp = previous.get("last_robots_denial_at")
+    if not isinstance(stamp, str):
+        return None
+    try:
+        denied_at = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if denied_at.tzinfo is None:
+        return None
+    age = now - denied_at.astimezone(UTC)
+    if timedelta(0) <= age < JOBINJA_ROBOTS_RETRY:
+        return stamp
+    return None
+
+
 def poll_career(
     path: str | Path, *, client: PoliteClient, needs_iran: bool,
     needs_remote: bool, slot: int | None = None,
@@ -470,7 +502,8 @@ def poll_career(
     previous = load_career(path, tolerant=True)
     fresh: list[dict[str, str]] = []
     errors: list[str] = []
-    started = datetime.now(UTC).isoformat()
+    started_at = datetime.now(UTC)
+    started = started_at.isoformat()
     sources: dict[str, dict[str, Any]] = {
         "jobicy": {"requested": needs_remote, "fetched": 0, "accepted": 0},
         "jobinja": {"requested": needs_iran, "fetched": 0, "accepted": 0},
@@ -513,21 +546,31 @@ def poll_career(
     if needs_iran:
         if slot is None:
             slot = int(datetime.now(UTC).timestamp()) // (SCHEDULE_INTERVAL_HOURS * 3600)
-        res = client.get(iran_search_url(slot))
-        sources["jobinja"]["fetched"] += 1
-        if res.ok:
-            parsed = parse_iran_jobs(res.text)
-            sources["jobinja"]["accepted"] += len(parsed)
-            # Valid listings with irrelevant titles can legitimately produce
-            # zero career matches. Only missing recognizable job links signals
-            # a markup change; do not report ordinary empty results as outages.
-            if not parsed and not re.search(
-                r"/companies/[^/]+/jobs/[^/]+", res.text,
-            ):
-                errors.append("Jobinja returned no recognizable job cards; verify markup")
-            fresh.extend(parsed)
+        denied_recently = _recent_jobinja_robots_denial(health_path, started_at)
+        if denied_recently is not None:
+            # Source remains policy-blocked, but no second denied request or
+            # dead-letter is emitted during the bounded cooldown.
+            sources["jobinja"]["status"] = "blocked_robots"
+            sources["jobinja"]["last_robots_denial_at"] = denied_recently
         else:
-            errors.append(f"Jobinja fetch: {res.error or res.status}")
+            res = client.get(iran_search_url(slot))
+            sources["jobinja"]["fetched"] += 1
+            if res.ok:
+                parsed = parse_iran_jobs(res.text)
+                sources["jobinja"]["accepted"] += len(parsed)
+                # Empty eligible roles and unrecognizable HTML are distinct.
+                if not parsed and not re.search(
+                    r"/companies/[^/]+/jobs/[^/]+", res.text,
+                ):
+                    errors.append("Jobinja returned no recognizable job cards; verify markup")
+                fresh.extend(parsed)
+            elif getattr(res, "robots_blocked", False):
+                # Do not try a proxy or alternative URL to evade robots.txt.
+                sources["jobinja"]["status"] = "blocked_robots"
+                sources["jobinja"]["last_robots_denial_at"] = started
+                errors.append("Jobinja fetch: blocked by robots.txt")
+            else:
+                errors.append(f"Jobinja fetch: {res.error or res.status}")
 
         # One unfiltered, robots-allowed IranTalent listing request.
         other = client.get(IRANTALENT_URL)
@@ -554,6 +597,9 @@ def poll_career(
                 issues = [error for error in errors if error.startswith("IranTalent")]
             if not info["requested"]:
                 info["status"] = "idle"
+            elif info.get("status") == "blocked_robots":
+                # Explicit provider-policy state, including cooldown cycles.
+                pass
             elif issues:
                 info["status"] = "degraded" if info["accepted"] else "error"
             elif info["fetched"]:
