@@ -44,7 +44,9 @@ def test_new_queries_are_prioritized_before_eligible_repeats_and_are_fair() -> N
         ledger.accept_page(pair, [], now=START)
     next_pair = ledger.plan(pairs, now=START + timedelta(hours=4), limit=2)
     assert next_pair == [next(p for p in pairs if p not in first)]
-    assert ledger.plan(pairs, now=START + timedelta(hours=36), limit=3) == [C] if C not in first else []
+    assert ledger.plan(pairs, now=START + timedelta(hours=36), limit=3) == [
+        p for p in pairs if p not in first
+    ]
 
 
 def test_exact_query_two_day_cooldown_and_other_pairs_continue() -> None:
