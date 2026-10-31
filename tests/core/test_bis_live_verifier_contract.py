@@ -4,7 +4,6 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-
 WORKFLOW = (
     Path(__file__).resolve().parents[2]
     / ".github/workflows/verify-bis-official-rss-live.yml"
