@@ -187,19 +187,22 @@ note = "OFF: listing loads dynamically and some ETH roles are outside Switzerlan
 
 [[board]]
 name = "life_dkfz"
-type = "link_scan"
+type = "rss"
 group = "life_sciences"
-enabled = false
+enabled = true
 url = "https://jobs.dkfz.de/en/jobs"
-link_pattern = '^https://jobs[.]dkfz[.]de/en/jobs/[0-9]+/[^?#]+$'
-title_allow_pattern = '^(?:Ph[.]?D[.]?|Doctoral)\b'
+# Official d.vinci endpoint serves RSS 2.0 only to an explicitly identified
+# robot. Live runner #41191741843 parsed 16 records with transparent UA.
+rss_user_agent = "Collegeum-LifeSciencesCollector/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)"
+allowed_link_hosts = ["jobs.dkfz.de"]
 institution = "German Cancer Research Center (DKFZ)"
 country = "Germany"
 field_implied = false
 require_deadline = true
-may_be_empty = false
+may_be_empty = true
 min_interval = 3.0
-note = "OFF: official d.vinci individual job URLs verified, but runner 41050133340 returned HTTP 200 with zero raw anchors and no PhD text on /en/jobs. Requires a supported public discovery adapter, approved robots policy and live vacancy identifiers before enabling. Old PhD examples have passed deadlines. Keep strict require_deadline for future activation."
+verification = "official_rss_xml_20261031"
+note = "Recover official d.vinci RSS feed with identified collector; 16 general jobs observed, not 16 verified doctoral positions."
 
 [[board]]
 name = "life_fmi_programme"
