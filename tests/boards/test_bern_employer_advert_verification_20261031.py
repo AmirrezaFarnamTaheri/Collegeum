@@ -149,7 +149,7 @@ def test_reviewed_exclusion_is_non_destructive_to_historical_journal(tmp_path) -
         "funding_status": "unverified",
     }
     journal = tmp_path / "career_jobs.ndjson"
-    saved = json.dumps(original) + "\\n"
+    saved = json.dumps(original) + "\n"
     journal.write_text(saved, encoding="utf-8")
     assert stored_positions(journal) == []
     member = {"topics": {"life_sciences_phd": "2026-10-01T00:00:00Z"}, "scopes": {}}
