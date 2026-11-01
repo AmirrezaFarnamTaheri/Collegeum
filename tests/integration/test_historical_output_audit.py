@@ -350,6 +350,13 @@ def test_federal_reserve_board_index_is_disabled_until_job_specific_feed_exists(
     assert fed.opt("url") == (
         "https://www.federalreserve.gov/careers-research-assistants.htm"
     )
+    import re
+    pattern = re.compile(fed.opt("link_pattern"))
+    assert not pattern.search("https://www.federalreserve.gov/careers-internships.htm")
+    assert not pattern.search("https://frbog.taleo.net/careersection/2/jobsearch.ftl")
+    assert pattern.search(
+        "https://frbog.taleo.net/careersection/2/jobdetail.ftl?job=123456"
+    )
     # Disabling the inaccurate Board-of-Governors index does not disable
     # the *separate* official regional Reserve-Bank Workday source.
     regional = next(
