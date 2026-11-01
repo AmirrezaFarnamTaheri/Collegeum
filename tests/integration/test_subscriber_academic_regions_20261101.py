@@ -96,6 +96,9 @@ def test_encrypted_store_reset_to_worldwide_keeps_fresh_opt_in_timestamp(setting
 
     store = FeedbackStore.from_settings(settings)
     store.toggle_subscription(202, "topics", "predoc")
+    # Simulate an established subscription: only the new region reset may
+    # disqualify an older advert; the original topic opt-in is five days old.
+    store.subscriber(202)["topics"]["predoc"] = _ts(5)
     store.toggle_academic_region(202, "europe")
     store.toggle_academic_region(202, "europe")
     current = store.subscriber(202)
