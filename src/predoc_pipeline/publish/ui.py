@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from .subscriptions import ACADEMIC_REGIONS, CAREER_SCOPES, LOOKBACK_DAYS, TOPIC_LABELS
+from .subscriptions import CAREER_SCOPES, LOOKBACK_DAYS, TOPIC_LABELS
 
 ACADEMIC = ("predoc", "phd", "postdoc", "research")
 LIFE_SCIENCES = "life_sciences_phd"
