@@ -114,6 +114,11 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
   const regionSummary = regionNames.length ? regionNames.join(', ') :
     (fa ? 'همه جهان' : 'Worldwide');
   const tr = (en, persian) => fa ? persian : en;
+  const alertReady = ACADEMIC.some(key => key in m.topics) ||
+    'life_sciences_phd' in m.topics ||
+    (CAREERS.some(key => key in m.topics) && Object.keys(m.scopes).length > 0);
+  const alertStatus = !alertReady ? tr('Not configured', 'تنظیم نشده') :
+    m.paused ? tr('Paused', 'متوقف') : tr('Active', 'فعال');
   if (page === 'markets') page = 'careers'; // Keep previously sent buttons usable.
   const parent = page === 'academic_regions' ? 'academic' :
     ['academic', 'careers', 'life_sciences'].includes(page) ? 'subscriptions' :
@@ -237,7 +242,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     rows.push([link('🔎 View matches', '🔎 مشاهده فرصت‌ها', 'latest'),
       link('🗓 History', '🗓 بازه زمانی', 'history')]);
   } else if (page === 'delivery') {
-    const status = m.paused ? tr('Paused', 'متوقف') : tr('Active', 'فعال');
+    const status = alertStatus;
     text = tr(
       '🔔 <b>Alert delivery</b>\n\n' +
       '<b>Status:</b> ' + status + '\n' +
@@ -264,6 +269,14 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
         tr('⏸ Pause alerts', '⏸ توقف اعلان‌ها'),
         m.paused ? 'sub:a:resume' : 'sub:a:pause')],
     ];
+    if (!member) {
+      text += tr('\n\nChoose roles before configuring alerts.',
+        '\n\nپیش از تنظیم اعلان‌ها، موضوع‌ها را انتخاب کنید.');
+      rows = [[link('🧭 Set subscriptions', '🧭 تنظیم اشتراک‌ها', 'subscriptions')]];
+    } else if (!alertReady) {
+      rows.unshift([link('🧭 Configure roles & markets',
+        '🧭 تنظیم موضوع‌ها و محدوده‌ها', 'subscriptions')]);
+    }
   } else if (page === 'display') {
     text = tr('<b>Display settings</b>\n\nBrowse results: choose positions per page. This does not change your daily alert limit.',
       '<b>تنظیمات نمایش</b>\n\nتعداد فرصت در هر صفحه. این تنظیم حد اعلان روزانه را تغییر نمی‌دهد.');
@@ -313,13 +326,13 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       '<b>Browsing</b>\n' +
       `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} per page\n\n` +
       '<b>Notifications</b>\n' +
-      `🔔 ${m.paused ? 'Paused' : 'Active'} · ${m.daily_limit} per day\n\n` +
+      `🔔 ${alertStatus} · ${m.daily_limit} per day\n\n` +
       '<i>Browsing settings never resend previous alerts.</i>',
       '⚙️ <b>تنظیمات</b>\n\n' +
       '<b>مرور فرصت‌ها</b>\n' +
       `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} در صفحه\n\n` +
       '<b>اعلان‌ها</b>\n' +
-      `🔔 ${m.paused ? 'متوقف' : 'فعال'} · ${m.daily_limit} در روز\n\n` +
+      `🔔 ${alertStatus} · ${m.daily_limit} در روز\n\n` +
       '<i>تنظیم بازه مرور باعث ارسال دوباره اعلان‌های قبلی نمی‌شود.</i>'
     );
     rows = [
@@ -339,9 +352,8 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     const nLife = 'life_sciences_phd' in m.topics ? 1 : 0;
     const markets = [m.scopes.iran ? tr('Iran', 'ایران') : '',
       m.scopes.remote ? tr('Remote', 'دورکاری') : ''].filter(Boolean);
-    const ready = nAcademic > 0 || nLife > 0 || (nCareers > 0 && markets.length);
-    const status = !ready ? tr('Not configured', 'تنظیم نشده') :
-      m.paused ? tr('Paused', 'متوقف') : tr('Active', 'فعال');
+    const ready = alertReady;
+    const status = alertStatus;
     text = tr(
       '🎯 <b>Collegeum</b>\n<i>Your career radar</i>\n\n' +
       '<b>Your search</b>\n' +
