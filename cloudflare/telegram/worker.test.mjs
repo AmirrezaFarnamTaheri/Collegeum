@@ -574,3 +574,28 @@ test('owner home preserves the match-history preference shared with subscriber s
   assert.ok(content.reply_markup.inline_keyboard.flat().some(
     button => button.callback_data === 'view|tracking|0'));
 });
+
+test('owner positions and My matches both keep a date-only deadline visible through today', async () => {
+  const instance = bot();
+  const member = {topics: {predoc: new Date().toISOString()}, scopes: {},
+    paused: false, language: 'en', delivery_mode: 'instant',
+    daily_limit: 6, quiet_hours: false, timezone: 'UTC'};
+  await instance.ctx.storage.put('subscriber:42', member);
+  const today = new Date().toISOString().slice(0, 10);
+  const listing = {...record, kind: 'predoc', deadline: today};
+  await instance.fetch(post('/sync', {...snapshot, listings: [listing],
+    generated_at: new Date().toISOString()}));
+  const ownerView = await instance.render('positions', 0, '', 42);
+  assert.match(ownerView.text, /Predoc in Economics/);
+  assert.match(ownerView.text, new RegExp(today));
+});
+
+test('owner tracking has direct navigation to the unified My matches and Settings', async () => {
+  const instance = bot();
+  const tracking = await instance.render('tracking', 0, '', 42);
+  const callbacks = tracking.reply_markup.inline_keyboard.flat().map(b => b.callback_data);
+  assert.ok(callbacks.includes('sub:p:latest'));
+  assert.ok(callbacks.includes('sub:p:more'));
+  assert.ok(callbacks.includes('view|valid|0'));
+  assert.ok(callbacks.includes('view|applied|0'));
+});
