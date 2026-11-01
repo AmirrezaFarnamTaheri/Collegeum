@@ -157,25 +157,26 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     ];
   } else if (page === 'academic_regions') {
     const count = Object.keys(academicRegions).filter(region => region !== 'all').length;
-    text = tr('🌍 <b>Academic regions</b>\n\nFilter academic roles by location. '
-      + 'Choose any regions, or choose Worldwide to show every location. '
-      + 'An unspecified country appears only under Other / unspecified when filtered. '
-      + 'This affects browsing and future alerts, not previously delivered messages.',
-      '🌍 <b>مناطق دانشگاهی</b>\n\nمناطق دلخواه را انتخاب کنید. '
-      + '«همه جهان» تمام مناطق را نمایش می‌دهد. آگهی‌های بدون کشور مشخص فقط در «سایر / مکان نامشخص» نشان داده می‌شوند. '
-      + 'این فیلتر روی مرور و اعلان‌های آینده اثر دارد و پیام‌های قبلی را دوباره نمی‌فرستد.');
-    text += '\n\n' + tr('Current: ', 'انتخاب فعلی: ') + escape(regionSummary) +
-      '\n' + tr(`Selected: ${count}/8`, `انتخاب‌شده: ${count}/۸`);
+    text = tr(
+      '🌍 <b>Academic regions</b>\n<i>Choose where to look for academic roles.</i>\n\n' +
+      '<b>Current:</b> ' + escape(regionSummary) + '\n' +
+      `${count ? count + ' of 8 regions selected' : 'Worldwide · all locations'}\n\n` +
+      'Unknown countries appear under Other / unspecified. Changing filters does not resend old alerts.',
+      '🌍 <b>مناطق دانشگاهی</b>\n<i>مناطق موردنظر برای موقعیت‌های دانشگاهی را انتخاب کنید.</i>\n\n' +
+      '<b>انتخاب فعلی:</b> ' + escape(regionSummary) + '\n' +
+      `${count ? count + ' منطقه از ۸ منطقه' : 'همه جهان · تمام مکان‌ها'}\n\n` +
+      'کشور نامشخص در گزینه «سایر» است. تغییر فیلتر پیام‌های قبلی را دوباره ارسال نمی‌کند.'
+    );
     rows = [];
     for (let i = 0; i < ACADEMIC_REGIONS.length; i += 2) {
       rows.push(ACADEMIC_REGIONS.slice(i, i + 2).map(region =>
         button((region in academicRegions ? '☑ ' : '☐ ') +
           REGION_LABELS[fa ? 'fa' : 'en'][region], `sub:r:${region}`)));
     }
-    rows.push([button(`${count ? '☐' : '☑'} ${tr('Worldwide (clear filters)', 'همه جهان (حذف فیلتر)')}`,
+    rows.push([button(`${count ? '☐' : '☑'} ${tr('Worldwide · all regions', 'همه جهان · تمام مناطق')}`,
       'sub:r:all')]);
     rows.push([link('← Academic roles', '← فرصت‌های دانشگاهی', 'academic'),
-      link('🔎 View my matches', '🔎 فرصت‌های من', 'latest')]);
+      link('🔎 My matches', '🔎 فرصت‌های من', 'latest')]);
   } else if (['academic', 'careers', 'life_sciences'].includes(page)) {
     const options = page === 'academic' ? ACADEMIC :
       page === 'careers' ? CAREERS : ['life_sciences_phd'];
