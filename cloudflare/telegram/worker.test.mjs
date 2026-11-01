@@ -561,3 +561,16 @@ test('owner listing commands filter saved roles and use the saved page size', as
   assert.equal((first.text.match(/Open advert/g) || []).length, 6);
   assert.match((await instance.render('positions', 1, '', 42)).text, /Page 2 of 2/);
 });
+
+test('owner home preserves the match-history preference shared with subscriber settings', async () => {
+  const instance = bot();
+  const preferences = {topics: {predoc: new Date().toISOString()}, scopes: {},
+    paused: false, language: 'en', delivery_mode: 'instant',
+    daily_limit: 6, quiet_hours: false, timezone: 'UTC'};
+  await instance.ctx.storage.put('subscriber:42', preferences);
+  await instance.ctx.storage.put('match_window:42', 90);
+  const content = await instance.render('menu', 0, '', 42);
+  assert.match(content.text, /90 days/);
+  assert.ok(content.reply_markup.inline_keyboard.flat().some(
+    button => button.callback_data === 'view|tracking|0'));
+});
