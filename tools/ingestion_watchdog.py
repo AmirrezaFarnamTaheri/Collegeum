@@ -33,6 +33,21 @@ class Decision:
     age_seconds: int | None = None
 
 
+@dataclass(frozen=True)
+class CadenceAudit:
+    """Read-only run-creation observations, not a claim of dropped cron events."""
+
+    verified: bool
+    reason: str
+    expected: int = 0
+    observed: int = 0
+    delayed: int = 0
+    missing: int = 0
+    unsettled: int = 0
+    max_creation_delay_seconds: int | None = None
+    missing_ticks: tuple[str, ...] = ()
+
+
 def _timestamp(value: Any) -> datetime:
     if not isinstance(value, str) or "T" not in value:
         raise ValueError("Expected timezone-aware ISO 8601 timestamp")
@@ -96,6 +111,75 @@ def evaluate(
     return Decision(True, "stale-without-newer-run", age)
 
 
+def audit_cadence(
+    runs: Any, *, now: datetime, lookback: timedelta = timedelta(hours=24),
+) -> CadenceAudit:
+    """Compare actual schedule-triggered runs with four-hour UTC cron ticks.
+
+    Each scheduled run maps to its preceding four-hour tick. The latest tick
+    remains unsettled for one complete interval; an absent mature run is not
+    proof of an Actions scheduler failure. Require run history older than the
+    first expected tick so an API-limited response cannot invent gaps.
+    """
+    if now.tzinfo is None or lookback <= timedelta(0):
+        raise ValueError("An aware clock and positive cadence lookback are required")
+    now = now.astimezone(UTC)
+    if not isinstance(runs, list) or not runs:
+        return CadenceAudit(False, "untrusted-run-history")
+
+    scheduled: list[datetime] = []
+    all_created: list[datetime] = []
+    for item in runs:
+        if not isinstance(item, dict):
+            return CadenceAudit(False, "untrusted-run-history")
+        if item.get("head_branch") != "main":
+            continue
+        try:
+            created = _timestamp(item.get("created_at"))
+        except (ValueError, TypeError, OverflowError):
+            return CadenceAudit(False, "untrusted-run-history")
+        if created > now + FUTURE_SKEW:
+            return CadenceAudit(False, "untrusted-run-history")
+        all_created.append(created)
+        if (item.get("event") == "schedule"
+                and item.get("name", "predoc-pipeline") == "predoc-pipeline"):
+            scheduled.append(created)
+
+    start = now - lookback
+    tick = start.replace(
+        hour=(start.hour // 4) * 4, minute=7, second=0, microsecond=0,
+    )
+    if tick < start:
+        tick += timedelta(hours=4)
+    if not all_created or min(all_created) > tick:
+        return CadenceAudit(False, "insufficient-run-history")
+
+    expected = observed = delayed = missing = unsettled = 0
+    max_delay: int | None = None
+    missing_ticks: list[str] = []
+    while tick <= now:
+        expected += 1
+        next_tick = tick + timedelta(hours=4)
+        matches = [created for created in scheduled if tick <= created < next_tick]
+        if matches:
+            observed += 1
+            delay = max(0, int((min(matches) - tick).total_seconds()))
+            max_delay = delay if max_delay is None else max(max_delay, delay)
+            if delay > 30 * 60:
+                delayed += 1
+        elif now >= next_tick:
+            missing += 1
+            missing_ticks.append(tick.isoformat().replace("+00:00", "Z"))
+        else:
+            unsettled += 1
+        tick = next_tick
+    return CadenceAudit(
+        True, "unobserved-schedule-slots" if missing else "schedule-slots-observed",
+        expected, observed, delayed, missing, unsettled, max_delay,
+        tuple(missing_ticks),
+    )
+
+
 def _request(
     url: str, token: str, *, payload: dict[str, Any] | None = None
 ) -> dict[str, Any] | None:
@@ -134,13 +218,33 @@ def _request(
     return decoded
 
 
-def _summary(decision: Decision, action: str) -> None:
+def _summary(
+    decision: Decision, action: str, *, cadence: CadenceAudit | None = None,
+) -> None:
     age = "unknown" if decision.age_seconds is None else f"{decision.age_seconds / 3600:.2f}h"
     text = f"Ingestion watchdog: {decision.reason}; published data age {age}; action: {action}"
     print(text, flush=True)
     if decision.reason not in {"fresh", "pipeline-already-running"}:
-        # This is an operator diagnostic, not a promise of successful ingestion.
+        # An operator diagnostic, never proof that a publisher has succeeded.
         print(f"::warning title=Ingestion freshness::{text}", flush=True)
+    cadence_text = ""
+    if cadence is not None:
+        if cadence.verified:
+            lag = (f"{cadence.max_creation_delay_seconds // 60}m"
+                   if cadence.max_creation_delay_seconds is not None else "unknown")
+            cadence_text = (
+                f"scheduled slots (last 24h): {cadence.expected}; "
+                f"observed: {cadence.observed}; delayed >30m: {cadence.delayed}; "
+                f"unobserved mature slots: {cadence.missing}; "
+                f"unsettled slots: {cadence.unsettled}; max run-creation lag: {lag}"
+            )
+            print(f"Ingestion cadence: {cadence_text}", flush=True)
+            if cadence.missing:
+                print(f"::warning title=Ingestion cron coverage::{cadence_text}", flush=True)
+        else:
+            cadence_text = f"unverified ({cadence.reason}); insufficient history for gap claims"
+            print(f"Ingestion cadence: {cadence_text}", flush=True)
+
     report = os.environ.get("GITHUB_STEP_SUMMARY", "")
     if report:
         with open(report, "a", encoding="utf-8") as fh:
@@ -152,7 +256,16 @@ def _summary(decision: Decision, action: str) -> None:
                 "- This is not a publication success signal; "
                 "check the ensuing pipeline run.\n"
             )
-
+            if cadence is not None:
+                fh.write(f"- Schedule audit: **{cadence_text}**\n")
+                if cadence.verified and cadence.missing_ticks:
+                    fh.write("- No scheduled run observed for mature slots: "
+                             + ", ".join(cadence.missing_ticks) + "\n")
+                fh.write(
+                    "- Run creation timestamps do not measure job queueing or "
+                    "prove GitHub dropped a cron event. Manual recovery runs "
+                    "are not counted as scheduled events.\n"
+                )
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -172,7 +285,9 @@ def main(argv: list[str] | None = None) -> int:
         response = _request(base + "/workflows/pipeline.yml/runs?branch=main&per_page=50", token)
         if not isinstance(response, dict) or not isinstance(response.get("workflow_runs"), list):
             raise RuntimeError("GitHub Actions run history is unavailable")
-        decision = evaluate(health, response["workflow_runs"], now=datetime.now(UTC))
+        now = datetime.now(UTC)
+        decision = evaluate(health, response["workflow_runs"], now=now)
+        cadence = audit_cadence(response["workflow_runs"], now=now)
         action = "none"
         if decision.dispatch:
             if args.dispatch:
@@ -183,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
                 action = "requested-new-main-ingestion"
             else:
                 action = "would-request-new-main-ingestion"
-        _summary(decision, action)
+        _summary(decision, action, cadence=cadence)
     except (OSError, ValueError, RuntimeError) as exc:
         # Errors are safe, synthesized messages; no remote body is exposed.
         print(f"::error::Ingestion watchdog aborted: {exc}")

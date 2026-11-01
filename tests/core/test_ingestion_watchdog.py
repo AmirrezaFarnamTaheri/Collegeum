@@ -189,3 +189,103 @@ class WatchdogWorkflowSafetyTests(TestCase):
         self.assertIn('persist-credentials: false', workflow)
         self.assertIn('ref: main', workflow)
         self.assertNotIn('on:\n  schedule:', workflow)
+
+
+class CadenceEvidenceTests(TestCase):
+    """Reconcile run *creation* separately from successful health persistence."""
+
+    def test_late_cron_runs_and_unobserved_ticks_are_distinct(self):
+        from tools.ingestion_watchdog import audit_cadence
+
+        now = datetime(2026, 11, 1, 13, 30, tzinfo=UTC)
+
+        def observed(at, event="schedule"):
+            record = run(datetime.fromisoformat(at.replace("Z", "+00:00")))
+            record["event"] = event
+            return record
+
+        rows = [
+            observed("2026-11-01T05:48:51Z"),
+            observed("2026-11-01T00:30:00Z", "workflow_dispatch"),
+            observed("2026-10-31T23:16:59Z"),
+            observed("2026-10-31T19:53:14Z"),
+            observed("2026-10-31T12:00:00Z"),
+        ]
+        result = audit_cadence(rows, now=now)
+        self.assertTrue(result.verified)
+        self.assertEqual(result.expected, 6)
+        self.assertEqual(result.observed, 3)
+        self.assertEqual(result.delayed, 3)
+        self.assertEqual(result.missing, 2)
+        self.assertEqual(result.unsettled, 1)
+        self.assertEqual(result.max_creation_delay_seconds, 3 * 3600 + 46 * 60 + 14)
+        self.assertEqual(result.missing_ticks, (
+            "2026-11-01T00:07:00Z",
+            "2026-11-01T08:07:00Z",
+        ))
+
+    def test_manual_dispatch_never_counts_as_a_scheduled_tick(self):
+        from tools.ingestion_watchdog import audit_cadence
+
+        now = datetime(2026, 11, 1, 13, 30, tzinfo=UTC)
+        earliest = run(datetime(2026, 10, 31, 12, tzinfo=UTC))
+        earliest["event"] = "schedule"
+        recent = run(datetime(2026, 11, 1, 4, 30, tzinfo=UTC))
+        recent["event"] = "workflow_dispatch"
+        audit = audit_cadence([recent, earliest], now=now)
+        self.assertTrue(audit.verified)
+        self.assertEqual(audit.observed, 0)
+        self.assertEqual(audit.missing, 5)
+        self.assertEqual(audit.unsettled, 1)
+
+    def test_truncated_or_malformed_run_history_cannot_claim_missing_ticks(self):
+        from tools.ingestion_watchdog import audit_cadence
+
+        now = datetime(2026, 11, 1, 13, 30, tzinfo=UTC)
+        recent = run(datetime(2026, 11, 1, 5, 48, tzinfo=UTC))
+        recent["event"] = "schedule"
+        insufficient = audit_cadence([recent], now=now)
+        self.assertFalse(insufficient.verified)
+        self.assertEqual(insufficient.reason, "insufficient-run-history")
+        self.assertEqual(insufficient.missing_ticks, ())
+        malformed = {**recent, "created_at": "not-an-iso-time"}
+        rejected = audit_cadence([malformed], now=now)
+        self.assertFalse(rejected.verified)
+        self.assertEqual(rejected.reason, "untrusted-run-history")
+        self.assertEqual(rejected.missing_ticks, ())
+
+    def test_timezone_aware_clock_is_required(self):
+        from tools.ingestion_watchdog import audit_cadence
+
+        with self.assertRaises(ValueError):
+            audit_cadence([], now=datetime(2026, 11, 1, 13, 30))
+
+    def test_watchdog_summary_reports_cadence_without_dispatch_or_private_data(self):
+        import contextlib
+        import io
+
+        from tools.ingestion_watchdog import Decision, _summary, audit_cadence
+
+        now = datetime(2026, 11, 1, 13, 30, tzinfo=UTC)
+        old = run(datetime(2026, 10, 31, 12, tzinfo=UTC))
+        old["event"] = "schedule"
+        audit = audit_cadence([old], now=now)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            _summary(Decision(False, "fresh", 3600), "none", cadence=audit)
+        self.assertIn("scheduled slots", buf.getvalue())
+        self.assertIn("unobserved mature slots", buf.getvalue())
+        self.assertNotIn("Bearer", buf.getvalue())
+
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as temp:
+            summary = Path(temp) / "summary.md"
+            with patch.dict("os.environ", {"GITHUB_STEP_SUMMARY": str(summary)}):
+                _summary(Decision(False, "fresh", 3600), "none", cadence=audit)
+            rendered = summary.read_text(encoding="utf-8")
+            self.assertIn("\n- Schedule audit: **", rendered)
+            self.assertIn("\n- No scheduled run observed", rendered)
+            self.assertNotIn("\\n-", rendered)
