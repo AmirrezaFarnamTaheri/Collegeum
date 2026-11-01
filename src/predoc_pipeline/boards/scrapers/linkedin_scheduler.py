@@ -394,11 +394,11 @@ class QueryLedger:
         """Retain last complete timestamp and cursor; defer transient errors."""
         now = _utc(now)
         row = self._row(pair)
-        row["status"] = "access_limited" if status in (403, 429) else "failed"
+        row["status"] = "access_limited" if status in (403, 429, 999) else "failed"
         row["last_attempt_at"] = _stamp(now)
-        retry_at = now + timedelta(hours=48 if status in (403, 429) else 4)
+        retry_at = now + timedelta(hours=48 if status in (403, 429, 999) else 4)
         row["retry_after"] = _stamp(retry_at)
-        if status in (403, 429):
+        if status in (403, 429, 999):
             previous_block = _read_time(self.state.get("access_blocked_until"))
             if previous_block is None or previous_block < retry_at:
                 self.state["access_blocked_until"] = _stamp(retry_at)
