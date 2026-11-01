@@ -57,7 +57,7 @@ const safeApplicationUrl = value => {
 const deadlineNotPassed = (value, now) => {
   if (!value) return true;
   if (typeof value !== 'string') return false;
-  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(value))
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value))
     return value >= new Date(now).toISOString().slice(0, 10);
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) && timestamp >= now;
@@ -136,8 +136,8 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       'بازه مرور فرصت‌ها: ' + lookbackLabel(selectedWindow(windowDays), true), 'history')]);
   } else if (page === 'history') {
     const days = selectedWindow(windowDays);
-    text = tr('<b>Match history</b>\\n\\nChoose how far back My matches searches. This changes browsing only, not new-job alerts or previous deliveries.',
-      '<b>بازه زمانی فرصت‌ها</b>\\n\\nبازه جستجوی «فرصت‌های من» را انتخاب کنید. این انتخاب اعلان‌های جدید و سابقه ارسال را تغییر نمی‌دهد.');
+    text = tr('<b>Match history</b>\n\nChoose how far back My matches searches. This changes browsing only, not new-job alerts or previous deliveries.',
+      '<b>بازه زمانی فرصت‌ها</b>\n\nبازه جستجوی «فرصت‌های من» را انتخاب کنید. این انتخاب اعلان‌های جدید و سابقه ارسال را تغییر نمی‌دهد.');
     rows = [...lookbackChoices(days, fa, true),
       [link('View my matches →', 'مشاهده فرصت‌های من ←', 'latest')]];
   } else if (page === 'stop') {
@@ -294,27 +294,27 @@ export async function subscriberUpdate(bot, message, callback, key) {
           '⚠️ Listing snapshot is over 8 hours old; results may be incomplete.')
         : '';
     const entries = matches.slice(current * size, current * size + size).map((r, index) =>
-      `${current * size + index + 1}. <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, 110))}</a>\\n` +
+      `${current * size + index + 1}. <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, 110))}</a>\n` +
       escape(String(r.institution || 'Employer unknown').slice(0, 90)) +
       (r.country ? ` · ${escape(String(r.country).slice(0, 50))}` : '') +
-      (r.deadline ? `\\n${fa ? 'مهلت' : 'Deadline'}: ${escape(String(r.deadline).slice(0, 10))}` : '') +
+      (r.deadline ? `\n${fa ? 'مهلت' : 'Deadline'}: ${escape(String(r.deadline).slice(0, 10))}` : '') +
       (r.category && r.availability !== 'active'
-        ? (fa ? '\\nℹ️ وضعیت پذیرش تأیید نشده است.' : '\\nℹ️ Availability unverified.') : '') +
+        ? (fa ? '\nℹ️ وضعیت پذیرش تأیید نشده است.' : '\nℹ️ Availability unverified.') : '') +
       (r.category === 'life_sciences_phd'
-        ? (fa ? '\\nℹ️ تأمین مالی تأیید نشده است.' : '\\nℹ️ Funding unverified.') : ''));
+        ? (fa ? '\nℹ️ تأمین مالی تأیید نشده است.' : '\nℹ️ Funding unverified.') : ''));
     const empty = !member || !Object.keys(member.topics || {}).length
       ? (fa ? 'ابتدا موضوع دلخواه را در اشتراک‌ها انتخاب کنید.' :
         'Choose an academic or career role in Subscriptions first.')
       : (fa ? 'در این بازه فرصت منطبق پیدا نشد. بازه ۳ ماهه یا موضوع‌های دیگر را امتحان کنید.' :
         'No matches in this window. Try 3 months or broaden your selected roles.');
-    const header = (fa ? '<b>فرصت‌های من</b>' : '<b>My matches</b>') + '\\n\\n' +
+    const header = (fa ? '<b>فرصت‌های من</b>' : '<b>My matches</b>') + '\n\n' +
       (fa ? 'موضوع‌ها و محدوده‌های انتخاب‌شده' : 'Your selected roles and career markets') +
-      ' · ' + lookbackLabel(days, fa) + '\\n' +
+      ' · ' + lookbackLabel(days, fa) + '\n' +
       (fa ? `${matches.length} مورد منطبق` : `${matches.length} matches`);
     const footer = fa ? 'ℹ️ مشاهده آگهی به معنی باز بودن یا تأمین مالی تأییدشده نیست.' :
       'ℹ️ A discovered listing is not a verified open or funded vacancy.';
-    content = {text: [header, snapshotWarning, entries.join('\\n\\n') || empty, footer]
-      .filter(Boolean).join('\\n\\n'),
+    content = {text: [header, snapshotWarning, entries.join('\n\n') || empty, footer]
+      .filter(Boolean).join('\n\n'),
       reply_markup: {inline_keyboard: [
         ...lookbackChoices(days, fa),
         ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${days}:${current - 1}`)] : []),
