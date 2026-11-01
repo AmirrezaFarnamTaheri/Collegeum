@@ -158,7 +158,8 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
                        for k, v in member[field].items()):
                 raise _corrupt(path, f"subscriber {chat_id}: invalid {field}")
         from .subscriptions import ACADEMIC_REGIONS
-        if any(region not in ACADEMIC_REGIONS for region in member["academic_regions"]):
+        if any(region not in ACADEMIC_REGIONS and region != "all"
+               for region in member["academic_regions"]):
             raise _corrupt(path, f"subscriber {chat_id}: invalid academic regions")
         if not isinstance(member.get("paused", False), bool):
             raise _corrupt(path, f"subscriber {chat_id}: paused must be a boolean")
@@ -298,12 +299,16 @@ class FeedbackStore:
             raise ValueError("unsupported academic region")
         selected: dict[str, str] = self._member(chat_id)["academic_regions"]
         if region == "all":
-            if not selected:
+            if not any(key != "all" for key in selected):
                 return False
             selected.clear()
+            selected["all"] = _now()
         elif region in selected:
             del selected[region]
+            if not selected:
+                selected["all"] = _now()
         else:
+            selected.pop("all", None)
             selected[region] = _now()
         self._dirty = True
         return True
