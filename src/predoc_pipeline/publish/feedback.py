@@ -290,6 +290,24 @@ class FeedbackStore:
         self._dirty = True
         return enabled
 
+    def toggle_academic_region(self, chat_id: int, region: str) -> bool:
+        """Update a region opt-in without altering career markets or delivery receipts."""
+        from .subscriptions import ACADEMIC_REGIONS
+
+        if region not in ACADEMIC_REGIONS and region != "all":
+            raise ValueError("unsupported academic region")
+        selected: dict[str, str] = self._member(chat_id)["academic_regions"]
+        if region == "all":
+            if not selected:
+                return False
+            selected.clear()
+        elif region in selected:
+            del selected[region]
+        else:
+            selected[region] = _now()
+        self._dirty = True
+        return True
+
     def set_topics_group(self, chat_id: int, group: str, enabled: bool) -> bool:
         """Apply an explicitly tapped group action, preserving prior opt-in dates."""
         from .ui import ACADEMIC, CAREERS
