@@ -387,9 +387,10 @@ def test_life_discovery_records_policy_cooldown_as_skipped_not_partial(
     finally:
         life_sciences.SCRAPERS["linkedin"] = original
     assert not errors
-    assert len(discovered) >= 0
     assert http.urls == []
     info = diagnostics["life_linkedin"]
+    assert info["vacancy_links"] == 10  # cached cards remain in the audit
+    assert len(discovered) <= info["vacancy_links"]
     assert info["status"] == "skipped"
     assert info["discovery_issues"] == 0
     assert info["detail_failures"] == 0
