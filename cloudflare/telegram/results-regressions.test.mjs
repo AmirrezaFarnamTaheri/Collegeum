@@ -17,7 +17,7 @@ function academic(days, suffix = 'a', other = {}) {
     first_seen_at: isoDaysAgo(days), last_seen_at: isoDaysAgo(1),
     closed_at: null, expired_at: null, deadline: null, ...other};
 }
-function fixture({rows = [], career = [], member = preferences(), snapshot = isoDaysAgo(0)} = {}) {
+function fixture({rows = [], career = [], member = preferences(), snapshot = isoDaysAgo(0), owner = false} = {}) {
   const values = new Map([['subscribers_initialized', true], ['subscriber:42', member],
     ['career_listings', career]]);
   if (snapshot) values.set('snapshot_at', snapshot);
@@ -28,7 +28,7 @@ function fixture({rows = [], career = [], member = preferences(), snapshot = iso
     delete: async k => values.delete(k),
     transaction: async callback => callback(storage),
   };
-  const bot = {ctx: {storage}, env: {OWNER_IDS: ''},
+  const bot = {ctx: {storage}, env: {OWNER_IDS: owner ? '42' : ''},
     api: async () => {}, dataset: async () => ({rows, marks: new Map()}),
     deliver: async (_key, _method, content) => {sent.push(content);}};
   const msg = {chat: {id: 42, type: 'private'}, message_id: 9};
@@ -97,4 +97,31 @@ test('career result with unknown availability is visibly unverified', async () =
   const text = (await f.tap('sub:p:latest:7:0')).text;
   assert.match(text, /Data analyst/);
   assert.match(text, /[Uu]nverified|not verified/);
+});
+
+test('nested preference screens stay uncluttered while owner tracking stays reachable', async () => {
+  const f = fixture({owner: true, rows: [academic(1)]});
+  const markets = await f.tap('sub:p:markets');
+  assert.ok(!markets.reply_markup.inline_keyboard.flat().some(
+    button => button.callback_data === 'view|tracking|0'));
+  const settings = await f.tap('sub:p:more', 'settings');
+  assert.ok(settings.reply_markup.inline_keyboard.flat().some(
+    button => button.callback_data === 'view|tracking|0'));
+  const matches = await f.tap('sub:p:latest', 'matches');
+  assert.ok(matches.reply_markup.inline_keyboard.flat().some(
+    button => button.callback_data === 'view|tracking|0'));
+});
+
+test('language toggle stays in Settings and source status navigates back there', async () => {
+  const f = fixture();
+  f.values.set('source_status', {en: '<b>Sources</b>\\nOne provider failed',
+    fa: '<b>منابع</b>\\nیک منبع ناموفق'});
+  const lang = await f.tap('sub:l:fa');
+  assert.match(lang.text, /تنظیمات/);
+  assert.ok(lang.reply_markup.inline_keyboard.flat().some(
+    b => b.callback_data === 'sub:p:history'));
+  const sources = await f.tap('sub:p:sources', 'sources');
+  assert.match(sources.text, /منابع/);
+  assert.ok(sources.reply_markup.inline_keyboard.flat().some(
+    b => b.callback_data === 'sub:p:more'));
 });
