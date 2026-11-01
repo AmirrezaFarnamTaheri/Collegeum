@@ -1681,7 +1681,7 @@ def test_subscription_home_does_not_claim_active_alerts_without_any_topic():
     assert "Not configured" in empty
     ready, _ = menu({"topics": {"predoc": "2026-10-15T00:00:00Z"},
                      "scopes": {}, "paused": False})
-    assert "Alerts: On" in ready
+    assert "🔔 Active" in ready
     paused, _ = menu({"topics": {"predoc": "2026-10-15T00:00:00Z"},
                       "scopes": {}, "paused": True})
     assert "Alerts: Paused" in paused
