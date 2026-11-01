@@ -28,7 +28,7 @@ test('subscriptions clarify career-market eligibility and link to history and re
   const screen = panel(member, 'subscriptions');
   assert.match(screen.text, /2\/4/);
   assert.match(screen.text, /1\/4/);
-  assert.match(screen.text, /Career.*Job markets/i);
+  assert.match(screen.text, /Careers[\s\S]*Job markets/i);
   assert.ok(!callbacks(screen).includes('sub:p:markets'));
   for (const route of ['sub:p:academic', 'sub:p:careers',
     'sub:p:life_sciences', 'sub:p:latest', 'sub:p:history'])
