@@ -116,9 +116,10 @@ def private_message(
         return False
     command = tokens[0].lower().split("@")[0]
     pages = {
-        "/start": "home", "/settings": "home", "/subscribe": "home",
+        "/start": "home", "/settings": "home", "/subscribe": "subscriptions",
+        "/subscriptions": "subscriptions", "/regions": "academic_regions",
         "/status": "home", "/more": "more", "/academic": "academic",
-        "/careers": "careers", "/markets": "markets", "/guide": "help",
+        "/careers": "careers", "/markets": "careers", "/guide": "help",
         "/lifesciences": "life_sciences",
         "/stop": "stop", "/delete": "stop", "/help": "help",
         "/sources": "sources", "/delivery": "delivery",
@@ -231,8 +232,9 @@ def _page(
     if target == "sources":
         return sources_panel(settings.career_health_path, lang=language(member))
     if target in (
-        "home", "academic", "life_sciences", "careers", "markets",
-        "delivery", "privacy", "help", "more", "stop",
+        "home", "subscriptions", "academic", "academic_regions",
+        "life_sciences", "careers", "markets", "delivery",
+        "privacy", "help", "more", "stop",
     ):
         return menu(member, target)
     return None
@@ -304,7 +306,7 @@ def private_callback(
         from .feedback import MAX_SUBSCRIBERS
         if (member is None and len(store.subscribers) >= MAX_SUBSCRIBERS
                 and (parse_toggle(raw) is not None or raw.startswith(
-                    ("sub:b:", "sub:a:", "sub:l:")
+                    ("sub:b:", "sub:a:", "sub:l:", "sub:r:")
                 ))):
             _reply_callback(bot, callback_id, "Subscriptions are currently full.")
             return True
@@ -329,7 +331,17 @@ def private_callback(
                 target = (
                     "life_sciences" if option == LIFE_SCIENCES else
                     "academic" if option in ACADEMIC else "careers"
-                ) if kind == "topics" else "markets"
+                ) if kind == "topics" else "careers"
+            elif raw.startswith("sub:r:"):
+                from .subscriptions import ACADEMIC_REGIONS
+                region = raw.removeprefix("sub:r:")
+                if region not in ACADEMIC_REGIONS and region != "all":
+                    _reply_callback(bot, callback_id, "Invalid region")
+                    return True
+                if not store.callback_seen(callback_id):
+                    store.toggle_academic_region(user_id, region)
+                    mutation = True
+                target = "academic_regions"
             elif raw in ("sub:a:pause", "sub:a:resume"):
                 if not store.callback_seen(callback_id):
                     store.set_paused(user_id, raw.endswith(":pause"))
