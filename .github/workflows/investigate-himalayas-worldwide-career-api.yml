@@ -1,0 +1,75 @@
+name: investigate-himalayas-worldwide-career-api
+on:
+  push:
+    branches:
+      - investigate/himalayas-worldwide-career-api-20261102
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Read-only official API evaluation (no vacancy data exported)
+        run: |
+          PYTHONPATH=src python3 - <<'PY'
+          import json
+          import time
+          from urllib.parse import urlencode, urlsplit
+          from predoc_pipeline.ingest.career import classify_career
+          from predoc_pipeline.ingest.http import PoliteClient
+          from predoc_pipeline.settings import Settings
+
+          queries = ("data analyst", "data scientist", "research analyst", "economic consultant")
+          settings = Settings()
+          total = 0
+          with PoliteClient(
+              user_agent=settings.http_user_agent, timeout=20,
+              per_host_delay=1, respect_robots=True,
+          ) as client:
+              for q in queries:
+                  url = "https://himalayas.app/jobs/api/search?" + urlencode({
+                      "q": q, "worldwide": "true", "page": "1",
+                  })
+                  response = client.get(url, use_cache=False)
+                  result = {"query": q, "http_status": response.status}
+                  if response.ok:
+                      data = json.loads(response.text)
+                      jobs = data.get("jobs") if isinstance(data, dict) else None
+                      assert isinstance(jobs, list), "Unrecognized official API schema"
+                      total += len(jobs)
+                      qualified = 0
+                      for job in jobs:
+                          if not isinstance(job, dict):
+                              continue
+                          title = job.get("title")
+                          apply = job.get("applicationLink")
+                          expiry = job.get("expiryDate")
+                          if (
+                              isinstance(title, str) and classify_career(title)
+                              and job.get("locationRestrictions") == []
+                              and job.get("timezoneRestrictions") == []
+                              and isinstance(expiry, (int, float)) and expiry > time.time()
+                              and isinstance(apply, str)
+                              and urlsplit(apply).scheme == "https"
+                          ):
+                              qualified += 1
+                      result["raw"] = len(jobs)
+                      result["potentially_eligible"] = qualified
+                  print(json.dumps(result, sort_keys=True))
+                  assert response.ok, "Himalayas official API denied or unreachable"
+          assert total > 0, "No real API records available for coverage test"
+          PY
