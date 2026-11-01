@@ -37,7 +37,7 @@ def _validate_subscribers(profiles: object) -> dict[str, Any]:
             raise ValueError('Invalid webhook subscriber preferences')
         member.setdefault('academic_regions', {})
         for field, allowed in (('topics', TOPICS), ('scopes', CAREER_SCOPES),
-                               ('academic_regions', (*ACADEMIC_REGIONS, 'all')):
+                               ('academic_regions', (*ACADEMIC_REGIONS, 'all'))):
             choices = member[field]
             if not isinstance(choices, dict) or any(
                 key not in allowed or not isinstance(at, str)
