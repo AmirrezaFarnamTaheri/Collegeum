@@ -395,3 +395,35 @@ def test_life_discovery_records_policy_cooldown_as_skipped_not_partial(
     assert info["detail_failures"] == 0
     assert info["search_diagnostics"]["requests"] == 0
     assert info["search_diagnostics"]["provider_cooldown_active"] is True
+
+
+def test_no_due_queries_in_normal_48h_rotation_is_not_a_false_empty_outage(
+    tmp_path: Path,
+) -> None:
+    """A source with a completed recent query has no new work in the next slot."""
+    from predoc_pipeline.boards.collector import _scrape_all
+    from predoc_pipeline.core.health import source_status
+
+    own = tmp_path / "econ.json"
+    peer = tmp_path / "life.json"
+    ledger = QueryLedger("linkedin")
+    ledger.request(LIFE_PAIR, now=T0)
+    ledger.accept_page(LIFE_PAIR, cards()[:1], now=T0)
+    ledger.save(own)
+    http = OfflineHTTP()
+    scraper = worker(
+        "linkedin", own, "life_linkedin", peer, http,
+        T0 + timedelta(hours=4),
+    )
+    report = asyncio.run(_scrape_all([scraper], max_concurrent=1, timeout=30))[0]
+    assert report.skipped is True
+    assert report.ok is True
+    assert report.as_stats()["errors"] == 0
+    assert source_status(report.as_stats()) == "skipped"
+    assert scraper.search_diagnostics["plan_size"] == 0
+    assert scraper.search_diagnostics["provider_cooldown_active"] is False
+    assert len(report.posts) == 1  # candidate replay, not a current fetch
+    assert not http.urls
+    assert QueryLedger.load(own, "linkedin").state["queries"][
+        query_key("linkedin", *LIFE_PAIR)
+    ]["last_complete_at"] is not None
