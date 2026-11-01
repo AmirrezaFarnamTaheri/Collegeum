@@ -4,7 +4,7 @@ export const TOPICS = ['predoc', 'phd', 'postdoc', 'research', 'life_sciences_ph
 const ACADEMIC = TOPICS.slice(0, 4), CAREERS = TOPICS.slice(5);
 const ZONES = ['UTC', 'Asia/Tehran', 'Europe/London', 'America/New_York'];
 const LIMITS = [3, 6, 10];
-export const PAGE_SIZES = [3, 4, 6, 8];
+export const PAGE_SIZES = [4, 6, 8, 12];
 export const pageSize = value => PAGE_SIZES.includes(value) ? value : 4;
 const LOOKBACK_DAYS = [7, 14, 30, 60, 90];
 const DEFAULT_LOOKBACK = 14;
@@ -380,10 +380,15 @@ export async function subscriberUpdate(bot, message, callback, key) {
         ? (fa ? '⚠️ فهرست فرصت‌ها بیش از ۸ ساعت است به‌روزرسانی نشده است.' :
           '⚠️ Listing snapshot is over 8 hours old; results may be incomplete.')
         : '';
+    // Twelve-result pages use a compact card to stay within Telegram's
+    // 4,096-character message limit without dropping any matched positions.
+    const limits = size === 12
+      ? {title: 65, institution: 50, country: 24}
+      : {title: 110, institution: 90, country: 50};
     const entries = matches.slice(current * size, current * size + size).map((r, index) =>
-      `${current * size + index + 1}. <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, 110))}</a>\n` +
-      escape(String(r.institution || 'Employer unknown').slice(0, 90)) +
-      (r.country ? ` · ${escape(String(r.country).slice(0, 50))}` : '') +
+      `${current * size + index + 1}. <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, limits.title))}</a>\n` +
+      escape(String(r.institution || 'Employer unknown').slice(0, limits.institution)) +
+      (r.country ? ` · ${escape(String(r.country).slice(0, limits.country))}` : '') +
       (r.deadline ? `\n${fa ? 'مهلت' : 'Deadline'}: ${escape(String(r.deadline).slice(0, 10))}` : '') +
       (r.category && r.availability !== 'active'
         ? (fa ? '\nℹ️ وضعیت پذیرش تأیید نشده است.' : '\nℹ️ Availability unverified.') : '') +

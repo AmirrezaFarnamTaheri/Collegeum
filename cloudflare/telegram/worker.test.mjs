@@ -602,3 +602,22 @@ test('owner tracking has direct navigation to the unified My matches and Setting
   assert.ok(more.reply_markup.inline_keyboard.flat().some(
     button => button.callback_data === 'sub:p:delivery'));
 });
+
+test('owner twelve-row academic pages remain under Telegram message limit', async () => {
+  const instance = bot();
+  const rows = Array.from({length: 12}, (_, i) => ({
+    ...record, url_hash: i.toString(16).padStart(64, '0'), kind: 'predoc',
+    title: 'Assistant ' + 'A'.repeat(110),
+    institution: 'University ' + 'B'.repeat(90), city: 'C'.repeat(60),
+    country: 'D'.repeat(50), deadline_note: 'E'.repeat(70),
+  }));
+  await instance.fetch(post('/sync', {...snapshot, listings: rows,
+    generated_at: new Date().toISOString()}));
+  await instance.ctx.storage.put('subscriber:42', {
+    topics: {predoc: new Date().toISOString()}, scopes: {},
+  });
+  await instance.ctx.storage.put('page_size:42', 12);
+  const view = await instance.render('positions', 0, '', 42);
+  assert.equal((view.text.match(/Open advert/g) || []).length, 12);
+  assert.ok(view.text.length <= 4096, `owner page has ${view.text.length} characters`);
+});
