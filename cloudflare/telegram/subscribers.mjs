@@ -62,6 +62,9 @@ const deadlineNotPassed = (value, now) => {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) && timestamp >= now;
 };
+// Shared visibility rule for owner browsing and subscriber matching.
+export const openAcademicListing = (row, now = Date.now()) =>
+  !row.closed_at && !row.expired_at && deadlineNotPassed(row.deadline, now);
 const recentlyDiscovered = (value, days, now) => {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) && timestamp <= now && timestamp >= now - days * 86400000;
@@ -353,10 +356,10 @@ export async function subscriberUpdate(bot, message, callback, key) {
     // The immutable first_seen_at is the consistent discovery timestamp for
     // academic and career history windows; last_seen_at is not a new listing.
     const academic = rows.filter(r => matchesPreferences(r, member) &&
-      !r.closed_at && !r.expired_at &&
+      openAcademicListing(r, now) &&
       !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
       recentlyDiscovered(r.first_seen_at || r.published_at, days, now) &&
-      deadlineNotPassed(r.deadline, now) && safeApplicationUrl(r.apply_url));
+      safeApplicationUrl(r.apply_url));
     const careerInventory = await bot.ctx.storage.get('career_listings') || [];
     const careers = careerInventory.filter(r => matchesPreferences(r, member) && r.availability !== 'closed' &&
         deadlineNotPassed(r.deadline, now) &&
