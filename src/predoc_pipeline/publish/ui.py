@@ -208,24 +208,20 @@ def menu(
             "انتخاب همه" if fa else "Clear all" if all_set else "Select all",
             f"sub:b:careers:{'off' if all_set else 'on'}",
         )])
-        buttons.append([_button(
-            "محدوده جستجو →" if fa else "Choose job markets →", "sub:p:markets",
-        )])
-        buttons.append(_back(lang))
-        body = f"{title}\n\n{caption}"
-    elif page == "markets":
-        title = "🌍 <b>محدوده مشاغل</b>" if fa else "🌍 <b>Job markets</b>"
-        caption = ("ایران و دورکاری جهانی دو گزینه مستقل هستند."
-                   if fa else "Iran-based and worldwide-remote are independent.")
         for key in CAREER_SCOPES:
             buttons.append([_button(
-                ("☑ " if key in scopes else "☐ ") + _label(key, lang), f"sub:g:{key}",
+                ("☑ " if key in scopes else "☐ ") + _label(key, lang),
+                f"sub:g:{key}",
             )])
-        buttons.append([_button(
-            "انتخاب مشاغل ←" if fa else "← Career roles", "sub:p:careers",
-        )])
-        buttons.append(_back(lang))
-        body = f"{title}\n\n{caption}"
+        buttons.append([_button("← اشتراک‌ها" if fa else "← Subscriptions",
+                                "sub:p:subscriptions")])
+        body = f"{title}\n\n{caption}\n\n" + (
+            f"محدوده‌ها: {len(scopes)}/2" if fa else
+            f"Job markets: {len(scopes)}/2 selected"
+        )
+        if any(key in topics for key in CAREERS) and not scopes:
+            body += ("\n\n⚠️ حداقل یک محدوده را انتخاب کنید." if fa else
+                     "\n\n⚠️ Select at least one market to receive career matches.")
     elif page == "delivery":
         mode = member.get("delivery_mode", "instant") if member else "instant"
         limit = member.get("daily_limit", 6) if member else 6
@@ -273,10 +269,10 @@ def menu(
             "تنظیمات منطقه، زبان و حریم خصوصی و راهنمای استفاده."
             if fa else
             "⚙️ <b>More options</b>\n\n"
-            "Adjust job markets and language, get help, or manage your privacy."
+            "Edit subscriptions and language, get help, or manage your privacy."
         )
         buttons = [
-            [_button("🌍 محدوده" if fa else "🌍 Job markets", "sub:p:markets"),
+            [_button("🧭 اشتراک‌ها" if fa else "🧭 Edit subscriptions", "sub:p:subscriptions"),
              _button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources")],
             [_button("ℹ️ راهنما" if fa else "ℹ️ Help", "sub:p:help"),
              _button("🔒 حریم خصوصی" if fa else "🔒 Privacy", "sub:p:privacy")],
@@ -304,7 +300,7 @@ def menu(
         body = (
             "ℹ️ <b>راهنما</b>\n\n"
             "۱. در «دانشگاهی»، «دکتری علوم زیستی» یا «مشاغل» موضوع دلخواه را انتخاب کنید.\n"
-            "۲. برای مشاغل، ایران یا دورکاری جهانی را جداگانه انتخاب کنید.\n"
+            "۲. محدوده‌های شغلی در همان صفحه‌اند؛ مناطق دانشگاهی جدا هستند.\n"
             "۳. اعلان‌ها فقط برای آگهی‌های جدید پس از عضویت هستند.\n"
             "۴. «تازه‌ترین‌ها» آگهی‌های قبلی را هم برای مرور نشان می‌دهد.\n"
             "۵. توقف اعلان‌ها اشتراک را نگه می‌دارد.\n"
@@ -313,7 +309,7 @@ def menu(
             if fa else
             "ℹ️ <b>How alerts work</b>\n\n"
             "1. Choose academic roles, Life Sciences PhD, or specialist careers.\n"
-            "2. For careers, select Iran and/or worldwide remote.\n"
+            "2. Choose career markets on the same screen; academic regions are separate.\n"
             "3. Notifications cover new matches after you opt in.\n"
             "4. Browse latest to view existing positions on demand.\n"
             "5. Pausing keeps your preferences but stops new alerts.\n"
@@ -371,7 +367,7 @@ def menu(
             f"🧬 Life Sciences PhD: {'On' if life_active else 'Off'}\n"
             f"🌍 Markets: {escape(market_line)}\n"
             f"🔔 Alerts: {delivery_status_en}\n\n"
-            "Choose roles below. Latest matches lets you browse before subscribing."
+            "Edit subscriptions to choose roles and regions. Browse before subscribing."
         )
         if careers and not selected_markets:
             body += (
@@ -394,9 +390,13 @@ def menu(
         ]
         if careers and not selected_markets:
             buttons.insert(2, [_button(
-                "🌍 محدوده را انتخاب کنید" if fa else "🌍 Choose a job market",
-                "sub:p:markets",
+                "💼 تعیین محدوده مشاغل" if fa else "💼 Set career markets",
+                "sub:p:careers",
             )])
+        buttons.insert(0, [_button(
+            "🧭 ویرایش اشتراک‌ها" if fa else "🧭 Edit subscriptions",
+            "sub:p:subscriptions",
+        )])
     return body, {"inline_keyboard": buttons}
 
 
