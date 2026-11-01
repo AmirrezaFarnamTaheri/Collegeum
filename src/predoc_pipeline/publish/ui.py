@@ -316,10 +316,12 @@ def menu(
     elif page == "more":
         body = (
             "⚙️ <b>تنظیمات و راهنما</b>\n\n"
-            "تنظیمات منطقه، زبان و حریم خصوصی و راهنمای استفاده."
+            "<b>اشتراک‌ها</b>\nنقش‌ها، مناطق دانشگاهی و محدوده‌های شغلی\n\n"
+            "<b>حساب و راهنما</b>\nزبان، منابع، حریم خصوصی و لغو عضویت"
             if fa else
             "⚙️ <b>More options</b>\n\n"
-            "Edit subscriptions and language, get help, or manage your privacy."
+            "<b>Subscriptions</b>\nRoles, academic regions and career markets\n\n"
+            "<b>Account & help</b>\nLanguage, sources, privacy and unsubscribe"
         )
         buttons = [
             [_button("🧭 اشتراک‌ها" if fa else "🧭 Edit subscriptions", "sub:p:subscriptions"),
