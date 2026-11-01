@@ -19,7 +19,7 @@ import re
 import time
 from collections import deque
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode
 
@@ -30,7 +30,7 @@ from ..models import JobPostSchema
 from ..utils.dates import parse_iso_datetime, parse_posted
 from ..utils.text import clean_ws, html_to_text
 from .base import BaseScraper, register
-from .linkedin_scheduler import QueryLedger
+from .linkedin_scheduler import QueryLedger, _read_time
 
 log = logging.getLogger(__name__)
 
@@ -138,6 +138,30 @@ class LinkedInScraper(BaseScraper):
             if isinstance(ident, str):
                 ledger.note_detail(ident, now=self._scheduler_now())
 
+    def _provider_blocked_until(self, ledger: QueryLedger) -> datetime | None:
+        """Read the other audience's restriction without modifying its ledger."""
+        blocked = _read_time(ledger.state.get("access_blocked_until"))
+        peer_path = self.opt("peer_checkpoint_path")
+        peer_source = self.opt("peer_checkpoint_source")
+        if peer_path is not None or peer_source is not None:
+            if not isinstance(peer_path, str) or not peer_path.strip() or (
+                not isinstance(peer_source, str) or not peer_source.strip()
+            ):
+                raise ValueError("Invalid LinkedIn peer checkpoint configuration")
+            peer = QueryLedger.load(peer_path, peer_source)
+            peer_block = _read_time(peer.state.get("access_blocked_until"))
+            if peer_block is not None and (blocked is None or peer_block > blocked):
+                blocked = peer_block
+        return blocked
+
+    def _access_is_blocked(self, *, now: datetime) -> bool:
+        ledger = getattr(self, "_checkpoint_ledger", None)
+        return (
+            isinstance(ledger, QueryLedger)
+            and (block := self._provider_blocked_until(ledger)) is not None
+            and now < block
+        )
+
     def flush_checkpoint(self) -> None:
         """Called after Life Sciences detail attempts, before final git commit."""
         ledger = getattr(self, "_checkpoint_ledger", None)
@@ -188,11 +212,15 @@ class LinkedInScraper(BaseScraper):
             ):
                 raise ValueError("Invalid LinkedIn core query")
             core.append((item["keyword"], item["location"]))
+        provider_block = self._provider_blocked_until(ledger)
+        provider_cooldown_active = (
+            provider_block is not None and self._scheduler_now() < provider_block
+        )
         selected = ledger.plan(
             pairs, now=self._scheduler_now(),
             limit=query_budget, cooldown_hours=cooldown, core_pairs=core,
         )
-        queue = deque(selected)
+        queue = deque([] if provider_cooldown_active else selected)
         self.search_diagnostics: dict[str, Any] = {
             "backend": "guest_checkpointed",
             "total_pairs": len(set(pairs)), "plan_size": len(selected),
@@ -201,6 +229,7 @@ class LinkedInScraper(BaseScraper):
             "unverified_empty": 0,
             "access_limited": False, "pages_with_more_possible": 0,
             "time_budget_reached": False, "backpressure": False,
+            "provider_cooldown_active": provider_cooldown_active,
         }
         started = time.monotonic()
         failures = 0
@@ -310,8 +339,9 @@ class LinkedInScraper(BaseScraper):
             ledger.save(path)
         self.search_diagnostics.update(ledger.counts())
         self.search_diagnostics["pending_queries"] = self.search_diagnostics["incomplete_queries"]
-        self.search_diagnostics["access_blocked_until"] = ledger.state.get(
-            "access_blocked_until",
+        final_block = self._provider_blocked_until(ledger)
+        self.search_diagnostics["access_blocked_until"] = (
+            final_block.isoformat() if final_block is not None else None
         )
         self.search_diagnostics["unprocessed_selected"] = len(queue)
         return raw
@@ -485,7 +515,19 @@ class LinkedInScraper(BaseScraper):
         job_id = post.extra.get("linkedin_id") or (_ID.search(post.url) or [None, None])[1]
         if not job_id:
             return None
-        html = await self.http.get_text(DETAIL.format(job_id))
+        if self._access_is_blocked(now=self._scheduler_now()):
+            return None
+        try:
+            html = await self.http.get_text(DETAIL.format(job_id), stop_on_429=True)
+        except FetchError as exc:
+            if exc.status in (403, 429):
+                ledger = getattr(self, "_checkpoint_ledger", None)
+                if isinstance(ledger, QueryLedger):
+                    ledger.state["access_blocked_until"] = (
+                        self._scheduler_now() + timedelta(hours=48)
+                    ).isoformat()
+                    ledger.save(self.opt("checkpoint_path"))
+            raise
         soup = BeautifulSoup(html, "lxml")
         body = soup.select_one(".show-more-less-html__markup, .description__text")
         return clean_ws(body.get_text(" ")) if body else html_to_text(html, 20000)
