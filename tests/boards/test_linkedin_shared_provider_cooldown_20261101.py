@@ -163,3 +163,26 @@ def test_detail_http_429_stops_without_user_agent_retry() -> None:
 
     asyncio.run(run())
     assert attempts == [429]
+
+
+def test_public_health_preserves_safe_coverage_counts_and_redacts_provider_data() -> None:
+    from predoc_pipeline.core.health import public_source_stats
+
+    result = public_source_stats({
+        "board:linkedin": {
+            "kind": "board", "items": 119, "ok": False, "errors": 1,
+            "messages": ["LinkedIn request failed"],
+            "search_diagnostics": {
+                "requests": 14, "completed_queries": 0, "pending_queries": 14,
+                "provider_cooldown_active": True, "access_limited": True,
+                "access_blocked_until": "2026-11-03T05:50:37+00:00",
+                "secret_provider_url": "https://example.org/?secret=token",
+            },
+        },
+    })["board:linkedin"]
+    assert result["status"] == "partial"
+    assert result["search_diagnostics"] == {
+        "requests": 14, "completed_queries": 0, "pending_queries": 14,
+        "provider_cooldown_active": True, "access_limited": True,
+    }
+    assert "secret_provider_url" not in str(result)
