@@ -134,6 +134,8 @@ class LinkedInScraper(BaseScraper):
         """Durably prioritize candidates not yet checked for real deadlines."""
         ledger = getattr(self, "_checkpoint_ledger", None)
         if isinstance(ledger, QueryLedger):
+            if self._access_is_blocked(now=self._scheduler_now()):
+                return
             ident = post.extra.get("linkedin_id")
             if isinstance(ident, str):
                 ledger.note_detail(ident, now=self._scheduler_now())
