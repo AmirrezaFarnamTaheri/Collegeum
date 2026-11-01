@@ -1,0 +1,63 @@
+name: verify-economic-misfit-official-rss-live
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/economic-misfit-official-category-feed-20261101
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Verify official category RSS read-only (do not publish)
+        run: |
+          PYTHONPATH=src python3 - <<'PY'
+          import asyncio
+          import json
+          from urllib.parse import urlsplit
+          from predoc_pipeline.boards.config import HttpConfig, load_board_sources
+          from predoc_pipeline.boards.collector import build_http
+          from predoc_pipeline.boards.scrapers.rss import RSSScraper
+
+          source = next(s for s in load_board_sources("config/sources.toml") if s.name == "economic_misfit")
+          assert source.type == "rss"
+          assert source.opt("urls") == [
+              "https://theeconomicmisfit.com/category/opportunity-alert/pre-docs/feed/"
+          ]
+
+          async def main():
+              async with build_http(HttpConfig(timeout=18, max_retries=0)) as http:
+                  scraper = RSSScraper(source, http)
+                  jobs, _ = await scraper.run()
+                  report = {
+                      "source": source.name,
+                      "entries": len(jobs),
+                      "unique_urls": len({job.url for job in jobs}),
+                      "fetch_errors": len(scraper.discovery_fetch_errors),
+                      "parse_errors": len(scraper.discovery_parse_errors),
+                  }
+                  print(json.dumps(report, sort_keys=True))
+                  assert not scraper.discovery_fetch_errors, "Official feed unreachable/denied"
+                  assert not scraper.discovery_parse_errors, "Official response is not parseable RSS"
+                  assert jobs, "Official category has no parseable job links; not verified empty"
+                  for job in jobs:
+                      parsed = urlsplit(job.url)
+                      assert parsed.scheme == "https" and parsed.hostname in {
+                          "theeconomicmisfit.com", "www.theeconomicmisfit.com"
+                      }, "Untrusted item host"
+                  assert len({job.url for job in jobs}) == len(jobs), "Duplicate feed entry URLs"
+
+          asyncio.run(main())
+          PY
