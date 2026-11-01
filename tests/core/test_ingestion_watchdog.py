@@ -263,6 +263,7 @@ class CadenceEvidenceTests(TestCase):
     def test_watchdog_summary_reports_cadence_without_dispatch_or_private_data(self):
         import contextlib
         import io
+
         from tools.ingestion_watchdog import Decision, _summary, audit_cadence
 
         now = datetime(2026, 11, 1, 13, 30, tzinfo=UTC)
