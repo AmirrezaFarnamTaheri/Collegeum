@@ -149,7 +149,6 @@ _ACADEMIC_COUNTRY_REGIONS = {
     "jordan": "middle_east",
     "lebanon": "middle_east",
     "iraq": "middle_east",
-    "egypt": "middle_east",
     "yemen": "middle_east",
     "palestine": "middle_east",
     "india": "asia",
