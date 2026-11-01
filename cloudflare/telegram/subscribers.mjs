@@ -1,4 +1,6 @@
 /** Private preferences. Delivery receipts remain in the encrypted Python journal. */
+import {ACADEMIC_REGIONS, REGION_LABELS, academicRegion} from './academic-regions.mjs';
+export {ACADEMIC_REGIONS, academicRegion} from './academic-regions.mjs';
 export const TOPICS = ['predoc', 'phd', 'postdoc', 'research', 'life_sciences_phd',
   'data_scientist', 'data_analyst', 'econ_consulting', 'research_analyst'];
 const ACADEMIC = TOPICS.slice(0, 4), CAREERS = TOPICS.slice(5);
@@ -31,9 +33,14 @@ const lookbackChoices = (days, fa, setting = false) => [[7, 14], [30, 60], [90]]
     })[value]}`,
     setting ? `sub:w:${value}` : `sub:p:latest:${value}:0`,
   )));
-export const matchesPreferences = (row, member) => Boolean(member &&
-  (row.category || row.kind) in member.topics &&
-  (!row.scope || row.scope in member.scopes));
+export const matchesPreferences = (row, member) => {
+  if (!member || !((row.category || row.kind) in member.topics)) return false;
+  if (row.scope && !(row.scope in member.scopes)) return false;
+  const regions = member.academic_regions || {};
+  if (ACADEMIC.includes(row.kind || row.category) && Object.keys(regions).length)
+    return academicRegion(row.country) in regions;
+  return true;
+};
 const LABELS = {
   en: ['Predoc / research assistant', 'PhD positions', 'Postdocs', 'Research staff',
     'Life Sciences PhD · Europe', 'Data science', 'Data analysis / BI',
@@ -69,14 +76,17 @@ const recentlyDiscovered = (value, days, now) => {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) && timestamp <= now && timestamp >= now - days * 86400000;
 };
-const fresh = () => ({topics: {}, scopes: {}, paused: false, language: 'en',
+const fresh = () => ({topics: {}, scopes: {}, academic_regions: {},
+  paused: false, language: 'en',
   delivery_mode: 'instant', daily_limit: 6, quiet_hours: false, timezone: 'UTC'});
 
 export function validPreferences(value) {
   if (value === null) return true;
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   if (Object.keys(value).some(k => !Object.keys(fresh()).includes(k))) return false;
-  for (const [field, allowed] of [['topics', TOPICS], ['scopes', ['iran', 'remote']]]) {
+  for (const [field, allowed] of [['topics', TOPICS], ['scopes', ['iran', 'remote']],
+    ['academic_regions', ACADEMIC_REGIONS]]) {
+    if (field === 'academic_regions' && value[field] === undefined) continue;
     if (!value[field] || typeof value[field] !== 'object' || Array.isArray(value[field])) return false;
     if (Object.entries(value[field]).some(([key, at]) => !allowed.includes(key) ||
       typeof at !== 'string' || !Number.isFinite(Date.parse(at)))) return false;
@@ -88,65 +98,101 @@ export function validPreferences(value) {
 
 export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOKBACK) {
   const m = member || fresh(), fa = m.language === 'fa';
+  const academicRegions = m.academic_regions || {};
+  const regionNames = Object.keys(academicRegions).map(region => REGION_LABELS[m.language][region]);
+  const regionSummary = regionNames.length ? regionNames.join(', ') :
+    (fa ? 'همه جهان' : 'Worldwide');
   const tr = (en, persian) => fa ? persian : en;
-  const parent = ['academic', 'careers', 'life_sciences', 'markets'].includes(page) ? 'subscriptions' :
-    ['display', 'history'].includes(page) ? 'more' : 'home';
+  if (page === 'markets') page = 'careers'; // Keep previously sent buttons usable.
+  const parent = page === 'academic_regions' ? 'academic' :
+    ['academic', 'careers', 'life_sciences'].includes(page) ? 'subscriptions' :
+      ['display', 'history'].includes(page) ? 'more' : 'home';
   const home = [button(parent === 'subscriptions' ? tr('← Subscriptions', '← اشتراک‌ها') :
     parent === 'more' ? tr('← Settings', '← تنظیمات') : tr('← Home', '← خانه'), `sub:p:${parent}`)];
   const link = (en, persian, page) => button(tr(en, persian), `sub:p:${page}`);
   let text, rows;
   if (page === 'subscriptions') {
-    const nAcademic = ACADEMIC.filter(key => key in m.topics).length;
-    const nCareers = CAREERS.filter(key => key in m.topics).length;
-    const nMarkets = Object.keys(m.scopes).length;
-    const nLife = 'life_sciences_phd' in m.topics ? 1 : 0;
-    text = tr('🧭 <b>Subscriptions</b>\n\nChoose your roles and markets. Changes save immediately.\n'
-      + `🎓 Academic ${nAcademic}/4 · 💼 Careers ${nCareers}/4\n`
-      + `🧬 Life Sciences ${nLife}/1 · 🌍 Markets ${nMarkets}/2\n\n`
-      + 'Job markets apply to career roles only; academic roles do not need one.',
-      '🧭 <b>اشتراک‌ها</b>\n\nموضوع‌ها و محدوده دلخواه را انتخاب کنید. تغییرات فوری ذخیره می‌شوند.\n'
-      + `🎓 دانشگاهی ${nAcademic}/4 · 💼 شغلی ${nCareers}/4\n`
-      + `🧬 علوم زیستی ${nLife}/1 · 🌍 محدوده‌ها ${nMarkets}/2\n\n`
-      + 'محدوده‌های شغلی فقط برای مشاغل هستند؛ فرصت‌های دانشگاهی به محدوده نیاز ندارند.');
-    if (nCareers && !nMarkets) text += tr(
-      '\n\n⚠️ Select at least one market to see career matches.',
-      '\n\n⚠️ برای دیدن مشاغل، دست‌کم یک محدوده را انتخاب کنید.');
-    rows = [[link(`🎓 Academic · ${nAcademic}/4`, `🎓 دانشگاهی · ${nAcademic}/4`, 'academic'),
-      link(`💼 Careers · ${nCareers}/4`, `💼 مشاغل · ${nCareers}/4`, 'careers')],
-      [link(`🧬 Life Sciences · ${nLife}/1`, `🧬 علوم زیستی · ${nLife}/1`, 'life_sciences'),
-        link(`🌍 Markets · ${nMarkets}/2`, `🌍 محدوده‌ها · ${nMarkets}/2`, 'markets')],
+    const a = ACADEMIC.filter(key => key in m.topics).length;
+    const c = CAREERS.filter(key => key in m.topics).length;
+    const n = Object.keys(m.scopes).length;
+    const life = Number('life_sciences_phd' in m.topics);
+    text = tr('🧭 <b>Edit subscriptions</b>\n\nSelect roles and their locations. Each tap saves immediately.\n\n' +
+      `🎓 Academic · ${a}/4\n` + 'Regions: ' + escape(regionSummary) + '\n\n' +
+      `💼 Careers · ${c}/4\nJob markets: ${n}/2 selected\n\n` +
+      `🧬 Life Sciences PhD · ${life ? 'On' : 'Off'}`,
+      '🧭 <b>ویرایش اشتراک‌ها</b>\n\nموضوع‌ها و منطقه‌ها را انتخاب کنید. هر تغییر فوری ذخیره می‌شود.\n\n' +
+      `🎓 دانشگاهی · ${a}/4\n` + 'مناطق: ' + escape(regionSummary) + '\n\n' +
+      `💼 شغلی · ${c}/4\nمحدوده مشاغل: ${n}/2 انتخاب‌شده\n\n` +
+      `🧬 دکتری علوم زیستی · ${life ? 'فعال' : 'خاموش'}`);
+    if (c && !n) text += tr(
+      '\n\n⚠️ Career alerts need at least one market.',
+      '\n\n⚠️ اعلان‌های شغلی به دست‌کم یک محدوده نیاز دارند.');
+    rows = [[link(`🎓 Academic · ${a}/4`, `🎓 دانشگاهی · ${a}/4`, 'academic'),
+      link(`💼 Careers + markets · ${c}/4`, `💼 مشاغل و محدوده · ${c}/4`, 'careers')],
+      [link(`🧬 Life Sciences · ${life}/1`, `🧬 علوم زیستی · ${life}/1`, 'life_sciences')],
       [link('🔎 View my matches', '🔎 فرصت‌های من', 'latest'),
         link('🗓 Match history', '🗓 بازه زمانی', 'history')]];
-  } else if (['academic', 'careers', 'life_sciences', 'markets'].includes(page)) {
-    const options = page === 'academic' ? ACADEMIC : page === 'careers' ? CAREERS :
-      page === 'life_sciences' ? ['life_sciences_phd'] : ['iran', 'remote'];
-    const field = page === 'markets' ? 'scopes' : 'topics';
-    text = page === 'academic' ? tr('<b>Academic roles</b>\n\nChoose roles. Predocs are before a PhD; research staff may need a completed PhD.',
-      '<b>فرصت‌های دانشگاهی</b>\n\nموضوع دلخواه را انتخاب کنید. پیشادکتری پیش از دکتری است؛ پژوهشگر حرفه‌ای ممکن است دکتری بخواهد.') :
-      page === 'markets' ? tr('<b>Job markets</b>\n\nChoose one or both markets for career alerts. Academic roles are not restricted by these markets.', '<b>محدوده مشاغل</b>\n\nبرای اعلان مشاغل یک یا هر دو محدوده را انتخاب کنید. این محدوده‌ها فرصت‌های دانشگاهی را محدود نمی‌کنند.') :
-      page === 'careers' ? tr('<b>Career roles</b>\n\nChoose roles, then a job market.', '<b>مشاغل</b>\n\nموضوع‌ها و سپس محدوده جستجو را انتخاب کنید.') :
-      tr('<b>Life Sciences PhD · Europe</b>\n\nToggle alerts for doctoral openings.', '<b>دکتری علوم زیستی · اروپا</b>\n\nاعلان فرصت‌های دکتری را روشن یا خاموش کنید.');
-    const count = options.filter(key => key in m[field]).length;
-    text += '\n\n' + tr(`Selected: ${count}/${options.length} · ☑ On · ☐ Off · Tap to change`,
-      `انتخاب‌شده: ${count}/${options.length} · ☑ فعال · ☐ غیرفعال · برای تغییر لمس کنید`);
-    if (page === 'careers' && !Object.keys(m.scopes).length) text += tr(
-      '\n\n⚠️ Choose a job market to enable career matches.',
-      '\n\n⚠️ برای دیدن مشاغل محدوده جستجو را انتخاب کنید.');
-    if (page === 'markets' && !CAREERS.some(key => key in m.topics)) text += tr(
-      '\n\nℹ️ Choose at least one Career role. Markets do not filter academic roles.',
-      '\n\nℹ️ دست‌کم یک موضوع شغلی انتخاب کنید. محدوده‌ها فرصت‌های دانشگاهی را محدود نمی‌کنند.');
-    rows = options.map(key => [button((key in m[field] ? '☑ ' : '☐ ') +
-      (key === 'iran' ? tr('Iran', 'ایران') : key === 'remote' ? tr('Worldwide remote', 'دورکاری جهانی') :
-        LABELS[m.language][TOPICS.indexOf(key)]), `sub:${field === 'topics' ? 't' : 'g'}:${key}`)]);
-    if (['academic', 'careers'].includes(page)) {
-      const all = options.every(key => key in m.topics);
-      rows.push([button(all ? tr('Clear all', 'پاک‌کردن همه') : tr('Select all', 'انتخاب همه'),
-        `sub:b:${page}:${all ? 'off' : 'on'}`)]);
+  } else if (page === 'academic_regions') {
+    const count = Object.keys(academicRegions).length;
+    text = tr('🌍 <b>Academic regions</b>\n\nFilter academic roles by location. '
+      + 'Choose any regions, or choose Worldwide to show every location. '
+      + 'An unspecified country appears only under Other / unspecified when filtered.',
+      '🌍 <b>مناطق دانشگاهی</b>\n\nمناطق دلخواه را انتخاب کنید. '
+      + '«همه جهان» تمام مناطق را نمایش می‌دهد. آگهی‌های بدون کشور مشخص فقط در «سایر / مکان نامشخص» نشان داده می‌شوند.');
+    text += '\n\n' + tr('Current: ', 'انتخاب فعلی: ') + escape(regionSummary) +
+      '\n' + tr(`Selected: ${count}/8`, `انتخاب‌شده: ${count}/۸`);
+    rows = [];
+    for (let i = 0; i < ACADEMIC_REGIONS.length; i += 2) {
+      rows.push(ACADEMIC_REGIONS.slice(i, i + 2).map(region =>
+        button((region in academicRegions ? '☑ ' : '☐ ') +
+          REGION_LABELS[m.language][region], `sub:r:${region}`)));
     }
-    if (page === 'careers') rows.push([link(
-      `🌍 Job markets · ${Object.keys(m.scopes).length}/2 →`,
-      `🌍 محدوده مشاغل · ${Object.keys(m.scopes).length}/2 ←`, 'markets')]);
-    rows.push([link('🔎 View my matches', '🔎 فرصت‌های من', 'latest'), link('🗓 History', '🗓 بازه زمانی', 'history')]);
+    rows.push([button(`${count ? '☐' : '☑'} ${tr('Worldwide (clear filters)', 'همه جهان (حذف فیلتر)')}`,
+      'sub:r:all')]);
+    rows.push([link('← Academic roles', '← فرصت‌های دانشگاهی', 'academic'),
+      link('🔎 View my matches', '🔎 فرصت‌های من', 'latest')]);
+  } else if (['academic', 'careers', 'life_sciences'].includes(page)) {
+    const options = page === 'academic' ? ACADEMIC :
+      page === 'careers' ? CAREERS : ['life_sciences_phd'];
+    const count = options.filter(key => key in m.topics).length;
+    text = page === 'academic'
+      ? tr('🎓 <b>Academic roles</b>\n\nChoose your academic stages. Region filters below are independent of career markets.',
+        '🎓 <b>فرصت‌های دانشگاهی</b>\n\nموضوع‌های دانشگاهی و سپس منطقه‌های دلخواه را انتخاب کنید. این فیلتر مستقل از مشاغل است.')
+      : page === 'careers'
+        ? tr('💼 <b>Career roles + job markets</b>\n\nSelect your career roles and the job markets in one place.',
+          '💼 <b>مشاغل و محدوده‌ها</b>\n\nموضوع‌ها و محدوده‌های شغلی را در همین صفحه انتخاب کنید.')
+        : tr('🧬 <b>Life Sciences PhD · Continental Europe</b>\n\nThis specialist feed remains Europe-only (excluding the UK), independent of Academic region filters.',
+          '🧬 <b>دکتری علوم زیستی · اروپای قاره‌ای</b>\n\nاین منبع تخصصی فقط اروپای قاره‌ای است (بدون بریتانیا) و از فیلتر مناطق دانشگاهی مستقل است.');
+    text += '\n\n' + tr(`Roles selected: ${count}/${options.length}`,
+      `موضوع‌های انتخاب‌شده: ${count}/${options.length}`);
+    rows = options.map(key => [button((key in m.topics ? '☑ ' : '☐ ') +
+      LABELS[m.language][TOPICS.indexOf(key)], `sub:t:${key}`)]);
+    if (page !== 'life_sciences') {
+      const all = options.every(key => key in m.topics);
+      rows.push([button(all ? tr('Clear roles', 'حذف همه موضوع‌ها') :
+        tr('Select all roles', 'انتخاب همه موضوع‌ها'),
+      `sub:b:${page}:${all ? 'off' : 'on'}`)]);
+    }
+    if (page === 'academic') {
+      text += '\n\n' + tr('Academic regions: ', 'مناطق دانشگاهی: ') + escape(regionSummary);
+      rows.push([link('🌍 Regions: ' + regionSummary.slice(0, 48),
+        '🌍 مناطق: ' + regionSummary.slice(0, 48), 'academic_regions')]);
+    }
+    if (page === 'careers') {
+      const n = Object.keys(m.scopes).length;
+      text += '\n\n' + tr(`Job markets: ${n}/2 selected`,
+        `محدوده مشاغل: ${n}/2 انتخاب‌شده`);
+      for (const [scope, en, persian] of [
+        ['iran', '🇮🇷 Iran-based', '🇮🇷 داخل ایران'],
+        ['remote', '🌐 Worldwide remote', '🌐 دورکاری جهانی'],
+      ]) rows.push([button((scope in m.scopes ? '☑ ' : '☐ ') +
+        tr(en, persian), `sub:g:${scope}`)]);
+      if (count && !n) text += tr(
+        '\n\n⚠️ Select at least one market to see career matches.',
+        '\n\n⚠️ برای دیدن مشاغل باید دست‌کم یک محدوده انتخاب کنید.');
+    }
+    rows.push([link('🔎 View my matches', '🔎 فرصت‌های من', 'latest'),
+      link('🗓 History', '🗓 بازه زمانی', 'history')]);
   } else if (page === 'delivery') {
     text = tr('<b>Alert delivery</b>', '<b>ارسال اعلان‌ها</b>') + '\n\n' +
       tr('Changes apply at the next scheduled alert run. Individual alerts are sent when new matches are collected.',
