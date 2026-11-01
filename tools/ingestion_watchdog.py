@@ -248,23 +248,23 @@ def _summary(
     report = os.environ.get("GITHUB_STEP_SUMMARY", "")
     if report:
         with open(report, "a", encoding="utf-8") as fh:
-            fh.write("### Published ingestion freshness\\n\\n")
-            fh.write(f"- Health state: **{decision.reason}**\\n")
-            fh.write(f"- Age: **{age}** (threshold: 8h)\\n")
-            fh.write(f"- Dispatch: **{action}**\\n")
+            fh.write("### Published ingestion freshness\n\n")
+            fh.write(f"- Health state: **{decision.reason}**\n")
+            fh.write(f"- Age: **{age}** (threshold: 8h)\n")
+            fh.write(f"- Dispatch: **{action}**\n")
             fh.write(
                 "- This is not a publication success signal; "
-                "check the ensuing pipeline run.\\n"
+                "check the ensuing pipeline run.\n"
             )
             if cadence is not None:
-                fh.write(f"- Schedule audit: **{cadence_text}**\\n")
+                fh.write(f"- Schedule audit: **{cadence_text}**\n")
                 if cadence.verified and cadence.missing_ticks:
                     fh.write("- No scheduled run observed for mature slots: "
-                             + ", ".join(cadence.missing_ticks) + "\\n")
+                             + ", ".join(cadence.missing_ticks) + "\n")
                 fh.write(
                     "- Run creation timestamps do not measure job queueing or "
                     "prove GitHub dropped a cron event. Manual recovery runs "
-                    "are not counted as scheduled events.\\n"
+                    "are not counted as scheduled events.\n"
                 )
 
 def main(argv: list[str] | None = None) -> int:
