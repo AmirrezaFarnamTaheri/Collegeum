@@ -99,6 +99,7 @@ test('Latest matches offers all five rolling lookbacks with safe filtering', asy
   const career = {category: 'data_analyst', scope: 'remote', title: 'Career age 25',
     url: 'https://example.org/career', employer: 'Research Group',
     first_seen_at: at(25), availability: 'open'};
+  values.set('page_size:42', 8);
   values.set('career_listings', [career, {...career, scope: 'iran',
     title: 'Wrong market', url: 'https://example.org/iran'}]);
   const sent = [];
@@ -143,7 +144,7 @@ test('Latest lookback survives pagination and refuses unapproved windows', async
     b.callback_data === 'sub:p:latest:90:1'));
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:90:1'}, 'archive:1');
   assert.match(sent.at(-1).text, /last 90 days/i);
-  assert.match(sent.at(-1).text, /2\/3/);
+  assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b => b.text === '2/3'));
   assert.equal((sent.at(-1).text.match(/<a href=/g) || []).length, 4);
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:999:0'}, 'archive:bad');
   assert.doesNotMatch(sent.at(-1).text, /Latest matches/);
