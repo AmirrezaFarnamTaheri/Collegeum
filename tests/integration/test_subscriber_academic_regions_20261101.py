@@ -89,3 +89,17 @@ def test_legacy_python_menu_has_unified_career_and_academic_region_controls() ->
     assert "Academic regions" in regions
     assert "sub:r:europe" in region_actions
     assert "sub:r:all" in region_actions
+
+
+def test_encrypted_store_reset_to_worldwide_keeps_fresh_opt_in_timestamp(settings) -> None:
+    from predoc_pipeline.publish.feedback import FeedbackStore
+
+    store = FeedbackStore.from_settings(settings)
+    store.toggle_subscription(202, "topics", "predoc")
+    store.toggle_academic_region(202, "europe")
+    store.toggle_academic_region(202, "europe")
+    current = store.subscriber(202)
+    assert current is not None
+    assert set(current['academic_regions']) == {'all'}
+    assert not eligible(current, "predoc", "", _ts(1), country="Germany")
+    assert not current['deliveries']  # Regional toggles never create delivery receipts.
