@@ -1,7 +1,7 @@
 # Collegeum open-issues acceptance register — 1 November 2026
 
-This is a point-in-time, read-only evidence reconciliation for [#32](../issues/32),
-[#52](../issues/52), [#56](../issues/56), and [#80](../issues/80).
+This is a point-in-time, read-only evidence reconciliation for [#32](https://github.com/AmirrezaFarnamTaheri/Collegeum/issues/32),
+[#52](https://github.com/AmirrezaFarnamTaheri/Collegeum/issues/52), [#56](https://github.com/AmirrezaFarnamTaheri/Collegeum/issues/56), and [#80](https://github.com/AmirrezaFarnamTaheri/Collegeum/issues/80).
 GitHub PR/issue links are on
 [Collegeum](https://github.com/AmirrezaFarnamTaheri/Collegeum/issues).
 This file does **not** claim that every vacancy is active, that scheduled
