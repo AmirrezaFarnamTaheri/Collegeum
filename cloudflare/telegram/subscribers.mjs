@@ -530,8 +530,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
       ? {title: 65, institution: 50, country: 24}
       : {title: 110, institution: 90, country: 50};
     const entries = matches.slice(current * size, current * size + size).map((r, index) =>
-      `${current * size + index + 1}. <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, limits.title))}</a>\n` +
-      escape(String(r.institution || 'Employer unknown').slice(0, limits.institution)) +
+      `${current * size + index + 1}. ${r.category === 'life_sciences_phd' ? '🧬' : r.category ? '💼' : '🎓'} <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, limits.title))}</a>\n` +
+      '🏛 ' + escape(String(r.institution || 'Employer unknown').slice(0, limits.institution)) +
       (r.country ? ` · ${escape(String(r.country).slice(0, limits.country))}` : '') +
       (r.deadline ? `\n${fa ? 'مهلت' : 'Deadline'}: ${escape(String(r.deadline).slice(0, 10))}` : '') +
       (r.category && r.availability !== 'active'
@@ -548,10 +548,10 @@ export async function subscriberUpdate(bot, message, callback, key) {
           'Choose a job market (Iran or worldwide remote) to see career matches.')
         : (fa ? 'در این بازه فرصت منطبق پیدا نشد. بازه ۳ ماهه یا موضوع‌های دیگر را امتحان کنید.' :
           'No matches in this window. Try 3 months or broaden your selected roles.');
-    const header = (fa ? '<b>فرصت‌های من</b>' : '<b>My matches</b>') + '\n\n' +
-      (fa ? 'موضوع‌ها و محدوده‌های انتخاب‌شده' : 'Your selected roles and career markets') +
-      ' · ' + lookbackLabel(days, fa) + '\n' +
-      (fa ? `${matches.length} مورد منطبق` : `${matches.length} matches`) + '\n' +
+    const header = (fa ? '🔎 <b>فرصت‌های من</b>' : '🔎 <b>My matches</b>') + '\n' +
+      (fa ? `<b>${matches.length} فرصت</b> · ${lookbackLabel(days, fa)}`
+        : `<b>${matches.length} positions</b> · ${lookbackLabel(days, fa)}`) + '\n' +
+      (fa ? `صفحه ${current + 1} از ${totalPages}` : `Page ${current + 1} of ${totalPages}`) + '\n' +
       (fa ? `📦 فهرست: ${rows.length} دانشگاهی · ${careerInventory.length} شغلی`
         : `📦 Cached inventory: ${rows.length} academic · ${careerInventory.length} career records`);
     const footer = fa ? 'ℹ️ مشاهده آگهی به معنی باز بودن یا تأمین مالی تأییدشده نیست.' :
