@@ -435,9 +435,13 @@ export class TelegramBot {
     page = Math.min(Math.max(0, page), count - 1);
     const chunk = selected.slice(page * size, page * size + size);
     const labels = {positions: "My academic matches", valid: "Saved", applied: "Applications", hidden: "Hidden", new: "New academic matches", closing: "Academic matches closing soon", search: `Search my academic matches: ${query}`};
-    const blocks = chunk.map((r, i) => `<b>${page * size + i + 1}. ${esc(r.title.slice(0, 110))}</b>\n` +
-      `🏛 ${esc(r.institution.slice(0, 90))} · ${esc([r.city, r.country].filter(Boolean).join(", ").slice(0, 90) || "Location unstated")}\n` +
-      `⏳ ${esc(r.deadline ? r.deadline.slice(0, 10) : r.deadline_note?.slice(0, 70) || "Deadline unstated")} · <a href="${esc(safeUrl(r.apply_url))}">Open advert</a>`);
+    // Compact twelve-item pages to avoid exceeding Telegram's text limit.
+    const limits = size === 12
+      ? {title: 68, institution: 48, location: 50, deadline: 42}
+      : {title: 110, institution: 90, location: 90, deadline: 70};
+    const blocks = chunk.map((r, i) => `<b>${page * size + i + 1}. ${esc(r.title.slice(0, limits.title))}</b>\n` +
+      `🏛 ${esc(r.institution.slice(0, limits.institution))} · ${esc([r.city, r.country].filter(Boolean).join(", ").slice(0, limits.location) || "Location unstated")}\n` +
+      `⏳ ${esc(r.deadline ? r.deadline.slice(0, 10) : r.deadline_note?.slice(0, limits.deadline) || "Deadline unstated")} · <a href="${esc(safeUrl(r.apply_url))}">Open advert</a>`);
     const buttons = chunk.map((r, i) => [
       {text: `↗ ${page * size + i + 1} Details`, callback_data: `detail|${r.url_hash.slice(0, 16)}`},
       ...this.feedback(r, marks.get(r.url_hash), page * size + i + 1),
