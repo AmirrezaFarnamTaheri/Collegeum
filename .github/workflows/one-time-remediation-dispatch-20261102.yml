@@ -74,7 +74,120 @@ jobs:
               for gate in ci.yml refresh-release.yml; do
                 current="$(workflow_runs "$gate" | jq -r --arg sha "$GITHUB_SHA" \
                   '[.workflow_runs[] | select(.event == "push" and .head_branch == "main" and .head_sha == $sha)] | sort_by(.created_at) | last | [.id // 0, .status // "missing", .conclusion // "none"] | @tsv')"
-                IFS=$'\t' read -r _ state conclusion <<< "$current"
+                IFS=
+                  completed/success) ;;
+                  completed/*) fatal "Integrated $gate failed ($current)" ;;
+                  queued/*|pending/*|in_progress/*|waiting/*|requested/*|missing/*) ready=0 ;;
+                  *) fatal "Unrecognized integrated $gate gate state ($current)" ;;
+                esac
+              done
+              if [ "$ready" = 1 ]; then notice 'Integrated Python, Worker and source build CI passed'; return 0; fi
+              sleep 20
+            done
+            fatal 'Exact-main CI did not complete within the gate'
+          }
+
+          wait_run() {
+            local workflow="$1" id="$2" job="$3" attempts status conclusion actual
+            for attempts in $(seq 1 420); do
+              status="$(gh api "repos/$repo/actions/runs/$id" --jq .status)"
+              if [ "$status" = completed ]; then
+                conclusion="$(gh api "repos/$repo/actions/runs/$id" --jq .conclusion)"
+                [ "$conclusion" = success ] || fatal "$workflow run $id concluded $conclusion"
+                actual="$(gh api "repos/$repo/actions/runs/$id/jobs?per_page=100" --jq ".jobs[] | select(.name == \"$job\") | .conclusion")"
+                [ "$actual" = success ] || fatal "$workflow run $id: required $job job did not pass"
+                notice "$workflow run $id completed successfully ($job job)"
+                return 0
+              fi
+              case "$status" in queued|in_progress|pending|requested|waiting) ;; *) fatal "Unexpected $workflow run state $status" ;; esac
+              sleep 20
+            done
+            fatal "$workflow run $id exceeded acceptance deadline"
+          }
+
+          dispatch_and_wait() {
+            local workflow="$1" job="$2" id old_id new_id
+            shift 2
+            trusted_head
+            local before
+            before="$(mktemp)"
+            workflow_runs "$workflow" | jq -r '.workflow_runs[] | select(.event == "workflow_dispatch" and .head_branch == "main") | .id' > "$before"
+            gh workflow run "$workflow" --ref main "$@"
+            id=""
+            for attempts in $(seq 1 90); do
+              new_id="$(workflow_runs "$workflow" | jq -r '.workflow_runs[] | select(.event == "workflow_dispatch" and .head_branch == "main") | .id' | grep -vxFf "$before" || true)"
+              if [ -n "$new_id" ]; then
+                if [ "$(printf '%s\n' "$new_id" | wc -l)" -ne 1 ]; then fatal "Ambiguous $workflow dispatches"; fi
+                id="$new_id"
+                break
+              fi
+              sleep 10
+            done
+            rm -f "$before"
+            [[ "$id" =~ ^[0-9]+$ ]] || fatal "$workflow dispatch did not produce a run"
+            notice "$workflow dispatch created run $id"
+            wait_run "$workflow" "$id" "$job"
+            DISPATCHED_RUN="$id"
+          }
+
+          echo '### Collegeum guarded remediation acceptance' >> "$GITHUB_STEP_SUMMARY"
+          [ "$repo" = 'AmirrezaFarnamTaheri/Collegeum' ] || fatal 'Wrong repository'
+          [ "$GITHUB_REF" = refs/heads/main ] || fatal 'Untrusted branch'
+          [ "$(head_sha)" = "$GITHUB_SHA" ] || fatal 'Release HEAD moved before preflight'
+          wait_integrated_checks
+
+          # Don't change webhook registration. Inspect current account and
+          # delivery first; the deployment workflow verifies secrets/account.
+          dispatch_and_wait telegram-worker.yml inspect -f inspect_only=true -f activate_webhook=false
+          dispatch_and_wait pipeline.yml run -f dry_run=true
+          [ "$ENABLE_TELEGRAM_SYNC" = true ] || fatal 'Private Telegram sync is disabled; do not deploy a disconnected bot'
+          [ "$TELEGRAM_WEBHOOK_ENABLED" = true ] || fatal 'Telegram webhook mode is not enabled; cannot verify bot activation'
+          [ -n "$TELEGRAM_WORKER_URL" ] || fatal 'Missing configured Telegram Worker URL'
+          [[ "$TELEGRAM_WORKER_URL" == https://* ]] || fatal 'Configured Worker URL must be HTTPS'
+          dispatch_and_wait telegram-worker.yml deploy -f inspect_only=false -f activate_webhook=false
+          curl --fail --silent --show-error --max-time 20 \
+            "${TELEGRAM_WORKER_URL%/}/health" | jq -e '.service == "collegeum-telegram"' > /dev/null || fatal 'Deployed Worker health endpoint is unavailable'
+
+          # Prefer an already queued source-bearing production run to avoid
+          # duplicate dispatch and duplicate subscriber/publication delivery.
+          trusted_head
+          active="$(workflow_runs pipeline.yml | jq -r '[.workflow_runs[] | select((.event == "schedule" or .event == "workflow_dispatch") and (.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting" or .status == "requested"))] | sort_by(.created_at) | last | .id // empty')"
+          if [ -n "$active" ]; then
+            notice "Using already queued production ingestion $active; no duplicate dispatch"
+            wait_run pipeline.yml "$active" run
+            live="$active"
+          else
+            dispatch_and_wait pipeline.yml run -f dry_run=false
+            live="$DISPATCHED_RUN"
+          fi
+          ongoing_sync="$(workflow_runs telegram.yml | jq -r '[.workflow_runs[] | select((.event == "schedule" or .event == "workflow_dispatch") and (.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting" or .status == "requested"))] | sort_by(.created_at) | last | .id // empty')"
+          if [ -n "$ongoing_sync" ]; then
+            notice "Using existing Telegram sync run $ongoing_sync; no duplicate dispatch"
+            wait_run telegram.yml "$ongoing_sync" sync
+          else
+            dispatch_and_wait telegram.yml sync
+          fi
+
+          # The workflow badge alone is not an ingestion acceptance result.
+          # Check the published JSON checkpoint and the actual source outcome.
+          health="$(gh api "repos/$repo/contents/docs/data/health.json" --jq .content | base64 -d)"
+          actual="$(printf '%s' "$health" | jq -r '.last_run.run_id // empty')"
+          [ "$actual" = "$live" ] || fatal "Production run $live not persisted in published health (saw $actual)"
+          printf '%s' "$health" | jq -e '.last_run.outcome == "ok" and .last_run.source_errors == 0 and .last_run.sources.failed == 0 and .last_run.sources.partial == 0' > /dev/null || fatal 'Source collection remained partially degraded'
+          public="$(gh api "repos/$repo/contents/docs/data/listings.json" --jq .content | base64 -d)"
+          printf '%s' "$public" | jq -e '.listings | all(.[]; (.apply_url | type == "string" and startswith("https://")) and (.id != 250 or (.apply_url | startswith("https://www.jobs.ac.uk/job/DTI904/"))))' > /dev/null || fatal 'Public listings include incompatible application URLs'
+          notice "Published health and HTTPS dashboard accepted for production run $live"
+\t' read -r run_id state conclusion <<< "$current"
+                # Individual CI failures may be visible before GitHub marks
+                # the whole run completed (other matrix jobs can be queued).
+                # Stop on real failure, never wait or dispatch production.
+                if [ "$gate" = ci.yml ] && [[ "$run_id" =~ ^[1-9][0-9]*$ ]]; then
+                  failed_jobs="$(gh api "repos/$repo/actions/runs/$run_id/jobs?per_page=100" |
+                    jq -r '.jobs[] | select(.conclusion == "failure" or
+                      .conclusion == "cancelled" or .conclusion == "timed_out" or
+                      .conclusion == "action_required") | .name')"
+                  [ -z "$failed_jobs" ] || fatal "Integrated $gate failed job(s): $failed_jobs"
+                fi
                 case "$state/$conclusion" in
                   completed/success) ;;
                   completed/*) fatal "Integrated $gate failed ($current)" ;;
