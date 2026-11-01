@@ -48,6 +48,16 @@ const LABELS = {
   fa: ['پیشادکتری / دستیار پژوهشی', 'فرصت دکتری', 'پسادکتری', 'پژوهشگر حرفه‌ای',
     'دکتری علوم زیستی · اروپا', 'علم داده', 'تحلیل داده / BI', 'مشاوره اقتصادی', 'تحلیل پژوهش و اقتصاد'],
 };
+// Two-column role controls fit small Telegram screens; the description above
+// the buttons retains the distinction between predoc, PhD and staff roles.
+const SHORT_ROLE_LABELS = {
+  en: ['Predoc / RA', 'PhD positions', 'Postdocs', 'Research staff',
+    'Life Sciences PhD', 'Data science', 'Data analysis / BI',
+    'Econ consulting', 'Research analyst'],
+  fa: ['پیشادکتری / دستیار', 'فرصت دکتری', 'پسادکتری', 'پژوهشگر حرفه‌ای',
+    'دکتری علوم زیستی', 'علم داده', 'تحلیل داده / BI',
+    'مشاوره اقتصادی', 'تحلیلگر پژوهش'],
+};
 const escape = text => String(text).replace(/[&<>"']/g, c =>
   ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 const button = (text, data) => ({text, callback_data: data});
@@ -118,25 +128,33 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     const n = Object.keys(m.scopes).length;
     const marketSummary = [
       m.scopes.iran ? tr('Iran', 'ایران') : '',
-      m.scopes.remote ? tr('Worldwide remote', 'دورکاری جهانی') : '',
-    ].filter(Boolean).join(' + ') || tr('Not selected', 'انتخاب نشده');
+      m.scopes.remote ? tr('Remote', 'دورکاری') : '',
+    ].filter(Boolean).join(' · ') || tr('Not selected', 'انتخاب نشده');
     const life = Number('life_sciences_phd' in m.topics);
-    text = tr('🧭 <b>Edit subscriptions</b>\n\nSelect roles and their locations. Each tap saves immediately.\n\n' +
-      `🎓 Academic · ${a}/4\n` + 'Regions: ' + escape(regionSummary) + '\n\n' +
-      `💼 Careers · ${c}/4\nJob markets: ${n}/2 · ${marketSummary}\n\n` +
-      `🧬 Life Sciences PhD · ${life ? 'On' : 'Off'}`,
-      '🧭 <b>ویرایش اشتراک‌ها</b>\n\nموضوع‌ها و منطقه‌ها را انتخاب کنید. هر تغییر فوری ذخیره می‌شود.\n\n' +
-      `🎓 دانشگاهی · ${a}/4\n` + 'مناطق: ' + escape(regionSummary) + '\n\n' +
-      `💼 شغلی · ${c}/4\nمحدوده مشاغل: ${n}/2 · ${marketSummary}\n\n` +
-      `🧬 دکتری علوم زیستی · ${life ? 'فعال' : 'خاموش'}`);
+    text = tr(
+      '🧭 <b>Edit subscriptions</b>\n<i>Changes save as you tap.</i>\n\n' +
+      `<b>🎓 Academic</b> · ${a}/4 selected\n` +
+      '🌍 ' + escape(regionSummary) + '\n\n' +
+      `<b>💼 Careers</b> · ${c}/4 selected\n` +
+      `Job markets · ${n}/2 · ${escape(marketSummary)}\n\n` +
+      `<b>🧬 Life Sciences</b> · ${life ? 'On' : 'Off'}`,
+      '🧭 <b>ویرایش اشتراک‌ها</b>\n<i>هر انتخاب فوری ذخیره می‌شود.</i>\n\n' +
+      `<b>🎓 دانشگاهی</b> · ${a}/۴ انتخاب‌شده\n` +
+      '🌍 ' + escape(regionSummary) + '\n\n' +
+      `<b>💼 مشاغل</b> · ${c}/۴ انتخاب‌شده\n` +
+      `محدوده‌های شغلی · ${n}/۲ · ${escape(marketSummary)}\n\n` +
+      `<b>🧬 علوم زیستی</b> · ${life ? 'فعال' : 'خاموش'}`
+    );
     if (c && !n) text += tr(
-      '\n\n⚠️ Career alerts need at least one market.',
-      '\n\n⚠️ اعلان‌های شغلی به دست‌کم یک محدوده نیاز دارند.');
-    rows = [[link(`🎓 Academic · ${a}/4`, `🎓 دانشگاهی · ${a}/4`, 'academic'),
-      link(`💼 Careers + markets · ${c}/4`, `💼 مشاغل و محدوده · ${c}/4`, 'careers')],
-      [link(`🧬 Life Sciences · ${life}/1`, `🧬 علوم زیستی · ${life}/1`, 'life_sciences')],
-      [link('🔎 View my matches', '🔎 فرصت‌های من', 'latest'),
-        link('🗓 Match history', '🗓 بازه زمانی', 'history')]];
+      '\n\n⚠️ Choose a market to enable career matches.',
+      '\n\n⚠️ برای دیدن مشاغل، یک محدوده را انتخاب کنید.');
+    rows = [
+      [link(`🎓 Academic · ${a}/4`, `🎓 دانشگاهی · ${a}/۴`, 'academic'),
+        link(`💼 Careers · ${c}/4`, `💼 مشاغل · ${c}/۴`, 'careers')],
+      [link('🧬 Life Sciences', '🧬 علوم زیستی', 'life_sciences')],
+      [link('🔎 Browse my matches', '🔎 مشاهده فرصت‌ها', 'latest')],
+      [link('🗓 History settings', '🗓 تنظیم بازه زمانی', 'history')],
+    ];
   } else if (page === 'academic_regions') {
     const count = Object.keys(academicRegions).filter(region => region !== 'all').length;
     text = tr('🌍 <b>Academic regions</b>\n\nFilter academic roles by location. '
