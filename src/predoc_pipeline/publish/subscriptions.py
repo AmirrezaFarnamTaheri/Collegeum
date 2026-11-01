@@ -32,6 +32,192 @@ CAREER_TOPICS = frozenset(
     ("data_scientist", "data_analyst", "econ_consulting", "research_analyst")
 )
 CAREER_SCOPES = {"iran": "🇮🇷 Iran-based jobs", "remote": "🌍 Worldwide-remote jobs"}
+ACADEMIC_REGIONS = frozenset((
+    "north_america",
+    "latin_america",
+    "europe",
+    "middle_east",
+    "asia",
+    "oceania",
+    "africa",
+))
+ACADEMIC_TOPICS = frozenset(("predoc", "phd", "postdoc", "research"))
+_ACADEMIC_COUNTRY_REGIONS = {
+    "us": "north_america",
+    "usa": "north_america",
+    "unitedstates": "north_america",
+    "unitedstatesofamerica": "north_america",
+    "america": "north_america",
+    "canada": "north_america",
+    "ca": "north_america",
+    "can": "north_america",
+    "mexico": "latin_america",
+    "mx": "latin_america",
+    "brazil": "latin_america",
+    "br": "latin_america",
+    "argentina": "latin_america",
+    "chile": "latin_america",
+    "colombia": "latin_america",
+    "peru": "latin_america",
+    "costarica": "latin_america",
+    "ecuador": "latin_america",
+    "uruguay": "latin_america",
+    "paraguay": "latin_america",
+    "venezuela": "latin_america",
+    "bolivia": "latin_america",
+    "panama": "latin_america",
+    "guatemala": "latin_america",
+    "cuba": "latin_america",
+    "dominicanrepublic": "latin_america",
+    "unitedkingdom": "europe",
+    "uk": "europe",
+    "gb": "europe",
+    "greatbritain": "europe",
+    "england": "europe",
+    "scotland": "europe",
+    "wales": "europe",
+    "northernireland": "europe",
+    "ireland": "europe",
+    "germany": "europe",
+    "de": "europe",
+    "france": "europe",
+    "fr": "europe",
+    "netherlands": "europe",
+    "nl": "europe",
+    "belgium": "europe",
+    "be": "europe",
+    "switzerland": "europe",
+    "ch": "europe",
+    "austria": "europe",
+    "at": "europe",
+    "italy": "europe",
+    "it": "europe",
+    "spain": "europe",
+    "es": "europe",
+    "portugal": "europe",
+    "pt": "europe",
+    "denmark": "europe",
+    "dk": "europe",
+    "norway": "europe",
+    "no": "europe",
+    "sweden": "europe",
+    "se": "europe",
+    "finland": "europe",
+    "fi": "europe",
+    "iceland": "europe",
+    "is": "europe",
+    "poland": "europe",
+    "pl": "europe",
+    "czechrepublic": "europe",
+    "czechia": "europe",
+    "cz": "europe",
+    "slovakia": "europe",
+    "hungary": "europe",
+    "hu": "europe",
+    "romania": "europe",
+    "bulgaria": "europe",
+    "croatia": "europe",
+    "slovenia": "europe",
+    "estonia": "europe",
+    "latvia": "europe",
+    "lithuania": "europe",
+    "luxembourg": "europe",
+    "greece": "europe",
+    "cyprus": "europe",
+    "malta": "europe",
+    "serbia": "europe",
+    "bosniaandherzegovina": "europe",
+    "ukraine": "europe",
+    "moldova": "europe",
+    "iran": "middle_east",
+    "ir": "middle_east",
+    "unitedarabemirates": "middle_east",
+    "uae": "middle_east",
+    "ae": "middle_east",
+    "saudiarabia": "middle_east",
+    "sa": "middle_east",
+    "israel": "middle_east",
+    "il": "middle_east",
+    "turkey": "middle_east",
+    "turkiye": "middle_east",
+    "tr": "middle_east",
+    "qatar": "middle_east",
+    "qa": "middle_east",
+    "bahrain": "middle_east",
+    "kuwait": "middle_east",
+    "oman": "middle_east",
+    "jordan": "middle_east",
+    "lebanon": "middle_east",
+    "iraq": "middle_east",
+    "yemen": "middle_east",
+    "palestine": "middle_east",
+    "india": "asia",
+    "in": "asia",
+    "china": "asia",
+    "cn": "asia",
+    "japan": "asia",
+    "jp": "asia",
+    "southkorea": "asia",
+    "korea": "asia",
+    "republicofkorea": "asia",
+    "kr": "asia",
+    "taiwan": "asia",
+    "tw": "asia",
+    "singapore": "asia",
+    "sg": "asia",
+    "malaysia": "asia",
+    "my": "asia",
+    "indonesia": "asia",
+    "id": "asia",
+    "thailand": "asia",
+    "th": "asia",
+    "vietnam": "asia",
+    "vn": "asia",
+    "pakistan": "asia",
+    "pk": "asia",
+    "bangladesh": "asia",
+    "nepal": "asia",
+    "srilanka": "asia",
+    "philippines": "asia",
+    "ph": "asia",
+    "hongkong": "asia",
+    "hk": "asia",
+    "kazakhstan": "asia",
+    "uzbekistan": "asia",
+    "mongolia": "asia",
+    "australia": "oceania",
+    "au": "oceania",
+    "newzealand": "oceania",
+    "nz": "oceania",
+    "fiji": "oceania",
+    "papuanewguinea": "oceania",
+    "southafrica": "africa",
+    "za": "africa",
+    "nigeria": "africa",
+    "ng": "africa",
+    "kenya": "africa",
+    "ke": "africa",
+    "ghana": "africa",
+    "morocco": "africa",
+    "tunisia": "africa",
+    "algeria": "africa",
+    "ethiopia": "africa",
+    "uganda": "africa",
+    "tanzania": "africa",
+    "rwanda": "africa",
+    "senegal": "africa",
+    "egypt": "africa",
+}
+
+def academic_region(country: str | None) -> str:
+    """Map a verified country name or code to a broad region; never infer from city."""
+    import unicodedata
+    value = "".join(
+        ch.lower() for ch in unicodedata.normalize("NFKD", str(country or ""))
+        if ch.isascii() and ch.isalnum()
+    )
+    return _ACADEMIC_COUNTRY_REGIONS.get(value, "unknown")
+
 MAX_PER_USER = 4
 MAX_TOTAL = 24
 
@@ -86,7 +272,7 @@ def _instant(value: str) -> datetime | None:
 
 
 def eligible(member: dict[str, Any], category: str, scope: str,
-             published_at: str) -> bool:
+             published_at: str, *, country: str = "") -> bool:
     """A new selection never backfills old jobs or another user's interests."""
     choice_at = _instant(member.get("topics", {}).get(category, ""))
     posted_at = _instant(published_at)
@@ -97,14 +283,27 @@ def eligible(member: dict[str, Any], category: str, scope: str,
         if scope_at is None:
             return False
         choice_at = max(choice_at, scope_at)
+    if category in ACADEMIC_TOPICS:
+        regions = member.get("academic_regions") or {}
+        if regions:
+            region = "all" if "all" in regions else academic_region(country)
+            region_at = _instant(regions.get(region, ""))
+            if region_at is None:
+                return False
+            choice_at = max(choice_at, region_at)
     return posted_at >= choice_at
 
 
-def selected(member: dict[str, Any], category: str, scope: str) -> bool:
-    """Preview still enforces selected topics/markets, just not the opt-in date."""
-    return category in member.get("topics", {}) and (
-        not scope or scope in member.get("scopes", {})
-    )
+def selected(member: dict[str, Any], category: str, scope: str,
+             *, country: str = "") -> bool:
+    """Preview respects chosen academic regions and career markets."""
+    if category not in member.get("topics", {}):
+        return False
+    if scope and scope not in member.get("scopes", {}):
+        return False
+    regions = member.get("academic_regions") or {}
+    return (not (category in ACADEMIC_TOPICS and regions)
+            or "all" in regions or academic_region(country) in regions)
 
 
 LOOKBACK_DAYS = (7, 14, 30, 60, 90)
@@ -134,9 +333,10 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
         when = str(row["published_at"] or "")
         parsed = _instant(when)
         kind = Router.kind_for_row(row)
-        if parsed is None or parsed < cutoff or not selected(member, kind, ""):
+        if (parsed is None or parsed < cutoff or
+                not selected(member, kind, "", country=row["country"])):
             continue
-        if not preview and not eligible(member, kind, "", when):
+        if not preview and not eligible(member, kind, "", when, country=row["country"]):
             continue
         jobs.append({
             "key": "academic:" + row["url_hash"], "category": kind,

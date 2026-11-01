@@ -55,6 +55,26 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
     const view = calls.filter(c=>c.url.endsWith('/editMessageText')&&c.body.chat_id===777).at(-1);
     assert.match(view.body.text, /Economics RA/);
     assert.match(view.body.text, /last 14 days/i);
+    // Real Worker: saved academic regions restrict results without changing
+    // career markets, then Worldwide restores the existing listing.
+    const change = async (id, data) => send('/webhook', {
+      update_id: id, callback_query: {id: 'region:' + id, from: {id: 777},
+        message: {chat: {id: 777, type: 'private'}, message_id: 901}, data},
+    });
+    assert.equal((await change(5, 'sub:r:europe')).status, 200);
+    assert.equal((await change(6, 'sub:p:latest')).status, 200);
+    const europeView = calls.filter(c => c.url.endsWith('/editMessageText') &&
+      c.body.chat_id === 777).at(-1);
+    assert.doesNotMatch(europeView.body.text, /Economics RA/);
+    assert.match(europeView.body.text, /No matches/);
+    const withRegion = await (await send('/sync', snapshot)).json();
+    assert.ok(withRegion.subscribers['777'].academic_regions.europe);
+    assert.equal((await change(7, 'sub:r:all')).status, 200);
+    assert.equal((await change(8, 'sub:p:latest')).status, 200);
+    const worldView = calls.filter(c => c.url.endsWith('/editMessageText') &&
+      c.body.chat_id === 777).at(-1);
+    assert.match(worldView.body.text, /Economics RA/);
+
     assert.equal((await mf.dispatchFetch('https://worker.example/status')).status,401);
     const status=await (await mf.dispatchFetch('https://worker.example/status',{
       headers:{Authorization:'Bearer offline-sync'},

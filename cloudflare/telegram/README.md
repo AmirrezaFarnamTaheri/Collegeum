@@ -1,13 +1,25 @@
 # Collegeum Telegram webhook worker
 
 The Worker answers owner browsing and private subscriber controls immediately.
-Subscribers can choose roles and markets, change delivery preferences, switch
+Subscribers can choose roles and independent regions for Academic vacancies, select
+career roles and their markets together, and enable the specialist continental-Europe
+Life Sciences PhD feed. They can also change delivery preferences, switch
 English/Persian, pause and unsubscribe. GitHub still collects vacancies and sends
 checkpointed alerts on its schedule. Fast menus do not make collection continuous.
 
 My matches uses selected academic and Life Sciences roles, and selected career
-roles *plus* their Iran/remote market scopes. Markets do not filter academic
-positions. The history window supports 7, 14, 30, 60 or 90 days (7 days, 14 days,
+roles *plus* their Iran/remote market scopes. Career markets do not filter academic
+positions. Academic roles have a separate **Academic → Regions** multi-select
+(🌍 Worldwide by default; North America, Latin America, Europe including the UK,
+Middle East, Asia, Oceania, Africa, and Other/unspecified). Only the record's
+known country is used; unclassified countries are not silently guessed.
+An empty legacy region selection means Worldwide and preserves every existing
+subscriber. Explicitly resetting a previously filtered region to Worldwide
+records an opt-in timestamp (internally `academic_regions.all`) so even the
+reset cannot backfill older excluded vacancies. Academic region selection
+applies to browsing and future alert eligibility without replaying receipts. The Life
+Sciences PhD feed remains continental Europe only, independent of these regions.
+The history window supports 7, 14, 30, 60 or 90 days (7 days, 14 days,
 1 month, 2 months or 3 months). The default is 14 days, but **Settings → Match
 history** now saves a preferred window in Cloudflare's private per-chat storage.
 Opening My matches or the owner's /menu uses that saved range. Quick range buttons
@@ -29,10 +41,13 @@ academic/career inventory counts without exposing private subscribers.
 Saved, applied and hidden academic views retain explicitly tracked positions
 even if subscriptions change.
 
-Home summarizes role counts, job markets, alert status and saved browse window.
-Subscriptions shows selected counts and explains that career scopes are required
-only for career alerts. Every role and market panel offers a direct path to My
-matches and history controls. Settings separates **Match history**, **Display
+Home summarizes role counts, career markets, academic regions, alert status and
+saved browse window. **Edit subscriptions** has three clear destinations:
+Academic (roles → regions), Careers (roles and job markets on one screen), and
+Life Sciences PhD. The separate Markets destination is removed; old inline
+buttons still open the Careers screen. Selected counts, region/market summaries,
+and direct access to My matches and history make the state inspectable.
+Career scopes remain required for career alerts only. Settings separates **Match history**, **Display
 settings** (4, 6, 8 or 12 positions per page; default 4), **Alert delivery**, source status,
 language and account controls. Telegram controls are native inline keyboards;
 their colors/backgrounds follow each user's Telegram theme, not Worker CSS.
@@ -49,9 +64,15 @@ hours and time zone independently of browse history.
 
 The first authenticated protocol-v1 sync seeds existing preferences. Afterward,
 Cloudflare owns preference edits; the encrypted Python journal keeps delivery
-receipts. Sync imports preferences without replacing receipts. Unsubscribe
-tombstones prevent stale snapshots from reactivating a removed subscription.
-Older Workers are rejected before local private state changes.
+receipts. Academic regions are a backward-compatible optional preference: old
+profiles use an implicit empty/worldwide selection, and the Python sync only sends
+a nonempty region map so it remains compatible with older deployed Workers during
+a staged rollout. Deploy the compatible Worker **before** users set regional
+selections. Regional timestamps are preserved in the encrypted journal so newly
+added regions do not replay older alerts. Sync imports preferences without
+replacing receipts. Unsubscribe tombstones prevent stale snapshots from
+reactivating a removed subscription. Older Workers are rejected before local
+private state changes.
 
 Optional instant Telegram browsing and database chat, backed by a SQLite Durable
 Object. Valid AI questions are durably queued and acknowledged before the

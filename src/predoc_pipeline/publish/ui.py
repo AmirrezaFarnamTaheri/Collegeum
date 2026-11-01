@@ -19,6 +19,20 @@ from .subscriptions import CAREER_SCOPES, LOOKBACK_DAYS, TOPIC_LABELS
 ACADEMIC = ("predoc", "phd", "postdoc", "research")
 LIFE_SCIENCES = "life_sciences_phd"
 CAREERS = ("data_scientist", "data_analyst", "econ_consulting", "research_analyst")
+REGION_LABELS = {
+    "en": {
+        "north_america": "North America", "latin_america": "Latin America",
+        "europe": "Europe (incl. UK)", "middle_east": "Middle East",
+        "asia": "Asia", "oceania": "Oceania", "africa": "Africa",
+        "unknown": "Other / unspecified",
+    },
+    "fa": {
+        "north_america": "آمریکای شمالی", "latin_america": "آمریکای لاتین",
+        "europe": "اروپا (شامل بریتانیا)", "middle_east": "خاورمیانه",
+        "asia": "آسیا", "oceania": "اقیانوسیه", "africa": "آفریقا",
+        "unknown": "سایر / مکان نامشخص",
+    },
+}
 PAGE_SIZE = 4
 MAX_LATEST_PAGES = 500  # At most the 2,000-row uploaded snapshot at four per page
 
@@ -70,9 +84,40 @@ def menu(
     fa = lang == "fa"
     topics = member.get("topics", {}) if member else {}
     scopes = member.get("scopes", {}) if member else {}
+    regions = member.get("academic_regions", {}) if member else {}
+    region_summary = ", ".join(
+        REGION_LABELS[lang][key] for key in regions if key != "all"
+    )
+    region_summary = region_summary or ("همه جهان" if fa else "Worldwide")
+    if page == "markets":
+        page = "careers"  # Legacy callbacks remain valid.
     paused = bool(member and member.get("paused"))
     buttons: list[list[dict[str, str]]] = []
-    if page == "academic":
+    if page == "subscriptions":
+        academic = sum(key in topics for key in ACADEMIC)
+        careers = sum(key in topics for key in CAREERS)
+        life = LIFE_SCIENCES in topics
+        body = (
+            "🧭 <b>ویرایش اشتراک‌ها</b>\n\nهر تغییر فوری ذخیره می‌شود.\n\n"
+            f"🎓 دانشگاهی: {academic}/4\nمناطق: {escape(region_summary)}\n"
+            f"💼 مشاغل: {careers}/4 · محدوده‌ها: {len(scopes)}/2\n"
+            f"🧬 علوم زیستی: {'فعال' if life else 'خاموش'}"
+            if fa else
+            "🧭 <b>Edit subscriptions</b>\n\nEach tap saves immediately.\n\n"
+            f"🎓 Academic: {academic}/4\nRegions: {escape(region_summary)}\n"
+            f"💼 Careers: {careers}/4 · Job markets: {len(scopes)}/2\n"
+            f"🧬 Life Sciences: {'On' if life else 'Off'}"
+        )
+        buttons = [
+            [_button("🎓 دانشگاهی" if fa else "🎓 Academic", "sub:p:academic"),
+             _button("💼 مشاغل و محدوده‌ها" if fa else "💼 Careers + markets",
+                     "sub:p:careers")],
+            [_button("🧬 علوم زیستی" if fa else "🧬 Life Sciences",
+                     "sub:p:life_sciences")],
+            [_button("🔎 فرصت‌های من" if fa else "🔎 View my matches", "sub:p:latest")],
+            _back(lang),
+        ]
+    elif page == "academic":
         title = "🎓 <b>فرصت‌های دانشگاهی</b>" if fa else "🎓 <b>Academic opportunities</b>"
         caption = (
             "پیشادکتری پیش از ورود به دکتری است؛ دکتری برای دانشجویان دکتری است؛ "
@@ -93,8 +138,40 @@ def menu(
             "انتخاب همه" if fa else "Clear all" if all_set else "Select all",
             f"sub:b:academic:{'off' if all_set else 'on'}",
         )])
-        buttons.append(_back(lang))
+        buttons.append([_button(
+            ("🌍 مناطق: " if fa else "🌍 Academic regions: ") + region_summary[:45],
+            "sub:p:academic_regions",
+        )])
+        buttons.append([_button("← اشتراک‌ها" if fa else "← Subscriptions",
+                                "sub:p:subscriptions")])
         body = f"{title}\n\n{caption}"
+    elif page == "academic_regions":
+        ordered = [
+            "north_america", "latin_america", "europe", "middle_east",
+            "asia", "oceania", "africa", "unknown",
+        ]
+        for offset in range(0, len(ordered), 2):
+            buttons.append([
+                _button(
+                    ("☑ " if region in regions else "☐ ") + REGION_LABELS[lang][region],
+                    f"sub:r:{region}",
+                ) for region in ordered[offset:offset + 2]
+            ])
+        buttons.extend([
+            [_button(("☐ " if regions else "☑ ") +
+                     ("همه جهان (حذف فیلتر)" if fa else "Worldwide (clear filters)"),
+                     "sub:r:all")],
+            [_button("← دانشگاهی" if fa else "← Academic", "sub:p:academic")],
+        ])
+        description = (
+            "هر منطقه دلخواه را انتخاب کنید. «همه جهان» فیلتر را پاک می‌کند."
+            if fa else "Select regions or choose Worldwide to clear filters."
+        )
+        body = (
+            "🌍 <b>مناطق دانشگاهی</b>" if fa else "🌍 <b>Academic regions</b>"
+        ) + f"\n\n{description}\n\n" + (
+            "انتخاب فعلی: " if fa else "Current: "
+        ) + escape(region_summary)
     elif page == "life_sciences":
         title = (
             "🧬 <b>دکتری علوم زیستی · اروپا</b>" if fa
@@ -133,24 +210,20 @@ def menu(
             "انتخاب همه" if fa else "Clear all" if all_set else "Select all",
             f"sub:b:careers:{'off' if all_set else 'on'}",
         )])
-        buttons.append([_button(
-            "محدوده جستجو →" if fa else "Choose job markets →", "sub:p:markets",
-        )])
-        buttons.append(_back(lang))
-        body = f"{title}\n\n{caption}"
-    elif page == "markets":
-        title = "🌍 <b>محدوده مشاغل</b>" if fa else "🌍 <b>Job markets</b>"
-        caption = ("ایران و دورکاری جهانی دو گزینه مستقل هستند."
-                   if fa else "Iran-based and worldwide-remote are independent.")
         for key in CAREER_SCOPES:
             buttons.append([_button(
-                ("☑ " if key in scopes else "☐ ") + _label(key, lang), f"sub:g:{key}",
+                ("☑ " if key in scopes else "☐ ") + _label(key, lang),
+                f"sub:g:{key}",
             )])
-        buttons.append([_button(
-            "انتخاب مشاغل ←" if fa else "← Career roles", "sub:p:careers",
-        )])
-        buttons.append(_back(lang))
-        body = f"{title}\n\n{caption}"
+        buttons.append([_button("← اشتراک‌ها" if fa else "← Subscriptions",
+                                "sub:p:subscriptions")])
+        body = f"{title}\n\n{caption}\n\n" + (
+            f"محدوده‌ها: {len(scopes)}/2" if fa else
+            f"Job markets: {len(scopes)}/2 selected"
+        )
+        if any(key in topics for key in CAREERS) and not scopes:
+            body += ("\n\n⚠️ حداقل یک محدوده را انتخاب کنید." if fa else
+                     "\n\n⚠️ Select at least one market to receive career matches.")
     elif page == "delivery":
         mode = member.get("delivery_mode", "instant") if member else "instant"
         limit = member.get("daily_limit", 6) if member else 6
@@ -198,10 +271,10 @@ def menu(
             "تنظیمات منطقه، زبان و حریم خصوصی و راهنمای استفاده."
             if fa else
             "⚙️ <b>More options</b>\n\n"
-            "Adjust job markets and language, get help, or manage your privacy."
+            "Edit subscriptions and language, get help, or manage your privacy."
         )
         buttons = [
-            [_button("🌍 محدوده" if fa else "🌍 Job markets", "sub:p:markets"),
+            [_button("🧭 اشتراک‌ها" if fa else "🧭 Edit subscriptions", "sub:p:subscriptions"),
              _button("🌐 منابع" if fa else "🌐 Sources", "sub:p:sources")],
             [_button("ℹ️ راهنما" if fa else "ℹ️ Help", "sub:p:help"),
              _button("🔒 حریم خصوصی" if fa else "🔒 Privacy", "sub:p:privacy")],
@@ -229,7 +302,7 @@ def menu(
         body = (
             "ℹ️ <b>راهنما</b>\n\n"
             "۱. در «دانشگاهی»، «دکتری علوم زیستی» یا «مشاغل» موضوع دلخواه را انتخاب کنید.\n"
-            "۲. برای مشاغل، ایران یا دورکاری جهانی را جداگانه انتخاب کنید.\n"
+            "۲. محدوده‌های شغلی در همان صفحه‌اند؛ مناطق دانشگاهی جدا هستند.\n"
             "۳. اعلان‌ها فقط برای آگهی‌های جدید پس از عضویت هستند.\n"
             "۴. «تازه‌ترین‌ها» آگهی‌های قبلی را هم برای مرور نشان می‌دهد.\n"
             "۵. توقف اعلان‌ها اشتراک را نگه می‌دارد.\n"
@@ -238,7 +311,7 @@ def menu(
             if fa else
             "ℹ️ <b>How alerts work</b>\n\n"
             "1. Choose academic roles, Life Sciences PhD, or specialist careers.\n"
-            "2. For careers, select Iran and/or worldwide remote.\n"
+            "2. Choose career markets on the same screen; academic regions are separate.\n"
             "3. Notifications cover new matches after you opt in.\n"
             "4. Browse latest to view existing positions on demand.\n"
             "5. Pausing keeps your preferences but stops new alerts.\n"
@@ -296,7 +369,7 @@ def menu(
             f"🧬 Life Sciences PhD: {'On' if life_active else 'Off'}\n"
             f"🌍 Markets: {escape(market_line)}\n"
             f"🔔 Alerts: {delivery_status_en}\n\n"
-            "Choose roles below. Latest matches lets you browse before subscribing."
+            "Edit subscriptions to choose roles and regions. Browse before subscribing."
         )
         if careers and not selected_markets:
             body += (
@@ -319,9 +392,13 @@ def menu(
         ]
         if careers and not selected_markets:
             buttons.insert(2, [_button(
-                "🌍 محدوده را انتخاب کنید" if fa else "🌍 Choose a job market",
-                "sub:p:markets",
+                "💼 تعیین محدوده مشاغل" if fa else "💼 Set career markets",
+                "sub:p:careers",
             )])
+        buttons.insert(0, [_button(
+            "🧭 ویرایش اشتراک‌ها" if fa else "🧭 Edit subscriptions",
+            "sub:p:subscriptions",
+        )])
     return body, {"inline_keyboard": buttons}
 
 

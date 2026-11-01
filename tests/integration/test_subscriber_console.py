@@ -645,18 +645,21 @@ def test_compact_native_bot_ui_has_clear_hierarchy_and_safe_callbacks():
     assert "sub:p:markets" not in str(markup)
     more_text, more_keyboard = menu(None, "more")
     assert "More options" in more_text
-    assert "sub:p:markets" in str(more_keyboard)
+    assert "sub:p:subscriptions" in str(more_keyboard)
+    assert "sub:p:markets" not in str(more_keyboard)
     assert "sub:p:privacy" in str(more_keyboard)
     assert "sub:p:stop" in str(more_keyboard)
     for page in (
-        "academic", "life_sciences", "careers", "markets",
-        "delivery", "privacy", "help", "more", "stop",
+        "subscriptions", "academic", "academic_regions", "life_sciences",
+        "careers", "markets", "delivery", "privacy", "help", "more", "stop",
     ):
         text, keyboard = menu(None, page)
         assert text
         assert len(text) < 4096
         assert any(
-            button.get("callback_data") == "sub:p:home"
+            button.get("callback_data") in (
+                "sub:p:home", "sub:p:subscriptions", "sub:p:academic"
+            )
             for row in keyboard["inline_keyboard"] for button in row
         ) or page == "stop"
         for row in keyboard["inline_keyboard"]:

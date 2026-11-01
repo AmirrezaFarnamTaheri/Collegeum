@@ -148,15 +148,19 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
                 not chat_id.isdecimal() or int(chat_id) <= 0 or
                 not isinstance(member, dict)):
             raise _corrupt(path, "invalid subscriber identity")
-        for field in ("topics", "scopes", "deliveries"):
+        for field in ("topics", "scopes", "deliveries", "academic_regions"):
             value = member.get(field, {})
             if not isinstance(value, dict):
                 raise _corrupt(path, f"subscriber {chat_id}: {field} is not an object")
             member.setdefault(field, {})
-        for field in ("topics", "scopes"):
+        for field in ("topics", "scopes", "academic_regions"):
             if not all(isinstance(k, str) and isinstance(v, str)
                        for k, v in member[field].items()):
                 raise _corrupt(path, f"subscriber {chat_id}: invalid {field}")
+        from .subscriptions import ACADEMIC_REGIONS
+        if any(region not in ACADEMIC_REGIONS and region != "all"
+               for region in member["academic_regions"]):
+            raise _corrupt(path, f"subscriber {chat_id}: invalid academic regions")
         if not isinstance(member.get("paused", False), bool):
             raise _corrupt(path, f"subscriber {chat_id}: paused must be a boolean")
         if member.get("language", "en") not in ("en", "fa"):
@@ -262,7 +266,7 @@ class FeedbackStore:
                 and len(self.subscribers) >= MAX_SUBSCRIBERS):
             raise ValueError("subscriber capacity reached")
         return self.subscribers.setdefault(str(chat_id), {
-            "topics": {}, "scopes": {}, "deliveries": {},
+            "topics": {}, "scopes": {}, "academic_regions": {}, "deliveries": {},
             "paused": False, "language": "en",
             "delivery_mode": "instant", "daily_limit": 6,
             "quiet_hours": False, "timezone": "UTC", "digest_day": "",
@@ -286,6 +290,28 @@ class FeedbackStore:
             enabled = True
         self._dirty = True
         return enabled
+
+    def toggle_academic_region(self, chat_id: int, region: str) -> bool:
+        """Update a region opt-in without altering career markets or delivery receipts."""
+        from .subscriptions import ACADEMIC_REGIONS
+
+        if region not in ACADEMIC_REGIONS and region != "all":
+            raise ValueError("unsupported academic region")
+        selected: dict[str, str] = self._member(chat_id)["academic_regions"]
+        if region == "all":
+            if not any(key != "all" for key in selected):
+                return False
+            selected.clear()
+            selected["all"] = _now()
+        elif region in selected:
+            del selected[region]
+            if not selected:
+                selected["all"] = _now()
+        else:
+            selected.pop("all", None)
+            selected[region] = _now()
+        self._dirty = True
+        return True
 
     def set_topics_group(self, chat_id: int, group: str, enabled: bool) -> bool:
         """Apply an explicitly tapped group action, preserving prior opt-in dates."""
