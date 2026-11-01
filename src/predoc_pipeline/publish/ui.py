@@ -428,7 +428,7 @@ def menu(
         if careers and not selected_markets:
             body += (
                 "\n⚠️ برای مشاغل باید محدوده انتخاب کنید."
-                if fa else "\n⚠️ Career roles need a market."
+                if fa else "\n⚠️ Choose a job market for career matches."
             )
         buttons = [
             [_button("🔎 مشاهده فرصت‌های من" if fa else "🔎 Browse my matches",
