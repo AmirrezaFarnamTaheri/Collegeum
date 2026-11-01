@@ -400,7 +400,9 @@ export class TelegramBot {
     const available = rows.filter(r => open(r) && !["invalid", "applied"].includes(marks.get(r.url_hash)) &&
       matchesPreferences(r, member));
     if (kind === 'menu') {
-      const content = panel(member, 'home', size);
+      const defaultWindow = chatId === null ? null :
+        await this.ctx.storage.get(`match_window:${chatId}`);
+      const content = panel(member, 'home', size, defaultWindow);
       content.reply_markup.inline_keyboard.push([nav('Saved & applications', 'tracking')]);
       return content;
     }
