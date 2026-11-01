@@ -28,23 +28,28 @@ test('subscriptions clarify career-market eligibility and link to history and re
   const screen = panel(member, 'subscriptions');
   assert.match(screen.text, /2\/4/);
   assert.match(screen.text, /1\/4/);
-  assert.match(screen.text, /market.*career/i);
-  for (const route of ['sub:p:academic', 'sub:p:careers', 'sub:p:markets',
+  assert.match(screen.text, /Career.*Job markets/i);
+  assert.ok(!callbacks(screen).includes('sub:p:markets'));
+  for (const route of ['sub:p:academic', 'sub:p:careers',
     'sub:p:life_sciences', 'sub:p:latest', 'sub:p:history'])
     assert.ok(callbacks(screen).includes(route), route);
 });
 
 test('selection screens show progress, preserve bulk actions and offer direct results and history', () => {
-  for (const page of ['academic', 'careers', 'markets', 'life_sciences']) {
+  for (const page of ['academic', 'careers', 'academic_regions', 'life_sciences']) {
     const screen = panel(member, page, 4, 90);
-    assert.match(screen.text, /selected|on/i, page);
-    for (const route of ['sub:p:latest', 'sub:p:history', 'sub:p:subscriptions']) {
+    assert.match(screen.text, /selected|current|on/i, page);
+    for (const route of ['sub:p:latest']) {
       assert.ok(callbacks(screen).includes(route), page + ': ' + route);
     }
     assert.ok(buttons(screen).every(b => Buffer.byteLength(b.callback_data) <= 64));
     assert.ok(screen.reply_markup.inline_keyboard.every(row => row.length <= 2));
   }
   assert.ok(callbacks(panel(member, 'academic')).includes('sub:b:academic:on'));
+  assert.ok(callbacks(panel(member, 'academic')).includes('sub:p:academic_regions'));
+  assert.ok(callbacks(panel(member, 'careers')).includes('sub:g:iran'));
+  assert.ok(callbacks(panel(member, 'careers')).includes('sub:g:remote'));
+  assert.ok(callbacks(panel(member, 'academic_regions')).includes('sub:p:academic'));
 });
 
 test('settings have direct matching and delivery controls, without conflating page size and alert limits', () => {
@@ -67,7 +72,7 @@ test('bilingual menus keep source and account controls reachable with explicit b
   for (const language of ['en', 'fa']) {
     const selection = {...member, language};
     for (const page of ['home','subscriptions','academic','careers','life_sciences',
-      'markets','delivery','display','history','more','help','privacy','stop']) {
+      'academic_regions','markets','delivery','display','history','more','help','privacy','stop']) {
       const screen = panel(selection, page, 4, 14);
       assert.ok(screen.text.length < 4000, page);
       assert.ok(screen.reply_markup.inline_keyboard.every(row => row.length <= 2), page);
