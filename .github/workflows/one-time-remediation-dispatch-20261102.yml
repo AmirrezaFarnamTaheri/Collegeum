@@ -23,7 +23,7 @@ jobs:
       github.repository == 'AmirrezaFarnamTaheri/Collegeum' &&
       github.ref == 'refs/heads/main' &&
       startsWith(github.event.head_commit.message,
-      'ops: launch guarded Collegeum remediation acceptance 20261102')
+      'ops: relaunch verified Collegeum remediation acceptance 20261102')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:
