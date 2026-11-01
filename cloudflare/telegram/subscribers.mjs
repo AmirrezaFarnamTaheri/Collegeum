@@ -181,43 +181,60 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     const options = page === 'academic' ? ACADEMIC :
       page === 'careers' ? CAREERS : ['life_sciences_phd'];
     const count = options.filter(key => key in m.topics).length;
-    text = page === 'academic'
-      ? tr('🎓 <b>Academic roles</b>\n\nChoose your academic stages. Region filters below are independent of career markets.',
-        '🎓 <b>فرصت‌های دانشگاهی</b>\n\nموضوع‌های دانشگاهی و سپس منطقه‌های دلخواه را انتخاب کنید. این فیلتر مستقل از مشاغل است.')
-      : page === 'careers'
-        ? tr('💼 <b>Career roles + job markets</b>\n\nSelect your career roles and the job markets in one place.',
-          '💼 <b>مشاغل و محدوده‌ها</b>\n\nموضوع‌ها و محدوده‌های شغلی را در همین صفحه انتخاب کنید.')
-        : tr('🧬 <b>Life Sciences PhD · Continental Europe</b>\n\nThis specialist feed remains Europe-only (excluding the UK), independent of Academic region filters.',
-          '🧬 <b>دکتری علوم زیستی · اروپای قاره‌ای</b>\n\nاین منبع تخصصی فقط اروپای قاره‌ای است (بدون بریتانیا) و از فیلتر مناطق دانشگاهی مستقل است.');
-    text += '\n\n' + tr(`Roles selected: ${count}/${options.length}`,
-      `موضوع‌های انتخاب‌شده: ${count}/${options.length}`);
-    rows = options.map(key => [button((key in m.topics ? '☑ ' : '☐ ') +
-      LABELS[m.language][TOPICS.indexOf(key)], `sub:t:${key}`)]);
+    if (page === 'academic') {
+      text = tr(
+        '🎓 <b>Academic roles</b>\n<i>Tap to select or remove.</i>\n\n' +
+        `<b>Step 1 · Roles</b>  ${count}/4 selected\n` +
+        'Predoc comes before a PhD; postdocs and research staff may require one.\n\n' +
+        '<b>Step 2 · Regions</b>\n🌍 ' + escape(regionSummary),
+        '🎓 <b>فرصت‌های دانشگاهی</b>\n<i>برای انتخاب یا حذف ضربه بزنید.</i>\n\n' +
+        `<b>مرحله ۱ · نقش‌ها</b>  ${count}/۴ انتخاب‌شده\n` +
+        'پیشادکتری قبل از دکتری است؛ پسادکتری و پژوهشگر معمولاً به دکتری نیاز دارند.\n\n' +
+        '<b>مرحله ۲ · مناطق</b>\n🌍 ' + escape(regionSummary));
+    } else if (page === 'careers') {
+      const selected = Object.keys(m.scopes).length;
+      text = tr(
+        '💼 <b>Career roles + markets</b>\n<i>Both are needed for career matches.</i>\n\n' +
+        `<b>Step 1 · Roles</b>  ${count}/4 selected\n\n` +
+        `<b>Step 2 · Job markets</b>  ${selected}/2 selected`,
+        '💼 <b>مشاغل و محدوده‌ها</b>\n<i>برای دیدن مشاغل، نقش و محدوده لازم است.</i>\n\n' +
+        `<b>مرحله ۱ · نقش‌ها</b>  ${count}/۴ انتخاب‌شده\n\n` +
+        `<b>مرحله ۲ · محدوده‌های شغلی</b>  ${selected}/۲ انتخاب‌شده`);
+      if (count && !selected) text += tr(
+        '\n\n⚠️ Select Iran and/or worldwide remote to see career matches.',
+        '\n\n⚠️ ایران یا دورکاری جهانی را برای دیدن مشاغل انتخاب کنید.');
+    } else {
+      text = tr(
+        '🧬 <b>Life Sciences PhD</b>\n<i>One specialist feed · Continental Europe</i>\n\n' +
+        `Status: ${count ? 'Selected' : 'Not selected'}\n` +
+        'Excludes the UK. Funding and eligibility must be checked on the original advert.',
+        '🧬 <b>دکتری علوم زیستی</b>\n<i>یک منبع تخصصی · اروپای قاره‌ای</i>\n\n' +
+        `وضعیت: ${count ? 'انتخاب‌شده' : 'انتخاب نشده'}\n` +
+        'بریتانیا شامل نمی‌شود. شرایط و تأمین مالی را در آگهی اصلی بررسی کنید.');
+    }
+    rows = [];
+    for (let i = 0; i < options.length; i += 2) {
+      rows.push(options.slice(i, i + 2).map(key =>
+        button((key in m.topics ? '☑ ' : '☐ ') +
+          SHORT_ROLE_LABELS[fa ? 'fa' : 'en'][TOPICS.indexOf(key)], `sub:t:${key}`)));
+    }
     if (page !== 'life_sciences') {
       const all = options.every(key => key in m.topics);
-      rows.push([button(all ? tr('Clear roles', 'حذف همه موضوع‌ها') :
-        tr('Select all roles', 'انتخاب همه موضوع‌ها'),
+      rows.push([button(all ? tr('Clear roles', 'حذف همه نقش‌ها') :
+        tr('Select all roles', 'انتخاب همه نقش‌ها'),
       `sub:b:${page}:${all ? 'off' : 'on'}`)]);
     }
     if (page === 'academic') {
-      text += '\n\n' + tr('Academic regions: ', 'مناطق دانشگاهی: ') + escape(regionSummary);
-      rows.push([link('🌍 Regions: ' + regionSummary.slice(0, 48),
-        '🌍 مناطق: ' + regionSummary.slice(0, 48), 'academic_regions')]);
+      rows.push([link('🌍 Edit academic regions', '🌍 انتخاب مناطق دانشگاهی',
+        'academic_regions')]);
     }
     if (page === 'careers') {
-      const n = Object.keys(m.scopes).length;
-      text += '\n\n' + tr(`Job markets: ${n}/2 selected`,
-        `محدوده مشاغل: ${n}/2 انتخاب‌شده`);
-      for (const [scope, en, persian] of [
-        ['iran', '🇮🇷 Iran-based', '🇮🇷 داخل ایران'],
-        ['remote', '🌐 Worldwide remote', '🌐 دورکاری جهانی'],
-      ]) rows.push([button((scope in m.scopes ? '☑ ' : '☐ ') +
-        tr(en, persian), `sub:g:${scope}`)]);
-      if (count && !n) text += tr(
-        '\n\n⚠️ Select at least one market to see career matches.',
-        '\n\n⚠️ برای دیدن مشاغل باید دست‌کم یک محدوده انتخاب کنید.');
+      rows.push([
+        button((m.scopes.iran ? '☑ ' : '☐ ') + tr('🇮🇷 Iran', '🇮🇷 ایران'), 'sub:g:iran'),
+        button((m.scopes.remote ? '☑ ' : '☐ ') + tr('🌐 Remote', '🌐 دورکاری'), 'sub:g:remote'),
+      ]);
     }
-    rows.push([link('🔎 View my matches', '🔎 فرصت‌های من', 'latest'),
+    rows.push([link('🔎 View matches', '🔎 مشاهده فرصت‌ها', 'latest'),
       link('🗓 History', '🗓 بازه زمانی', 'history')]);
   } else if (page === 'delivery') {
     text = tr('<b>Alert delivery</b>', '<b>ارسال اعلان‌ها</b>') + '\n\n' +
