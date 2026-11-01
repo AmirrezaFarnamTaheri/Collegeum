@@ -201,7 +201,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
   const command = String(message.text || '').trim().split(/\s+/)[0].replace(/^\//, '').split('@')[0].toLowerCase();
   const raw = callback?.data || (['pause', 'resume'].includes(command) ? `sub:a:${command}` : `sub:p:${COMMAND_PAGES[command] || 'home'}`);
   const id = String(message.chat.id);
-  const selection = latestSelection(raw);
+  const preferredWindow = selectedWindow(await bot.ctx.storage.get(`match_window:${id}`));
+  const selection = latestSelection(raw, preferredWindow);
   const page = await bot.ctx.storage.transaction(async tx => {
     const claim = await tx.get(key);
     if (claim?.subscriber_applied) return claim.subscriber_page;
@@ -236,6 +237,11 @@ export async function subscriberUpdate(bot, message, callback, key) {
     } else if (raw === 'sub:stop:yes') {
       await tx.put(`subscriber:${id}`, null);
       await tx.delete(`page_size:${id}`);
+      await tx.delete(`match_window:${id}`);
+    } else if (parts.length === 3 && parts[1] === 'w' &&
+      LOOKBACK_DAYS.some(n => String(n) === parts[2])) {
+      await tx.put(`match_window:${id}`, Number(parts[2]));
+      target = 'history';
     } else if (parts.length === 3 && parts[1] === 'n' && PAGE_SIZES.some(n => String(n) === parts[2])) {
       await tx.put(`page_size:${id}`, Number(parts[2]));
       target = 'display';
@@ -250,7 +256,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
   });
   const member = await bot.ctx.storage.get(`subscriber:${id}`);
   const size = pageSize(await bot.ctx.storage.get(`page_size:${id}`));
-  let content = panel(member, page, size);
+  const windowDays = selectedWindow(await bot.ctx.storage.get(`match_window:${id}`));
+  let content = panel(member, page, size, windowDays);
   if (page === 'full') content.text = 'Subscriptions are full. Please try again later.';
   if (page === 'sources') content.text = (await bot.ctx.storage.get('source_status'))?.[member?.language || 'en'] ||
     (member?.language === 'fa' ? 'هنوز گزارش بررسی منابع در دسترس نیست.' : 'No source-check report is available yet.');
@@ -258,35 +265,65 @@ export async function subscriberUpdate(bot, message, callback, key) {
     const owner = (bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id);
     const {rows, marks} = await bot.dataset(owner);
     const now = Date.now(), days = selection.days;
-    const recent = at => Number.isFinite(Date.parse(at)) && Date.parse(at) <= now &&
-      Date.parse(at) >= now - days * 86400000;
-    const academic = rows.filter(r => matchesPreferences(r, member) && !r.closed_at && !r.expired_at &&
+    // Python's public-record export historically omitted published_at.
+    // The immutable first_seen_at is the consistent discovery timestamp for
+    // academic and career history windows; last_seen_at is not a new listing.
+    const academic = rows.filter(r => matchesPreferences(r, member) &&
+      !r.closed_at && !r.expired_at &&
       !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
-      recent(r.published_at) && (!r.deadline || Date.parse(r.deadline) >= Date.now()));
-    const careers = (await bot.ctx.storage.get('career_listings') || []).filter(r => matchesPreferences(r, member) &&
-      r.availability !== 'closed' && (!r.deadline || Date.parse(r.deadline) >= Date.now()) &&
-      recent(r.first_seen_at)).map(r => ({
-        ...r, apply_url: r.url, institution: r.employer, published_at: r.first_seen_at,
-      }));
-    const matches = [...academic, ...careers].sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
+      recentlyDiscovered(r.first_seen_at || r.published_at, days, now) &&
+      deadlineNotPassed(r.deadline, now) && safeApplicationUrl(r.apply_url));
+    const careers = (await bot.ctx.storage.get('career_listings') || [])
+      .filter(r => matchesPreferences(r, member) && r.availability !== 'closed' &&
+        deadlineNotPassed(r.deadline, now) &&
+        recentlyDiscovered(r.first_seen_at, days, now) && safeApplicationUrl(r.url))
+      .map(r => ({...r, apply_url: r.url, institution: r.employer,
+        published_at: r.first_seen_at}));
+    const matches = [...academic, ...careers].sort((a, b) =>
+      Date.parse(b.first_seen_at || b.published_at) - Date.parse(a.first_seen_at || a.published_at));
     const fa = member?.language === 'fa';
     const totalPages = Math.max(1, Math.ceil(matches.length / size));
     const current = Math.min(totalPages - 1, selection.page);
-    content = {text: (fa ? '<b>تازه‌ترین‌ها</b>' : '<b>Latest matches</b>') + '\n\n' +
-      (fa ? 'موضوع‌ها و محدوده‌های انتخاب‌شده' : 'Your selected roles and markets') +
-      ' · ' + lookbackLabel(days, fa) + '\n\n' +
-      (matches.slice(current * size, current * size + size).map(r => `<a href="${escape(r.apply_url)}">${escape(r.title.slice(0, 110))}</a>\n${escape(r.institution.slice(0, 90))}` +
-        (r.country ? ` · ${escape(r.country.slice(0, 50))}` : '') +
-        (r.deadline ? `\n${fa ? 'مهلت' : 'Deadline'}: ${escape(r.deadline.slice(0, 10))}` : '')).join('\n\n') ||
-        (fa ? 'موردی یافت نشد. موضوع‌ها را تغییر دهید یا بعداً بررسی کنید.' : 'No matches yet. Change your roles or check again later.')),
+    const snapshot = await bot.ctx.storage.get('snapshot_at');
+    const snapshotAt = Date.parse(snapshot);
+    const snapshotWarning = !Number.isFinite(snapshotAt)
+      ? (fa ? '⚠️ هنوز هیچ نسخه‌ای از فهرست فرصت‌ها همگام‌سازی نشده است.' :
+        '⚠️ Listing snapshot has not been synced yet. Run telegram-sync to connect the inventory.')
+      : now - snapshotAt > 8 * 3600000
+        ? (fa ? '⚠️ فهرست فرصت‌ها بیش از ۸ ساعت است به‌روزرسانی نشده است.' :
+          '⚠️ Listing snapshot is over 8 hours old; results may be incomplete.')
+        : '';
+    const entries = matches.slice(current * size, current * size + size).map((r, index) =>
+      `${current * size + index + 1}. <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, 110))}</a>\\n` +
+      escape(String(r.institution || 'Employer unknown').slice(0, 90)) +
+      (r.country ? ` · ${escape(String(r.country).slice(0, 50))}` : '') +
+      (r.deadline ? `\\n${fa ? 'مهلت' : 'Deadline'}: ${escape(String(r.deadline).slice(0, 10))}` : '') +
+      (r.category && r.availability !== 'active'
+        ? (fa ? '\\nℹ️ وضعیت پذیرش تأیید نشده است.' : '\\nℹ️ Availability unverified.') : '') +
+      (r.category === 'life_sciences_phd'
+        ? (fa ? '\\nℹ️ تأمین مالی تأیید نشده است.' : '\\nℹ️ Funding unverified.') : ''));
+    const empty = !member || !Object.keys(member.topics || {}).length
+      ? (fa ? 'ابتدا موضوع دلخواه را در اشتراک‌ها انتخاب کنید.' :
+        'Choose an academic or career role in Subscriptions first.')
+      : (fa ? 'در این بازه فرصت منطبق پیدا نشد. بازه ۳ ماهه یا موضوع‌های دیگر را امتحان کنید.' :
+        'No matches in this window. Try 3 months or broaden your selected roles.');
+    const header = (fa ? '<b>فرصت‌های من</b>' : '<b>My matches</b>') + '\\n\\n' +
+      (fa ? 'موضوع‌ها و محدوده‌های انتخاب‌شده' : 'Your selected roles and career markets') +
+      ' · ' + lookbackLabel(days, fa) + '\\n' +
+      (fa ? `${matches.length} مورد منطبق` : `${matches.length} matches`);
+    const footer = fa ? 'ℹ️ مشاهده آگهی به معنی باز بودن یا تأمین مالی تأییدشده نیست.' :
+      'ℹ️ A discovered listing is not a verified open or funded vacancy.';
+    content = {text: [header, snapshotWarning, entries.join('\\n\\n') || empty, footer]
+      .filter(Boolean).join('\\n\\n'),
       reply_markup: {inline_keyboard: [
         ...lookbackChoices(days, fa),
         ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${days}:${current - 1}`)] : []),
           button(`${current + 1}/${totalPages}`, `sub:p:latest:${days}:${current}`),
           ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${days}:${current + 1}`)] : [])]] : []),
-        [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),
+        [button(fa ? 'تنظیمات بازه زمانی' : 'Save preferred range', 'sub:p:history'),
           button(fa ? 'تنظیمات نمایش' : `Page size: ${size}`, 'sub:p:display')],
-        [button(fa ? 'خانه' : 'Home', 'sub:p:home')]]}};
+        [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),
+          button(fa ? 'خانه' : 'Home', 'sub:p:home')]]}};
   }
   if ((bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id))
     content.reply_markup.inline_keyboard.push([{text: member?.language === 'fa' ? 'پیگیری درخواست‌ها' : 'Saved & applications',
