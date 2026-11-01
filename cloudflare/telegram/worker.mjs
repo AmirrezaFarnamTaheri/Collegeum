@@ -4,6 +4,9 @@ import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreference
   openAcademicListing, pageSize, panel} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
+const GENERAL_CAREER_TOPICS = new Set([
+  'data_scientist', 'data_analyst', 'econ_consulting', 'research_analyst',
+]);
 const VIEWS = new Set(["positions", "valid", "applied", "hidden", "new", "closing", "search"]);
 const COMMANDS = new Set([...VIEWS, 'menu', 'more', 'home', 'help', 'start', 'forget', 'saved',
   'interested', 'jobs', 'list', 'tracking']);
@@ -115,7 +118,8 @@ export class TelegramBot {
       return json({subscriber_protocol: 1,
         subscribers_initialized: Boolean(await this.ctx.storage.get('subscribers_initialized')),
         snapshot_at: await this.ctx.storage.get('snapshot_at') || null,
-        inventory_counts: await this.ctx.storage.get('snapshot_counts') || {academic: 0, career: 0},
+        inventory_counts: await this.ctx.storage.get('snapshot_counts') ||
+          {academic: 0, career: 0, general_career: 0, life_sciences_phd: 0},
         pending_updates: updates.filter(s => !['done', 'rejected'].includes(s.stage)).length});
     }
     let payload;
@@ -328,7 +332,12 @@ export class TelegramBot {
       }
       await tx.put("snapshot_at", payload.generated_at);
       await tx.put('career_listings', careers);
-      await tx.put('snapshot_counts', {academic: listings.length, career: careers.length});
+      await tx.put('snapshot_counts', {
+        academic: listings.length,
+        career: careers.length, // Backward-compatible total of specialist + general jobs.
+        general_career: careers.filter(r => GENERAL_CAREER_TOPICS.has(r.category)).length,
+        life_sciences_phd: careers.filter(r => r.category === 'life_sciences_phd').length,
+      });
       await tx.put('source_status', sourceStatus);
       if (payload.subscriber_protocol === 1 && !await tx.get('subscribers_initialized')) {
         for (const [id, member] of Object.entries(subscribers)) await tx.put(`subscriber:${id}`, member);

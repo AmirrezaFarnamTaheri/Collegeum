@@ -517,6 +517,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
       recentlyDiscovered(r.first_seen_at || r.published_at, days, now) &&
       safeApplicationUrl(r.apply_url));
     const careerInventory = await bot.ctx.storage.get('career_listings') || [];
+    const generalCareerCount = careerInventory.filter(r => r && CAREERS.includes(r.category)).length;
+    const lifePhdCount = careerInventory.filter(r => r?.category === 'life_sciences_phd').length;
     const careers = careerInventory.filter(r => matchesPreferences(r, member) && r.availability !== 'closed' &&
         deadlineNotPassed(r.deadline, now) &&
         recentlyDiscovered(r.first_seen_at, days, now) && safeApplicationUrl(r.url))
@@ -564,8 +566,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
       (fa ? `<b>${matches.length} فرصت</b> · ${lookbackLabel(days, fa)}`
         : `<b>${matches.length} positions</b> · ${lookbackLabel(days, fa)}`) + '\n' +
       (fa ? `صفحه ${current + 1} از ${totalPages}` : `Page ${current + 1} of ${totalPages}`) + '\n' +
-      (fa ? `📦 فهرست: ${rows.length} دانشگاهی · ${careerInventory.length} شغلی`
-        : `📦 Cached inventory: ${rows.length} academic · ${careerInventory.length} career records`);
+      (fa ? `📦 فهرست ذخیره: ${rows.length} دانشگاهی · ${generalCareerCount} شغل عمومی · ${lifePhdCount} فرصت دکتری علوم زیستی`
+        : `📦 Cached inventory: ${rows.length} academic · ${generalCareerCount} career jobs · ${lifePhdCount} Life Sciences PhDs`);
     const footer = fa ? 'ℹ️ مشاهده آگهی به معنی باز بودن یا تأمین مالی تأییدشده نیست.' :
       'ℹ️ A discovered listing is not a verified open or funded vacancy.';
     content = {text: [header, snapshotWarning, entries.join('\n\n') || empty, footer]

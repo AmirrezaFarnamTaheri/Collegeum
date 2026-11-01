@@ -62,7 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$CHECK_ONLY" = "true" ]; then
-            python3 -S tools/ingestion_watchdog.py
+            python3 -S tools/ingestion_watchdog.py --strict-cadence
           else
-            python3 -S tools/ingestion_watchdog.py --dispatch
+            python3 -S tools/ingestion_watchdog.py --strict-cadence --dispatch
           fi
