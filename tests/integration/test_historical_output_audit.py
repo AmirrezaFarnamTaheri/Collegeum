@@ -218,11 +218,15 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
     published = {entry["id"]: entry for entry in output["listings"]}
     assert output["count"] == len(published)
     assert 28 not in published  # neuroscience is not economics
+    assert 201 not in published  # Fed internship programme FAQ is not a vacancy
     assert 170 not in published  # pure-mathematics postdoc is out of scope
     assert 259 not in published  # digital heritage/archaeology RA is out of scope
     for identifier in (46, 77, 139):
         assert identifier in published
     assert 173 not in published  # source returned HTTP 410; durable record is retained
+    assert "https://www.federalreserve.gov/careers-internships.htm" not in (
+        rss.read_text(encoding="utf-8")
+    )
     assert "University of Pennsylvania" in published[46]["institution"]
     assert "upenn.wd1.myworkdayjobs.com" in published[46]["apply_url"]
     assert published[46]["salary_min"] == 50000
