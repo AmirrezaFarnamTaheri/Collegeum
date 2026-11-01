@@ -99,7 +99,7 @@ export function validPreferences(value) {
 export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOKBACK) {
   const m = member || fresh(), fa = m.language === 'fa';
   const academicRegions = m.academic_regions || {};
-  const regionNames = Object.keys(academicRegions).map(region => REGION_LABELS[m.language][region]);
+  const regionNames = Object.keys(academicRegions).map(region => REGION_LABELS[fa ? 'fa' : 'en'][region]);
   const regionSummary = regionNames.length ? regionNames.join(', ') :
     (fa ? 'همه جهان' : 'Worldwide');
   const tr = (en, persian) => fa ? persian : en;
@@ -115,14 +115,18 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     const a = ACADEMIC.filter(key => key in m.topics).length;
     const c = CAREERS.filter(key => key in m.topics).length;
     const n = Object.keys(m.scopes).length;
+    const marketSummary = [
+      m.scopes.iran ? tr('Iran', 'ایران') : '',
+      m.scopes.remote ? tr('Worldwide remote', 'دورکاری جهانی') : '',
+    ].filter(Boolean).join(' + ') || tr('Not selected', 'انتخاب نشده');
     const life = Number('life_sciences_phd' in m.topics);
     text = tr('🧭 <b>Edit subscriptions</b>\n\nSelect roles and their locations. Each tap saves immediately.\n\n' +
       `🎓 Academic · ${a}/4\n` + 'Regions: ' + escape(regionSummary) + '\n\n' +
-      `💼 Careers · ${c}/4\nJob markets: ${n}/2 selected\n\n` +
+      `💼 Careers · ${c}/4\nJob markets: ${n}/2 · ${marketSummary}\n\n` +
       `🧬 Life Sciences PhD · ${life ? 'On' : 'Off'}`,
       '🧭 <b>ویرایش اشتراک‌ها</b>\n\nموضوع‌ها و منطقه‌ها را انتخاب کنید. هر تغییر فوری ذخیره می‌شود.\n\n' +
       `🎓 دانشگاهی · ${a}/4\n` + 'مناطق: ' + escape(regionSummary) + '\n\n' +
-      `💼 شغلی · ${c}/4\nمحدوده مشاغل: ${n}/2 انتخاب‌شده\n\n` +
+      `💼 شغلی · ${c}/4\nمحدوده مشاغل: ${n}/2 · ${marketSummary}\n\n` +
       `🧬 دکتری علوم زیستی · ${life ? 'فعال' : 'خاموش'}`);
     if (c && !n) text += tr(
       '\n\n⚠️ Career alerts need at least one market.',
@@ -136,9 +140,11 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     const count = Object.keys(academicRegions).length;
     text = tr('🌍 <b>Academic regions</b>\n\nFilter academic roles by location. '
       + 'Choose any regions, or choose Worldwide to show every location. '
-      + 'An unspecified country appears only under Other / unspecified when filtered.',
+      + 'An unspecified country appears only under Other / unspecified when filtered. '
+      + 'This affects browsing and future alerts, not previously delivered messages.',
       '🌍 <b>مناطق دانشگاهی</b>\n\nمناطق دلخواه را انتخاب کنید. '
-      + '«همه جهان» تمام مناطق را نمایش می‌دهد. آگهی‌های بدون کشور مشخص فقط در «سایر / مکان نامشخص» نشان داده می‌شوند.');
+      + '«همه جهان» تمام مناطق را نمایش می‌دهد. آگهی‌های بدون کشور مشخص فقط در «سایر / مکان نامشخص» نشان داده می‌شوند. '
+      + 'این فیلتر روی مرور و اعلان‌های آینده اثر دارد و پیام‌های قبلی را دوباره نمی‌فرستد.');
     text += '\n\n' + tr('Current: ', 'انتخاب فعلی: ') + escape(regionSummary) +
       '\n' + tr(`Selected: ${count}/8`, `انتخاب‌شده: ${count}/۸`);
     rows = [];
