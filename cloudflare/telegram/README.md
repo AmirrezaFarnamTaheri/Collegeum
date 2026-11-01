@@ -33,7 +33,7 @@ Home summarizes role counts, job markets, alert status and saved browse window.
 Subscriptions shows selected counts and explains that career scopes are required
 only for career alerts. Every role and market panel offers a direct path to My
 matches and history controls. Settings separates **Match history**, **Display
-settings** (3, 4, 6 or 8 positions per page), **Alert delivery**, source status,
+settings** (4, 6, 8 or 12 positions per page; default 4), **Alert delivery**, source status,
 language and account controls. Telegram controls are native inline keyboards;
 their colors/backgrounds follow each user's Telegram theme, not Worker CSS.
 Owners can reach Saved & applications from home, settings and results without
