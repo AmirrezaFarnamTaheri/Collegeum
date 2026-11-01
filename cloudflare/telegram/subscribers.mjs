@@ -152,7 +152,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     for (let i = 0; i < ACADEMIC_REGIONS.length; i += 2) {
       rows.push(ACADEMIC_REGIONS.slice(i, i + 2).map(region =>
         button((region in academicRegions ? '☑ ' : '☐ ') +
-          REGION_LABELS[m.language][region], `sub:r:${region}`)));
+          REGION_LABELS[fa ? 'fa' : 'en'][region], `sub:r:${region}`)));
     }
     rows.push([button(`${count ? '☐' : '☑'} ${tr('Worldwide (clear filters)', 'همه جهان (حذف فیلتر)')}`,
       'sub:r:all')]);
