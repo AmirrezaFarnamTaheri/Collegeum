@@ -1,7 +1,7 @@
 /** Telegram-first IA: predictable hierarchy without changing subscriber semantics. */
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {panel} from './subscribers.mjs';
+import {panel, subscriberCommand} from './subscribers.mjs';
 
 const member = {
   topics: {predoc: '2026-10-01T00:00:00Z', phd: '2026-10-01T00:00:00Z',
@@ -76,4 +76,10 @@ test('bilingual menus keep source and account controls reachable with explicit b
       if (language === 'fa') assert.match(screen.text, /[\u0600-\u06ff]/);
     }
   }
+});
+
+test('direct Telegram commands keep the redesigned screens reachable', () => {
+  for (const command of ['matches', 'subscriptions', 'history', 'display',
+    'notifications', 'settings', 'latest'])
+    assert.equal(subscriberCommand(command), true, command);
 });
