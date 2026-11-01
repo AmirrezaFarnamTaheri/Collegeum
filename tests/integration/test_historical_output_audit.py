@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -218,11 +219,15 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
     published = {entry["id"]: entry for entry in output["listings"]}
     assert output["count"] == len(published)
     assert 28 not in published  # neuroscience is not economics
+    assert 201 not in published  # Fed internship programme FAQ is not a vacancy
     assert 170 not in published  # pure-mathematics postdoc is out of scope
     assert 259 not in published  # digital heritage/archaeology RA is out of scope
     for identifier in (46, 77, 139):
         assert identifier in published
     assert 173 not in published  # source returned HTTP 410; durable record is retained
+    assert "https://www.federalreserve.gov/careers-internships.htm" not in (
+        rss.read_text(encoding="utf-8")
+    )
     assert "University of Pennsylvania" in published[46]["institution"]
     assert "upenn.wd1.myworkdayjobs.com" in published[46]["apply_url"]
     assert published[46]["salary_min"] == 50000
@@ -297,3 +302,64 @@ def test_partial_source_errors_are_visible_even_without_failed_sources(tmp_path:
     assert report["source_expected_empty"] == 8
     assert report["source_skipped"] == 1
     assert report["invalid_public_ids"] == [2, 3]
+
+
+def test_federal_reserve_internship_information_is_not_an_actionable_predoc() -> None:
+    """Verified navigation link #201 must never recur as a public job ad."""
+    from predoc_pipeline.core.output_quality import application_url_issue
+
+    url = "https://www.federalreserve.gov/careers-internships.htm"
+    assert application_url_issue(url) == "generic-program-information-page"
+    assert application_url_issue(url + "?utm_source=research") == (
+        "generic-program-information-page"
+    )
+    assert application_url_issue(
+        "https://www.federalreserve.gov/careers-research-assistants.htm"
+    ) is None
+    assert application_url_issue(
+        "https://frbog.taleo.net/careersection/2/jobdetail.ftl?job=123456"
+    ) is None
+
+    root = Path(__file__).resolve().parents[2]
+    journal = [
+        json.loads(line) for line in
+        (root / "data/listings.ndjson").read_text(encoding="utf-8").splitlines()
+    ]
+    row = next(item for item in journal if item["id"] == 201)
+    assert row["source"] == "fed_board"
+    assert row["source_url"] == url
+    assert row["status"] == "published"
+    assert row["url_hash"] == (
+        "cd21124afe79557db73b2a58ade97cf9399a0e26bd490d5ddc5b8e5d788ba1b9"
+    )
+    # The original durable publication and delivery revision remain unchanged.
+    assert row["published_at"] and row["telegram_delivery_revision"] == 0
+
+    public = json.loads((root / "docs/data/listings.json").read_text(encoding="utf-8"))
+    assert 201 not in {item["id"] for item in public["listings"]}
+    assert url not in (root / "docs/feed.xml").read_text(encoding="utf-8")
+
+
+def test_federal_reserve_board_index_is_disabled_until_job_specific_feed_exists() -> None:
+    """The broad navigation scanner collected 189 links, including a FAQ page."""
+    from predoc_pipeline.boards.config import load_board_sources
+
+    root = Path(__file__).resolve().parents[2]
+    sources = load_board_sources(root / "config/sources.toml")
+    fed = next(source for source in sources if source.name == "fed_board")
+    assert fed.enabled is False
+    assert fed.opt("url") == (
+        "https://www.federalreserve.gov/careers-research-assistants.htm"
+    )
+    pattern = re.compile(fed.opt("link_pattern"))
+    assert not pattern.search("https://www.federalreserve.gov/careers-internships.htm")
+    assert not pattern.search("https://frbog.taleo.net/careersection/2/jobsearch.ftl")
+    assert pattern.search(
+        "https://frbog.taleo.net/careersection/2/jobdetail.ftl?job=123456"
+    )
+    # Disabling the inaccurate Board-of-Governors index does not disable
+    # the *separate* official regional Reserve-Bank Workday source.
+    regional = next(
+        source for source in sources if source.name == "federal_reserve_system_jobs"
+    )
+    assert regional.enabled is True

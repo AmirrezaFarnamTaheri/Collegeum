@@ -28,6 +28,10 @@ _GENERIC_ROOTS = frozenset({
 # fellowship programme but is not a vacancy-specific application.
 # Do not reject all `/about/` paths: many official jobs use them.
 _NON_ACTIONABLE_PROGRAM_PAGES = frozenset({
+    # Employer's Board of Governors internship FAQ / programme description
+    # is not a named opening; historical listing #201 must remain journal-only.
+    ("www.federalreserve.gov", "/careers-internships.htm"),
+    ("federalreserve.gov", "/careers-internships.htm"),
     ("epic.uchicago.edu",
      "/about/jobs-fellowships/fellowships/predoctoral-fellows/"
      "predoctoral-fellowship-program/about"),

@@ -873,13 +873,16 @@ note = "Innocenzo Gasparini Institute for Economic Research (IGIER) at Bocconi U
 [[board]]
 name = "fed_board"
 type = "link_scan"
+enabled = false
 group = "central_bank"
 url = "https://www.federalreserve.gov/careers-research-assistants.htm"
-link_pattern = 'federalreserve\.gov/|taleo\.net'
+# Only individual employer ATS requisitions can be jobs. This programme
+# page links general navigation and does not certify open vacancies.
+link_pattern = '^https://frbog\.taleo\.net/careersection/[^/?#]+/jobdetail\.ftl\?job=[0-9]+(?:&|$)'
 institution = "Federal Reserve Board of Governors"
 country = "United States"
-field_implied = true
-note = "Federal Reserve Board of Governors Research Assistant Program."
+field_implied = false
+note = "OFF 2026-11-01: broad navigation scraper emitted internship guidance as predoc (historic ID 201). Require permitted official job-specific ATS links and read-only runner acceptance before re-enabling. Regional Reserve Bank Workday is separate."
 
 [[board]]
 name = "poverty_action"

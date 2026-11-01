@@ -144,6 +144,43 @@ offline RED/GREEN fixtures, a safe read-only GitHub-runner probe,
 green exact-head CI, and later a newly selected production source
 observation. Candidate URLs or HTTP 200 alone are not enough.
 
+## Follow-up: reviewed Federal Reserve Board false-publication, #32/#56
+
+After the source-bearing November 1 baseline, a direct archive-to-official-source
+comparison confirmed that general listing **ID 201** (`fed_board`) was
+incorrectly presented as an actionable predoc. Its source and apply URL,
+`https://www.federalreserve.gov/careers-internships.htm`, points to the
+Board's **general internship programme and application instructions**, not a
+position-specific ad. The scraped title itself was "internship careers page"
+and its summary was copied from an RA programme's internship FAQ.
+The broad `fed_board` link scanner sampled 189 navigation links and classified
+one misleading item as relevant in production.
+
+[PR #102](https://github.com/AmirrezaFarnamTaheri/Collegeum/pull/102)
+excludes this **exact employer URL** from the public job feed, preserving
+historical ID/hash/publication/receipts. The checked-in published projection
+drops from 186 to 185 listings and the RSS from 100 to 99 entries; the
+333-row journal is not rewritten. It also disables only the inaccurate
+Board-of-Governors navigation scanner (76 -> 75 enabled general sources),
+without disabling the separately validated Federal Reserve System regional
+Workday source. Re-enable the Board index only after official, job-specific,
+policy-permitted ATS discovery and read-only runner testing.
+
+An independent cross-post review should also distinguish genuine identical
+titles from distinct employer requisitions. King's College London's
+Policy Institute advertised **two distinct** Evaluation Manager positions:
+reference [**160625**](https://www.jobs.ac.uk/job/DTG863/research-associate-evaluation-manager)
+was a two-year fixed-term role (closing October 28), while official
+[reference **160868**](https://www.kcl.ac.uk/jobs/160868-research-associate-evaluation)
+is an indefinite-term role (closing November 9). Archived IDs 247 (indefinite) and 248 (two years) are not
+safe to merge merely because their titles match. Employer requisition
+mapping is still required before changing durable IDs. UiT's
+[official careers catalogue](https://uit.no/tavla/stillinger)
+advertises *four distinct RiverPulse research specialisms*,
+while the archived IDs 222/233/235 all describe climate/environmental
+governance; their LinkedIn cross-post relationships must be verified from
+actual employer-side requisition identities before any suppression.
+
 ## Acceptance ledger (not automatic issue closure)
 
 1. Confirm post-merge `main` CI and packaging on exact integrated commit;
