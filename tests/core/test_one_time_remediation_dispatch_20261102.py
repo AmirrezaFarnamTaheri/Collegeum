@@ -18,10 +18,17 @@ class TrustedReleaseWorkflowTests(unittest.TestCase):
 
     def test_only_reviewed_main_push_can_enter_release(self) -> None:
         self.assertIn("branches: [main]", self.text)
-        self.assertIn("paths: [.github/workflows/one-time-remediation-dispatch-20261102.yml]", self.text)
+        self.assertIn(
+            "paths: [.github/workflows/one-time-remediation-dispatch-20261102.yml]",
+            self.text,
+        )
         self.assertIn("github.repository == 'AmirrezaFarnamTaheri/Collegeum'", self.text)
         self.assertIn("github.ref == 'refs/heads/main'", self.text)
         self.assertIn("startsWith(github.event.head_commit.message,", self.text)
+        self.assertIn(
+            "ops: relaunch verified Collegeum remediation acceptance 20261102",
+            self.text,
+        )
         self.assertNotIn("workflow_dispatch:", self.text)
         self.assertNotIn("schedule:", self.text)
         self.assertIn("contents: read", self.text)
