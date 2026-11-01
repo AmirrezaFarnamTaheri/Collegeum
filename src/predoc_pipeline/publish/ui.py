@@ -14,13 +14,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from .subscriptions import CAREER_SCOPES, TOPIC_LABELS
+from .subscriptions import CAREER_SCOPES, LOOKBACK_DAYS, TOPIC_LABELS
 
 ACADEMIC = ("predoc", "phd", "postdoc", "research")
 LIFE_SCIENCES = "life_sciences_phd"
 CAREERS = ("data_scientist", "data_analyst", "econ_consulting", "research_analyst")
 PAGE_SIZE = 4
-MAX_LATEST_PAGES = 10
+MAX_LATEST_PAGES = 500  # At most the 2,000-row uploaded snapshot at four per page
 
 PERSIAN_LABELS = {
     "predoc": "دستیار پژوهشی / پیشادکتری",
@@ -327,8 +327,11 @@ def menu(
 
 def latest_panel(
     jobs: list[dict[str, str]], *, page: int, lang: str = "en",
+    lookback_days: int = 14,
 ) -> tuple[str, dict[str, Any]]:
-    """A single bounded browse card, not five unsolicited Telegram messages."""
+    """An editable view of a selected history window, not an alert backfill."""
+    if lookback_days not in LOOKBACK_DAYS:
+        raise ValueError("Unsupported match-history window")
     jobs = [
         item for item in jobs
         if _verified_https(item.get("url", ""))
@@ -338,7 +341,8 @@ def latest_panel(
     current = max(0, min(page, pages - 1))
     fa = lang == "fa"
     title = "🔎 <b>فرصت‌های تازه</b>" if fa else "🔎 <b>Latest matches</b>"
-    lines = [title, f"{current + 1} / {pages}", ""]
+    period = f"{lookback_days} روز اخیر" if fa else f"Last {lookback_days} days"
+    lines = [title, period, f"{current + 1} / {pages}", ""]
     for i, job in enumerate(jobs[current * PAGE_SIZE:(current + 1) * PAGE_SIZE], 1):
         url = job["url"]
         label = escape(job.get("title", "Opportunity")[:110])
@@ -353,11 +357,25 @@ def latest_panel(
         lines.append("موردی یافت نشد. موضوع‌ها را تغییر دهید یا بعداً بررسی کنید."
                      if fa else "No matching listings yet. Change your roles or check again later.")
     keyboard: list[list[dict[str, str]]] = []
+    labels = {
+        7: ("7 days", "۷ روز"), 14: ("14 days", "۱۴ روز"),
+        30: ("1 month", "۱ ماه"), 60: ("2 months", "۲ ماه"),
+        90: ("3 months", "۳ ماه"),
+    }
+    for group in ((7, 14), (30, 60), (90,)):
+        keyboard.append([
+            _button(
+                f"{'☑' if days == lookback_days else '☐'} {labels[days][1 if fa else 0]}",
+                f"sub:p:latest:{days}:0",
+            ) for days in group
+        ])
     nav = []
     if current:
-        nav.append(_button("‹ قبلی" if fa else "‹ Previous", f"sub:p:latest:{current-1}"))
+        nav.append(_button("‹ قبلی" if fa else "‹ Previous",
+                           f"sub:p:latest:{lookback_days}:{current-1}"))
     if current + 1 < pages:
-        nav.append(_button("بعدی ›" if fa else "Next ›", f"sub:p:latest:{current+1}"))
+        nav.append(_button("بعدی ›" if fa else "Next ›",
+                           f"sub:p:latest:{lookback_days}:{current+1}"))
     if nav:
         keyboard.append(nav)
     keyboard.append(_back(lang))

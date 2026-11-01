@@ -5,9 +5,16 @@ Subscribers can choose roles and markets, change delivery preferences, switch
 English/Persian, pause and unsubscribe. GitHub still collects vacancies and sends
 checkpointed alerts on its schedule. Fast menus do not make collection continuous.
 
-My matches uses the same selected roles and career markets as subscriptions,
-and shows matches from the last 14 days. Owner academic browsing, search and
-closing-soon views also respect selected roles. Saved, applied and hidden views
+My matches uses the same selected roles and career markets as subscriptions.
+The user can choose a rolling 7-, 14-, 30-, 60- or 90-day history window
+(7 days, 14 days, 1 month, 2 months or 3 months). The default stays 14 days.
+The selected window is carried across Next/Previous buttons in the current
+browse message; opening My matches again defaults to 14 days. These choices
+change browsing only: they do not backfill alerts, resend notifications or
+modify delivery receipts. Results depend on records in the latest uploaded
+snapshot, not exhaustive LinkedIn search coverage or past vacancy availability.
+Owner academic browsing, search and closing-soon views also respect selected
+roles. Saved, applied and hidden views
 retain explicitly tracked positions even if the subscription changes.
 Settings offers 3, 4, 6 or 8 positions per page (default 4). This display preference
 is private to the Worker's chat and is removed on unsubscribe; it does not change

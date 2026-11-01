@@ -6,6 +6,30 @@ const ZONES = ['UTC', 'Asia/Tehran', 'Europe/London', 'America/New_York'];
 const LIMITS = [3, 6, 10];
 export const PAGE_SIZES = [3, 4, 6, 8];
 export const pageSize = value => PAGE_SIZES.includes(value) ? value : 4;
+const LOOKBACK_DAYS = [7, 14, 30, 60, 90];
+const DEFAULT_LOOKBACK = 14;
+const latestSelection = raw => {
+  if (raw === 'sub:p:latest') return {days: DEFAULT_LOOKBACK, page: 0};
+  // Existing Telegram messages contain page-only callbacks; keep them usable.
+  const old = /^sub:p:latest:([0-9]{1,3})$/.exec(raw);
+  if (old && Number(old[1]) < 10) return {days: DEFAULT_LOOKBACK, page: Number(old[1])};
+  const selected = /^sub:p:latest:(7|14|30|60|90):([0-9]{1,3})$/.exec(raw);
+  if (!selected || Number(selected[2]) >= 500) return null;
+  return {days: Number(selected[1]), page: Number(selected[2])};
+};
+const lookbackLabel = (days, fa) => fa ? ({
+  7: '۷ روز اخیر', 14: '۱۴ روز اخیر', 30: '۳۰ روز اخیر',
+  60: '۶۰ روز اخیر', 90: '۹۰ روز اخیر',
+})[days] : `last ${days} days`;
+const lookbackChoices = (days, fa) => [[7, 14], [30, 60], [90]].map(row =>
+  row.map(value => button(
+    `${days === value ? '☑' : '☐'} ${fa ? ({
+      7: '۷ روز', 14: '۱۴ روز', 30: '۱ ماه', 60: '۲ ماه', 90: '۳ ماه',
+    })[value] : ({
+      7: '7 days', 14: '14 days', 30: '1 month', 60: '2 months', 90: '3 months',
+    })[value]}`,
+    `sub:p:latest:${value}:0`,
+  )));
 export const matchesPreferences = (row, member) => Boolean(member &&
   (row.category || row.kind) in member.topics &&
   (!row.scope || row.scope in member.scopes));
@@ -144,13 +168,16 @@ export async function subscriberUpdate(bot, message, callback, key) {
   const command = String(message.text || '').trim().split(/\s+/)[0].replace(/^\//, '').split('@')[0].toLowerCase();
   const raw = callback?.data || (['pause', 'resume'].includes(command) ? `sub:a:${command}` : `sub:p:${COMMAND_PAGES[command] || 'home'}`);
   const id = String(message.chat.id);
+  const selection = latestSelection(raw);
   const page = await bot.ctx.storage.transaction(async tx => {
     const claim = await tx.get(key);
     if (claim?.subscriber_applied) return claim.subscriber_page;
     const old = await tx.get(`subscriber:${id}`), m = old || fresh();
     let target = 'home', changed = false;
     const parts = raw.split(':');
-    if (parts[1] === 'p' && PAGES.has(parts[2])) target = parts[2];
+    if (selection) target = 'latest';
+    else if (parts.length === 3 && parts[1] === 'p' && PAGES.has(parts[2]) &&
+      parts[2] !== 'latest') target = parts[2];
     else if (parts.length === 3 && (parts[1] === 't' && TOPICS.includes(parts[2]) ||
       parts[1] === 'g' && ['iran', 'remote'].includes(parts[2]))) {
       const field = parts[1] === 't' ? 'topics' : 'scopes', option = parts[2];
@@ -197,8 +224,9 @@ export async function subscriberUpdate(bot, message, callback, key) {
   if (page === 'latest') {
     const owner = (bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id);
     const {rows, marks} = await bot.dataset(owner);
-    const recent = at => Number.isFinite(Date.parse(at)) && Date.parse(at) <= Date.now() &&
-      Date.parse(at) >= Date.now() - 14 * 86400000;
+    const now = Date.now(), days = selection.days;
+    const recent = at => Number.isFinite(Date.parse(at)) && Date.parse(at) <= now &&
+      Date.parse(at) >= now - days * 86400000;
     const academic = rows.filter(r => matchesPreferences(r, member) && !r.closed_at && !r.expired_at &&
       !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
       recent(r.published_at) && (!r.deadline || Date.parse(r.deadline) >= Date.now()));
@@ -210,17 +238,19 @@ export async function subscriberUpdate(bot, message, callback, key) {
     const matches = [...academic, ...careers].sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
     const fa = member?.language === 'fa';
     const totalPages = Math.max(1, Math.ceil(matches.length / size));
-    const current = Math.min(totalPages - 1, /^sub:p:latest:\d{1,6}$/.test(raw) ? Number(raw.split(':')[3]) : 0);
+    const current = Math.min(totalPages - 1, selection.page);
     content = {text: (fa ? '<b>تازه‌ترین‌ها</b>' : '<b>Latest matches</b>') + '\n\n' +
-      (fa ? 'بر اساس موضوع‌ها و محدوده‌های انتخاب‌شده · ۱۴ روز اخیر' : 'Your selected roles and markets · last 14 days') + '\n\n' +
+      (fa ? 'موضوع‌ها و محدوده‌های انتخاب‌شده' : 'Your selected roles and markets') +
+      ' · ' + lookbackLabel(days, fa) + '\n\n' +
       (matches.slice(current * size, current * size + size).map(r => `<a href="${escape(r.apply_url)}">${escape(r.title.slice(0, 110))}</a>\n${escape(r.institution.slice(0, 90))}` +
         (r.country ? ` · ${escape(r.country.slice(0, 50))}` : '') +
         (r.deadline ? `\n${fa ? 'مهلت' : 'Deadline'}: ${escape(r.deadline.slice(0, 10))}` : '')).join('\n\n') ||
         (fa ? 'موردی یافت نشد. موضوع‌ها را تغییر دهید یا بعداً بررسی کنید.' : 'No matches yet. Change your roles or check again later.')),
       reply_markup: {inline_keyboard: [
-        ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${current - 1}`)] : []),
-          button(`${current + 1}/${totalPages}`, `sub:p:latest:${current}`),
-          ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${current + 1}`)] : [])]] : []),
+        ...lookbackChoices(days, fa),
+        ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${days}:${current - 1}`)] : []),
+          button(`${current + 1}/${totalPages}`, `sub:p:latest:${days}:${current}`),
+          ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${days}:${current + 1}`)] : [])]] : []),
         [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),
           button(fa ? 'تنظیمات نمایش' : `Page size: ${size}`, 'sub:p:display')],
         [button(fa ? 'خانه' : 'Home', 'sub:p:home')]]}};

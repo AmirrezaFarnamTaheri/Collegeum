@@ -78,3 +78,74 @@ test('menu hierarchy groups subscriptions and uses explicit checkbox states', ()
   assert.equal(display.find(b => b.callback_data === 'sub:n:4').text, '☐ 4');
   assert.ok(display.some(b => b.callback_data === 'sub:p:more'));
 });
+
+test('Latest matches offers all five rolling lookbacks with safe filtering', async () => {
+  const now = Date.now();
+  const at = days => new Date(now - days * 86400000).toISOString();
+  const values = new Map([['subscribers_initialized', true], ['subscriber:42',
+    {...member, topics: {...member.topics, data_analyst: at(1)}, scopes: {remote: at(1)}}]]);
+  const storage = {get: async k => structuredClone(values.get(k)),
+    put: async (k, v) => values.set(k, structuredClone(v)),
+    delete: async k => values.delete(k), transaction: async fn => fn(storage)};
+  const rows = [6, 10, 25, 50, 80, 100].map((age, index) => ({
+    url_hash: String(index).repeat(64), kind: 'predoc',
+    title: `Academic age ${age}`, institution: 'University',
+    apply_url: `https://example.org/academic/${age}`, published_at: at(age),
+  }));
+  rows.push({...rows[0], url_hash: 'b'.repeat(64), kind: 'phd',
+    title: 'Wrong topic', published_at: at(1)});
+  rows.push({...rows[0], url_hash: 'c'.repeat(64), closed_at: at(1),
+    title: 'Closed position'});
+  const career = {category: 'data_analyst', scope: 'remote', title: 'Career age 25',
+    url: 'https://example.org/career', employer: 'Research Group',
+    first_seen_at: at(25), availability: 'open'};
+  values.set('page_size:42', 8);
+  values.set('career_listings', [career, {...career, scope: 'iran',
+    title: 'Wrong market', url: 'https://example.org/iran'}]);
+  const sent = [];
+  const bot = {ctx: {storage}, env: {OWNER_IDS: ''}, api: async () => {},
+    deliver: async (_key, _method, data) => sent.push(data),
+    dataset: async () => ({rows, marks: new Map()})};
+  const msg = {chat: {id: 42, type: 'private'}, message_id: 5};
+  for (const [days, expected] of [[7, 1], [14, 2], [30, 4], [60, 5], [90, 6]]) {
+    await subscriberUpdate(bot, msg, {data: `sub:p:latest:${days}:0`}, `lookback:${days}`);
+    const view = sent.at(-1);
+    assert.equal((view.text.match(/<a href=/g) || []).length, expected, `last ${days} days`);
+    assert.match(view.text, new RegExp(`last ${days} days`, 'i'));
+    assert.ok(view.reply_markup.inline_keyboard.flat().some(b =>
+      b.callback_data === `sub:p:latest:${days}:0` && b.text.startsWith('☑')));
+    assert.doesNotMatch(view.text, /Wrong topic|Wrong market|Closed position|Academic age 100/);
+  }
+  // The ordinary command remains backward-compatible with the last-14-day default.
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest'}, 'legacy:default');
+  assert.match(sent.at(-1).text, /last 14 days/i);
+  assert.equal((sent.at(-1).text.match(/<a href=/g) || []).length, 2);
+  assert.equal(values.has('match_window:42'), false); // browsing does not change synced preferences
+});
+
+test('Latest lookback survives pagination and refuses unapproved windows', async () => {
+  const now = Date.now(), at = age => new Date(now - age * 86400000).toISOString();
+  const values = new Map([['subscribers_initialized', true], ['subscriber:42', member]]);
+  const storage = {get: async k => structuredClone(values.get(k)),
+    put: async (k, v) => values.set(k, structuredClone(v)),
+    delete: async k => values.delete(k), transaction: async fn => fn(storage)};
+  const sent = [], rows = Array.from({length: 10}, (_, i) => ({
+    kind: 'predoc', url_hash: String(i).repeat(64), title: `Archive match ${i}`,
+    institution: 'University', apply_url: `https://example.org/${i}`,
+    published_at: at(32 + i),
+  }));
+  const bot = {ctx: {storage}, env: {}, api: async () => {},
+    deliver: async (_key, _method, data) => sent.push(data),
+    dataset: async () => ({rows, marks: new Map()})};
+  const msg = {chat: {id: 42, type: 'private'}, message_id: 9};
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest:90:0'}, 'archive:0');
+  assert.equal((sent.at(-1).text.match(/<a href=/g) || []).length, 4);
+  assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:90:1'));
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest:90:1'}, 'archive:1');
+  assert.match(sent.at(-1).text, /last 90 days/i);
+  assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b => b.text === '2/3'));
+  assert.equal((sent.at(-1).text.match(/<a href=/g) || []).length, 4);
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest:999:0'}, 'archive:bad');
+  assert.doesNotMatch(sent.at(-1).text, /Latest matches/);
+});

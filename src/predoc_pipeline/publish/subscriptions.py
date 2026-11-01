@@ -107,11 +107,18 @@ def selected(member: dict[str, Any], category: str, scope: str) -> bool:
     )
 
 
+LOOKBACK_DAYS = (7, 14, 30, 60, 90)
+
+
 def matching(member: dict[str, Any], academic: list[sqlite3.Row],
              careers: list[dict[str, str]], *, preview: bool = False,
+             lookback_days: int = 14,
              ) -> list[dict[str, str]]:
-    """Select recent published academic positions and explicit-market career jobs."""
-    cutoff = datetime.now(UTC) - timedelta(days=14)
+    """Preview a selected history window without backfilling scheduled alerts."""
+    if lookback_days not in LOOKBACK_DAYS:
+        raise ValueError("Unsupported match-history window")
+    # Notification eligibility remains on its existing 14-day policy.
+    cutoff = datetime.now(UTC) - timedelta(days=lookback_days if preview else 14)
     jobs: list[dict[str, str]] = []
     for row in academic:
         if row["status"] != "published" or row["closed_at"] or row["expired_at"]:

@@ -15,9 +15,17 @@ from ..logging_setup import get_logger
 from ..settings import Settings
 from .admin import admin_id, audit, buttons, render
 from .feedback import FeedbackStore
-from .subscriptions import matching, parse_toggle, private_user_id
+from .subscriptions import LOOKBACK_DAYS, matching, parse_toggle, private_user_id
 from .telegram import TelegramError
-from .ui import ACADEMIC, LIFE_SCIENCES, language, latest_panel, menu, sources_panel
+from .ui import (
+    ACADEMIC,
+    LIFE_SCIENCES,
+    MAX_LATEST_PAGES,
+    language,
+    latest_panel,
+    menu,
+    sources_panel,
+)
 
 log = get_logger(__name__)
 
@@ -68,7 +76,7 @@ def _update_panel(
 
 def _latest(
     store: FeedbackStore, chat_id: int, academic: list[sqlite3.Row],
-    settings: Settings, page: int = 0,
+    settings: Settings, page: int = 0, lookback_days: int = 14,
 ) -> tuple[str, dict[str, Any]]:
     member = store.subscriber(chat_id)
     if member is None or not member["topics"]:
@@ -81,8 +89,12 @@ def _latest(
         degraded = True
     else:
         degraded = False
-    results = matching(member, academic, careers, preview=True)
-    text, keyboard = latest_panel(results, page=page, lang=language(member))
+    results = matching(
+        member, academic, careers, preview=True, lookback_days=lookback_days,
+    )
+    text, keyboard = latest_panel(
+        results, page=page, lang=language(member), lookback_days=lookback_days,
+    )
     if degraded:
         notice = ("⚠️ منبع مشاغل موقتاً در دسترس نیست."
                   if language(member) == "fa" else
@@ -199,11 +211,19 @@ def _page(
 ) -> tuple[str, dict[str, Any]] | None:
     if raw.startswith("sub:p:latest"):
         parts = raw.split(":")
-        if len(parts) == 3:
+        if raw == "sub:p:latest":
             return _latest(store, user_id, academic, settings)
-        if (len(parts) == 4 and parts[3].isascii()
-                and parts[3].isdecimal() and 0 <= int(parts[3]) < 10):
+        if (len(parts) == 4 and parts[:3] == ["sub", "p", "latest"]
+                and parts[3].isascii() and parts[3].isdecimal()
+                and 0 <= int(parts[3]) < 10):
+            # Previously sent page-only buttons remain usable at 14 days.
             return _latest(store, user_id, academic, settings, int(parts[3]))
+        if (len(parts) == 5 and parts[:3] == ["sub", "p", "latest"]
+                and parts[3] in {str(days) for days in LOOKBACK_DAYS}
+                and len(parts[4]) <= 3 and parts[4].isascii()
+                and parts[4].isdecimal() and int(parts[4]) < MAX_LATEST_PAGES):
+            return _latest(store, user_id, academic, settings,
+                           int(parts[4]), lookback_days=int(parts[3]))
         return None
     if not raw.startswith("sub:p:"):
         return None
