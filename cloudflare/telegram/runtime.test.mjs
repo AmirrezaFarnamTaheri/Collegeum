@@ -81,7 +81,12 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
     })).json();
     assert.equal(status.subscribers_initialized,true);
     assert.equal(status.subscribers,undefined);
-    assert.deepEqual(status.inventory_counts, {academic: 1, career: 0});
+    assert.deepEqual(status.inventory_counts, {
+      academic: 1,
+      career: 0, // Legacy combined total retained for existing sync clients.
+      general_career: 0,
+      life_sciences_phd: 0,
+    });
     // Distinct valid IDs execute concurrently against the actual DO transaction API.
     await Promise.all(Array.from({length:6},(_,i)=>send('/webhook',{update_id:100+i,
       message:{chat:{id:1000+i,type:'private'},from:{id:1000+i},text:'/ask Count open roles'}})));
