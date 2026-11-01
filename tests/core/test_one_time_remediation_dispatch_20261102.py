@@ -34,6 +34,7 @@ class TrustedReleaseWorkflowTests(unittest.TestCase):
         self.assertIn("contents: read", self.text)
         self.assertIn("actions: write", self.text)
         self.assertIn("persist-credentials: false", self.text)
+        self.assertIn("cancel-in-progress: true", self.text)
 
     def test_dry_run_and_inspection_precede_any_production_dispatch(self) -> None:
         inspection = self.text.index("dispatch_and_wait telegram-worker.yml inspect")
