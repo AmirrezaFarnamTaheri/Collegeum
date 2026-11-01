@@ -165,8 +165,11 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     const days = selectedWindow(windowDays);
     text = tr('<b>Match history</b>\n\nChoose how far back My matches searches. This changes browsing only, not new-job alerts or previous deliveries.',
       '<b>بازه زمانی فرصت‌ها</b>\n\nبازه جستجوی «فرصت‌های من» را انتخاب کنید. این انتخاب اعلان‌های جدید و سابقه ارسال را تغییر نمی‌دهد.');
+    text += '\n\n' + tr('Saved default: ', 'بازه پیش‌فرض ذخیره‌شده: ') +
+      lookbackLabel(days, fa) + '\n' +
+      tr('☑ Selected · ☐ Not selected', '☑ انتخاب‌شده · ☐ انتخاب نشده');
     rows = [...lookbackChoices(days, fa, true),
-      [link('View my matches →', 'مشاهده فرصت‌های من ←', 'latest')]];
+      [link('🔎 View my matches →', '🔎 مشاهده فرصت‌های من ←', 'latest')]];
   } else if (page === 'stop') {
     text = tr('<b>Unsubscribe?</b>\n\nRemove your active preferences and stop future alerts. Previously encrypted backups may remain.',
       '<b>لغو عضویت؟</b>\n\nتنظیمات فعال حذف و اعلان‌ها متوقف می‌شوند. نسخه‌های پشتیبان رمزگذاری‌شده قبلی ممکن است باقی بمانند.');
@@ -292,8 +295,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
         if (parts[3] === 'on') m.topics[topic] ||= new Date().toISOString(); else delete m.topics[topic];
       }
       target = parts[2]; changed = true;
-    } else if (parts[1] === 'l' && ['en', 'fa'].includes(parts[2])) {
-      m.language = parts[2]; changed = true;
+    } else if (parts.length === 3 && parts[1] === 'l' && ['en', 'fa'].includes(parts[2])) {
+      m.language = parts[2]; changed = true; target = 'more';
     } else if (parts[1] === 'a' && ['pause', 'resume'].includes(parts[2]) && old) {
       m.paused = parts[2] === 'pause'; changed = true; target = 'delivery';
     } else if (parts[1] === 'd' && old) {
@@ -328,8 +331,18 @@ export async function subscriberUpdate(bot, message, callback, key) {
   const windowDays = selectedWindow(await bot.ctx.storage.get(`match_window:${id}`));
   let content = panel(member, page, size, windowDays);
   if (page === 'full') content.text = 'Subscriptions are full. Please try again later.';
-  if (page === 'sources') content.text = (await bot.ctx.storage.get('source_status'))?.[member?.language || 'en'] ||
-    (member?.language === 'fa' ? 'هنوز گزارش بررسی منابع در دسترس نیست.' : 'No source-check report is available yet.');
+  if (page === 'sources') {
+    const fa = member?.language === 'fa';
+    content = {
+      text: (await bot.ctx.storage.get('source_status'))?.[fa ? 'fa' : 'en'] ||
+        (fa ? 'هنوز گزارش بررسی منابع در دسترس نیست.' :
+          'No source-check report is available yet.'),
+      reply_markup: {inline_keyboard: [[
+        button(fa ? '← تنظیمات' : '← Settings', 'sub:p:more'),
+        button(fa ? '🔎 فرصت‌های من' : '🔎 My matches', 'sub:p:latest'),
+      ]]},
+    };
+  }
   if (page === 'latest') {
     const owner = (bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id);
     const {rows, marks} = await bot.dataset(owner);
@@ -394,8 +407,10 @@ export async function subscriberUpdate(bot, message, callback, key) {
         [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),
           button(fa ? 'خانه' : 'Home', 'sub:p:home')]]}};
   }
-  if ((bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id))
-    content.reply_markup.inline_keyboard.push([{text: member?.language === 'fa' ? 'پیگیری درخواست‌ها' : 'Saved & applications',
+  if (['home', 'more', 'latest'].includes(page) &&
+      (bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id))
+    content.reply_markup.inline_keyboard.push([{text:
+      member?.language === 'fa' ? '📌 ذخیره‌شده و درخواست‌ها' : '📌 Saved & applications',
       callback_data: 'view|tracking|0'}]);
   if (callback) {
     try { await bot.api('answerCallbackQuery', {callback_query_id: callback.id}); } catch { /* expired tap */ }
