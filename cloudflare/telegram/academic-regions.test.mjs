@@ -95,6 +95,8 @@ test('region toggles save without editing career markets; legacy market callback
   await tap('sub:p:markets', 'old-menu');
   assert.match(messages.at(-1).text, /Career roles/i);
   await tap('sub:r:all', 'all');
-  assert.deepEqual(values.get('subscriber:42').academic_regions, {});
+  assert.ok(values.get('subscriber:42').academic_regions.all);
   assert.equal(validPreferences(values.get('subscriber:42')), true);
+  assert.equal(matchesPreferences({kind: 'predoc', country: 'Canada'},
+    values.get('subscriber:42')), true);
 });
