@@ -25,7 +25,7 @@ test('career roles and markets are one screen; legacy market deep links work', (
 test('academic screen supports multi-select regions and an explicit worldwide reset', () => {
   const member = fresh();
   assert.ok(ACADEMIC_REGIONS.includes('europe'));
-  const screen = panel(member, 'academic');
+  const screen = panel(member, 'academic_regions');
   for (const region of ACADEMIC_REGIONS)
     assert.ok(callbacks(screen).includes('sub:r:' + region), region);
   assert.ok(callbacks(screen).includes('sub:r:all'));
