@@ -237,15 +237,33 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     rows.push([link('🔎 View matches', '🔎 مشاهده فرصت‌ها', 'latest'),
       link('🗓 History', '🗓 بازه زمانی', 'history')]);
   } else if (page === 'delivery') {
-    text = tr('<b>Alert delivery</b>', '<b>ارسال اعلان‌ها</b>') + '\n\n' +
-      tr('Changes apply at the next scheduled alert run. Individual alerts are sent when new matches are collected.',
-        'تغییرات در اجرای بعدی ارسال اعمال می‌شوند. اعلان تکی پس از گردآوری فرصت تازه ارسال می‌شود.');
-    rows = [[button(tr('Mode: ', 'روش: ') + (m.delivery_mode === 'digest' ? tr('Daily digest', 'خلاصه روزانه') : tr('Individual', 'تکی')), 'sub:d:mode')],
-      [button(tr('Daily maximum: ', 'حد روزانه: ') + m.daily_limit, 'sub:d:limit')],
-      [button(tr('Quiet hours: ', 'ساعات آرام: ') + (m.quiet_hours ? '22:00–08:00' : tr('Off', 'خاموش')), 'sub:d:quiet')],
-      [button(tr('Time zone: ', 'منطقه زمانی: ') + m.timezone, 'sub:d:zone')]];
-    rows.push([button(m.paused ? tr('Resume alerts', 'ازسرگیری اعلان') : tr('Pause alerts', 'توقف اعلان'),
-      m.paused ? 'sub:a:resume' : 'sub:a:pause')]);
+    const status = m.paused ? tr('Paused', 'متوقف') : tr('Active', 'فعال');
+    text = tr(
+      '🔔 <b>Alert delivery</b>\n\n' +
+      '<b>Status:</b> ' + status + '\n' +
+      `📬 ${m.delivery_mode === 'digest' ? 'Daily digest' : 'Individual alerts'} · max ${m.daily_limit}/day\n` +
+      `🌙 Quiet hours: ${m.quiet_hours ? '22:00–08:00' : 'Off'}\n` +
+      '🕓 ' + escape(m.timezone) + '\n\n' +
+      '<i>New alerts follow scheduled collection, not your browsing history.</i>',
+      '🔔 <b>ارسال اعلان‌ها</b>\n\n' +
+      '<b>وضعیت:</b> ' + status + '\n' +
+      `📬 ${m.delivery_mode === 'digest' ? 'خلاصه روزانه' : 'اعلان تکی'} · حداکثر ${m.daily_limit} در روز\n` +
+      `🌙 ساعات آرام: ${m.quiet_hours ? '۲۲ تا ۸' : 'خاموش'}\n` +
+      '🕓 ' + escape(m.timezone) + '\n\n' +
+      '<i>اعلان‌های تازه طبق زمان‌بندی گردآوری ارسال می‌شوند، نه بازه مرور.</i>'
+    );
+    rows = [
+      [button(tr('📬 Mode: ', '📬 روش: ') +
+        (m.delivery_mode === 'digest' ? tr('Digest', 'خلاصه') : tr('Individual', 'تکی')),
+      'sub:d:mode')],
+      [button(tr('🎯 Daily limit: ', '🎯 سقف روزانه: ') + m.daily_limit, 'sub:d:limit')],
+      [button(tr('🌙 Quiet hours: ', '🌙 ساعات آرام: ') +
+        (m.quiet_hours ? tr('On', 'روشن') : tr('Off', 'خاموش')), 'sub:d:quiet')],
+      [button(tr('🕓 Time zone: ', '🕓 منطقه زمانی: ') + m.timezone, 'sub:d:zone')],
+      [button(m.paused ? tr('▶ Resume alerts', '▶ ازسرگیری اعلان‌ها') :
+        tr('⏸ Pause alerts', '⏸ توقف اعلان‌ها'),
+        m.paused ? 'sub:a:resume' : 'sub:a:pause')],
+    ];
   } else if (page === 'display') {
     text = tr('<b>Display settings</b>\n\nBrowse results: choose positions per page. This does not change your daily alert limit.',
       '<b>تنظیمات نمایش</b>\n\nتعداد فرصت در هر صفحه. این تنظیم حد اعلان روزانه را تغییر نمی‌دهد.');
