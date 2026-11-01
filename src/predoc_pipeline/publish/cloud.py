@@ -16,12 +16,12 @@ from ..settings import Settings
 from .feedback import STATUS_BY_CODE, FeedbackStore
 
 PREFERENCE_FIELDS = ('topics', 'scopes', 'paused', 'language', 'delivery_mode',
-                     'daily_limit', 'quiet_hours', 'timezone')
+                     'daily_limit', 'quiet_hours', 'timezone', 'academic_regions')
 
 
 def _validate_subscribers(profiles: object) -> dict[str, Any]:
     from .feedback import DAILY_LIMITS, DELIVERY_ZONES, MAX_SUBSCRIBERS
-    from .subscriptions import CAREER_SCOPES, TOPICS
+    from .subscriptions import ACADEMIC_REGIONS, CAREER_SCOPES, TOPICS
 
     if not isinstance(profiles, dict) or len(profiles) > MAX_SUBSCRIBERS:
         raise ValueError('Invalid webhook subscriber response')
@@ -31,9 +31,13 @@ def _validate_subscribers(profiles: object) -> dict[str, Any]:
             raise ValueError('Invalid webhook subscriber identity')
         if member is None:
             continue
-        if not isinstance(member, dict) or set(member) != set(PREFERENCE_FIELDS):
+        required = set(PREFERENCE_FIELDS) - {'academic_regions'}
+        if (not isinstance(member, dict) or not required.issubset(member)
+                or set(member) - set(PREFERENCE_FIELDS)):
             raise ValueError('Invalid webhook subscriber preferences')
-        for field, allowed in (('topics', TOPICS), ('scopes', CAREER_SCOPES)):
+        member.setdefault('academic_regions', {})
+        for field, allowed in (('topics', TOPICS), ('scopes', CAREER_SCOPES),
+                               ('academic_regions', ACADEMIC_REGIONS)):
             choices = member[field]
             if not isinstance(choices, dict) or any(
                 key not in allowed or not isinstance(at, str)
@@ -84,8 +88,12 @@ def sync_cloud(
             records.append(data)
     if len(records) > 2000:
         raise ValueError('Webhook snapshot exceeds 2,000 listings; archive history before syncing')
-    profiles = {identifier: {field: member[field] for field in PREFERENCE_FIELDS}
-                for identifier, member in store.subscribers.items()}
+    # Keep an empty academic region selection implicit for older Worker builds.
+    # New selections are enabled only after the compatible Worker is deployed.
+    profiles = {identifier: {
+        field: member[field] for field in PREFERENCE_FIELDS
+        if field != 'academic_regions' or member.get('academic_regions')
+    } for identifier, member in store.subscribers.items()}
     from ..ingest.career import load_career
 
     careers = load_career(settings.career_state_path)
