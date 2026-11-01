@@ -260,7 +260,9 @@ const PAGES = new Set(['home', 'subscriptions', 'display', 'history', 'academic'
 const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'subscriptions', status: 'home',
   academic: 'academic', careers: 'careers', markets: 'markets', lifesciences: 'life_sciences',
   delivery: 'delivery', guide: 'help', privacy: 'privacy', stop: 'stop', delete: 'stop',
-  latest: 'latest', sources: 'sources', help: 'help', more: 'more'};
+  latest: 'latest', matches: 'latest', subscriptions: 'subscriptions',
+  history: 'history', display: 'display', notifications: 'delivery',
+  sources: 'sources', help: 'help', more: 'more'};
 export const subscriberCommand = command => (Object.hasOwn(COMMAND_PAGES, command) &&
   !['help', 'more'].includes(command)) || ['pause', 'resume'].includes(command);
 
@@ -355,8 +357,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
       !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
       recentlyDiscovered(r.first_seen_at || r.published_at, days, now) &&
       deadlineNotPassed(r.deadline, now) && safeApplicationUrl(r.apply_url));
-    const careers = (await bot.ctx.storage.get('career_listings') || [])
-      .filter(r => matchesPreferences(r, member) && r.availability !== 'closed' &&
+    const careerInventory = await bot.ctx.storage.get('career_listings') || [];
+    const careers = careerInventory.filter(r => matchesPreferences(r, member) && r.availability !== 'closed' &&
         deadlineNotPassed(r.deadline, now) &&
         recentlyDiscovered(r.first_seen_at, days, now) && safeApplicationUrl(r.url))
       .map(r => ({...r, apply_url: r.url, institution: r.employer,
@@ -384,15 +386,22 @@ export async function subscriberUpdate(bot, message, callback, key) {
         ? (fa ? '\nℹ️ وضعیت پذیرش تأیید نشده است.' : '\nℹ️ Availability unverified.') : '') +
       (r.category === 'life_sciences_phd'
         ? (fa ? '\nℹ️ تأمین مالی تأیید نشده است.' : '\nℹ️ Funding unverified.') : ''));
+    const needsCareerMarket = member && CAREERS.some(topic => topic in member.topics) &&
+      !Object.keys(member.scopes || {}).length;
     const empty = !member || !Object.keys(member.topics || {}).length
       ? (fa ? 'ابتدا موضوع دلخواه را در اشتراک‌ها انتخاب کنید.' :
         'Choose an academic or career role in Subscriptions first.')
-      : (fa ? 'در این بازه فرصت منطبق پیدا نشد. بازه ۳ ماهه یا موضوع‌های دیگر را امتحان کنید.' :
-        'No matches in this window. Try 3 months or broaden your selected roles.');
+      : needsCareerMarket && !academic.length
+        ? (fa ? 'برای دیدن مشاغل باید یک محدوده شغلی انتخاب کنید: ایران یا دورکاری جهانی.' :
+          'Choose a job market (Iran or worldwide remote) to see career matches.')
+        : (fa ? 'در این بازه فرصت منطبق پیدا نشد. بازه ۳ ماهه یا موضوع‌های دیگر را امتحان کنید.' :
+          'No matches in this window. Try 3 months or broaden your selected roles.');
     const header = (fa ? '<b>فرصت‌های من</b>' : '<b>My matches</b>') + '\n\n' +
       (fa ? 'موضوع‌ها و محدوده‌های انتخاب‌شده' : 'Your selected roles and career markets') +
       ' · ' + lookbackLabel(days, fa) + '\n' +
-      (fa ? `${matches.length} مورد منطبق` : `${matches.length} matches`);
+      (fa ? `${matches.length} مورد منطبق` : `${matches.length} matches`) + '\n' +
+      (fa ? `📦 فهرست: ${rows.length} دانشگاهی · ${careerInventory.length} شغلی`
+        : `📦 Cached inventory: ${rows.length} academic · ${careerInventory.length} career records`);
     const footer = fa ? 'ℹ️ مشاهده آگهی به معنی باز بودن یا تأمین مالی تأییدشده نیست.' :
       'ℹ️ A discovered listing is not a verified open or funded vacancy.';
     content = {text: [header, snapshotWarning, entries.join('\n\n') || empty, footer]
