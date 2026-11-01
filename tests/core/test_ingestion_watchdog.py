@@ -275,3 +275,16 @@ class CadenceEvidenceTests(TestCase):
         self.assertIn("scheduled slots", buf.getvalue())
         self.assertIn("unobserved mature slots", buf.getvalue())
         self.assertNotIn("Bearer", buf.getvalue())
+
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as temp:
+            summary = Path(temp) / "summary.md"
+            with patch.dict("os.environ", {"GITHUB_STEP_SUMMARY": str(summary)}):
+                _summary(Decision(False, "fresh", 3600), "none", cadence=audit)
+            rendered = summary.read_text(encoding="utf-8")
+            self.assertIn("\n- Schedule audit: **", rendered)
+            self.assertIn("\n- No scheduled run observed", rendered)
+            self.assertNotIn("\\n-", rendered)
