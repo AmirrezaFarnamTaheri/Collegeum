@@ -308,22 +308,31 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     rows = [[link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions'),
       link('🗓 History settings', '🗓 بازه زمانی', 'history')]];
   } else if (page === 'more') {
-    text = tr('⚙️ <b>Settings</b>\n\n'
-      + 'Browse preferences affect only the way results are shown. '
-      + 'Alert delivery controls new notifications.',
-      '⚙️ <b>تنظیمات</b>\n\n'
-      + 'تنظیمات مرور فقط نمایش نتایج را تغییر می‌دهد. '
-      + 'ارسال اعلان، پیام‌های فرصت‌های تازه را کنترل می‌کند.');
-    rows = [[link('🗓 History: ' + lookbackLabel(selectedWindow(windowDays), false),
-      '🗓 بازه: ' + lookbackLabel(selectedWindow(windowDays), true), 'history'),
-      link('📄 Page size: ' + pageSize(size), '📄 تعداد در صفحه: ' + pageSize(size), 'display')],
+    text = tr(
+      '⚙️ <b>Settings</b>\n\n' +
+      '<b>Browsing</b>\n' +
+      `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} per page\n\n` +
+      '<b>Notifications</b>\n' +
+      `🔔 ${m.paused ? 'Paused' : 'Active'} · ${m.daily_limit} per day\n\n` +
+      '<i>Browsing settings never resend previous alerts.</i>',
+      '⚙️ <b>تنظیمات</b>\n\n' +
+      '<b>مرور فرصت‌ها</b>\n' +
+      `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} در صفحه\n\n` +
+      '<b>اعلان‌ها</b>\n' +
+      `🔔 ${m.paused ? 'متوقف' : 'فعال'} · ${m.daily_limit} در روز\n\n` +
+      '<i>تنظیم بازه مرور باعث ارسال دوباره اعلان‌های قبلی نمی‌شود.</i>'
+    );
+    rows = [
+      [link('🗓 Match history', '🗓 بازه زمانی', 'history'),
+        link('📄 Results/page', '📄 تعداد در صفحه', 'display')],
       [link('🔔 Alert delivery', '🔔 ارسال اعلان', 'delivery'),
-        link('🧭 Edit subscriptions', '🧭 ویرایش اشتراک‌ها', 'subscriptions')],
+        link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions')],
       [link('🌐 Source status', '🌐 وضعیت منابع', 'sources'),
         link('❔ Help', '❔ راهنما', 'help')],
       [button(fa ? '🌐 English' : '🌐 فارسی', `sub:l:${fa ? 'en' : 'fa'}`),
         link('🔒 Privacy', '🔒 حریم خصوصی', 'privacy')],
-      [link('🗑 Unsubscribe', '🗑 لغو عضویت', 'stop')]];
+      [link('🗑 Unsubscribe', '🗑 لغو اشتراک', 'stop')],
+    ];
   } else {
     const nAcademic = ACADEMIC.filter(key => key in m.topics).length;
     const nCareers = CAREERS.filter(key => key in m.topics).length;
