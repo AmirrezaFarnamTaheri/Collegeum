@@ -20,6 +20,7 @@ makes the whole history auditable in ``git log -p``, which the binary never was.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
@@ -186,12 +187,32 @@ def _row_value(row: Any, key: str) -> Any:
         return None
 
 
-def _public_application_url(value: str | None) -> str | None:
-    """Unwrap only a verified HTTPS Google Forms target from Google login."""
+def _public_application_url(
+    value: str | None, source_url: str | None = None,
+) -> str | None:
+    """Return an HTTPS link to the individual advert for public consumers.
+
+    Never rewrite durable application identities. A confirmed university HTTP
+    application gateway can be shown via its position-specific HTTPS jobs.ac.uk
+    advert, but generic/unknown source pages fail closed. The dashboard, RSS
+    and HTTPS-only Telegram browser use the same safe display projection.
+    """
     if not value:
         return value
     try:
         parts = urlsplit(value)
+        if parts.scheme == "http":
+            source = urlsplit(source_url or "")
+            if (source.scheme == "https"
+                    and source.hostname in {"www.jobs.ac.uk", "jobs.ac.uk"}
+                    and not source.username and not source.password
+                    and re.fullmatch(
+                        r"/job/[A-Z0-9]{6,12}(?:/[A-Z0-9][A-Z0-9-]*)?/?",
+                        source.path, re.I,
+                    )
+                    and application_url_issue(source_url) is None):
+                return source_url
+            return None
         if parts.hostname == "accounts.google.com" and "/signin/" in parts.path:
             target = parse_qs(parts.query).get("continue", [""])[0]
             dest = urlsplit(target)
@@ -199,7 +220,7 @@ def _public_application_url(value: str | None) -> str | None:
                     and dest.path.startswith("/forms/")):
                 return target
     except ValueError:
-        pass
+        return None
     return value
 
 
@@ -246,7 +267,7 @@ def _public_record(row: Any) -> dict[str, Any]:
         "visa": get("visa_sponsorship_status"),
         "summary": get("summary") or "",
         "language": get("language") or "en",
-        "apply_url": _public_application_url(get("apply_url")),
+        "apply_url": _public_application_url(get("apply_url"), get("source_url")),
         "source_url": get("source_url"),
         "confidence": round(float(get("confidence") or 0), 3),
         "first_seen_at": get("first_seen_at"),
@@ -274,7 +295,9 @@ def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
         for row in db.active_listings()
         if row["url_hash"] not in hidden
         and not excluded_by_audit(row["url_hash"])
-        and application_url_issue(_public_application_url(row["apply_url"])) is None
+        and application_url_issue(
+            _public_application_url(row["apply_url"], row["source_url"])
+        ) is None
         and not authentication_page_text(row["summary"])
         and (router is None or router.channel_for_row(row) == "web")
     ]
