@@ -286,7 +286,8 @@ def eligible(member: dict[str, Any], category: str, scope: str,
     if category in ACADEMIC_TOPICS:
         regions = member.get("academic_regions") or {}
         if regions:
-            region_at = _instant(regions.get(academic_region(country), ""))
+            region = "all" if "all" in regions else academic_region(country)
+            region_at = _instant(regions.get(region, ""))
             if region_at is None:
                 return False
             choice_at = max(choice_at, region_at)
@@ -301,7 +302,8 @@ def selected(member: dict[str, Any], category: str, scope: str,
     if scope and scope not in member.get("scopes", {}):
         return False
     regions = member.get("academic_regions") or {}
-    return not (category in ACADEMIC_TOPICS and regions) or academic_region(country) in regions
+    return (not (category in ACADEMIC_TOPICS and regions)
+            or "all" in regions or academic_region(country) in regions
 
 
 LOOKBACK_DAYS = (7, 14, 30, 60, 90)
