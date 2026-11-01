@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: one-time-collegeum-remediation-dispatch-20261102
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   accept:
