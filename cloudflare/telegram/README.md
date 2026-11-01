@@ -49,8 +49,15 @@ buttons still open the Careers screen. Selected counts, region/market summaries,
 and direct access to My matches and history make the state inspectable.
 Career scopes remain required for career alerts only. Settings separates **Match history**, **Display
 settings** (4, 6, 8 or 12 positions per page; default 4), **Alert delivery**, source status,
-language and account controls. Telegram controls are native inline keyboards;
-their colors/backgrounds follow each user's Telegram theme, not Worker CSS.
+language and account controls. The mobile-first interface uses a short
+Collegeum hero, separate Search/Alert status summaries, two-column role grids,
+clear step labels for Academic roles → Regions and Careers → Job markets, and
+type icons (🎓 academic, 💼 career, 🧬 specialist) on match cards. Selection
+buttons have short bilingual labels and visible checked states. Page headers
+show the total match count and current page; the 12-item compact display remains
+within Telegram's message-size limit. Only text, supported HTML emphasis,
+native keyboards and Telegram-provided emojis are styled: Telegram controls
+the button colors, sizing, theme and background (not Worker CSS).
 Owners can reach Saved & applications from home, settings and results without
 cluttering every selection panel. The tracking actions (Save, Hide and Applied)
 currently operate on **academic listings only**; career listings are browseable
