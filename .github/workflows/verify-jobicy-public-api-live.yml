@@ -1,0 +1,57 @@
+name: verify-jobicy-public-api-live
+on:
+  push:
+    branches:
+      - fix/jobicy-public-api-route-20261102
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Verify documented public API with robots-aware read-only request
+        run: |
+          PYTHONPATH=src python3 - <<'PY'
+          import json
+          from predoc_pipeline.ingest.career import REMOTE_API, parse_remote_jobs
+          from predoc_pipeline.ingest.http import PoliteClient
+          from predoc_pipeline.settings import Settings
+          from tools.probe_career_sources import _recognizes_jobicy
+
+          settings = Settings()
+          with PoliteClient(
+              user_agent=settings.http_user_agent,
+              timeout=settings.http_timeout_seconds,
+              per_host_delay=settings.per_host_delay_seconds,
+              respect_robots=True,
+          ) as client:
+              response = client.get(REMOTE_API, use_cache=False)
+          summary = {"http_status": response.status, "fetch_ok": response.ok}
+          if response.ok:
+              payload = json.loads(response.text)
+              jobs = payload.get("jobs") if isinstance(payload, dict) else None
+              summary["raw"] = len(jobs) if isinstance(jobs, list) else -1
+              if isinstance(jobs, list) and _recognizes_jobicy(jobs):
+                  eligible = parse_remote_jobs(payload)
+                  summary["eligible_career"] = len(eligible)
+                  summary["schema_recognized"] = True
+              else:
+                  summary["schema_recognized"] = False
+          print(json.dumps(summary, sort_keys=True))
+          assert response.ok, "Jobicy public endpoint denied or unreachable"
+          assert summary.get("schema_recognized"), "Official Jobicy JSON schema changed"
+          PY
