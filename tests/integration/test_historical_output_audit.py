@@ -275,3 +275,25 @@ def test_reviewed_out_of_scope_positions_are_hidden_without_erasing_publication_
             assert row["closed_reason"]
         assert excluded_by_audit(row["url_hash"])
     assert not excluded_by_audit("0" * 64)
+
+
+def test_partial_source_errors_are_visible_even_without_failed_sources(tmp_path: Path):
+    """HTTP 429 can leave an archive intact while new source coverage is partial."""
+    _write_fixture(tmp_path)
+    path = tmp_path / "docs/data/health.json"
+    health = json.loads(path.read_text(encoding="utf-8"))
+    health["source_summary"] = {
+        "total": 76, "successful": 66, "empty": 8,
+        "failed": 0, "partial": 1, "skipped": 1,
+    }
+    health["last_run"]["source_errors"] = 1
+    health["last_run"]["outcome"] = "partial"
+    path.write_text(json.dumps(health), encoding="utf-8")
+    report = inspect(tmp_path)
+    assert report["pipeline_outcome"] == "partial"
+    assert report["source_failures"] == 0
+    assert report["source_partials"] == 1
+    assert report["source_errors"] == 1
+    assert report["source_expected_empty"] == 8
+    assert report["source_skipped"] == 1
+    assert report["invalid_public_ids"] == [2, 3]
