@@ -29,7 +29,7 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
   });
   try {
     assert.equal((await send('/webhook',{},false)).status,401);
-    const row={id:42,url_hash:'a'.repeat(64),title:'Economics RA',institution:'Example University',
+    const row={id:42,url_hash:'a'.repeat(64),kind:'predoc',title:'Economics RA',institution:'Example University',
       country:'Canada',apply_url:'https://example.org/job',first_seen_at:new Date().toISOString()};
     const snapshot={listings:[row],marks:{},generated_at:new Date().toISOString(),
       subscriber_protocol:1,subscribers:{}};
