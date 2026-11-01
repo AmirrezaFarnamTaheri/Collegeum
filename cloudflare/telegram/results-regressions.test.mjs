@@ -126,3 +126,22 @@ test('language toggle stays in Settings and source status navigates back there',
   assert.ok(sources.reply_markup.inline_keyboard.flat().some(
     b => b.callback_data === 'sub:p:more'));
 });
+
+test('empty results explain that career roles need a market even when inventory exists', async () => {
+  const member = preferences();
+  member.topics = {data_analyst: isoDaysAgo(20)};
+  member.scopes = {};
+  const f = fixture({member, career: [{category: 'data_analyst', scope: 'remote',
+    title: 'Example analyst job', employer: 'Lab', first_seen_at: isoDaysAgo(1),
+    url: 'https://example.org/job/4', availability: 'unknown'}]});
+  const view = await f.tap('sub:p:latest');
+  assert.match(view.text, /choose.*job market/i);
+  assert.match(view.text, /1 career/i);
+});
+
+test('stale snapshot is labeled even when a role matches', async () => {
+  const f = fixture({rows: [academic(1)], snapshot: isoDaysAgo(1)});
+  const view = await f.tap('sub:p:latest:7:0');
+  assert.match(view.text, /over 8 hours old/i);
+  assert.match(view.text, /Research Assistant a/);
+});
