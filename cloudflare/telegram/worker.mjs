@@ -405,14 +405,15 @@ export class TelegramBot {
       const defaultWindow = chatId === null ? null :
         await this.ctx.storage.get(`match_window:${chatId}`);
       const content = panel(member, 'home', size, defaultWindow);
-      content.reply_markup.inline_keyboard.push([nav('Saved & applications', 'tracking')]);
+      content.reply_markup.inline_keyboard.push([nav('📌 Saved & applications', 'tracking')]);
       return content;
     }
-    if (kind === "tracking") return {text: '<b>Saved & applications</b>\n\n' +
-      `<b>${available.length} academic matches</b> · ${rows.filter(r => open(r) && marks.get(r.url_hash) === "valid").length} saved · ` +
-      `${rows.filter(r => marks.get(r.url_hash) === "applied").length} applied\n\n` +
-      'Tracking applies to academic listings. Career roles are in My matches.\n' +
-      'Search with <code>/search economics London</code>.\n\n' +
+    if (kind === "tracking") return {text: '📌 <b>Saved & applications</b>\n<i>Your academic application tracker</i>\n\n' +
+      `🎓 ${available.length} matching · ✅ ${rows.filter(r => open(r) && marks.get(r.url_hash) === "valid").length} saved · ` +
+      `📝 ${rows.filter(r => marks.get(r.url_hash) === "applied").length} applied\n\n` +
+      'Use Saved, Applied or Hidden to review marked listings.\n' +
+      'Career listings appear in My matches, but do not have tracking receipts yet.\n' +
+      'Search: <code>/search economics London</code>.\n\n' +
       `Listings updated: ${esc((await this.ctx.storage.get("snapshot_at")) || "Waiting for first sync")}`, reply_markup: menu()};
     if (kind === "more") return {text: '⚙️ <b>More options</b>\n\n' +
       'View recent or hidden positions, or open help.', reply_markup: moreMenu()};

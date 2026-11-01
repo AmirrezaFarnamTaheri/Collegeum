@@ -48,6 +48,16 @@ const LABELS = {
   fa: ['پیشادکتری / دستیار پژوهشی', 'فرصت دکتری', 'پسادکتری', 'پژوهشگر حرفه‌ای',
     'دکتری علوم زیستی · اروپا', 'علم داده', 'تحلیل داده / BI', 'مشاوره اقتصادی', 'تحلیل پژوهش و اقتصاد'],
 };
+// Two-column role controls fit small Telegram screens; the description above
+// the buttons retains the distinction between predoc, PhD and staff roles.
+const SHORT_ROLE_LABELS = {
+  en: ['Predoc / RA', 'PhD positions', 'Postdocs', 'Research staff',
+    'Life Sciences PhD', 'Data science', 'Data analysis / BI',
+    'Econ consulting', 'Research analyst'],
+  fa: ['پیشادکتری / دستیار', 'فرصت دکتری', 'پسادکتری', 'پژوهشگر حرفه‌ای',
+    'دکتری علوم زیستی', 'علم داده', 'تحلیل داده / BI',
+    'مشاوره اقتصادی', 'تحلیلگر پژوهش'],
+};
 const escape = text => String(text).replace(/[&<>"']/g, c =>
   ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 const button = (text, data) => ({text, callback_data: data});
@@ -104,6 +114,11 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
   const regionSummary = regionNames.length ? regionNames.join(', ') :
     (fa ? 'همه جهان' : 'Worldwide');
   const tr = (en, persian) => fa ? persian : en;
+  const alertReady = ACADEMIC.some(key => key in m.topics) ||
+    'life_sciences_phd' in m.topics ||
+    (CAREERS.some(key => key in m.topics) && Object.keys(m.scopes).length > 0);
+  const alertStatus = !alertReady ? tr('Not configured', 'تنظیم نشده') :
+    m.paused ? tr('Paused', 'متوقف') : tr('Active', 'فعال');
   if (page === 'markets') page = 'careers'; // Keep previously sent buttons usable.
   const parent = page === 'academic_regions' ? 'academic' :
     ['academic', 'careers', 'life_sciences'].includes(page) ? 'subscriptions' :
@@ -118,98 +133,150 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     const n = Object.keys(m.scopes).length;
     const marketSummary = [
       m.scopes.iran ? tr('Iran', 'ایران') : '',
-      m.scopes.remote ? tr('Worldwide remote', 'دورکاری جهانی') : '',
-    ].filter(Boolean).join(' + ') || tr('Not selected', 'انتخاب نشده');
+      m.scopes.remote ? tr('Remote', 'دورکاری') : '',
+    ].filter(Boolean).join(' · ') || tr('Not selected', 'انتخاب نشده');
     const life = Number('life_sciences_phd' in m.topics);
-    text = tr('🧭 <b>Edit subscriptions</b>\n\nSelect roles and their locations. Each tap saves immediately.\n\n' +
-      `🎓 Academic · ${a}/4\n` + 'Regions: ' + escape(regionSummary) + '\n\n' +
-      `💼 Careers · ${c}/4\nJob markets: ${n}/2 · ${marketSummary}\n\n` +
-      `🧬 Life Sciences PhD · ${life ? 'On' : 'Off'}`,
-      '🧭 <b>ویرایش اشتراک‌ها</b>\n\nموضوع‌ها و منطقه‌ها را انتخاب کنید. هر تغییر فوری ذخیره می‌شود.\n\n' +
-      `🎓 دانشگاهی · ${a}/4\n` + 'مناطق: ' + escape(regionSummary) + '\n\n' +
-      `💼 شغلی · ${c}/4\nمحدوده مشاغل: ${n}/2 · ${marketSummary}\n\n` +
-      `🧬 دکتری علوم زیستی · ${life ? 'فعال' : 'خاموش'}`);
+    text = tr(
+      '🧭 <b>Edit subscriptions</b>\n<i>Changes save as you tap.</i>\n\n' +
+      `<b>🎓 Academic</b> · ${a}/4 selected\n` +
+      '🌍 ' + escape(regionSummary) + '\n\n' +
+      `<b>💼 Careers</b> · ${c}/4 selected\n` +
+      `Job markets · ${n}/2 · ${escape(marketSummary)}\n\n` +
+      `<b>🧬 Life Sciences</b> · ${life ? 'On' : 'Off'}`,
+      '🧭 <b>ویرایش اشتراک‌ها</b>\n<i>هر انتخاب فوری ذخیره می‌شود.</i>\n\n' +
+      `<b>🎓 دانشگاهی</b> · ${a}/۴ انتخاب‌شده\n` +
+      '🌍 ' + escape(regionSummary) + '\n\n' +
+      `<b>💼 مشاغل</b> · ${c}/۴ انتخاب‌شده\n` +
+      `محدوده‌های شغلی · ${n}/۲ · ${escape(marketSummary)}\n\n` +
+      `<b>🧬 علوم زیستی</b> · ${life ? 'فعال' : 'خاموش'}`
+    );
     if (c && !n) text += tr(
-      '\n\n⚠️ Career alerts need at least one market.',
-      '\n\n⚠️ اعلان‌های شغلی به دست‌کم یک محدوده نیاز دارند.');
-    rows = [[link(`🎓 Academic · ${a}/4`, `🎓 دانشگاهی · ${a}/4`, 'academic'),
-      link(`💼 Careers + markets · ${c}/4`, `💼 مشاغل و محدوده · ${c}/4`, 'careers')],
-      [link(`🧬 Life Sciences · ${life}/1`, `🧬 علوم زیستی · ${life}/1`, 'life_sciences')],
-      [link('🔎 View my matches', '🔎 فرصت‌های من', 'latest'),
-        link('🗓 Match history', '🗓 بازه زمانی', 'history')]];
+      '\n\n⚠️ Choose a market to enable career matches.',
+      '\n\n⚠️ برای دیدن مشاغل، یک محدوده را انتخاب کنید.');
+    rows = [
+      [link(`🎓 Academic · ${a}/4`, `🎓 دانشگاهی · ${a}/۴`, 'academic'),
+        link(`💼 Careers · ${c}/4`, `💼 مشاغل · ${c}/۴`, 'careers')],
+      [link('🧬 Life Sciences', '🧬 علوم زیستی', 'life_sciences')],
+      [link('🔎 Browse my matches', '🔎 مشاهده فرصت‌ها', 'latest')],
+      [link('🗓 History settings', '🗓 تنظیم بازه زمانی', 'history')],
+    ];
   } else if (page === 'academic_regions') {
     const count = Object.keys(academicRegions).filter(region => region !== 'all').length;
-    text = tr('🌍 <b>Academic regions</b>\n\nFilter academic roles by location. '
-      + 'Choose any regions, or choose Worldwide to show every location. '
-      + 'An unspecified country appears only under Other / unspecified when filtered. '
-      + 'This affects browsing and future alerts, not previously delivered messages.',
-      '🌍 <b>مناطق دانشگاهی</b>\n\nمناطق دلخواه را انتخاب کنید. '
-      + '«همه جهان» تمام مناطق را نمایش می‌دهد. آگهی‌های بدون کشور مشخص فقط در «سایر / مکان نامشخص» نشان داده می‌شوند. '
-      + 'این فیلتر روی مرور و اعلان‌های آینده اثر دارد و پیام‌های قبلی را دوباره نمی‌فرستد.');
-    text += '\n\n' + tr('Current: ', 'انتخاب فعلی: ') + escape(regionSummary) +
-      '\n' + tr(`Selected: ${count}/8`, `انتخاب‌شده: ${count}/۸`);
+    text = tr(
+      '🌍 <b>Academic regions</b>\n<i>Choose where to look for academic roles.</i>\n\n' +
+      '<b>Current:</b> ' + escape(regionSummary) + '\n' +
+      `${count ? count + ' of 8 regions selected' : 'Worldwide · all locations'}\n\n` +
+      'Unknown countries appear under Other / unspecified. Changing filters does not resend old alerts.',
+      '🌍 <b>مناطق دانشگاهی</b>\n<i>مناطق موردنظر برای موقعیت‌های دانشگاهی را انتخاب کنید.</i>\n\n' +
+      '<b>انتخاب فعلی:</b> ' + escape(regionSummary) + '\n' +
+      `${count ? count + ' منطقه از ۸ منطقه' : 'همه جهان · تمام مکان‌ها'}\n\n` +
+      'کشور نامشخص در گزینه «سایر» است. تغییر فیلتر پیام‌های قبلی را دوباره ارسال نمی‌کند.'
+    );
     rows = [];
     for (let i = 0; i < ACADEMIC_REGIONS.length; i += 2) {
       rows.push(ACADEMIC_REGIONS.slice(i, i + 2).map(region =>
         button((region in academicRegions ? '☑ ' : '☐ ') +
           REGION_LABELS[fa ? 'fa' : 'en'][region], `sub:r:${region}`)));
     }
-    rows.push([button(`${count ? '☐' : '☑'} ${tr('Worldwide (clear filters)', 'همه جهان (حذف فیلتر)')}`,
+    rows.push([button(`${count ? '☐' : '☑'} ${tr('Worldwide · all regions', 'همه جهان · تمام مناطق')}`,
       'sub:r:all')]);
     rows.push([link('← Academic roles', '← فرصت‌های دانشگاهی', 'academic'),
-      link('🔎 View my matches', '🔎 فرصت‌های من', 'latest')]);
+      link('🔎 My matches', '🔎 فرصت‌های من', 'latest')]);
   } else if (['academic', 'careers', 'life_sciences'].includes(page)) {
     const options = page === 'academic' ? ACADEMIC :
       page === 'careers' ? CAREERS : ['life_sciences_phd'];
     const count = options.filter(key => key in m.topics).length;
-    text = page === 'academic'
-      ? tr('🎓 <b>Academic roles</b>\n\nChoose your academic stages. Region filters below are independent of career markets.',
-        '🎓 <b>فرصت‌های دانشگاهی</b>\n\nموضوع‌های دانشگاهی و سپس منطقه‌های دلخواه را انتخاب کنید. این فیلتر مستقل از مشاغل است.')
-      : page === 'careers'
-        ? tr('💼 <b>Career roles + job markets</b>\n\nSelect your career roles and the job markets in one place.',
-          '💼 <b>مشاغل و محدوده‌ها</b>\n\nموضوع‌ها و محدوده‌های شغلی را در همین صفحه انتخاب کنید.')
-        : tr('🧬 <b>Life Sciences PhD · Continental Europe</b>\n\nThis specialist feed remains Europe-only (excluding the UK), independent of Academic region filters.',
-          '🧬 <b>دکتری علوم زیستی · اروپای قاره‌ای</b>\n\nاین منبع تخصصی فقط اروپای قاره‌ای است (بدون بریتانیا) و از فیلتر مناطق دانشگاهی مستقل است.');
-    text += '\n\n' + tr(`Roles selected: ${count}/${options.length}`,
-      `موضوع‌های انتخاب‌شده: ${count}/${options.length}`);
-    rows = options.map(key => [button((key in m.topics ? '☑ ' : '☐ ') +
-      LABELS[m.language][TOPICS.indexOf(key)], `sub:t:${key}`)]);
+    if (page === 'academic') {
+      text = tr(
+        '🎓 <b>Academic roles</b>\n<i>Tap to select or remove.</i>\n\n' +
+        `<b>Step 1 · Roles</b>  ${count}/4 selected\n` +
+        'Predoc comes before a PhD; postdocs and research staff may require one.\n\n' +
+        '<b>Step 2 · Regions</b>\n🌍 ' + escape(regionSummary),
+        '🎓 <b>فرصت‌های دانشگاهی</b>\n<i>برای انتخاب یا حذف ضربه بزنید.</i>\n\n' +
+        `<b>مرحله ۱ · نقش‌ها</b>  ${count}/۴ انتخاب‌شده\n` +
+        'پیشادکتری قبل از دکتری است؛ پسادکتری و پژوهشگر معمولاً به دکتری نیاز دارند.\n\n' +
+        '<b>مرحله ۲ · مناطق</b>\n🌍 ' + escape(regionSummary));
+    } else if (page === 'careers') {
+      const selected = Object.keys(m.scopes).length;
+      text = tr(
+        '💼 <b>Career roles + markets</b>\n<i>Both are needed for career matches.</i>\n\n' +
+        `<b>Step 1 · Roles</b>  ${count}/4 selected\n\n` +
+        `<b>Step 2 · Job markets</b>  ${selected}/2 selected`,
+        '💼 <b>مشاغل و محدوده‌ها</b>\n<i>برای دیدن مشاغل، نقش و محدوده لازم است.</i>\n\n' +
+        `<b>مرحله ۱ · نقش‌ها</b>  ${count}/۴ انتخاب‌شده\n\n` +
+        `<b>مرحله ۲ · محدوده‌های شغلی</b>  ${selected}/۲ انتخاب‌شده`);
+      if (count && !selected) text += tr(
+        '\n\n⚠️ Select Iran and/or worldwide remote to see career matches.',
+        '\n\n⚠️ ایران یا دورکاری جهانی را برای دیدن مشاغل انتخاب کنید.');
+    } else {
+      text = tr(
+        '🧬 <b>Life Sciences PhD</b>\n<i>One specialist feed · Continental Europe</i>\n\n' +
+        `Status: ${count ? 'Selected' : 'Not selected'}\n` +
+        'Excludes the UK. Funding and eligibility must be checked on the original advert.',
+        '🧬 <b>دکتری علوم زیستی</b>\n<i>یک منبع تخصصی · اروپای قاره‌ای</i>\n\n' +
+        `وضعیت: ${count ? 'انتخاب‌شده' : 'انتخاب نشده'}\n` +
+        'بریتانیا شامل نمی‌شود. شرایط و تأمین مالی را در آگهی اصلی بررسی کنید.');
+    }
+    rows = [];
+    for (let i = 0; i < options.length; i += 2) {
+      rows.push(options.slice(i, i + 2).map(key =>
+        button((key in m.topics ? '☑ ' : '☐ ') +
+          SHORT_ROLE_LABELS[fa ? 'fa' : 'en'][TOPICS.indexOf(key)], `sub:t:${key}`)));
+    }
     if (page !== 'life_sciences') {
       const all = options.every(key => key in m.topics);
-      rows.push([button(all ? tr('Clear roles', 'حذف همه موضوع‌ها') :
-        tr('Select all roles', 'انتخاب همه موضوع‌ها'),
+      rows.push([button(all ? tr('Clear roles', 'حذف همه نقش‌ها') :
+        tr('Select all roles', 'انتخاب همه نقش‌ها'),
       `sub:b:${page}:${all ? 'off' : 'on'}`)]);
     }
     if (page === 'academic') {
-      text += '\n\n' + tr('Academic regions: ', 'مناطق دانشگاهی: ') + escape(regionSummary);
-      rows.push([link('🌍 Regions: ' + regionSummary.slice(0, 48),
-        '🌍 مناطق: ' + regionSummary.slice(0, 48), 'academic_regions')]);
+      rows.push([link('🌍 Edit academic regions', '🌍 انتخاب مناطق دانشگاهی',
+        'academic_regions')]);
     }
     if (page === 'careers') {
-      const n = Object.keys(m.scopes).length;
-      text += '\n\n' + tr(`Job markets: ${n}/2 selected`,
-        `محدوده مشاغل: ${n}/2 انتخاب‌شده`);
-      for (const [scope, en, persian] of [
-        ['iran', '🇮🇷 Iran-based', '🇮🇷 داخل ایران'],
-        ['remote', '🌐 Worldwide remote', '🌐 دورکاری جهانی'],
-      ]) rows.push([button((scope in m.scopes ? '☑ ' : '☐ ') +
-        tr(en, persian), `sub:g:${scope}`)]);
-      if (count && !n) text += tr(
-        '\n\n⚠️ Select at least one market to see career matches.',
-        '\n\n⚠️ برای دیدن مشاغل باید دست‌کم یک محدوده انتخاب کنید.');
+      rows.push([
+        button((m.scopes.iran ? '☑ ' : '☐ ') + tr('🇮🇷 Iran', '🇮🇷 ایران'), 'sub:g:iran'),
+        button((m.scopes.remote ? '☑ ' : '☐ ') + tr('🌐 Remote', '🌐 دورکاری'), 'sub:g:remote'),
+      ]);
     }
-    rows.push([link('🔎 View my matches', '🔎 فرصت‌های من', 'latest'),
+    rows.push([link('🔎 View matches', '🔎 مشاهده فرصت‌ها', 'latest'),
       link('🗓 History', '🗓 بازه زمانی', 'history')]);
   } else if (page === 'delivery') {
-    text = tr('<b>Alert delivery</b>', '<b>ارسال اعلان‌ها</b>') + '\n\n' +
-      tr('Changes apply at the next scheduled alert run. Individual alerts are sent when new matches are collected.',
-        'تغییرات در اجرای بعدی ارسال اعمال می‌شوند. اعلان تکی پس از گردآوری فرصت تازه ارسال می‌شود.');
-    rows = [[button(tr('Mode: ', 'روش: ') + (m.delivery_mode === 'digest' ? tr('Daily digest', 'خلاصه روزانه') : tr('Individual', 'تکی')), 'sub:d:mode')],
-      [button(tr('Daily maximum: ', 'حد روزانه: ') + m.daily_limit, 'sub:d:limit')],
-      [button(tr('Quiet hours: ', 'ساعات آرام: ') + (m.quiet_hours ? '22:00–08:00' : tr('Off', 'خاموش')), 'sub:d:quiet')],
-      [button(tr('Time zone: ', 'منطقه زمانی: ') + m.timezone, 'sub:d:zone')]];
-    rows.push([button(m.paused ? tr('Resume alerts', 'ازسرگیری اعلان') : tr('Pause alerts', 'توقف اعلان'),
-      m.paused ? 'sub:a:resume' : 'sub:a:pause')]);
+    const status = alertStatus;
+    text = tr(
+      '🔔 <b>Alert delivery</b>\n\n' +
+      '<b>Status:</b> ' + status + '\n' +
+      `📬 ${m.delivery_mode === 'digest' ? 'Daily digest' : 'Individual alerts'} · max ${m.daily_limit}/day\n` +
+      `🌙 Quiet hours: ${m.quiet_hours ? '22:00–08:00' : 'Off'}\n` +
+      '🕓 ' + escape(m.timezone) + '\n\n' +
+      '<i>New alerts follow scheduled collection, not your browsing history.</i>',
+      '🔔 <b>ارسال اعلان‌ها</b>\n\n' +
+      '<b>وضعیت:</b> ' + status + '\n' +
+      `📬 ${m.delivery_mode === 'digest' ? 'خلاصه روزانه' : 'اعلان تکی'} · حداکثر ${m.daily_limit} در روز\n` +
+      `🌙 ساعات آرام: ${m.quiet_hours ? '۲۲ تا ۸' : 'خاموش'}\n` +
+      '🕓 ' + escape(m.timezone) + '\n\n' +
+      '<i>اعلان‌های تازه طبق زمان‌بندی گردآوری ارسال می‌شوند، نه بازه مرور.</i>'
+    );
+    rows = [
+      [button(tr('📬 Mode: ', '📬 روش: ') +
+        (m.delivery_mode === 'digest' ? tr('Digest', 'خلاصه') : tr('Individual', 'تکی')),
+      'sub:d:mode')],
+      [button(tr('🎯 Daily limit: ', '🎯 سقف روزانه: ') + m.daily_limit, 'sub:d:limit')],
+      [button(tr('🌙 Quiet hours: ', '🌙 ساعات آرام: ') +
+        (m.quiet_hours ? tr('On', 'روشن') : tr('Off', 'خاموش')), 'sub:d:quiet')],
+      [button(tr('🕓 Time zone: ', '🕓 منطقه زمانی: ') + m.timezone, 'sub:d:zone')],
+      [button(m.paused ? tr('▶ Resume alerts', '▶ ازسرگیری اعلان‌ها') :
+        tr('⏸ Pause alerts', '⏸ توقف اعلان‌ها'),
+        m.paused ? 'sub:a:resume' : 'sub:a:pause')],
+    ];
+    if (!member) {
+      text += tr('\n\nChoose roles before configuring alerts.',
+        '\n\nپیش از تنظیم اعلان‌ها، موضوع‌ها را انتخاب کنید.');
+      rows = [[link('🧭 Set subscriptions', '🧭 تنظیم اشتراک‌ها', 'subscriptions')]];
+    } else if (!alertReady) {
+      rows.unshift([link('🧭 Configure roles & markets',
+        '🧭 تنظیم موضوع‌ها و محدوده‌ها', 'subscriptions')]);
+    }
   } else if (page === 'display') {
     text = tr('<b>Display settings</b>\n\nBrowse results: choose positions per page. This does not change your daily alert limit.',
       '<b>تنظیمات نمایش</b>\n\nتعداد فرصت در هر صفحه. این تنظیم حد اعلان روزانه را تغییر نمی‌دهد.');
@@ -254,59 +321,73 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     rows = [[link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions'),
       link('🗓 History settings', '🗓 بازه زمانی', 'history')]];
   } else if (page === 'more') {
-    text = tr('⚙️ <b>Settings</b>\n\n'
-      + 'Browse preferences affect only the way results are shown. '
-      + 'Alert delivery controls new notifications.',
-      '⚙️ <b>تنظیمات</b>\n\n'
-      + 'تنظیمات مرور فقط نمایش نتایج را تغییر می‌دهد. '
-      + 'ارسال اعلان، پیام‌های فرصت‌های تازه را کنترل می‌کند.');
-    rows = [[link('🗓 History: ' + lookbackLabel(selectedWindow(windowDays), false),
-      '🗓 بازه: ' + lookbackLabel(selectedWindow(windowDays), true), 'history'),
-      link('📄 Page size: ' + pageSize(size), '📄 تعداد در صفحه: ' + pageSize(size), 'display')],
+    text = tr(
+      '⚙️ <b>Settings</b>\n\n' +
+      '<b>Browsing</b>\n' +
+      `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} per page\n\n` +
+      '<b>Notifications</b>\n' +
+      `🔔 ${alertStatus} · ${m.daily_limit} per day\n\n` +
+      '<i>Browsing settings never resend previous alerts.</i>',
+      '⚙️ <b>تنظیمات</b>\n\n' +
+      '<b>مرور فرصت‌ها</b>\n' +
+      `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} در صفحه\n\n` +
+      '<b>اعلان‌ها</b>\n' +
+      `🔔 ${alertStatus} · ${m.daily_limit} در روز\n\n` +
+      '<i>تنظیم بازه مرور باعث ارسال دوباره اعلان‌های قبلی نمی‌شود.</i>'
+    );
+    rows = [
+      [link('🗓 Match history', '🗓 بازه زمانی', 'history'),
+        link('📄 Results/page', '📄 تعداد در صفحه', 'display')],
       [link('🔔 Alert delivery', '🔔 ارسال اعلان', 'delivery'),
-        link('🧭 Edit subscriptions', '🧭 ویرایش اشتراک‌ها', 'subscriptions')],
+        link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions')],
       [link('🌐 Source status', '🌐 وضعیت منابع', 'sources'),
         link('❔ Help', '❔ راهنما', 'help')],
       [button(fa ? '🌐 English' : '🌐 فارسی', `sub:l:${fa ? 'en' : 'fa'}`),
         link('🔒 Privacy', '🔒 حریم خصوصی', 'privacy')],
-      [link('🗑 Unsubscribe', '🗑 لغو عضویت', 'stop')]];
+      [link('🗑 Unsubscribe', '🗑 لغو اشتراک', 'stop')],
+    ];
   } else {
     const nAcademic = ACADEMIC.filter(key => key in m.topics).length;
     const nCareers = CAREERS.filter(key => key in m.topics).length;
     const nLife = 'life_sciences_phd' in m.topics ? 1 : 0;
     const markets = [m.scopes.iran ? tr('Iran', 'ایران') : '',
-      m.scopes.remote ? tr('Worldwide remote', 'دورکاری جهانی') : ''].filter(Boolean);
-    const ready = nAcademic > 0 || nLife > 0 || (nCareers > 0 && markets.length);
-    const status = !ready ? tr('Not configured', 'تنظیم نشده') :
-      m.paused ? tr('Paused', 'متوقف') : tr('On', 'فعال');
-    text = tr('🎯 <b>Collegeum · Career radar</b>', '🎯 <b>کالجیوم · رادار فرصت‌ها</b>') +
-      '\n\n' + tr(`🎓 Academic: ${nAcademic}/4 · 💼 Careers: ${nCareers}/4\n` +
-        `🧬 Life Sciences: ${nLife ? 'On' : 'Off'}\n`,
-        `🎓 دانشگاهی: ${nAcademic}/4 · 💼 مشاغل: ${nCareers}/4\n` +
-        `🧬 علوم زیستی: ${nLife ? 'فعال' : 'غیرفعال'}\n`) +
-      tr('🌍 Career markets: ', '🌍 محدوده مشاغل: ') +
-      escape(markets.join(' + ') || tr('Not selected', 'انتخاب نشده')) + '\n' +
-      tr('🗺 Academic regions: ', '🗺 مناطق دانشگاهی: ') +
-      escape(regionSummary.slice(0, 120)) + '\n' +
-      tr('🔔 Alerts: ', '🔔 اعلان‌ها: ') + status + '\n' +
-      tr('🗓 Browse range: ', '🗓 بازه مرور: ') + lookbackLabel(selectedWindow(windowDays), fa);
+      m.scopes.remote ? tr('Remote', 'دورکاری') : ''].filter(Boolean);
+    const ready = alertReady;
+    const status = alertStatus;
+    text = tr(
+      '🎯 <b>Collegeum</b>\n<i>Your career radar</i>\n\n' +
+      '<b>Your search</b>\n' +
+      `🎓 Academic ${nAcademic}/4 · 💼 Careers ${nCareers}/4\n` +
+      `🧬 Life Sciences ${nLife ? 'On' : 'Off'}\n`,
+      '🎯 <b>کالجیوم</b>\n<i>رادار فرصت‌های شما</i>\n\n' +
+      '<b>جستجوی شما</b>\n' +
+      `🎓 دانشگاهی ${nAcademic}/۴ · 💼 مشاغل ${nCareers}/۴\n` +
+      `🧬 علوم زیستی ${nLife ? 'فعال' : 'خاموش'}\n`
+    ) +
+      tr('🌍 Regions: ', '🌍 مناطق: ') + escape(regionSummary.slice(0, 100)) + '\n' +
+      tr('💼 Markets: ', '💼 محدوده‌ها: ') +
+      escape(markets.join(' · ') || tr('Not selected', 'انتخاب نشده')) + '\n\n' +
+      tr('<b>Alert status</b>\n', '<b>وضعیت اعلان‌ها</b>\n') +
+      `🔔 ${status} · 🗓 ${lookbackLabel(selectedWindow(windowDays), fa)}`;
     text += '\n\n' + (!ready ? tr(
-      'Choose roles under Subscriptions. Existing matches can then be browsed.',
-      'از اشتراک‌ها موضوع دلخواه را انتخاب کنید، سپس فرصت‌های قبلی را مرور کنید.') :
-      m.paused ? tr('Your selections are saved; alerts are paused.',
-        'تنظیمات ذخیره شده‌اند اما اعلان‌ها متوقف هستند.') :
-        tr('Browse existing positions below. New alerts follow the collection schedule.',
-          'فرصت‌های موجود را مرور کنید. اعلان‌های جدید طبق برنامه گردآوری ارسال می‌شوند.'));
+      'Choose roles under Subscriptions to personalize My matches.',
+      'برای شخصی‌سازی فرصت‌ها از اشتراک‌ها موضوع انتخاب کنید.') :
+      m.paused ? tr('Your choices are saved. Notifications are paused.',
+        'انتخاب‌ها ذخیره شده‌اند. اعلان‌ها متوقف هستند.') :
+        tr('Browse positions below. New alerts follow the collection schedule.',
+          'فرصت‌های موجود را مرور کنید. اعلان‌ها طبق برنامه گردآوری ارسال می‌شوند.'));
     if (nCareers && !markets.length) text += tr(
-      '\n\n⚠️ Career roles need at least one job market.',
-      '\n\n⚠️ برای مشاغل دست‌کم یک محدوده لازم است.');
-    rows = [[link('🔎 View my matches', '🔎 فرصت‌های من', 'latest')],
-      [link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions'),
+      '\n⚠️ Career roles need a job market.',
+      '\n⚠️ برای مشاغل باید محدوده انتخاب کنید.');
+    rows = [
+      [link('🔎 Browse my matches', '🔎 مشاهده فرصت‌های من', 'latest')],
+      [link('🧭 Edit subscriptions', '🧭 ویرایش اشتراک‌ها', 'subscriptions'),
         link('🔔 Alert delivery', '🔔 ارسال اعلان', 'delivery')],
       [link('⚙️ Settings', '⚙️ تنظیمات', 'more'),
-        link('❔ Help', '❔ راهنما', 'help')]];
+        link('❔ Help', '❔ راهنما', 'help')],
+    ];
     if (nCareers && !markets.length)
-      rows.splice(2, 0, [link('💼 Set career markets', '💼 تعیین محدوده مشاغل', 'careers')]);
+      rows.splice(2, 0, [link('💼 Choose job markets', '💼 انتخاب محدوده مشاغل', 'careers')]);
     return {text, reply_markup: {inline_keyboard: rows}};
   }
   rows.push(home);
@@ -461,8 +542,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
       ? {title: 65, institution: 50, country: 24}
       : {title: 110, institution: 90, country: 50};
     const entries = matches.slice(current * size, current * size + size).map((r, index) =>
-      `${current * size + index + 1}. <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, limits.title))}</a>\n` +
-      escape(String(r.institution || 'Employer unknown').slice(0, limits.institution)) +
+      `${current * size + index + 1}. ${r.category === 'life_sciences_phd' ? '🧬' : r.category ? '💼' : '🎓'} <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, limits.title))}</a>\n` +
+      '🏛 ' + escape(String(r.institution || 'Employer unknown').slice(0, limits.institution)) +
       (r.country ? ` · ${escape(String(r.country).slice(0, limits.country))}` : '') +
       (r.deadline ? `\n${fa ? 'مهلت' : 'Deadline'}: ${escape(String(r.deadline).slice(0, 10))}` : '') +
       (r.category && r.availability !== 'active'
@@ -479,10 +560,10 @@ export async function subscriberUpdate(bot, message, callback, key) {
           'Choose a job market (Iran or worldwide remote) to see career matches.')
         : (fa ? 'در این بازه فرصت منطبق پیدا نشد. بازه ۳ ماهه یا موضوع‌های دیگر را امتحان کنید.' :
           'No matches in this window. Try 3 months or broaden your selected roles.');
-    const header = (fa ? '<b>فرصت‌های من</b>' : '<b>My matches</b>') + '\n\n' +
-      (fa ? 'موضوع‌ها و محدوده‌های انتخاب‌شده' : 'Your selected roles and career markets') +
-      ' · ' + lookbackLabel(days, fa) + '\n' +
-      (fa ? `${matches.length} مورد منطبق` : `${matches.length} matches`) + '\n' +
+    const header = (fa ? '🔎 <b>فرصت‌های من</b>' : '🔎 <b>My matches</b>') + '\n' +
+      (fa ? `<b>${matches.length} فرصت</b> · ${lookbackLabel(days, fa)}`
+        : `<b>${matches.length} positions</b> · ${lookbackLabel(days, fa)}`) + '\n' +
+      (fa ? `صفحه ${current + 1} از ${totalPages}` : `Page ${current + 1} of ${totalPages}`) + '\n' +
       (fa ? `📦 فهرست: ${rows.length} دانشگاهی · ${careerInventory.length} شغلی`
         : `📦 Cached inventory: ${rows.length} academic · ${careerInventory.length} career records`);
     const footer = fa ? 'ℹ️ مشاهده آگهی به معنی باز بودن یا تأمین مالی تأییدشده نیست.' :
