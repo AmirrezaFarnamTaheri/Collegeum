@@ -163,33 +163,32 @@ def menu(
             _back(lang),
         ]
     elif page == "academic":
-        title = "🎓 <b>فرصت‌های دانشگاهی</b>" if fa else "🎓 <b>Academic opportunities</b>"
-        caption = (
-            "پیشادکتری پیش از ورود به دکتری است؛ دکتری برای دانشجویان دکتری است؛ "
-            "پسادکتری و پژوهشگر حرفه‌ای معمولاً مدرک دکتری می‌خواهند. "
-            "موضوع‌ها مستقل‌اند و فقط آگهی‌های تازه اعلان می‌شوند."
+        selected = sum(key in topics for key in ACADEMIC)
+        body = (
+            "🎓 <b>فرصت‌های دانشگاهی</b>\n<i>برای انتخاب یا حذف ضربه بزنید.</i>\n\n"
+            f"<b>مرحله ۱ · نقش‌ها</b>  {selected}/۴ انتخاب‌شده\n"
+            "پیشادکتری قبل از دکتری است؛ پسادکتری و پژوهشگر معمولاً به دکتری نیاز دارند.\n\n"
+            f"<b>مرحله ۲ · مناطق</b>\n🌍 {escape(region_summary)}"
             if fa else
-            "Predoc = before a PhD; PhD = doctoral student openings; "
-            "postdoc and research staff may require a completed PhD. "
-            "Tap a role to turn its alerts on or off."
+            "🎓 <b>Academic roles</b>\n<i>Tap to select or remove.</i>\n\n"
+            f"<b>Step 1 · Roles</b>  {selected}/4 selected\n"
+            "Predoc comes before a PhD; postdocs and research staff may require one.\n\n"
+            f"<b>Step 2 · Regions</b>\n🌍 {escape(region_summary)}"
         )
-        for key in ACADEMIC:
-            buttons.append([_button(
-                ("☑ " if key in topics else "☐ ") + _label(key, lang), f"sub:t:{key}",
-            )])
+        buttons = _role_grid(ACADEMIC, topics, lang)
         all_set = all(key in topics for key in ACADEMIC)
-        buttons.append([_button(
-            "پاک‌کردن همه" if fa and all_set else
-            "انتخاب همه" if fa else "Clear all" if all_set else "Select all",
-            f"sub:b:academic:{'off' if all_set else 'on'}",
-        )])
-        buttons.append([_button(
-            ("🌍 مناطق: " if fa else "🌍 Academic regions: ") + region_summary[:45],
-            "sub:p:academic_regions",
-        )])
-        buttons.append([_button("← اشتراک‌ها" if fa else "← Subscriptions",
-                                "sub:p:subscriptions")])
-        body = f"{title}\n\n{caption}"
+        buttons += [
+            [_button(
+                "حذف همه نقش‌ها" if fa and all_set else
+                "انتخاب همه نقش‌ها" if fa else "Clear roles" if all_set else "Select all roles",
+                f"sub:b:academic:{'off' if all_set else 'on'}",
+            )],
+            [_button("🌍 انتخاب مناطق" if fa else "🌍 Edit academic regions",
+                     "sub:p:academic_regions")],
+            [_button("🔎 مشاهده فرصت‌ها" if fa else "🔎 View matches", "sub:p:latest")],
+            [_button("← اشتراک‌ها" if fa else "← Subscriptions",
+                     "sub:p:subscriptions")],
+        ]
     elif page == "academic_regions":
         ordered = [
             "north_america", "latin_america", "europe", "middle_east",
