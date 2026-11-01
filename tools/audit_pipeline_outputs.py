@@ -106,6 +106,17 @@ def inspect(root: Path) -> dict[str, Any]:
             if reason:
                 # Never place URLs (which can contain access tokens) in CI logs.
                 invalid_feed.append(reason)
+    summary = health.get("source_summary")
+    if not isinstance(summary, dict):
+        summary = {}
+    last_run = health.get("last_run")
+    if not isinstance(last_run, dict):
+        last_run = {}
+
+    def safe_count(value: Any) -> int | None:
+        # Public output should never echo arbitrary provider/log strings.
+        return value if type(value) is int and 0 <= value <= 1000000 else None
+
     return {
         "journal_rows": len(records),
         "public_rows": len(public),
@@ -113,9 +124,13 @@ def inspect(root: Path) -> dict[str, Any]:
         "journal_quarantine_candidates": offending,
         "invalid_public_ids": invalid_visible,
         "invalid_rss_links": invalid_feed,
-        "pipeline_outcome": (health.get("last_run") or {}).get("outcome"),
-        "source_failures": (health.get("source_summary") or {}).get("failed"),
-        "last_pipeline_run": (health.get("last_run") or {}).get("run_id"),
+        "pipeline_outcome": last_run.get("outcome"),
+        "source_failures": safe_count(summary.get("failed")),
+        "source_partials": safe_count(summary.get("partial")),
+        "source_errors": safe_count(last_run.get("source_errors")),
+        "source_expected_empty": safe_count(summary.get("empty")),
+        "source_skipped": safe_count(summary.get("skipped")),
+        "last_pipeline_run": last_run.get("run_id"),
     }
 
 
