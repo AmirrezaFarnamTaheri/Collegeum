@@ -38,7 +38,7 @@ const NAMES = {
     'Malta', 'Serbia', 'Bosnia and Herzegovina', 'Ukraine', 'Moldova'],
   middle_east: ['Iran', 'IR', 'United Arab Emirates', 'UAE', 'AE', 'Saudi Arabia',
     'SA', 'Israel', 'IL', 'Turkey', 'Türkiye', 'TR', 'Qatar', 'QA',
-    'Bahrain', 'Kuwait', 'Oman', 'Jordan', 'Lebanon', 'Iraq', 'Egypt',
+    'Bahrain', 'Kuwait', 'Oman', 'Jordan', 'Lebanon', 'Iraq',
     'Yemen', 'Palestine'],
   asia: ['India', 'IN', 'China', 'CN', 'Japan', 'JP', 'South Korea', 'Korea',
     'Republic of Korea', 'KR', 'Taiwan', 'TW', 'Singapore', 'SG',
