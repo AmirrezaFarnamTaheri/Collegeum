@@ -13,9 +13,11 @@ positions. Academic roles have a separate **Academic → Regions** multi-select
 (🌍 Worldwide by default; North America, Latin America, Europe including the UK,
 Middle East, Asia, Oceania, Africa, and Other/unspecified). Only the record's
 known country is used; unclassified countries are not silently guessed.
-An empty region selection means Worldwide and preserves every existing subscriber.
-Academic region selection applies to browsing and future alert eligibility. Newly
-selected regions never backfill jobs discovered before that selection. The Life
+An empty legacy region selection means Worldwide and preserves every existing
+subscriber. Explicitly resetting a previously filtered region to Worldwide
+records an opt-in timestamp (internally `academic_regions.all`) so even the
+reset cannot backfill older excluded vacancies. Academic region selection
+applies to browsing and future alert eligibility without replaying receipts. The Life
 Sciences PhD feed remains continental Europe only, independent of these regions.
 The history window supports 7, 14, 30, 60 or 90 days (7 days, 14 days,
 1 month, 2 months or 3 months). The default is 14 days, but **Settings → Match
