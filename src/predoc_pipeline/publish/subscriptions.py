@@ -303,7 +303,7 @@ def selected(member: dict[str, Any], category: str, scope: str,
         return False
     regions = member.get("academic_regions") or {}
     return (not (category in ACADEMIC_TOPICS and regions)
-            or "all" in regions or academic_region(country) in regions
+            or "all" in regions or academic_region(country) in regions)
 
 
 LOOKBACK_DAYS = (7, 14, 30, 60, 90)
