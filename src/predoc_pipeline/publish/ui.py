@@ -72,6 +72,37 @@ def _label(key: str, lang: str) -> str:
     return CAREER_SCOPES.get(key, key).split(" ", 1)[-1]
 
 
+SHORT_ROLE_NAMES = {
+    "en": {
+        "predoc": "Predoc / RA", "phd": "PhD positions",
+        "postdoc": "Postdocs", "research": "Research staff",
+        "data_scientist": "Data science", "data_analyst": "Data analysis / BI",
+        "econ_consulting": "Econ consulting", "research_analyst": "Research analyst",
+    },
+    "fa": {
+        "predoc": "پیشادکتری / دستیار", "phd": "فرصت دکتری",
+        "postdoc": "پسادکتری", "research": "پژوهشگر حرفه‌ای",
+        "data_scientist": "علم داده", "data_analyst": "تحلیل داده / BI",
+        "econ_consulting": "مشاوره اقتصادی", "research_analyst": "تحلیلگر پژوهش",
+    },
+}
+
+
+def _role_grid(keys: tuple[str, ...], topics: dict[str, str],
+               lang: str) -> list[list[dict[str, str]]]:
+    """Short 2-column Telegram buttons; descriptions live in the message."""
+    return [
+        [
+            _button(
+                ("☑ " if key in topics else "☐ ") + SHORT_ROLE_NAMES[lang][key],
+                f"sub:t:{key}",
+            )
+            for key in keys[offset:offset + 2]
+        ]
+        for offset in range(0, len(keys), 2)
+    ]
+
+
 def _back(lang: str) -> list[dict[str, str]]:
     return [_button("بازگشت به خانه ↩" if lang == "fa" else "← Home", "sub:p:home")]
 
