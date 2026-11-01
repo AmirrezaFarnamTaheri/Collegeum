@@ -26,6 +26,7 @@ function fixture({rows = [], career = [], member = preferences(), snapshot = iso
     get: async k => structuredClone(values.get(k)),
     put: async (k, v) => values.set(k, structuredClone(v)),
     delete: async k => values.delete(k),
+    list: async ({prefix} = {}) => new Map([...values].filter(([key]) => !prefix || key.startsWith(prefix))),
     transaction: async callback => callback(storage),
   };
   const bot = {ctx: {storage}, env: {OWNER_IDS: owner ? '42' : ''},
