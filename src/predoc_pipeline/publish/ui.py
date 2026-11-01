@@ -85,7 +85,9 @@ def menu(
     topics = member.get("topics", {}) if member else {}
     scopes = member.get("scopes", {}) if member else {}
     regions = member.get("academic_regions", {}) if member else {}
-    region_summary = ", ".join(REGION_LABELS[lang][key] for key in regions)
+    region_summary = ", ".join(
+        REGION_LABELS[lang][key] for key in regions if key != "all"
+    )
     region_summary = region_summary or ("همه جهان" if fa else "Worldwide")
     if page == "markets":
         page = "careers"  # Legacy callbacks remain valid.
