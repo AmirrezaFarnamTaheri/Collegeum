@@ -8,11 +8,12 @@ export const PAGE_SIZES = [3, 4, 6, 8];
 export const pageSize = value => PAGE_SIZES.includes(value) ? value : 4;
 const LOOKBACK_DAYS = [7, 14, 30, 60, 90];
 const DEFAULT_LOOKBACK = 14;
-const latestSelection = raw => {
-  if (raw === 'sub:p:latest') return {days: DEFAULT_LOOKBACK, page: 0};
+const selectedWindow = value => LOOKBACK_DAYS.includes(value) ? value : DEFAULT_LOOKBACK;
+const latestSelection = (raw, preferred = DEFAULT_LOOKBACK) => {
+  if (raw === 'sub:p:latest') return {days: selectedWindow(preferred), page: 0};
   // Existing Telegram messages contain page-only callbacks; keep them usable.
   const old = /^sub:p:latest:([0-9]{1,3})$/.exec(raw);
-  if (old && Number(old[1]) < 10) return {days: DEFAULT_LOOKBACK, page: Number(old[1])};
+  if (old && Number(old[1]) < 10) return {days: selectedWindow(preferred), page: Number(old[1])};
   const selected = /^sub:p:latest:(7|14|30|60|90):([0-9]{1,3})$/.exec(raw);
   if (!selected || Number(selected[2]) >= 500) return null;
   return {days: Number(selected[1]), page: Number(selected[2])};
@@ -21,14 +22,14 @@ const lookbackLabel = (days, fa) => fa ? ({
   7: '۷ روز اخیر', 14: '۱۴ روز اخیر', 30: '۳۰ روز اخیر',
   60: '۶۰ روز اخیر', 90: '۹۰ روز اخیر',
 })[days] : `last ${days} days`;
-const lookbackChoices = (days, fa) => [[7, 14], [30, 60], [90]].map(row =>
+const lookbackChoices = (days, fa, setting = false) => [[7, 14], [30, 60], [90]].map(row =>
   row.map(value => button(
     `${days === value ? '☑' : '☐'} ${fa ? ({
       7: '۷ روز', 14: '۱۴ روز', 30: '۱ ماه', 60: '۲ ماه', 90: '۳ ماه',
     })[value] : ({
       7: '7 days', 14: '14 days', 30: '1 month', 60: '2 months', 90: '3 months',
     })[value]}`,
-    `sub:p:latest:${value}:0`,
+    setting ? `sub:w:${value}` : `sub:p:latest:${value}:0`,
   )));
 export const matchesPreferences = (row, member) => Boolean(member &&
   (row.category || row.kind) in member.topics &&
@@ -43,6 +44,28 @@ const LABELS = {
 const escape = text => String(text).replace(/[&<>"']/g, c =>
   ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 const button = (text, data) => ({text, callback_data: data});
+const safeApplicationUrl = value => {
+  if (typeof value !== 'string' || value.length > 1024) return '';
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname && !url.username && !url.password
+      ? url.href : '';
+  } catch { return ''; }
+};
+// A date-only deadline has no employer-provided closing time. Keep it visible
+// through its UTC calendar date; never claim the application is verified open.
+const deadlineNotPassed = (value, now) => {
+  if (!value) return true;
+  if (typeof value !== 'string') return false;
+  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(value))
+    return value >= new Date(now).toISOString().slice(0, 10);
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && timestamp >= now;
+};
+const recentlyDiscovered = (value, days, now) => {
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && timestamp <= now && timestamp >= now - days * 86400000;
+};
 const fresh = () => ({topics: {}, scopes: {}, paused: false, language: 'en',
   delivery_mode: 'instant', daily_limit: 6, quiet_hours: false, timezone: 'UTC'});
 
@@ -60,11 +83,11 @@ export function validPreferences(value) {
     typeof value.quiet_hours === 'boolean' && ZONES.includes(value.timezone);
 }
 
-export function panel(member, page = 'home', size = 4) {
+export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOKBACK) {
   const m = member || fresh(), fa = m.language === 'fa';
   const tr = (en, persian) => fa ? persian : en;
   const parent = ['academic', 'careers', 'life_sciences', 'markets'].includes(page) ? 'subscriptions' :
-    page === 'display' ? 'more' : 'home';
+    ['display', 'history'].includes(page) ? 'more' : 'home';
   const home = [button(tr('← Back', '← بازگشت'), `sub:p:${parent}`)];
   const link = (en, persian, page) => button(tr(en, persian), `sub:p:${page}`);
   let text, rows;
@@ -80,7 +103,7 @@ export function panel(member, page = 'home', size = 4) {
     const field = page === 'markets' ? 'scopes' : 'topics';
     text = page === 'academic' ? tr('<b>Academic roles</b>\n\nChoose roles. Predocs are before a PhD; research staff may need a completed PhD.',
       '<b>فرصت‌های دانشگاهی</b>\n\nموضوع دلخواه را انتخاب کنید. پیشادکتری پیش از دکتری است؛ پژوهشگر حرفه‌ای ممکن است دکتری بخواهد.') :
-      page === 'markets' ? tr('<b>Job markets</b>\n\nChoose one or both markets for career alerts.', '<b>محدوده مشاغل</b>\n\nبرای اعلان مشاغل یک یا هر دو محدوده را انتخاب کنید.') :
+      page === 'markets' ? tr('<b>Job markets</b>\n\nChoose one or both markets for career alerts. Academic roles are not restricted by these markets.', '<b>محدوده مشاغل</b>\n\nبرای اعلان مشاغل یک یا هر دو محدوده را انتخاب کنید. این محدوده‌ها فرصت‌های دانشگاهی را محدود نمی‌کنند.') :
       page === 'careers' ? tr('<b>Career roles</b>\n\nChoose roles, then a job market.', '<b>مشاغل</b>\n\nموضوع‌ها و سپس محدوده جستجو را انتخاب کنید.') :
       tr('<b>Life Sciences PhD · Europe</b>\n\nToggle alerts for doctoral openings.', '<b>دکتری علوم زیستی · اروپا</b>\n\nاعلان فرصت‌های دکتری را روشن یا خاموش کنید.');
     text += '\n\n' + tr('☑ Selected · ☐ Not selected · Tap to change', '☑ انتخاب‌شده · ☐ انتخاب‌نشده · برای تغییر لمس کنید');
@@ -109,6 +132,14 @@ export function panel(member, page = 'home', size = 4) {
       '<b>تنظیمات نمایش</b>\n\nتعداد فرصت در هر صفحه. این تنظیم حد اعلان روزانه را تغییر نمی‌دهد.');
     rows = [PAGE_SIZES.slice(0, 2), PAGE_SIZES.slice(2)].map(options => options.map(n =>
       button(`${n === pageSize(size) ? '☑' : '☐'} ${n}`, `sub:n:${n}`)));
+    rows.push([link('Match history: ' + lookbackLabel(selectedWindow(windowDays), false),
+      'بازه مرور فرصت‌ها: ' + lookbackLabel(selectedWindow(windowDays), true), 'history')]);
+  } else if (page === 'history') {
+    const days = selectedWindow(windowDays);
+    text = tr('<b>Match history</b>\\n\\nChoose how far back My matches searches. This changes browsing only, not new-job alerts or previous deliveries.',
+      '<b>بازه زمانی فرصت‌ها</b>\\n\\nبازه جستجوی «فرصت‌های من» را انتخاب کنید. این انتخاب اعلان‌های جدید و سابقه ارسال را تغییر نمی‌دهد.');
+    rows = [...lookbackChoices(days, fa, true),
+      [link('View my matches →', 'مشاهده فرصت‌های من ←', 'latest')]];
   } else if (page === 'stop') {
     text = tr('<b>Unsubscribe?</b>\n\nRemove your active preferences and stop future alerts. Previously encrypted backups may remain.',
       '<b>لغو عضویت؟</b>\n\nتنظیمات فعال حذف و اعلان‌ها متوقف می‌شوند. نسخه‌های پشتیبان رمزگذاری‌شده قبلی ممکن است باقی بمانند.');
@@ -126,6 +157,8 @@ export function panel(member, page = 'home', size = 4) {
     text += '\n\n' + tr('Listing size affects browsing only. Alert limits are set under Alert delivery.',
       'تعداد هر صفحه فقط برای مرور است. حد اعلان‌ها در «ارسال اعلان» تنظیم می‌شود.');
     rows = [[link('Display settings', 'تنظیمات نمایش', 'display')],
+      [link('Match history: ' + lookbackLabel(selectedWindow(windowDays), false),
+        'بازه فرصت‌ها: ' + lookbackLabel(selectedWindow(windowDays), true), 'history')],
       [link('Alert delivery', 'ارسال اعلان', 'delivery'), link('My matches', 'فرصت‌های من', 'latest')],
       [link('Job markets', 'محدوده مشاغل', 'markets'), link('Sources', 'منابع', 'sources')],
       [link('Help', 'راهنما', 'help'), link('Privacy', 'حریم خصوصی', 'privacy')],
@@ -150,7 +183,7 @@ export function panel(member, page = 'home', size = 4) {
   return {text, reply_markup: {inline_keyboard: rows}};
 }
 
-const PAGES = new Set(['home', 'subscriptions', 'display', 'academic', 'careers', 'life_sciences', 'markets', 'delivery',
+const PAGES = new Set(['home', 'subscriptions', 'display', 'history', 'academic', 'careers', 'life_sciences', 'markets', 'delivery',
   'more', 'help', 'privacy', 'stop', 'latest', 'sources']);
 const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'subscriptions', status: 'home',
   academic: 'academic', careers: 'careers', markets: 'markets', lifesciences: 'life_sciences',
