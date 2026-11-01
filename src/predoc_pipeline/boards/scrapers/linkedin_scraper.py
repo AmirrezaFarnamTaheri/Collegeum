@@ -218,6 +218,10 @@ class LinkedInScraper(BaseScraper):
         provider_cooldown_active = (
             provider_block is not None and self._scheduler_now() < provider_block
         )
+        if provider_cooldown_active:
+            # Replaying past cards is not successful provider collection.
+            # Keep source health partial even when no new request is allowed.
+            self.discovery_limits.append("LinkedIn provider access cooldown active")
         selected = ledger.plan(
             pairs, now=self._scheduler_now(),
             limit=query_budget, cooldown_hours=cooldown, core_pairs=core,
@@ -272,7 +276,7 @@ class LinkedInScraper(BaseScraper):
                     self.discovery_fetch_errors.append(
                         f"LinkedIn search HTTP {exc.status or 'fetch error'}"
                     )
-                    if exc.status in {403, 429}:
+                    if exc.status in {403, 429, 999}:
                         self.search_diagnostics["access_limited"] = True
                         break
                     if failures >= 3:
@@ -410,7 +414,7 @@ class LinkedInScraper(BaseScraper):
                 self.discovery_fetch_errors.append(
                     f"LinkedIn search HTTP {exc.status or 'fetch failure'}"
                 )
-                if exc.status in (403, 429):
+                if exc.status in (403, 429, 999):
                     # Stop; never rotate UA/proxy/account or bypass access controls.
                     self.search_diagnostics["access_limited"] = True
                     break
