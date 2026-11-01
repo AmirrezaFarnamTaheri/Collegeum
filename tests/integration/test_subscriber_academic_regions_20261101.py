@@ -58,3 +58,33 @@ def test_webhook_profile_accepts_legacy_regions_and_validates_new_selectors() ->
     assert _validate_subscribers({'42': member_with})['42']['academic_regions']
     with pytest.raises(ValueError):
         _validate_subscribers({'42': dict(member, academic_regions={'fake': _ts(1)})})
+
+
+def test_legacy_python_menu_has_unified_career_and_academic_region_controls() -> None:
+    from predoc_pipeline.publish.ui import menu
+
+    member = {'topics': {'predoc': _ts(2), 'data_analyst': _ts(2)},
+              'scopes': {'iran': _ts(2)}, 'academic_regions': {'europe': _ts(2)}}
+    overview, overview_keyboard = menu(member, "subscriptions")
+    codes = [button['callback_data'] for row in overview_keyboard['inline_keyboard']
+             for button in row]
+    assert "Edit subscriptions" in overview
+    assert "sub:p:academic" in codes and "sub:p:careers" in codes
+    assert "sub:p:markets" not in codes
+    careers, careers_keyboard = menu(member, "careers")
+    actions = [button['callback_data'] for row in careers_keyboard['inline_keyboard']
+               for button in row]
+    assert "sub:g:iran" in actions and "sub:g:remote" in actions
+    assert "sub:t:data_analyst" in actions
+    assert "sub:p:markets" not in actions
+    academic, academics_keyboard = menu(member, "academic")
+    assert "sub:p:academic_regions" in {
+        button['callback_data'] for row in academics_keyboard['inline_keyboard']
+        for button in row
+    }
+    regions, regions_keyboard = menu(member, "academic_regions")
+    region_actions = {b["callback_data"] for row in regions_keyboard["inline_keyboard"]
+                      for b in row}
+    assert "Academic regions" in regions
+    assert "sub:r:europe" in region_actions
+    assert "sub:r:all" in region_actions
