@@ -229,7 +229,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     rows = [];
   } else if (page === 'help') {
     text = tr('❔ <b>How Collegeum works</b>\n\n'
-      + '1. Subscriptions → select Academic, Careers or Life Sciences roles. Careers also require a market.\n'
+      + '1. Subscriptions → select Academic roles and regions, Careers with markets, or Life Sciences.\n'
       + '2. My matches → browse saved roles from the last 7, 14, 30, 60 or 90 days.\n'
       + '3. Settings → Match history saves your default range. Display controls page size.\n'
       + '4. Alert delivery → choose notification mode, quota, time zone and quiet hours.\n\n'
@@ -237,7 +237,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       + 'Collection is scheduled, so missing listings can mean an outdated snapshot. '
       + 'Always confirm eligibility and opening status on the original employer site.',
       '❔ <b>راهنمای کالجیوم</b>\n\n'
-      + '۱. از اشتراک‌ها موضوع‌های دانشگاهی، شغلی یا علوم زیستی را انتخاب کنید. مشاغل به محدوده نیاز دارند.\n'
+      + '۱. در اشتراک‌ها موضوع‌ها و مناطق دانشگاهی، مشاغل و محدوده‌ها یا علوم زیستی را انتخاب کنید.\n'
       + '۲. فرصت‌های من: بازه‌های ۷، ۱۴، ۳۰، ۶۰ و ۹۰ روز را مرور کنید.\n'
       + '۳. تنظیمات: بازه زمانی پیش‌فرض و تعداد نتایج در صفحه را تعیین کنید.\n'
       + '۴. ارسال اعلان: روش، سقف روزانه، منطقه زمانی و ساعات آرام را تغییر دهید.\n\n'
@@ -257,7 +257,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       '🗓 بازه: ' + lookbackLabel(selectedWindow(windowDays), true), 'history'),
       link('📄 Page size: ' + pageSize(size), '📄 تعداد در صفحه: ' + pageSize(size), 'display')],
       [link('🔔 Alert delivery', '🔔 ارسال اعلان', 'delivery'),
-        link('🌍 Job markets', '🌍 محدوده مشاغل', 'markets')],
+        link('🧭 Edit subscriptions', '🧭 ویرایش اشتراک‌ها', 'subscriptions')],
       [link('🌐 Source status', '🌐 وضعیت منابع', 'sources'),
         link('❔ Help', '❔ راهنما', 'help')],
       [button(fa ? '🌐 English' : '🌐 فارسی', `sub:l:${fa ? 'en' : 'fa'}`),
@@ -277,8 +277,10 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
         `🧬 Life Sciences: ${nLife ? 'On' : 'Off'}\n`,
         `🎓 دانشگاهی: ${nAcademic}/4 · 💼 مشاغل: ${nCareers}/4\n` +
         `🧬 علوم زیستی: ${nLife ? 'فعال' : 'غیرفعال'}\n`) +
-      tr('🌍 Markets: ', '🌍 محدوده‌ها: ') +
+      tr('🌍 Career markets: ', '🌍 محدوده مشاغل: ') +
       escape(markets.join(' + ') || tr('Not selected', 'انتخاب نشده')) + '\n' +
+      tr('🗺 Academic regions: ', '🗺 مناطق دانشگاهی: ') +
+      escape(regionSummary.slice(0, 120)) + '\n' +
       tr('🔔 Alerts: ', '🔔 اعلان‌ها: ') + status + '\n' +
       tr('🗓 Browse range: ', '🗓 بازه مرور: ') + lookbackLabel(selectedWindow(windowDays), fa);
     text += '\n\n' + (!ready ? tr(
@@ -297,17 +299,19 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       [link('⚙️ Settings', '⚙️ تنظیمات', 'more'),
         link('❔ Help', '❔ راهنما', 'help')]];
     if (nCareers && !markets.length)
-      rows.splice(2, 0, [link('🌍 Choose a job market', '🌍 انتخاب محدوده مشاغل', 'markets')]);
+      rows.splice(2, 0, [link('💼 Set career markets', '💼 تعیین محدوده مشاغل', 'careers')]);
     return {text, reply_markup: {inline_keyboard: rows}};
   }
   rows.push(home);
   return {text, reply_markup: {inline_keyboard: rows}};
 }
 
-const PAGES = new Set(['home', 'subscriptions', 'display', 'history', 'academic', 'careers', 'life_sciences', 'markets', 'delivery',
+const PAGES = new Set(['home', 'subscriptions', 'display', 'history', 'academic', 'academic_regions',
+  'careers', 'life_sciences', 'markets', 'delivery',
   'more', 'help', 'privacy', 'stop', 'latest', 'sources']);
 const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'subscriptions', status: 'home',
-  academic: 'academic', careers: 'careers', markets: 'markets', lifesciences: 'life_sciences',
+  academic: 'academic', regions: 'academic_regions', academicregions: 'academic_regions',
+  careers: 'careers', markets: 'careers', lifesciences: 'life_sciences',
   delivery: 'delivery', guide: 'help', privacy: 'privacy', stop: 'stop', delete: 'stop',
   latest: 'latest', matches: 'latest', subscriptions: 'subscriptions',
   history: 'history', display: 'display', notifications: 'delivery',
@@ -339,8 +343,15 @@ export async function subscriberUpdate(bot, message, callback, key) {
       parts[1] === 'g' && ['iran', 'remote'].includes(parts[2]))) {
       const field = parts[1] === 't' ? 'topics' : 'scopes', option = parts[2];
       if (option in m[field]) delete m[field][option]; else m[field][option] = new Date().toISOString();
-      target = field === 'scopes' ? 'markets' : option === 'life_sciences_phd' ? 'life_sciences' : ACADEMIC.includes(option) ? 'academic' : 'careers';
+      target = field === 'scopes' ? 'careers' : option === 'life_sciences_phd' ? 'life_sciences' : ACADEMIC.includes(option) ? 'academic' : 'careers';
       changed = true;
+    } else if (parts.length === 3 && parts[1] === 'r' &&
+      (ACADEMIC_REGIONS.includes(parts[2]) || parts[2] === 'all')) {
+      m.academic_regions ||= {};
+      if (parts[2] === 'all') m.academic_regions = {};
+      else if (parts[2] in m.academic_regions) delete m.academic_regions[parts[2]];
+      else m.academic_regions[parts[2]] = new Date().toISOString();
+      target = 'academic_regions'; changed = true;
     } else if (parts.length === 4 && parts[1] === 'b' && ['academic', 'careers'].includes(parts[2]) && ['on', 'off'].includes(parts[3])) {
       for (const topic of parts[2] === 'academic' ? ACADEMIC : CAREERS) {
         if (parts[3] === 'on') m.topics[topic] ||= new Date().toISOString(); else delete m.topics[topic];
