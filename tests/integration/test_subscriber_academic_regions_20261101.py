@@ -91,10 +91,13 @@ def test_legacy_python_menu_has_unified_career_and_academic_region_controls() ->
     assert "sub:r:all" in region_actions
 
 
-def test_encrypted_store_reset_to_worldwide_keeps_fresh_opt_in_timestamp(settings) -> None:
-    from predoc_pipeline.publish.feedback import FeedbackStore
+def test_encrypted_store_reset_to_worldwide_keeps_fresh_opt_in_timestamp(tmp_path) -> None:
+    from predoc_pipeline.publish.feedback import FeedbackStore, generate_key
+    from predoc_pipeline.settings import Settings
 
-    store = FeedbackStore.from_settings(settings)
+    cfg = Settings(_env_file=None, feedback_encryption_key=generate_key(),
+                   feedback_path=str(tmp_path / "feedback.json"))
+    store = FeedbackStore.from_settings(cfg)
     store.toggle_subscription(202, "topics", "predoc")
     # Simulate an established subscription: only the new region reset may
     # disqualify an older advert; the original topic opt-in is five days old.
