@@ -43,7 +43,7 @@ field_implied = true
 name = "economic_misfit"
 type = "rss"
 group = "aggregator"
-urls = ["https://theeconomicmisfit.com/category/pre-docs/feed/", "https://theeconomicmisfit.com/feed/"]
+urls = ["https://theeconomicmisfit.com/category/opportunity-alert/pre-docs/feed/"]
 title_format = "role_at_institution"
 categories_exclude = ["post-doc", "workshop", "scholarship", "conference", "summer school", "seminar"]
 
