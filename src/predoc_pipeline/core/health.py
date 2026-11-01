@@ -102,6 +102,31 @@ def public_source_stats(stats: dict[str, Any]) -> dict[str, Any]:
         # without raising. Publish an explicit derived outcome so consumers
         # don't mistake raw ok=True for a healthy source.
         public["status"] = source_status(public)
+        # Expose only finite, known-safe scheduler counters and restriction
+        # status. Do not export query strings, URLs or arbitrary provider text.
+        search = data.get("search_diagnostics")
+        if isinstance(search, dict):
+            safe_ints = (
+                "total_pairs", "plan_size", "requests", "completed_queries",
+                "failed_requests", "pending_queries", "incomplete_queries",
+                "checkpointed_queries", "replay_candidates",
+                "pages_with_more_possible", "unprocessed_selected",
+                "coverage_gaps", "truncated_queries", "unverified_empty",
+            )
+            safe_bools = (
+                "access_limited", "time_budget_reached", "backpressure",
+                "provider_cooldown_active",
+            )
+            public["search_diagnostics"] = {
+                **{
+                    k: search[k] for k in safe_ints
+                    if type(search.get(k)) is int and 0 <= search[k] <= 1000000
+                },
+                **{
+                    k: search[k] for k in safe_bools
+                    if type(search.get(k)) is bool
+                },
+            }
         if (
             public["status"] == "failed"
             and not public["messages"]
