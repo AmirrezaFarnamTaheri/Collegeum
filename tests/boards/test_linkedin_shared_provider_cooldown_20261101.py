@@ -291,7 +291,9 @@ def test_compliant_cooldown_without_cached_cards_is_not_a_new_fetch_failure(
     """Production Nov 1: no requests, zero raw posts, incorrectly emitted a DLQ failure."""
     from predoc_pipeline.boards.collector import _scrape_all
     from predoc_pipeline.core.health import (
-        public_source_stats, source_error_count, source_summary,
+        public_source_stats,
+        source_error_count,
+        source_summary,
     )
 
     econ_path, life_path = tmp_path / "econ.json", tmp_path / "life.json"
