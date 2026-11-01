@@ -338,38 +338,44 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     const nCareers = CAREERS.filter(key => key in m.topics).length;
     const nLife = 'life_sciences_phd' in m.topics ? 1 : 0;
     const markets = [m.scopes.iran ? tr('Iran', 'ایران') : '',
-      m.scopes.remote ? tr('Worldwide remote', 'دورکاری جهانی') : ''].filter(Boolean);
+      m.scopes.remote ? tr('Remote', 'دورکاری') : ''].filter(Boolean);
     const ready = nAcademic > 0 || nLife > 0 || (nCareers > 0 && markets.length);
     const status = !ready ? tr('Not configured', 'تنظیم نشده') :
-      m.paused ? tr('Paused', 'متوقف') : tr('On', 'فعال');
-    text = tr('🎯 <b>Collegeum · Career radar</b>', '🎯 <b>کالجیوم · رادار فرصت‌ها</b>') +
-      '\n\n' + tr(`🎓 Academic: ${nAcademic}/4 · 💼 Careers: ${nCareers}/4\n` +
-        `🧬 Life Sciences: ${nLife ? 'On' : 'Off'}\n`,
-        `🎓 دانشگاهی: ${nAcademic}/4 · 💼 مشاغل: ${nCareers}/4\n` +
-        `🧬 علوم زیستی: ${nLife ? 'فعال' : 'غیرفعال'}\n`) +
-      tr('🌍 Career markets: ', '🌍 محدوده مشاغل: ') +
-      escape(markets.join(' + ') || tr('Not selected', 'انتخاب نشده')) + '\n' +
-      tr('🗺 Academic regions: ', '🗺 مناطق دانشگاهی: ') +
-      escape(regionSummary.slice(0, 120)) + '\n' +
-      tr('🔔 Alerts: ', '🔔 اعلان‌ها: ') + status + '\n' +
-      tr('🗓 Browse range: ', '🗓 بازه مرور: ') + lookbackLabel(selectedWindow(windowDays), fa);
+      m.paused ? tr('Paused', 'متوقف') : tr('Active', 'فعال');
+    text = tr(
+      '🎯 <b>Collegeum</b>\n<i>Your career radar</i>\n\n' +
+      '<b>Your search</b>\n' +
+      `🎓 Academic ${nAcademic}/4 · 💼 Careers ${nCareers}/4\n` +
+      `🧬 Life Sciences ${nLife ? 'On' : 'Off'}\n`,
+      '🎯 <b>کالجیوم</b>\n<i>رادار فرصت‌های شما</i>\n\n' +
+      '<b>جستجوی شما</b>\n' +
+      `🎓 دانشگاهی ${nAcademic}/۴ · 💼 مشاغل ${nCareers}/۴\n` +
+      `🧬 علوم زیستی ${nLife ? 'فعال' : 'خاموش'}\n`
+    ) +
+      tr('🌍 Regions: ', '🌍 مناطق: ') + escape(regionSummary.slice(0, 100)) + '\n' +
+      tr('💼 Markets: ', '💼 محدوده‌ها: ') +
+      escape(markets.join(' · ') || tr('Not selected', 'انتخاب نشده')) + '\n\n' +
+      tr('<b>Alert status</b>\n', '<b>وضعیت اعلان‌ها</b>\n') +
+      `🔔 ${status} · 🗓 ${lookbackLabel(selectedWindow(windowDays), fa)}`;
     text += '\n\n' + (!ready ? tr(
-      'Choose roles under Subscriptions. Existing matches can then be browsed.',
-      'از اشتراک‌ها موضوع دلخواه را انتخاب کنید، سپس فرصت‌های قبلی را مرور کنید.') :
-      m.paused ? tr('Your selections are saved; alerts are paused.',
-        'تنظیمات ذخیره شده‌اند اما اعلان‌ها متوقف هستند.') :
-        tr('Browse existing positions below. New alerts follow the collection schedule.',
-          'فرصت‌های موجود را مرور کنید. اعلان‌های جدید طبق برنامه گردآوری ارسال می‌شوند.'));
+      'Choose roles under Subscriptions to personalize My matches.',
+      'برای شخصی‌سازی فرصت‌ها از اشتراک‌ها موضوع انتخاب کنید.') :
+      m.paused ? tr('Your choices are saved. Notifications are paused.',
+        'انتخاب‌ها ذخیره شده‌اند. اعلان‌ها متوقف هستند.') :
+        tr('Browse positions below. New alerts follow the collection schedule.',
+          'فرصت‌های موجود را مرور کنید. اعلان‌ها طبق برنامه گردآوری ارسال می‌شوند.'));
     if (nCareers && !markets.length) text += tr(
-      '\n\n⚠️ Career roles need at least one job market.',
-      '\n\n⚠️ برای مشاغل دست‌کم یک محدوده لازم است.');
-    rows = [[link('🔎 View my matches', '🔎 فرصت‌های من', 'latest')],
-      [link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions'),
+      '\n⚠️ Career roles need a job market.',
+      '\n⚠️ برای مشاغل باید محدوده انتخاب کنید.');
+    rows = [
+      [link('🔎 Browse my matches', '🔎 مشاهده فرصت‌های من', 'latest')],
+      [link('🧭 Edit subscriptions', '🧭 ویرایش اشتراک‌ها', 'subscriptions'),
         link('🔔 Alert delivery', '🔔 ارسال اعلان', 'delivery')],
       [link('⚙️ Settings', '⚙️ تنظیمات', 'more'),
-        link('❔ Help', '❔ راهنما', 'help')]];
+        link('❔ Help', '❔ راهنما', 'help')],
+    ];
     if (nCareers && !markets.length)
-      rows.splice(2, 0, [link('💼 Set career markets', '💼 تعیین محدوده مشاغل', 'careers')]);
+      rows.splice(2, 0, [link('💼 Choose job markets', '💼 انتخاب محدوده مشاغل', 'careers')]);
     return {text, reply_markup: {inline_keyboard: rows}};
   }
   rows.push(home);
