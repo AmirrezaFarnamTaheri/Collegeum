@@ -1,0 +1,70 @@
+name: investigate-remoteok-career-global
+on:
+  push:
+    branches: [investigate/remoteok-career-global-20261102]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Inspect official Remote OK feed read-only, policy-aware
+        run: |
+          PYTHONPATH=src python3 - <<'PY'
+          from collections import Counter
+          import json
+          from urllib.parse import urlsplit
+          from predoc_pipeline.ingest.career import classify_career
+          from predoc_pipeline.ingest.http import PoliteClient
+          from predoc_pipeline.settings import Settings
+          settings = Settings()
+          with PoliteClient(
+              user_agent=settings.http_user_agent, timeout=25,
+              per_host_delay=1, respect_robots=True,
+          ) as client:
+              response = client.get("https://remoteok.com/api", use_cache=False)
+          report = {"http_status": response.status, "fetch_ok": response.ok}
+          if response.ok:
+              rows = json.loads(response.text)
+              assert isinstance(rows, list), "Remote OK array schema changed"
+              matched = 0
+              locations = Counter()
+              worldwide = 0
+              recognized = 0
+              for entry in rows[:250]:
+                  if not isinstance(entry, dict) or not entry.get("id"):
+                      continue
+                  link, title = entry.get("url"), entry.get("position")
+                  geo = entry.get("location")
+                  if (
+                      isinstance(link, str) and isinstance(title, str)
+                      and urlsplit(link).scheme == "https"
+                      and urlsplit(link).hostname in ("remoteok.com", "www.remoteok.com")
+                  ):
+                      recognized += 1
+                      if classify_career(title):
+                          matched += 1
+                          locations[str(geo or "(unspecified)")[:50]] += 1
+                          if isinstance(geo, str) and geo.strip().casefold() in (
+                              "worldwide", "anywhere", "global", "anywhere in the world",
+                          ):
+                              worldwide += 1
+              report.update(raw=len(rows), recognized=recognized,
+                            matching_roles=matched, eligible_worldwide=worldwide,
+                            role_locations=locations.most_common(8))
+              assert recognized > 0, "No canonical Remote OK vacancy records"
+          print(json.dumps(report, ensure_ascii=False))
+          assert response.ok, "Remote OK denied or unavailable; no bypass"
+          PY
