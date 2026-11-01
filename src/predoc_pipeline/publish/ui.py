@@ -393,60 +393,53 @@ def menu(
         careers = sum(key in topics for key in CAREERS)
         life_active = LIFE_SCIENCES in topics
         selected_markets = [
-            _label(key, lang) for key in CAREER_SCOPES if key in scopes
+            ("ایران" if fa else "Iran") if "iran" in scopes else "",
+            ("دورکاری" if fa else "Remote") if "remote" in scopes else "",
         ]
-        alerts_ready = bool(academic or life_active or (careers and selected_markets))
-        delivery_status_en = (
-            "Not configured" if not alerts_ready else "Paused" if paused else "On"
+        selected_markets = [choice for choice in selected_markets if choice]
+        ready = bool(academic or life_active or (careers and selected_markets))
+        status = (
+            "تنظیم نشده" if fa and not ready else
+            "متوقف" if fa and paused else "فعال" if fa else
+            "Not configured" if not ready else "Paused" if paused else "Active"
         )
-        market_line = ", ".join(selected_markets) if selected_markets else (
+        market_line = " · ".join(selected_markets) or (
             "انتخاب نشده" if fa else "Not selected"
         )
         body = (
-            "🧭 <b>Collegeum | اعلان فرصت‌ها</b>\n\n"
-            f"🎓 دانشگاهی: {academic}/{len(ACADEMIC)}\n"
-            f"💼 شغلی: {careers}/4\n"
-            f"🧬 زیست‌شناسی: {'فعال' if life_active else 'غیرفعال'}\n"
-            f"🌍 محدوده: {escape(market_line)}\n"
-            f"🔔 وضعیت: {'تنظیم نشده' if not alerts_ready else 'متوقف' if paused else 'فعال'}\n\n"
-            "برای تنظیم، یکی از دسته‌ها را انتخاب کنید."
+            "🎯 <b>کالجیوم</b>\n<i>رادار فرصت‌های شما</i>\n\n"
+            "<b>جستجوی شما</b>\n"
+            f"🎓 دانشگاهی: {academic}/۴ · 💼 مشاغل: {careers}/۴\n"
+            f"🧬 علوم زیستی: {'فعال' if life_active else 'خاموش'}\n"
+            f"🌍 مناطق: {escape(region_summary)}\n"
+            f"💼 محدوده‌ها: {escape(market_line)}\n\n"
+            f"<b>وضعیت اعلان‌ها</b>\n🔔 {status}"
             if fa else
-            "🧭 <b>Collegeum | Job alerts</b>\n\n"
-            f"🎓 Academic roles: {academic}/{len(ACADEMIC)}\n"
-            f"💼 Career roles: {careers}/4\n"
-            f"🧬 Life Sciences PhD: {'On' if life_active else 'Off'}\n"
-            f"🌍 Markets: {escape(market_line)}\n"
-            f"🔔 Alerts: {delivery_status_en}\n\n"
-            "Edit subscriptions to choose roles and regions. Browse before subscribing."
+            "🎯 <b>Collegeum</b>\n<i>Your career radar</i>\n\n"
+            "<b>Your search</b>\n"
+            f"🎓 Academic roles: {academic}/4 · 💼 Careers: {careers}/4\n"
+            f"🧬 Life Sciences: {'On' if life_active else 'Off'}\n"
+            f"🌍 Regions: {escape(region_summary)}\n"
+            f"💼 Markets: {escape(market_line)}\n\n"
+            f"<b>Alert status</b>\n🔔 {status}"
         )
         if careers and not selected_markets:
             body += (
-                "\n\n⚠️ برای دریافت اعلان مشاغل، محدوده جستجو را انتخاب کنید."
-                if fa else "\n\n⚠️ Choose a job market to enable career alerts."
+                "\n⚠️ برای مشاغل باید محدوده انتخاب کنید."
+                if fa else "\n⚠️ Career roles need a market."
             )
         buttons = [
+            [_button("🔎 مشاهده فرصت‌های من" if fa else "🔎 Browse my matches",
+                     "sub:p:latest")],
+            [_button("🧭 ویرایش اشتراک‌ها" if fa else "🧭 Edit subscriptions",
+                     "sub:p:subscriptions")],
             [_button("🎓 دانشگاهی" if fa else "🎓 Academic", "sub:p:academic"),
              _button("💼 مشاغل" if fa else "💼 Careers", "sub:p:careers")],
-            [_button("🧬 دکتری علوم زیستی" if fa else "🧬 Life Sciences PhD",
+            [_button("🧬 علوم زیستی" if fa else "🧬 Life Sciences",
                      "sub:p:life_sciences")],
-            [_button("🔎 تازه‌ترین‌ها" if fa else "🔎 Latest matches", "sub:p:latest"),
-             _button("🔔 تنظیم ارسال" if fa else "🔔 Delivery", "sub:p:delivery")],
-            [_button(
-                "▶ ازسرگیری" if fa and paused else "⏸ توقف" if fa else
-                "▶ Resume" if paused else "⏸ Pause",
-                "sub:a:resume" if paused else "sub:a:pause",
-            ),
-             _button("⚙️ بیشتر" if fa else "⚙️ More", "sub:p:more")],
+            [_button("🔔 اعلان‌ها" if fa else "🔔 Alert delivery", "sub:p:delivery"),
+             _button("⚙️ تنظیمات" if fa else "⚙️ Settings", "sub:p:more")],
         ]
-        if careers and not selected_markets:
-            buttons.insert(2, [_button(
-                "💼 تعیین محدوده مشاغل" if fa else "💼 Set career markets",
-                "sub:p:careers",
-            )])
-        buttons.insert(0, [_button(
-            "🧭 ویرایش اشتراک‌ها" if fa else "🧭 Edit subscriptions",
-            "sub:p:subscriptions",
-        )])
     return body, {"inline_keyboard": buttons}
 
 
