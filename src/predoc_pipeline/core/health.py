@@ -63,6 +63,10 @@ def public_failure(message: Any) -> str:
         return "Response could not be parsed"
     if "discovery limit" in lowered or "pagination cap" in lowered:
         return "Discovery truncated by configured limit"
+    if "provider access cooldown" in lowered:
+        return "Provider access cooldown; discovery deferred"
+    if "no due linkedin search queries" in lowered:
+        return "No due LinkedIn queries; discovery deferred"
     if "skipped" in lowered:
         return "Source skipped by its adapter"
     return "Source request failed"

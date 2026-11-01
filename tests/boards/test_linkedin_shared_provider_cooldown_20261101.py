@@ -212,8 +212,11 @@ def test_peer_access_cooldown_marks_replayed_source_partial_in_real_collector(
     report = asyncio.run(_scrape_all([scraper], max_concurrent=1, timeout=30))[0]
     assert len(report.posts) == 10
     assert http.urls == []
-    assert report.failure_stage == "limit"
-    assert source_status(report.as_stats()) == "partial"
+    assert report.skipped is True
+    assert report.ok is True
+    assert report.failure_stage is None
+    assert report.as_stats()["errors"] == 0
+    assert source_status(report.as_stats()) == "skipped"
     assert report.as_stats()["search_diagnostics"]["provider_cooldown_active"] is True
 
 
@@ -280,3 +283,148 @@ def test_linkedin_detail_http_999_stops_future_detail_requests_and_saves_block(
     ledger = QueryLedger.load(path, "life_linkedin")
     assert ledger.state["access_blocked_until"] == (T0 + timedelta(hours=48)).isoformat()
     assert ledger.state["queries"][query_key("life_linkedin", *LIFE_PAIR)]["pending"]["offset"] == 10
+
+
+def test_compliant_cooldown_without_cached_cards_is_not_a_new_fetch_failure(
+    tmp_path: Path,
+) -> None:
+    """Production Nov 1: no requests, zero raw posts, incorrectly emitted a DLQ failure."""
+    from predoc_pipeline.boards.collector import _scrape_all
+    from predoc_pipeline.core.health import (
+        public_source_stats,
+        source_error_count,
+        source_summary,
+    )
+
+    econ_path, life_path = tmp_path / "econ.json", tmp_path / "life.json"
+    econ = QueryLedger("linkedin")
+    econ.request(ECON_PAIR, now=T0)
+    econ.fail(ECON_PAIR, now=T0, status=429)
+    econ.save(econ_path)
+    original = econ_path.read_bytes()
+    http = OfflineHTTP()
+    scraper = worker(
+        "life_linkedin", life_path, "linkedin", econ_path,
+        http, T0 + timedelta(hours=8),
+    )
+    result = asyncio.run(_scrape_all([scraper], max_concurrent=1, timeout=30))[0]
+    stats = result.as_stats()
+    public = public_source_stats({"board:life_linkedin": stats})["board:life_linkedin"]
+    assert not result.posts and not http.urls
+    assert result.skipped and result.ok
+    assert stats["errors"] == 0
+    assert stats["fetched"] == 0
+    assert stats["failure_counts"] == {"fetch": 0, "parse": 0, "limit": 0}
+    assert public["status"] == "skipped"
+    assert public["messages"] == ["Provider access cooldown; discovery deferred"]
+    assert public["search_diagnostics"]["provider_cooldown_active"] is True
+    assert public["search_diagnostics"]["requests"] == 0
+    assert source_summary({"board:life_linkedin": stats})["skipped"] == 1
+    assert source_error_count({"board:life_linkedin": stats}) == 0
+    assert econ_path.read_bytes() == original
+
+
+def test_a_real_first_429_stays_failed_until_cooldown_recovery(tmp_path: Path) -> None:
+    """A newly attempted denied request must still be counted, not hidden as skipped."""
+    from predoc_pipeline.boards.collector import _scrape_all
+    from predoc_pipeline.core.health import source_error_count, source_status
+
+    class DeniedHTTP(OfflineHTTP):
+        async def get_text(self, url: str, **_kwargs: object) -> str:
+            self.urls.append(url)
+            raise FetchError("HTTP 429", status=429)
+
+    path, peer = tmp_path / "econ.json", tmp_path / "life.json"
+    http = DeniedHTTP()
+    scraper = worker("linkedin", path, "life_linkedin", peer, http, T0)
+    report = asyncio.run(_scrape_all([scraper], max_concurrent=1, timeout=30))[0]
+    assert len(http.urls) == 1
+    assert report.skipped is False
+    assert source_status(report.as_stats()) == "failed"
+    assert source_error_count({"board:linkedin": report.as_stats()}) >= 1
+    assert QueryLedger.load(path, "linkedin").state["access_blocked_until"] == (
+        T0 + timedelta(hours=48)
+    ).isoformat()
+
+
+def test_life_discovery_records_policy_cooldown_as_skipped_not_partial(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A Life Sciences source may replay cards without attempting any new request."""
+    from contextlib import asynccontextmanager
+
+    from predoc_pipeline.boards.config import HttpConfig
+    from predoc_pipeline.ingest import life_sciences
+
+    econ_path, life_path = tmp_path / "econ.json", tmp_path / "life.json"
+    econ = QueryLedger("linkedin")
+    econ.request(ECON_PAIR, now=T0)
+    econ.fail(ECON_PAIR, now=T0, status=429)
+    econ.save(econ_path)
+    life = QueryLedger("life_linkedin")
+    life.request(LIFE_PAIR, now=T0 - timedelta(hours=2))
+    life.accept_page(LIFE_PAIR, cards(), now=T0 - timedelta(hours=2))
+    life.save(life_path)
+
+    http = OfflineHTTP()
+    scraper = worker("life_linkedin", life_path, "linkedin", econ_path, http,
+                     T0 + timedelta(hours=4))
+
+    @asynccontextmanager
+    async def fake_http(_cfg: object):
+        yield http
+
+    monkeypatch.setattr(life_sciences, "load_life_sources", lambda _: [scraper.cfg])
+    monkeypatch.setattr(life_sciences, "build_http", fake_http)
+    original = life_sciences.SCRAPERS["linkedin"]
+    monkeypatch.setitem(life_sciences.SCRAPERS, "linkedin", lambda _cfg, _http: scraper)
+    try:
+        diagnostics: dict[str, dict] = {}
+        discovered, errors = asyncio.run(life_sciences.discover(
+            "unused.toml", HttpConfig(), selected_names={"life_linkedin"},
+            diagnostics=diagnostics,
+        ))
+    finally:
+        life_sciences.SCRAPERS["linkedin"] = original
+    assert not errors
+    assert http.urls == []
+    info = diagnostics["life_linkedin"]
+    assert info["vacancy_links"] == 10  # cached cards remain in the audit
+    assert len(discovered) <= info["vacancy_links"]
+    assert info["status"] == "skipped"
+    assert info["discovery_issues"] == 0
+    assert info["detail_failures"] == 0
+    assert info["search_diagnostics"]["requests"] == 0
+    assert info["search_diagnostics"]["provider_cooldown_active"] is True
+
+
+def test_no_due_queries_in_normal_48h_rotation_is_not_a_false_empty_outage(
+    tmp_path: Path,
+) -> None:
+    """A source with a completed recent query has no new work in the next slot."""
+    from predoc_pipeline.boards.collector import _scrape_all
+    from predoc_pipeline.core.health import source_status
+
+    own = tmp_path / "econ.json"
+    peer = tmp_path / "life.json"
+    ledger = QueryLedger("linkedin")
+    ledger.request(LIFE_PAIR, now=T0)
+    ledger.accept_page(LIFE_PAIR, cards()[:1], now=T0)
+    ledger.save(own)
+    http = OfflineHTTP()
+    scraper = worker(
+        "linkedin", own, "life_linkedin", peer, http,
+        T0 + timedelta(hours=4),
+    )
+    report = asyncio.run(_scrape_all([scraper], max_concurrent=1, timeout=30))[0]
+    assert report.skipped is True
+    assert report.ok is True
+    assert report.as_stats()["errors"] == 0
+    assert source_status(report.as_stats()) == "skipped"
+    assert scraper.search_diagnostics["plan_size"] == 0
+    assert scraper.search_diagnostics["provider_cooldown_active"] is False
+    assert len(report.posts) == 1  # candidate replay, not a current fetch
+    assert not http.urls
+    assert QueryLedger.load(own, "linkedin").state["queries"][
+        query_key("linkedin", *LIFE_PAIR)
+    ]["last_complete_at"] is not None
