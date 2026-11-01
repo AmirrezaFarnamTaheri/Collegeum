@@ -38,7 +38,7 @@ export const matchesPreferences = (row, member) => {
   if (row.scope && !(row.scope in member.scopes)) return false;
   const regions = member.academic_regions || {};
   if (ACADEMIC.includes(row.kind || row.category) && Object.keys(regions).length)
-    return academicRegion(row.country) in regions;
+    return 'all' in regions || academicRegion(row.country) in regions;
   return true;
 };
 const LABELS = {
@@ -85,7 +85,7 @@ export function validPreferences(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   if (Object.keys(value).some(k => !Object.keys(fresh()).includes(k))) return false;
   for (const [field, allowed] of [['topics', TOPICS], ['scopes', ['iran', 'remote']],
-    ['academic_regions', ACADEMIC_REGIONS]]) {
+    ['academic_regions', [...ACADEMIC_REGIONS, 'all']]]) {
     if (field === 'academic_regions' && value[field] === undefined) continue;
     if (!value[field] || typeof value[field] !== 'object' || Array.isArray(value[field])) return false;
     if (Object.entries(value[field]).some(([key, at]) => !allowed.includes(key) ||
@@ -99,7 +99,8 @@ export function validPreferences(value) {
 export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOKBACK) {
   const m = member || fresh(), fa = m.language === 'fa';
   const academicRegions = m.academic_regions || {};
-  const regionNames = Object.keys(academicRegions).map(region => REGION_LABELS[fa ? 'fa' : 'en'][region]);
+  const regionNames = Object.keys(academicRegions).filter(region => region !== 'all')
+    .map(region => REGION_LABELS[fa ? 'fa' : 'en'][region]);
   const regionSummary = regionNames.length ? regionNames.join(', ') :
     (fa ? 'همه جهان' : 'Worldwide');
   const tr = (en, persian) => fa ? persian : en;
@@ -137,7 +138,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       [link('🔎 View my matches', '🔎 فرصت‌های من', 'latest'),
         link('🗓 Match history', '🗓 بازه زمانی', 'history')]];
   } else if (page === 'academic_regions') {
-    const count = Object.keys(academicRegions).length;
+    const count = Object.keys(academicRegions).filter(region => region !== 'all').length;
     text = tr('🌍 <b>Academic regions</b>\n\nFilter academic roles by location. '
       + 'Choose any regions, or choose Worldwide to show every location. '
       + 'An unspecified country appears only under Other / unspecified when filtered. '
@@ -354,9 +355,20 @@ export async function subscriberUpdate(bot, message, callback, key) {
     } else if (parts.length === 3 && parts[1] === 'r' &&
       (ACADEMIC_REGIONS.includes(parts[2]) || parts[2] === 'all')) {
       m.academic_regions ||= {};
-      if (parts[2] === 'all') m.academic_regions = {};
-      else if (parts[2] in m.academic_regions) delete m.academic_regions[parts[2]];
-      else m.academic_regions[parts[2]] = new Date().toISOString();
+      const region = parts[2];
+      const selected = Object.keys(m.academic_regions).filter(name => name !== 'all');
+      if (region === 'all') {
+        // A deliberate reset to Worldwide must not make older excluded records
+        // eligible for first-time alerts; its timestamp acts as an opt-in fence.
+        if (selected.length) m.academic_regions = {all: new Date().toISOString()};
+      } else if (region in m.academic_regions) {
+        delete m.academic_regions[region];
+        if (!Object.keys(m.academic_regions).length)
+          m.academic_regions = {all: new Date().toISOString()};
+      } else {
+        delete m.academic_regions.all;
+        m.academic_regions[region] = new Date().toISOString();
+      }
       target = 'academic_regions'; changed = true;
     } else if (parts.length === 4 && parts[1] === 'b' && ['academic', 'careers'].includes(parts[2]) && ['on', 'off'].includes(parts[3])) {
       for (const topic of parts[2] === 'academic' ? ACADEMIC : CAREERS) {
