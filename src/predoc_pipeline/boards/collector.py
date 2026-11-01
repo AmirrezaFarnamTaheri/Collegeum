@@ -161,6 +161,17 @@ async def _scrape_all(
                     )
                     note = f"{len(s.discovery_limits)} discovery limit(s) reached"
                     res.error = f"{res.error}; {note}" if res.error else note
+                if getattr(s, "intentionally_deferred", False):
+                    # A scheduled LinkedIn source can replay safe, known cards
+                    # without new provider access. Do not create a new DLQ event
+                    # or mark a zero-request cooldown as a source outage.
+                    res.skipped = True
+                    diagnostic = getattr(s, "search_diagnostics", {})
+                    res.error = (
+                        "skipped: LinkedIn provider access cooldown"
+                        if diagnostic.get("provider_cooldown_active") else
+                        "skipped: no due LinkedIn search queries"
+                    )
             except TimeoutError:
                 res.ok, res.error = False, f"timed out after {source_timeout:g}s"
                 res.failure_stage = "timeout"
