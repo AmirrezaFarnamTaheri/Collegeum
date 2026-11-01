@@ -23,6 +23,9 @@ def test_robots_denied_providers_are_not_scheduled_as_healthy():
 def test_ifau_joins_verified_empty_coverage_without_reenabling_failed_sources():
     boards = load_board_sources(REGISTRY)
     assert len(boards) == 144
-    # Mannheim was disabled after a recorded robots.txt policy denial.
-    assert sum(source.enabled for source in boards) == 76
+    # Mannheim remains disabled after a robots.txt denial. The Federal
+    # Reserve Board navigation-only index is also disabled after its verified
+    # internship guidance page was mispublished as a vacancy (listing 201).
+    assert sum(source.enabled for source in boards) == 75
+    assert next(s for s in boards if s.name == "fed_board").enabled is False
     assert len({source.name for source in boards}) == 144
