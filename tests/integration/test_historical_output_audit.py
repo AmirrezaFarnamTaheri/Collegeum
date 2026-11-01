@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -350,7 +351,6 @@ def test_federal_reserve_board_index_is_disabled_until_job_specific_feed_exists(
     assert fed.opt("url") == (
         "https://www.federalreserve.gov/careers-research-assistants.htm"
     )
-    import re
     pattern = re.compile(fed.opt("link_pattern"))
     assert not pattern.search("https://www.federalreserve.gov/careers-internships.htm")
     assert not pattern.search("https://frbog.taleo.net/careersection/2/jobsearch.ftl")
