@@ -17,7 +17,15 @@ from .admin import admin_id, audit, buttons, render
 from .feedback import FeedbackStore
 from .subscriptions import LOOKBACK_DAYS, matching, parse_toggle, private_user_id
 from .telegram import TelegramError
-from .ui import ACADEMIC, LIFE_SCIENCES, MAX_LATEST_PAGES, language, latest_panel, menu, sources_panel
+from .ui import (
+    ACADEMIC,
+    LIFE_SCIENCES,
+    MAX_LATEST_PAGES,
+    language,
+    latest_panel,
+    menu,
+    sources_panel,
+)
 
 log = get_logger(__name__)
 
