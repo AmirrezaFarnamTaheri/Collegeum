@@ -155,7 +155,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     rows.push([button(m.paused ? tr('Resume alerts', 'ازسرگیری اعلان') : tr('Pause alerts', 'توقف اعلان'),
       m.paused ? 'sub:a:resume' : 'sub:a:pause')]);
   } else if (page === 'display') {
-    text = tr('<b>Display settings</b>\n\nPositions per page. This does not change your daily alert limit.',
+    text = tr('<b>Display settings</b>\n\nBrowse results: choose positions per page. This does not change your daily alert limit.',
       '<b>تنظیمات نمایش</b>\n\nتعداد فرصت در هر صفحه. این تنظیم حد اعلان روزانه را تغییر نمی‌دهد.');
     rows = [PAGE_SIZES.slice(0, 2), PAGE_SIZES.slice(2)].map(options => options.map(n =>
       button(`${n === pageSize(size) ? '☑' : '☐'} ${n}`, `sub:n:${n}`)));
