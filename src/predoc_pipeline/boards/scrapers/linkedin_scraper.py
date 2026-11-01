@@ -526,7 +526,7 @@ class LinkedInScraper(BaseScraper):
         try:
             html = await self.http.get_text(DETAIL.format(job_id), stop_on_429=True)
         except FetchError as exc:
-            if exc.status in (403, 429):
+            if exc.status in (403, 429, 999):
                 ledger = getattr(self, "_checkpoint_ledger", None)
                 if isinstance(ledger, QueryLedger):
                     ledger.state["access_blocked_until"] = (
