@@ -164,6 +164,30 @@ class LinkedInScraper(BaseScraper):
             and now < block
         )
 
+    @property
+    def intentionally_deferred(self) -> bool:
+        """No eligible query was attempted; this is neither empty nor a fetch failure.
+
+        Replayed cards remain available to the downstream filters. Never hide
+        an actual request, malformed replay card or truncated cursor behind a
+        provider-cooldown flag.
+        """
+        diagnostic = getattr(self, "search_diagnostics", None)
+        return (
+            isinstance(diagnostic, dict)
+            and diagnostic.get("backend") == "guest_checkpointed"
+            and diagnostic.get("requests") == 0
+            and (
+                diagnostic.get("provider_cooldown_active") is True
+                or diagnostic.get("plan_size") == 0
+            )
+            and not any((
+                self.discovery_fetch_errors,
+                self.discovery_parse_errors,
+                self.discovery_limits,
+            ))
+        )
+
     def flush_checkpoint(self) -> None:
         """Called after Life Sciences detail attempts, before final git commit."""
         ledger = getattr(self, "_checkpoint_ledger", None)
@@ -218,10 +242,9 @@ class LinkedInScraper(BaseScraper):
         provider_cooldown_active = (
             provider_block is not None and self._scheduler_now() < provider_block
         )
-        if provider_cooldown_active:
-            # Replaying past cards is not successful provider collection.
-            # Keep source health partial even when no new request is allowed.
-            self.discovery_limits.append("LinkedIn provider access cooldown active")
+        # A pre-existing provider cooldown is a deliberate, policy-compliant
+        # no-request interval, not another discovery limit or failed fetch.
+        # The collector records it as skipped when no other error occurred.
         selected = ledger.plan(
             pairs, now=self._scheduler_now(),
             limit=query_budget, cooldown_hours=cooldown, core_pairs=core,
