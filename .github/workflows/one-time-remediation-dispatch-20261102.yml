@@ -1,0 +1,180 @@
+name: one-time-remediation-dispatch-20261102
+
+# The only automatic trigger is the reviewed squash merge that introduces
+# THIS file to the trusted main branch with the exact one-time commit title.
+# The GITHUB_TOKEN has no repository-contents write permission. The existing
+# workflows own production journals, Telegram secrets and delivery receipts.
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/one-time-remediation-dispatch-20261102.yml]
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: one-time-collegeum-remediation-dispatch-20261102
+  cancel-in-progress: false
+
+jobs:
+  accept:
+    if: >-
+      github.repository == 'AmirrezaFarnamTaheri/Collegeum' &&
+      github.ref == 'refs/heads/main' &&
+      startsWith(github.event.head_commit.message,
+      'ops: launch guarded Collegeum remediation acceptance 20261102')
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ENABLE_TELEGRAM_SYNC: ${{ vars.ENABLE_TELEGRAM_SYNC || 'false' }}
+      TELEGRAM_WORKER_URL: ${{ vars.TELEGRAM_WORKER_URL }}
+      TELEGRAM_WEBHOOK_ENABLED: ${{ vars.TELEGRAM_WEBHOOK_ENABLED || 'false' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Gate exact integrated CI, inspect, dry-run, deploy, ingest, sync and audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          fatal() { echo "::error title=Remediation acceptance refused::$*"; exit 1; }
+          notice() { echo "::notice::$*"; echo "$*" >> "$GITHUB_STEP_SUMMARY"; }
+          workflow_runs() { gh api "repos/$repo/actions/workflows/$1/runs?branch=main&per_page=60"; }
+          head_sha() { gh api "repos/$repo/git/ref/heads/main" --jq '.object.sha'; }
+
+          # Routine source-state commits may advance main while this job runs;
+          # code/config/workflow changes must halt the privileged release.
+          trusted_head() {
+            local current status changed
+            current="$(head_sha)"
+            if [ "$current" = "$GITHUB_SHA" ]; then return 0; fi
+            status="$(gh api "repos/$repo/compare/$GITHUB_SHA...$current" --jq .status)"
+            [ "$status" = ahead ] || fatal "Main diverged from reviewed release"
+            [ "$(gh api "repos/$repo/compare/$GITHUB_SHA...$current" --jq '.files | length')" -lt 300 ] || fatal 'Review scope truncated'
+            changed="$(gh api "repos/$repo/compare/$GITHUB_SHA...$current" --jq '.files[].filename')"
+            while IFS= read -r item; do
+              [ -n "$item" ] || continue
+              case "$item" in
+                data/listings.ndjson|data/seen.ndjson|data/x_threads.ndjson|data/career_jobs.ndjson|data/career_health.json|data/source_rotation.json|data/life_sources_rotation.json|data/life_sources_health.json|data/linkedin_econ_search_state.json|data/linkedin_life_search_state.json|data/feedback.enc|data/telegram_state.json|docs/data/listings.json|docs/data/health.json|docs/feed.xml) ;;
+                *) fatal "Non-data changes appeared on main; deployment requires new review" ;;
+              esac
+            done <<< "$changed"
+          }
+
+          # Only successful *main push* CI at this exact source SHA can release.
+          wait_integrated_checks() {
+            local gate current state conclusion attempts ready
+            for attempts in $(seq 1 170); do
+              trusted_head
+              ready=1
+              for gate in ci.yml refresh-release.yml; do
+                current="$(workflow_runs "$gate" | jq -r --arg sha "$GITHUB_SHA" \
+                  '[.workflow_runs[] | select(.event == "push" and .head_branch == "main" and .head_sha == $sha)] | sort_by(.created_at) | last | [.id // 0, .status // "missing", .conclusion // "none"] | @tsv')"
+                IFS=$'\t' read -r _ state conclusion <<< "$current"
+                case "$state/$conclusion" in
+                  completed/success) ;;
+                  completed/*) fatal "Integrated $gate failed ($current)" ;;
+                  queued/*|pending/*|in_progress/*|waiting/*|requested/*|missing/*) ready=0 ;;
+                  *) fatal "Unrecognized integrated $gate gate state ($current)" ;;
+                esac
+              done
+              if [ "$ready" = 1 ]; then notice 'Integrated Python, Worker and source build CI passed'; return 0; fi
+              sleep 20
+            done
+            fatal 'Exact-main CI did not complete within the gate'
+          }
+
+          wait_run() {
+            local workflow="$1" id="$2" job="$3" attempts status conclusion actual
+            for attempts in $(seq 1 420); do
+              status="$(gh api "repos/$repo/actions/runs/$id" --jq .status)"
+              if [ "$status" = completed ]; then
+                conclusion="$(gh api "repos/$repo/actions/runs/$id" --jq .conclusion)"
+                [ "$conclusion" = success ] || fatal "$workflow run $id concluded $conclusion"
+                actual="$(gh api "repos/$repo/actions/runs/$id/jobs?per_page=100" --jq ".jobs[] | select(.name == \"$job\") | .conclusion")"
+                [ "$actual" = success ] || fatal "$workflow run $id: required $job job did not pass"
+                notice "$workflow run $id completed successfully ($job job)"
+                return 0
+              fi
+              case "$status" in queued|in_progress|pending|requested|waiting) ;; *) fatal "Unexpected $workflow run state $status" ;; esac
+              sleep 20
+            done
+            fatal "$workflow run $id exceeded acceptance deadline"
+          }
+
+          dispatch_and_wait() {
+            local workflow="$1" job="$2" id old_id new_id
+            shift 2
+            trusted_head
+            local before
+            before="$(mktemp)"
+            workflow_runs "$workflow" | jq -r '.workflow_runs[] | select(.event == "workflow_dispatch" and .head_branch == "main") | .id' > "$before"
+            gh workflow run "$workflow" --ref main "$@"
+            id=""
+            for attempts in $(seq 1 90); do
+              new_id="$(workflow_runs "$workflow" | jq -r '.workflow_runs[] | select(.event == "workflow_dispatch" and .head_branch == "main") | .id' | grep -vxFf "$before" || true)"
+              if [ -n "$new_id" ]; then
+                if [ "$(printf '%s\n' "$new_id" | wc -l)" -ne 1 ]; then fatal "Ambiguous $workflow dispatches"; fi
+                id="$new_id"
+                break
+              fi
+              sleep 10
+            done
+            rm -f "$before"
+            [[ "$id" =~ ^[0-9]+$ ]] || fatal "$workflow dispatch did not produce a run"
+            notice "$workflow dispatch created run $id"
+            wait_run "$workflow" "$id" "$job"
+            DISPATCHED_RUN="$id"
+          }
+
+          echo '### Collegeum guarded remediation acceptance' >> "$GITHUB_STEP_SUMMARY"
+          [ "$repo" = 'AmirrezaFarnamTaheri/Collegeum' ] || fatal 'Wrong repository'
+          [ "$GITHUB_REF" = refs/heads/main ] || fatal 'Untrusted branch'
+          [ "$(head_sha)" = "$GITHUB_SHA" ] || fatal 'Release HEAD moved before preflight'
+          wait_integrated_checks
+
+          # Don't change webhook registration. Inspect current account and
+          # delivery first; the deployment workflow verifies secrets/account.
+          dispatch_and_wait telegram-worker.yml inspect -f inspect_only=true -f activate_webhook=false
+          dispatch_and_wait pipeline.yml run -f dry_run=true
+          [ "$ENABLE_TELEGRAM_SYNC" = true ] || fatal 'Private Telegram sync is disabled; do not deploy a disconnected bot'
+          [ "$TELEGRAM_WEBHOOK_ENABLED" = true ] || fatal 'Telegram webhook mode is not enabled; cannot verify bot activation'
+          [ -n "$TELEGRAM_WORKER_URL" ] || fatal 'Missing configured Telegram Worker URL'
+          [[ "$TELEGRAM_WORKER_URL" == https://* ]] || fatal 'Configured Worker URL must be HTTPS'
+          dispatch_and_wait telegram-worker.yml deploy -f inspect_only=false -f activate_webhook=false
+          curl --fail --silent --show-error --max-time 20 \
+            "${TELEGRAM_WORKER_URL%/}/health" | jq -e '.service == "collegeum-telegram"' > /dev/null || fatal 'Deployed Worker health endpoint is unavailable'
+
+          # Prefer an already queued source-bearing production run to avoid
+          # duplicate dispatch and duplicate subscriber/publication delivery.
+          trusted_head
+          active="$(workflow_runs pipeline.yml | jq -r '[.workflow_runs[] | select((.event == "schedule" or .event == "workflow_dispatch") and (.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting" or .status == "requested"))] | sort_by(.created_at) | last | .id // empty')"
+          if [ -n "$active" ]; then
+            notice "Using already queued production ingestion $active; no duplicate dispatch"
+            wait_run pipeline.yml "$active" run
+            live="$active"
+          else
+            dispatch_and_wait pipeline.yml run -f dry_run=false
+            live="$DISPATCHED_RUN"
+          fi
+          ongoing_sync="$(workflow_runs telegram.yml | jq -r '[.workflow_runs[] | select((.event == "schedule" or .event == "workflow_dispatch") and (.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting" or .status == "requested"))] | sort_by(.created_at) | last | .id // empty')"
+          if [ -n "$ongoing_sync" ]; then
+            notice "Using existing Telegram sync run $ongoing_sync; no duplicate dispatch"
+            wait_run telegram.yml "$ongoing_sync" sync
+          else
+            dispatch_and_wait telegram.yml sync
+          fi
+
+          # The workflow badge alone is not an ingestion acceptance result.
+          # Check the published JSON checkpoint and the actual source outcome.
+          health="$(gh api "repos/$repo/contents/docs/data/health.json" --jq .content | base64 -d)"
+          actual="$(printf '%s' "$health" | jq -r '.last_run.run_id // empty')"
+          [ "$actual" = "$live" ] || fatal "Production run $live not persisted in published health (saw $actual)"
+          printf '%s' "$health" | jq -e '.last_run.outcome == "ok" and .last_run.source_errors == 0 and .last_run.sources.failed == 0 and .last_run.sources.partial == 0' > /dev/null || fatal 'Source collection remained partially degraded'
+          public="$(gh api "repos/$repo/contents/docs/data/listings.json" --jq .content | base64 -d)"
+          printf '%s' "$public" | jq -e '.listings | all(.[]; (.apply_url | type == "string" and startswith("https://")) and (.id != 250 or (.apply_url | startswith("https://www.jobs.ac.uk/job/DTI904/"))))' > /dev/null || fatal 'Public listings include incompatible application URLs'
+          notice "Published health and HTTPS dashboard accepted for production run $live"
