@@ -99,4 +99,9 @@ test('region toggles save without editing career markets; legacy market callback
   assert.equal(validPreferences(values.get('subscriber:42')), true);
   assert.equal(matchesPreferences({kind: 'predoc', country: 'Canada'},
     values.get('subscriber:42')), true);
+  await tap('sub:r:europe', 'back-europe');
+  await tap('sub:r:europe', 'clear-last');
+  assert.ok(values.get('subscriber:42').academic_regions.all,
+    'removing the last regional filter also records a Worldwide timestamp');
+  assert.equal(validPreferences(values.get('subscriber:42')), true);
 });
