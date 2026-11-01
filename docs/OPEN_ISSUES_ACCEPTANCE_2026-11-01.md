@@ -169,12 +169,14 @@ policy-permitted ATS discovery and read-only runner testing.
 An independent cross-post review should also distinguish genuine identical
 titles from distinct employer requisitions. King's College London's
 Policy Institute advertised **two distinct** Evaluation Manager positions:
-reference **160625** was a two-year fixed-term role (closing October 28),
-while official reference **160868** is an indefinite-term role (closing
-November 9). Archived IDs 247 (indefinite) and 248 (two years) are not
+reference [**160625**](https://www.jobs.ac.uk/job/DTG863/research-associate-evaluation-manager)
+was a two-year fixed-term role (closing October 28), while official
+[reference **160868**](https://www.kcl.ac.uk/jobs/160868-research-associate-evaluation)
+is an indefinite-term role (closing November 9). Archived IDs 247 (indefinite) and 248 (two years) are not
 safe to merge merely because their titles match. Employer requisition
-mapping is still required before changing durable IDs. UiT's official
-RiverPulse project advertises *four distinct research specialisms*,
+mapping is still required before changing durable IDs. UiT's
+[official careers catalogue](https://uit.no/tavla/stillinger)
+advertises *four distinct RiverPulse research specialisms*,
 while the archived IDs 222/233/235 all describe climate/environmental
 governance; their LinkedIn cross-post relationships must be verified from
 actual employer-side requisition identities before any suppression.
