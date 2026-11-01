@@ -92,3 +92,21 @@ test('all Telegram menus maintain short callbacks, readable rows and valid HTML'
     }
   }
 });
+
+test('unconfigured subscribers see a truthful alert state and a working setup path', () => {
+  const empty = {
+    topics: {}, scopes: {}, paused: false, language: 'en',
+    delivery_mode: 'instant', daily_limit: 6, quiet_hours: false, timezone: 'UTC',
+  };
+  const home = panel(empty, 'home');
+  const settings = panel(empty, 'more');
+  const delivery = panel(empty, 'delivery');
+  for (const screen of [home, settings, delivery])
+    assert.match(screen.text, /Not configured/);
+  assert.doesNotMatch(settings.text, /🔔 Active/);
+  assert.ok(actions(delivery).includes('sub:p:subscriptions'));
+  const neverEnrolled = panel(null, 'delivery');
+  assert.ok(actions(neverEnrolled).includes('sub:p:subscriptions'));
+  assert.ok(!actions(neverEnrolled).includes('sub:d:mode'),
+    'initial alert settings must not expose inert toggles');
+});
