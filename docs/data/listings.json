@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-11-01T05:57:28Z",
- "count": 186,
+ "count": 185,
  "listings": [
   {
    "id": 333,
@@ -3511,48 +3511,6 @@
    "start_date": null,
    "kind": "phd",
    "sector": "academic"
-  },
-  {
-   "id": 201,
-   "title": "internship careers page",
-   "institution": "Federal Reserve Board of Governors",
-   "principal_investigator": null,
-   "country": "United States",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": null,
-   "days_left": null,
-   "disciplines": [
-    "Finance",
-    "Labor Economics",
-    "Public Policy"
-   ],
-   "visa": "unknown",
-   "summary": "I’m only a sophomore or junior. Does the Board offer research-related internships? We do! Please head over to our to learn how to apply. Our economic research internships do offer the opportunity for a full-time return offer into the RA program for eligible rising juniors and graduate students.",
-   "language": "en",
-   "apply_url": "https://www.federalreserve.gov/careers-internships.htm",
-   "source_url": "https://www.federalreserve.gov/careers-internships.htm",
-   "confidence": 0.874,
-   "first_seen_at": "2026-10-13T19:24:54Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [
-    "https://www.federalreserve.gov/careers-internships.htm"
-   ],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "bachelors",
-   "degree_note": "undergraduate",
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "institutional"
   },
   {
    "id": 198,
