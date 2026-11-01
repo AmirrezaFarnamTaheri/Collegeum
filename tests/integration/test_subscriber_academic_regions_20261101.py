@@ -42,8 +42,9 @@ def test_region_opt_in_date_never_backfills_old_notifications() -> None:
     assert not eligible(member, 'predoc', '', _ts(3), country='Germany')
     assert eligible(member, 'predoc', '', _ts(1), country='Germany')
     assert not eligible(member, 'predoc', '', _ts(1), country='Canada')
-    member['academic_regions'] = {}
-    assert eligible(member, 'predoc', '', _ts(3), country='Canada')
+    member['academic_regions'] = {'all': _ts(2)}
+    assert not eligible(member, 'predoc', '', _ts(3), country='Canada')
+    assert eligible(member, 'predoc', '', _ts(1), country='Canada')
 
 
 def test_webhook_profile_accepts_legacy_regions_and_validates_new_selectors() -> None:
