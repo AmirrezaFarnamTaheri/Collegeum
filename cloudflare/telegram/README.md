@@ -37,7 +37,13 @@ settings** (3, 4, 6 or 8 positions per page), **Alert delivery**, source status,
 language and account controls. Telegram controls are native inline keyboards;
 their colors/backgrounds follow each user's Telegram theme, not Worker CSS.
 Owners can reach Saved & applications from home, settings and results without
-cluttering every selection panel. Back returns to the named parent section.
+cluttering every selection panel. The tracking actions (Save, Hide and Applied)
+currently operate on **academic listings only**; career listings are browseable
+under My matches but do not yet have application-tracking receipts. Owner
+tracking includes direct paths back to My matches and Settings, and its More
+panel links directly to Alert delivery. Back returns to the named parent
+section. Shortcut commands `/matches`, `/subscriptions`, `/history`, `/display`
+and `/notifications` open the corresponding private subscriber panels.
 Alert delivery offers pause/resume, individual/digest mode, daily limits, quiet
 hours and time zone independently of browse history.
 
