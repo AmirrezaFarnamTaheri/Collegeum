@@ -27,8 +27,11 @@ from .rotation import SCHEDULE_INTERVAL_HOURS
 
 log = get_logger(__name__)
 
-REMOTE_API = "https://jobicy.com/api/v2/remote-jobs?count=200&geo=anywhere"
-REMOTE_STATUS_API = "https://jobicy.com/api/v2/remote-jobs/status"
+# Jobicy's public Jobs API changed to /api/jobs (documented 2026-10-19).
+# Public results have a 100-row page limit and a 7-day publication window.
+# Preserve the 'anywhere' geo filter and validate jobGeo for each card.
+REMOTE_API = "https://jobicy.com/api/jobs?count=100&geo=anywhere"
+REMOTE_STATUS_API = "https://jobicy.com/api/jobs/status"
 IRANTALENT_URL = "https://www.irantalent.com/en/jobs"
 MAX_PROVIDER_ID = 9_007_199_254_740_991
 IRAN_SEARCH_TERMS = (
