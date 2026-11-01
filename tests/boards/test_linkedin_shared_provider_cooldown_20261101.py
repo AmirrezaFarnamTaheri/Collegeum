@@ -186,3 +186,97 @@ def test_public_health_preserves_safe_coverage_counts_and_redacts_provider_data(
         "provider_cooldown_active": True, "access_limited": True,
     }
     assert "secret_provider_url" not in str(result)
+
+
+def test_peer_access_cooldown_marks_replayed_source_partial_in_real_collector(
+    tmp_path: Path,
+) -> None:
+    """A cached candidate is not proof that scheduled provider requests ran."""
+    from predoc_pipeline.boards.collector import _scrape_all
+    from predoc_pipeline.core.health import source_status
+
+    econ_path, life_path = tmp_path / "econ.json", tmp_path / "life.json"
+    econ = QueryLedger("linkedin")
+    econ.request(ECON_PAIR, now=T0)
+    econ.fail(ECON_PAIR, now=T0, status=429)
+    econ.save(econ_path)
+    life = QueryLedger("life_linkedin")
+    life.request(LIFE_PAIR, now=T0 - timedelta(hours=1))
+    life.accept_page(LIFE_PAIR, cards(), now=T0 - timedelta(hours=1))
+    life.save(life_path)
+    http = OfflineHTTP()
+    scraper = worker(
+        "life_linkedin", life_path, "linkedin", econ_path, http,
+        T0 + timedelta(minutes=4),
+    )
+    report = asyncio.run(_scrape_all([scraper], max_concurrent=1, timeout=30))[0]
+    assert len(report.posts) == 10
+    assert http.urls == []
+    assert report.failure_stage == "limit"
+    assert source_status(report.as_stats()) == "partial"
+    assert report.as_stats()["search_diagnostics"]["provider_cooldown_active"] is True
+
+
+def test_linkedin_guest_search_http_999_is_a_provider_access_denial(tmp_path: Path) -> None:
+    """Never continue other keywords after a provider-specific deny response."""
+    class DeniedHTTP(OfflineHTTP):
+        async def get_text(self, url: str, **_kwargs: object) -> str:
+            self.urls.append(url)
+            raise FetchError("HTTP 999: request denied", status=999)
+
+    path = tmp_path / "econ.json"
+    http = DeniedHTTP()
+    cfg = SourceConfig(
+        name="linkedin", type="linkedin", keywords=["PhD economics", "predoc economics"],
+        locations=["Sweden"], query_budget=2, request_budget=2, max_pages=12,
+        time_budget_seconds=15, checkpoint_path=str(path),
+    )
+    scraper = LinkedInScraper(cfg, http)
+    scraper._scheduler_now = lambda: T0
+    posts, count = asyncio.run(scraper.run())
+    assert not posts and count == 0
+    assert len(http.urls) == 1  # do not try alternative searches after denial
+    assert scraper.search_diagnostics["access_limited"] is True
+    ledger = QueryLedger.load(path, "linkedin")
+    assert ledger.state["access_blocked_until"] == (T0 + timedelta(hours=48)).isoformat()
+    assert ledger.counts()["incomplete_queries"] == 1
+    failing = next(iter(ledger.state["queries"].values()))
+    assert failing["last_complete_at"] is None
+    assert failing["pending"]["offset"] == 0
+
+
+def test_linkedin_detail_http_999_stops_future_detail_requests_and_saves_block(
+    tmp_path: Path,
+) -> None:
+    """Detail-job HTTP 999 must stop access rather than probing every card."""
+    class DeniedDetailHTTP(OfflineHTTP):
+        async def get_text(self, url: str, **_kwargs: object) -> str:
+            if "/jobs-guest/jobs/api/jobPosting/" in url:
+                self.urls.append(url)
+                raise FetchError("LinkedIn HTTP 999", status=999)
+            self.urls.append(url)
+            return "".join(
+                f'<div class="base-card" data-entity-urn="urn:li:jobPosting:{4980001000 + i}">'
+                f'<h3>PhD Molecular Biology</h3></div>'
+                for i in range(10)
+            )
+
+    path = tmp_path / "life.json"
+    http = DeniedDetailHTTP()
+    cfg = SourceConfig(
+        name="life_linkedin", type="linkedin", keywords=["PhD epigenetics"],
+        locations=["European Union"], query_budget=1, request_budget=1,
+        time_budget_seconds=15, max_pages=12, checkpoint_path=str(path),
+    )
+    scraper = LinkedInScraper(cfg, http)
+    scraper._scheduler_now = lambda: T0
+    posts, count = asyncio.run(scraper.run())
+    assert count == len(posts) == 10
+    with pytest.raises(FetchError) as raised:
+        asyncio.run(scraper.fetch_detail(posts[0]))
+    assert raised.value.status == 999
+    assert asyncio.run(scraper.fetch_detail(posts[1])) is None
+    assert len(http.urls) == 2  # one search + exactly one blocked detail
+    ledger = QueryLedger.load(path, "life_linkedin")
+    assert ledger.state["access_blocked_until"] == (T0 + timedelta(hours=48)).isoformat()
+    assert ledger.state["queries"][query_key("life_linkedin", *LIFE_PAIR)]["pending"]["offset"] == 10
