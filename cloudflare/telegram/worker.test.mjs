@@ -598,4 +598,7 @@ test('owner tracking has direct navigation to the unified My matches and Setting
   assert.ok(callbacks.includes('sub:p:more'));
   assert.ok(callbacks.includes('view|valid|0'));
   assert.ok(callbacks.includes('view|applied|0'));
+  const more = await instance.render('more', 0, '', 42);
+  assert.ok(more.reply_markup.inline_keyboard.flat().some(
+    button => button.callback_data === 'sub:p:delivery'));
 });
