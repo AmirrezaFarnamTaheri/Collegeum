@@ -1,0 +1,61 @@
+name: telegram-live-acceptance-once-20261101
+
+# Run one authenticated, non-destructive verification on addition to main.
+# This workflow does not set a webhook, deploy code or modify subscriptions.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/telegram-live-acceptance-once-20261101.yml
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    if: github.repository == 'AmirrezaFarnamTaheri/Collegeum'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Verify protected Worker state, fresh inventory and one owner menu message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK_ENABLED: ${{ vars.TELEGRAM_WEBHOOK_ENABLED || 'false' }}
+          TELEGRAM_WORKER_URL: ${{ vars.TELEGRAM_WORKER_URL }}
+          TELEGRAM_WORKER_SYNC_TOKEN: ${{ secrets.TELEGRAM_WORKER_SYNC_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          report_file="$(mktemp)"
+          trap 'rm -f "$report_file"' EXIT
+          python3 -S tools/telegram_connection.py --smoke > "$report_file"
+          python3 - "$report_file" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as fh:
+              report = json.load(fh)
+          assert report.get("ready") is True, "Webhook connection not ready"
+          assert report.get("webhook_matches_worker") is True, "Wrong live webhook"
+          assert report.get("telegram_delivery") == "webhook", "Unexpected delivery mode"
+          assert report.get("snapshot_fresh") is True, "Snapshot not fresh"
+          assert report.get("last_delivery_error_at") is None, "Recent Telegram delivery error"
+          assert report.get("live_test", {}).get("menu_delivery_confirmed") is True, (
+              "Owner menu message not acknowledged"
+          )
+          worker = report.get("worker") or {}
+          counts = worker.get("inventory_counts")
+          assert isinstance(counts, dict), "Deployed worker does not expose inventory diagnostics"
+          assert all(isinstance(counts.get(k), int) and counts[k] >= 0
+                     for k in ("academic", "career")), "Invalid worker inventory counts"
+          print("Authenticated live Telegram smoke: pass")
+          print("Current inventory counts:", counts)
+          print("Snapshot timestamp:", worker.get("snapshot_at"))
+          print("Owner menu delivery confirmed; no webhook or preference changes")
+          PY
