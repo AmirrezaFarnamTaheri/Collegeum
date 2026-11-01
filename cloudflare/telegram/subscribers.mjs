@@ -233,7 +233,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       tr('🔔 Alerts: ', '🔔 اعلان‌ها: ') + status + '\n' +
       tr('🗓 Browse range: ', '🗓 بازه مرور: ') + lookbackLabel(selectedWindow(windowDays), fa);
     text += '\n\n' + (!ready ? tr(
-      'Choose a role under Subscriptions. Existing matches can then be browsed.',
+      'Choose roles under Subscriptions. Existing matches can then be browsed.',
       'از اشتراک‌ها موضوع دلخواه را انتخاب کنید، سپس فرصت‌های قبلی را مرور کنید.') :
       m.paused ? tr('Your selections are saved; alerts are paused.',
         'تنظیمات ذخیره شده‌اند اما اعلان‌ها متوقف هستند.') :
