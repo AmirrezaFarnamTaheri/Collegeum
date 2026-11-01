@@ -128,24 +128,38 @@ def menu(
         academic = sum(key in topics for key in ACADEMIC)
         careers = sum(key in topics for key in CAREERS)
         life = LIFE_SCIENCES in topics
-        body = (
-            "🧭 <b>ویرایش اشتراک‌ها</b>\n\nهر تغییر فوری ذخیره می‌شود.\n\n"
-            f"🎓 دانشگاهی: {academic}/4\nمناطق: {escape(region_summary)}\n"
-            f"💼 مشاغل: {careers}/4 · محدوده‌ها: {len(scopes)}/2\n"
-            f"🧬 علوم زیستی: {'فعال' if life else 'خاموش'}"
-            if fa else
-            "🧭 <b>Edit subscriptions</b>\n\nEach tap saves immediately.\n\n"
-            f"🎓 Academic: {academic}/4\nRegions: {escape(region_summary)}\n"
-            f"💼 Careers: {careers}/4 · Job markets: {len(scopes)}/2\n"
-            f"🧬 Life Sciences: {'On' if life else 'Off'}"
+        market_names = [
+            ("ایران" if fa else "Iran") if "iran" in scopes else "",
+            ("دورکاری" if fa else "Remote") if "remote" in scopes else "",
+        ]
+        market_summary = " · ".join(name for name in market_names if name) or (
+            "انتخاب نشده" if fa else "Not selected"
         )
+        body = (
+            "🧭 <b>ویرایش اشتراک‌ها</b>\n<i>هر انتخاب فوری ذخیره می‌شود.</i>\n\n"
+            f"<b>🎓 دانشگاهی</b> · {academic}/۴ انتخاب‌شده\n"
+            f"🌍 {escape(region_summary)}\n\n"
+            f"<b>💼 مشاغل</b> · {careers}/۴ انتخاب‌شده\n"
+            f"محدوده‌ها · {len(scopes)}/۲ · {escape(market_summary)}\n\n"
+            f"<b>🧬 علوم زیستی</b> · {'فعال' if life else 'خاموش'}"
+            if fa else
+            "🧭 <b>Edit subscriptions</b>\n<i>Changes save as you tap.</i>\n\n"
+            f"<b>🎓 Academic</b> · {academic}/4 selected\n"
+            f"🌍 {escape(region_summary)}\n\n"
+            f"<b>💼 Careers</b> · {careers}/4 selected\n"
+            f"Job markets · {len(scopes)}/2 · {escape(market_summary)}\n\n"
+            f"<b>🧬 Life Sciences</b> · {'On' if life else 'Off'}"
+        )
+        if careers and not scopes:
+            body += ("\n\n⚠️ برای دیدن مشاغل یک محدوده انتخاب کنید." if fa
+                     else "\n\n⚠️ Choose a market to enable career matches.")
         buttons = [
             [_button("🎓 دانشگاهی" if fa else "🎓 Academic", "sub:p:academic"),
-             _button("💼 مشاغل و محدوده‌ها" if fa else "💼 Careers + markets",
-                     "sub:p:careers")],
+             _button("💼 مشاغل" if fa else "💼 Careers", "sub:p:careers")],
             [_button("🧬 علوم زیستی" if fa else "🧬 Life Sciences",
                      "sub:p:life_sciences")],
-            [_button("🔎 فرصت‌های من" if fa else "🔎 View my matches", "sub:p:latest")],
+            [_button("🔎 مشاهده فرصت‌ها" if fa else "🔎 Browse my matches",
+                     "sub:p:latest")],
             _back(lang),
         ]
     elif page == "academic":
