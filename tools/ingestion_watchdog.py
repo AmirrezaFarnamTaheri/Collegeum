@@ -271,6 +271,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dispatch", action="store_true",
                         help="Allow exactly one guarded workflow_dispatch with dry_run=false")
+    parser.add_argument("--strict-cadence", action="store_true",
+                        help="Fail the monitor for verified unobserved mature cron slots")
     parser.add_argument("--health", default="docs/data/health.json", type=Path)
     args = parser.parse_args(argv)
 
@@ -299,6 +301,15 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 action = "would-request-new-main-ingestion"
         _summary(decision, action, cadence=cadence)
+        if args.strict_cadence and cadence.verified and cadence.missing:
+            # A healthy published snapshot must not hide missing cron coverage.
+            # This only changes the observer check conclusion; the normal
+            # recovery dispatch guard remains unchanged and fail-closed.
+            print(
+                "::error title=Unobserved scheduled ingestion slots::"
+                f"{cadence.missing} mature 4-hour cron slot(s) unobserved"
+            )
+            return 2
     except (OSError, ValueError, RuntimeError) as exc:
         # Errors are safe, synthesized messages; no remote body is exposed.
         print(f"::error::Ingestion watchdog aborted: {exc}")
