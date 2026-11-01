@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: one-time-collegeum-remediation-dispatch-20261102
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   accept:
@@ -23,7 +23,7 @@ jobs:
       github.repository == 'AmirrezaFarnamTaheri/Collegeum' &&
       github.ref == 'refs/heads/main' &&
       startsWith(github.event.head_commit.message,
-      'ops: launch guarded Collegeum remediation acceptance 20261102')
+      'ops: relaunch verified Collegeum remediation acceptance 20261102')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:
@@ -74,7 +74,17 @@ jobs:
               for gate in ci.yml refresh-release.yml; do
                 current="$(workflow_runs "$gate" | jq -r --arg sha "$GITHUB_SHA" \
                   '[.workflow_runs[] | select(.event == "push" and .head_branch == "main" and .head_sha == $sha)] | sort_by(.created_at) | last | [.id // 0, .status // "missing", .conclusion // "none"] | @tsv')"
-                IFS=$'\t' read -r _ state conclusion <<< "$current"
+                IFS=$'\t' read -r run_id state conclusion <<< "$current"
+                # Individual CI failures may be visible before GitHub marks
+                # the whole run completed (other matrix jobs can be queued).
+                # Stop on real failure, never wait or dispatch production.
+                if [ "$gate" = ci.yml ] && [[ "$run_id" =~ ^[1-9][0-9]*$ ]]; then
+                  failed_jobs="$(gh api "repos/$repo/actions/runs/$run_id/jobs?per_page=100" |
+                    jq -r '.jobs[] | select(.conclusion == "failure" or
+                      .conclusion == "cancelled" or .conclusion == "timed_out" or
+                      .conclusion == "action_required") | .name')"
+                  [ -z "$failed_jobs" ] || fatal "Integrated $gate failed job(s): $failed_jobs"
+                fi
                 case "$state/$conclusion" in
                   completed/success) ;;
                   completed/*) fatal "Integrated $gate failed ($current)" ;;
