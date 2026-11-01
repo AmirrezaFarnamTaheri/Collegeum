@@ -241,33 +241,37 @@ def menu(
         ]
         body = f"{title}\n\n{caption}"
     elif page == "careers":
-        title = "💼 <b>مشاغل تخصصی</b>" if fa else "💼 <b>Specialist careers</b>"
-        caption = ("ابتدا موضوع و سپس منطقه را مشخص کنید."
-                   if fa else "Pick roles, then choose your job markets.")
-        for key in CAREERS:
-            buttons.append([_button(
-                ("☑ " if key in topics else "☐ ") + _label(key, lang), f"sub:t:{key}",
-            )])
+        selected = sum(key in topics for key in CAREERS)
+        body = (
+            "💼 <b>مشاغل و محدوده‌ها</b>\n<i>برای دیدن مشاغل، نقش و محدوده لازم است.</i>\n\n"
+            f"<b>مرحله ۱ · نقش‌ها</b>  {selected}/۴ انتخاب‌شده\n\n"
+            f"<b>مرحله ۲ · محدوده‌ها</b>  {len(scopes)}/۲ انتخاب‌شده"
+            if fa else
+            "💼 <b>Career roles + markets</b>\n<i>Both are needed for career matches.</i>\n\n"
+            f"<b>Step 1 · Roles</b>  {selected}/4 selected\n\n"
+            f"<b>Step 2 · Job markets</b>  {len(scopes)}/2 selected"
+        )
+        if selected and not scopes:
+            body += ("\n\n⚠️ ایران یا دورکاری جهانی را انتخاب کنید." if fa
+                     else "\n\n⚠️ Choose Iran and/or worldwide remote.")
+        buttons = _role_grid(CAREERS, topics, lang)
         all_set = all(key in topics for key in CAREERS)
         buttons.append([_button(
-            "پاک‌کردن همه" if fa and all_set else
-            "انتخاب همه" if fa else "Clear all" if all_set else "Select all",
+            "حذف همه نقش‌ها" if fa and all_set else
+            "انتخاب همه نقش‌ها" if fa else "Clear roles" if all_set else "Select all roles",
             f"sub:b:careers:{'off' if all_set else 'on'}",
         )])
-        for key in CAREER_SCOPES:
-            buttons.append([_button(
-                ("☑ " if key in scopes else "☐ ") + _label(key, lang),
-                f"sub:g:{key}",
-            )])
-        buttons.append([_button("← اشتراک‌ها" if fa else "← Subscriptions",
-                                "sub:p:subscriptions")])
-        body = f"{title}\n\n{caption}\n\n" + (
-            f"محدوده‌ها: {len(scopes)}/2" if fa else
-            f"Job markets: {len(scopes)}/2 selected"
-        )
-        if any(key in topics for key in CAREERS) and not scopes:
-            body += ("\n\n⚠️ حداقل یک محدوده را انتخاب کنید." if fa else
-                     "\n\n⚠️ Select at least one market to receive career matches.")
+        buttons.append([
+            _button(("☑ " if "iran" in scopes else "☐ ") +
+                    ("🇮🇷 ایران" if fa else "🇮🇷 Iran"), "sub:g:iran"),
+            _button(("☑ " if "remote" in scopes else "☐ ") +
+                    ("🌐 دورکاری" if fa else "🌐 Remote"), "sub:g:remote"),
+        ])
+        buttons.extend([
+            [_button("🔎 مشاهده فرصت‌ها" if fa else "🔎 View matches", "sub:p:latest")],
+            [_button("← اشتراک‌ها" if fa else "← Subscriptions",
+                     "sub:p:subscriptions")],
+        ])
     elif page == "delivery":
         mode = member.get("delivery_mode", "instant") if member else "instant"
         limit = member.get("daily_limit", 6) if member else 6
