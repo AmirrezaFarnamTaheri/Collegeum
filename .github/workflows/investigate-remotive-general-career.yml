@@ -1,0 +1,76 @@
+name: investigate-remotive-general-career
+on:
+  push:
+    branches: [investigate/remotive-general-career-20261102]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+      - run: uv sync --locked
+      - name: Robots-aware, read-only public API schema and eligibility probe
+        run: |
+          PYTHONPATH=src python3 - <<'PY'
+          import json
+          from collections import Counter
+          from urllib.parse import urlsplit
+          from predoc_pipeline.ingest.career import classify_career
+          from predoc_pipeline.ingest.http import PoliteClient
+          from predoc_pipeline.settings import Settings
+
+          settings = Settings()
+          url = "https://remotive.com/api/remote-jobs?limit=200"
+          with PoliteClient(
+              user_agent=settings.http_user_agent,
+              timeout=25.0,
+              per_host_delay=1.0,
+              respect_robots=True,
+          ) as client:
+              response = client.get(url, use_cache=False)
+          result = {"http_status": response.status, "fetch_ok": response.ok}
+          if response.ok:
+              data = json.loads(response.text)
+              rows = data.get("jobs") if isinstance(data, dict) else None
+              assert isinstance(rows, list), "Remotive public jobs response schema missing"
+              result["raw_jobs"] = len(rows)
+              recognized = 0
+              worldwide_roles = 0
+              locations = Counter()
+              for job in rows:
+                  if not isinstance(job, dict):
+                      continue
+                  title = job.get("title")
+                  link = job.get("url")
+                  location = job.get("candidate_required_location")
+                  if (
+                      isinstance(title, str)
+                      and isinstance(link, str)
+                      and urlsplit(link).scheme == "https"
+                      and urlsplit(link).hostname in ("remotive.com", "www.remotive.com")
+                  ):
+                      recognized += 1
+                      if classify_career(title):
+                          locations[str(location or "(missing)")[:50]] += 1
+                          if isinstance(location, str) and location.strip().casefold() in (
+                              "worldwide", "anywhere", "global", "anywhere in the world",
+                          ):
+                              worldwide_roles += 1
+              result["recognized"] = recognized
+              result["role_locations"] = locations.most_common(12)
+              result["eligible_worldwide_roles"] = worldwide_roles
+              assert recognized > 0, "No canonical job records in response"
+          print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+          assert response.ok, "No permitted access to Remotive public endpoint"
+          PY
