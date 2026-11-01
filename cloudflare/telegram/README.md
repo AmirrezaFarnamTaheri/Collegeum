@@ -5,27 +5,47 @@ Subscribers can choose roles and markets, change delivery preferences, switch
 English/Persian, pause and unsubscribe. GitHub still collects vacancies and sends
 checkpointed alerts on its schedule. Fast menus do not make collection continuous.
 
-My matches uses the same selected roles and career markets as subscriptions.
-The user can choose a rolling 7-, 14-, 30-, 60- or 90-day history window
-(7 days, 14 days, 1 month, 2 months or 3 months). The default stays 14 days.
-The selected window is carried across Next/Previous buttons in the current
-browse message; opening My matches again defaults to 14 days. These choices
-change browsing only: they do not backfill alerts, resend notifications or
-modify delivery receipts. Results depend on records in the latest uploaded
-snapshot, not exhaustive LinkedIn search coverage or past vacancy availability.
-Owner academic browsing, search and closing-soon views also respect selected
-roles. Saved, applied and hidden views
-retain explicitly tracked positions even if the subscription changes.
-Settings offers 3, 4, 6 or 8 positions per page (default 4). This display preference
-is private to the Worker's chat and is removed on unsubscribe; it does not change
-the daily alert limit in Alert delivery.
+My matches uses selected academic and Life Sciences roles, and selected career
+roles *plus* their Iran/remote market scopes. Markets do not filter academic
+positions. The history window supports 7, 14, 30, 60 or 90 days (7 days, 14 days,
+1 month, 2 months or 3 months). The default is 14 days, but **Settings → Match
+history** now saves a preferred window in Cloudflare's private per-chat storage.
+Opening My matches or the owner's /menu uses that saved range. Quick range buttons
+in My matches preview a different window without changing the saved default;
+Next/Previous preserve the preview range. This is *browsing*, not an alert
+backfill: it never re-notifies historical vacancies or alters the encrypted
+delivery journal. Unsubscribe removes the stored preferred range and page size.
 
-Home groups My matches, Subscriptions, Alert delivery, Settings and Help.
-Subscriptions contains Academic roles, Career roles, Life Sciences and Job
-markets. Role and market buttons use ☑ for selected and ☐ for not selected.
-Alert delivery contains pause/resume and notification controls; Settings leads
-to display choices and account controls. Back returns to the parent section.
-Owners have a separate Saved & applications section for tracking actions.
+Results depend on the latest uploaded snapshot, not exhaustive provider coverage
+or confirmation that every discovered vacancy is currently accepting
+applications. The Worker uses the immutable first_seen_at for rolling history;
+previously the academic browser erroneously filtered on a missing published_at.
+The Python sync now also sends published_at for compatibility. The Worker warns
+when no snapshot exists or the last sync is over eight hours old. Only safe
+HTTPS application links appear; career availability and Life Sciences funding
+are explicitly marked as unverified. Date-only deadlines include their UTC
+calendar day. The authenticated /status endpoint reports snapshot age and
+academic/career inventory counts without exposing private subscribers.
+Saved, applied and hidden academic views retain explicitly tracked positions
+even if subscriptions change.
+
+Home summarizes role counts, job markets, alert status and saved browse window.
+Subscriptions shows selected counts and explains that career scopes are required
+only for career alerts. Every role and market panel offers a direct path to My
+matches and history controls. Settings separates **Match history**, **Display
+settings** (3, 4, 6 or 8 positions per page), **Alert delivery**, source status,
+language and account controls. Telegram controls are native inline keyboards;
+their colors/backgrounds follow each user's Telegram theme, not Worker CSS.
+Owners can reach Saved & applications from home, settings and results without
+cluttering every selection panel. The tracking actions (Save, Hide and Applied)
+currently operate on **academic listings only**; career listings are browseable
+under My matches but do not yet have application-tracking receipts. Owner
+tracking includes direct paths back to My matches and Settings, and its More
+panel links directly to Alert delivery. Back returns to the named parent
+section. Shortcut commands `/matches`, `/subscriptions`, `/history`, `/display`
+and `/notifications` open the corresponding private subscriber panels.
+Alert delivery offers pause/resume, individual/digest mode, daily limits, quiet
+hours and time zone independently of browse history.
 
 The first authenticated protocol-v1 sync seeds existing preferences. Afterward,
 Cloudflare owns preference edits; the encrypted Python journal keeps delivery

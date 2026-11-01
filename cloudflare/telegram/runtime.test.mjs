@@ -29,9 +29,9 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
   });
   try {
     assert.equal((await send('/webhook',{},false)).status,401);
-    const row={id:42,url_hash:'a'.repeat(64),title:'Economics RA',institution:'Example University',
-      country:'Canada',apply_url:'https://example.org/job',first_seen_at:'2026-10-12T00:00:00Z'};
-    const snapshot={listings:[row],marks:{},generated_at:'2026-10-12T00:00:00Z',
+    const row={id:42,url_hash:'a'.repeat(64),kind:'predoc',title:'Economics RA',institution:'Example University',
+      country:'Canada',apply_url:'https://example.org/job',first_seen_at:new Date().toISOString()};
+    const snapshot={listings:[row],marks:{},generated_at:new Date().toISOString(),
       subscriber_protocol:1,subscribers:{}};
     assert.equal((await send('/sync',snapshot)).status,200);
     assert.equal((await send('/sync',{...snapshot,listings:[],generated_at:'2026-10-11T00:00:00Z'})).status,409);
@@ -48,12 +48,20 @@ test('workerd validates webhook auth, SQLite snapshots, private feedback and pub
     const choices=await (await send('/sync',snapshot)).json();
     assert.ok(choices.subscribers['777'].topics.predoc);
     assert.equal(calls.filter(c=>c.url.endsWith('/editMessageText')&&c.body.chat_id===777).length,1);
+    // Full runtime path: Python-shaped academic snapshot -> saved role -> match panel.
+    const myMatches = {update_id:4, callback_query:{id:'matching-roles',from:{id:777},
+      message:{chat:{id:777,type:'private'},message_id:901},data:'sub:p:latest'}};
+    assert.equal((await send('/webhook',myMatches)).status,200);
+    const view = calls.filter(c=>c.url.endsWith('/editMessageText')&&c.body.chat_id===777).at(-1);
+    assert.match(view.body.text, /Economics RA/);
+    assert.match(view.body.text, /last 14 days/i);
     assert.equal((await mf.dispatchFetch('https://worker.example/status')).status,401);
     const status=await (await mf.dispatchFetch('https://worker.example/status',{
       headers:{Authorization:'Bearer offline-sync'},
     })).json();
     assert.equal(status.subscribers_initialized,true);
     assert.equal(status.subscribers,undefined);
+    assert.deepEqual(status.inventory_counts, {academic: 1, career: 0});
     // Distinct valid IDs execute concurrently against the actual DO transaction API.
     await Promise.all(Array.from({length:6},(_,i)=>send('/webhook',{update_id:100+i,
       message:{chat:{id:1000+i,type:'private'},from:{id:1000+i},text:'/ask Count open roles'}})));

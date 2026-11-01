@@ -1,6 +1,7 @@
 /** Owner-only webhook bot. The Durable Object serializes updates and syncs. */
 import {ask, reservePublic} from './assistant.mjs';
-import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreferences, pageSize, panel} from './subscribers.mjs';
+import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreferences,
+  openAcademicListing, pageSize, panel} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const VIEWS = new Set(["positions", "valid", "applied", "hidden", "new", "closing", "search"]);
@@ -23,15 +24,16 @@ const safeUrl = value => {
   catch { return ""; }
 };
 const menu = () => ({inline_keyboard: [
-  [nav('Saved', 'valid'), nav('Applied', 'applied')],
-  [nav('Academic matches', 'positions'), nav('Closing soon', 'closing')],
-  [nav('Search', 'search'), nav('More', 'more')],
-  [nav('← Home', 'menu')],
+  [nav('✅ Saved', 'valid'), nav('📝 Applied', 'applied')],
+  [{text: '🔎 My matches', callback_data: 'sub:p:latest'},
+    nav('⏳ Closing soon', 'closing')],
+  [nav('🔍 Search', 'search'), nav('⋯ More', 'more')],
+  [{text: '⚙️ Settings', callback_data: 'sub:p:more'}, nav('⌂ Home', 'menu')],
 ]});
 const moreMenu = () => ({inline_keyboard: [
   [nav("🆕 New this week", "new"), nav("🙈 Hidden", "hidden")],
   [nav("❔ Help", "help"), nav("← Home", "menu")],
-  [{text: 'Alert settings', callback_data: 'sub:p:home'}],
+  [{text: '🔔 Alert delivery', callback_data: 'sub:p:delivery'}],
 ]});
 
 export async function sameSecret(actual, expected) {
@@ -113,6 +115,7 @@ export class TelegramBot {
       return json({subscriber_protocol: 1,
         subscribers_initialized: Boolean(await this.ctx.storage.get('subscribers_initialized')),
         snapshot_at: await this.ctx.storage.get('snapshot_at') || null,
+        inventory_counts: await this.ctx.storage.get('snapshot_counts') || {academic: 0, career: 0},
         pending_updates: updates.filter(s => !['done', 'rejected'].includes(s.stage)).length});
     }
     let payload;
@@ -325,6 +328,7 @@ export class TelegramBot {
       }
       await tx.put("snapshot_at", payload.generated_at);
       await tx.put('career_listings', careers);
+      await tx.put('snapshot_counts', {academic: listings.length, career: careers.length});
       await tx.put('source_status', sourceStatus);
       if (payload.subscriber_protocol === 1 && !await tx.get('subscribers_initialized')) {
         for (const [id, member] of Object.entries(subscribers)) await tx.put(`subscriber:${id}`, member);
@@ -394,17 +398,20 @@ export class TelegramBot {
     const member = chatId === null ? null : await this.ctx.storage.get(`subscriber:${chatId}`);
     const size = pageSize(chatId === null ? null : await this.ctx.storage.get(`page_size:${chatId}`));
     const now = Date.now();
-    const open = r => !r.closed_at && !r.expired_at && (!r.deadline || Date.parse(r.deadline) >= now);
+    const open = r => openAcademicListing(r, now);
     const available = rows.filter(r => open(r) && !["invalid", "applied"].includes(marks.get(r.url_hash)) &&
       matchesPreferences(r, member));
     if (kind === 'menu') {
-      const content = panel(member, 'home', size);
+      const defaultWindow = chatId === null ? null :
+        await this.ctx.storage.get(`match_window:${chatId}`);
+      const content = panel(member, 'home', size, defaultWindow);
       content.reply_markup.inline_keyboard.push([nav('Saved & applications', 'tracking')]);
       return content;
     }
     if (kind === "tracking") return {text: '<b>Saved & applications</b>\n\n' +
       `<b>${available.length} academic matches</b> · ${rows.filter(r => open(r) && marks.get(r.url_hash) === "valid").length} saved · ` +
       `${rows.filter(r => marks.get(r.url_hash) === "applied").length} applied\n\n` +
+      'Tracking applies to academic listings. Career roles are in My matches.\n' +
       'Search with <code>/search economics London</code>.\n\n' +
       `Listings updated: ${esc((await this.ctx.storage.get("snapshot_at")) || "Waiting for first sync")}`, reply_markup: menu()};
     if (kind === "more") return {text: '⚙️ <b>More options</b>\n\n' +

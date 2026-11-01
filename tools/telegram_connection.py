@@ -104,7 +104,8 @@ def inspect_connection(env: dict[str, str], *, activate: bool = False,
         status = request(origin + '/status', bearer=sync_token)
         result['worker_status_ms'] = round((time.perf_counter() - started) * 1000)
         result['worker'] = {field: status.get(field) for field in (
-            'subscriber_protocol', 'subscribers_initialized', 'snapshot_at', 'pending_updates')}
+            'subscriber_protocol', 'subscribers_initialized', 'snapshot_at',
+            'inventory_counts', 'pending_updates')}
     snapshot_fresh = False
     if status:
         try:

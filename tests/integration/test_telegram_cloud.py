@@ -85,6 +85,7 @@ def test_webhook_mode_sends_snapshot_and_imports_marks_without_polling(settings)
         payload = json.loads(request.content)
         assert len(payload['listings']) == 5
         assert all('telegram_message_id' not in r for r in payload['listings'])
+        assert all('first_seen_at' in r and 'published_at' in r for r in payload['listings'])
         return httpx.Response(200, json={'subscriber_protocol': 1, 'subscribers': {},
                                         'marks': {key: {'status': 'applied', 'at': format_ts()}}})
 
