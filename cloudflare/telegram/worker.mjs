@@ -113,6 +113,7 @@ export class TelegramBot {
       return json({subscriber_protocol: 1,
         subscribers_initialized: Boolean(await this.ctx.storage.get('subscribers_initialized')),
         snapshot_at: await this.ctx.storage.get('snapshot_at') || null,
+        inventory_counts: await this.ctx.storage.get('snapshot_counts') || {academic: 0, career: 0},
         pending_updates: updates.filter(s => !['done', 'rejected'].includes(s.stage)).length});
     }
     let payload;
@@ -325,6 +326,7 @@ export class TelegramBot {
       }
       await tx.put("snapshot_at", payload.generated_at);
       await tx.put('career_listings', careers);
+      await tx.put('snapshot_counts', {academic: listings.length, career: careers.length});
       await tx.put('source_status', sourceStatus);
       if (payload.subscriber_protocol === 1 && !await tx.get('subscribers_initialized')) {
         for (const [id, member] of Object.entries(subscribers)) await tx.put(`subscriber:${id}`, member);
