@@ -76,7 +76,8 @@ def sync_cloud(
         for row in db.published_listings():
             data = state._public_record(row)
             data.update({key: row[key] for key in (
-                'url_hash', 'first_seen_at', 'last_seen_at', 'published_at', 'closed_at', 'expired_at',
+                'url_hash', 'first_seen_at', 'last_seen_at', 'published_at',
+                'closed_at', 'expired_at',
                 'deadline_note',
             )})
             data['kind'] = router.kind_for_row(row)
