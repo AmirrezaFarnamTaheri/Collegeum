@@ -14,11 +14,25 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from .subscriptions import CAREER_SCOPES, LOOKBACK_DAYS, TOPIC_LABELS
+from .subscriptions import ACADEMIC_REGIONS, CAREER_SCOPES, LOOKBACK_DAYS, TOPIC_LABELS
 
 ACADEMIC = ("predoc", "phd", "postdoc", "research")
 LIFE_SCIENCES = "life_sciences_phd"
 CAREERS = ("data_scientist", "data_analyst", "econ_consulting", "research_analyst")
+REGION_LABELS = {
+    "en": {
+        "north_america": "North America", "latin_america": "Latin America",
+        "europe": "Europe (incl. UK)", "middle_east": "Middle East",
+        "asia": "Asia", "oceania": "Oceania", "africa": "Africa",
+        "unknown": "Other / unspecified",
+    },
+    "fa": {
+        "north_america": "آمریکای شمالی", "latin_america": "آمریکای لاتین",
+        "europe": "اروپا (شامل بریتانیا)", "middle_east": "خاورمیانه",
+        "asia": "آسیا", "oceania": "اقیانوسیه", "africa": "آفریقا",
+        "unknown": "سایر / مکان نامشخص",
+    },
+}
 PAGE_SIZE = 4
 MAX_LATEST_PAGES = 500  # At most the 2,000-row uploaded snapshot at four per page
 
@@ -70,9 +84,38 @@ def menu(
     fa = lang == "fa"
     topics = member.get("topics", {}) if member else {}
     scopes = member.get("scopes", {}) if member else {}
+    regions = member.get("academic_regions", {}) if member else {}
+    region_summary = ", ".join(REGION_LABELS[lang][key] for key in regions)
+    region_summary = region_summary or ("همه جهان" if fa else "Worldwide")
+    if page == "markets":
+        page = "careers"  # Legacy callbacks remain valid.
     paused = bool(member and member.get("paused"))
     buttons: list[list[dict[str, str]]] = []
-    if page == "academic":
+    if page == "subscriptions":
+        academic = sum(key in topics for key in ACADEMIC)
+        careers = sum(key in topics for key in CAREERS)
+        life = LIFE_SCIENCES in topics
+        body = (
+            "🧭 <b>ویرایش اشتراک‌ها</b>\n\nهر تغییر فوری ذخیره می‌شود.\n\n"
+            f"🎓 دانشگاهی: {academic}/4\nمناطق: {escape(region_summary)}\n"
+            f"💼 مشاغل: {careers}/4 · محدوده‌ها: {len(scopes)}/2\n"
+            f"🧬 علوم زیستی: {'فعال' if life else 'خاموش'}"
+            if fa else
+            "🧭 <b>Edit subscriptions</b>\n\nEach tap saves immediately.\n\n"
+            f"🎓 Academic: {academic}/4\nRegions: {escape(region_summary)}\n"
+            f"💼 Careers: {careers}/4 · Job markets: {len(scopes)}/2\n"
+            f"🧬 Life Sciences: {'On' if life else 'Off'}"
+        )
+        buttons = [
+            [_button("🎓 دانشگاهی" if fa else "🎓 Academic", "sub:p:academic"),
+             _button("💼 مشاغل و محدوده‌ها" if fa else "💼 Careers + markets",
+                     "sub:p:careers")],
+            [_button("🧬 علوم زیستی" if fa else "🧬 Life Sciences",
+                     "sub:p:life_sciences")],
+            [_button("🔎 فرصت‌های من" if fa else "🔎 View my matches", "sub:p:latest")],
+            _back(lang),
+        ]
+    elif page == "academic":
         title = "🎓 <b>فرصت‌های دانشگاهی</b>" if fa else "🎓 <b>Academic opportunities</b>"
         caption = (
             "پیشادکتری پیش از ورود به دکتری است؛ دکتری برای دانشجویان دکتری است؛ "
@@ -93,8 +136,40 @@ def menu(
             "انتخاب همه" if fa else "Clear all" if all_set else "Select all",
             f"sub:b:academic:{'off' if all_set else 'on'}",
         )])
-        buttons.append(_back(lang))
+        buttons.append([_button(
+            ("🌍 مناطق: " if fa else "🌍 Academic regions: ") + region_summary[:45],
+            "sub:p:academic_regions",
+        )])
+        buttons.append([_button("← اشتراک‌ها" if fa else "← Subscriptions",
+                                "sub:p:subscriptions")])
         body = f"{title}\n\n{caption}"
+    elif page == "academic_regions":
+        ordered = [
+            "north_america", "latin_america", "europe", "middle_east",
+            "asia", "oceania", "africa", "unknown",
+        ]
+        for offset in range(0, len(ordered), 2):
+            buttons.append([
+                _button(
+                    ("☑ " if region in regions else "☐ ") + REGION_LABELS[lang][region],
+                    f"sub:r:{region}",
+                ) for region in ordered[offset:offset + 2]
+            ])
+        buttons.extend([
+            [_button(("☐ " if regions else "☑ ") +
+                     ("همه جهان (حذف فیلتر)" if fa else "Worldwide (clear filters)"),
+                     "sub:r:all")],
+            [_button("← دانشگاهی" if fa else "← Academic", "sub:p:academic")],
+        ])
+        description = (
+            "هر منطقه دلخواه را انتخاب کنید. «همه جهان» فیلتر را پاک می‌کند."
+            if fa else "Select regions or choose Worldwide to clear filters."
+        )
+        body = (
+            "🌍 <b>مناطق دانشگاهی</b>" if fa else "🌍 <b>Academic regions</b>"
+        ) + f"\n\n{description}\n\n" + (
+            "انتخاب فعلی: " if fa else "Current: "
+        ) + escape(region_summary)
     elif page == "life_sciences":
         title = (
             "🧬 <b>دکتری علوم زیستی · اروپا</b>" if fa
