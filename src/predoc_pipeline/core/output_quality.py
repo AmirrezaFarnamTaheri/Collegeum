@@ -37,6 +37,15 @@ _NON_ACTIONABLE_PROGRAM_PAGES = frozenset({
      "predoctoral-fellowship-program/about"),
 })
 
+# Evidence-reviewed generic career landing pages from the LinkedIn audit.
+# Exact host/path matching avoids rejecting real requisition deep links.
+_GENERIC_EMPLOYER_CAREER_PAGES = frozenset({
+    ("www.jobs.lse.ac.uk", ""),
+    ("www.lse.ac.uk", "/lsejobs"),
+    ("www.fnuniv.ca", ""),
+    ("rb.wd5.myworkdayjobs.com", "/frs"),
+})
+
 _AUTH_HOSTS = frozenset({
     "accounts.google.com", "login.microsoftonline.com",
     "login.live.com", "appleid.apple.com",
@@ -63,6 +72,8 @@ def application_url_issue(url: object) -> str | None:
     decoded = unquote(parts.path)
     if _TEMPLATE.search(decoded):
         return "unresolved-url-template"
+    if (hostname, decoded.rstrip("/").casefold()) in _GENERIC_EMPLOYER_CAREER_PAGES:
+        return "generic-employer-careers-page"
     if (hostname, decoded.rstrip("/")) in _NON_ACTIONABLE_PROGRAM_PAGES:
         return "generic-program-information-page"
     if hostname == "job-boards.greenhouse.io" and "true" in (
