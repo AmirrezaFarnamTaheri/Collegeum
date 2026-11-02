@@ -160,3 +160,58 @@ def test_cloud_export_failure_retries_even_when_feedback_is_already_saved(settin
         result = telegram_sync(settings, http_client=client)
     assert result['taps'] == 0 and len(attempts) == 2
     assert not FeedbackStore(settings.feedback_path).data['cloud_exports_pending']
+
+
+def test_webhook_export_excludes_unusable_historical_apply_links(settings):
+    """Historical feedback is retained, but the Worker never sees a null apply URL."""
+    from predoc_pipeline.core.db import Database
+    from predoc_pipeline.core.urls import url_hash
+
+    add_listings(settings)
+    configure(settings)
+    bad_cases = (
+        ("http://www.econjobmarket.org/",
+         "https://www.europeanjobmarketofeconomists.org/job-listing/old-post"),
+        ("http://jobs.hhs.se/en/job/stockholm/old-post",
+         "http://jobs.hhs.se/en/job/stockholm/old-post"),
+    )
+    official_ad = "https://www.jobs.ac.uk/job/DTI904/test-studentship"
+    applications = (*bad_cases, ("http://www.bris.ac.uk/pg-howtoapply", official_ad))
+    hashes = []
+    with Database(settings.db_path) as db:
+        for index, (apply, source) in enumerate(applications):
+            key = url_hash(source)
+            hashes.append(key)
+            identifier = db.insert_listing({
+                "url_hash": key, "apply_url": apply, "source_url": source,
+                "source": "historical", "title": f"Archived vacancy {index}",
+                "institution": "Example University", "confidence": 0.8,
+                "country": "", "is_remote": 0, "disciplines": "[]",
+                "summary": "", "visa_sponsorship_status": "unknown",
+                "language": "en", "model_confidence": 0.9, "rule_score": 0.6,
+            })
+            db.mark_published(identifier, 150 + index)
+    # Removing a listing from the browse snapshot must not erase saved feedback.
+    store = FeedbackStore(settings.feedback_path)
+    store.set(hashes[0], "valid")
+    store.save()
+
+    def handler(request):
+        payload = json.loads(request.content)
+        observed = {entry["url_hash"]: entry for entry in payload["listings"]}
+        assert len(observed) == 6  # Five ordinary positions, one verified HTTPS fallback.
+        assert hashes[0] not in observed and hashes[1] not in observed
+        assert observed[hashes[2]]["apply_url"] == official_ad
+        assert all(entry.get("apply_url") for entry in observed.values())
+        assert hashes[0] in payload["marks"]
+        return httpx.Response(200, json={
+            "subscriber_protocol": 1, "subscribers": {}, "marks": {},
+        })
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        result = telegram_sync(settings, http_client=client)
+    assert result["failed"] == 0
+    with Database(settings.db_path) as db:
+        journal = {row["url_hash"] for row in db.published_listings()}
+    assert all(key in journal for key in hashes)
+    assert FeedbackStore(settings.feedback_path).status(hashes[0]) == "valid"
