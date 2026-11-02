@@ -182,7 +182,11 @@ def test_confirmed_source_facts_survive_public_rebuild(tmp_path: Path):
     public = json.loads((root / "docs/data/listings.json").read_text("utf-8"))
     entries = {item["id"]: item for item in public["listings"]}
     assert 28 not in entries
-    assert entries[46]["institution"] == rows[46]["institution"]
+    # ID 46 stays in the journal, while identical Workday requisition 297
+    # becomes the sole browse listing.
+    assert 46 not in entries
+    assert 297 in entries
+    assert entries[297]["salary_min"] == rows[46]["salary_min"]
     assert entries[77]["kind"] == "research"
     assert entries[77]["salary_min"] == rows[77]["salary_min"]
     assert entries[139]["min_degree"] == "masters"
@@ -222,16 +226,19 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
     assert 201 not in published  # Fed internship programme FAQ is not a vacancy
     assert 170 not in published  # pure-mathematics postdoc is out of scope
     assert 259 not in published  # digital heritage/archaeology RA is out of scope
-    for identifier in (46, 77, 139):
+    for identifier in (297, 77, 139):
         assert identifier in published
+    assert 46 not in published  # same requisition as verified Wharton ID 297
+    assert 49 not in published  # same requisition as verified Wharton ID 304
+    assert 211 not in published  # same requisition as verified Fed ID 301
     assert 173 not in published  # source returned HTTP 410; durable record is retained
     assert "https://www.federalreserve.gov/careers-internships.htm" not in (
         rss.read_text(encoding="utf-8")
     )
-    assert "University of Pennsylvania" in published[46]["institution"]
-    assert "upenn.wd1.myworkdayjobs.com" in published[46]["apply_url"]
-    assert published[46]["salary_min"] == 50000
-    assert published[46]["salary_max"] == 60000
+    assert "University of Pennsylvania" in published[297]["institution"]
+    assert "upenn.wd1.myworkdayjobs.com" in published[297]["apply_url"]
+    assert published[297]["salary_min"] == 50000
+    assert published[297]["salary_max"] == 60000
     assert published[77]["kind"] == "research"
     assert published[77]["salary_min"] == 114952.5
     assert published[77]["salary_max"] == 156778
@@ -248,7 +255,7 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
                    for item in items)
     assert not any("167780" in (item.findtext("guid") or "") for item in items)
     assert not any("/job/DTJ282/" in (item.findtext("guid") or "") for item in items)
-    for identifier in (46, 77, 139):
+    for identifier in (297, 77, 139):
         item = published[identifier]
         guid = item["source_url"]
         assert guid in feed_by_guid

@@ -12,6 +12,7 @@ from ..core.output_quality import (
     application_url_issue,
     authentication_page_text,
     excluded_by_audit,
+    suppressed_public_alias,
 )
 from ..core.timeparse import parse_datetime, utcnow
 from ..routing import Router
@@ -324,6 +325,7 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
             continue
         # Do not privately send a record quarantined from public publication.
         if (excluded_by_audit(row["url_hash"])
+                or suppressed_public_alias(row["url_hash"])
                 or application_url_issue(row["apply_url"]) is not None
                 or authentication_page_text(row["summary"])):
             continue

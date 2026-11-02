@@ -101,6 +101,29 @@ def application_url_issue(url: object) -> str | None:
 # any delivery receipts; prevent re-publication in web, RSS and subscriptions.
 # Hashes are stable URL identities and are reviewed individually (not inferred
 # from title similarity or project affiliation).
+# Same employer requisitions, identified by identical full ATS requisition IDs
+# in both application URLs. These are PUBLIC projection aliases only: the
+# journal and any historical Telegram IDs remain immutable. Do not infer
+# equivalent identity from matching title/institution alone (notably King's
+# requisitions 160868/160625 and NTNU 310150/310064).
+_REVIEWED_PUBLIC_REQUISITION_MIRRORS = frozenset({
+    # Wharton Real Estate Center JR00124462: hide older predoc.org ID 49;
+    # show official Wharton Workday ID 304.
+    "520edaca6aab1281fbca1c7b8bd05a3f0589e7a52a89a600f4f112f4f8b3544f",
+    # Wharton JR00127654-1: hide older predoc.org ID 46;
+    # show official Workday ID 297.
+    "27f792e4149a1945ae54831c191e5d0b8e71dfb532a7534d55aa1b8b470a1c30",
+    # Chicago Fed R-0000033280-2: hide older predoc.org ID 211;
+    # show official Workday ID 301.
+    "090ba66ef5282148a2a17764d37fab38d77fd38056adc25e9803bb66f9924b0d",
+})
+
+
+def suppressed_public_alias(url_hash: object) -> bool:
+    """Suppress only manually proven same-requisition mirror browse entries."""
+    return isinstance(url_hash, str) and url_hash in _REVIEWED_PUBLIC_REQUISITION_MIRRORS
+
+
 _REVIEWED_WRONG_FIELD_URL_HASHES = frozenset({
     # SIEPR current staff/postdoc directory, not a vacancy index.
     "3c0f5a1439671f2e2848d26aa519ac9a588e850b35dec70b7cc7dc85824f64a6",
