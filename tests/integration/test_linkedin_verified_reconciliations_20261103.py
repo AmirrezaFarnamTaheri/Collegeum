@@ -6,6 +6,10 @@ rewrite durable job IDs, LinkedIn source URLs or Telegram delivery receipts.
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
+
+import pytest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -162,3 +166,28 @@ def test_opt_in_subscription_preview_does_not_repeat_verified_requisition_aliase
     assert [entry["key"] for entry in results] == [
         "academic:" + rows[304]["url_hash"]
     ]
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="Node.js required")
+def test_dashboard_does_not_mislabel_linkedin_source_advert_as_direct_application():
+    page = (ROOT / "docs/index.html").read_text(encoding="utf-8")
+    source = "function applicationLinkLabel" + page.split(
+        "function applicationLinkLabel", 1
+    )[1].split("function deadlineBadge", 1)[0]
+    script = source + """
+const tests = [
+ {apply_url:'https://www.linkedin.com/jobs/view/4482079977'},
+ {apply_url:'https://www.kcl.ac.uk/jobs/160868-research-associate-evaluation'},
+ {apply_url:'https://example.edu/role.pdf'},
+];
+console.log(JSON.stringify(tests.map(applicationLinkLabel)));
+"""
+    output = subprocess.run(["node", "-e", script], check=True,
+                            capture_output=True, text=True)
+    assert json.loads(output.stdout) == [
+        "View on LinkedIn ↗",
+        "View application page ↗",
+        "View job description ↗",
+    ]
+    assert "applicationLinkLabel(r)" in page
+    assert "Direct link ↗" not in page
