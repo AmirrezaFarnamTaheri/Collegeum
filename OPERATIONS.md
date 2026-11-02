@@ -104,8 +104,8 @@ dashboard looks stale:
 ### The ingestion snapshot is over eight hours old
 
 The `ingestion-freshness-recovery.yml` workflow checks the latest public
-`docs/data/health.json` after a successful `main` CI push or a successful
-scheduled `telegram-sync`. It is **not** an additional GitHub cron: scheduled
+`docs/data/health.json` after a successful `main` CI push or any completed trusted
+scheduled `telegram-sync` (including a failed sync). It is **not** an additional GitHub cron: scheduled
 events can be delayed or dropped by GitHub. The fallback uses only GitHub's
 built-in `GITHUB_TOKEN` (Actions write permission) to request a **new**
 `workflow_dispatch` on `main`; it cannot directly publish or change journals.

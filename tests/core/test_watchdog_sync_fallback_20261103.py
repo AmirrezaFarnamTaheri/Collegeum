@@ -12,6 +12,13 @@ def test_failed_scheduled_sync_can_invoke_guarded_freshness_recovery():
     expression = workflow.split("    if: >-", 1)[1].split("    runs-on:", 1)[0]
     assert "github.event.workflow_run.head_repository.full_name == github.repository" in expression
     assert "github.event.workflow_run.head_branch == 'main'" in expression
+    # Even manual invocations must use the reviewed main workflow, never
+    # arbitrary feature-branch code with an Actions-write token.
+    assert re.search(
+        r"\(github\.event_name == 'workflow_dispatch'\s*&&\s*"
+        r"github\.ref == 'refs/heads/main'\)",
+        expression, re.DOTALL,
+    )
     # A successful trusted main CI push is still the only CI-triggered recovery.
     assert re.search(
         r"\(github\.event\.workflow_run\.name == 'ci'[^)]*"
