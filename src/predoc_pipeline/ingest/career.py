@@ -465,7 +465,7 @@ def _verify_remote_status(
 
 
 
-JOBINJA_ROBOTS_RETRY = timedelta(hours=24)
+JOBINJA_ROBOTS_RETRY = timedelta(days=7)
 
 
 def _recent_jobinja_robots_denial(
@@ -609,6 +609,16 @@ def poll_career(
                 info["status"] = "ok" if info["accepted"] else "empty"
             else:
                 info["status"] = "error"
+            if name == "jobinja" and info["status"] == "blocked_robots":
+                # Either the just-observed denial or a validated persisted
+                # denial produced this state. Give users and operators an
+                # unambiguous next policy check; do not retry daily.
+                denied_at = datetime.fromisoformat(
+                    info["last_robots_denial_at"].replace("Z", "+00:00")
+                )
+                info["next_robots_check_at"] = (
+                    denied_at.astimezone(UTC) + JOBINJA_ROBOTS_RETRY
+                ).isoformat()
             info["error_count"] = len(issues)
             previous_info = historical.get(name, {}) if isinstance(historical, dict) else {}
             last_success = (
