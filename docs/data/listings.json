@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-11-02T00:04:08Z",
- "count": 180,
+ "generated_at": "2026-11-02T05:59:38Z",
+ "count": 179,
  "listings": [
   {
    "id": 334,
@@ -845,24 +845,27 @@
    "deadline": null,
    "days_left": null,
    "disciplines": [
+    "Health Economics",
     "Public Policy",
-    "Health Economics"
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "This is a full-time Research Assistant position in the Health, Income, and Benefits Policy Division at the Urban Institute, where the incumbent will perform quantitative research tasks, including data cleaning, analysis, and regression modeling. It suits candidates with a bachelor's degree in economics, public policy, or related fields, along with experience using Stata, R, or SAS, who are interested in health policy topics.",
+   "summary": "The Urban Institute is hiring a full‑time Research Assistant to conduct quantitative analysis on health, income, and benefits policy issues. The position requires a bachelor's degree and at least one year of quantitative research experience.",
    "language": "en",
    "apply_url": "https://urban.wd115.myworkdayjobs.com/Urban-Careers/job/The-Urban-Institute-DC/Research-Assistant---Quantitative--Health--Income--and-Benefits-Policy-Division-_R-801655",
    "source_url": "https://urban.wd115.myworkdayjobs.com/Urban-Careers/job/The-Urban-Institute-DC/Research-Assistant---Quantitative--Health--Income--and-Benefits-Policy-Division-_R-801655",
-   "confidence": 0.985,
+   "confidence": 0.97,
    "first_seen_at": "2026-10-29T21:09:14Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://urban.wd115.myworkdayjobs.com/Urban-Careers/job/The-Urban-Institute-DC/Research-Assistant---Quantitative--Health--Income--and-Benefits-Policy-Division-_R-801655"
+   ],
    "salary_min": 52520.0,
    "salary_max": 52520.0,
    "salary_currency": "USD",
    "salary_period": null,
-   "salary_raw": "Min $52,520 - Mid $59,085- Max $65,650 and the current median $55,336.33",
+   "salary_raw": "Min $52,520 - Mid $59,085- Max $65,650",
    "tools_required": [
     "Stata",
     "R"
@@ -1703,15 +1706,15 @@
    "deadline": "2026-11-25T00:00:00Z",
    "days_left": 23,
    "disciplines": [
-    "Behavioral/Experimental Economics",
-    "Econometrics"
+    "Econometrics",
+    "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "The Center for Behavioral Institutional Design at New York University Abu Dhabi seeks postdoctoral researchers to investigate human behavioral diversity and design institutions and policies that enhance social welfare. Applicants should hold a PhD in economics or a related field and possess expertise in experimental, empirical, or theoretical methods.",
+   "summary": "The Center for Behavioral Institutional Design at NYU Abu Dhabi is seeking a Post-Doctoral Associate to research the origins of human behavioral diversity and develop models of human behavior for designing institutions and policies that promote social welfare. The position is a two-year fixed-term role with competitive compensation and benefits, requiring a PhD in economics or a related field and expertise in experimental, empirical, or theoretical methods.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416945/post-doctoral-associate-in-the-center-for-behavioral-institutional-design-c-bid-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416945/post-doctoral-associate-in-the-center-for-behavioral-institutional-design-c-bid-?LinkSource=PremiumListing",
-   "confidence": 0.987,
+   "confidence": 0.95,
    "first_seen_at": "2026-10-26T15:16:40Z",
    "deadline_note": null,
    "visa_note": null,
@@ -1722,7 +1725,7 @@
    "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
-   "salary_raw": "Higher than internationally competitive rates for postdoctoral research positions, in addition to substantial benefits (generous housing, transportation and travel allowances, educational subsidies for children), together with full health insurance and retirement contributions. The UAE does not levy income tax.",
+   "salary_raw": "higher than internationally competitive rates for postdoctoral research positions",
    "tools_required": [],
    "tools_preferred": [],
    "min_degree": "phd",
@@ -3467,7 +3470,7 @@
    "id": 194,
    "title": "Postdoctoral Researcher in Economics",
    "institution": "University of Helsinki",
-   "principal_investigator": "Professor Pia Nilsson",
+   "principal_investigator": "Pia Nilsson",
    "country": "Finland",
    "city": "Helsinki",
    "is_remote": false,
@@ -3479,11 +3482,11 @@
     "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "The University of Helsinki seeks a postdoctoral researcher to work on a project examining how inheritance and gift taxation shape intergenerational farm succession in Sweden and Finland, using longitudinal administrative data and econometric analysis. The candidate should have a completed PhD in economics or a related field, strong training in econometrics and longitudinal methods, and experience with administrative register data.",
+   "summary": "The University of Helsinki seeks a postdoctoral researcher for a two-year fixed-term position in the Department of Economics and Management, contributing to the NEXT project on intergenerational farm succession and inheritance taxation in Sweden and Finland. The role requires a completed PhD in economics or a closely related field by the anticipated January 2027 start, strong econometrics and longitudinal empirical skills, and experience with administrative register data, with about 10–15% teaching responsibilities at the Viikki campus.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416517/postdoctoral-researcher-in-economics?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416517/postdoctoral-researcher-in-economics?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.985,
    "first_seen_at": "2026-10-13T11:54:55Z",
    "deadline_note": null,
    "visa_note": null,
@@ -5045,49 +5048,6 @@
    "degree_note": "unstated",
    "start_term": null,
    "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
-   "id": 107,
-   "title": "Predoctoral Research Scholar",
-   "institution": "University of Notre Dame",
-   "principal_investigator": "Y. Claire Yang",
-   "country": "United States",
-   "city": "South Bend",
-   "is_remote": false,
-   "duration_years": 1.0,
-   "deadline": "2026-11-02T04:59:59Z",
-   "days_left": 0,
-   "disciplines": [
-    "Health Economics",
-    "Public Policy",
-    "Quantitative Social Sciences"
-   ],
-   "visa": "not_offered",
-   "summary": "The position is a one-year predoctoral research associate role (renewable for a second year) at Notre Dame Population Analytics, working under Dr. Y. Claire Yang on population health and aging research. The role involves data acquisition, statistical analysis, literature reviews, and drafting research papers, suited for a recent graduate with strong quantitative skills considering graduate school.",
-   "language": "en",
-   "apply_url": "https://bit.ly/4rz4sqU",
-   "source_url": "https://bit.ly/4rz4sqU",
-   "confidence": 0.924,
-   "first_seen_at": "2026-10-11T09:59:35Z",
-   "deadline_note": null,
-   "visa_note": "No sponsorship / citizenship restriction (“do not provide visa”)",
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [
-    "R",
-    "Stata"
-   ],
-   "tools_preferred": [],
-   "min_degree": "bachelors",
-   "degree_note": null,
-   "start_term": "July 1, 2027",
-   "start_date": "2027-07-01",
    "kind": "predoc",
    "sector": "academic"
   },
