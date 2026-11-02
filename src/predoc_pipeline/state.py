@@ -26,7 +26,9 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 from .core.output_quality import (
-    application_url_issue, authentication_page_text, excluded_by_audit,
+    application_url_issue,
+    authentication_page_text,
+    excluded_by_audit,
     suppressed_public_alias,
 )
 from .core.timeparse import format_ts, parse_datetime, utcnow
