@@ -85,6 +85,14 @@ def sync_cloud(
                 'deadline_note',
             )})
             data['kind'] = router.kind_for_row(row)
+            # The journal retains historical HTTP and obsolete gateways, but
+            # the Worker rejects missing links in an entire atomic snapshot.
+            # Match dashboard/Telegram HTTPS safety without rewriting history.
+            apply_url = data.get('apply_url')
+            if (not isinstance(apply_url, str)
+                    or urlsplit(apply_url).scheme != 'https'
+                    or state.application_url_issue(apply_url) is not None):
+                continue
             records.append(data)
     if len(records) > 2000:
         raise ValueError('Webhook snapshot exceeds 2,000 listings; archive history before syncing')
