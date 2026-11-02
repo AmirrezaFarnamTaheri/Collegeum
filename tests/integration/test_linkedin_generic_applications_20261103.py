@@ -41,6 +41,7 @@ def test_generic_application_is_hidden_without_erasing_receipt_or_identity():
         "source_url": "https://www.linkedin.com/jobs/view/4455348498",
         "status": "published",
         "telegram_message_id": 402,
+        "summary": "Academic research analyst job, but no requisition deep link.",
     }
     direct = {
         **generic,
