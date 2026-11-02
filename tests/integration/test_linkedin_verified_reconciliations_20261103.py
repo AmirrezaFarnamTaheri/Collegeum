@@ -8,10 +8,10 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-
-import pytest
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from predoc_pipeline import state
 from predoc_pipeline.core.output_quality import suppressed_public_alias
