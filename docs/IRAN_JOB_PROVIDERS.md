@@ -8,7 +8,7 @@ and access rules can change.
 
 | Provider | Verified discovery surface | Public listing API? | Decision |
 |---|---|---|---|
-| [Jobinja](https://jobinja.ir) | Public vacancy searches and job detail links | No documented first-party API found | Conservative public HTML adapter, rotating one keyword per 4-hour run; robots and HTML changes fail visibly |
+| [Jobinja](https://jobinja.ir) | Public vacancy searches and job detail links | No documented first-party API found | Robots-aware HTML adapter. Following a verified robots block, display `blocked_robots` and suspend Jobinja requests for seven days (one supervised recheck thereafter); do not label restricted access as empty or healthy |
 | [IranTalent](https://www.irantalent.com/en/jobs) | Public listings at `/en/jobs` and detail URLs | No first-party public vacancy API verified | Conservative public-page adapter; validate domain, path, occupation and **explicit Iranian location** |
 | [Jobvision](https://jobvision.ir) | Jobs website; much of the listing UI is browser-rendered | No verified public jobs API; `candidateapi.jobvision.ir` is a *candidate-profile* API, not an open vacancy feed | **Not automatically polled**; seek a documented partner feed or use an allowed public export if offered |
 | [e-estekhdam](https://www.e-estekhdam.com/search) | Public vacancy search and official Telegram job channel | No verified first-party public jobs API; public search accessibility is variable | **Not automatically polled**; require a reliable listing feed and runtime/robots validation |
