@@ -16,7 +16,6 @@ import pytest
 from predoc_pipeline import state
 from predoc_pipeline.core.output_quality import suppressed_public_alias
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
