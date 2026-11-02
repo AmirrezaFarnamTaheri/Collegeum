@@ -72,7 +72,7 @@ The two clusters are different: the first needs original requisition verificatio
 
 ## 5. Application-link specificity — HIGH
 
-All 31 current LinkedIn-origin public records use HTTPS, but HTTPS **alone** does not establish an actionable application. Of 49 historic LinkedIn-origin publications, 41 retain LinkedIn as the apply link. Among the eight with a non-LinkedIn application URL, four point to broad, potentially non-actionable pages:
+All 31 current LinkedIn-origin public records use HTTPS, but HTTPS **alone** does not establish an actionable application. Of 49 historic LinkedIn-origin publications, 41 retain LinkedIn as the apply link. Among the eight **historical** non-LinkedIn application URLs, four point to broad, potentially non-actionable pages. **Only ID 333 of these four remains in the current public export**; IDs 52, 315 and 316 are absent from the latest public export:
 
 | Collegeum ID | Stored application destination | Risk |
 |---:|---|---|
@@ -96,7 +96,7 @@ These are **triage buckets, not validated eligibility labels**. A title such as 
 
 ## 7. Field suitability and false-positive review — MEDIUM
 
-Review published LinkedIn records **ID 326** (`Prospect Research Officer`, Western University) and **ID 234** (`Research Assistant`, College of Immigration and Citizenship Consultants) for economics/predoc **discipline** and degree-level relevance. These titles alone are insufficient to establish either an eligible economics research post or a misclassification. Check original job descriptions and employer requisitions; do not auto-remove merely because of title.
+Two **historical** LinkedIn publications are already **absent from the current public export**: **ID 326** (`Prospect Research Officer`, Western University) and **ID 234** (`Research Assistant`, College of Immigration and Citizenship Consultants). Employer [Western Advancement's prospect-management team](https://advancement.uwo.ca/our_teams/prospect-research.html) and the original [ID 326 job description](https://ca.linkedin.com/jobs/view/prospect-research-officer-at-western-university-4484472525) show fundraising/prospect intelligence, not academic economic research; this confirms the field mismatch but **does not establish current dashboard contamination**. Other [ID 234 job-description evidence](https://remotive.com/remote/jobs/research/research-assistant-6019982) concerns research support for an immigration-consultant regulator rather than economics predoctoral training, although a role-based relevance review remains appropriate. Preserve both historical records and receipts and verify existing routing; do not erase by title alone.
 
 Additional visible records with no deadline, especially UiT IDs 222/233/235/291/327 and King's IDs 247/248, should be labeled **deadline not recorded**, not silently interpreted as open.
 
