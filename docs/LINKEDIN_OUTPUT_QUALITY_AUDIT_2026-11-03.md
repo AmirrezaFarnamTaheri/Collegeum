@@ -35,6 +35,8 @@ Analysis reconciles source, application, and public records by original LinkedIn
 | Accepted LinkedIn decisions missing a listing reference | **4 / 41** | 9.8% of LinkedIn accepted decisions; traceability gap, not proof of four missing live vacancies |
 | Accepted LinkedIn decisions with a valid referenced journal hash | **37 / 41** | All 37 references resolve; no dangling non-null references in this subset |
 
+**Web exposure versus Telegram broadcasting:** Of the **31 current public LinkedIn-origin rows**, **29 have no historical `telegram_message_id`**, while **2** (IDs 166 and 172) have one. In contrast, 16 LinkedIn-origin historical publications with a Telegram message ID are no longer present in today's public web export. A missing public-broadcast message ID is **not proof of lost Telegram delivery**: the router deliberately sends many postdoc, specialist and institutional listings to the website, while the private subscriber Worker uses a separate opt-in matching path. To audit alleged missing matches, compare role/region/channel preference eligibility and per-user delivery receipts rather than treating `published_at` as a Telegram send acknowledgement. None of the 49 LinkedIn-origin historic listings with a recorded deadline was found first-seen or published *after* its recorded deadline (but 32 have no deadline, which limits this check).
+
 **Decision ledger warning:** Discovery-decision counts, source-listing counts, and the public export are *different grains*. Do not subtract 41 accepted from 49 published to infer undispatched records. Four accepted decisions dated October 3–4 lack `listing_url_hash`; their canonical hashes should be reconciled only with verifiable provenance.
 
 ## 3. Production search completeness and freshness — HIGH
