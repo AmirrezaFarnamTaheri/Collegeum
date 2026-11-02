@@ -10,6 +10,7 @@ import httpx
 from .. import state
 from ..core.db import Database
 from ..core.db import init as init_db
+from ..core.output_quality import application_url_issue
 from ..core.timeparse import format_ts, parse_datetime, utcnow
 from ..routing import Router
 from ..settings import Settings
@@ -91,7 +92,7 @@ def sync_cloud(
             apply_url = data.get('apply_url')
             if (not isinstance(apply_url, str)
                     or urlsplit(apply_url).scheme != 'https'
-                    or state.application_url_issue(apply_url) is not None):
+                    or application_url_issue(apply_url) is not None):
                 continue
             records.append(data)
     if len(records) > 2000:
