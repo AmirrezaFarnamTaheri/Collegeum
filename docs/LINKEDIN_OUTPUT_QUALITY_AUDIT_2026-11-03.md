@@ -94,6 +94,20 @@ Of **87 distinct cached LinkedIn cards**, a conservative title-only triage found
 
 These are **triage buckets, not validated eligibility labels**. A title such as `Doctorant - Candidatures spontanées` may be a generic unsolicited application rather than a funded opening; even an explicitly titled PhD posting may have expired. Senior and postdoctoral cards are not equivalent to entry doctoral funding opportunities. No buffered item should be promoted into a funded/active Life Sciences subscription merely because it matched a search keyword. `last_replayed_at` is not proof of fresh posting or official employer availability.
 
+### Specialist journal cross-check against buffered LinkedIn cards
+
+The latest career journal is **95** total records: **93** Life Sciences PhD subscriptions and **2** general Career roles. **Three of 93** Life Sciences records have `source=life_linkedin`; the 87-card replay buffer does **not** mean 87 accepted, funded or live positions. **All 93 Life Sciences records** retain `funding_status=unverified` (including those with a funding claim in their title); **28 of 93** have an empty structured `country` field even when the location text is present.
+
+The three existing Life Sciences LinkedIn-origin records are:
+
+| LinkedIn job ID | Employer / title | Recorded deadline | Independent employer-grain evidence |
+|---|---|---|---|
+| `4485169791` | NTNU, PhD candidate in molecular medical microbiology at IKOM | 2026-11-20 | [Official Jobbnorge requisition 310150](https://www.jobbnorge.no/ledige-stillinger/stilling/310150/phd-candidate-in-molecular-medical-microbiology-at-ikom); Norwegian [public employment registration](https://arbeidsplassen.nav.no/stillinger/stilling/bfcaf705-4fb5-4128-bd59-1dd3adc50db2) |
+| `4485151980` | NTNU, PhD candidate in molecular cell biology and microbiology at IKOM | 2026-11-20 | [Official Jobbnorge requisition 310064](https://www.jobbnorge.no/ledige-stillinger/stilling/310064/phd-candidate-in-molecular-cell-biology-and-microbiology-at-ikom) |
+| `4485222039` | “Fully Funded PhD Positions in Astronomy, Biology, … Neuroscience, and Physics” attributed to EGU, Klosterneuburg | 2027-01-08 | **Program/admission aggregation risk:** it advertises multiple disciplines and no verified employer-level per-studentship funding evidence; do not infer one specific funded vacancy from the broad title |
+
+The two NTNU roles have different official Jobbnorge requisition IDs, so do **not** deduplicate them merely because their employer, department and November 20 deadline match. Their documented source claims and current availability should still be checked before replacing historical LinkedIn URLs with official job-specific apply URLs. No feedback identities or notification receipts are modified by this assessment.
+
 ## 7. Field suitability and false-positive review — MEDIUM
 
 Two **historical** LinkedIn publications are already **absent from the current public export**: **ID 326** (`Prospect Research Officer`, Western University) and **ID 234** (`Research Assistant`, College of Immigration and Citizenship Consultants). Employer [Western Advancement's prospect-management team](https://advancement.uwo.ca/our_teams/prospect-research.html) and the original [ID 326 job description](https://ca.linkedin.com/jobs/view/prospect-research-officer-at-western-university-4484472525) show fundraising/prospect intelligence, not academic economic research; this confirms the field mismatch but **does not establish current dashboard contamination**. Other [ID 234 job-description evidence](https://remotive.com/remote/jobs/research/research-assistant-6019982) concerns research support for an immigration-consultant regulator rather than economics predoctoral training, although a role-based relevance review remains appropriate. Preserve both historical records and receipts and verify existing routing; do not erase by title alone.
