@@ -82,6 +82,11 @@ const deadlineNotPassed = (value, now) => {
 // Shared visibility rule for owner browsing and subscriber matching.
 export const openAcademicListing = (row, now = Date.now()) =>
   !row.closed_at && !row.expired_at && deadlineNotPassed(row.deadline, now);
+// Public browse/match visibility is separate from historical tracking state.
+// Preserve old marked mirrors in the durable snapshot for Saved/Applied views.
+export const visibleAcademicMatch = (row, member, now = Date.now()) =>
+  !row.reviewed_public_mirror && openAcademicListing(row, now) &&
+  matchesPreferences(row, member);
 const recentlyDiscovered = (value, days, now) => {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) && timestamp <= now && timestamp >= now - days * 86400000;

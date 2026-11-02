@@ -1,7 +1,7 @@
 /** Owner-only webhook bot. The Durable Object serializes updates and syncs. */
 import {ask, reservePublic} from './assistant.mjs';
 import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreferences,
-  openAcademicListing, pageSize, panel} from './subscribers.mjs';
+  openAcademicListing, visibleAcademicMatch, pageSize, panel} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const GENERAL_CAREER_TOPICS = new Set([
@@ -408,8 +408,8 @@ export class TelegramBot {
     const size = pageSize(chatId === null ? null : await this.ctx.storage.get(`page_size:${chatId}`));
     const now = Date.now();
     const open = r => openAcademicListing(r, now);
-    const available = rows.filter(r => open(r) && !["invalid", "applied"].includes(marks.get(r.url_hash)) &&
-      matchesPreferences(r, member));
+    const available = rows.filter(r => !["invalid", "applied"].includes(marks.get(r.url_hash)) &&
+      visibleAcademicMatch(r, member, now));
     if (kind === 'menu') {
       const defaultWindow = chatId === null ? null :
         await this.ctx.storage.get(`match_window:${chatId}`);

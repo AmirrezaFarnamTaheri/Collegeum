@@ -1807,6 +1807,13 @@
       return code || 'Unstated';
     }
 
+    function applicationLinkLabel(item) {
+      const url = String(item?.apply_url || '');
+      if (/linkedin\.com\/jobs\/view\//i.test(url)) return 'View on LinkedIn ↗';
+      if (/\.pdf(?:[?#]|$)/i.test(url)) return 'View job description ↗';
+      return 'View application page ↗';
+    }
+
     function deadlineBadge(item) {
       if (!item.deadline || item.days_left == null) {
         const label = item.deadline ? 'Check deadline' :
@@ -2011,7 +2018,7 @@
                 ` : ''}
                 <div class="more-actions">
                   <button class="more-btn" data-open="${r.id}">Full details &amp; apply &rarr;</button>
-                  ${r.apply_url ? `<a class="more-btn alt" href="${esc(r.apply_url)}" target="_blank" rel="noopener">Direct link ↗</a>` : ''}
+                  ${r.apply_url ? `<a class="more-btn alt" href="${esc(r.apply_url)}" target="_blank" rel="noopener">${esc(applicationLinkLabel(r))}</a>` : ''}
                 </div>
               </div>
             </div>

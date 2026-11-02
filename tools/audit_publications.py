@@ -315,11 +315,18 @@ def audit(root: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
                     finding("error", "rss-title-divergence", f"RSS entry {i}")
                 if link != match.get("apply_url"):
                     finding("error", "rss-application-divergence", f"RSS entry {i}")
+                # Keep the stdlib contract aligned with RSS output: an
+                # omitted deadline is unknown, not proof of rolling review.
+                deadline = match.get("deadline")
+                if not deadline:
+                    note = str(match.get("deadline_note") or "")
+                    deadline = (note if re.search(r"\b(?:rolling|until filled)\b", note, re.I)
+                                else "not recorded (availability unverified)")
                 expected_description = (
                     f"{match['institution']} \u2014 "
                     f"{match.get('city') or ''} {match.get('country') or ''}"
                 ).strip() + (
-                    f". Deadline: {match.get('deadline') or 'rolling'}. "
+                    f". Deadline: {deadline}. "
                     + (match.get("summary") or "")
                 )
                 if record.findtext("description") != expected_description:

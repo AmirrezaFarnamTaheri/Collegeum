@@ -25,7 +25,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
-from .core.output_quality import application_url_issue, authentication_page_text, excluded_by_audit
+from .core.output_quality import (
+    application_url_issue,
+    authentication_page_text,
+    excluded_by_audit,
+    suppressed_public_alias,
+)
 from .core.timeparse import format_ts, parse_datetime, utcnow
 from .models import parse_salary, salary_value_is_artifact
 
@@ -295,6 +300,7 @@ def _web_rows(db: Any, hidden: set[str], router: Any | None) -> list[Any]:
         for row in db.active_listings()
         if row["url_hash"] not in hidden
         and not excluded_by_audit(row["url_hash"])
+        and not suppressed_public_alias(row["url_hash"])
         and application_url_issue(
             _public_application_url(row["apply_url"], row["source_url"])
         ) is None
@@ -494,7 +500,13 @@ def export_feed(
 
     for row in rows:
         record = _public_record(row)
-        deadline = record["deadline"] or "rolling"
+        deadline = record["deadline"]
+        if not deadline:
+            # No deadline is evidence of uncertainty, NOT a rolling application.
+            # Preserve explicit source wording only if it actually says rolling.
+            note = str(record.get("deadline_note") or "")
+            deadline = (note if re.search(r"\b(?:rolling|until filled)\b", note, re.I)
+                        else "not recorded (availability unverified)")
         description = (
             f"{record['institution']} \u2014 {record['city'] or ''} {record['country']}".strip()
             + f". Deadline: {deadline}. "

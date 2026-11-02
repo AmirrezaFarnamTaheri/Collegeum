@@ -10,7 +10,7 @@ import httpx
 from .. import state
 from ..core.db import Database
 from ..core.db import init as init_db
-from ..core.output_quality import application_url_issue
+from ..core.output_quality import application_url_issue, suppressed_public_alias
 from ..core.timeparse import format_ts, parse_datetime, utcnow
 from ..routing import Router
 from ..settings import Settings
@@ -86,6 +86,7 @@ def sync_cloud(
                 'deadline_note',
             )})
             data['kind'] = router.kind_for_row(row)
+            data['reviewed_public_mirror'] = suppressed_public_alias(row['url_hash'])
             # The journal retains historical HTTP and obsolete gateways, but
             # the Worker rejects missing links in an entire atomic snapshot.
             # Match dashboard/Telegram HTTPS safety without rewriting history.
