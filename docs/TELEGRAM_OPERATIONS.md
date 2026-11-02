@@ -55,9 +55,14 @@ consulting, and economic/research analyst. Do not classify a generic analytics
 keyword in a description as a job-title match. A country-restricted remote
 job must **not** appear under worldwide-remote. "Worldwide" is a job-board
 label, not a guarantee of employment eligibility or payment from Iran.
-The Jobinja adapter is best-effort: when its HTML/robots/access changes,
-the source reports an error and produces zero results rather than invent
-postings. Its coverage and live reliability require monitored verification.
+The Jobinja adapter is best-effort. Its observed robots.txt denial is
+reported as `blocked_robots`, not as an empty result or a healthy source.
+Following the first denial it suspends further requests for seven days, with
+`last_robots_denial_at` and `next_robots_check_at` in source health. The bot
+shows a policy block and next policy recheck rather than a misleading green
+status. A first restriction creates a source-specific dead letter; subsequent
+cooldown cycles do not. No proxy, alternate host, robots bypass or new
+credential is used. Coverage remains unverified until a permitted source works.
 
 The only career-publication record is `data/career_jobs.ndjson`, keyed by a
 stable URL hash. It stores canonical URLs, source, role, country/remote scope,
