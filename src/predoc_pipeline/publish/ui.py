@@ -566,7 +566,7 @@ def sources_panel(
                 and 0 <= fetched <= 100 and 0 <= accepted <= 2000
             )
             state = info.get("status")
-            if state not in ("ok", "empty", "error", "degraded", "idle"):
+            if state not in ("ok", "empty", "error", "degraded", "idle", "blocked_robots"):
                 state = "ok" if enabled and fetched and valid else "error"
             if not enabled:
                 state = "idle"
@@ -579,10 +579,11 @@ def sources_panel(
                 stale = datetime.now(UTC) - last.astimezone(UTC) > timedelta(hours=12)
             except ValueError:
                 stale = True
-            if enabled and stale:
+            if enabled and stale and state != "blocked_robots":
                 state = "stale"
             marker = {"ok": "✓", "empty": "○", "idle": "○",
-                      "error": "!", "degraded": "!", "stale": "!"}[state]
+                      "error": "!", "degraded": "!", "stale": "!",
+                      "blocked_robots": "!"}[state]
             summary = {
                 "ok": ("فعال", "Healthy"),
                 "empty": ("بدون مورد مرتبط", "No matching roles"),
@@ -590,12 +591,32 @@ def sources_panel(
                 "error": ("خطا", "Source error"),
                 "degraded": ("اختلال", "Degraded"),
                 "stale": ("قدیمی", "Stale"),
+                "blocked_robots": ("مسدود مطابق سیاست سایت", "Blocked by site policy"),
             }[state][0 if fa else 1]
-            count = str(accepted) if enabled and valid else "—"
+            count = str(accepted) if enabled and valid and state != "blocked_robots" else "—"
             lines.append(
                 f"{marker} <b>{name}</b> · {fa_scope if fa else en_scope}"
                 f" · {summary} · {count} {'مورد' if fa else 'matches'}"
             )
+            if key == "jobinja" and state == "blocked_robots":
+                # This is a policy restriction, not an empty search. The
+                # timestamp is bounded, parsed and formatted as a date only;
+                # raw provider failures and subscriber data remain private.
+                next_check = info.get("next_robots_check_at")
+                if isinstance(next_check, str) and len(next_check) <= 40:
+                    try:
+                        due = datetime.fromisoformat(
+                            next_check.replace("Z", "+00:00")
+                        )
+                        if due.tzinfo is not None:
+                            lines.append(
+                                ("بررسی مجدد سیاست دسترسی: " if fa
+                                 else "Next policy recheck: ")
+                                + escape(due.astimezone(UTC).date().isoformat())
+                                + " UTC"
+                            )
+                    except (ValueError, OverflowError):
+                        pass
         lines.append(
             "این اعداد پوشش کامل بازار کار را تضمین نمی‌کنند."
             if fa else

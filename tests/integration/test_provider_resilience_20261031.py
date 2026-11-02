@@ -75,13 +75,43 @@ def test_recent_jobinja_robots_denial_suspends_retries_without_hiding_block(tmp_
     assert any("irantalent.com" in url for url in client.calls)
 
 
+def test_robots_denial_stops_daily_retries_but_keeps_explicit_block_and_due_date(tmp_path):
+    # GH runner got another Jobinja robots 403 after a 24h cooldown. Repeating
+    # this denial every day produces perpetual career DLQs and adds disallowed
+    # traffic. An explicit one-week policy retry is safe and auditable.
+    denied = datetime.now(UTC) - timedelta(hours=30)
+    prior = {
+        "sources": {
+            "jobinja": {
+                "status": "blocked_robots",
+                "last_robots_denial_at": denied.isoformat(),
+            }
+        }
+    }
+    (tmp_path / "career_health.json").write_text(json.dumps(prior), encoding="utf-8")
+    client = ProviderClient()
+    _, errors, report = _poll(tmp_path, client)
+
+    source = report["sources"]["jobinja"]
+    assert source["status"] == "blocked_robots"
+    assert source["requested"] is True
+    assert source["fetched"] == 0
+    assert source["accepted"] == 0
+    assert source["error_count"] == 0
+    assert source["last_robots_denial_at"] == denied.isoformat()
+    assert datetime.fromisoformat(source["next_robots_check_at"]) == denied + timedelta(days=7)
+    assert not any("jobinja.ir" in url for url in client.calls)
+    assert any("irantalent.com" in url for url in client.calls)
+    assert not errors
+
+
 def test_stale_jobinja_robots_denial_is_retried_for_recovery(tmp_path):
     prior = {
         "sources": {
             "jobinja": {
                 "status": "blocked_robots",
                 "last_robots_denial_at": (
-                    datetime.now(UTC) - timedelta(hours=30)
+                    datetime.now(UTC) - timedelta(days=8)
                 ).isoformat(),
             }
         }
