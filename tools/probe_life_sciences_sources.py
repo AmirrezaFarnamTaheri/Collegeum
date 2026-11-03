@@ -73,7 +73,7 @@ def check_sources(
     limit: int = MAX_PROBE_SOURCES, offset: int = 0,
     names: set[str] | None = None, detail_sample_limit: int = 0,
 ) -> dict[str, Any]:
-    """Produce public counts without downloading individual vacancy details."""
+    """Return bounded source, detail-access and exact observed-link overlap counts."""
     if not 1 <= limit <= MAX_PROBE_SOURCES:
         raise ValueError("limit must be between 1 and 16")
     if not 0 <= offset <= 256:
@@ -115,6 +115,7 @@ def check_sources(
         "checked": 0,
         "sources": {},
     }
+    source_candidate_urls: dict[str, set[str]] = {}
     for source in sources[offset:offset + limit]:
         if source.type in {"bite_jobs", "linkedin"}:
             # These adapters need provider-specific queries, not a static
@@ -212,6 +213,13 @@ def check_sources(
             "urls_total": len(urls), "urls_checked": len(endpoints),
             "endpoints": endpoints,
         }
+        if source.type == "link_scan":
+            # Count repeated index anchors by exact observed URL. These are
+            # duplicate *search appearances*, not duplicated vacancies.
+            source_candidate_urls[source.name] = set(vacancy_urls)
+            report["sources"][source.name]["duplicate_link_appearances_across_query_pages"] = (
+                sum(int(entry["vacancy_links"]) for entry in endpoints) - len(vacancy_urls)
+            )
         if detail_sample_limit:
             # The same robots-aware, paced client inspects a bounded sample.
             # Never fetch a guessed ATS cross-origin link, a lookalike host or
@@ -250,6 +258,26 @@ def check_sources(
                 "http_status_counts": dict(sorted(http_status_counts.items())),
             }
         report["checked"] += 1
+    names_checked = sorted(source_candidate_urls)
+    shared: list[dict[str, Any]] = []
+    for index, left in enumerate(names_checked):
+        for right in names_checked[index + 1:]:
+            count = len(source_candidate_urls[left] & source_candidate_urls[right])
+            if count:
+                shared.append({
+                    "left": left, "right": right, "shared_link_urls": count,
+                })
+    all_observed: set[str] = set()
+    for links in source_candidate_urls.values():
+        all_observed.update(links)
+    report["cross_source_overlap"] = {
+        "source_pairs_examined": len(names_checked) * (len(names_checked) - 1) // 2,
+        "observed_source_unique_link_total": sum(
+            len(links) for links in source_candidate_urls.values()
+        ),
+        "distinct_observed_link_urls": len(all_observed),
+        "pairwise_shared_link_counts": shared,
+    }
     return report
 
 
