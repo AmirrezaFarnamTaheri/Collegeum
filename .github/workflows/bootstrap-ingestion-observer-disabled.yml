@@ -2,11 +2,9 @@ name: bootstrap-disabled-independent-ingestion-observer
 
 # One-time, account-scoped disabled deployment. Runs only from trusted main.
 # A re-run refuses to overwrite an existing Worker and does not enable recovery.
+# The initial disabled Worker was deployed on 2026-11-03; retain this only
+# as an explicitly invoked, guarded recovery tool for future rebootstrap.
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/bootstrap-ingestion-observer-disabled.yml
   workflow_dispatch:
 
 permissions:
@@ -48,6 +46,12 @@ jobs:
           CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
           CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
         run: node deploy-token.mjs
+      - name: Audit observer absence across every credential-accessible Cloudflare account
+        env:
+          CF_TOKEN_PRIMARY: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
+          CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
+        run: node ../ingestion-watchdog/bootstrap-check.mjs inventory
       - name: Require confirmed absence and deploy with recovery strictly disabled
         run: |
           set -euo pipefail
