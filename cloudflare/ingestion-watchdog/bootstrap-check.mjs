@@ -63,7 +63,7 @@ export async function auditAvailableAccounts({
   }
   let targetObserved = false;
   for (const token of credentials) {
-    const accounts = await read(token, ROOT + '?per_page=50');
+    const accounts = await read(token, ROOT.slice(0, -1) + '?per_page=50');
     if (!accounts || !Array.isArray(accounts.result) ||
         accounts.result.length >= 50 ||
         (accounts.result_info && (
