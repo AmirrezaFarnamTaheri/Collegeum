@@ -101,6 +101,9 @@ urls = [
 ]
 link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
 institution_from_context = true
+# These independently configured keyword pages returned the same 10 URLs in a
+# 2026-11-03 compliant runner probe; treat identical nonempty results as partial.
+query_result_diversity_required = true
 note = "EU careers; individual job cards must establish a European country."
 
 [[board]]

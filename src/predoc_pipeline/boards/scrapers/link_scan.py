@@ -25,6 +25,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 from bs4 import BeautifulSoup, Tag
 
 from ...core.output_quality import application_url_issue
+from ...core.query_result_diversity import identical_nonempty_query_results
 from ..models import JobPostSchema
 from ..utils.dates import extract_deadline, find_dates, parse_posted, today
 from ..utils.geo import detect_location
@@ -305,12 +306,25 @@ class LinkScanScraper(BaseScraper):
     def parse_postings(self, raw_data: list[Any]) -> list[JobPostSchema]:
         self.verified_empty_evidence = False
         posts: list[JobPostSchema] = []
+        query_observations: list[tuple[str, set[str]]] = []
+        verify_query_diversity = self.opt("query_result_diversity_required") is True
         for base, html in raw_data:
             soup = BeautifulSoup(html, "lxml")
-            if self.opt("selectors"):
-                posts.extend(self._parse_selectors(base, soup))
-            else:
-                posts.extend(self._parse_links(base, soup))
+            page_posts = (
+                self._parse_selectors(base, soup)
+                if self.opt("selectors") else self._parse_links(base, soup)
+            )
+            posts.extend(page_posts)
+            if verify_query_diversity:
+                query_observations.append((base, {post.url for post in page_posts if post.url}))
+        # A source can return 200 and legitimate vacancy links yet silently
+        # ignore distinct keyword queries. Preserve every candidate, but
+        # surface unverifiable filtered coverage as a partial source outcome.
+        if verify_query_diversity and identical_nonempty_query_results(query_observations):
+            self.discovery_parse_errors.append(
+                "Search query filters unverified: distinct query URLs returned "
+                "identical nonempty vacancy URL sets"
+            )
         # Opt-in for small providers that explicitly say when there are no
         # current vacancies. A redirected article or layout regression must
         # not silently masquerade as a healthy empty listing page.
