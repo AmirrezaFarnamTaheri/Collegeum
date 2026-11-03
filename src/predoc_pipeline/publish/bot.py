@@ -126,7 +126,7 @@ TITLES = {
     "hidden": "❌ <b>{n} hidden position{s}</b> (tap ❌ again to bring one back)",
 }
 EMPTY = {
-    "positions": "📋 No matching listings in the latest stored snapshot. Review filters or check later.",
+    "positions": "📋 No matching listings in this snapshot. Review filters or check later.",
     "applied": "📝 You haven't marked anything as applied yet. Tap 📝 under a position.",
     "valid": "✅ Nothing marked as interesting yet. Tap ✅ under a position.",
     "hidden": "❌ Nothing hidden.",
