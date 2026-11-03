@@ -15,6 +15,7 @@ urls = [
 ]
 link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
 institution_from_context = true
+query_result_diversity_required = true
 min_interval = 3.0
 verification = "official_aggregator_search_partition"
 note = "Partition of original EURAXESS discovery keywords: regulation, histones and methylation."
@@ -31,6 +32,7 @@ urls = [
 ]
 link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
 institution_from_context = true
+query_result_diversity_required = true
 min_interval = 3.0
 verification = "official_aggregator_search_partition"
 note = "Partition of EURAXESS queries: psychiatric genetics, neurogenetics, epigenomics."
@@ -47,6 +49,7 @@ urls = [
 ]
 link_pattern = 'euraxess\.ec\.europa\.eu/jobs/\d+$'
 institution_from_context = true
+query_result_diversity_required = true
 min_interval = 3.0
 verification = "official_aggregator_search_partition"
 note = "Partition of EURAXESS queries: RNA, transcriptomics, single cell."
