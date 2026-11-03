@@ -1113,9 +1113,9 @@ institution = "Princeton University (Research Program in Development Economics)"
 country = "United States"
 may_be_empty = true
 verified_empty_marker = "Open Positions"
-link_pattern = '^https://main-princeton\.icims\.com/jobs/[0-9]+/[^?#]+'
+link_pattern = '^https://(?:main-princeton|research-princeton)\.icims\.com/jobs/[0-9]+/[^?#]+'
 field_implied = false
-note = "OFF: Official RPDE jobs index returned HTTP 403 on the GitHub runner on 2026-10-29; retain configuration for later verified recovery."
+note = "OFF: RPDE index returned HTTP 403 on the GitHub runner 2026-10-29. Host patterns include the 2026 official research-princeton iCIMS ATS; runner access and current individual requisitions remain unverified."
 
 [[board]]
 name = "brookings_jobs"
