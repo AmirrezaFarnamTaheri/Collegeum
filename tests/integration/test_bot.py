@@ -226,7 +226,8 @@ def test_positions_are_sorted_by_deadline_and_paged(settings):
         "Research Assistant in Finance", "Predoc in Macroeconomics", "Pre-doctoral Fellow"]
     pages = build_pages("positions", chosen, store, page_size=2)
     assert len(pages) == 2
-    assert "3 snapshot listings" in pages[0][0] and "1. Research Assistant in Finance" in pages[0][0]
+    assert "3 snapshot listings" in pages[0][0]
+    assert "1. Research Assistant in Finance" in pages[0][0]
     assert [b["text"] for b in pages[1][1]["inline_keyboard"][0]] == ["✅ 3", "❌ 3", "📝 3"]
     assert "Tap again to undo" in pages[-1][0]
 
