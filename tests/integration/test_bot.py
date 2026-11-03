@@ -226,7 +226,7 @@ def test_positions_are_sorted_by_deadline_and_paged(settings):
         "Research Assistant in Finance", "Predoc in Macroeconomics", "Pre-doctoral Fellow"]
     pages = build_pages("positions", chosen, store, page_size=2)
     assert len(pages) == 2
-    assert "3 open positions" in pages[0][0] and "1. Research Assistant in Finance" in pages[0][0]
+    assert "3 snapshot listings" in pages[0][0] and "1. Research Assistant in Finance" in pages[0][0]
     assert [b["text"] for b in pages[1][1]["inline_keyboard"][0]] == ["✅ 3", "❌ 3", "📝 3"]
     assert "Tap again to undo" in pages[-1][0]
 
@@ -254,9 +254,9 @@ def test_full_conversation(settings):
     assert load_state(settings.telegram_state_path)["offset"] == 9
 
     sent = [b["text"] for b in fake.sent()]
-    assert "3 open positions" in sent[0]
+    assert "3 snapshot listings" in sent[0]
     later = "\n".join(sent[1:-2])
-    assert "1 open position" in later and "Pre-doctoral Fellow" in later  # applied + hidden gone
+    assert "1 snapshot listing" in later and "Pre-doctoral Fellow" in later  # applied + hidden gone
     assert any("1 position you applied to" in t and "Research Assistant in Finance" in t
                for t in sent)
     assert "Predoc bot" in sent[-1]                                         # "hello" -> help
