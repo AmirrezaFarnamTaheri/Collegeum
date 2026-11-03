@@ -1,0 +1,58 @@
+name: source-quality-audit
+
+# Independent, read-only evidence capture after production ingestion. This
+# does NOT collect, publish, send Telegram messages, or retry providers.
+on:
+  workflow_run:
+    workflows: ["predoc-pipeline"]
+    types: [completed]
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - tools/audit_source_quality.py
+      - .github/workflows/source-quality-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collegeum-source-quality-audit
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Audit public source and vacancy evidence without side effects
+        env:
+          EXPECTED_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
+        run: |
+          set -euo pipefail
+          python3 -S tools/audit_source_quality.py \
+            --strict --expected-run-id "$EXPECTED_RUN_ID" \
+            --output build/source-quality-audit.json
+      - name: Preserve source-quality evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: source-quality-${{ github.run_id }}
+          path: build/source-quality-audit.json
+          retention-days: 14
+          if-no-files-found: warn
