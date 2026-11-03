@@ -1,87 +1,126 @@
 # Independent ingestion recovery observer
 
-This is a **separate Cloudflare Worker**, not the Telegram bot and not another
-GitHub Actions schedule. Its UTC Cron Trigger runs at minute 37 every two
-hours. It can notice missed GitHub four-hour ingestion events even when no
-GitHub `workflow_run` event is emitted.
+This is a **separate Cloudflare Worker** with a UTC Cron Trigger at minute 37
+every two hours, not another GitHub Actions schedule or a Telegram bot endpoint.
+It reads committed public production health and trusted GitHub workflow history.
+It never directly publishes vacancies or contacts subscribers.
 
-**This is deployable code, not a live deployment.** The committed config
-defaults to `RECOVERY_ENABLED=false`, so it cannot dispatch until a maintainer
-deliberately activates it.
+## Verified deployment state (2026-11-03 UTC)
 
-## Recovery safety
+**Deployed but NOT activated.** Trusted-main
+[disabled bootstrap #41630610227](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/41630610227)
+successfully created `collegeum-ingestion-observer` in the configured Cloudflare
+account with Cron `37 */2 * * *` and explicit `RECOVERY_ENABLED=false`.
+A read-only Cloudflare inventory **attempt 1** in
+[run #41629216487](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/41629216487)
+ran before the bootstrap and reported `presence=not-observed`. The same
+[inspection rerun, attempt 2](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/41629216487/attempts/2)
+ran **after deployment** at 11:55 UTC and independently reported
+`presence=deployed`, `cron=configured`, `scheduled_handler=present` and
+`github_credential_binding=missing`. The inspection failed its gate
+deliberately. The bootstrap's independent settings postcheck separately
+established `RECOVERY_ENABLED=false`; previous inventory code could not
+inspect that binding and reported `recovery_enabled=unverified`.
+Do not claim recovery can dispatch or has been exercised.
 
-- Read only `main:docs/data/health.json` using GitHub's authenticated
-  repository contents API. The freshness threshold is **over eight hours**.
-- When stale, read the `main` pipeline workflow runs. If any run is active,
-  queued, or newer than the published checkpoint (even a failed run), do not
-  dispatch.
-- Only a valid stale snapshot with trusted, older, completed pipeline history
-  authorizes one `pipeline.yml` dispatch on `main` with `dry_run=false`.
-- Malformed health, incomplete run history, future clocks, API failures,
-  unexpected statuses and missing credentials fail closed. No automatic retry
-  of an ambiguous dispatch response.
-- The separate Worker has no public recovery endpoint (`fetch()` returns
-  HTTP 404) and `workers_dev=false`. It never touches Telegram, subscriber
-  records, vacancy journals, or source endpoints, and logs no tokens or raw
-  GitHub API responses.
+The one-time bootstrap workflow is now **manual-only** and refuses to overwrite
+an existing observer. Do not attempt another initial deployment on this account.
+An accepted recovery requires the credential, verified enabled binding, actual
+Cloudflare Cron invocations, and a checkpoint + Telegram receipt audit.
 
-## Deployment: explicit maintainer action
+## Runtime safety
 
-A **Cloudflare account** is required. Merging this PR alone cannot run the
-independent cron or verify recovery in production.
+- Read only `main:docs/data/health.json` through GitHub's authenticated
+  contents API. The freshness threshold is strictly **more than eight hours**.
+- If stale, read recent `main` production pipeline history. Any queued,
+  running, active or newer main pipeline blocks an additional dispatch.
+- Only a trusted stale snapshot and exclusively older completed runs can
+  authorize one `pipeline.yml` workflow dispatch to `main` with
+  `dry_run=false`.
+- Missing credentials, future timestamps, malformed health, incomplete or
+  unexpected API responses, and ambiguous dispatch responses **fail closed**.
+- There is **no public recovery HTTP endpoint** (`fetch()` returns 404 and
+  `workers_dev=false`). No Telegram tokens, subscriber data, journal writes
+  or vacancy publishing belong in this Worker.
 
-1. Create a fine-grained GitHub credential restricted to **only**
-   `AmirrezaFarnamTaheri/Collegeum`. Grant **Contents: read** and
-   **Actions: write**, no other repository permissions. Set an expiration,
-   plan rotation, and never put the credential in a commit, log, or chat.
-2. From a trusted checkout, in `cloudflare/telegram/`, use the existing locked
-   Wrangler client. Run this dry-run before any deployment:
+## Finish activation — deliberate operator steps
 
+1. An authorized repository owner creates an **expiring fine-grained GitHub
+   credential** with access to **only**
+   `AmirrezaFarnamTaheri/Collegeum`: **Contents read** and **Actions write**.
+   No other repository permissions. Record its expiration/rotation privately.
+   Never paste the credential into this repository, issue, chat or a log.
+2. Verify the intended Cloudflare account and existing disabled Worker. Use
+   the trusted-main, read-only `inspect-independent-ingestion-observer`
+   workflow. It checks Worker identity, Cron, secret-binding **name/type** and,
+   when settings access permits, the exact `RECOVERY_ENABLED` plain-text
+   binding. It reports only fixed states (`enabled`, `disabled`,
+   `unverified`), never secret contents. A missing binding is a failed gate.
+3. From a trusted interactive checkout, with the verified Cloudflare account
+   configured and the existing locked Wrangler client installed, bind the
+   credential **as a Cloudflare secret**, not a plain-text variable:
+
+       cd cloudflare/telegram
        npm ci
-       npx wrangler deploy --dry-run --config ../ingestion-watchdog/wrangler.jsonc
-
-3. Deploy in the **disabled** state and configure the Worker secret
-   interactively (Wrangler prompts for its value; do not use a shell argument):
-
-       npx wrangler deploy --config ../ingestion-watchdog/wrangler.jsonc
+       npx wrangler whoami
        npx wrangler secret put GITHUB_TOKEN --config ../ingestion-watchdog/wrangler.jsonc
 
-4. After checking the deployment name, Cron Trigger and secret binding,
-   explicitly opt in:
+   Supply the credential only to Wrangler's secure prompt. In CI or a
+   noninteractive shell, a blank standard input **may be accepted as an empty
+   secret**; never run `secret put` without a verified nonempty input source.
+   Do not pass a token as a shell argument or place it in a tracked file.
+4. Re-run the independent inventory. Require `presence=deployed`,
+   `cron=configured`, `scheduled_handler=present`,
+   `github_credential_binding=present` and
+   **`recovery_enabled=disabled`**. Verify the token can read committed
+   health, and that an authorized operator has checked its repository scope
+   and expiration; an API 200 response alone does not prove least privilege.
+5. Only after all gates pass, explicitly enable recovery on the **intended
+   account** from a trusted checkout:
 
        npx wrangler deploy --config ../ingestion-watchdog/wrangler.jsonc --var RECOVERY_ENABLED:true
 
-   The CLI flag overrides the checked-in disabled default. A normal redeploy
-   without the flag safely disables recovery. Avoid enabling a fork or granting
-   the token access to other repositories.
+   The command must retain the existing `GITHUB_TOKEN` secret binding.
+   Re-run the independent inventory and require
+   `recovery_enabled=enabled` **and** the secret binding still present.
+   The checked-in default remains `false`; ordinary redeployment without
+   the override safely disables recovery. Do not enable a fork.
+6. Confirm a **real Cloudflare scheduled invocation** logs
+   `fresh; action: none` when production health is fresh, with no new
+   `predoc-pipeline` workflow-dispatch. Later, when health becomes genuinely
+   stale and there is no newer/active ingestion, verify the observer requests
+   one new trusted `main` run; that run checkpoints fresh production health,
+   correctly classifies degraded sources, and does not duplicate Telegram
+   deliveries or rewrite receipts. Record run IDs, checkpoint time, and
+   sanitized operator evidence in [issue #52](https://github.com/AmirrezaFarnamTaheri/Collegeum/issues/52).
 
-5. Verify that Cloudflare Workers & Pages lists
-   `collegeum-ingestion-observer` with `37 */2 * * *` (UTC). Healthy
-   invocations log `fresh; action: none` and cause **no** GitHub dispatch.
-   When a genuinely stale checkpoint is observed, verify the new
-   `predoc-pipeline` workflow-dispatch run, its successful checkpoint, and
-   the absence of duplicate Telegram publication. Attach evidence to #52.
+To **disable**, deploy without the override or disable the Cron Trigger.
+Rotate or revoke the fine-grained credential separately in both GitHub and
+Cloudflare. If any validation is ambiguous, leave recovery disabled.
 
-To disable, redeploy without the override or disable the Cron Trigger.
-The GitHub token must be rotated separately in Cloudflare Worker secrets.
+### New accounts or disaster-recovery bootstrap only
 
-## Limitations and acceptance
+The `bootstrap-disabled-independent-ingestion-observer` workflow can be
+manually invoked from trusted `main` on an account proven not to contain the
+Worker. Its locked Wrangler dry-run precedes writes; a cross-account,
+credential-accessible read-only inventory rejects duplicate identities and
+incomplete account/script access; an additional settings check refuses to
+overwrite an existing Worker. The only allowed deployment is disabled, with a
+postcheck of Worker identity, Cron and `RECOVERY_ENABLED=false`.
+**Do not use this workflow to enable recovery or rotate secrets.**
 
-- This is independent of the GitHub schedule but cannot guarantee Cloudflare
-  will never delay a cron execution. A separate external alerting provider is
-  advisable for a strict freshness SLA.
-- The GitHub-based watchdog and the external observer have a small
-  read-then-dispatch race. Neither makes a global exactly-once promise;
-  existing `predoc-bot` concurrency and publishing journals serialize and
-  deduplicate side effects.
-- A dispatched ingestion is not proof of fresh data, source health, or
-  verified-open vacancies. Source-quality acceptance is separate.
-- No Cloudflare deployment access or secret was available to this GitHub
-  implementation. **Keep #52 open until the live invocation and subsequent
-  production checkpoint are independently verified.**
-- Offline tests: `node --test cloudflare/ingestion-watchdog/worker.test.mjs`.
-  The CI worker job also validates the Wrangler dry-run build.
+## Limits
+
+- An independent Cloudflare Cron is not a guaranteed no-delay scheduler.
+- The GitHub watchdog and Cloudflare observer have a narrow read/dispatch
+  race; the application's publishing journal and `predoc-bot` concurrency
+  remain essential, and no global exactly-once guarantee is claimed.
+- A dispatch is not evidence of fresh health, correct extraction, verified
+  open/funded vacancies, or zero duplicate Telegram receipts.
+- Keep issue #52 open until independent enabled-Cron recovery and production
+  acceptance have been demonstrated.
+- Offline tests: `node --test cloudflare/ingestion-watchdog/*.test.mjs`.
+  CI also requires a locked Wrangler build dry-run.
 
 Related: [#52](https://github.com/AmirrezaFarnamTaheri/Collegeum/issues/52),
 [#32](https://github.com/AmirrezaFarnamTaheri/Collegeum/issues/32),
