@@ -6,10 +6,12 @@ from predoc_pipeline.core.query_result_diversity import identical_nonempty_query
 
 class QueryDiversityTests(unittest.TestCase):
     def test_ignored_keywords_are_unverified_not_distinct_coverage(self):
+        first = "https://example.edu/jobs/1"
+        second = "https://example.edu/jobs/2"
         rows = [
-            ("https://example.edu/search?keyword=epi", {"https://example.edu/jobs/1", "https://example.edu/jobs/2"}),
-            ("https://example.edu/search?keyword=genomics", {"https://example.edu/jobs/2", "https://example.edu/jobs/1"}),
-            ("https://example.edu/search?keyword=crispr", {"https://example.edu/jobs/1", "https://example.edu/jobs/2"}),
+            ("https://example.edu/search?keyword=epi", {first, second}),
+            ("https://example.edu/search?keyword=genomics", {second, first}),
+            ("https://example.edu/search?keyword=crispr", {first, second}),
         ]
         self.assertTrue(identical_nonempty_query_results(rows))
 
