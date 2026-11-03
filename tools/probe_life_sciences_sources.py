@@ -71,6 +71,7 @@ def feed_entries(content: str) -> int:
 def check_sources(
     client: Any, config: str | Path, *, region: str = "all",
     limit: int = MAX_PROBE_SOURCES, offset: int = 0,
+    names: set[str] | None = None, detail_sample_limit: int = 0,
 ) -> dict[str, Any]:
     """Produce public counts without downloading individual vacancy details."""
     if not 1 <= limit <= MAX_PROBE_SOURCES:
@@ -79,6 +80,8 @@ def check_sources(
         raise ValueError("offset must be between 0 and 256")
     if region not in REGIONS:
         raise ValueError("unknown source region")
+    if type(detail_sample_limit) is not int or not 0 <= detail_sample_limit <= 2:
+        raise ValueError("detail_sample_limit must be between 0 and 2")
     sources = [s for s in load_life_sources(config) if s.enabled]
     if region == "core":
         core_ids = {
@@ -89,10 +92,20 @@ def check_sources(
         config_file = Path(config).parent / "life_sciences_sources" / f"{region}.toml"
         regional_ids = {s.name for s in load_board_sources(config_file)}
         sources = [s for s in sources if s.name in regional_ids]
+    if names is not None:
+        if (not isinstance(names, set) or not names or len(names) > 3
+                or any(not isinstance(name, str) or not name for name in names)):
+            raise ValueError("names must select one to three distinct source identifiers")
+        if not names.issubset({source.name for source in sources}):
+            raise ValueError("names must refer only to enabled sources in scope")
+        if offset != 0 or limit < len(names):
+            raise ValueError("named source selection may not silently skip a source")
+        sources = [source for source in sources if source.name in names]
 
     report: dict[str, Any] = {
         "checked_at": datetime.now(UTC).isoformat(),
         "region": region,
+        "requested_names": sorted(names) if names else None,
         "enabled_in_scope": len(sources),
         "offset": offset, "limit": limit,
         "next_offset": (
@@ -199,6 +212,43 @@ def check_sources(
             "urls_total": len(urls), "urls_checked": len(endpoints),
             "endpoints": endpoints,
         }
+        if detail_sample_limit:
+            # The same robots-aware, paced client inspects a bounded sample.
+            # Never fetch a guessed ATS cross-origin link, a lookalike host or
+            # an unvalidated link just because a broad regex matched a path.
+            expected_host = urlsplit(urls[0]).hostname
+            same_origin: list[str] = []
+            if source.type == "link_scan":
+                for candidate in sorted(vacancy_urls):
+                    try:
+                        parsed = urlsplit(candidate)
+                        if (parsed.scheme == "https" and parsed.hostname == expected_host
+                                and not parsed.username and not parsed.password):
+                            same_origin.append(candidate)
+                    except ValueError:
+                        continue
+            statuses: dict[str, int] = {}
+            http_status_counts: dict[str, int] = {}
+            for candidate in same_origin[:detail_sample_limit]:
+                try:
+                    response = client.get(candidate, use_cache=False)
+                    http_status = response.status
+                    detail_status = (
+                        "blocked_robots" if http_status == 999
+                        else "ok" if response.ok else "http_error"
+                    )
+                except Exception:  # noqa: BLE001 - per-detail failure remains observable
+                    http_status = 0
+                    detail_status = "http_error"
+                statuses[detail_status] = statuses.get(detail_status, 0) + 1
+                status_key = str(http_status)
+                http_status_counts[status_key] = http_status_counts.get(status_key, 0) + 1
+            report["sources"][source.name]["detail_probe"] = {
+                "same_origin_candidates": len(same_origin),
+                "sampled": min(len(same_origin), detail_sample_limit),
+                "statuses": dict(sorted(statuses.items())),
+                "http_status_counts": dict(sorted(http_status_counts.items())),
+            }
         report["checked"] += 1
     return report
 
@@ -209,6 +259,9 @@ def main() -> None:
     parser.add_argument("--region", default="all", choices=sorted(REGIONS))
     parser.add_argument("--limit", type=int, default=MAX_PROBE_SOURCES)
     parser.add_argument("--offset", type=int, default=0)
+    parser.add_argument("--names", nargs="+", help="One to three enabled source names")
+    parser.add_argument("--detail-sample-limit", type=int, default=0,
+                        help="Maximum same-origin vacancy details per source (0 to 2)")
     parser.add_argument(
         "--output", type=Path, default=Path("build/life-sciences-sources.json"),
     )
@@ -219,7 +272,8 @@ def main() -> None:
     ) as client:
         report = check_sources(
             client, args.config, region=args.region, limit=args.limit,
-            offset=args.offset,
+            offset=args.offset, names=set(args.names) if args.names else None,
+            detail_sample_limit=args.detail_sample_limit,
         )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
