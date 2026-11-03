@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-03T11:38:23Z",
+ "generated_at": "2026-11-03T11:56:32Z",
  "count": 185,
  "listings": [
   {
@@ -2829,10 +2829,12 @@
    "deadline": "2026-12-01T00:00:00Z",
    "days_left": 28,
    "disciplines": [
-    "Finance"
+    "Finance",
+    "Business and Management",
+    "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "This is a four-year PhD studentship in Accounting and Finance at the University of Bristol Business School. It provides a bursary of £21,805 per annum and includes mandatory Graduate Teaching Assistant responsibilities. The role is open to outstanding applicants with a first or high 2:1 honours degree and a master's qualification from a UK university.",
+   "summary": "The University of Bristol Business School offers a PhD studentship with a stipend of £21,805 per annum for four years, including teaching assistant responsibilities. The position suits candidates with a first or upper second‑class honours degree and a master’s qualification who are interested in research themes such as finance, business and management, and public policy.",
    "language": "en",
    "apply_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
    "source_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
@@ -2850,9 +2852,9 @@
    "salary_raw": "£21,805 per annum",
    "tools_required": [],
    "tools_preferred": [],
-   "min_degree": "phd",
+   "min_degree": "masters",
    "degree_note": null,
-   "start_term": "2026-10-21",
+   "start_term": "Autumn 2027",
    "start_date": "2026-10-21",
    "kind": "phd",
    "sector": "academic"
