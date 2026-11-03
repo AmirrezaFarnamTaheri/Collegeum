@@ -73,6 +73,14 @@ def search_page_evidence(content: str, url: str) -> dict[str, Any]:
         if value.startswith("keywords:"):
             keyword = unquote(value.partition(":")[2]).casefold().strip()
             break
+    # Public search forms also expose "keys" and "keywords". Reflection is
+    # only a diagnostic hint; it never certifies server-side filtering.
+    if not keyword:
+        for name in ("keys", "keywords"):
+            matches = query.get(name, [])
+            if matches and 0 < len(matches[0]) <= 120:
+                keyword = matches[0].casefold().strip()
+                break
     soup = BeautifulSoup(content[:MAX_PARSE_CHARS], "lxml")
     visible = soup.get_text(" ", strip=True).casefold()
     match = re.search(r"\bsearch results?\s*\(\s*([0-9][0-9,]*)\s*\)", visible)
