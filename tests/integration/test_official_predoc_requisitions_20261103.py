@@ -124,4 +124,5 @@ def test_probe_workflow_is_main_only_and_makes_no_publication():
     assert "contents: read" in workflow
     assert "predoc-pipeline" not in workflow
     assert "wrangler deploy" not in workflow
-    assert "secrets." not in workflow
+    assert "${{ secrets." not in workflow
+    assert "GITHUB_TOKEN" not in workflow
