@@ -110,3 +110,18 @@ def test_official_form_field_probe_is_main_only_and_does_not_deploy():
     assert "tools/probe_euraxess_query_parameters.py" in workflow
     assert "--output" in workflow
     assert "wrangler deploy" not in workflow
+
+
+def test_network_exception_on_one_official_query_never_claims_filter_coverage():
+    client = Client({
+        f"{PREFIX}?keys=epigenetics": (200, page(101, count=12)),
+        f"{PREFIX}?keys=genomics": (200, page(202, count=14)),
+        f"{PREFIX}?keywords=epigenetics": (200, page(303, count=16)),
+        # Last request intentionally raises KeyError, representing a transport failure.
+    })
+    result = compare_candidate_queries(client)
+    assert len(client.calls) == 4
+    assert result["parameters"][0]["query_result_signal"] == "distinct_nonempty"
+    assert result["parameters"][1]["query_result_signal"] == "indeterminate"
+    assert result["parameters"][1]["observations"][1]["status"] == "http_error"
+    assert result["verified_server_side_filter"] is False
