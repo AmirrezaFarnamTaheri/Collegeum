@@ -78,8 +78,9 @@ def test_same_two_keyword_queries_retain_candidates_but_mark_partial(tmp_path, m
     assert requested == list(pages)
     assert status["status"] == "partial"
     assert status["discovery_issues"] == 1
-    assert len(errors) == 1
-    assert "identical nonempty" in errors[0]
+    # Discovery warnings intentionally contain only an aggregate count,
+    # never job-specific URLs, upstream HTML or identifying position fields.
+    assert errors == ["life_filtered: 1 discovery issues"]
     assert "/jobs/101" not in errors[0]
 
 
