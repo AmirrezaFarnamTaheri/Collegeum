@@ -1,0 +1,59 @@
+name: investigate-euraxess-official-query-parameters
+
+# Four explicitly bounded, robots-aware GETs to the existing official origin.
+# This is a read-only diagnostic, not production source activation.
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/probe_euraxess_query_parameters.py
+      - tools/probe_life_sciences_sources.py
+      - .github/workflows/probe-euraxess-search-parameters.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collegeum-euraxess-official-params-readonly
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'AmirrezaFarnamTaheri/Collegeum'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+          enable-cache: true
+      - name: Install locked parser and robots-aware HTTP requirements
+        run: |
+          uv lock --check
+          uv sync --locked --extra portals
+      - name: Compare two form-supported parameter names with two fixed keywords
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python3 tools/probe_euraxess_query_parameters.py \
+            --output build/euraxess-official-query-parameter-probe.json
+      - name: Preserve only sanitized, aggregate read-only evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: euraxess-query-parameter-probe-${{ github.run_id }}
+          path: build/euraxess-official-query-parameter-probe.json
+          retention-days: 14
+          if-no-files-found: warn
