@@ -78,3 +78,13 @@ test('one-time disabled bootstrap workflow uses trusted main and no Github crede
   assert.match(yml, /RECOVERY_ENABLED:false/);
   assert.doesNotMatch(yml, /GITHUB_TOKEN:|wrangler secret put|RECOVERY_ENABLED:true/);
 });
+
+test('worker-specific settings denial cannot authorize even a disabled deployment', async () => {
+  const {fetchImpl, calls} = fake({
+    [ROOT]: [{id: 'collegeum-telegram'}],
+    [ROOT + '/' + NAME + '/settings']: 403,
+  });
+  const result = await preflightAbsent({accountId: ACCOUNT, token: TOKEN, fetchImpl});
+  assert.deepEqual(result, {deploy: false, reason: 'absence-unverified'});
+  assert.equal(calls.length, 2);
+});
