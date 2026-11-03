@@ -1,0 +1,57 @@
+name: verify-official-predoc-requisitions
+
+# Read-only, fixed four-URL employer-policy probe. No publication, no secrets.
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/probe_official_predoc_requisitions.py
+      - .github/workflows/verify-official-predoc-requisitions.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collegeum-official-predoc-requisitions-readonly
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'AmirrezaFarnamTaheri/Collegeum'
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+          enable-cache: true
+      - name: Install locked policy-aware probe dependencies
+        run: |
+          uv lock --check
+          uv sync --locked --extra portals
+      - name: Inspect only two disabled official sources and two existing ATS requisitions
+        env:
+          PYTHONPATH: src:.
+        run: |
+          set -euo pipefail
+          python3 tools/probe_official_predoc_requisitions.py \
+            --output build/official-predoc-requisitions.json
+      - name: Preserve aggregate source status (no vacancy publication)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: official-predoc-requisitions-${{ github.run_id }}
+          path: build/official-predoc-requisitions.json
+          retention-days: 14
+          if-no-files-found: warn
