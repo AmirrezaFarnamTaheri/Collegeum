@@ -48,6 +48,17 @@ export async function inspectWorker({accountId, tokens, fetchImpl = fetch}) {
 
     const schedules = await read(token, '/' + NAME + '/schedules');
     const secrets = await read(token, '/' + NAME + '/secrets');
+    const settings = await read(token, '/' + NAME + '/settings');
+    // Read only the exact plain-text opt-in binding. Never log settings,
+    // other plain-text variables, secret values, or API response bodies.
+    let recoveryEnabled = 'unverified';
+    if (Array.isArray(settings?.bindings)) {
+      const flags = settings.bindings.filter(item => item?.name === 'RECOVERY_ENABLED');
+      if (flags.length === 1 && flags[0].type === 'plain_text') {
+        if (flags[0].text === 'true') recoveryEnabled = 'enabled';
+        if (flags[0].text === 'false') recoveryEnabled = 'disabled';
+      }
+    }
     return {
       worker: NAME,
       presence: 'deployed',
@@ -62,8 +73,7 @@ export async function inspectWorker({accountId, tokens, fetchImpl = fetch}) {
       scheduled_handler: Array.isArray(found.handlers)
         ? found.handlers.includes('scheduled') ? 'present' : 'missing'
         : 'unverified',
-      // The scripts/schedules/secrets APIs do not certify the deployed var.
-      recovery_enabled: 'unverified',
+      recovery_enabled: recoveryEnabled,
     };
   }
   return empty(listAccessible ? 'not-observed' : 'access-unavailable');
