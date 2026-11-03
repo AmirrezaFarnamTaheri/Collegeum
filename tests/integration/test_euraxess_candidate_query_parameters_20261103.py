@@ -88,3 +88,25 @@ def test_probe_refuses_to_follow_arbitrary_urls_or_extra_parameters():
     else:
         raise AssertionError("unsafe term must fail before requests")
     assert client.calls == []
+
+
+def test_official_get_keys_form_reflects_requested_search_value():
+    from tools.probe_life_sciences_sources import search_page_evidence
+
+    html = ('<form method="get"><input type="search" name="keys" '
+            'value="epigenetics" placeholder="Field, subject, position, '
+            'location, keyword"></form><h2>Search results (14)</h2>')
+    result = search_page_evidence(html, f"{PREFIX}?keys=epigenetics")
+    assert result["search_input_names"] == ["keys"]
+    assert result["search_value_reflected"] is True
+    assert result["declared_result_count"] == 14
+
+
+def test_official_form_field_probe_is_main_only_and_does_not_deploy():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[2]
+    workflow = (root / ".github/workflows/probe-euraxess-search-parameters.yml").read_text()
+    assert "refs/heads/main" in workflow
+    assert "tools/probe_euraxess_query_parameters.py" in workflow
+    assert "--output" in workflow
+    assert "wrangler deploy" not in workflow
