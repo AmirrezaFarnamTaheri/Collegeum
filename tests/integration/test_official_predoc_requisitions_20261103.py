@@ -6,7 +6,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 from tools.probe_official_predoc_requisitions import probe_candidates
 
 
