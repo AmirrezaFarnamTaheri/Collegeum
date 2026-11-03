@@ -109,6 +109,10 @@ def test_official_form_field_probe_is_main_only_and_does_not_deploy():
     assert "refs/heads/main" in workflow
     assert "tools/probe_euraxess_query_parameters.py" in workflow
     assert "--output" in workflow
+    assert "PYTHONPATH: src:." in workflow
+    # Both EURAXESS read-only probes share one concurrency group, preventing
+    # parallel same-origin request bursts across independent GitHub workflows.
+    assert "collegeum-life-euraxess-readonly-probe" in workflow
     assert "wrangler deploy" not in workflow
 
 
