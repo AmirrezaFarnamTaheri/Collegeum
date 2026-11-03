@@ -61,7 +61,10 @@ def test_probe_distinguishes_robots_denials_and_vacancy_links() -> None:
     assert result["checked"] == 4
     assert result["sources"]["life_linkedin"]["status"] == "requires_adapter_probe"
     assert result["sources"]["life_linkedin"]["urls_checked"] == 0
-    assert result["sources"]["life_euraxess"]["status"] == "ok"
+    # The fake returns the same job URL for all four distinct keyword URLs:
+    # reachable HTTP is not evidence of functioning keyword filtering.
+    assert result["sources"]["life_euraxess"]["status"] == "partial"
+    assert result["sources"]["life_euraxess"]["query_result_signal"] == "identical_nonempty"
     assert result["sources"]["life_academictransfer"]["status"] == "blocked_robots"
     assert result["sources"]["life_max_planck"]["vacancy_links"] == 1
     assert all("chat_id" not in item for item in result["sources"].values())
