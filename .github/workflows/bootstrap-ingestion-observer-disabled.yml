@@ -1,0 +1,57 @@
+name: bootstrap-disabled-independent-ingestion-observer
+
+# One-time, account-scoped disabled deployment. Runs only from trusted main.
+# A re-run refuses to overwrite an existing Worker and does not enable recovery.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/bootstrap-ingestion-observer-disabled.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collegeum-disabled-ingestion-observer-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    if: >-
+      github.repository == 'AmirrezaFarnamTaheri/Collegeum' &&
+      github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: cloudflare/telegram
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Install exact locked Wrangler client
+        run: npm ci
+      - name: Dry-run build the independent observer without Cloudflare writes
+        run: npx wrangler deploy --dry-run --config ../ingestion-watchdog/wrangler.jsonc
+      - name: Select and verify existing intended-account Cloudflare credential
+        env:
+          CF_TOKEN_PRIMARY: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
+          CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
+        run: node deploy-token.mjs
+      - name: Require confirmed absence and deploy with recovery strictly disabled
+        run: |
+          set -euo pipefail
+          node ../ingestion-watchdog/bootstrap-check.mjs preflight
+          npx wrangler deploy --config ../ingestion-watchdog/wrangler.jsonc --var RECOVERY_ENABLED:false
+      - name: Independently verify script, Cron and disabled runtime binding
+        run: node ../ingestion-watchdog/bootstrap-check.mjs verify
