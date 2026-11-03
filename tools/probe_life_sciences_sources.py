@@ -62,7 +62,11 @@ def candidate_links(content: str, url: str, pattern: str) -> int:
     return len(candidate_job_urls(content, url, pattern))
 
 def search_page_evidence(content: str, url: str) -> dict[str, Any]:
-    """Sanitized page evidence: keyword visibility is NOT proof of filter validity."""
+    """Inspect visible search evidence and public form names, never input values.
+
+    Only reading the provider's public form and an exact URL is permitted here.
+    Form fields and keywords are diagnostic hints, not proof the server filtered.
+    """
     query = parse_qs(urlsplit(url).query)
     keyword = ""
     for value in query.get("f[0]", []):
@@ -72,10 +76,40 @@ def search_page_evidence(content: str, url: str) -> dict[str, Any]:
     soup = BeautifulSoup(content[:MAX_PARSE_CHARS], "lxml")
     visible = soup.get_text(" ", strip=True).casefold()
     match = re.search(r"\bsearch results?\s*\(\s*([0-9][0-9,]*)\s*\)", visible)
+    search_names: set[str] = set()
+    methods: set[str] = set()
+    reflected = False
+    for form in soup.select("form")[:20]:
+        for field in form.select("input")[:80]:
+            kind = str(field.get("type", "text")).casefold()
+            name = str(field.get("name") or "")
+            hint = " ".join(
+                str(field.get(attr) or "") for attr in ("name", "placeholder", "aria-label")
+            ).casefold()
+            if kind not in {"text", "search"} or not (
+                kind == "search" or "search" in hint or "keyword" in hint or "subject" in hint
+            ):
+                continue
+            if not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_:-]{0,63}", name):
+                continue
+            if any(secret in name.casefold() for secret in (
+                "csrf", "token", "secret", "password"
+            )):
+                continue
+            search_names.add(name)
+            method = str(form.get("method") or "get").casefold()
+            if method in {"get", "post"}:
+                methods.add(method)
+            if keyword and str(field.get("value") or "").casefold().strip() == keyword:
+                reflected = True
     return {
         "keyword_in_visible_text": bool(keyword and keyword in visible),
         "declared_result_count": int(match.group(1).replace(",", "")) if match else None,
+        "search_input_names": sorted(search_names)[:8],
+        "search_form_methods": sorted(methods),
+        "search_value_reflected": reflected,
     }
+
 
 def feed_entries(content: str) -> int:
     """Count actual RSS/Atom entries, ignoring metadata and shell pages."""
