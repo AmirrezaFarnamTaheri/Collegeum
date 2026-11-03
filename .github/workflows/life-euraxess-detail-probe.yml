@@ -1,0 +1,61 @@
+name: investigate-life-euraxess-details
+
+# One small, policy-aware read-only probe. It never saves discoveries to the
+# historical journal, changes source health, publishes jobs or accesses users.
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/probe_life_sciences_sources.py
+      - .github/workflows/life-euraxess-detail-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collegeum-life-euraxess-readonly-probe
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'AmirrezaFarnamTaheri/Collegeum'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          activate-environment: true
+          enable-cache: true
+      - name: Install exact locked read-only parser dependencies
+        run: |
+          uv lock --check
+          uv sync --locked --extra portals
+      - name: Inspect only three enabled EURAXESS search views and six same-host details
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python3 tools/probe_life_sciences_sources.py \
+            --config config/life_sciences.toml --region all \
+            --names life_euraxess life_euraxess_cell_models life_euraxess_computational \
+            --limit 3 --detail-sample-limit 2 \
+            --output build/life-euraxess-detail-probe.json
+      - name: Preserve read-only source accessibility evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: life-euraxess-detail-access-${{ github.run_id }}
+          path: build/life-euraxess-detail-probe.json
+          retention-days: 14
+          if-no-files-found: warn
