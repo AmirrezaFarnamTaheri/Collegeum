@@ -153,6 +153,58 @@ class SourceQualityTests(unittest.TestCase):
             broken.write_text(broken.read_text() * 2, encoding="utf-8")
             self.assertEqual(main(["--root", str(root), "--output", str(dest), "--strict"]), 2)
 
+    def test_same_title_employer_crossposts_are_review_only_not_auto_merged(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            fixture(root, dashboard={"listings": [
+                {"id": 222, "kind": "postdoc", "title":
+                 "Postdoctoral Research Fellow in Climate and Environmental Governance",
+                 "institution": "UiT, The Arctic University of Norway",
+                 "apply_url": "https://www.linkedin.com/jobs/view/4477002506"},
+                {"id": 233, "kind": "postdoc", "title":
+                 "Postdoctoral Research Fellow in Climate and Environmental Governance",
+                 "institution": "UiT- The Arctic University of Norway",
+                 "apply_url": "https://www.linkedin.com/jobs/view/4477783880"},
+                {"id": 235, "kind": "postdoc", "title":
+                 "Postdoctoral Research Fellow in Climate and Environmental Governance",
+                 "institution": "UiT The Arctic University of Norway",
+                 "apply_url": "https://www.linkedin.com/jobs/view/4478230740"},
+                {"id": 11, "kind": "predoc", "title": "Pre-Doctoral Technical Associate",
+                 "institution": "MIT Sloan School of Management",
+                 "apply_url": "https://example.edu/jobs/associate-A"},
+                {"id": 12, "kind": "predoc", "title": "Pre-Doctoral Technical Associate",
+                 "institution": "MIT Sloan School of Management",
+                 "apply_url": "https://example.edu/jobs/associate-B"},
+                {"id": 17, "kind": "postdoc", "title": "Arctic Aquatic Ecology",
+                 "institution": "UiT The Arctic University of Norway",
+                 "apply_url": "https://example.edu/jobs/different-requisition"},
+            ]})
+            report = audit(root, now=NOW)
+            public = report["public_dashboard"]
+            self.assertEqual(public["visible_listings"], 6)
+            self.assertEqual(public["possible_crosspost_groups"], 2)
+            self.assertEqual(public["possible_crosspost_rows"], 5)
+            self.assertEqual(public["possible_crosspost_id_groups"], [[222, 233, 235], [11, 12]])
+            self.assertEqual(report["integrity_findings"], [])
+            self.assertIn("public:crosspost-review-candidates-not-proven-duplicates",
+                          report["operational_observations"])
+            self.assertTrue(any("not confirmed duplicates" in x for x in report["limitations"]))
+
+    def test_review_only_crosspost_candidates_require_distinct_links_and_employer(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            fixture(root, dashboard={"listings": [
+                {"id": 1, "kind": "predoc", "title": "Research Assistant",
+                 "institution": "University A", "apply_url": "https://a.edu/jobs/1"},
+                {"id": 2, "kind": "predoc", "title": "Research Assistant",
+                 "institution": "University B", "apply_url": "https://b.edu/jobs/2"},
+                {"id": 3, "kind": "predoc", "title": "Research Assistant",
+                 "institution": "University A", "apply_url": "https://a.edu/jobs/1"},
+            ]})
+            result = audit(root, now=NOW)
+            self.assertEqual(result["public_dashboard"]["possible_crosspost_groups"], 0)
+            self.assertEqual(result["public_dashboard"]["possible_crosspost_id_groups"], [])
+
     def test_readonly_workflow_follows_production_and_uses_trusted_main(self):
         workflow = (Path(__file__).resolve().parents[2] /
                     ".github/workflows/source-quality-audit.yml").read_text(encoding="utf-8")
