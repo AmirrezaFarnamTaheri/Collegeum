@@ -179,6 +179,7 @@ def audit(root: Path, *, now: datetime | None = None,
 
     availability = {"unknown": 0, "provider_marked_active": 0, "closed": 0}
     funding_unverified = 0
+    funding_applicable_rows = 0
     deadline_missing = deadline_elapsed = seen_old = seen_invalid = 0
     types = Counter()
     for item in career_rows:
@@ -186,8 +187,13 @@ def audit(root: Path, *, now: datetime | None = None,
         label = "provider_marked_active" if status == "active" else (
             "closed" if status == "closed" else "unknown")
         availability[label] += 1
-        funding_unverified += int(item.get("funding_status") != "verified")
-        types[str(item.get("category") or "unspecified")] += 1
+        category = str(item.get("category") or "unspecified")
+        types[category] += 1
+        # Funding verification is a doctoral-specific claim. General analyst
+        # roles must not be counted as unfunded or funding-unverified PhDs.
+        if category == "life_sciences_phd":
+            funding_applicable_rows += 1
+            funding_unverified += int(item.get("funding_status") != "verified")
         last_seen = _instant(item.get("last_seen_at") or item.get("first_seen_at"))
         if last_seen is None:
             seen_invalid += 1
@@ -268,6 +274,7 @@ def audit(root: Path, *, now: datetime | None = None,
         "career": {
             "rows": len(career_rows), "categories": dict(sorted(types.items())),
             "availability": availability, "verified_open_count": 0,
+            "funding_applicable_rows": funding_applicable_rows,
             "funding_unverified": funding_unverified,
             "deadline_missing": deadline_missing,
             "deadline_elapsed_not_proof_closed": deadline_elapsed,
