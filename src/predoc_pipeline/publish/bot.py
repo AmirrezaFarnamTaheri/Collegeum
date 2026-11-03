@@ -101,7 +101,8 @@ ALIASES = {
 }
 HELP = (
     "🤖 <b>Predoc bot</b>\n\n"
-    "/positions: stored listings, nearest stated deadline first; verify availability with employer\n"
+    "/positions: stored listings, nearest stated deadline first\n"
+    "Check with the employer before applying; availability may have changed.\n"
     "/applied: the ones you applied to\n"
     "/valid: the ones you marked ✅\n"
     "/hidden: the ones you marked ❌\n\n"
