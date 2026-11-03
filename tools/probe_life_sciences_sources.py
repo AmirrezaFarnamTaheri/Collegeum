@@ -14,11 +14,12 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import parse_qs, unquote, urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
 from predoc_pipeline.boards.config import load_board_sources
+from predoc_pipeline.core.query_result_diversity import identical_nonempty_query_results
 from predoc_pipeline.ingest.http import PoliteClient
 from predoc_pipeline.ingest.life_sciences import load_life_sources
 
@@ -59,6 +60,22 @@ def candidate_job_urls(content: str, url: str, pattern: str) -> set[str]:
 def candidate_links(content: str, url: str, pattern: str) -> int:
     """Retain the count API used by existing fixtures and health checks."""
     return len(candidate_job_urls(content, url, pattern))
+
+def search_page_evidence(content: str, url: str) -> dict[str, Any]:
+    """Sanitized page evidence: keyword visibility is NOT proof of filter validity."""
+    query = parse_qs(urlsplit(url).query)
+    keyword = ""
+    for value in query.get("f[0]", []):
+        if value.startswith("keywords:"):
+            keyword = unquote(value.partition(":")[2]).casefold().strip()
+            break
+    soup = BeautifulSoup(content[:MAX_PARSE_CHARS], "lxml")
+    visible = soup.get_text(" ", strip=True).casefold()
+    match = re.search(r"\bsearch results?\s*\(\s*([0-9][0-9,]*)\s*\)", visible)
+    return {
+        "keyword_in_visible_text": bool(keyword and keyword in visible),
+        "declared_result_count": int(match.group(1).replace(",", "")) if match else None,
+    }
 
 def feed_entries(content: str) -> int:
     """Count actual RSS/Atom entries, ignoring metadata and shell pages."""
@@ -156,6 +173,7 @@ def check_sources(
         endpoints: list[dict[str, Any]] = []
         vacancy_urls: set[str] = set()
         rss_entry_count = 0
+        query_observations: list[tuple[str, set[str]]] = []
         for url in urls:
             try:
                 response = client.get(url, use_cache=False)
@@ -181,16 +199,22 @@ def check_sources(
                         )
                         matched = len(links)
                         vacancy_urls.update(links)
+                        if source.opt("query_result_diversity_required") is True:
+                            query_observations.append((url, links))
                     except re.error:
                         status = "invalid_pattern"
                 else:
                     status = "unsupported_scraper"
                 if status == "ok" and matched == 0:
                     status = "no_recognized_vacancy_links"
-            endpoints.append({
+            entry = {
                 "url": url, "status": status, "http_status": response.status,
                 "vacancy_links": matched,
-            })
+            }
+            if (response.ok and source.type == "link_scan"
+                    and source.opt("query_result_diversity_required") is True):
+                entry.update(search_page_evidence(response.text, url))
+            endpoints.append(entry)
 
         states = [item["status"] for item in endpoints]
         problems = {"blocked_robots", "http_error", "invalid_pattern", "unsupported_scraper"}
@@ -203,6 +227,16 @@ def check_sources(
         else:
             status = "partial"
 
+        query_result_signal: str | None = None
+        if source.opt("query_result_diversity_required") is True:
+            if (len(query_observations) != len(urls)
+                    or any(not links for _, links in query_observations)):
+                query_result_signal = "indeterminate"
+            elif identical_nonempty_query_results(query_observations):
+                query_result_signal = "identical_nonempty"
+                status = "partial"
+            else:
+                query_result_signal = "distinct_nonempty"
         report["sources"][source.name] = {
             "status": status,
             "http_status": endpoints[0]["http_status"],  # compatibility
@@ -213,6 +247,8 @@ def check_sources(
             "urls_total": len(urls), "urls_checked": len(endpoints),
             "endpoints": endpoints,
         }
+        if query_result_signal is not None:
+            report["sources"][source.name]["query_result_signal"] = query_result_signal
         if source.type == "link_scan":
             # Count repeated index anchors by exact observed URL. These are
             # duplicate *search appearances*, not duplicated vacancies.
