@@ -6,8 +6,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from tools.probe_official_predoc_requisitions import probe_candidates
 
+from tools.probe_official_predoc_requisitions import probe_candidates
 
 ROOT = Path(__file__).resolve().parents[2]
 PRINCETON_INDEX = "https://rpde.princeton.edu/opportunities/jobs"
