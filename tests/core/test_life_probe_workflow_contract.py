@@ -1,6 +1,6 @@
 """Never turn a one-off source acceptance probe into live collection or write access."""
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FLOW = ROOT / ".github/workflows/life-euraxess-detail-probe.yml"
