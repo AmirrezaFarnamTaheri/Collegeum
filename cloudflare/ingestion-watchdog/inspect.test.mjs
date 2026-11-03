@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
-import {inspectWorker} from './inspect.mjs';
+import {inspectWorker} from './inspect-ingestion-observer.mjs';
 
 const ACCOUNT = '0'.repeat(32);
 const BASE = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT}/workers/scripts`;
