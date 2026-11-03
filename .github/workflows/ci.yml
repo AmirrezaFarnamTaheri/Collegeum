@@ -110,3 +110,10 @@ jobs:
         working-directory: cloudflare/telegram
         env:
           WRANGLER_SEND_METRICS: "false"
+      - name: Test independent ingestion recovery safety gate
+        run: node --test cloudflare/ingestion-watchdog/worker.test.mjs
+      - name: Build isolated Cloudflare recovery observer without deploying
+        run: npx wrangler deploy --dry-run --config ../ingestion-watchdog/wrangler.jsonc --outdir .wrangler/ingestion-observer-build
+        working-directory: cloudflare/telegram
+        env:
+          WRANGLER_SEND_METRICS: "false"
