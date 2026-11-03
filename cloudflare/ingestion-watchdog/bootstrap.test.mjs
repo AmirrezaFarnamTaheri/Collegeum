@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
-import {preflightAbsent, verifyDisabledDeployment} from './bootstrap-check.mjs';
+import {preflightAbsent, verifyDisabledDeployment, auditAvailableAccounts} from './bootstrap-check.mjs';
 
 const ACCOUNT = 'a'.repeat(32);
 const TOKEN = 'test-sensitive-no-log';
@@ -87,4 +87,75 @@ test('worker-specific settings denial cannot authorize even a disabled deploymen
   const result = await preflightAbsent({accountId: ACCOUNT, token: TOKEN, fetchImpl});
   assert.deepEqual(result, {deploy: false, reason: 'absence-unverified'});
   assert.equal(calls.length, 2);
+});
+
+const ACCOUNT_B = 'b'.repeat(32);
+const ACCOUNT_URL = 'https://api.cloudflare.com/client/v4/accounts?per_page=50';
+const inventoryResult = (result, total_pages = 1) =>
+  ({success: true, result, result_info: {total_pages}});
+
+function auditMock(routes) {
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({url, options});
+    assert.equal(options.method, 'GET');
+    assert.ok(options.headers.Authorization.startsWith('Bearer '));
+    const entry = routes[url];
+    if (typeof entry === 'number') return new Response('', {status: entry});
+    if (!entry) return new Response('', {status: 404});
+    return Response.json(entry);
+  };
+  return {fetchImpl, calls};
+}
+
+test('cross-account audit blocks a named observer found outside the target account', async () => {
+  const second = 'other-inventory-token';
+  const mock = auditMock({
+    [ACCOUNT_URL]: inventoryResult([{id: ACCOUNT}, {id: ACCOUNT_B}]),
+    [ROOT]: inventoryResult([{id: 'collegeum-telegram'}]),
+    ['https://api.cloudflare.com/client/v4/accounts/' + ACCOUNT_B +
+      '/workers/scripts']: inventoryResult([{id: NAME}]),
+  });
+  const outcome = await auditAvailableAccounts({
+    targetAccountId: ACCOUNT, tokens: [TOKEN, second], fetchImpl: mock.fetchImpl,
+  });
+  assert.deepEqual(outcome, {safe: false, reason: 'duplicate-in-accessible-account'});
+  assert.ok(mock.calls.every(call => call.options.method === 'GET'));
+  assert.doesNotMatch(JSON.stringify(outcome), /other-inventory-token|test-sensitive-no-log/);
+});
+
+test('cross-account audit allows one exhaustive clean accessible inventory', async () => {
+  const mock = auditMock({
+    [ACCOUNT_URL]: inventoryResult([{id: ACCOUNT}, {id: ACCOUNT_B}]),
+    [ROOT]: inventoryResult([{id: 'collegeum-telegram'}]),
+    ['https://api.cloudflare.com/client/v4/accounts/' + ACCOUNT_B +
+      '/workers/scripts']: inventoryResult([]),
+  });
+  assert.deepEqual(await auditAvailableAccounts({
+    targetAccountId: ACCOUNT, tokens: [TOKEN], fetchImpl: mock.fetchImpl,
+  }), {safe: true, reason: 'accessible-accounts-checked'});
+  assert.equal(mock.calls.length, 3);
+});
+
+test('cross-account audit fails closed for missing target, denied access or pagination', async () => {
+  for (const routes of [
+    {[ACCOUNT_URL]: 403},
+    {[ACCOUNT_URL]: inventoryResult([{id: ACCOUNT}], 2)},
+    {[ACCOUNT_URL]: inventoryResult([{id: ACCOUNT_B}])},
+    {[ACCOUNT_URL]: inventoryResult([{id: ACCOUNT}]), [ROOT]: 403},
+  ]) {
+    const mock = auditMock(routes);
+    const out = await auditAvailableAccounts({
+      targetAccountId: ACCOUNT, tokens: [TOKEN], fetchImpl: mock.fetchImpl,
+    });
+    assert.equal(out.safe, false, out.reason);
+  }
+});
+
+test('bootstrap workflow requires cross-account check before running any deploy', () => {
+  const yml = readFileSync(new URL('../../.github/workflows/bootstrap-ingestion-observer-disabled.yml',
+    import.meta.url), 'utf8');
+  const audit = yml.indexOf('bootstrap-check.mjs inventory');
+  const deploy = yml.indexOf('wrangler deploy --config');
+  assert.ok(audit >= 0 && deploy > audit);
 });
