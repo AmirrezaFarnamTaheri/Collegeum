@@ -37,7 +37,7 @@ test('existing worker identity, Cron and secret name are detected without leakin
     github_credential_binding: 'present', scheduled_handler: 'present',
     recovery_enabled: 'unverified',
   });
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 4);
   assert.ok(calls.every(call => call.options.headers.Authorization === 'Bearer ' + TOKEN));
   assert.ok(!JSON.stringify(result).includes(TOKEN));
   assert.ok(!JSON.stringify(result).includes('never-log-secret-value'));
