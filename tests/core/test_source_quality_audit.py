@@ -71,7 +71,10 @@ class SourceQualityTests(unittest.TestCase):
             self.assertEqual(career["availability"], {
                 "unknown": 1, "provider_marked_active": 1, "closed": 0})
             self.assertEqual(career["verified_open_count"], 0)
-            self.assertEqual(career["funding_unverified"], 2)
+            # Only the doctoral record requires funding verification; the
+            # research analyst remains outside that doctoral denominator.
+            self.assertEqual(career["funding_applicable_rows"], 1)
+            self.assertEqual(career["funding_unverified"], 1)
             self.assertEqual(career["last_seen_older_than_7d"], 1)
             self.assertEqual(career["deadline_elapsed_not_proof_closed"], 1)
             self.assertEqual(report["integrity_findings"], [])
