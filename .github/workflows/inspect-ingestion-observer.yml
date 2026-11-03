@@ -1,0 +1,42 @@
+name: inspect-independent-ingestion-observer
+
+# Read-only inventory of the *existing* Cloudflare account. This workflow
+# cannot deploy a second Worker, set a secret, or dispatch an ingestion.
+on:
+  push:
+    branches: [main]
+    paths:
+      - cloudflare/ingestion-watchdog/inspect-ingestion-observer.mjs
+      - .github/workflows/inspect-ingestion-observer.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collegeum-ingestion-observer-readonly-inventory
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: >-
+      github.repository == 'AmirrezaFarnamTaheri/Collegeum' &&
+      github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: ${{ vars.COLLEGEUM_SECRET_ENVIRONMENT }}
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Inspect existing Worker name, schedule and secret binding only
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CF_TOKEN_PRIMARY: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
+          CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
+        run: node cloudflare/ingestion-watchdog/inspect-ingestion-observer.mjs
