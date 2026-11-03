@@ -11,11 +11,15 @@ It never directly publishes vacancies or contacts subscribers.
 [disabled bootstrap #41630610227](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/41630610227)
 successfully created `collegeum-ingestion-observer` in the configured Cloudflare
 account with Cron `37 */2 * * *` and explicit `RECOVERY_ENABLED=false`.
-A separate read-only
-[Cloudflare inventory attempt 2](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/41629216487)
-verified script identity, Cron and scheduled handler, but reported the
-`GITHUB_TOKEN` Worker secret **missing**. That inspection deliberately failed
-its activation gate. Do not claim recovery can dispatch or has been exercised.
+An earlier read-only
+[Cloudflare inventory #41629216487](https://github.com/AmirrezaFarnamTaheri/Collegeum/actions/runs/41629216487)
+ran **before** deployment and reported `presence=not-observed`; it could
+not verify a deployed Cron or any secret binding. The subsequent disabled
+bootstrap independently verified the Worker identity, Cron, scheduled handler
+and `RECOVERY_ENABLED=false` binding, but it **did not install** a GitHub
+credential. The post-deployment `GITHUB_TOKEN` secret binding has not yet
+been independently verified. Do not claim recovery can dispatch or has
+been exercised.
 
 The one-time bootstrap workflow is now **manual-only** and refuses to overwrite
 an existing observer. Do not attempt another initial deployment on this account.
