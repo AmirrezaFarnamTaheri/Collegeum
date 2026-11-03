@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import unicodedata
 from collections import Counter
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -56,6 +58,39 @@ def _safe_link(value: Any) -> bool:
                 and not parsed.username and not parsed.password and parsed.port != 0)
     except ValueError:
         return False
+
+
+def _review_key(value: Any) -> str:
+    if not isinstance(value, str):
+        return ""
+    value = unicodedata.normalize("NFKD", value).casefold()
+    ascii_text = "".join(c for c in value if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", " ", ascii_text).strip()
+
+
+def _possible_crossposts(public: list[dict[str, Any]]) -> list[list[int]]:
+    """Conservative *review candidates*, never automatic vacancy identity merges.
+
+    Same normalized title and employer can still describe independent
+    requisitions (e.g. MIT Sloan faculty posts); employer ATS identities are
+    needed before hiding anything. Return numeric public IDs, not URLs.
+    """
+    groups: dict[tuple[str, str], list[tuple[int, str]]] = {}
+    for row in public:
+        if type(row.get("id")) is not int or not _safe_link(row.get("apply_url")):
+            continue
+        institution = _review_key(row.get("institution"))
+        title = _review_key(row.get("title"))
+        if not institution or not title:
+            continue
+        groups.setdefault((institution, title), []).append(
+            (row["id"], str(row["apply_url"]))
+        )
+    candidates = []
+    for entries in groups.values():
+        if len(entries) > 1 and len({url for _, url in entries}) > 1:
+            candidates.append(sorted({identifier for identifier, _ in entries}))
+    return sorted(candidates, key=lambda ids: (-len(ids), ids))
 
 
 def _counts(items: Any) -> dict[str, int]:
@@ -216,6 +251,9 @@ def audit(root: Path, *, now: datetime | None = None,
     bad_public_links = sum(not _safe_link(x.get("apply_url")) for x in public)
     if bad_public_links:
         findings.add("public:unsafe-application-urls")
+    crossposts = _possible_crossposts(public)
+    if crossposts:
+        observations.add("public:crosspost-review-candidates-not-proven-duplicates")
 
     return {
         "schema_version": 1,
@@ -256,6 +294,9 @@ def audit(root: Path, *, now: datetime | None = None,
         "public_dashboard": {
             "visible_listings": len(public), "roles": dict(sorted(roles.items())),
             "visa_unknown": unknown_visas, "deadlines_missing": missing_public_deadlines,
+            "possible_crosspost_groups": len(crossposts),
+            "possible_crosspost_rows": sum(len(ids) for ids in crossposts),
+            "possible_crosspost_id_groups": crossposts[:25],
         },
         "integrity_findings": sorted(findings),
         "operational_observations": sorted(observations),
@@ -265,6 +306,7 @@ def audit(root: Path, *, now: datetime | None = None,
             "absence of a deadline is unknown; elapsed deadline is not proof of closure",
             "rotating life source observations were not checked in the same run",
             "historical records and publication receipts were not modified",
+            "same-title/employer clusters are review candidates, not confirmed duplicates",
         ],
     }
 
