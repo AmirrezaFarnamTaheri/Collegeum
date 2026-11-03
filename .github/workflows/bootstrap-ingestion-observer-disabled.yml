@@ -48,6 +48,12 @@ jobs:
           CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
           CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
         run: node deploy-token.mjs
+      - name: Audit observer absence across every credential-accessible Cloudflare account
+        env:
+          CF_TOKEN_PRIMARY: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN_SECONDARY: ${{ secrets.CLOUDFLARE_API_TOKEN_2 }}
+          CF_TOKEN_TERTIARY: ${{ secrets.CLOUDFLARE_API_TOKEN_3 }}
+        run: node ../ingestion-watchdog/bootstrap-check.mjs inventory
       - name: Require confirmed absence and deploy with recovery strictly disabled
         run: |
           set -euo pipefail
