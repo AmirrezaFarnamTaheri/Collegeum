@@ -547,19 +547,236 @@ test('owner home groups subscriptions, matches and a separate tracking section',
   assert.ok(menuActions.includes('view|menu|0'));
 });
 
-test('owner listing commands filter saved roles and use the saved page size', async () => {
+test('positions, jobs and list show the same unified My matches as /matches', async () => {
+  const instance = bot();
+  const now = new Date().toISOString();
+  const member = {topics: {predoc: now, data_analyst: now}, scopes: {remote: now},
+    paused: false, language: 'en', delivery_mode: 'instant', daily_limit: 6,
+    quiet_hours: false, timezone: 'UTC'};
+  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}],
+    subscriber_protocol: 1, subscribers: {}}));
+  await instance.ctx.storage.put('career_listings', [{
+    category: 'data_analyst', scope: 'remote', title: 'Remote research analyst',
+    url: 'https://example.org/career', employer: 'Research Lab',
+    first_seen_at: now, availability: 'unknown',
+  }]);
+  for (const id of [42, 999]) {
+    await instance.ctx.storage.put(`subscriber:${id}`, member);
+    await instance.ctx.storage.put(`match_window:${id}`, 60);
+    await instance.ctx.storage.put(`page_size:${id}`, 6);
+  }
+  const messages = [];
+  for (const [i, command] of ['/positions', '/jobs', '/list', '/matches'].entries()) {
+    const result = await instance.fetch(post('/webhook', {update_id: 9500 + i,
+      message: {chat: {id: 42, type: 'private'}, from: {id: 42}, text: command}}));
+    assert.equal(result.status, 200);
+    const sent = instance.calls.filter(call => call.method === 'sendMessage').at(-1)?.payload;
+    assert.ok(sent, command);
+    messages.push(sent);
+    assert.match(sent.text, /My matches/i);
+    assert.match(sent.text, /Predoc in Economics/);
+    assert.match(sent.text, /Remote research analyst/);
+    assert.match(sent.text, /last 60 days/);
+    assert.match(sent.text, /not a verified open or funded vacancy/);
+    assert.doesNotMatch(sent.text, /My academic matches/);
+    assert.ok(sent.reply_markup.inline_keyboard.flat().some(b =>
+      b.callback_data === 'sub:p:latest:60:0'));
+    assert.ok(sent.reply_markup.inline_keyboard.flat().some(b => b.text === 'Page size: 6'));
+  }
+  for (const sent of messages.slice(1)) {
+    assert.equal(sent.text, messages[0].text);
+    assert.deepEqual(sent.reply_markup, messages[0].reply_markup);
+  }
+  // Non-owner private subscriptions also reuse My matches, never an owner-only tracker.
+  const publicResult = await instance.fetch(post('/webhook', {update_id: 9504,
+    message: {chat: {id: 999, type: 'private'}, from: {id: 999}, text: '/positions'}}));
+  assert.equal(publicResult.status, 200);
+  const publicView = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  assert.match(publicView.text, /My matches/);
+  assert.doesNotMatch(publicView.text, /My academic matches/);
+  assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+  assert.equal(await instance.ctx.storage.get('page_size:42'), 6);
+  assert.equal(await instance.ctx.storage.get('mark:' + record.url_hash), undefined);
+});
+
+
+test('unified My matches preserves academic detail and tracking actions without career receipts', async () => {
+  const instance = bot();
+  const now = new Date().toISOString();
+  const member = {topics: {predoc: now, data_analyst: now}, scopes: {remote: now},
+    paused: false, language: 'en', delivery_mode: 'instant', daily_limit: 6,
+    quiet_hours: false, timezone: 'UTC'};
+  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}],
+    subscriber_protocol: 1, subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', member);
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.ctx.storage.put('page_size:42', 12);
+  await instance.ctx.storage.put('career_listings', [{
+    category: 'data_analyst', scope: 'remote', title: 'Career is not tracked',
+    url: 'https://example.org/career', employer: 'Data Research Group',
+    first_seen_at: now, availability: 'unknown',
+  }]);
+  await instance.fetch(post('/webhook', {update_id: 9600,
+    message: {chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/positions'}}));
+  const content = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  const actions = content.reply_markup.inline_keyboard.flat();
+  const academicDetail = actions.find(b =>
+    b.callback_data === 'detail|' + record.url_hash.slice(0, 16) + '|60|0');
+  assert.ok(academicDetail, 'academic matches retain per-listing details and tracking');
+  assert.match(academicDetail.text, /Details|track/i);
+  assert.equal(actions.filter(b => b.callback_data?.startsWith('detail|')).length, 1,
+    'career matches must not imply supported save/application receipts');
+  assert.match(content.text, /Career is not tracked/);
+  assert.match(content.text, /not a verified open or funded vacancy/);
+  await instance.fetch(post('/webhook', {update_id: 9601,
+    callback_query: {id: 'detail', from: {id: 42}, message: {chat: {id: 42, type: 'private'},
+      message_id: 900}, data: academicDetail.callback_data}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.match(detail.text, /Current availability is not independently verified/);
+  const detailActions = detail.reply_markup.inline_keyboard.flat();
+  const save = detailActions.find(b => b.callback_data ===
+    'fb|v|' + record.url_hash.slice(0, 16) + '|60|0');
+  assert.ok(save, 'Save remains available in unified detail');
+  assert.ok(detailActions.some(b => b.callback_data ===
+    'fb|x|' + record.url_hash.slice(0, 16) + '|60|0'));
+  assert.ok(detailActions.some(b => b.callback_data ===
+    'fb|a|' + record.url_hash.slice(0, 16) + '|60|0'));
+  assert.ok(detailActions.some(b => b.callback_data === 'sub:p:latest:60:0'));
+  const markUpdate = {update_id: 9602, callback_query: {id: 'save', from: {id: 42},
+    message: {chat: {id: 42, type: 'private'}, message_id: 900},
+    data: save.callback_data}};
+  await instance.fetch(post('/webhook', markUpdate));
+  await instance.fetch(post('/webhook', markUpdate));
+  assert.equal((await instance.dataset()).marks.get(record.url_hash), 'valid',
+    'replayed webhook cannot toggle a saved mark twice');
+  const markedDetail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(markedDetail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:60:0'));
+  assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+  assert.equal(await instance.ctx.storage.get('page_size:42'), 12);
+});
+
+
+test('academic details opened from New return to New without losing tracking actions', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}]}));
+  await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date().toISOString()}, scopes: {}});
+  const fresh = await instance.render('new', 0, '', 42);
+  const action = fresh.reply_markup.inline_keyboard.flat().find(b =>
+    b.callback_data === 'detail|' + record.url_hash.slice(0, 16) + '|new|0');
+  assert.ok(action);
+  await instance.fetch(post('/webhook', {update_id: 9610, callback_query: {
+    id: 'detail-from-new', from: {id: 42}, message: {chat: {id: 42, type: 'private'},
+      message_id: 900}, data: action.callback_data}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'view|new|0'));
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'fb|v|' + record.url_hash.slice(0, 16) + '|new|0'));
+});
+
+
+test('twelve-item unified My matches keeps inline controls and Telegram message limits', async () => {
+  const instance = bot();
+  const now = new Date().toISOString();
+  const member = {topics: {predoc: now}, scopes: {}, language: 'en'};
+  const listings = Array.from({length: 12}, (_, i) => ({
+    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(64, '0'),
+    title: 'Research Assistant ' + 'A'.repeat(125),
+    institution: 'University ' + 'B'.repeat(100),
+    country: 'United Kingdom', apply_url: `https://example.org/jobs/${i}/${'C'.repeat(35)}`,
+  }));
+  await instance.fetch(post('/sync', {...snapshot, listings, subscriber_protocol: 1,
+    subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', member);
+  await instance.ctx.storage.put('page_size:42', 12);
+  await instance.fetch(post('/webhook', {update_id: 9650, message: {
+    chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/positions',
+  }}));
+  const view = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  assert.match(view.text, /My matches/);
+  assert.equal((view.text.match(/<a href=/g) || []).length, 12);
+  assert.ok(view.text.length <= 4096, `unified page has ${view.text.length} characters`);
+  const rows = view.reply_markup.inline_keyboard;
+  assert.equal(rows.flat().filter(b => b.callback_data?.startsWith('detail|')).length, 12);
+  assert.ok(rows.every(r => r.length <= 3));
+  assert.ok(rows.flat().every(b => !b.callback_data || Buffer.byteLength(b.callback_data) <= 64));
+  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:display'));
+  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:history'));
+  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
+  assert.ok(rows.flat().some(b => b.callback_data === 'view|tracking|0'));
+});
+
+
+test('Persian My matches localizes academic details and preserves callback identity', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}],
+    subscriber_protocol: 1, subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', {
+    topics: {predoc: new Date().toISOString()}, scopes: {}, language: 'fa',
+  });
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.fetch(post('/webhook', {update_id: 9651, message: {
+    chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/positions',
+  }}));
+  const view = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  const button = view.reply_markup.inline_keyboard.flat().find(b =>
+    b.callback_data === 'detail|' + record.url_hash.slice(0, 16) + '|60|0');
+  assert.ok(button);
+  assert.match(button.text, /جزئیات/);
+  assert.match(view.text, /تأییدشده نیست/);
+});
+
+
+test('deadline-first academic detail keeps the sort and preview history on return', async () => {
+  const instance = bot();
+  const today = new Date(), later = new Date(today.getTime() + 30 * 86400000).toISOString();
+  const soon = new Date(today.getTime() + 2 * 86400000).toISOString();
+  const records = [{...record, kind: 'predoc', deadline: later}, {...record,
+    url_hash: 'b'.repeat(64), kind: 'predoc', title: 'Closer deadline', deadline: soon}];
+  await instance.fetch(post('/sync', {...snapshot, listings: records,
+    subscriber_protocol: 1, subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', {topics: {predoc: today.toISOString()},
+    scopes: {}, language: 'en'});
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.fetch(post('/webhook', {update_id: 9720, callback_query: {
+    id: 'order-first', from: {id: 42},
+    message: {chat: {id: 42, type: 'private'}, message_id: 900},
+    data: 'sub:p:latest:60:0:d'}}));
+  const list = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(list.text.indexOf('Closer deadline') < list.text.indexOf('Predoc in Economics'));
+  assert.match(list.text, /Deadline first/);
+  const control = list.reply_markup.inline_keyboard.flat().find(b =>
+    b.callback_data === 'detail|' + 'b'.repeat(16) + '|60|0d');
+  assert.ok(control);
+  await instance.fetch(post('/webhook', {update_id: 9721, callback_query: {
+    id: 'order-detail', from: {id: 42},
+    message: {chat: {id: 42, type: 'private'}, message_id: 900},
+    data: control.callback_data}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:60:0:d'));
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'fb|v|' + 'b'.repeat(16) + '|60|0d'));
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+});
+
+
+test('academic New view still filters saved roles and respects the saved page size', async () => {
   const instance = bot();
   const records = Array.from({length: 8}, (_, i) => ({...record,
     kind: i === 7 ? 'phd' : 'predoc', title: `Role ${i}`, url_hash: String(i).repeat(64)}));
   await instance.fetch(post('/sync', {...snapshot, listings: records}));
-  assert.match((await instance.render('positions', 0, '', 42)).text, /No matches/);
+  assert.match((await instance.render('new', 0, '', 42)).text, /No matches/);
   await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date().toISOString()}, scopes: {}});
   await instance.ctx.storage.put('page_size:42', 6);
-  const first = await instance.render('positions', 0, '', 42);
-  assert.match(first.text, /My academic matches · 7/);
+  const first = await instance.render('new', 0, '', 42);
+  assert.match(first.text, /New academic matches · 7/);
   assert.doesNotMatch(first.text, /Role 7/);
   assert.equal((first.text.match(/Open advert/g) || []).length, 6);
-  assert.match((await instance.render('positions', 1, '', 42)).text, /Page 2 of 2/);
+  assert.match((await instance.render('new', 1, '', 42)).text, /Page 2 of 2/);
 });
 
 test('owner home preserves the match-history preference shared with subscriber settings', async () => {
@@ -575,7 +792,7 @@ test('owner home preserves the match-history preference shared with subscriber s
     button => button.callback_data === 'view|tracking|0'));
 });
 
-test('owner positions and My matches both keep a date-only deadline visible through today', async () => {
+test('academic Closing and unified My matches retain a deadline through its date', async () => {
   const instance = bot();
   const member = {topics: {predoc: new Date().toISOString()}, scopes: {},
     paused: false, language: 'en', delivery_mode: 'instant',
@@ -585,9 +802,17 @@ test('owner positions and My matches both keep a date-only deadline visible thro
   const listing = {...record, kind: 'predoc', deadline: today};
   await instance.fetch(post('/sync', {...snapshot, listings: [listing],
     generated_at: new Date().toISOString()}));
-  const ownerView = await instance.render('positions', 0, '', 42);
+  const ownerView = await instance.render('new', 0, '', 42);
   assert.match(ownerView.text, /Predoc in Economics/);
   assert.match(ownerView.text, new RegExp(today));
+  await instance.ctx.storage.put('subscribers_initialized', true);
+  await instance.fetch(post('/webhook', {update_id: 9298,
+    message: {chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/positions'}}));
+  const unified = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  assert.ok(unified);
+  assert.match(unified.text, /My matches/);
+  assert.match(unified.text, /Predoc in Economics/);
+  assert.match(unified.text, new RegExp(today));
 });
 
 test('owner tracking has direct navigation to the unified My matches and Settings', async () => {
@@ -603,7 +828,7 @@ test('owner tracking has direct navigation to the unified My matches and Setting
     button => button.callback_data === 'sub:p:delivery'));
 });
 
-test('owner twelve-row academic pages remain under Telegram message limit', async () => {
+test('academic New twelve-row pages remain under Telegram message limit', async () => {
   const instance = bot();
   const rows = Array.from({length: 12}, (_, i) => ({
     ...record, url_hash: i.toString(16).padStart(64, '0'), kind: 'predoc',
@@ -617,20 +842,20 @@ test('owner twelve-row academic pages remain under Telegram message limit', asyn
     topics: {predoc: new Date().toISOString()}, scopes: {},
   });
   await instance.ctx.storage.put('page_size:42', 12);
-  const view = await instance.render('positions', 0, '', 42);
+  const view = await instance.render('new', 0, '', 42);
   assert.equal((view.text.match(/Open advert/g) || []).length, 12);
   assert.ok(view.text.length <= 4096, `owner page has ${view.text.length} characters`);
 });
 
 
-test('owner snapshot views do not imply independently confirmed open vacancies', async () => {
+test('academic and detail views do not imply independently confirmed open vacancies', async () => {
   const instance = bot();
   const listing = {...record, kind: 'predoc', deadline: null};
   await instance.fetch(post('/sync', {...snapshot, listings: [listing]}));
   await instance.ctx.storage.put('subscriber:42', {
     topics: {predoc: new Date().toISOString()}, scopes: {},
   });
-  const view = await instance.render('positions', 0, '', 42);
+  const view = await instance.render('new', 0, '', 42);
   assert.match(view.text, /not independently verified/i);
   assert.doesNotMatch(view.text, /all open positions/i);
   await instance.fetch(post('/webhook', {update_id: 9400,
@@ -641,5 +866,34 @@ test('owner snapshot views do not imply independently confirmed open vacancies',
   assert.ok(detail);
   assert.match(detail.text, /not independently verified/i);
   assert.ok(detail.reply_markup.inline_keyboard.flat().some(
-    b => b.text === '← Browse listings' && b.callback_data === 'view|positions|0'));
+    b => b.text === '← My matches' && b.callback_data === 'sub:p:latest'));
+});
+
+test('legacy owner positions pagination callback opens unified My matches without data writes', async () => {
+  const instance = bot();
+  const now = new Date().toISOString();
+  const member = {topics: {predoc: now}, scopes: {}, language: 'en'};
+  const listings = Array.from({length: 52}, (_, i) => ({...record, kind: 'predoc',
+    url_hash: i.toString(16).padStart(64, '0'), title: `Research role ${i}`}));
+  await instance.fetch(post('/sync', {...snapshot, listings, subscriber_protocol: 1,
+    subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', member);
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.ctx.storage.put('page_size:42', 4);
+  const result = await instance.fetch(post('/webhook', {update_id: 9505,
+    callback_query: {id: 'old-page', from: {id: 42},
+      message: {chat: {id: 42, type: 'private'}, message_id: 900},
+      data: 'view|positions|11'}}));
+  assert.equal(result.status, 200);
+  const view = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(view);
+  assert.match(view.text, /My matches/);
+  assert.match(view.text, /Page 12 of 13/);
+  assert.match(view.text, /last 60 days/);
+  assert.match(view.text, /not a verified open or funded vacancy/);
+  assert.ok(instance.calls.some(c => c.method === 'answerCallbackQuery'));
+  assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+  assert.equal(await instance.ctx.storage.get('page_size:42'), 4);
+  assert.equal((await instance.dataset()).marks.size, 0);
 });

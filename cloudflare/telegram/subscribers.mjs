@@ -12,26 +12,28 @@ const LOOKBACK_DAYS = [7, 14, 30, 60, 90];
 const DEFAULT_LOOKBACK = 14;
 const selectedWindow = value => LOOKBACK_DAYS.includes(value) ? value : DEFAULT_LOOKBACK;
 const latestSelection = (raw, preferred = DEFAULT_LOOKBACK) => {
-  if (raw === 'sub:p:latest') return {days: selectedWindow(preferred), page: 0};
+  if (raw === 'sub:p:latest') return {days: selectedWindow(preferred), page: 0, sort: 'recent'};
   // Existing Telegram messages contain page-only callbacks; keep them usable.
+  // Accommodate older academic-list page numbers when routing into My matches.
   const old = /^sub:p:latest:([0-9]{1,3})$/.exec(raw);
-  if (old && Number(old[1]) < 10) return {days: selectedWindow(preferred), page: Number(old[1])};
-  const selected = /^sub:p:latest:(7|14|30|60|90):([0-9]{1,3})$/.exec(raw);
+  if (old && Number(old[1]) < 500) return {days: selectedWindow(preferred), page: Number(old[1]), sort: 'recent'};
+  const selected = /^sub:p:latest:(7|14|30|60|90):([0-9]{1,3})(:d)?$/.exec(raw);
   if (!selected || Number(selected[2]) >= 500) return null;
-  return {days: Number(selected[1]), page: Number(selected[2])};
+  return {days: Number(selected[1]), page: Number(selected[2]),
+    sort: selected[3] ? 'deadline' : 'recent'};
 };
 const lookbackLabel = (days, fa) => fa ? ({
   7: '۷ روز اخیر', 14: '۱۴ روز اخیر', 30: '۳۰ روز اخیر',
   60: '۶۰ روز اخیر', 90: '۹۰ روز اخیر',
 })[days] : `last ${days} days`;
-const lookbackChoices = (days, fa, setting = false) => [[7, 14], [30, 60], [90]].map(row =>
+const lookbackChoices = (days, fa, setting = false, sort = 'recent') => [[7, 14], [30, 60], [90]].map(row =>
   row.map(value => button(
     `${days === value ? '☑' : '☐'} ${fa ? ({
       7: '۷ روز', 14: '۱۴ روز', 30: '۱ ماه', 60: '۲ ماه', 90: '۳ ماه',
     })[value] : ({
       7: '7 days', 14: '14 days', 30: '1 month', 60: '2 months', 90: '3 months',
     })[value]}`,
-    setting ? `sub:w:${value}` : `sub:p:latest:${value}:0`,
+    setting ? `sub:w:${value}` : `sub:p:latest:${value}:0${sort === 'deadline' ? ':d' : ''}`, 
   )));
 export const matchesPreferences = (row, member) => {
   if (!member || !((row.category || row.kind) in member.topics)) return false;
@@ -406,7 +408,8 @@ const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'subscription
   academic: 'academic', regions: 'academic_regions', academicregions: 'academic_regions',
   careers: 'careers', markets: 'careers', lifesciences: 'life_sciences',
   delivery: 'delivery', guide: 'help', privacy: 'privacy', stop: 'stop', delete: 'stop',
-  latest: 'latest', matches: 'latest', subscriptions: 'subscriptions',
+  latest: 'latest', matches: 'latest', positions: 'latest', jobs: 'latest', list: 'latest',
+  subscriptions: 'subscriptions',
   history: 'history', display: 'display', notifications: 'delivery',
   sources: 'sources', help: 'help', more: 'more'};
 export const subscriberCommand = command => (Object.hasOwn(COMMAND_PAGES, command) &&
@@ -512,7 +515,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
   if (page === 'latest') {
     const owner = (bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id);
     const {rows, marks} = await bot.dataset(owner);
-    const now = Date.now(), days = selection.days;
+    const now = Date.now(), days = selection.days, sort = selection.sort;
     // Python's public-record export historically omitted published_at.
     // The immutable first_seen_at is the consistent discovery timestamp for
     // academic and career history windows; last_seen_at is not a new listing.
@@ -529,8 +532,11 @@ export async function subscriberUpdate(bot, message, callback, key) {
         recentlyDiscovered(r.first_seen_at, days, now) && safeApplicationUrl(r.url))
       .map(r => ({...r, apply_url: r.url, institution: r.employer,
         published_at: r.first_seen_at}));
+    const discovered = r => Date.parse(r.first_seen_at || r.published_at) || 0;
+    const due = r => Number.isFinite(Date.parse(r.deadline)) ? Date.parse(r.deadline) : Infinity;
     const matches = [...academic, ...careers].sort((a, b) =>
-      Date.parse(b.first_seen_at || b.published_at) - Date.parse(a.first_seen_at || a.published_at));
+      sort === 'deadline' ? due(a) - due(b) || discovered(b) - discovered(a)
+        : discovered(b) - discovered(a));
     const fa = member?.language === 'fa';
     const totalPages = Math.max(1, Math.ceil(matches.length / size));
     const current = Math.min(totalPages - 1, selection.page);
@@ -548,7 +554,20 @@ export async function subscriberUpdate(bot, message, callback, key) {
     const limits = size === 12
       ? {title: 65, institution: 50, country: 24}
       : {title: 110, institution: 90, country: 50};
-    const entries = matches.slice(current * size, current * size + size).map((r, index) =>
+    const visible = matches.slice(current * size, current * size + size);
+    const details = [];
+    if (owner) {
+      // The unified view keeps the academic detail/Save/Hide/Applied tools.
+      // Career records have no feedback receipts, so never offer fake tracking.
+      const academicControls = visible.flatMap((r, index) =>
+        !r.category && /^[a-f0-9]{64}$/.test(String(r.url_hash || ''))
+          ? [button(`${current * size + index + 1} · ${fa ? 'جزئیات و پیگیری' : 'Details & track'}`,
+              `detail|${r.url_hash.slice(0, 16)}|${days}|${current}${sort === 'deadline' ? 'd' : ''}`)]
+          : []);
+      for (let i = 0; i < academicControls.length; i += 2)
+        details.push(academicControls.slice(i, i + 2));
+    }
+    const entries = visible.map((r, index) =>
       `${current * size + index + 1}. ${r.category === 'life_sciences_phd' ? '🧬' : r.category ? '💼' : '🎓'} <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, limits.title))}</a>\n` +
       '🏛 ' + escape(String(r.institution || 'Employer unknown').slice(0, limits.institution)) +
       (r.country ? ` · ${escape(String(r.country).slice(0, limits.country))}` : '') +
@@ -569,19 +588,29 @@ export async function subscriberUpdate(bot, message, callback, key) {
           'No matches in this window. Try 3 months or broaden your selected roles.');
     const header = (fa ? '🔎 <b>فرصت‌های من</b>' : '🔎 <b>My matches</b>') + '\n' +
       (fa ? `<b>${matches.length} فرصت</b> · ${lookbackLabel(days, fa)}`
-        : `<b>${matches.length} positions</b> · ${lookbackLabel(days, fa)}`) + '\n' +
-      (fa ? `صفحه ${current + 1} از ${totalPages}` : `Page ${current + 1} of ${totalPages}`) + '\n' +
+        : `<b>${matches.length} matching listings</b> · ${lookbackLabel(days, fa)}`) + '\n' +
+      (fa ? `صفحه ${current + 1} از ${totalPages}` : `Page ${current + 1} of ${totalPages}`) +
+      (sort === 'deadline' ? (fa ? ' · مهلت نزدیک‌تر' : ' · Deadline first') : '') + '\n' +
       (fa ? `📦 فهرست ذخیره: ${rows.length} دانشگاهی · ${generalCareerCount} شغل عمومی · ${lifePhdCount} فرصت دکتری علوم زیستی`
         : `📦 Cached inventory: ${rows.length} academic · ${generalCareerCount} career jobs · ${lifePhdCount} Life Sciences PhDs`);
     const footer = fa ? 'ℹ️ مشاهده آگهی به معنی باز بودن یا تأمین مالی تأییدشده نیست.' :
       'ℹ️ A discovered listing is not a verified open or funded vacancy.';
-    content = {text: [header, snapshotWarning, entries.join('\n\n') || empty, footer]
+    const trackingHint = details.length
+      ? (fa ? '🎓 گزینه‌های شماره‌دار جزئیات، ذخیره، پنهان‌کردن و ثبت درخواست را فقط برای موارد دانشگاهی نشان می‌دهند.'
+        : '🎓 Numbered Details buttons offer Save, Hide and Applied for academic listings. Career listings are not tracked.')
+      : '';
+    content = {text: [header, snapshotWarning, entries.join('\n\n') || empty, trackingHint, footer]
       .filter(Boolean).join('\n\n'),
       reply_markup: {inline_keyboard: [
-        ...lookbackChoices(days, fa),
-        ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${days}:${current - 1}`)] : []),
-          button(`${current + 1}/${totalPages}`, `sub:p:latest:${days}:${current}`),
-          ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${days}:${current + 1}`)] : [])]] : []),
+        ...details,
+        [button(`${sort === 'recent' ? '☑' : '☐'} ${fa ? 'جدیدترین' : 'Newest'}`,
+          `sub:p:latest:${days}:0`),
+          button(`${sort === 'deadline' ? '☑' : '☐'} ${fa ? 'مهلت نزدیک‌تر' : 'Deadline first'}`,
+            `sub:p:latest:${days}:0:d`)],
+        ...lookbackChoices(days, fa, false, sort),
+        ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${days}:${current - 1}${sort === 'deadline' ? ':d' : ''}`)] : []),
+          button(`${current + 1}/${totalPages}`, `sub:p:latest:${days}:${current}${sort === 'deadline' ? ':d' : ''}`),
+          ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${days}:${current + 1}${sort === 'deadline' ? ':d' : ''}`)] : [])]] : []),
         [button(fa ? 'تنظیمات بازه زمانی' : 'Save preferred range', 'sub:p:history'),
           button(fa ? 'تنظیمات نمایش' : `Page size: ${size}`, 'sub:p:display')],
         [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),

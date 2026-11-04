@@ -149,3 +149,60 @@ test('Latest lookback survives pagination and refuses unapproved windows', async
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:999:0'}, 'archive:bad');
   assert.doesNotMatch(sent.at(-1).text, /Latest matches/);
 });
+
+
+test('My matches preserves newest and soonest deadline sorting across ranges and pages', async () => {
+  const now = Date.now();
+  const iso = days => new Date(now + days * 86400000).toISOString();
+  const rows = [
+    {kind: 'predoc', url_hash: 'a'.repeat(64), title: 'Newest discovered',
+      institution: 'University', apply_url: 'https://example.org/new',
+      first_seen_at: iso(0), deadline: iso(30)},
+    {kind: 'predoc', url_hash: 'b'.repeat(64), title: 'Middle deadline',
+      institution: 'University', apply_url: 'https://example.org/middle',
+      first_seen_at: iso(-1), deadline: iso(10)},
+    {kind: 'predoc', url_hash: 'c'.repeat(64), title: 'Third deadline',
+      institution: 'University', apply_url: 'https://example.org/third',
+      first_seen_at: iso(-2), deadline: iso(25)},
+    {kind: 'predoc', url_hash: 'd'.repeat(64), title: 'Later deadline',
+      institution: 'University', apply_url: 'https://example.org/later',
+      first_seen_at: iso(-3), deadline: iso(35)},
+    {kind: 'predoc', url_hash: 'e'.repeat(64), title: 'Soonest deadline',
+      institution: 'University', apply_url: 'https://example.org/soon',
+      first_seen_at: iso(-4), deadline: iso(2)},
+  ];
+  const values = new Map([['subscribers_initialized', true], ['subscriber:42', member],
+    ['page_size:42', 4], ['match_window:42', 60]]);
+  const storage = {get: async k => structuredClone(values.get(k)),
+    put: async (k, v) => values.set(k, structuredClone(v)),
+    delete: async k => values.delete(k), transaction: async fn => fn(storage)};
+  const sent = [];
+  const bot = {ctx: {storage}, env: {OWNER_IDS: ''}, api: async () => {},
+    deliver: async (_key, _method, data) => sent.push(data),
+    dataset: async () => ({rows, marks: new Map()})};
+  const msg = {chat: {id: 42, type: 'private'}, message_id: 999};
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest:60:0'}, 'recent');
+  let view = sent.at(-1);
+  assert.ok(view.text.indexOf('Newest discovered') < view.text.indexOf('Middle deadline'));
+  assert.doesNotMatch(view.text, /Soonest deadline/);
+  assert.ok(view.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:60:0:d'));
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest:60:0:d'}, 'deadline');
+  view = sent.at(-1);
+  assert.ok(view.text.indexOf('Soonest deadline') < view.text.indexOf('Middle deadline'));
+  assert.ok(view.text.indexOf('Middle deadline') < view.text.indexOf('Newest discovered'));
+  assert.doesNotMatch(view.text, /Later deadline/);
+  const actions = view.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:1:d'));
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:30:0:d'));
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:0'));
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest:60:1:d'}, 'deadline:next');
+  view = sent.at(-1);
+  assert.match(view.text, /Page 2 of 2/);
+  assert.match(view.text, /Later deadline/);
+  assert.doesNotMatch(view.text, /Soonest deadline/);
+  assert.ok(view.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:60:0:d'));
+  assert.equal(values.get('match_window:42'), 60);
+  assert.equal(values.get('page_size:42'), 4);
+});
