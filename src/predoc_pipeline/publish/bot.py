@@ -241,6 +241,57 @@ class _Bot:
         return self.client.call(method, payload, sleep=self.sleep)
 
 
+def _refresh_commands(
+    settings: Settings, bot: _Bot, chat_state: dict[str, Any], owners: set[int],
+) -> None:
+    """Update Telegram picker metadata without polling, sending, or changing state receipts."""
+    if chat_state.get("commands_version") == COMMANDS_VERSION:
+        return
+    try:
+        command_list = [
+            {"command": c, "description": d} for c, d in COMMANDS
+        ]
+        bot.call("setMyCommands", {"commands": command_list})
+        # Persian labels for users whose Telegram locale is Persian.
+        bot.call("setMyCommands", {
+            "scope": {"type": "all_private_chats"},
+            "language_code": "fa",
+            "commands": [
+                {"command": c, "description": FA_COMMAND_DESCRIPTIONS[c]}
+                for c, _ in COMMANDS
+            ],
+        })
+        raw_admin = settings.telegram_admin_chat_id.strip()
+        admin_chat = (
+            int(raw_admin) if raw_admin.isascii()
+            and raw_admin.isdecimal() and int(raw_admin) > 0
+            else None
+        )
+        for chat_id in sorted(owners):
+            scoped = [
+                *command_list,
+                *[
+                    {"command": c, "description": desc}
+                    for c, desc in OWNER_COMMANDS
+                ],
+            ]
+            if chat_id == admin_chat:
+                scoped.extend([
+                    {"command": ADMIN_COMMAND[0], "description": ADMIN_COMMAND[1]},
+                    {
+                        "command": RECONCILE_COMMAND[0],
+                        "description": RECONCILE_COMMAND[1],
+                    },
+                ])
+            bot.call("setMyCommands", {
+                "scope": {"type": "chat", "chat_id": chat_id},
+                "commands": scoped,
+            })
+        chat_state["commands_version"] = COMMANDS_VERSION
+    except TelegramError as exc:
+        log.warning("set_commands_failed", error=str(exc))
+
+
 def telegram_sync(
     settings: Settings,
     *,
@@ -255,7 +306,18 @@ def telegram_sync(
     if settings.telegram_webhook_enabled:
         from .cloud import sync_cloud
 
-        return sync_cloud(settings, http_client=http_client)
+        result = sync_cloud(settings, http_client=http_client)
+        if settings.telegram_bot_token and settings.owner_ids:
+            chat_state = load_chat_state(settings.telegram_state_path)
+            if chat_state.get("commands_version") != COMMANDS_VERSION:
+                tg = TelegramClient(bot_token=settings.telegram_bot_token, client=http_client)
+                try:
+                    _refresh_commands(settings, _Bot(tg, sleep), chat_state, settings.owner_ids)
+                    if chat_state.get("commands_version") == COMMANDS_VERSION:
+                        save_state(settings.telegram_state_path, chat_state)
+                finally:
+                    tg.close()
+        return result
     tg_prefs = load_preferences(settings.preferences_config).telegram
     page_size = max(1, page_size or tg_prefs.list_page_size)
     max_items = max(1, max_items or tg_prefs.list_max)
@@ -279,50 +341,7 @@ def telegram_sync(
         tg.close()
         raise
     try:
-        if chat_state.get("commands_version") != COMMANDS_VERSION:
-            try:
-                command_list = [
-                    {"command": c, "description": d} for c, d in COMMANDS
-                ]
-                bot.call("setMyCommands", {"commands": command_list})
-                # Persian labels for users whose Telegram locale is Persian.
-                bot.call("setMyCommands", {
-                    "scope": {"type": "all_private_chats"},
-                    "language_code": "fa",
-                    "commands": [
-                        {"command": c, "description": FA_COMMAND_DESCRIPTIONS[c]}
-                        for c, _ in COMMANDS
-                    ],
-                })
-                raw_admin = settings.telegram_admin_chat_id.strip()
-                admin_chat = (
-                    int(raw_admin) if raw_admin.isascii()
-                    and raw_admin.isdecimal() and int(raw_admin) > 0
-                    else None
-                )
-                for chat_id in sorted(owners):
-                    scoped = [
-                        *command_list,
-                        *[
-                            {"command": c, "description": desc}
-                            for c, desc in OWNER_COMMANDS
-                        ],
-                    ]
-                    if chat_id == admin_chat:
-                        scoped.extend([
-                            {"command": ADMIN_COMMAND[0], "description": ADMIN_COMMAND[1]},
-                            {
-                                "command": RECONCILE_COMMAND[0],
-                                "description": RECONCILE_COMMAND[1],
-                            },
-                        ])
-                    bot.call("setMyCommands", {
-                        "scope": {"type": "chat", "chat_id": chat_id},
-                        "commands": scoped,
-                    })
-                chat_state["commands_version"] = COMMANDS_VERSION
-            except TelegramError as exc:
-                log.warning("set_commands_failed", error=str(exc))
+        _refresh_commands(settings, bot, chat_state, owners)
 
         # Bound interactive processing so a command storm cannot monopolize
         # the ten-minute scheduled sync window. Unprocessed updates keep offset.
