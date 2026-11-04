@@ -678,6 +678,38 @@ test('academic details opened from New return to New without losing tracking act
 });
 
 
+test('twelve-item unified My matches keeps inline controls and Telegram message limits', async () => {
+  const instance = bot();
+  const now = new Date().toISOString();
+  const member = {topics: {predoc: now}, scopes: {}, language: 'en'};
+  const listings = Array.from({length: 12}, (_, i) => ({
+    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(64, '0'),
+    title: 'Research Assistant ' + 'A'.repeat(125),
+    institution: 'University ' + 'B'.repeat(100),
+    country: 'United Kingdom', apply_url: `https://example.org/jobs/${i}/${'C'.repeat(35)}`,
+  }));
+  await instance.fetch(post('/sync', {...snapshot, listings, subscriber_protocol: 1,
+    subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', member);
+  await instance.ctx.storage.put('page_size:42', 12);
+  await instance.fetch(post('/webhook', {update_id: 9650, message: {
+    chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/positions',
+  }}));
+  const view = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  assert.match(view.text, /My matches/);
+  assert.equal((view.text.match(/<a href=/g) || []).length, 12);
+  assert.ok(view.text.length <= 4096, `unified page has ${view.text.length} characters`);
+  const rows = view.reply_markup.inline_keyboard;
+  assert.equal(rows.flat().filter(b => b.callback_data?.startsWith('detail|')).length, 12);
+  assert.ok(rows.every(r => r.length <= 3));
+  assert.ok(rows.flat().every(b => !b.callback_data || Buffer.byteLength(b.callback_data) <= 64));
+  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:display'));
+  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:history'));
+  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
+  assert.ok(rows.flat().some(b => b.callback_data === 'view|tracking|0'));
+});
+
+
 test('academic New view still filters saved roles and respects the saved page size', async () => {
   const instance = bot();
   const records = Array.from({length: 8}, (_, i) => ({...record,
