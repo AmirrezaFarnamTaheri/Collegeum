@@ -601,19 +601,19 @@ test('positions, jobs and list show the same unified My matches as /matches', as
 });
 
 
-test('owner listing commands filter saved roles and use the saved page size', async () => {
+test('academic New view still filters saved roles and respects the saved page size', async () => {
   const instance = bot();
   const records = Array.from({length: 8}, (_, i) => ({...record,
     kind: i === 7 ? 'phd' : 'predoc', title: `Role ${i}`, url_hash: String(i).repeat(64)}));
   await instance.fetch(post('/sync', {...snapshot, listings: records}));
-  assert.match((await instance.render('positions', 0, '', 42)).text, /No matches/);
+  assert.match((await instance.render('new', 0, '', 42)).text, /No matches/);
   await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date().toISOString()}, scopes: {}});
   await instance.ctx.storage.put('page_size:42', 6);
-  const first = await instance.render('positions', 0, '', 42);
-  assert.match(first.text, /My academic matches · 7/);
+  const first = await instance.render('new', 0, '', 42);
+  assert.match(first.text, /New academic matches · 7/);
   assert.doesNotMatch(first.text, /Role 7/);
   assert.equal((first.text.match(/Open advert/g) || []).length, 6);
-  assert.match((await instance.render('positions', 1, '', 42)).text, /Page 2 of 2/);
+  assert.match((await instance.render('new', 1, '', 42)).text, /Page 2 of 2/);
 });
 
 test('owner home preserves the match-history preference shared with subscriber settings', async () => {
@@ -629,7 +629,7 @@ test('owner home preserves the match-history preference shared with subscriber s
     button => button.callback_data === 'view|tracking|0'));
 });
 
-test('owner positions and My matches both keep a date-only deadline visible through today', async () => {
+test('academic Closing and unified My matches retain a deadline through its date', async () => {
   const instance = bot();
   const member = {topics: {predoc: new Date().toISOString()}, scopes: {},
     paused: false, language: 'en', delivery_mode: 'instant',
@@ -639,9 +639,17 @@ test('owner positions and My matches both keep a date-only deadline visible thro
   const listing = {...record, kind: 'predoc', deadline: today};
   await instance.fetch(post('/sync', {...snapshot, listings: [listing],
     generated_at: new Date().toISOString()}));
-  const ownerView = await instance.render('positions', 0, '', 42);
+  const ownerView = await instance.render('new', 0, '', 42);
   assert.match(ownerView.text, /Predoc in Economics/);
   assert.match(ownerView.text, new RegExp(today));
+  await instance.ctx.storage.put('subscribers_initialized', true);
+  await instance.fetch(post('/webhook', {update_id: 9298,
+    message: {chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/positions'}}));
+  const unified = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  assert.ok(unified);
+  assert.match(unified.text, /My matches/);
+  assert.match(unified.text, /Predoc in Economics/);
+  assert.match(unified.text, new RegExp(today));
 });
 
 test('owner tracking has direct navigation to the unified My matches and Settings', async () => {
@@ -657,7 +665,7 @@ test('owner tracking has direct navigation to the unified My matches and Setting
     button => button.callback_data === 'sub:p:delivery'));
 });
 
-test('owner twelve-row academic pages remain under Telegram message limit', async () => {
+test('academic New twelve-row pages remain under Telegram message limit', async () => {
   const instance = bot();
   const rows = Array.from({length: 12}, (_, i) => ({
     ...record, url_hash: i.toString(16).padStart(64, '0'), kind: 'predoc',
@@ -671,20 +679,20 @@ test('owner twelve-row academic pages remain under Telegram message limit', asyn
     topics: {predoc: new Date().toISOString()}, scopes: {},
   });
   await instance.ctx.storage.put('page_size:42', 12);
-  const view = await instance.render('positions', 0, '', 42);
+  const view = await instance.render('new', 0, '', 42);
   assert.equal((view.text.match(/Open advert/g) || []).length, 12);
   assert.ok(view.text.length <= 4096, `owner page has ${view.text.length} characters`);
 });
 
 
-test('owner snapshot views do not imply independently confirmed open vacancies', async () => {
+test('academic and detail views do not imply independently confirmed open vacancies', async () => {
   const instance = bot();
   const listing = {...record, kind: 'predoc', deadline: null};
   await instance.fetch(post('/sync', {...snapshot, listings: [listing]}));
   await instance.ctx.storage.put('subscriber:42', {
     topics: {predoc: new Date().toISOString()}, scopes: {},
   });
-  const view = await instance.render('positions', 0, '', 42);
+  const view = await instance.render('new', 0, '', 42);
   assert.match(view.text, /not independently verified/i);
   assert.doesNotMatch(view.text, /all open positions/i);
   await instance.fetch(post('/webhook', {update_id: 9400,
@@ -695,5 +703,34 @@ test('owner snapshot views do not imply independently confirmed open vacancies',
   assert.ok(detail);
   assert.match(detail.text, /not independently verified/i);
   assert.ok(detail.reply_markup.inline_keyboard.flat().some(
-    b => b.text === '← Browse listings' && b.callback_data === 'view|positions|0'));
+    b => b.text === '← My matches' && b.callback_data === 'sub:p:latest'));
+});
+
+test('legacy owner positions pagination callback opens unified My matches without data writes', async () => {
+  const instance = bot();
+  const now = new Date().toISOString();
+  const member = {topics: {predoc: now}, scopes: {}, language: 'en'};
+  const listings = Array.from({length: 52}, (_, i) => ({...record, kind: 'predoc',
+    url_hash: i.toString(16).padStart(64, '0'), title: `Research role ${i}`}));
+  await instance.fetch(post('/sync', {...snapshot, listings, subscriber_protocol: 1,
+    subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', member);
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.ctx.storage.put('page_size:42', 4);
+  const result = await instance.fetch(post('/webhook', {update_id: 9505,
+    callback_query: {id: 'old-page', from: {id: 42},
+      message: {chat: {id: 42, type: 'private'}, message_id: 900},
+      data: 'view|positions|11'}}));
+  assert.equal(result.status, 200);
+  const view = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(view);
+  assert.match(view.text, /My matches/);
+  assert.match(view.text, /Page 12 of 13/);
+  assert.match(view.text, /last 60 days/);
+  assert.match(view.text, /not a verified open or funded vacancy/);
+  assert.ok(instance.calls.some(c => c.method === 'answerCallbackQuery'));
+  assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+  assert.equal(await instance.ctx.storage.get('page_size:42'), 4);
+  assert.equal((await instance.dataset()).marks.size, 0);
 });
