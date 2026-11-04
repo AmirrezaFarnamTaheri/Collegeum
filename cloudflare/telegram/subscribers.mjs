@@ -26,6 +26,13 @@ const lookbackLabel = (days, fa) => fa ? ({
   7: '۷ روز اخیر', 14: '۱۴ روز اخیر', 30: '۳۰ روز اخیر',
   60: '۶۰ روز اخیر', 90: '۹۰ روز اخیر',
 })[days] : `last ${days} days`;
+const rangeButtonLabel = (days, fa) => fa ? ({
+  7: '۷ روز اخیر', 14: '۱۴ روز اخیر', 30: '۱ ماه اخیر',
+  60: '۲ ماه اخیر', 90: '۳ ماه اخیر',
+})[days] : ({
+  7: 'Last 7 days', 14: 'Last 14 days', 30: 'Last month',
+  60: 'Last 2 months', 90: 'Last 3 months',
+})[days];
 const lookbackChoices = (days, fa, setting = false, sort = 'recent') => [[7, 14], [30, 60], [90]].map(row =>
   row.map(value => button(
     `${days === value ? '☑' : '☐'} ${fa ? ({
@@ -426,6 +433,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
   const id = String(message.chat.id);
   const preferredWindow = selectedWindow(await bot.ctx.storage.get(`match_window:${id}`));
   const selection = latestSelection(raw, preferredWindow);
+  const rangePreview = /^sub:p:range:(7|14|30|60|90)(:d)?$/.exec(raw);
   const page = await bot.ctx.storage.transaction(async tx => {
     const claim = await tx.get(key);
     if (claim?.subscriber_applied) return claim.subscriber_page;
@@ -433,6 +441,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
     let target = 'home', changed = false;
     const parts = raw.split(':');
     if (selection) target = 'latest';
+    else if (rangePreview) target = 'range';
     else if (parts.length === 3 && parts[1] === 'p' && PAGES.has(parts[2]) &&
       parts[2] !== 'latest') target = parts[2];
     else if (parts.length === 3 && (parts[1] === 't' && TOPICS.includes(parts[2]) ||
@@ -510,6 +519,24 @@ export async function subscriberUpdate(bot, message, callback, key) {
         button(fa ? '← تنظیمات' : '← Settings', 'sub:p:more'),
         button(fa ? '🔎 فرصت‌های من' : '🔎 My matches', 'sub:p:latest'),
       ]]},
+    };
+  }
+  if (page === 'range') {
+    const days = Number(rangePreview[1]);
+    const sort = rangePreview[2] ? 'deadline' : 'recent';
+    const fa = member?.language === 'fa';
+    const selected = rangeButtonLabel(days, fa);
+    const saved = rangeButtonLabel(windowDays, fa);
+    content = {
+      text: fa
+        ? `🗓 <b>انتخاب بازه مرور</b>\n\nبازه فعلی: ${selected}\nبازه ذخیره‌شده: ${saved}\n\nانتخاب زیر فقط نتایج مرور را تغییر می‌دهد؛ اعلان‌های قبلی دوباره ارسال نمی‌شوند.`
+        : `🗓 <b>Choose a range</b>\n\nViewing: ${selected}\nSaved default: ${saved}\n\nChoosing a range only changes the current browse view, not alerts or saved preferences.`,
+      reply_markup: {inline_keyboard: [
+        ...lookbackChoices(days, fa, false, sort),
+        [button(fa ? '← بازگشت به فرصت‌های من' : '← Back to My matches',
+          `sub:p:latest:${days}:0${sort === 'deadline' ? ':d' : ''}`)],
+        [button(fa ? '⚙️ تنظیم بازه پیش‌فرض' : '⚙️ Default range settings', 'sub:p:history')],
+      ]},
     };
   }
   if (page === 'latest') {
@@ -603,16 +630,16 @@ export async function subscriberUpdate(bot, message, callback, key) {
       .filter(Boolean).join('\n\n'),
       reply_markup: {inline_keyboard: [
         ...details,
+        [button(rangeButtonLabel(days, fa),
+          `sub:p:range:${days}${sort === 'deadline' ? ':d' : ''}`)],
         [button(`${sort === 'recent' ? '☑' : '☐'} ${fa ? 'جدیدترین' : 'Newest'}`,
           `sub:p:latest:${days}:0`),
           button(`${sort === 'deadline' ? '☑' : '☐'} ${fa ? 'مهلت نزدیک‌تر' : 'Deadline first'}`,
-            `sub:p:latest:${days}:0:d`)],
-        ...lookbackChoices(days, fa, false, sort),
+            `sub:p:latest:${days}:0:d`),
+          button(fa ? `در هر صفحه: ${size}` : `Page size: ${size}`, 'sub:p:display')],
         ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${days}:${current - 1}${sort === 'deadline' ? ':d' : ''}`)] : []),
           button(`${current + 1}/${totalPages}`, `sub:p:latest:${days}:${current}${sort === 'deadline' ? ':d' : ''}`),
           ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${days}:${current + 1}${sort === 'deadline' ? ':d' : ''}`)] : [])]] : []),
-        [button(fa ? 'تنظیمات بازه زمانی' : 'Save preferred range', 'sub:p:history'),
-          button(fa ? 'تنظیمات نمایش' : `Page size: ${size}`, 'sub:p:display')],
         [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),
           button(fa ? 'خانه' : 'Home', 'sub:p:home')]]}};
   }
