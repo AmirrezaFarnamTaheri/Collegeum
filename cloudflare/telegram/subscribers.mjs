@@ -100,6 +100,27 @@ const recentlyDiscovered = (value, days, now) => {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) && timestamp <= now && timestamp >= now - days * 86400000;
 };
+// Keep result membership and ordering identical between My matches and
+// Previous/Next on academic detail cards; never invent career feedback receipts.
+export function browseMatchingListings(rows, careerInventory, marks, member,
+    days, sort = 'recent', now = Date.now()) {
+  const academic = rows.filter(r => matchesPreferences(r, member) &&
+    openAcademicListing(r, now) && !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
+    recentlyDiscovered(r.first_seen_at || r.published_at, days, now) &&
+    safeApplicationUrl(r.apply_url));
+  const careers = careerInventory.filter(r =>
+      matchesPreferences(r, member) && r.availability !== 'closed' &&
+      deadlineNotPassed(r.deadline, now) &&
+      recentlyDiscovered(r.first_seen_at, days, now) && safeApplicationUrl(r.url))
+    .map(r => ({...r, apply_url: r.url, institution: r.employer,
+      published_at: r.first_seen_at}));
+  const discovered = r => Date.parse(r.first_seen_at || r.published_at) || 0;
+  const due = r => Number.isFinite(Date.parse(r.deadline)) ? Date.parse(r.deadline) : Infinity;
+  const matches = [...academic, ...careers].sort((a, b) =>
+    sort === 'deadline' ? due(a) - due(b) || discovered(b) - discovered(a)
+      : discovered(b) - discovered(a));
+  return {academic, matches};
+}
 const fresh = () => ({topics: {}, scopes: {}, academic_regions: {},
   paused: false, language: 'en',
   delivery_mode: 'instant', daily_limit: 6, quiet_hours: false, timezone: 'UTC'});
@@ -546,24 +567,11 @@ export async function subscriberUpdate(bot, message, callback, key) {
     // Python's public-record export historically omitted published_at.
     // The immutable first_seen_at is the consistent discovery timestamp for
     // academic and career history windows; last_seen_at is not a new listing.
-    const academic = rows.filter(r => matchesPreferences(r, member) &&
-      openAcademicListing(r, now) &&
-      !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
-      recentlyDiscovered(r.first_seen_at || r.published_at, days, now) &&
-      safeApplicationUrl(r.apply_url));
     const careerInventory = await bot.ctx.storage.get('career_listings') || [];
     const generalCareerCount = careerInventory.filter(r => r && CAREERS.includes(r.category)).length;
     const lifePhdCount = careerInventory.filter(r => r?.category === 'life_sciences_phd').length;
-    const careers = careerInventory.filter(r => matchesPreferences(r, member) && r.availability !== 'closed' &&
-        deadlineNotPassed(r.deadline, now) &&
-        recentlyDiscovered(r.first_seen_at, days, now) && safeApplicationUrl(r.url))
-      .map(r => ({...r, apply_url: r.url, institution: r.employer,
-        published_at: r.first_seen_at}));
-    const discovered = r => Date.parse(r.first_seen_at || r.published_at) || 0;
-    const due = r => Number.isFinite(Date.parse(r.deadline)) ? Date.parse(r.deadline) : Infinity;
-    const matches = [...academic, ...careers].sort((a, b) =>
-      sort === 'deadline' ? due(a) - due(b) || discovered(b) - discovered(a)
-        : discovered(b) - discovered(a));
+    const {academic, matches} = browseMatchingListings(
+      rows, careerInventory, marks, member, days, sort, now);
     const fa = member?.language === 'fa';
     const totalPages = Math.max(1, Math.ceil(matches.length / size));
     const current = Math.min(totalPages - 1, selection.page);
