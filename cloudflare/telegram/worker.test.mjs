@@ -547,6 +547,60 @@ test('owner home groups subscriptions, matches and a separate tracking section',
   assert.ok(menuActions.includes('view|menu|0'));
 });
 
+test('positions, jobs and list show the same unified My matches as /matches', async () => {
+  const instance = bot();
+  const now = new Date().toISOString();
+  const member = {topics: {predoc: now, data_analyst: now}, scopes: {remote: now},
+    paused: false, language: 'en', delivery_mode: 'instant', daily_limit: 6,
+    quiet_hours: false, timezone: 'UTC'};
+  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}],
+    subscriber_protocol: 1, subscribers: {}}));
+  await instance.ctx.storage.put('career_listings', [{
+    category: 'data_analyst', scope: 'remote', title: 'Remote research analyst',
+    url: 'https://example.org/career', employer: 'Research Lab',
+    first_seen_at: now, availability: 'unknown',
+  }]);
+  for (const id of [42, 999]) {
+    await instance.ctx.storage.put(`subscriber:${id}`, member);
+    await instance.ctx.storage.put(`match_window:${id}`, 60);
+    await instance.ctx.storage.put(`page_size:${id}`, 6);
+  }
+  const messages = [];
+  for (const [i, command] of ['/positions', '/jobs', '/list', '/matches'].entries()) {
+    const result = await instance.fetch(post('/webhook', {update_id: 9500 + i,
+      message: {chat: {id: 42, type: 'private'}, from: {id: 42}, text: command}}));
+    assert.equal(result.status, 200);
+    const sent = instance.calls.filter(call => call.method === 'sendMessage').at(-1)?.payload;
+    assert.ok(sent, command);
+    messages.push(sent);
+    assert.match(sent.text, /My matches/i);
+    assert.match(sent.text, /Predoc in Economics/);
+    assert.match(sent.text, /Remote research analyst/);
+    assert.match(sent.text, /last 60 days/);
+    assert.match(sent.text, /not a verified open or funded vacancy/);
+    assert.doesNotMatch(sent.text, /My academic matches/);
+    assert.ok(sent.reply_markup.inline_keyboard.flat().some(b =>
+      b.callback_data === 'sub:p:latest:60:0'));
+    assert.ok(sent.reply_markup.inline_keyboard.flat().some(b => b.text === 'Page size: 6'));
+  }
+  for (const sent of messages.slice(1)) {
+    assert.equal(sent.text, messages[0].text);
+    assert.deepEqual(sent.reply_markup, messages[0].reply_markup);
+  }
+  // Non-owner private subscriptions also reuse My matches, never an owner-only tracker.
+  const publicResult = await instance.fetch(post('/webhook', {update_id: 9504,
+    message: {chat: {id: 999, type: 'private'}, from: {id: 999}, text: '/positions'}}));
+  assert.equal(publicResult.status, 200);
+  const publicView = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  assert.match(publicView.text, /My matches/);
+  assert.doesNotMatch(publicView.text, /My academic matches/);
+  assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+  assert.equal(await instance.ctx.storage.get('page_size:42'), 6);
+  assert.equal(await instance.ctx.storage.get('mark:' + record.url_hash), undefined);
+});
+
+
 test('owner listing commands filter saved roles and use the saved page size', async () => {
   const instance = bot();
   const records = Array.from({length: 8}, (_, i) => ({...record,
