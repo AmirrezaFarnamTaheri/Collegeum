@@ -709,6 +709,10 @@ test('twelve-item unified My matches keeps inline controls and Telegram message 
   assert.match(controls[0].text, /Newest/);
   assert.match(controls[1].text, /Deadline first/);
   assert.equal(controls[2].text, 'Page size: 12');
+  const rangeRow = rows.find(row => row.some(b => b.callback_data === 'sub:p:range:14'));
+  assert.ok(rangeRow);
+  assert.equal(rangeRow.length, 1, 'My matches uses one full-width range button');
+  assert.match(rangeRow[0].text, /Last 14 days/);
   assert.ok(rows.flat().every(b => b.callback_data !== 'sub:p:history'),
     'Save preferred range is no longer a shortcut on My matches');
   assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
