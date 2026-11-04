@@ -678,6 +678,90 @@ test('academic details opened from New return to New without losing tracking act
 });
 
 
+
+test('academic detail can visit previous and next postings across My matches pages', async () => {
+  const instance = bot(), now = Date.now();
+  const listings = Array.from({length: 6}, (_, i) => ({
+    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(64, '0'),
+    title: 'Academic listing ' + i,
+    first_seen_at: new Date(now - i * 3600000).toISOString(),
+  }));
+  await instance.fetch(post('/sync', {...snapshot, listings, subscriber_protocol: 1,
+    subscribers: {}}));
+  const member = {topics: {predoc: new Date(now).toISOString(), data_analyst: new Date(now).toISOString()},
+    scopes: {remote: new Date(now).toISOString()}, language: 'en'};
+  await instance.ctx.storage.put('subscriber:42', member);
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.ctx.storage.put('page_size:42', 4);
+  // A career match between academic 2 and 3 does not acquire fake tracking controls.
+  await instance.ctx.storage.put('career_listings', [{
+    category: 'data_analyst', scope: 'remote', title: 'Career between academic listings',
+    employer: 'Research Lab', url: 'https://example.org/career',
+    first_seen_at: new Date(now - 2.5 * 3600000).toISOString(),
+    availability: 'unknown',
+  }]);
+  const tap = async (id, data) => {
+    await instance.fetch(post('/webhook', {update_id: id, callback_query: {
+      id: String(id), from: {id: 42},
+      message: {chat: {id: 42, type: 'private'}, message_id: 900}, data}}));
+    return instance.calls.filter(x => x.method === 'editMessageText').at(-1)?.payload;
+  };
+  const hash = i => i.toString(16).padStart(64, '0').slice(0, 16);
+  let detail = await tap(9800, 'detail|' + hash(2) + '|60|0');
+  assert.match(detail.text, /Academic listing 2/);
+  let actions = detail.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(1) + '|60|0' &&
+    /Previous/.test(b.text)));
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(3) + '|60|1' &&
+    /Next/.test(b.text)), 'next must cross to the correct page and skip career entries');
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:0'));
+  detail = await tap(9801, 'detail|' + hash(3) + '|60|1');
+  assert.match(detail.text, /Academic listing 3/);
+  actions = detail.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(2) + '|60|0'));
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(4) + '|60|1'));
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:1'));
+  detail = await tap(9802, 'detail|' + hash(5) + '|60|1');
+  actions = detail.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(4) + '|60|1'));
+  assert.ok(actions.every(b => !/Next/.test(b.text)), 'last posting has no bogus Next');
+  detail = await tap(9803, 'detail|' + hash(0) + '|60|0');
+  actions = detail.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.every(b => !/Previous/.test(b.text)), 'first posting has no bogus Previous');
+  // Saving or hiding keeps the current detail and neighboring browse options.
+  detail = await tap(9804, 'fb|x|' + hash(2) + '|60|0');
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'detail|' + hash(3) + '|60|1'));
+  assert.equal((await instance.dataset()).marks.get(listings[2].url_hash), 'invalid');
+  assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+  assert.equal(await instance.ctx.storage.get('page_size:42'), 4);
+});
+
+test('academic New details retain Previous and Next without changing the original view', async () => {
+  const instance = bot(), now = Date.now();
+  const listings = Array.from({length: 5}, (_, i) => ({
+    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(64, '0'),
+    title: 'New academic listing ' + i,
+    first_seen_at: new Date(now - i * 3600000).toISOString(),
+  }));
+  await instance.fetch(post('/sync', {...snapshot, listings}));
+  await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date(now).toISOString()},
+    scopes: {}, language: 'en'});
+  await instance.ctx.storage.put('page_size:42', 4);
+  const action = 'detail|' + (3).toString(16).padStart(64, '0').slice(0, 16) + '|new|0';
+  await instance.fetch(post('/webhook', {update_id: 9810, callback_query: {
+    id: 'new-detail', from: {id: 42},
+    message: {chat: {id: 42, type: 'private'}, message_id: 900}, data: action}}));
+  const detail = instance.calls.filter(x => x.method === 'editMessageText').at(-1)?.payload;
+  const controls = detail.reply_markup.inline_keyboard.flat();
+  const hash = i => i.toString(16).padStart(64, '0').slice(0, 16);
+  assert.ok(controls.some(b => b.callback_data === 'detail|' + hash(2) + '|new|0'));
+  assert.ok(controls.some(b => b.callback_data === 'detail|' + hash(4) + '|new|1'));
+  assert.ok(controls.some(b => b.callback_data === 'view|new|0'));
+  assert.ok(controls.some(b => b.callback_data === 'fb|v|' + hash(3) + '|new|0'));
+});
+
 test('twelve-item unified My matches keeps inline controls and Telegram message limits', async () => {
   const instance = bot();
   const now = new Date().toISOString();
