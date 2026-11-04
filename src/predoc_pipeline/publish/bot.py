@@ -65,7 +65,7 @@ COMMANDS = [
 # command picker only exposes everyday actions rather than 24+ shortcuts.
 OWNER_COMMANDS = [
     ("menu", "Browse your research shortlist"),
-    ("positions", "Browse stored listings"),
+    ("positions", "Browse My matches"),
     ("search", "Search stored vacancies"),
     ("saved", "Saved and interesting roles"),
     ("applied", "Track applications"),
@@ -89,7 +89,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "stop": "لغو عضویت با تأیید",
     "delete": "حذف داده‌های فعال اشتراک",
 }
-COMMANDS_VERSION = 13
+COMMANDS_VERSION = 14
 MAX_COMMANDS_PER_SYNC = 20
 ALIASES = {
     "menu": "menu", "home": "menu", "more": "more", "search": "search", "new": "new",
