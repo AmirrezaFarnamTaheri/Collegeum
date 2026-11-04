@@ -730,6 +730,40 @@ test('Persian My matches localizes academic details and preserves callback ident
 });
 
 
+test('deadline-first academic detail keeps the sort and preview history on return', async () => {
+  const instance = bot();
+  const today = new Date(), later = new Date(today.getTime() + 30 * 86400000).toISOString();
+  const soon = new Date(today.getTime() + 2 * 86400000).toISOString();
+  const records = [{...record, kind: 'predoc', deadline: later}, {...record,
+    url_hash: 'b'.repeat(64), kind: 'predoc', title: 'Closer deadline', deadline: soon}];
+  await instance.fetch(post('/sync', {...snapshot, listings: records,
+    subscriber_protocol: 1, subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', {topics: {predoc: today.toISOString()},
+    scopes: {}, language: 'en'});
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.fetch(post('/webhook', {update_id: 9720, callback_query: {
+    id: 'order-first', from: {id: 42},
+    message: {chat: {id: 42, type: 'private'}, message_id: 900},
+    data: 'sub:p:latest:60:0:d'}}));
+  const list = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(list.text.indexOf('Closer deadline') < list.text.indexOf('Predoc in Economics'));
+  assert.match(list.text, /Deadline first/);
+  const control = list.reply_markup.inline_keyboard.flat().find(b =>
+    b.callback_data === 'detail|' + 'b'.repeat(16) + '|60|0d');
+  assert.ok(control);
+  await instance.fetch(post('/webhook', {update_id: 9721, callback_query: {
+    id: 'order-detail', from: {id: 42},
+    message: {chat: {id: 42, type: 'private'}, message_id: 900},
+    data: control.callback_data}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:60:0:d'));
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'fb|v|' + 'b'.repeat(16) + '|60|0d'));
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+});
+
+
 test('academic New view still filters saved roles and respects the saved page size', async () => {
   const instance = bot();
   const records = Array.from({length: 8}, (_, i) => ({...record,
