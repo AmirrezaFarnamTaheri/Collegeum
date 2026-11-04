@@ -526,7 +526,7 @@ export class TelegramBot {
     // Older Telegram messages may still contain academic-only view|positions|N
     // buttons. Preserve their page number and show the unified My matches view.
     if (parts[0] === "view" && parts[1] === "positions" && parts.length === 3 &&
-        /^\\d{1,6}$/.test(parts[2])) {
+        /^\d{1,6}$/.test(parts[2])) {
       const page = Math.min(Number(parts[2]), 499);
       return subscriberUpdate(this, message, {...callback, data: `sub:p:latest:${page}`}, updateKey);
     }
