@@ -84,7 +84,7 @@ def test_webhook_sync_refreshes_stale_owner_picker_without_touching_cursor(setti
                   if body.get('scope') == {'type': 'chat', 'chat_id': 42})
     descriptions = {entry['command']: entry['description']
                     for entry in scoped['commands']}
-    assert descriptions['positions'] == 'Browse stored listings'
+    assert descriptions['positions'] == 'Browse My matches'
     assert [name for name, _ in calls].count('sync') == 2
     assert not any(name in {'getUpdates', 'sendMessage', 'setWebhook'} for name, _ in calls)
     state = load_chat_state(settings.telegram_state_path)
