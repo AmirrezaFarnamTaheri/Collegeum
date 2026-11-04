@@ -161,12 +161,18 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
     {kind: 'predoc', url_hash: 'b'.repeat(64), title: 'Middle deadline',
       institution: 'University', apply_url: 'https://example.org/middle',
       first_seen_at: iso(-1), deadline: iso(10)},
-    {kind: 'predoc', url_hash: 'c'.repeat(64), title: 'Soonest deadline',
+    {kind: 'predoc', url_hash: 'c'.repeat(64), title: 'Third deadline',
+      institution: 'University', apply_url: 'https://example.org/third',
+      first_seen_at: iso(-2), deadline: iso(25)},
+    {kind: 'predoc', url_hash: 'd'.repeat(64), title: 'Later deadline',
+      institution: 'University', apply_url: 'https://example.org/later',
+      first_seen_at: iso(-3), deadline: iso(35)},
+    {kind: 'predoc', url_hash: 'e'.repeat(64), title: 'Soonest deadline',
       institution: 'University', apply_url: 'https://example.org/soon',
-      first_seen_at: iso(-2), deadline: iso(2)},
+      first_seen_at: iso(-4), deadline: iso(2)},
   ];
   const values = new Map([['subscribers_initialized', true], ['subscriber:42', member],
-    ['page_size:42', 2], ['match_window:42', 60]]);
+    ['page_size:42', 4], ['match_window:42', 60]]);
   const storage = {get: async k => structuredClone(values.get(k)),
     put: async (k, v) => values.set(k, structuredClone(v)),
     delete: async k => values.delete(k), transaction: async fn => fn(storage)};
@@ -196,5 +202,5 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
   assert.ok(view.reply_markup.inline_keyboard.flat().some(b =>
     b.callback_data === 'sub:p:latest:60:0:d'));
   assert.equal(values.get('match_window:42'), 60);
-  assert.equal(values.get('page_size:42'), 2);
+  assert.equal(values.get('page_size:42'), 4);
 });
