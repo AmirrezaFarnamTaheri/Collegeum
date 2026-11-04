@@ -65,7 +65,7 @@ COMMANDS = [
 # command picker only exposes everyday actions rather than 24+ shortcuts.
 OWNER_COMMANDS = [
     ("menu", "Browse your research shortlist"),
-    ("positions", "All open vacancies"),
+    ("positions", "Browse stored listings"),
     ("search", "Search stored vacancies"),
     ("saved", "Saved and interesting roles"),
     ("applied", "Track applications"),
@@ -89,7 +89,7 @@ FA_COMMAND_DESCRIPTIONS = {
     "stop": "لغو عضویت با تأیید",
     "delete": "حذف داده‌های فعال اشتراک",
 }
-COMMANDS_VERSION = 12
+COMMANDS_VERSION = 13
 MAX_COMMANDS_PER_SYNC = 20
 ALIASES = {
     "menu": "menu", "home": "menu", "more": "more", "search": "search", "new": "new",
@@ -101,7 +101,8 @@ ALIASES = {
 }
 HELP = (
     "🤖 <b>Predoc bot</b>\n\n"
-    "/positions: all open positions, soonest deadline first\n"
+    "/positions: stored listings, nearest stated deadline first\n"
+    "Check with the employer before applying; availability may have changed.\n"
     "/applied: the ones you applied to\n"
     "/valid: the ones you marked ✅\n"
     "/hidden: the ones you marked ❌\n\n"
@@ -119,13 +120,13 @@ DONE = {
     None: "↩️ Mark removed",
 }
 TITLES = {
-    "positions": "📋 <b>{n} open position{s}</b>, soonest deadline first",
+    "positions": "📋 <b>{n} snapshot listing{s}</b>, soonest deadline first",
     "applied": "📝 <b>{n} position{s} you applied to</b>",
     "valid": "✅ <b>{n} position{s} you marked as interesting</b>",
     "hidden": "❌ <b>{n} hidden position{s}</b> (tap ❌ again to bring one back)",
 }
 EMPTY = {
-    "positions": "📋 No open positions right now. New ones appear after the next collection.",
+    "positions": "📋 No matching listings in this snapshot. Review filters or check later.",
     "applied": "📝 You haven't marked anything as applied yet. Tap 📝 under a position.",
     "valid": "✅ Nothing marked as interesting yet. Tap ✅ under a position.",
     "hidden": "❌ Nothing hidden.",
@@ -209,13 +210,19 @@ def build_pages(
         n_applied = len(store.with_status(APPLIED))
         if n_applied:
             footer += f"\n\n📝 You've applied to {n_applied}: send /applied"
+    snapshot_note = ("\n\n<i>Snapshot only: current availability is not independently verified.</i>"
+                     if kind == "positions" else "")
+    footer += snapshot_note
     footer += f"\n\n<i>{esc(LEGEND)}</i>"
     pages: list[tuple[str, dict[str, Any] | None]] = []
     for page in pack_html_blocks(blocks, header=head, footer=footer, page_size=min(page_size, 30)):
         chunk = shown[page.start:page.end]
         buttons = [feedback_row(r["url_hash"], store.status(r["url_hash"]), page.start + i + 1)
                    for i, r in enumerate(chunk)]
-        pages.append((page.html, {"inline_keyboard": buttons}))
+        # pack_html_blocks writes the footer on the last page only; every
+        # earlier page also needs the disclosure. The packer reserves its budget.
+        html = page.html + (snapshot_note if page.end < len(shown) else "")
+        pages.append((html, {"inline_keyboard": buttons}))
     return pages
 
 
@@ -238,6 +245,57 @@ class _Bot:
         return self.client.call(method, payload, sleep=self.sleep)
 
 
+def _refresh_commands(
+    settings: Settings, bot: _Bot, chat_state: dict[str, Any], owners: set[int],
+) -> None:
+    """Update Telegram picker metadata without polling, sending, or changing state receipts."""
+    if chat_state.get("commands_version") == COMMANDS_VERSION:
+        return
+    try:
+        command_list = [
+            {"command": c, "description": d} for c, d in COMMANDS
+        ]
+        bot.call("setMyCommands", {"commands": command_list})
+        # Persian labels for users whose Telegram locale is Persian.
+        bot.call("setMyCommands", {
+            "scope": {"type": "all_private_chats"},
+            "language_code": "fa",
+            "commands": [
+                {"command": c, "description": FA_COMMAND_DESCRIPTIONS[c]}
+                for c, _ in COMMANDS
+            ],
+        })
+        raw_admin = settings.telegram_admin_chat_id.strip()
+        admin_chat = (
+            int(raw_admin) if raw_admin.isascii()
+            and raw_admin.isdecimal() and int(raw_admin) > 0
+            else None
+        )
+        for chat_id in sorted(owners):
+            scoped = [
+                *command_list,
+                *[
+                    {"command": c, "description": desc}
+                    for c, desc in OWNER_COMMANDS
+                ],
+            ]
+            if chat_id == admin_chat:
+                scoped.extend([
+                    {"command": ADMIN_COMMAND[0], "description": ADMIN_COMMAND[1]},
+                    {
+                        "command": RECONCILE_COMMAND[0],
+                        "description": RECONCILE_COMMAND[1],
+                    },
+                ])
+            bot.call("setMyCommands", {
+                "scope": {"type": "chat", "chat_id": chat_id},
+                "commands": scoped,
+            })
+        chat_state["commands_version"] = COMMANDS_VERSION
+    except TelegramError as exc:
+        log.warning("set_commands_failed", error=str(exc))
+
+
 def telegram_sync(
     settings: Settings,
     *,
@@ -252,7 +310,18 @@ def telegram_sync(
     if settings.telegram_webhook_enabled:
         from .cloud import sync_cloud
 
-        return sync_cloud(settings, http_client=http_client)
+        result = sync_cloud(settings, http_client=http_client)
+        if settings.telegram_bot_token and settings.owner_ids:
+            chat_state = load_chat_state(settings.telegram_state_path)
+            if chat_state.get("commands_version") != COMMANDS_VERSION:
+                tg = TelegramClient(bot_token=settings.telegram_bot_token, client=http_client)
+                try:
+                    _refresh_commands(settings, _Bot(tg, sleep), chat_state, settings.owner_ids)
+                    if chat_state.get("commands_version") == COMMANDS_VERSION:
+                        save_state(settings.telegram_state_path, chat_state)
+                finally:
+                    tg.close()
+        return result
     tg_prefs = load_preferences(settings.preferences_config).telegram
     page_size = max(1, page_size or tg_prefs.list_page_size)
     max_items = max(1, max_items or tg_prefs.list_max)
@@ -276,50 +345,7 @@ def telegram_sync(
         tg.close()
         raise
     try:
-        if chat_state.get("commands_version") != COMMANDS_VERSION:
-            try:
-                command_list = [
-                    {"command": c, "description": d} for c, d in COMMANDS
-                ]
-                bot.call("setMyCommands", {"commands": command_list})
-                # Persian labels for users whose Telegram locale is Persian.
-                bot.call("setMyCommands", {
-                    "scope": {"type": "all_private_chats"},
-                    "language_code": "fa",
-                    "commands": [
-                        {"command": c, "description": FA_COMMAND_DESCRIPTIONS[c]}
-                        for c, _ in COMMANDS
-                    ],
-                })
-                raw_admin = settings.telegram_admin_chat_id.strip()
-                admin_chat = (
-                    int(raw_admin) if raw_admin.isascii()
-                    and raw_admin.isdecimal() and int(raw_admin) > 0
-                    else None
-                )
-                for chat_id in sorted(owners):
-                    scoped = [
-                        *command_list,
-                        *[
-                            {"command": c, "description": desc}
-                            for c, desc in OWNER_COMMANDS
-                        ],
-                    ]
-                    if chat_id == admin_chat:
-                        scoped.extend([
-                            {"command": ADMIN_COMMAND[0], "description": ADMIN_COMMAND[1]},
-                            {
-                                "command": RECONCILE_COMMAND[0],
-                                "description": RECONCILE_COMMAND[1],
-                            },
-                        ])
-                    bot.call("setMyCommands", {
-                        "scope": {"type": "chat", "chat_id": chat_id},
-                        "commands": scoped,
-                    })
-                chat_state["commands_version"] = COMMANDS_VERSION
-            except TelegramError as exc:
-                log.warning("set_commands_failed", error=str(exc))
+        _refresh_commands(settings, bot, chat_state, owners)
 
         # Bound interactive processing so a command storm cannot monopolize
         # the ten-minute scheduled sync window. Unprocessed updates keep offset.

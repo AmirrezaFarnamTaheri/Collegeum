@@ -467,7 +467,9 @@ export class TelegramBot {
       (blocks.join("\n\n") || (kind === 'valid' ? 'No saved positions yet. Open a position and tap Save.' :
         kind === 'search' ? 'No matches. Try fewer words or a different location.' :
           'No matches in this view. Review your subscriptions or check again later.')) +
-      (count > 1 ? `\n\nPage ${page + 1} of ${count}` : ''), reply_markup: {inline_keyboard: buttons}};
+      (count > 1 ? `\n\nPage ${page + 1} of ${count}` : '') +
+      '\n\n<i>Snapshot only: current availability is not independently verified.</i>',
+      reply_markup: {inline_keyboard: buttons}};
   }
 
   feedback(row, status, number = "") {
@@ -552,10 +554,11 @@ export class TelegramBot {
         `⏳ ${esc(row.deadline?.slice(0, 10) || row.deadline_note?.slice(0, 200) || "Deadline unstated")}\n` +
         `${esc(row.summary?.slice(0, 900) || "See the original advert for requirements.")}\n\n` +
         `Visa: ${esc(row.visa_note?.slice(0, 300) || "Unstated; check advert")}\n` +
-        (row.closed_at || row.expired_at ? "⚠️ This advert is now closed.\n" : "") +
+        (row.closed_at || row.expired_at ? "⚠️ This advert is now closed.\n" :
+           "ℹ️ Current availability is not independently verified.\n") +
         `<a href="${esc(safeUrl(row.apply_url))}">Open official advert ↗</a>`,
         reply_markup: {inline_keyboard: [[{text: "Open advert ↗", url: safeUrl(row.apply_url)}],
-          this.feedback(row, mark?.status), [nav("← Open positions", "positions"), nav("⌂ Home", "menu")]]}};
+          this.feedback(row, mark?.status), [nav("← Browse listings", "positions"), nav("⌂ Home", "menu")]]}};
     } else return;
     await this.deliver(updateKey,"editMessageText", {chat_id: message.chat.id, message_id: message.message_id,
       ...content, parse_mode: "HTML", link_preview_options: {is_disabled: true}});

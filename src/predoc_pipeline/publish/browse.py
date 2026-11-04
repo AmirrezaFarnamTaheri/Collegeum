@@ -17,7 +17,7 @@ VIEWS = frozenset({'positions', 'valid', 'applied', 'hidden', 'closing', 'new', 
 def menu_keyboard() -> dict[str, Any]:
     """Three action rows on a phone; advanced actions live on one extra screen."""
     return {'inline_keyboard': [
-        [{'text': '📋 Open positions', 'callback_data': 'view|positions|0'},
+        [{'text': '📋 Browse listings', 'callback_data': 'view|positions|0'},
          {'text': '⏳ Closing soon', 'callback_data': 'view|closing|0'}],
         [{'text': '⭐ Saved', 'callback_data': 'view|valid|0'},
          {'text': '📝 Applied', 'callback_data': 'view|applied|0'}],
@@ -47,7 +47,7 @@ def home(rows: list[sqlite3.Row], store: FeedbackStore) -> tuple[str, dict[str, 
     counts = {kind: len(select_rows(kind, rows, store))
               for kind in ('positions', 'valid', 'applied', 'hidden')}
     text = ('<b>Collegeum · Positions and applications</b>\n\n'
-            f"<b>{counts['positions']} open</b> · {counts['valid']} saved · "
+            f"<b>{counts['positions']} snapshot listings</b> · {counts['valid']} saved · "
             f"{counts['applied']} applied\n\n"
             'Search with <code>/search economics London</code>.')
     return text, menu_keyboard()
@@ -138,10 +138,11 @@ def details(row: sqlite3.Row, store: FeedbackStore) -> tuple[str, dict[str, Any]
     keyboard = render_keyboard(listing, url_hash=row['url_hash'],
                                status=store.status(row['url_hash'])) or {'inline_keyboard': []}
     keyboard['inline_keyboard'].append([
-        {'text': '← Open positions', 'callback_data': 'view|positions|0'},
+        {'text': '← Browse listings', 'callback_data': 'view|positions|0'},
         {'text': '⌂ Home', 'callback_data': 'view|menu|0'},
     ])
-    return render_card(listing), keyboard
+    return (render_card(listing) + '\n\n<i>Current availability is not independently verified.</i>',
+            keyboard)
 
 
 def valid_prefix(prefix: str) -> bool:

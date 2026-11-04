@@ -7,8 +7,8 @@ import httpx
 import pytest
 
 from predoc_pipeline.core.timeparse import format_ts
-from predoc_pipeline.publish.bot import telegram_sync
-from predoc_pipeline.publish.feedback import FeedbackStore
+from predoc_pipeline.publish.bot import COMMANDS_VERSION, telegram_sync
+from predoc_pipeline.publish.feedback import FeedbackStore, load_chat_state, save_state
 from tests.integration.test_bot import add_listings
 from tests.integration.test_bot import settings as bot_settings
 
@@ -50,6 +50,49 @@ def configure(settings):
     settings.telegram_webhook_enabled = True
     settings.telegram_worker_url = 'https://collegeum.example.org'
     settings.telegram_worker_sync_token = 'offline-sync-secret'
+    # Other webhook tests model an already-current Telegram command picker.
+    save_state(settings.telegram_state_path, {'commands_version': COMMANDS_VERSION})
+
+
+def test_webhook_sync_refreshes_stale_owner_picker_without_touching_cursor(settings):
+    configure(settings)
+    save_state(settings.telegram_state_path, {
+        'commands_version': COMMANDS_VERSION - 1,
+        'offset': 123,
+        'exports_pending': True,
+    })
+    calls = []
+
+    def handler(request):
+        name = request.url.path.rsplit('/', 1)[-1]
+        body = json.loads(request.content)
+        calls.append((name, body))
+        if name == 'sync':
+            return httpx.Response(200, json={
+                'subscriber_protocol': 1, 'subscribers': {}, 'marks': {},
+            })
+        assert name == 'setMyCommands', f'unexpected Telegram operation: {name}'
+        return httpx.Response(200, json={'ok': True, 'result': True})
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        telegram_sync(settings, http_client=client)
+        telegram_sync(settings, http_client=client)
+
+    command_calls = [body for name, body in calls if name == 'setMyCommands']
+    assert len(command_calls) == 3  # global, Persian, and private-owner scopes
+    scoped = next(body for body in command_calls
+                  if body.get('scope') == {'type': 'chat', 'chat_id': 42})
+    descriptions = {entry['command']: entry['description']
+                    for entry in scoped['commands']}
+    assert descriptions['positions'] == 'Browse stored listings'
+    assert [name for name, _ in calls].count('sync') == 2
+    assert not any(name in {'getUpdates', 'sendMessage', 'setWebhook'} for name, _ in calls)
+    state = load_chat_state(settings.telegram_state_path)
+    assert state == {
+        'commands_version': COMMANDS_VERSION,
+        'offset': 123,
+        'exports_pending': True,
+    }
 
 
 def test_old_worker_cannot_disable_existing_subscriber_controls(settings):

@@ -621,3 +621,25 @@ test('owner twelve-row academic pages remain under Telegram message limit', asyn
   assert.equal((view.text.match(/Open advert/g) || []).length, 12);
   assert.ok(view.text.length <= 4096, `owner page has ${view.text.length} characters`);
 });
+
+
+test('owner snapshot views do not imply independently confirmed open vacancies', async () => {
+  const instance = bot();
+  const listing = {...record, kind: 'predoc', deadline: null};
+  await instance.fetch(post('/sync', {...snapshot, listings: [listing]}));
+  await instance.ctx.storage.put('subscriber:42', {
+    topics: {predoc: new Date().toISOString()}, scopes: {},
+  });
+  const view = await instance.render('positions', 0, '', 42);
+  assert.match(view.text, /not independently verified/i);
+  assert.doesNotMatch(view.text, /all open positions/i);
+  await instance.fetch(post('/webhook', {update_id: 9400,
+    callback_query: {id: 'snapshot-detail', from: {id: 42},
+      message: {chat: {id: 42, type: 'private'}, message_id: 900},
+      data: 'detail|' + 'a'.repeat(16)}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(detail);
+  assert.match(detail.text, /not independently verified/i);
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(
+    b => b.text === '← Browse listings' && b.callback_data === 'view|positions|0'));
+});

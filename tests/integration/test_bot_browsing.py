@@ -19,12 +19,12 @@ from tests.integration.test_bot import settings as bot_settings
 settings = bot_settings
 
 
-def test_home_menu_has_navigation_and_open_count(settings):
+def test_home_menu_has_navigation_and_snapshot_count(settings):
     add_listings(settings)
     fake = FakeTelegram([msg(1, '/menu')])
     run_sync(settings, fake)
     message = fake.sent()[0]
-    assert 'Collegeum' in message['text'] and '3 open' in message['text']
+    assert 'Collegeum' in message['text'] and '3 snapshot listings' in message['text']
     labels = [b['text'] for r in message['reply_markup']['inline_keyboard'] for b in r]
     assert any('Saved' in label for label in labels)
     assert any('Closing' in label for label in labels)
