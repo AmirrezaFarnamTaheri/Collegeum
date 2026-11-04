@@ -206,3 +206,38 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
   assert.equal(values.get('match_window:42'), 60);
   assert.equal(values.get('page_size:42'), 4);
 });
+
+test('My matches groups sorting and page size while history remains in settings', async () => {
+  for (const language of ['en', 'fa']) {
+    const values = new Map([['subscribers_initialized', true],
+      ['subscriber:42', {...member, language}],
+      ['page_size:42', 12], ['match_window:42', 60]]);
+    const storage = {get: async k => structuredClone(values.get(k)),
+      put: async (k, v) => values.set(k, structuredClone(v)),
+      delete: async k => values.delete(k), transaction: async fn => fn(storage)};
+    const sent = [];
+    const bot = {ctx: {storage}, env: {OWNER_IDS: '42'}, api: async () => {},
+      deliver: async (_key, _method, data) => sent.push(data),
+      dataset: async () => ({rows: [{
+        kind: 'predoc', url_hash: 'a'.repeat(64), title: 'Research assistant',
+        institution: 'University', first_seen_at: new Date().toISOString(),
+        apply_url: 'https://example.org/academic',
+      }], marks: new Map()})};
+    await subscriberUpdate(bot, {chat: {id: 42, type: 'private'}, message_id: 5},
+      {data: 'sub:p:latest:60:0:d'}, `compact:${language}`);
+    const rows = sent.at(-1).reply_markup.inline_keyboard;
+    const controls = rows.find(row => row.some(b => b.callback_data === 'sub:p:display'));
+    assert.deepEqual(controls.map(b => b.callback_data), [
+      'sub:p:latest:60:0', 'sub:p:latest:60:0:d', 'sub:p:display']);
+    assert.equal(controls.length, 3);
+    assert.match(controls[2].text, /12/);
+    assert.ok(rows.flat().every(b => b.callback_data !== 'sub:p:history'));
+    assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
+    assert.ok(rows.flat().some(b => b.callback_data === 'view|tracking|0'));
+    const settings = panel({...member, language}, 'more');
+    assert.ok(settings.reply_markup.inline_keyboard.flat().some(b =>
+      b.callback_data === 'sub:p:history'), 'saved range remains accessible via Settings');
+    assert.equal(values.get('match_window:42'), 60);
+    assert.equal(values.get('page_size:42'), 12);
+  }
+});
