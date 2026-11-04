@@ -232,6 +232,36 @@ def test_positions_are_sorted_by_deadline_and_paged(settings):
     assert "Tap again to undo" in pages[-1][0]
 
 
+def test_real_legacy_home_and_detail_do_not_claim_confirmed_openings(settings):
+    from predoc_pipeline.publish.browse import details, home, menu_keyboard
+
+    add_listings(settings)
+    store = FeedbackStore(settings.feedback_path)
+    rows = rows_of(settings)
+    buttons = [button['text'] for line in menu_keyboard()['inline_keyboard'] for button in line]
+    assert not any('open positions' in label.lower() for label in buttons)
+    home_text, _ = home(rows, store)
+    assert 'open' not in home_text.lower()
+    assert 'snapshot' in home_text.lower() or 'listing' in home_text.lower()
+    detail_text, keyboard = details(rows[0], store)
+    assert 'not independently verified' in detail_text.lower()
+    back = [button for line in keyboard['inline_keyboard'] for button in line
+            if button.get('callback_data') == 'view|positions|0']
+    assert len(back) == 1
+    assert 'open positions' not in back[0]['text'].lower()
+
+
+def test_legacy_snapshot_disclaimer_is_present_on_every_page(settings):
+    add_listings(settings)
+    store = FeedbackStore(settings.feedback_path)
+    chosen = select_rows('positions', rows_of(settings), store)
+    pages = build_pages('positions', chosen, store, page_size=1)
+    assert len(pages) == 3
+    for text, _keyboard in pages:
+        assert 'not independently verified' in text.lower()
+        assert 'open positions' not in text.lower()
+
+
 def test_full_conversation(settings):
     ids = add_listings(settings)
     lse, upf = ids["Research Assistant in Finance"], ids["Predoc in Macroeconomics"]
