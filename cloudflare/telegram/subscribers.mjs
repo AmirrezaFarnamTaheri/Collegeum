@@ -557,7 +557,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
       // Career records have no feedback receipts, so never offer fake tracking.
       const academicControls = visible.flatMap((r, index) =>
         !r.category && /^[a-f0-9]{64}$/.test(String(r.url_hash || ''))
-          ? [button(`${current * size + index + 1} · Details & track`,
+          ? [button(`${current * size + index + 1} · ${fa ? 'جزئیات و پیگیری' : 'Details & track'}`,
               `detail|${r.url_hash.slice(0, 16)}|${days}|${current}`)]
           : []);
       for (let i = 0; i < academicControls.length; i += 2)
