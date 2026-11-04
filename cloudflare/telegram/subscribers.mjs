@@ -14,8 +14,9 @@ const selectedWindow = value => LOOKBACK_DAYS.includes(value) ? value : DEFAULT_
 const latestSelection = (raw, preferred = DEFAULT_LOOKBACK) => {
   if (raw === 'sub:p:latest') return {days: selectedWindow(preferred), page: 0};
   // Existing Telegram messages contain page-only callbacks; keep them usable.
+  // Accommodate older academic-list page numbers when routing into My matches.
   const old = /^sub:p:latest:([0-9]{1,3})$/.exec(raw);
-  if (old && Number(old[1]) < 10) return {days: selectedWindow(preferred), page: Number(old[1])};
+  if (old && Number(old[1]) < 500) return {days: selectedWindow(preferred), page: Number(old[1])};
   const selected = /^sub:p:latest:(7|14|30|60|90):([0-9]{1,3})$/.exec(raw);
   if (!selected || Number(selected[2]) >= 500) return null;
   return {days: Number(selected[1]), page: Number(selected[2])};
@@ -406,7 +407,8 @@ const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'subscription
   academic: 'academic', regions: 'academic_regions', academicregions: 'academic_regions',
   careers: 'careers', markets: 'careers', lifesciences: 'life_sciences',
   delivery: 'delivery', guide: 'help', privacy: 'privacy', stop: 'stop', delete: 'stop',
-  latest: 'latest', matches: 'latest', subscriptions: 'subscriptions',
+  latest: 'latest', matches: 'latest', positions: 'latest', jobs: 'latest', list: 'latest',
+  subscriptions: 'subscriptions',
   history: 'history', display: 'display', notifications: 'delivery',
   sources: 'sources', help: 'help', more: 'more'};
 export const subscriberCommand = command => (Object.hasOwn(COMMAND_PAGES, command) &&
