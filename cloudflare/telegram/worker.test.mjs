@@ -710,6 +710,26 @@ test('twelve-item unified My matches keeps inline controls and Telegram message 
 });
 
 
+test('Persian My matches localizes academic details and preserves callback identity', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}],
+    subscriber_protocol: 1, subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', {
+    topics: {predoc: new Date().toISOString()}, scopes: {}, language: 'fa',
+  });
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.fetch(post('/webhook', {update_id: 9651, message: {
+    chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/positions',
+  }}));
+  const view = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  const button = view.reply_markup.inline_keyboard.flat().find(b =>
+    b.callback_data === 'detail|' + record.url_hash.slice(0, 16) + '|60|0');
+  assert.ok(button);
+  assert.match(button.text, /جزئیات/);
+  assert.match(view.text, /تأییدشده نیست/);
+});
+
+
 test('academic New view still filters saved roles and respects the saved page size', async () => {
   const instance = bot();
   const records = Array.from({length: 8}, (_, i) => ({...record,
