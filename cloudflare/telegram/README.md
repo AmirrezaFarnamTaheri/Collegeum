@@ -7,8 +7,10 @@ Life Sciences PhD feed. They can also change delivery preferences, switch
 English/Persian, pause and unsubscribe. GitHub still collects vacancies and sends
 checkpointed alerts on its schedule. Fast menus do not make collection continuous.
 
-My matches uses selected academic and Life Sciences roles, and selected career
-roles *plus* their Iran/remote market scopes. Career markets do not filter academic
+My matches is the canonical listings view: `/positions`, `/jobs`, `/list` and
+`/matches` all use the same academic, Life Sciences PhD and career results,
+filters and pagination. It uses selected academic and Life Sciences roles, and
+selected career roles *plus* their Iran/remote market scopes. Career markets do not filter academic
 positions. Academic roles have a separate **Academic → Regions** multi-select
 (🌍 Worldwide by default; North America, Latin America, Europe including the UK,
 Middle East, Asia, Oceania, Africa, and Other/unspecified). Only the record's
@@ -59,9 +61,13 @@ within Telegram's message-size limit. Only text, supported HTML emphasis,
 native keyboards and Telegram-provided emojis are styled: Telegram controls
 the button colors, sizing, theme and background (not Worker CSS).
 Owners can reach Saved & applications from home, settings and results without
-cluttering every selection panel. The tracking actions (Save, Hide and Applied)
-currently operate on **academic listings only**; career listings are browseable
-under My matches but do not yet have application-tracking receipts. Owner
+cluttering every selection panel. In My matches, compact numbered Details & track
+buttons retain the original academic detail cards (including advert links,
+application notes, Save, Hide and Applied), with the chosen history window and
+page preserved on return. The tracking actions operate on **academic listings
+only**; career listings are browseable under My matches but do not have
+application-tracking receipts. Old academic-only `/positions` pagination and
+listing/detail/feedback buttons remain compatible after the command is unified. Owner
 tracking includes direct paths back to My matches and Settings, and its More
 panel links directly to Alert delivery. Back returns to the named parent
 section. Shortcut commands `/matches`, `/subscriptions`, `/history`, `/display`
