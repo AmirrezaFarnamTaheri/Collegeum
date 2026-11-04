@@ -7,8 +7,8 @@ const STATUS = new Set(["valid", "invalid", "applied"]);
 const GENERAL_CAREER_TOPICS = new Set([
   'data_scientist', 'data_analyst', 'econ_consulting', 'research_analyst',
 ]);
-const VIEWS = new Set(["positions", "valid", "applied", "hidden", "new", "closing", "search"]);
-const COMMANDS = new Set([...VIEWS, 'menu', 'more', 'home', 'help', 'start', 'forget', 'saved',
+const VIEWS = new Set(["valid", "applied", "hidden", "new", "closing", "search"]);
+const COMMANDS = new Set([...VIEWS, 'positions', 'menu', 'more', 'home', 'help', 'start', 'forget', 'saved',
   'interested', 'jobs', 'list', 'tracking']);
 const aiQuestion = message => {
   const input = String(message.text || '').trim();
@@ -431,6 +431,7 @@ export class TelegramBot {
       '/new: added this week · /closing: deadlines within 7 days\n' +
       '🔎 <code>/search economics London</code>: all words must match.\n\n' +
       '✅ Save · ❌ Hide · 📝 Applied. Tap again to undo.\n' +
+      '/positions shows My matches across selected academic and career roles.\n' +
       'Replies use the latest uploaded snapshot. Check the original advert before applying.', reply_markup: menu()};
     let selected = ["valid", "applied", "hidden"].includes(kind)
       ? rows.filter(r => marks.get(r.url_hash) === (kind === "hidden" ? "invalid" : kind) && (kind !== "valid" || open(r)))
@@ -444,7 +445,7 @@ export class TelegramBot {
     const count = Math.max(1, Math.ceil(selected.length / size));
     page = Math.min(Math.max(0, page), count - 1);
     const chunk = selected.slice(page * size, page * size + size);
-    const labels = {positions: "My academic matches", valid: "Saved", applied: "Applications", hidden: "Hidden", new: "New academic matches", closing: "Academic matches closing soon", search: `Search my academic matches: ${query}`};
+    const labels = {valid: "Saved", applied: "Applications", hidden: "Hidden", new: "New academic matches", closing: "Academic matches closing soon", search: `Search my academic matches: ${query}`};
     // Compact twelve-item pages to avoid exceeding Telegram's text limit.
     const limits = size === 12
       ? {title: 68, institution: 48, location: 50, deadline: 42}
@@ -480,7 +481,7 @@ export class TelegramBot {
 
   async command(message, owner = true, admission = {}, updateKey) {
     const [word, ...words] = String(message.text || "/menu").trim().split(/\s+/);
-    const aliases = {start: "menu", home: "menu", saved: "valid", interested: "valid", jobs: "positions", list: "positions"};
+    const aliases = {start: "menu", home: "menu", saved: "valid", interested: "valid"};
     let kind = word.replace(/^\//, "").split("@")[0].toLowerCase();
     if ((subscriberCommand(kind) && (kind !== 'start' || !owner)) ||
         (!owner && ['help', 'more', 'menu', 'home'].includes(kind))) {
@@ -520,9 +521,16 @@ export class TelegramBot {
   }
 
   async callback(callback,updateKey) {
-    try { await this.api("answerCallbackQuery", {callback_query_id: callback.id}); } catch { /* stale toast */ }
     const parts = String(callback.data || "").split("|");
     const message = callback.message;
+    // Older Telegram messages may still contain academic-only view|positions|N
+    // buttons. Preserve their page number and show the unified My matches view.
+    if (parts[0] === "view" && parts[1] === "positions" && parts.length === 3 &&
+        /^\\d{1,6}$/.test(parts[2])) {
+      const page = Math.min(Number(parts[2]), 499);
+      return subscriberUpdate(this, message, {...callback, data: `sub:p:latest:${page}`}, updateKey);
+    }
+    try { await this.api("answerCallbackQuery", {callback_query_id: callback.id}); } catch { /* stale toast */ }
     let content;
     if (parts[0] === "view" && parts.length === 3 && /^\d{1,6}$/.test(parts[2])) {
       const kind = parts[1];
@@ -558,7 +566,7 @@ export class TelegramBot {
            "ℹ️ Current availability is not independently verified.\n") +
         `<a href="${esc(safeUrl(row.apply_url))}">Open official advert ↗</a>`,
         reply_markup: {inline_keyboard: [[{text: "Open advert ↗", url: safeUrl(row.apply_url)}],
-          this.feedback(row, mark?.status), [nav("← Browse listings", "positions"), nav("⌂ Home", "menu")]]}};
+          this.feedback(row, mark?.status), [{text: "← My matches", callback_data: "sub:p:latest"}, nav("⌂ Home", "menu")]]}};
     } else return;
     await this.deliver(updateKey,"editMessageText", {chat_id: message.chat.id, message_id: message.message_id,
       ...content, parse_mode: "HTML", link_preview_options: {is_disabled: true}});
