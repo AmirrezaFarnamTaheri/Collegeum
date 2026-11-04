@@ -547,14 +547,16 @@ export class TelegramBot {
       let back = {text: "← My matches", callback_data: "sub:p:latest"};
       if (origin.length === 2) {
         const [source, index] = origin;
-        if (!/^\d{1,3}$/.test(index) || Number(index) >= 500) return;
+        const page = /^(\d{1,3})(d?)$/.exec(index);
+        if (!page || Number(page[1]) >= 500) return;
+        const pageIndex = Number(page[1]), sortSuffix = page[2] ? ":d" : "";
         if (["7", "14", "30", "60", "90"].includes(source))
-          back = {text: "← My matches", callback_data: `sub:p:latest:${source}:${Number(index)}`};
-        else if (VIEWS.has(source))
-          back = {text: "← Previous view", callback_data: `view|${source}|${Number(index)}`};
+          back = {text: "← My matches", callback_data: `sub:p:latest:${source}:${pageIndex}${sortSuffix}`};
+        else if (VIEWS.has(source) && !sortSuffix)
+          back = {text: "← Previous view", callback_data: `view|${source}|${pageIndex}`};
         else return;
       }
-      const context = origin.length ? `${origin[0]}|${Number(origin[1])}` : "";
+      const context = origin.length ? `${origin[0]}|${origin[1]}` : "";
       const matches = [...(await this.ctx.storage.list({prefix: `listing:${prefix}`})).values()];
       if (matches.length !== 1) return;
       const row = matches[0];
