@@ -190,7 +190,8 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:60:0:d'}, 'deadline');
   view = sent.at(-1);
   assert.ok(view.text.indexOf('Soonest deadline') < view.text.indexOf('Middle deadline'));
-  assert.doesNotMatch(view.text, /Newest discovered/);
+  assert.ok(view.text.indexOf('Middle deadline') < view.text.indexOf('Newest discovered'));
+  assert.doesNotMatch(view.text, /Later deadline/);
   const actions = view.reply_markup.inline_keyboard.flat();
   assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:1:d'));
   assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:30:0:d'));
@@ -198,7 +199,8 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:60:1:d'}, 'deadline:next');
   view = sent.at(-1);
   assert.match(view.text, /Page 2 of 2/);
-  assert.match(view.text, /Newest discovered/);
+  assert.match(view.text, /Later deadline/);
+  assert.doesNotMatch(view.text, /Soonest deadline/);
   assert.ok(view.reply_markup.inline_keyboard.flat().some(b =>
     b.callback_data === 'sub:p:latest:60:0:d'));
   assert.equal(values.get('match_window:42'), 60);
