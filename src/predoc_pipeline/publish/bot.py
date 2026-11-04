@@ -210,15 +210,19 @@ def build_pages(
         n_applied = len(store.with_status(APPLIED))
         if n_applied:
             footer += f"\n\n📝 You've applied to {n_applied}: send /applied"
-    if kind == "positions":
-        footer += "\n\n<i>Snapshot only: current availability is not independently verified.</i>"
+    snapshot_note = ("\n\n<i>Snapshot only: current availability is not independently verified.</i>"
+                     if kind == "positions" else "")
+    footer += snapshot_note
     footer += f"\n\n<i>{esc(LEGEND)}</i>"
     pages: list[tuple[str, dict[str, Any] | None]] = []
     for page in pack_html_blocks(blocks, header=head, footer=footer, page_size=min(page_size, 30)):
         chunk = shown[page.start:page.end]
         buttons = [feedback_row(r["url_hash"], store.status(r["url_hash"]), page.start + i + 1)
                    for i, r in enumerate(chunk)]
-        pages.append((page.html, {"inline_keyboard": buttons}))
+        # pack_html_blocks writes the footer on the last page only; every
+        # earlier page also needs the disclosure. The packer reserves its budget.
+        html = page.html + (snapshot_note if page.end < len(shown) else "")
+        pages.append((html, {"inline_keyboard": buttons}))
     return pages
 
 
