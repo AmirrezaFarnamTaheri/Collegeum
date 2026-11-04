@@ -454,8 +454,8 @@ export class TelegramBot {
       `🏛 ${esc(r.institution.slice(0, limits.institution))} · ${esc([r.city, r.country].filter(Boolean).join(", ").slice(0, limits.location) || "Location unstated")}\n` +
       `⏳ ${esc(r.deadline ? r.deadline.slice(0, 10) : r.deadline_note?.slice(0, limits.deadline) || "Deadline unstated")} · <a href="${esc(safeUrl(r.apply_url))}">Open advert</a>`);
     const buttons = chunk.map((r, i) => [
-      {text: `↗ ${page * size + i + 1} Details`, callback_data: `detail|${r.url_hash.slice(0, 16)}`},
-      ...this.feedback(r, marks.get(r.url_hash), page * size + i + 1),
+      {text: `↗ ${page * size + i + 1} Details`, callback_data: `detail|${r.url_hash.slice(0, 16)}|${kind}|${page}`},
+      ...this.feedback(r, marks.get(r.url_hash), page * size + i + 1, `${kind}|${page}`),
     ]);
     const navigation = [];
     if (page) navigation.push(nav("← Previous", kind, page - 1));
@@ -473,10 +473,10 @@ export class TelegramBot {
       reply_markup: {inline_keyboard: buttons}};
   }
 
-  feedback(row, status, number = "") {
+  feedback(row, status, number = "", origin = "") {
     return [["v", "valid", "✅"], ["x", "invalid", "❌"], ["a", "applied", "📝"]].map(([code, st, icon]) =>
       ({text: `${st === status ? "• " : ""}${icon} ${number || ({valid: "Save", invalid: "Hide", applied: "Applied"})[st]}`,
-        callback_data: `fb|${code}|${row.url_hash.slice(0, 16)}`}));
+        callback_data: `fb|${code}|${row.url_hash.slice(0, 16)}${origin ? `|${origin}` : ""}`}));
   }
 
   async command(message, owner = true, admission = {}, updateKey) {
@@ -538,9 +538,23 @@ export class TelegramBot {
       const storedSearch=kind==='search'?await this.ctx.storage.get(`search:${message.chat.id}:${message.message_id}`):null;
       const query=typeof storedSearch==='string'?storedSearch:storedSearch?.query||'';
       content = await this.render(kind, Number(parts[2]), query, message.chat.id);
-    } else if ((parts[0] === "fb" && parts.length === 3) || (parts[0] === "detail" && parts.length === 2)) {
-      const prefix = parts.at(-1);
+    } else if ((parts[0] === "fb" && [3, 5].includes(parts.length)) ||
+               (parts[0] === "detail" && [2, 4].includes(parts.length))) {
+      const prefix = parts[0] === "fb" ? parts[2] : parts[1];
       if (!/^[a-f0-9]{16}$/.test(prefix)) return;
+      // Navigation context lives in callback data, not in subscriber preferences.
+      const origin = parts.slice(parts[0] === "fb" ? 3 : 2);
+      let back = {text: "← My matches", callback_data: "sub:p:latest"};
+      if (origin.length === 2) {
+        const [source, index] = origin;
+        if (!/^\d{1,3}$/.test(index) || Number(index) >= 500) return;
+        if (["7", "14", "30", "60", "90"].includes(source))
+          back = {text: "← My matches", callback_data: `sub:p:latest:${source}:${Number(index)}`};
+        else if (VIEWS.has(source))
+          back = {text: "← Previous view", callback_data: `view|${source}|${Number(index)}`};
+        else return;
+      }
+      const context = origin.length ? `${origin[0]}|${Number(origin[1])}` : "";
       const matches = [...(await this.ctx.storage.list({prefix: `listing:${prefix}`})).values()];
       if (matches.length !== 1) return;
       const row = matches[0];
@@ -566,7 +580,7 @@ export class TelegramBot {
            "ℹ️ Current availability is not independently verified.\n") +
         `<a href="${esc(safeUrl(row.apply_url))}">Open official advert ↗</a>`,
         reply_markup: {inline_keyboard: [[{text: "Open advert ↗", url: safeUrl(row.apply_url)}],
-          this.feedback(row, mark?.status), [{text: "← My matches", callback_data: "sub:p:latest"}, nav("⌂ Home", "menu")]]}};
+          this.feedback(row, mark?.status, "", context), [back, nav("⌂ Home", "menu")]]}};
     } else return;
     await this.deliver(updateKey,"editMessageText", {chat_id: message.chat.id, message_id: message.message_id,
       ...content, parse_mode: "HTML", link_preview_options: {is_disabled: true}});
