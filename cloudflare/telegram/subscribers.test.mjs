@@ -231,7 +231,26 @@ test('My matches groups sorting and page size while history remains in settings'
       'sub:p:latest:60:0', 'sub:p:latest:60:0:d', 'sub:p:display']);
     assert.equal(controls.length, 3);
     assert.match(controls[2].text, /12/);
+    const range = rows.filter(row => row.some(b => b.callback_data === 'sub:p:range:60:d'));
+    assert.equal(range.length, 1, 'only one range-selection row');
+    assert.equal(range[0].length, 1, 'range button occupies its own row');
+    assert.match(range[0][0].text, language === 'fa' ? /۲ ماه/ : /Last 2 months/);
+    assert.ok(rows.flat().every(b => !/^sub:p:latest:(7|14|30|60|90):0:d$/.test(b.callback_data) ||
+      controls.includes(b)), 'five range choices should not be shown on My matches');
     assert.ok(rows.flat().every(b => b.callback_data !== 'sub:p:history'));
+    await subscriberUpdate(bot, {chat: {id: 42, type: 'private'}, message_id: 5},
+      {data: 'sub:p:range:60:d'}, `range:${language}`);
+    const chooser = sent.at(-1);
+    assert.match(chooser.text, language === 'fa' ? /بازه/ : /Choose a range/);
+    const choices = chooser.reply_markup.inline_keyboard.flat();
+    for (const days of [7, 14, 30, 60, 90]) {
+      assert.ok(choices.some(b => b.callback_data === `sub:p:latest:${days}:0:d`),
+        `range chooser must show ${days} days with deadline sort`);
+    }
+    assert.ok(choices.some(b => b.callback_data === 'sub:p:latest:60:0:d'),
+      'return to active sort and chosen range');
+    assert.ok(choices.some(b => b.callback_data === 'sub:p:history'),
+      'saved default remains configurable behind the range panel');
     assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
     assert.ok(rows.flat().some(b => b.callback_data === 'view|tracking|0'));
     const settings = panel({...member, language}, 'more');
