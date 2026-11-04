@@ -584,7 +584,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
           'No matches in this window. Try 3 months or broaden your selected roles.');
     const header = (fa ? '🔎 <b>فرصت‌های من</b>' : '🔎 <b>My matches</b>') + '\n' +
       (fa ? `<b>${matches.length} فرصت</b> · ${lookbackLabel(days, fa)}`
-        : `<b>${matches.length} positions</b> · ${lookbackLabel(days, fa)}`) + '\n' +
+        : `<b>${matches.length} matching listings</b> · ${lookbackLabel(days, fa)}`) + '\n' +
       (fa ? `صفحه ${current + 1} از ${totalPages}` : `Page ${current + 1} of ${totalPages}`) + '\n' +
       (fa ? `📦 فهرست ذخیره: ${rows.length} دانشگاهی · ${generalCareerCount} شغل عمومی · ${lifePhdCount} فرصت دکتری علوم زیستی`
         : `📦 Cached inventory: ${rows.length} academic · ${generalCareerCount} career jobs · ${lifePhdCount} Life Sciences PhDs`);
