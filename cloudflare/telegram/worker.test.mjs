@@ -703,8 +703,14 @@ test('twelve-item unified My matches keeps inline controls and Telegram message 
   assert.equal(rows.flat().filter(b => b.callback_data?.startsWith('detail|')).length, 12);
   assert.ok(rows.every(r => r.length <= 3));
   assert.ok(rows.flat().every(b => !b.callback_data || Buffer.byteLength(b.callback_data) <= 64));
-  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:display'));
-  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:history'));
+  const controls = rows.find(row => row.some(b => b.callback_data === 'sub:p:display'));
+  assert.deepEqual(controls.map(b => b.callback_data), [
+    'sub:p:latest:14:0', 'sub:p:latest:14:0:d', 'sub:p:display']);
+  assert.match(controls[0].text, /Newest/);
+  assert.match(controls[1].text, /Deadline first/);
+  assert.equal(controls[2].text, 'Page size: 12');
+  assert.ok(rows.flat().every(b => b.callback_data !== 'sub:p:history'),
+    'Save preferred range is no longer a shortcut on My matches');
   assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
   assert.ok(rows.flat().some(b => b.callback_data === 'view|tracking|0'));
 });
