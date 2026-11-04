@@ -601,6 +601,83 @@ test('positions, jobs and list show the same unified My matches as /matches', as
 });
 
 
+test('unified My matches preserves academic detail and tracking actions without career receipts', async () => {
+  const instance = bot();
+  const now = new Date().toISOString();
+  const member = {topics: {predoc: now, data_analyst: now}, scopes: {remote: now},
+    paused: false, language: 'en', delivery_mode: 'instant', daily_limit: 6,
+    quiet_hours: false, timezone: 'UTC'};
+  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}],
+    subscriber_protocol: 1, subscribers: {}}));
+  await instance.ctx.storage.put('subscriber:42', member);
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.ctx.storage.put('page_size:42', 12);
+  await instance.ctx.storage.put('career_listings', [{
+    category: 'data_analyst', scope: 'remote', title: 'Career is not tracked',
+    url: 'https://example.org/career', employer: 'Data Research Group',
+    first_seen_at: now, availability: 'unknown',
+  }]);
+  await instance.fetch(post('/webhook', {update_id: 9600,
+    message: {chat: {id: 42, type: 'private'}, from: {id: 42}, text: '/positions'}}));
+  const content = instance.calls.filter(c => c.method === 'sendMessage').at(-1)?.payload;
+  const actions = content.reply_markup.inline_keyboard.flat();
+  const academicDetail = actions.find(b =>
+    b.callback_data === 'detail|' + record.url_hash.slice(0, 16) + '|60|0');
+  assert.ok(academicDetail, 'academic matches retain per-listing details and tracking');
+  assert.match(academicDetail.text, /Details|track/i);
+  assert.equal(actions.filter(b => b.callback_data?.startsWith('detail|')).length, 1,
+    'career matches must not imply supported save/application receipts');
+  assert.match(content.text, /Career is not tracked/);
+  assert.match(content.text, /not a verified open or funded vacancy/);
+  await instance.fetch(post('/webhook', {update_id: 9601,
+    callback_query: {id: 'detail', from: {id: 42}, message: {chat: {id: 42, type: 'private'},
+      message_id: 900}, data: academicDetail.callback_data}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.match(detail.text, /Current availability is not independently verified/);
+  const detailActions = detail.reply_markup.inline_keyboard.flat();
+  const save = detailActions.find(b => b.callback_data ===
+    'fb|v|' + record.url_hash.slice(0, 16) + '|60|0');
+  assert.ok(save, 'Save remains available in unified detail');
+  assert.ok(detailActions.some(b => b.callback_data ===
+    'fb|x|' + record.url_hash.slice(0, 16) + '|60|0'));
+  assert.ok(detailActions.some(b => b.callback_data ===
+    'fb|a|' + record.url_hash.slice(0, 16) + '|60|0'));
+  assert.ok(detailActions.some(b => b.callback_data === 'sub:p:latest:60:0'));
+  const markUpdate = {update_id: 9602, callback_query: {id: 'save', from: {id: 42},
+    message: {chat: {id: 42, type: 'private'}, message_id: 900},
+    data: save.callback_data}};
+  await instance.fetch(post('/webhook', markUpdate));
+  await instance.fetch(post('/webhook', markUpdate));
+  assert.equal((await instance.dataset()).marks.get(record.url_hash), 'valid',
+    'replayed webhook cannot toggle a saved mark twice');
+  const markedDetail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(markedDetail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:60:0'));
+  assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+  assert.equal(await instance.ctx.storage.get('page_size:42'), 12);
+});
+
+
+test('academic details opened from New return to New without losing tracking actions', async () => {
+  const instance = bot();
+  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}]}));
+  await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date().toISOString()}, scopes: {}});
+  const fresh = await instance.render('new', 0, '', 42);
+  const action = fresh.reply_markup.inline_keyboard.flat().find(b =>
+    b.callback_data === 'detail|' + record.url_hash.slice(0, 16) + '|new|0');
+  assert.ok(action);
+  await instance.fetch(post('/webhook', {update_id: 9610, callback_query: {
+    id: 'detail-from-new', from: {id: 42}, message: {chat: {id: 42, type: 'private'},
+      message_id: 900}, data: action.callback_data}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'view|new|0'));
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'fb|v|' + record.url_hash.slice(0, 16) + '|new|0'));
+});
+
+
 test('academic New view still filters saved roles and respects the saved page size', async () => {
   const instance = bot();
   const records = Array.from({length: 8}, (_, i) => ({...record,
