@@ -550,7 +550,20 @@ export async function subscriberUpdate(bot, message, callback, key) {
     const limits = size === 12
       ? {title: 65, institution: 50, country: 24}
       : {title: 110, institution: 90, country: 50};
-    const entries = matches.slice(current * size, current * size + size).map((r, index) =>
+    const visible = matches.slice(current * size, current * size + size);
+    const details = [];
+    if (owner) {
+      // The unified view keeps the academic detail/Save/Hide/Applied tools.
+      // Career records have no feedback receipts, so never offer fake tracking.
+      const academicControls = visible.flatMap((r, index) =>
+        !r.category && /^[a-f0-9]{64}$/.test(String(r.url_hash || ''))
+          ? [button(`${current * size + index + 1} · Details & track`,
+              `detail|${r.url_hash.slice(0, 16)}|${days}|${current}`)]
+          : []);
+      for (let i = 0; i < academicControls.length; i += 2)
+        details.push(academicControls.slice(i, i + 2));
+    }
+    const entries = visible.map((r, index) =>
       `${current * size + index + 1}. ${r.category === 'life_sciences_phd' ? '🧬' : r.category ? '💼' : '🎓'} <a href="${escape(safeApplicationUrl(r.apply_url))}">${escape(String(r.title || 'Opportunity').slice(0, limits.title))}</a>\n` +
       '🏛 ' + escape(String(r.institution || 'Employer unknown').slice(0, limits.institution)) +
       (r.country ? ` · ${escape(String(r.country).slice(0, limits.country))}` : '') +
@@ -577,9 +590,14 @@ export async function subscriberUpdate(bot, message, callback, key) {
         : `📦 Cached inventory: ${rows.length} academic · ${generalCareerCount} career jobs · ${lifePhdCount} Life Sciences PhDs`);
     const footer = fa ? 'ℹ️ مشاهده آگهی به معنی باز بودن یا تأمین مالی تأییدشده نیست.' :
       'ℹ️ A discovered listing is not a verified open or funded vacancy.';
-    content = {text: [header, snapshotWarning, entries.join('\n\n') || empty, footer]
+    const trackingHint = details.length
+      ? (fa ? '🎓 گزینه‌های شماره‌دار جزئیات، ذخیره، پنهان‌کردن و ثبت درخواست را فقط برای موارد دانشگاهی نشان می‌دهند.'
+        : '🎓 Numbered Details buttons offer Save, Hide and Applied for academic listings. Career listings are not tracked.')
+      : '';
+    content = {text: [header, snapshotWarning, entries.join('\n\n') || empty, trackingHint, footer]
       .filter(Boolean).join('\n\n'),
       reply_markup: {inline_keyboard: [
+        ...details,
         ...lookbackChoices(days, fa),
         ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${days}:${current - 1}`)] : []),
           button(`${current + 1}/${totalPages}`, `sub:p:latest:${days}:${current}`),
