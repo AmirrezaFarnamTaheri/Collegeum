@@ -161,6 +161,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
         ['privacy', 'stop', 'help'].includes(page) ? 'account' :
           ['browse', 'account', 'delivery'].includes(page) ? 'more' : 'home';
   const backLabels = {
+    academic: tr('← Academic roles', '← فرصت‌های دانشگاهی'),
     subscriptions: tr('← Subscriptions', '← اشتراک‌ها'),
     more: tr('← Settings', '← تنظیمات'),
     browse: tr('← Browsing', '← مرور فرصت‌ها'),
