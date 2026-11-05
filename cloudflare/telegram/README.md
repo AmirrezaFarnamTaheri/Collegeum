@@ -24,12 +24,17 @@ Sciences PhD feed remains continental Europe only, independent of these regions.
 The history window supports 7, 14, 30, 60 or 90 days (7 days, 14 days,
 1 month, 2 months or 3 months). The default is 14 days, but **Settings → Match
 history** now saves a preferred window in Cloudflare's private per-chat storage.
-Opening My matches or the owner's /menu uses that saved range. Quick range buttons
-in My matches preview a different window without changing the saved default.
+Opening My matches or the owner's /menu uses that saved range. My matches
+shows one full-width current-range button (for example, **Last 2 months**); tapping
+it opens a dedicated five-choice range panel with a link to saved-default
+settings. Previewing another range never changes the saved default or resends alerts.
+**Newest / Deadline first** and **Page size** share one compact toolbar row.
 **Newest / Deadline first** sorting preserves both the recent-discovery order of
 My matches and the earliest-stated-deadline order of legacy `/positions`.
-Next/Previous, lookback changes and academic detail/mark back-navigation retain
-the preview sort and range without updating saved preferences. This is *browsing*, not an alert
+Next/Previous on academic detail cards, result-page pagination and lookback
+changes retain the preview sort and range without updating saved preferences.
+Detail navigation follows eligible academic results and skips career records
+that have no tracking receipts. This is *browsing*, not an alert
 backfill: it never re-notifies historical vacancies or alters the encrypted
 delivery journal. Unsubscribe removes the stored preferred range and page size.
 
