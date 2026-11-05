@@ -112,7 +112,12 @@ test('Latest matches offers all five rolling lookbacks with safe filtering', asy
     const view = sent.at(-1);
     assert.equal((view.text.match(/<a href=/g) || []).length, expected, `last ${days} days`);
     assert.match(view.text, new RegExp(`last ${days} days`, 'i'));
-    assert.ok(view.reply_markup.inline_keyboard.flat().some(b =>
+    const range = view.reply_markup.inline_keyboard.flat().filter(b =>
+      b.callback_data === `sub:p:range:${days}`);
+    assert.equal(range.length, 1, 'one range button replaces five inline choices');
+    await subscriberUpdate(bot, msg, {data: `sub:p:range:${days}`}, `chooser:${days}`);
+    const choices = sent.at(-1).reply_markup.inline_keyboard.flat();
+    assert.ok(choices.some(b =>
       b.callback_data === `sub:p:latest:${days}:0` && b.text.startsWith('☑')));
     assert.doesNotMatch(view.text, /Wrong topic|Wrong market|Closed position|Academic age 100/);
   }
@@ -194,8 +199,11 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
   assert.doesNotMatch(view.text, /Later deadline/);
   const actions = view.reply_markup.inline_keyboard.flat();
   assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:1:d'));
-  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:30:0:d'));
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:range:60:d'));
   assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:0'));
+  await subscriberUpdate(bot, msg, {data: 'sub:p:range:60:d'}, 'deadline:chooser');
+  assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:30:0:d'));
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:60:1:d'}, 'deadline:next');
   view = sent.at(-1);
   assert.match(view.text, /Page 2 of 2/);
