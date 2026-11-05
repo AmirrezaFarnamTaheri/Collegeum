@@ -157,7 +157,9 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
   if (page === 'markets') page = 'careers'; // Keep previously sent buttons usable.
   const parent = page === 'academic_regions' ? 'academic' :
     ['academic', 'careers', 'life_sciences'].includes(page) ? 'subscriptions' :
-      ['display', 'history'].includes(page) ? 'more' : 'home';
+      ['display', 'history'].includes(page) ? 'browse' :
+        ['privacy', 'stop', 'help'].includes(page) ? 'account' :
+          ['browse', 'account', 'delivery'].includes(page) ? 'more' : 'home';
   const home = [button(parent === 'subscriptions' ? tr('← Subscriptions', '← اشتراک‌ها') :
     parent === 'more' ? tr('← Settings', '← تنظیمات') : tr('← Home', '← خانه'), `sub:p:${parent}`)];
   const link = (en, persian, page) => button(tr(en, persian), `sub:p:${page}`);
@@ -312,6 +314,22 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       rows.unshift([link('🧭 Configure roles & markets',
         '🧭 تنظیم موضوع‌ها و محدوده‌ها', 'subscriptions')]);
     }
+  } else if (page === 'browse') {
+    text = tr(
+      '🔎 <b>Browsing</b>\n\n' +
+      `🗓 Saved default: ${rangeButtonLabel(selectedWindow(windowDays), false)}\n` +
+      `📄 Page size: ${pageSize(size)}\n\n` +
+      'These settings control browsing, not alert delivery.',
+      '🔎 <b>مرور فرصت‌ها</b>\n\n' +
+      `🗓 بازه پیش‌فرض: ${rangeButtonLabel(selectedWindow(windowDays), true)}\n` +
+      `📄 تعداد در صفحه: ${pageSize(size)}\n\n` +
+      'این تنظیمات فقط مرور فرصت‌ها را تغییر می‌دهند، نه ارسال اعلان‌ها.'
+    );
+    rows = [
+      [link('🗓 Default range', '🗓 بازه پیش‌فرض', 'history'),
+        link('📄 Page size', '📄 تعداد در صفحه', 'display')],
+      [link('🔎 Open My matches', '🔎 مشاهده فرصت‌های من', 'latest')],
+    ];
   } else if (page === 'display') {
     text = tr('<b>Display settings</b>\n\nBrowse results: choose positions per page. This does not change your daily alert limit.',
       '<b>تنظیمات نمایش</b>\n\nتعداد فرصت در هر صفحه. این تنظیم حد اعلان روزانه را تغییر نمی‌دهد.');
@@ -355,31 +373,31 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       + 'وضعیت پذیرش و شرایط را در وب‌سایت کارفرما بررسی کنید.');
     rows = [[link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions'),
       link('🗓 History settings', '🗓 بازه زمانی', 'history')]];
+  } else if (page === 'account') {
+    text = tr('👤 <b>Account & help</b>\n\nLanguage: English\nSupport, privacy and subscription controls.',
+      '👤 <b>حساب و راهنما</b>\n\nزبان: فارسی\nپشتیبانی، حریم خصوصی و کنترل‌های اشتراک.');
+    rows = [
+      [button(fa ? '🌐 Switch to English' : '🌐 تغییر زبان به فارسی',
+        `sub:l:${fa ? 'en' : 'fa'}`)],
+      [link('🌐 Source status', '🌐 وضعیت منابع', 'sources'),
+        link('❔ Help', '❔ راهنما', 'help')],
+      [link('🔒 Privacy', '🔒 حریم خصوصی', 'privacy')],
+      [link('🗑 Unsubscribe', '🗑 لغو اشتراک', 'stop')],
+    ];
   } else if (page === 'more') {
     text = tr(
       '⚙️ <b>Settings</b>\n\n' +
-      '<b>Browsing</b>\n' +
-      `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} per page\n\n` +
-      '<b>Notifications</b>\n' +
-      `🔔 ${alertStatus} · ${m.daily_limit} per day\n\n` +
-      '<i>Browsing settings never resend previous alerts.</i>',
+      `🔎 ${rangeButtonLabel(selectedWindow(windowDays), false)} · ${pageSize(size)} per page\n` +
+      `🔔 ${alertStatus} · ${m.daily_limit} per day`,
       '⚙️ <b>تنظیمات</b>\n\n' +
-      '<b>مرور فرصت‌ها</b>\n' +
-      `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} در صفحه\n\n` +
-      '<b>اعلان‌ها</b>\n' +
-      `🔔 ${alertStatus} · ${m.daily_limit} در روز\n\n` +
-      '<i>تنظیم بازه مرور باعث ارسال دوباره اعلان‌های قبلی نمی‌شود.</i>'
+      `🔎 ${rangeButtonLabel(selectedWindow(windowDays), true)} · ${pageSize(size)} در صفحه\n` +
+      `🔔 ${alertStatus} · ${m.daily_limit} در روز`
     );
     rows = [
-      [link('🗓 Match history', '🗓 بازه زمانی', 'history'),
-        link('📄 Results/page', '📄 تعداد در صفحه', 'display')],
-      [link('🔔 Alert delivery', '🔔 ارسال اعلان', 'delivery'),
-        link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions')],
-      [link('🌐 Source status', '🌐 وضعیت منابع', 'sources'),
-        link('❔ Help', '❔ راهنما', 'help')],
-      [button(fa ? '🌐 English' : '🌐 فارسی', `sub:l:${fa ? 'en' : 'fa'}`),
-        link('🔒 Privacy', '🔒 حریم خصوصی', 'privacy')],
-      [link('🗑 Unsubscribe', '🗑 لغو اشتراک', 'stop')],
+      [link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions'),
+        link('🔎 Browsing', '🔎 مرور فرصت‌ها', 'browse')],
+      [link('🔔 Alerts', '🔔 اعلان‌ها', 'delivery'),
+        link('👤 Account & help', '👤 حساب و راهنما', 'account')],
     ];
   } else {
     const nAcademic = ACADEMIC.filter(key => key in m.topics).length;
@@ -429,9 +447,9 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
   return {text, reply_markup: {inline_keyboard: rows}};
 }
 
-const PAGES = new Set(['home', 'subscriptions', 'display', 'history', 'academic', 'academic_regions',
+const PAGES = new Set(['home', 'subscriptions', 'display', 'history', 'browse', 'academic', 'academic_regions',
   'careers', 'life_sciences', 'markets', 'delivery',
-  'more', 'help', 'privacy', 'stop', 'latest', 'sources']);
+  'more', 'account', 'help', 'privacy', 'stop', 'latest', 'sources']);
 const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'subscriptions', status: 'home',
   academic: 'academic', regions: 'academic_regions', academicregions: 'academic_regions',
   careers: 'careers', markets: 'careers', lifesciences: 'life_sciences',
@@ -496,7 +514,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
       }
       target = parts[2]; changed = true;
     } else if (parts.length === 3 && parts[1] === 'l' && ['en', 'fa'].includes(parts[2])) {
-      m.language = parts[2]; changed = true; target = 'more';
+      m.language = parts[2]; changed = true; target = 'account';
     } else if (parts[1] === 'a' && ['pause', 'resume'].includes(parts[2]) && old) {
       m.paused = parts[2] === 'pause'; changed = true; target = 'delivery';
     } else if (parts[1] === 'd' && old) {
@@ -538,7 +556,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
         (fa ? 'هنوز گزارش بررسی منابع در دسترس نیست.' :
           'No source-check report is available yet.'),
       reply_markup: {inline_keyboard: [[
-        button(fa ? '← تنظیمات' : '← Settings', 'sub:p:more'),
+        button(fa ? '← حساب و راهنما' : '← Account & help', 'sub:p:account'),
         button(fa ? '🔎 فرصت‌های من' : '🔎 My matches', 'sub:p:latest'),
       ]]},
     };
@@ -652,7 +670,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
         [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),
           button(fa ? 'خانه' : 'Home', 'sub:p:home')]]}};
   }
-  if (['home', 'more', 'latest'].includes(page) &&
+  if (['home', 'latest'].includes(page) &&
       (bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id))
     content.reply_markup.inline_keyboard.push([{text:
       member?.language === 'fa' ? '📌 ذخیره‌شده و درخواست‌ها' : '📌 Saved & applications',
