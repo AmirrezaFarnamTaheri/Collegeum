@@ -94,6 +94,35 @@ test('settings is a compact four-destination hub with secondary controls grouped
   assert.equal(callbacks(panel(member, 'privacy')).includes('sub:p:account'), true);
 });
 
+test('nested Settings back labels identify their actual destinations', () => {
+  const expected = [
+    ['history', 'sub:p:browse', /Browsing/],
+    ['display', 'sub:p:browse', /Browsing/],
+    ['privacy', 'sub:p:account', /Account/],
+    ['stop', 'sub:p:account', /Account/],
+    ['help', 'sub:p:account', /Account/],
+    ['browse', 'sub:p:more', /Settings/],
+    ['account', 'sub:p:more', /Settings/],
+  ];
+  for (const [page, destination, label] of expected) {
+    const screen = panel(member, page, 12, 60);
+    const lastRow = screen.reply_markup.inline_keyboard.at(-1);
+    assert.equal(lastRow.length, 1, page);
+    assert.equal(lastRow[0].callback_data, destination, page);
+    assert.match(lastRow[0].text, label, page);
+  }
+  for (const [page, destination, label] of [
+    ['history', 'sub:p:browse', /مرور/],
+    ['privacy', 'sub:p:account', /حساب/],
+    ['browse', 'sub:p:more', /تنظیمات/],
+  ]) {
+    const screen = panel({...member, language: 'fa'}, page, 12, 60);
+    const last = screen.reply_markup.inline_keyboard.at(-1)[0];
+    assert.equal(last.callback_data, destination);
+    assert.match(last.text, label);
+  }
+});
+
 test('bilingual menus keep source and account controls reachable with explicit back path', () => {
   for (const language of ['en', 'fa']) {
     const selection = {...member, language};
