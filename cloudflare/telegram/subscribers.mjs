@@ -454,7 +454,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
   const id = String(message.chat.id);
   const preferredWindow = selectedWindow(await bot.ctx.storage.get(`match_window:${id}`));
   const selection = latestSelection(raw, preferredWindow);
-  const rangePreview = /^sub:p:range:(7|14|30|60|90)(:d)?$/.exec(raw);
+  const rangeMatch = /^sub:p:range:(7|14|30|60|90):([0-9]{1,3})(:d)?$/.exec(raw);
+  const rangePreview = rangeMatch && Number(rangeMatch[2]) < 500 ? rangeMatch : null;
   const page = await bot.ctx.storage.transaction(async tx => {
     const claim = await tx.get(key);
     if (claim?.subscriber_applied) return claim.subscriber_page;
@@ -544,7 +545,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
   }
   if (page === 'range') {
     const days = Number(rangePreview[1]);
-    const sort = rangePreview[2] ? 'deadline' : 'recent';
+    const sort = rangePreview[3] ? 'deadline' : 'recent';
     const fa = member?.language === 'fa';
     const selected = rangeButtonLabel(days, fa);
     const saved = rangeButtonLabel(windowDays, fa);
@@ -555,7 +556,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
       reply_markup: {inline_keyboard: [
         ...lookbackChoices(days, fa, false, sort),
         [button(fa ? '← بازگشت به فرصت‌های من' : '← Back to My matches',
-          `sub:p:latest:${days}:0${sort === 'deadline' ? ':d' : ''}`)],
+          `sub:p:latest:${days}:${Number(rangePreview[2])}${sort === 'deadline' ? ':d' : ''}`)],
         [button(fa ? '⚙️ تنظیم بازه پیش‌فرض' : '⚙️ Default range settings', 'sub:p:history')],
       ]},
     };
@@ -639,7 +640,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
       reply_markup: {inline_keyboard: [
         ...details,
         [button(rangeButtonLabel(days, fa),
-          `sub:p:range:${days}${sort === 'deadline' ? ':d' : ''}`)],
+          `sub:p:range:${days}:${current}${sort === 'deadline' ? ':d' : ''}`)],
         [button(`${sort === 'recent' ? '☑' : '☐'} ${fa ? 'جدیدترین' : 'Newest'}`,
           `sub:p:latest:${days}:0`),
           button(`${sort === 'deadline' ? '☑' : '☐'} ${fa ? 'مهلت نزدیک‌تر' : 'Deadline first'}`,
