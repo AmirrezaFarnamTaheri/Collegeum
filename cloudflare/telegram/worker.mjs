@@ -528,7 +528,10 @@ export class TelegramBot {
     const index = rowsWithCurrent.findIndex(r => r.url_hash === row.url_hash && isAcademic(r));
     if (index < 0) return [];
     const neighbors = [];
-    for (const [step, label] of [[-1, '← Previous'], [1, 'Next →']]) {
+    const labels = member?.language === 'fa'
+      ? [[-1, '← قبلی'], [1, 'بعدی →']]
+      : [[-1, '← Previous'], [1, 'Next →']];
+    for (const [step, label] of labels) {
       for (let i = index + step; i >= 0 && i < rowsWithCurrent.length; i += step) {
         const neighbor = rowsWithCurrent[i];
         if (!isAcademic(neighbor)) continue;
