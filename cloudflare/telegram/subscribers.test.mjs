@@ -8,7 +8,7 @@ const member = {topics: {predoc: new Date().toISOString()}, scopes: {}, paused: 
 test('both languages keep all settings reachable with bounded native buttons', () => {
   for (const language of ['en', 'fa']) {
     for (const page of ['home', 'subscriptions', 'display', 'academic', 'careers', 'life_sciences', 'markets',
-      'delivery', 'more', 'help', 'privacy', 'stop']) {
+      'delivery', 'more', 'browse', 'account', 'help', 'privacy', 'stop']) {
       const result = panel({...member, language}, page);
       assert.ok(result.text.length < 4096);
       if (language === 'fa') assert.match(result.text, /[\u0600-\u06ff]/);
@@ -21,7 +21,8 @@ test('both languages keep all settings reachable with bounded native buttons', (
   }
   assert.ok(panel(member).reply_markup.inline_keyboard.length <= 4);
   assert.match(panel(null).text, /Choose roles/);
-  assert.ok(panel(member, 'more').reply_markup.inline_keyboard.flat().some(b => b.callback_data === 'sub:p:stop'));
+  assert.ok(panel(member, 'account').reply_markup.inline_keyboard.flat().some(b => b.callback_data === 'sub:p:stop'));
+  assert.ok(!panel(member, 'more').reply_markup.inline_keyboard.flat().some(b => b.callback_data === 'sub:p:stop'));
 });
 
 test('subscriber schema rejects receipts, invalid controls and unknown topics', () => {
@@ -76,7 +77,7 @@ test('menu hierarchy groups subscriptions and uses explicit checkbox states', ()
   const display = panel(member, 'display', 6).reply_markup.inline_keyboard.flat();
   assert.equal(display.find(b => b.callback_data === 'sub:n:6').text, '☑ 6');
   assert.equal(display.find(b => b.callback_data === 'sub:n:4').text, '☐ 4');
-  assert.ok(display.some(b => b.callback_data === 'sub:p:more'));
+  assert.ok(display.some(b => b.callback_data === 'sub:p:browse'));
 });
 
 test('Latest matches offers all five rolling lookbacks with safe filtering', async () => {
@@ -269,9 +270,9 @@ test('My matches groups sorting and page size while history remains in settings'
       'saved default remains configurable behind the range panel');
     assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
     assert.ok(rows.flat().some(b => b.callback_data === 'view|tracking|0'));
-    const settings = panel({...member, language}, 'more');
+    const settings = panel({...member, language}, 'browse');
     assert.ok(settings.reply_markup.inline_keyboard.flat().some(b =>
-      b.callback_data === 'sub:p:history'), 'saved range remains accessible via Settings');
+      b.callback_data === 'sub:p:history'), 'saved range remains accessible via Browsing');
     assert.equal(values.get('match_window:42'), 60);
     assert.equal(values.get('page_size:42'), 12);
   }
