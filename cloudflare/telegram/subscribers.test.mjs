@@ -113,9 +113,9 @@ test('Latest matches offers all five rolling lookbacks with safe filtering', asy
     assert.equal((view.text.match(/<a href=/g) || []).length, expected, `last ${days} days`);
     assert.match(view.text, new RegExp(`last ${days} days`, 'i'));
     const range = view.reply_markup.inline_keyboard.flat().filter(b =>
-      b.callback_data === `sub:p:range:${days}`);
+      b.callback_data === `sub:p:range:${days}:0`);
     assert.equal(range.length, 1, 'one range button replaces five inline choices');
-    await subscriberUpdate(bot, msg, {data: `sub:p:range:${days}`}, `chooser:${days}`);
+    await subscriberUpdate(bot, msg, {data: `sub:p:range:${days}:0`}, `chooser:${days}`);
     const choices = sent.at(-1).reply_markup.inline_keyboard.flat();
     assert.ok(choices.some(b =>
       b.callback_data === `sub:p:latest:${days}:0` && b.text.startsWith('☑')));
@@ -148,7 +148,14 @@ test('Latest lookback survives pagination and refuses unapproved windows', async
   assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
     b.callback_data === 'sub:p:latest:90:1'));
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:90:1'}, 'archive:1');
-  assert.match(sent.at(-1).text, /last 90 days/i);
+  const rangeOnSecondPage = sent.at(-1).reply_markup.inline_keyboard.flat().find(b =>
+    b.callback_data === 'sub:p:range:90:1');
+  assert.ok(rangeOnSecondPage);
+  await subscriberUpdate(bot, msg, {data: rangeOnSecondPage.callback_data}, 'archive:range');
+  assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:90:1' && /Back/.test(b.text)));
+  assert.equal(values.has('match_window:42'), false);
+  assert.match(sent.at(-2).text, /last 90 days/i);
   assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b => b.text === '2/3'));
   assert.equal((sent.at(-1).text.match(/<a href=/g) || []).length, 4);
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:999:0'}, 'archive:bad');
@@ -199,9 +206,9 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
   assert.doesNotMatch(view.text, /Later deadline/);
   const actions = view.reply_markup.inline_keyboard.flat();
   assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:1:d'));
-  assert.ok(actions.some(b => b.callback_data === 'sub:p:range:60:d'));
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:range:60:0:d'));
   assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:0'));
-  await subscriberUpdate(bot, msg, {data: 'sub:p:range:60:d'}, 'deadline:chooser');
+  await subscriberUpdate(bot, msg, {data: 'sub:p:range:60:0:d'}, 'deadline:chooser');
   assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
     b.callback_data === 'sub:p:latest:30:0:d'));
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:60:1:d'}, 'deadline:next');
@@ -239,7 +246,7 @@ test('My matches groups sorting and page size while history remains in settings'
       'sub:p:latest:60:0', 'sub:p:latest:60:0:d', 'sub:p:display']);
     assert.equal(controls.length, 3);
     assert.match(controls[2].text, /12/);
-    const range = rows.filter(row => row.some(b => b.callback_data === 'sub:p:range:60:d'));
+    const range = rows.filter(row => row.some(b => b.callback_data === 'sub:p:range:60:0:d'));
     assert.equal(range.length, 1, 'only one range-selection row');
     assert.equal(range[0].length, 1, 'range button occupies its own row');
     assert.match(range[0][0].text, language === 'fa' ? /۲ ماه/ : /Last 2 months/);
@@ -247,7 +254,7 @@ test('My matches groups sorting and page size while history remains in settings'
       controls.includes(b)), 'five range choices should not be shown on My matches');
     assert.ok(rows.flat().every(b => b.callback_data !== 'sub:p:history'));
     await subscriberUpdate(bot, {chat: {id: 42, type: 'private'}, message_id: 5},
-      {data: 'sub:p:range:60:d'}, `range:${language}`);
+      {data: 'sub:p:range:60:0:d'}, `range:${language}`);
     const chooser = sent.at(-1);
     assert.match(chooser.text, language === 'fa' ? /بازه/ : /Choose a range/);
     const choices = chooser.reply_markup.inline_keyboard.flat();
