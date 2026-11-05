@@ -678,6 +678,91 @@ test('academic details opened from New return to New without losing tracking act
 });
 
 
+
+test('academic detail can visit previous and next postings across My matches pages', async () => {
+  const instance = bot(), now = Date.now();
+  const listings = Array.from({length: 6}, (_, i) => ({
+    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(16, '0') + '0'.repeat(48),
+    title: 'Academic listing ' + i,
+    first_seen_at: new Date(now - i * 3600000).toISOString(),
+  }));
+  await instance.fetch(post('/sync', {...snapshot, listings, subscriber_protocol: 1,
+    subscribers: {}}));
+  const member = {topics: {predoc: new Date(now).toISOString(), data_analyst: new Date(now).toISOString()},
+    scopes: {remote: new Date(now).toISOString()}, language: 'en'};
+  await instance.ctx.storage.put('subscriber:42', member);
+  await instance.ctx.storage.put('match_window:42', 60);
+  await instance.ctx.storage.put('page_size:42', 4);
+  // A career match between academic 2 and 3 does not acquire fake tracking controls.
+  await instance.ctx.storage.put('career_listings', [{
+    category: 'data_analyst', scope: 'remote', title: 'Career between academic listings',
+    employer: 'Research Lab', url: 'https://example.org/career',
+    first_seen_at: new Date(now - 2.5 * 3600000).toISOString(),
+    availability: 'unknown',
+  }]);
+  const tap = async (id, data) => {
+    await instance.fetch(post('/webhook', {update_id: id, callback_query: {
+      id: String(id), from: {id: 42},
+      message: {chat: {id: 42, type: 'private'}, message_id: 900}, data}}));
+    return instance.calls.filter(x => x.method === 'editMessageText').at(-1)?.payload;
+  };
+  const hash = i => i.toString(16).padStart(16, '0');
+  let detail = await tap(9800, 'detail|' + hash(2) + '|60|0');
+  assert.match(detail.text, /Academic listing 2/);
+  let actions = detail.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(1) + '|60|0' &&
+    /Previous/.test(b.text)));
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(3) + '|60|1' &&
+    /Next/.test(b.text)), 'next must cross to the correct page and skip career entries');
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:0'));
+  detail = await tap(9801, 'detail|' + hash(3) + '|60|1');
+  assert.match(detail.text, /Academic listing 3/);
+  actions = detail.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(2) + '|60|0'));
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(4) + '|60|1'));
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:1'));
+  detail = await tap(9802, 'detail|' + hash(5) + '|60|1');
+  actions = detail.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.some(b => b.callback_data === 'detail|' + hash(4) + '|60|1'));
+  assert.ok(actions.every(b => !/Next/.test(b.text)), 'last posting has no bogus Next');
+  detail = await tap(9803, 'detail|' + hash(0) + '|60|0');
+  actions = detail.reply_markup.inline_keyboard.flat();
+  assert.ok(actions.every(b => !/Previous/.test(b.text)), 'first posting has no bogus Previous');
+  // Saving or hiding keeps the current detail and neighboring browse options.
+  detail = await tap(9804, 'fb|x|' + hash(2) + '|60|0');
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'detail|' + hash(3) + '|60|0'),
+    'after Hide, next points to the neighbor on its newly compacted results page');
+  assert.equal((await instance.dataset()).marks.get(listings[2].url_hash), 'invalid');
+  assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
+  assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
+  assert.equal(await instance.ctx.storage.get('page_size:42'), 4);
+});
+
+test('academic New details retain Previous and Next without changing the original view', async () => {
+  const instance = bot(), now = Date.now();
+  const listings = Array.from({length: 5}, (_, i) => ({
+    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(16, '0') + '0'.repeat(48),
+    title: 'New academic listing ' + i,
+    first_seen_at: new Date(now - i * 3600000).toISOString(),
+  }));
+  await instance.fetch(post('/sync', {...snapshot, listings}));
+  await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date(now).toISOString()},
+    scopes: {}, language: 'en'});
+  await instance.ctx.storage.put('page_size:42', 4);
+  const action = 'detail|' + (3).toString(16).padStart(16, '0') + '|new|0';
+  await instance.fetch(post('/webhook', {update_id: 9810, callback_query: {
+    id: 'new-detail', from: {id: 42},
+    message: {chat: {id: 42, type: 'private'}, message_id: 900}, data: action}}));
+  const detail = instance.calls.filter(x => x.method === 'editMessageText').at(-1)?.payload;
+  const controls = detail.reply_markup.inline_keyboard.flat();
+  const hash = i => i.toString(16).padStart(16, '0');
+  assert.ok(controls.some(b => b.callback_data === 'detail|' + hash(2) + '|new|0'));
+  assert.ok(controls.some(b => b.callback_data === 'detail|' + hash(4) + '|new|1'));
+  assert.ok(controls.some(b => b.callback_data === 'view|new|0'));
+  assert.ok(controls.some(b => b.callback_data === 'fb|v|' + hash(3) + '|new|0'));
+});
+
 test('twelve-item unified My matches keeps inline controls and Telegram message limits', async () => {
   const instance = bot();
   const now = new Date().toISOString();
@@ -703,8 +788,18 @@ test('twelve-item unified My matches keeps inline controls and Telegram message 
   assert.equal(rows.flat().filter(b => b.callback_data?.startsWith('detail|')).length, 12);
   assert.ok(rows.every(r => r.length <= 3));
   assert.ok(rows.flat().every(b => !b.callback_data || Buffer.byteLength(b.callback_data) <= 64));
-  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:display'));
-  assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:history'));
+  const controls = rows.find(row => row.some(b => b.callback_data === 'sub:p:display'));
+  assert.deepEqual(controls.map(b => b.callback_data), [
+    'sub:p:latest:14:0', 'sub:p:latest:14:0:d', 'sub:p:display']);
+  assert.match(controls[0].text, /Newest/);
+  assert.match(controls[1].text, /Deadline first/);
+  assert.equal(controls[2].text, 'Page size: 12');
+  const rangeRow = rows.find(row => row.some(b => b.callback_data === 'sub:p:range:14:0'));
+  assert.ok(rangeRow);
+  assert.equal(rangeRow.length, 1, 'My matches uses one full-width range button');
+  assert.match(rangeRow[0].text, /Last 14 days/);
+  assert.ok(rows.flat().every(b => b.callback_data !== 'sub:p:history'),
+    'Save preferred range is no longer a shortcut on My matches');
   assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
   assert.ok(rows.flat().some(b => b.callback_data === 'view|tracking|0'));
 });
@@ -712,8 +807,11 @@ test('twelve-item unified My matches keeps inline controls and Telegram message 
 
 test('Persian My matches localizes academic details and preserves callback identity', async () => {
   const instance = bot();
-  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}],
-    subscriber_protocol: 1, subscribers: {}}));
+  await instance.fetch(post('/sync', {...snapshot, listings: [
+    {...record, kind: 'predoc'}, {...record, kind: 'predoc',
+      url_hash: 'b'.repeat(64), title: 'Second academic listing',
+      first_seen_at: new Date(Date.parse(record.first_seen_at) - 3600000).toISOString()},
+  ], subscriber_protocol: 1, subscribers: {}}));
   await instance.ctx.storage.put('subscriber:42', {
     topics: {predoc: new Date().toISOString()}, scopes: {}, language: 'fa',
   });
@@ -727,6 +825,13 @@ test('Persian My matches localizes academic details and preserves callback ident
   assert.ok(button);
   assert.match(button.text, /جزئیات/);
   assert.match(view.text, /تأییدشده نیست/);
+  await instance.fetch(post('/webhook', {update_id: 9652,
+    callback_query: {id: 'fa-detail', from: {id: 42},
+      message: {chat: {id: 42, type: 'private'}, message_id: 900}, data: button.callback_data}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'detail|' + 'b'.repeat(16) + '|60|0' && /بعدی/.test(b.text)),
+    'navigation label is localized without changing callback identities');
 });
 
 

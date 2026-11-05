@@ -65,12 +65,20 @@ test('regional and alert settings show saved state without long instruction bloc
     assert.ok(actions(regions).includes('sub:r:all'));
 
     const settings = panel(profile(language), 'more', 12, 90);
-    assert.match(settings.text, language === 'fa' ? /مرور/ : /<b>Browsing<\/b>/);
-    assert.match(settings.text, language === 'fa' ? /اعلان/ : /<b>Notifications<\/b>/);
+    assert.match(settings.text, language === 'fa' ? /تنظیمات/ : /<b>Settings<\/b>/);
+    assert.match(settings.text, language === 'fa' ? /فعال/ : /Active/);
     assert.ok(settings.text.length < 700);
-    for (const target of ['sub:p:history','sub:p:display','sub:p:delivery']) {
+    for (const target of ['sub:p:browse','sub:p:subscriptions','sub:p:delivery','sub:p:account']) {
       assert.ok(actions(settings).includes(target));
     }
+    assert.ok(settings.reply_markup.inline_keyboard.length <= 3);
+    const browsing = panel(profile(language), 'browse', 12, 90);
+    assert.ok(actions(browsing).includes('sub:p:history'));
+    assert.ok(actions(browsing).includes('sub:p:display'));
+    assert.ok(actions(browsing).includes('sub:p:more'));
+    const account = panel(profile(language), 'account');
+    for (const target of ['sub:p:sources', 'sub:p:help', 'sub:p:privacy', 'sub:p:stop'])
+      assert.ok(actions(account).includes(target));
     const delivery = panel(profile(language), 'delivery');
     assert.match(delivery.text, language === 'fa' ? /وضعیت/ : /Status/i);
     assert.ok(actions(delivery).includes('sub:d:mode'));
@@ -81,7 +89,7 @@ test('regional and alert settings show saved state without long instruction bloc
 test('all Telegram menus maintain short callbacks, readable rows and valid HTML', () => {
   for (const language of ['en', 'fa']) {
     for (const page of ['home','subscriptions','academic','academic_regions','careers',
-      'life_sciences','delivery','more','history','display','help','stop']) {
+      'life_sciences','delivery','more','browse','account','history','display','help','stop']) {
       const content = panel(profile(language), page, 12, 90);
       assert.ok(content.text.length <= 4096, page);
       assert.equal((content.text.match(/<b>/g) || []).length,

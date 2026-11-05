@@ -49,7 +49,7 @@ test('academic match is shown when cloud snapshot has first_seen_at but no publi
 });
 
 test('settings exposes a saved history window without changing subscriber alert preferences', async () => {
-  assert.ok(panel(preferences(), 'more').reply_markup.inline_keyboard.flat().some(
+  assert.ok(panel(preferences(), 'browse').reply_markup.inline_keyboard.flat().some(
     b => b.callback_data === 'sub:p:history'));
   const f = fixture({rows: [academic(80), academic(95, 'b')]});
   const storedBefore = structuredClone(f.values.get('subscriber:42'));
@@ -106,25 +106,31 @@ test('nested preference screens stay uncluttered while owner tracking stays reac
   assert.ok(!markets.reply_markup.inline_keyboard.flat().some(
     button => button.callback_data === 'view|tracking|0'));
   const settings = await f.tap('sub:p:more', 'settings');
-  assert.ok(settings.reply_markup.inline_keyboard.flat().some(
+  assert.ok(!settings.reply_markup.inline_keyboard.flat().some(
+    button => button.callback_data === 'view|tracking|0'),
+    'tracking is available from Home and results, not repeated in Settings');
+  const home = await f.tap('sub:p:home', 'home');
+  assert.ok(home.reply_markup.inline_keyboard.flat().some(
     button => button.callback_data === 'view|tracking|0'));
   const matches = await f.tap('sub:p:latest', 'matches');
   assert.ok(matches.reply_markup.inline_keyboard.flat().some(
     button => button.callback_data === 'view|tracking|0'));
 });
 
-test('language toggle stays in Settings and source status navigates back there', async () => {
+test('language toggle stays in Account & help and source status returns there', async () => {
   const f = fixture();
   f.values.set('source_status', {en: '<b>Sources</b>\\nOne provider failed',
     fa: '<b>منابع</b>\\nیک منبع ناموفق'});
   const lang = await f.tap('sub:l:fa');
-  assert.match(lang.text, /تنظیمات/);
+  assert.match(lang.text, /حساب و راهنما/);
   assert.ok(lang.reply_markup.inline_keyboard.flat().some(
-    b => b.callback_data === 'sub:p:history'));
+    b => b.callback_data === 'sub:p:privacy'));
+  assert.ok(lang.reply_markup.inline_keyboard.flat().some(
+    b => b.callback_data === 'sub:p:more'));
   const sources = await f.tap('sub:p:sources', 'sources');
   assert.match(sources.text, /منابع/);
   assert.ok(sources.reply_markup.inline_keyboard.flat().some(
-    b => b.callback_data === 'sub:p:more'));
+    b => b.callback_data === 'sub:p:account'));
 });
 
 test('empty results explain that career roles need a market even when inventory exists', async () => {

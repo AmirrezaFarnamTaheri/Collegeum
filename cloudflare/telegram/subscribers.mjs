@@ -26,6 +26,13 @@ const lookbackLabel = (days, fa) => fa ? ({
   7: '۷ روز اخیر', 14: '۱۴ روز اخیر', 30: '۳۰ روز اخیر',
   60: '۶۰ روز اخیر', 90: '۹۰ روز اخیر',
 })[days] : `last ${days} days`;
+const rangeButtonLabel = (days, fa) => fa ? ({
+  7: '۷ روز اخیر', 14: '۱۴ روز اخیر', 30: '۱ ماه اخیر',
+  60: '۲ ماه اخیر', 90: '۳ ماه اخیر',
+})[days] : ({
+  7: 'Last 7 days', 14: 'Last 14 days', 30: 'Last month',
+  60: 'Last 2 months', 90: 'Last 3 months',
+})[days];
 const lookbackChoices = (days, fa, setting = false, sort = 'recent') => [[7, 14], [30, 60], [90]].map(row =>
   row.map(value => button(
     `${days === value ? '☑' : '☐'} ${fa ? ({
@@ -93,6 +100,27 @@ const recentlyDiscovered = (value, days, now) => {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) && timestamp <= now && timestamp >= now - days * 86400000;
 };
+// Keep result membership and ordering identical between My matches and
+// Previous/Next on academic detail cards; never invent career feedback receipts.
+export function browseMatchingListings(rows, careerInventory, marks, member,
+    days, sort = 'recent', now = Date.now()) {
+  const academic = rows.filter(r => matchesPreferences(r, member) &&
+    openAcademicListing(r, now) && !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
+    recentlyDiscovered(r.first_seen_at || r.published_at, days, now) &&
+    safeApplicationUrl(r.apply_url));
+  const careers = careerInventory.filter(r =>
+      matchesPreferences(r, member) && r.availability !== 'closed' &&
+      deadlineNotPassed(r.deadline, now) &&
+      recentlyDiscovered(r.first_seen_at, days, now) && safeApplicationUrl(r.url))
+    .map(r => ({...r, apply_url: r.url, institution: r.employer,
+      published_at: r.first_seen_at}));
+  const discovered = r => Date.parse(r.first_seen_at || r.published_at) || 0;
+  const due = r => Number.isFinite(Date.parse(r.deadline)) ? Date.parse(r.deadline) : Infinity;
+  const matches = [...academic, ...careers].sort((a, b) =>
+    sort === 'deadline' ? due(a) - due(b) || discovered(b) - discovered(a)
+      : discovered(b) - discovered(a));
+  return {academic, matches};
+}
 const fresh = () => ({topics: {}, scopes: {}, academic_regions: {},
   paused: false, language: 'en',
   delivery_mode: 'instant', daily_limit: 6, quiet_hours: false, timezone: 'UTC'});
@@ -129,9 +157,18 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
   if (page === 'markets') page = 'careers'; // Keep previously sent buttons usable.
   const parent = page === 'academic_regions' ? 'academic' :
     ['academic', 'careers', 'life_sciences'].includes(page) ? 'subscriptions' :
-      ['display', 'history'].includes(page) ? 'more' : 'home';
-  const home = [button(parent === 'subscriptions' ? tr('← Subscriptions', '← اشتراک‌ها') :
-    parent === 'more' ? tr('← Settings', '← تنظیمات') : tr('← Home', '← خانه'), `sub:p:${parent}`)];
+      ['display', 'history'].includes(page) ? 'browse' :
+        ['privacy', 'stop', 'help'].includes(page) ? 'account' :
+          ['browse', 'account', 'delivery'].includes(page) ? 'more' : 'home';
+  const backLabels = {
+    academic: tr('← Academic roles', '← فرصت‌های دانشگاهی'),
+    subscriptions: tr('← Subscriptions', '← اشتراک‌ها'),
+    more: tr('← Settings', '← تنظیمات'),
+    browse: tr('← Browsing', '← مرور فرصت‌ها'),
+    account: tr('← Account & help', '← حساب و راهنما'),
+    home: tr('← Home', '← خانه'),
+  };
+  const home = [button(backLabels[parent], `sub:p:${parent}`)];
   const link = (en, persian, page) => button(tr(en, persian), `sub:p:${page}`);
   let text, rows;
   if (page === 'subscriptions') {
@@ -187,8 +224,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     }
     rows.push([button(`${count ? '☐' : '☑'} ${tr('Worldwide · all regions', 'همه جهان · تمام مناطق')}`,
       'sub:r:all')]);
-    rows.push([link('← Academic roles', '← فرصت‌های دانشگاهی', 'academic'),
-      link('🔎 My matches', '🔎 فرصت‌های من', 'latest')]);
+    rows.push([link('🔎 My matches', '🔎 فرصت‌های من', 'latest')]);
   } else if (['academic', 'careers', 'life_sciences'].includes(page)) {
     const options = page === 'academic' ? ACADEMIC :
       page === 'careers' ? CAREERS : ['life_sciences_phd'];
@@ -284,6 +320,22 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       rows.unshift([link('🧭 Configure roles & markets',
         '🧭 تنظیم موضوع‌ها و محدوده‌ها', 'subscriptions')]);
     }
+  } else if (page === 'browse') {
+    text = tr(
+      '🔎 <b>Browsing</b>\n\n' +
+      `🗓 Saved default: ${rangeButtonLabel(selectedWindow(windowDays), false)}\n` +
+      `📄 Page size: ${pageSize(size)}\n\n` +
+      'These settings control browsing, not alert delivery.',
+      '🔎 <b>مرور فرصت‌ها</b>\n\n' +
+      `🗓 بازه پیش‌فرض: ${rangeButtonLabel(selectedWindow(windowDays), true)}\n` +
+      `📄 تعداد در صفحه: ${pageSize(size)}\n\n` +
+      'این تنظیمات فقط مرور فرصت‌ها را تغییر می‌دهند، نه ارسال اعلان‌ها.'
+    );
+    rows = [
+      [link('🗓 Default range', '🗓 بازه پیش‌فرض', 'history'),
+        link('📄 Page size', '📄 تعداد در صفحه', 'display')],
+      [link('🔎 Open My matches', '🔎 مشاهده فرصت‌های من', 'latest')],
+    ];
   } else if (page === 'display') {
     text = tr('<b>Display settings</b>\n\nBrowse results: choose positions per page. This does not change your daily alert limit.',
       '<b>تنظیمات نمایش</b>\n\nتعداد فرصت در هر صفحه. این تنظیم حد اعلان روزانه را تغییر نمی‌دهد.');
@@ -327,31 +379,31 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       + 'وضعیت پذیرش و شرایط را در وب‌سایت کارفرما بررسی کنید.');
     rows = [[link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions'),
       link('🗓 History settings', '🗓 بازه زمانی', 'history')]];
+  } else if (page === 'account') {
+    text = tr('👤 <b>Account & help</b>\n\nLanguage: English\nSupport, privacy and subscription controls.',
+      '👤 <b>حساب و راهنما</b>\n\nزبان: فارسی\nپشتیبانی، حریم خصوصی و کنترل‌های اشتراک.');
+    rows = [
+      [button(fa ? '🌐 زبان: فارسی → English' : '🌐 Language: English → فارسی',
+        `sub:l:${fa ? 'en' : 'fa'}`)],
+      [link('🌐 Source status', '🌐 وضعیت منابع', 'sources'),
+        link('❔ Help', '❔ راهنما', 'help')],
+      [link('🔒 Privacy', '🔒 حریم خصوصی', 'privacy')],
+      [link('🗑 Unsubscribe', '🗑 لغو اشتراک', 'stop')],
+    ];
   } else if (page === 'more') {
     text = tr(
       '⚙️ <b>Settings</b>\n\n' +
-      '<b>Browsing</b>\n' +
-      `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} per page\n\n` +
-      '<b>Notifications</b>\n' +
-      `🔔 ${alertStatus} · ${m.daily_limit} per day\n\n` +
-      '<i>Browsing settings never resend previous alerts.</i>',
+      `🔎 ${rangeButtonLabel(selectedWindow(windowDays), false)} · ${pageSize(size)} per page\n` +
+      `🔔 ${alertStatus} · ${m.daily_limit} per day`,
       '⚙️ <b>تنظیمات</b>\n\n' +
-      '<b>مرور فرصت‌ها</b>\n' +
-      `🗓 ${lookbackLabel(selectedWindow(windowDays), fa)} · 📄 ${pageSize(size)} در صفحه\n\n` +
-      '<b>اعلان‌ها</b>\n' +
-      `🔔 ${alertStatus} · ${m.daily_limit} در روز\n\n` +
-      '<i>تنظیم بازه مرور باعث ارسال دوباره اعلان‌های قبلی نمی‌شود.</i>'
+      `🔎 ${rangeButtonLabel(selectedWindow(windowDays), true)} · ${pageSize(size)} در صفحه\n` +
+      `🔔 ${alertStatus} · ${m.daily_limit} در روز`
     );
     rows = [
-      [link('🗓 Match history', '🗓 بازه زمانی', 'history'),
-        link('📄 Results/page', '📄 تعداد در صفحه', 'display')],
-      [link('🔔 Alert delivery', '🔔 ارسال اعلان', 'delivery'),
-        link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions')],
-      [link('🌐 Source status', '🌐 وضعیت منابع', 'sources'),
-        link('❔ Help', '❔ راهنما', 'help')],
-      [button(fa ? '🌐 English' : '🌐 فارسی', `sub:l:${fa ? 'en' : 'fa'}`),
-        link('🔒 Privacy', '🔒 حریم خصوصی', 'privacy')],
-      [link('🗑 Unsubscribe', '🗑 لغو اشتراک', 'stop')],
+      [link('🧭 Subscriptions', '🧭 اشتراک‌ها', 'subscriptions'),
+        link('🔎 Browsing', '🔎 مرور فرصت‌ها', 'browse')],
+      [link('🔔 Alerts', '🔔 اعلان‌ها', 'delivery'),
+        link('👤 Account & help', '👤 حساب و راهنما', 'account')],
     ];
   } else {
     const nAcademic = ACADEMIC.filter(key => key in m.topics).length;
@@ -401,9 +453,9 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
   return {text, reply_markup: {inline_keyboard: rows}};
 }
 
-const PAGES = new Set(['home', 'subscriptions', 'display', 'history', 'academic', 'academic_regions',
+const PAGES = new Set(['home', 'subscriptions', 'display', 'history', 'browse', 'academic', 'academic_regions',
   'careers', 'life_sciences', 'markets', 'delivery',
-  'more', 'help', 'privacy', 'stop', 'latest', 'sources']);
+  'more', 'account', 'help', 'privacy', 'stop', 'latest', 'sources']);
 const COMMAND_PAGES = {start: 'home', settings: 'more', subscribe: 'subscriptions', status: 'home',
   academic: 'academic', regions: 'academic_regions', academicregions: 'academic_regions',
   careers: 'careers', markets: 'careers', lifesciences: 'life_sciences',
@@ -426,6 +478,8 @@ export async function subscriberUpdate(bot, message, callback, key) {
   const id = String(message.chat.id);
   const preferredWindow = selectedWindow(await bot.ctx.storage.get(`match_window:${id}`));
   const selection = latestSelection(raw, preferredWindow);
+  const rangeMatch = /^sub:p:range:(7|14|30|60|90):([0-9]{1,3})(:d)?$/.exec(raw);
+  const rangePreview = rangeMatch && Number(rangeMatch[2]) < 500 ? rangeMatch : null;
   const page = await bot.ctx.storage.transaction(async tx => {
     const claim = await tx.get(key);
     if (claim?.subscriber_applied) return claim.subscriber_page;
@@ -433,6 +487,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
     let target = 'home', changed = false;
     const parts = raw.split(':');
     if (selection) target = 'latest';
+    else if (rangePreview) target = 'range';
     else if (parts.length === 3 && parts[1] === 'p' && PAGES.has(parts[2]) &&
       parts[2] !== 'latest') target = parts[2];
     else if (parts.length === 3 && (parts[1] === 't' && TOPICS.includes(parts[2]) ||
@@ -465,7 +520,7 @@ export async function subscriberUpdate(bot, message, callback, key) {
       }
       target = parts[2]; changed = true;
     } else if (parts.length === 3 && parts[1] === 'l' && ['en', 'fa'].includes(parts[2])) {
-      m.language = parts[2]; changed = true; target = 'more';
+      m.language = parts[2]; changed = true; target = 'account';
     } else if (parts[1] === 'a' && ['pause', 'resume'].includes(parts[2]) && old) {
       m.paused = parts[2] === 'pause'; changed = true; target = 'delivery';
     } else if (parts[1] === 'd' && old) {
@@ -507,9 +562,27 @@ export async function subscriberUpdate(bot, message, callback, key) {
         (fa ? 'هنوز گزارش بررسی منابع در دسترس نیست.' :
           'No source-check report is available yet.'),
       reply_markup: {inline_keyboard: [[
-        button(fa ? '← تنظیمات' : '← Settings', 'sub:p:more'),
+        button(fa ? '← حساب و راهنما' : '← Account & help', 'sub:p:account'),
         button(fa ? '🔎 فرصت‌های من' : '🔎 My matches', 'sub:p:latest'),
       ]]},
+    };
+  }
+  if (page === 'range') {
+    const days = Number(rangePreview[1]);
+    const sort = rangePreview[3] ? 'deadline' : 'recent';
+    const fa = member?.language === 'fa';
+    const selected = rangeButtonLabel(days, fa);
+    const saved = rangeButtonLabel(windowDays, fa);
+    content = {
+      text: fa
+        ? `🗓 <b>انتخاب بازه مرور</b>\n\nبازه فعلی: ${selected}\nبازه ذخیره‌شده: ${saved}\n\nانتخاب زیر فقط نتایج مرور را تغییر می‌دهد؛ اعلان‌های قبلی دوباره ارسال نمی‌شوند.`
+        : `🗓 <b>Choose a range</b>\n\nViewing: ${selected}\nSaved default: ${saved}\n\nChoosing a range only changes the current browse view, not alerts or saved preferences.`,
+      reply_markup: {inline_keyboard: [
+        ...lookbackChoices(days, fa, false, sort),
+        [button(fa ? '← بازگشت به فرصت‌های من' : '← Back to My matches',
+          `sub:p:latest:${days}:${Number(rangePreview[2])}${sort === 'deadline' ? ':d' : ''}`)],
+        [button(fa ? '⚙️ تنظیم بازه پیش‌فرض' : '⚙️ Default range settings', 'sub:p:history')],
+      ]},
     };
   }
   if (page === 'latest') {
@@ -519,24 +592,11 @@ export async function subscriberUpdate(bot, message, callback, key) {
     // Python's public-record export historically omitted published_at.
     // The immutable first_seen_at is the consistent discovery timestamp for
     // academic and career history windows; last_seen_at is not a new listing.
-    const academic = rows.filter(r => matchesPreferences(r, member) &&
-      openAcademicListing(r, now) &&
-      !['invalid', 'applied'].includes(marks?.get(r.url_hash)) &&
-      recentlyDiscovered(r.first_seen_at || r.published_at, days, now) &&
-      safeApplicationUrl(r.apply_url));
     const careerInventory = await bot.ctx.storage.get('career_listings') || [];
     const generalCareerCount = careerInventory.filter(r => r && CAREERS.includes(r.category)).length;
     const lifePhdCount = careerInventory.filter(r => r?.category === 'life_sciences_phd').length;
-    const careers = careerInventory.filter(r => matchesPreferences(r, member) && r.availability !== 'closed' &&
-        deadlineNotPassed(r.deadline, now) &&
-        recentlyDiscovered(r.first_seen_at, days, now) && safeApplicationUrl(r.url))
-      .map(r => ({...r, apply_url: r.url, institution: r.employer,
-        published_at: r.first_seen_at}));
-    const discovered = r => Date.parse(r.first_seen_at || r.published_at) || 0;
-    const due = r => Number.isFinite(Date.parse(r.deadline)) ? Date.parse(r.deadline) : Infinity;
-    const matches = [...academic, ...careers].sort((a, b) =>
-      sort === 'deadline' ? due(a) - due(b) || discovered(b) - discovered(a)
-        : discovered(b) - discovered(a));
+    const {academic, matches} = browseMatchingListings(
+      rows, careerInventory, marks, member, days, sort, now);
     const fa = member?.language === 'fa';
     const totalPages = Math.max(1, Math.ceil(matches.length / size));
     const current = Math.min(totalPages - 1, selection.page);
@@ -603,20 +663,20 @@ export async function subscriberUpdate(bot, message, callback, key) {
       .filter(Boolean).join('\n\n'),
       reply_markup: {inline_keyboard: [
         ...details,
+        [button(rangeButtonLabel(days, fa),
+          `sub:p:range:${days}:${current}${sort === 'deadline' ? ':d' : ''}`)],
         [button(`${sort === 'recent' ? '☑' : '☐'} ${fa ? 'جدیدترین' : 'Newest'}`,
           `sub:p:latest:${days}:0`),
           button(`${sort === 'deadline' ? '☑' : '☐'} ${fa ? 'مهلت نزدیک‌تر' : 'Deadline first'}`,
-            `sub:p:latest:${days}:0:d`)],
-        ...lookbackChoices(days, fa, false, sort),
+            `sub:p:latest:${days}:0:d`),
+          button(fa ? `در هر صفحه: ${size}` : `Page size: ${size}`, 'sub:p:display')],
         ...(totalPages > 1 ? [[...(current ? [button('‹', `sub:p:latest:${days}:${current - 1}${sort === 'deadline' ? ':d' : ''}`)] : []),
           button(`${current + 1}/${totalPages}`, `sub:p:latest:${days}:${current}${sort === 'deadline' ? ':d' : ''}`),
           ...(current + 1 < totalPages ? [button('›', `sub:p:latest:${days}:${current + 1}${sort === 'deadline' ? ':d' : ''}`)] : [])]] : []),
-        [button(fa ? 'تنظیمات بازه زمانی' : 'Save preferred range', 'sub:p:history'),
-          button(fa ? 'تنظیمات نمایش' : `Page size: ${size}`, 'sub:p:display')],
         [button(fa ? 'اشتراک‌ها' : 'Edit subscriptions', 'sub:p:subscriptions'),
           button(fa ? 'خانه' : 'Home', 'sub:p:home')]]}};
   }
-  if (['home', 'more', 'latest'].includes(page) &&
+  if (['home', 'latest'].includes(page) &&
       (bot.env?.OWNER_IDS || '').split(',').map(s => s.trim()).includes(id))
     content.reply_markup.inline_keyboard.push([{text:
       member?.language === 'fa' ? '📌 ذخیره‌شده و درخواست‌ها' : '📌 Saved & applications',

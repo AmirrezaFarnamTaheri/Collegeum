@@ -8,7 +8,7 @@ const member = {topics: {predoc: new Date().toISOString()}, scopes: {}, paused: 
 test('both languages keep all settings reachable with bounded native buttons', () => {
   for (const language of ['en', 'fa']) {
     for (const page of ['home', 'subscriptions', 'display', 'academic', 'careers', 'life_sciences', 'markets',
-      'delivery', 'more', 'help', 'privacy', 'stop']) {
+      'delivery', 'more', 'browse', 'account', 'help', 'privacy', 'stop']) {
       const result = panel({...member, language}, page);
       assert.ok(result.text.length < 4096);
       if (language === 'fa') assert.match(result.text, /[\u0600-\u06ff]/);
@@ -21,7 +21,8 @@ test('both languages keep all settings reachable with bounded native buttons', (
   }
   assert.ok(panel(member).reply_markup.inline_keyboard.length <= 4);
   assert.match(panel(null).text, /Choose roles/);
-  assert.ok(panel(member, 'more').reply_markup.inline_keyboard.flat().some(b => b.callback_data === 'sub:p:stop'));
+  assert.ok(panel(member, 'account').reply_markup.inline_keyboard.flat().some(b => b.callback_data === 'sub:p:stop'));
+  assert.ok(!panel(member, 'more').reply_markup.inline_keyboard.flat().some(b => b.callback_data === 'sub:p:stop'));
 });
 
 test('subscriber schema rejects receipts, invalid controls and unknown topics', () => {
@@ -76,7 +77,7 @@ test('menu hierarchy groups subscriptions and uses explicit checkbox states', ()
   const display = panel(member, 'display', 6).reply_markup.inline_keyboard.flat();
   assert.equal(display.find(b => b.callback_data === 'sub:n:6').text, '☑ 6');
   assert.equal(display.find(b => b.callback_data === 'sub:n:4').text, '☐ 4');
-  assert.ok(display.some(b => b.callback_data === 'sub:p:more'));
+  assert.ok(display.some(b => b.callback_data === 'sub:p:browse'));
 });
 
 test('Latest matches offers all five rolling lookbacks with safe filtering', async () => {
@@ -112,7 +113,12 @@ test('Latest matches offers all five rolling lookbacks with safe filtering', asy
     const view = sent.at(-1);
     assert.equal((view.text.match(/<a href=/g) || []).length, expected, `last ${days} days`);
     assert.match(view.text, new RegExp(`last ${days} days`, 'i'));
-    assert.ok(view.reply_markup.inline_keyboard.flat().some(b =>
+    const range = view.reply_markup.inline_keyboard.flat().filter(b =>
+      b.callback_data === `sub:p:range:${days}:0`);
+    assert.equal(range.length, 1, 'one range button replaces five inline choices');
+    await subscriberUpdate(bot, msg, {data: `sub:p:range:${days}:0`}, `chooser:${days}`);
+    const choices = sent.at(-1).reply_markup.inline_keyboard.flat();
+    assert.ok(choices.some(b =>
       b.callback_data === `sub:p:latest:${days}:0` && b.text.startsWith('☑')));
     assert.doesNotMatch(view.text, /Wrong topic|Wrong market|Closed position|Academic age 100/);
   }
@@ -143,6 +149,14 @@ test('Latest lookback survives pagination and refuses unapproved windows', async
   assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
     b.callback_data === 'sub:p:latest:90:1'));
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:90:1'}, 'archive:1');
+  const rangeOnSecondPage = sent.at(-1).reply_markup.inline_keyboard.flat().find(b =>
+    b.callback_data === 'sub:p:range:90:1');
+  assert.ok(rangeOnSecondPage);
+  await subscriberUpdate(bot, msg, {data: rangeOnSecondPage.callback_data}, 'archive:range');
+  assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:90:1' && /Back/.test(b.text)));
+  assert.equal(values.has('match_window:42'), false);
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest:90:1'}, 'archive:return');
   assert.match(sent.at(-1).text, /last 90 days/i);
   assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b => b.text === '2/3'));
   assert.equal((sent.at(-1).text.match(/<a href=/g) || []).length, 4);
@@ -194,8 +208,11 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
   assert.doesNotMatch(view.text, /Later deadline/);
   const actions = view.reply_markup.inline_keyboard.flat();
   assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:1:d'));
-  assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:30:0:d'));
+  assert.ok(actions.some(b => b.callback_data === 'sub:p:range:60:0:d'));
   assert.ok(actions.some(b => b.callback_data === 'sub:p:latest:60:0'));
+  await subscriberUpdate(bot, msg, {data: 'sub:p:range:60:0:d'}, 'deadline:chooser');
+  assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'sub:p:latest:30:0:d'));
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:60:1:d'}, 'deadline:next');
   view = sent.at(-1);
   assert.match(view.text, /Page 2 of 2/);
@@ -205,4 +222,58 @@ test('My matches preserves newest and soonest deadline sorting across ranges and
     b.callback_data === 'sub:p:latest:60:0:d'));
   assert.equal(values.get('match_window:42'), 60);
   assert.equal(values.get('page_size:42'), 4);
+});
+
+test('My matches groups sorting and page size while history remains in settings', async () => {
+  for (const language of ['en', 'fa']) {
+    const values = new Map([['subscribers_initialized', true],
+      ['subscriber:42', {...member, language}],
+      ['page_size:42', 12], ['match_window:42', 60]]);
+    const storage = {get: async k => structuredClone(values.get(k)),
+      put: async (k, v) => values.set(k, structuredClone(v)),
+      delete: async k => values.delete(k), transaction: async fn => fn(storage)};
+    const sent = [];
+    const bot = {ctx: {storage}, env: {OWNER_IDS: '42'}, api: async () => {},
+      deliver: async (_key, _method, data) => sent.push(data),
+      dataset: async () => ({rows: [{
+        kind: 'predoc', url_hash: 'a'.repeat(64), title: 'Research assistant',
+        institution: 'University', first_seen_at: new Date().toISOString(),
+        apply_url: 'https://example.org/academic',
+      }], marks: new Map()})};
+    await subscriberUpdate(bot, {chat: {id: 42, type: 'private'}, message_id: 5},
+      {data: 'sub:p:latest:60:0:d'}, `compact:${language}`);
+    const rows = sent.at(-1).reply_markup.inline_keyboard;
+    const controls = rows.find(row => row.some(b => b.callback_data === 'sub:p:display'));
+    assert.deepEqual(controls.map(b => b.callback_data), [
+      'sub:p:latest:60:0', 'sub:p:latest:60:0:d', 'sub:p:display']);
+    assert.equal(controls.length, 3);
+    assert.match(controls[2].text, /12/);
+    const range = rows.filter(row => row.some(b => b.callback_data === 'sub:p:range:60:0:d'));
+    assert.equal(range.length, 1, 'only one range-selection row');
+    assert.equal(range[0].length, 1, 'range button occupies its own row');
+    assert.match(range[0][0].text, language === 'fa' ? /۲ ماه/ : /Last 2 months/);
+    assert.ok(rows.flat().every(b => !/^sub:p:latest:(7|14|30|60|90):0:d$/.test(b.callback_data) ||
+      controls.includes(b)), 'five range choices should not be shown on My matches');
+    assert.ok(rows.flat().every(b => b.callback_data !== 'sub:p:history'));
+    await subscriberUpdate(bot, {chat: {id: 42, type: 'private'}, message_id: 5},
+      {data: 'sub:p:range:60:0:d'}, `range:${language}`);
+    const chooser = sent.at(-1);
+    assert.match(chooser.text, language === 'fa' ? /بازه/ : /Choose a range/);
+    const choices = chooser.reply_markup.inline_keyboard.flat();
+    for (const days of [7, 14, 30, 60, 90]) {
+      assert.ok(choices.some(b => b.callback_data === `sub:p:latest:${days}:0:d`),
+        `range chooser must show ${days} days with deadline sort`);
+    }
+    assert.ok(choices.some(b => b.callback_data === 'sub:p:latest:60:0:d'),
+      'return to active sort and chosen range');
+    assert.ok(choices.some(b => b.callback_data === 'sub:p:history'),
+      'saved default remains configurable behind the range panel');
+    assert.ok(rows.flat().some(b => b.callback_data === 'sub:p:subscriptions'));
+    assert.ok(rows.flat().some(b => b.callback_data === 'view|tracking|0'));
+    const settings = panel({...member, language}, 'browse');
+    assert.ok(settings.reply_markup.inline_keyboard.flat().some(b =>
+      b.callback_data === 'sub:p:history'), 'saved range remains accessible via Browsing');
+    assert.equal(values.get('match_window:42'), 60);
+    assert.equal(values.get('page_size:42'), 12);
+  }
 });

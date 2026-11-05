@@ -1,7 +1,7 @@
 /** Owner-only webhook bot. The Durable Object serializes updates and syncs. */
 import {ask, reservePublic} from './assistant.mjs';
-import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreferences,
-  openAcademicListing, visibleAcademicMatch, pageSize, panel} from './subscribers.mjs';
+import {subscriberCommand, subscriberUpdate, validPreferences,
+  openAcademicListing, visibleAcademicMatch, browseMatchingListings, pageSize, panel} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const GENERAL_CAREER_TOPICS = new Set([
@@ -38,6 +38,29 @@ const moreMenu = () => ({inline_keyboard: [
   [nav("❔ Help", "help"), nav("← Home", "menu")],
   [{text: '🔔 Alert delivery', callback_data: 'sub:p:delivery'}],
 ]});
+// One selection path for academic listing screens and detail Previous/Next.
+// Tracking mirrors remain available in Saved/Applied/Hidden even if closed.
+const ownerAcademicRows = (kind, rows, marks, member, now, query = "") => {
+  const available = rows.filter(r => !["invalid", "applied"].includes(marks.get(r.url_hash)) &&
+    visibleAcademicMatch(r, member, now));
+  let selected = ["valid", "applied", "hidden"].includes(kind)
+    ? rows.filter(r => marks.get(r.url_hash) === (kind === "hidden" ? "invalid" : kind) &&
+      (kind !== "valid" || openAcademicListing(r, now)))
+    : available;
+  if (kind === "closing")
+    selected = selected.filter(r => r.deadline && Date.parse(r.deadline) <= now + 7 * 86400000);
+  if (kind === "new")
+    selected = selected.filter(r => Date.parse(r.first_seen_at) >= now - 7 * 86400000 &&
+      Date.parse(r.first_seen_at) <= now);
+  if (kind === "search")
+    selected = selected.filter(r => query.toLowerCase().split(/\s+/).every(term =>
+      [r.title, r.institution, r.country, r.city, r.summary, r.principal_investigator]
+        .join(" ").toLowerCase().includes(term)));
+  return [...selected].sort((a, b) => kind === "new"
+    ? Date.parse(b.first_seen_at) - Date.parse(a.first_seen_at)
+    : (Date.parse(a.deadline) || Infinity) - (Date.parse(b.deadline) || Infinity) ||
+      a.title.localeCompare(b.title));
+};
 
 export async function sameSecret(actual, expected) {
   if (!actual || !expected) return false;
@@ -433,15 +456,7 @@ export class TelegramBot {
       '✅ Save · ❌ Hide · 📝 Applied. Tap again to undo.\n' +
       '/positions shows My matches across selected academic and career roles.\n' +
       'Replies use the latest uploaded snapshot. Check the original advert before applying.', reply_markup: menu()};
-    let selected = ["valid", "applied", "hidden"].includes(kind)
-      ? rows.filter(r => marks.get(r.url_hash) === (kind === "hidden" ? "invalid" : kind) && (kind !== "valid" || open(r)))
-      : available;
-    if (kind === "closing") selected = selected.filter(r => r.deadline && Date.parse(r.deadline) <= now + 7 * 86400000);
-    if (kind === "new") selected = selected.filter(r => Date.parse(r.first_seen_at) >= now - 7 * 86400000 && Date.parse(r.first_seen_at) <= now);
-    if (kind === "search") selected = selected.filter(r => query.toLowerCase().split(/\s+/).every(term =>
-      [r.title, r.institution, r.country, r.city, r.summary, r.principal_investigator].join(" ").toLowerCase().includes(term)));
-    selected.sort((a, b) => kind === "new" ? Date.parse(b.first_seen_at) - Date.parse(a.first_seen_at) :
-      (Date.parse(a.deadline) || Infinity) - (Date.parse(b.deadline) || Infinity) || a.title.localeCompare(b.title));
+    const selected = ownerAcademicRows(kind, rows, marks, member, now, query);
     const count = Math.max(1, Math.ceil(selected.length / size));
     page = Math.min(Math.max(0, page), count - 1);
     const chunk = selected.slice(page * size, page * size + size);
@@ -477,6 +492,57 @@ export class TelegramBot {
     return [["v", "valid", "✅"], ["x", "invalid", "❌"], ["a", "applied", "📝"]].map(([code, st, icon]) =>
       ({text: `${st === status ? "• " : ""}${icon} ${number || ({valid: "Save", invalid: "Hide", applied: "Applied"})[st]}`,
         callback_data: `fb|${code}|${row.url_hash.slice(0, 16)}${origin ? `|${origin}` : ""}`}));
+  }
+
+  async postingNavigation(row, origin, message) {
+    if (origin.length !== 2) return [];
+    const [source, pageToken] = origin;
+    const pageMatch = /^(\d{1,3})(d?)$/.exec(pageToken);
+    if (!pageMatch || Number(pageMatch[1]) >= 500) return [];
+    const member = await this.ctx.storage.get(`subscriber:${message.chat.id}`);
+    const size = pageSize(await this.ctx.storage.get(`page_size:${message.chat.id}`));
+    const {rows, marks} = await this.dataset();
+    const originalMarks = new Map(marks), withCurrentMarks = new Map(marks);
+    const now = Date.now();
+    let currentRows, rowsWithCurrent;
+    if (["7", "14", "30", "60", "90"].includes(source)) {
+      const days = Number(source), sort = pageMatch[2] ? 'deadline' : 'recent';
+      const careers = await this.ctx.storage.get('career_listings') || [];
+      currentRows = browseMatchingListings(rows, careers, originalMarks, member, days, sort, now).matches;
+      // A Hide/Applied tap removes a match; keep its detail positioned between
+      // surviving neighbors without resurrecting any private saved mark.
+      withCurrentMarks.delete(row.url_hash);
+      rowsWithCurrent = browseMatchingListings(rows, careers, withCurrentMarks, member, days, sort, now).matches;
+    } else if (VIEWS.has(source) && !pageMatch[2]) {
+      const stored = source === 'search'
+        ? await this.ctx.storage.get(`search:${message.chat.id}:${message.message_id}`) : null;
+      const query = typeof stored === 'string' ? stored : stored?.query || '';
+      if (source === 'search' && !query) return [];
+      withCurrentMarks.set(row.url_hash, {
+        valid: 'valid', applied: 'applied', hidden: 'invalid',
+      }[source] || null);
+      currentRows = ownerAcademicRows(source, rows, originalMarks, member, now, query);
+      rowsWithCurrent = ownerAcademicRows(source, rows, withCurrentMarks, member, now, query);
+    } else return [];
+    const isAcademic = r => !r.category && HASH.test(String(r.url_hash || ''));
+    const index = rowsWithCurrent.findIndex(r => r.url_hash === row.url_hash && isAcademic(r));
+    if (index < 0) return [];
+    const neighbors = [];
+    const labels = member?.language === 'fa'
+      ? [[-1, '← قبلی'], [1, 'بعدی →']]
+      : [[-1, '← Previous'], [1, 'Next →']];
+    for (const [step, label] of labels) {
+      for (let i = index + step; i >= 0 && i < rowsWithCurrent.length; i += step) {
+        const neighbor = rowsWithCurrent[i];
+        if (!isAcademic(neighbor)) continue;
+        const liveIndex = currentRows.findIndex(r => r.url_hash === neighbor.url_hash);
+        const page = Math.floor((liveIndex >= 0 ? liveIndex : i) / size);
+        neighbors.push({text: label,
+          callback_data: `detail|${neighbor.url_hash.slice(0, 16)}|${source}|${page}${pageMatch[2]}`});
+        break;
+      }
+    }
+    return neighbors;
   }
 
   async command(message, owner = true, admission = {}, updateKey) {
@@ -573,6 +639,7 @@ export class TelegramBot {
         });
       }
       const mark = await this.ctx.storage.get(`mark:${row.url_hash}`);
+      const neighboring = await this.postingNavigation(row, origin, message);
       content = {text: `<b>${esc(row.title.slice(0, 200))}</b>\n🏛 ${esc(row.institution.slice(0, 180))}\n` +
         `${esc([row.city, row.country].filter(Boolean).join(", ").slice(0, 180))}\n\n` +
         `⏳ ${esc(row.deadline?.slice(0, 10) || row.deadline_note?.slice(0, 200) || "Deadline unstated")}\n` +
@@ -582,7 +649,9 @@ export class TelegramBot {
            "ℹ️ Current availability is not independently verified.\n") +
         `<a href="${esc(safeUrl(row.apply_url))}">Open official advert ↗</a>`,
         reply_markup: {inline_keyboard: [[{text: "Open advert ↗", url: safeUrl(row.apply_url)}],
-          this.feedback(row, mark?.status, "", context), [back, nav("⌂ Home", "menu")]]}};
+          this.feedback(row, mark?.status, "", context),
+          ...(neighboring.length ? [neighboring] : []),
+          [back, nav("⌂ Home", "menu")]]}};
     } else return;
     await this.deliver(updateKey,"editMessageText", {chat_id: message.chat.id, message_id: message.message_id,
       ...content, parse_mode: "HTML", link_preview_options: {is_disabled: true}});
