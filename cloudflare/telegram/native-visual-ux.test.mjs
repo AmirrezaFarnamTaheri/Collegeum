@@ -65,8 +65,8 @@ test('regional and alert settings show saved state without long instruction bloc
     assert.ok(actions(regions).includes('sub:r:all'));
 
     const settings = panel(profile(language), 'more', 12, 90);
-    assert.match(settings.text, language === 'fa' ? /مرور/ : /<b>Browsing<\/b>/);
-    assert.match(settings.text, language === 'fa' ? /اعلان/ : /<b>Notifications<\/b>/);
+    assert.match(settings.text, language === 'fa' ? /تنظیمات/ : /<b>Settings<\/b>/);
+    assert.match(settings.text, language === 'fa' ? /فعال/ : /Active/);
     assert.ok(settings.text.length < 700);
     for (const target of ['sub:p:browse','sub:p:subscriptions','sub:p:delivery','sub:p:account']) {
       assert.ok(actions(settings).includes(target));
