@@ -160,8 +160,14 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
       ['display', 'history'].includes(page) ? 'browse' :
         ['privacy', 'stop', 'help'].includes(page) ? 'account' :
           ['browse', 'account', 'delivery'].includes(page) ? 'more' : 'home';
-  const home = [button(parent === 'subscriptions' ? tr('← Subscriptions', '← اشتراک‌ها') :
-    parent === 'more' ? tr('← Settings', '← تنظیمات') : tr('← Home', '← خانه'), `sub:p:${parent}`)];
+  const backLabels = {
+    subscriptions: tr('← Subscriptions', '← اشتراک‌ها'),
+    more: tr('← Settings', '← تنظیمات'),
+    browse: tr('← Browsing', '← مرور فرصت‌ها'),
+    account: tr('← Account & help', '← حساب و راهنما'),
+    home: tr('← Home', '← خانه'),
+  };
+  const home = [button(backLabels[parent], `sub:p:${parent}`)];
   const link = (en, persian, page) => button(tr(en, persian), `sub:p:${page}`);
   let text, rows;
   if (page === 'subscriptions') {
