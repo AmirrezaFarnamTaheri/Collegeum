@@ -807,8 +807,11 @@ test('twelve-item unified My matches keeps inline controls and Telegram message 
 
 test('Persian My matches localizes academic details and preserves callback identity', async () => {
   const instance = bot();
-  await instance.fetch(post('/sync', {...snapshot, listings: [{...record, kind: 'predoc'}],
-    subscriber_protocol: 1, subscribers: {}}));
+  await instance.fetch(post('/sync', {...snapshot, listings: [
+    {...record, kind: 'predoc'}, {...record, kind: 'predoc',
+      url_hash: 'b'.repeat(64), title: 'Second academic listing',
+      first_seen_at: new Date(Date.parse(record.first_seen_at) - 3600000).toISOString()},
+  ], subscriber_protocol: 1, subscribers: {}}));
   await instance.ctx.storage.put('subscriber:42', {
     topics: {predoc: new Date().toISOString()}, scopes: {}, language: 'fa',
   });
@@ -822,6 +825,13 @@ test('Persian My matches localizes academic details and preserves callback ident
   assert.ok(button);
   assert.match(button.text, /جزئیات/);
   assert.match(view.text, /تأییدشده نیست/);
+  await instance.fetch(post('/webhook', {update_id: 9652,
+    callback_query: {id: 'fa-detail', from: {id: 42},
+      message: {chat: {id: 42, type: 'private'}, message_id: 900}, data: button.callback_data}}));
+  const detail = instance.calls.filter(c => c.method === 'editMessageText').at(-1)?.payload;
+  assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
+    b.callback_data === 'detail|' + 'b'.repeat(16) + '|60|0' && /بعدی/.test(b.text)),
+    'navigation label is localized without changing callback identities');
 });
 
 
