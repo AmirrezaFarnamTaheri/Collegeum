@@ -731,7 +731,8 @@ test('academic detail can visit previous and next postings across My matches pag
   // Saving or hiding keeps the current detail and neighboring browse options.
   detail = await tap(9804, 'fb|x|' + hash(2) + '|60|0');
   assert.ok(detail.reply_markup.inline_keyboard.flat().some(b =>
-    b.callback_data === 'detail|' + hash(3) + '|60|1'));
+    b.callback_data === 'detail|' + hash(3) + '|60|0'),
+    'after Hide, next points to the neighbor on its newly compacted results page');
   assert.equal((await instance.dataset()).marks.get(listings[2].url_hash), 'invalid');
   assert.deepEqual(await instance.ctx.storage.get('subscriber:42'), member);
   assert.equal(await instance.ctx.storage.get('match_window:42'), 60);
