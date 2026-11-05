@@ -377,7 +377,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     text = tr('👤 <b>Account & help</b>\n\nLanguage: English\nSupport, privacy and subscription controls.',
       '👤 <b>حساب و راهنما</b>\n\nزبان: فارسی\nپشتیبانی، حریم خصوصی و کنترل‌های اشتراک.');
     rows = [
-      [button(fa ? '🌐 Switch to English' : '🌐 تغییر زبان به فارسی',
+      [button(fa ? '🌐 زبان: فارسی → English' : '🌐 Language: English → فارسی',
         `sub:l:${fa ? 'en' : 'fa'}`)],
       [link('🌐 Source status', '🌐 وضعیت منابع', 'sources'),
         link('❔ Help', '❔ راهنما', 'help')],
