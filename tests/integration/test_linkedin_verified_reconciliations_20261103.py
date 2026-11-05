@@ -49,7 +49,13 @@ def test_verified_cross_source_aliases_hide_only_reviewed_mirror_rows():
         assert suppressed_public_alias(original["url_hash"])
         assert not suppressed_public_alias(target["url_hash"])
         assert alias not in public
-        assert canonical in public
+        # A reviewed canonical record can subsequently be closed by ingestion.
+        # Alias suppression must not resurrect that closed vacancy, nor hide
+        # an otherwise eligible canonical record from the public projection.
+        if target.get("closed_at") or target.get("expired_at"):
+            assert canonical not in public
+        else:
+            assert canonical in public
         # The suppressed row remains a historical publication, never erased.
         assert original["status"] == "published"
         assert original["published_at"]
