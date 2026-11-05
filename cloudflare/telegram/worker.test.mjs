@@ -682,7 +682,7 @@ test('academic details opened from New return to New without losing tracking act
 test('academic detail can visit previous and next postings across My matches pages', async () => {
   const instance = bot(), now = Date.now();
   const listings = Array.from({length: 6}, (_, i) => ({
-    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(64, '0'),
+    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(16, '0') + '0'.repeat(48),
     title: 'Academic listing ' + i,
     first_seen_at: new Date(now - i * 3600000).toISOString(),
   }));
@@ -706,7 +706,7 @@ test('academic detail can visit previous and next postings across My matches pag
       message: {chat: {id: 42, type: 'private'}, message_id: 900}, data}}));
     return instance.calls.filter(x => x.method === 'editMessageText').at(-1)?.payload;
   };
-  const hash = i => i.toString(16).padStart(64, '0').slice(0, 16);
+  const hash = i => i.toString(16).padStart(16, '0');
   let detail = await tap(9800, 'detail|' + hash(2) + '|60|0');
   assert.match(detail.text, /Academic listing 2/);
   let actions = detail.reply_markup.inline_keyboard.flat();
@@ -742,7 +742,7 @@ test('academic detail can visit previous and next postings across My matches pag
 test('academic New details retain Previous and Next without changing the original view', async () => {
   const instance = bot(), now = Date.now();
   const listings = Array.from({length: 5}, (_, i) => ({
-    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(64, '0'),
+    ...record, kind: 'predoc', url_hash: i.toString(16).padStart(16, '0') + '0'.repeat(48),
     title: 'New academic listing ' + i,
     first_seen_at: new Date(now - i * 3600000).toISOString(),
   }));
@@ -750,13 +750,13 @@ test('academic New details retain Previous and Next without changing the origina
   await instance.ctx.storage.put('subscriber:42', {topics: {predoc: new Date(now).toISOString()},
     scopes: {}, language: 'en'});
   await instance.ctx.storage.put('page_size:42', 4);
-  const action = 'detail|' + (3).toString(16).padStart(64, '0').slice(0, 16) + '|new|0';
+  const action = 'detail|' + (3).toString(16).padStart(16, '0') + '|new|0';
   await instance.fetch(post('/webhook', {update_id: 9810, callback_query: {
     id: 'new-detail', from: {id: 42},
     message: {chat: {id: 42, type: 'private'}, message_id: 900}, data: action}}));
   const detail = instance.calls.filter(x => x.method === 'editMessageText').at(-1)?.payload;
   const controls = detail.reply_markup.inline_keyboard.flat();
-  const hash = i => i.toString(16).padStart(64, '0').slice(0, 16);
+  const hash = i => i.toString(16).padStart(16, '0');
   assert.ok(controls.some(b => b.callback_data === 'detail|' + hash(2) + '|new|0'));
   assert.ok(controls.some(b => b.callback_data === 'detail|' + hash(4) + '|new|1'));
   assert.ok(controls.some(b => b.callback_data === 'view|new|0'));
