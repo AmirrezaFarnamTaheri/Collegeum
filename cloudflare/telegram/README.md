@@ -22,8 +22,9 @@ reset cannot backfill older excluded vacancies. Academic region selection
 applies to browsing and future alert eligibility without replaying receipts. The Life
 Sciences PhD feed remains continental Europe only, independent of these regions.
 The history window supports 7, 14, 30, 60 or 90 days (7 days, 14 days,
-1 month, 2 months or 3 months). The default is 14 days, but **Settings → Match
-history** now saves a preferred window in Cloudflare's private per-chat storage.
+1 month, 2 months or 3 months). The default is 14 days, but **Settings →
+Browsing → Default range** saves a preferred window in Cloudflare's private
+per-chat storage.
 Opening My matches or the owner's /menu uses that saved range. My matches
 shows one full-width current-range button (for example, **Last 2 months**); tapping
 it opens a dedicated five-choice range panel with a link to saved-default
@@ -52,7 +53,13 @@ Saved, applied and hidden academic views retain explicitly tracked positions
 even if subscriptions change.
 
 Home summarizes role counts, career markets, academic regions, alert status and
-saved browse window. **Edit subscriptions** has three clear destinations:
+saved browse window. The **Settings** landing page is a compact four-way hub:
+Subscriptions, Browsing, Alerts and Account & help. Browsing groups the saved
+history window and page size; Alerts retains notification controls; Account &
+help contains the language switch, source status, help, privacy and the
+confirmation-protected Unsubscribe action. Existing direct commands and older
+Telegram buttons still reach their original settings; saving preferences does
+not replay delivery receipts. **Edit subscriptions** has three clear destinations:
 Academic (roles → regions), Careers (roles and job markets on one screen), and
 Life Sciences PhD. The separate Markets destination is removed; old inline
 buttons still open the Careers screen. Selected counts, region/market summaries,
