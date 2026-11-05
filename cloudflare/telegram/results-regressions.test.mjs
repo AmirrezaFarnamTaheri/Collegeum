@@ -122,7 +122,7 @@ test('language toggle stays in Account & help and source status returns there', 
   f.values.set('source_status', {en: '<b>Sources</b>\\nOne provider failed',
     fa: '<b>منابع</b>\\nیک منبع ناموفق'});
   const lang = await f.tap('sub:l:fa');
-  assert.match(lang.text, /تنظیمات/);
+  assert.match(lang.text, /حساب و راهنما/);
   assert.ok(lang.reply_markup.inline_keyboard.flat().some(
     b => b.callback_data === 'sub:p:privacy'));
   assert.ok(lang.reply_markup.inline_keyboard.flat().some(
