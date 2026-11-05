@@ -50,6 +50,8 @@ test('selection screens show progress, preserve bulk actions and offer direct re
   assert.ok(callbacks(panel(member, 'careers')).includes('sub:g:iran'));
   assert.ok(callbacks(panel(member, 'careers')).includes('sub:g:remote'));
   assert.ok(callbacks(panel(member, 'academic_regions')).includes('sub:p:academic'));
+  assert.equal(callbacks(panel(member, 'academic_regions')).filter(x => x === 'sub:p:academic').length, 1,
+    'Academic regions should not repeat its Back action');
 });
 
 test('settings is a compact four-destination hub with secondary controls grouped behind panels', () => {
