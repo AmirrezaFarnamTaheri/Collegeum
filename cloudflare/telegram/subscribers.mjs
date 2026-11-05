@@ -224,8 +224,7 @@ export function panel(member, page = 'home', size = 4, windowDays = DEFAULT_LOOK
     }
     rows.push([button(`${count ? '☐' : '☑'} ${tr('Worldwide · all regions', 'همه جهان · تمام مناطق')}`,
       'sub:r:all')]);
-    rows.push([link('← Academic roles', '← فرصت‌های دانشگاهی', 'academic'),
-      link('🔎 My matches', '🔎 فرصت‌های من', 'latest')]);
+    rows.push([link('🔎 My matches', '🔎 فرصت‌های من', 'latest')]);
   } else if (['academic', 'careers', 'life_sciences'].includes(page)) {
     const options = page === 'academic' ? ACADEMIC :
       page === 'careers' ? CAREERS : ['life_sciences_phd'];
