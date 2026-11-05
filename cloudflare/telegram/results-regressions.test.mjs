@@ -106,7 +106,11 @@ test('nested preference screens stay uncluttered while owner tracking stays reac
   assert.ok(!markets.reply_markup.inline_keyboard.flat().some(
     button => button.callback_data === 'view|tracking|0'));
   const settings = await f.tap('sub:p:more', 'settings');
-  assert.ok(settings.reply_markup.inline_keyboard.flat().some(
+  assert.ok(!settings.reply_markup.inline_keyboard.flat().some(
+    button => button.callback_data === 'view|tracking|0'),
+    'tracking is available from Home and results, not repeated in Settings');
+  const home = await f.tap('sub:p:home', 'home');
+  assert.ok(home.reply_markup.inline_keyboard.flat().some(
     button => button.callback_data === 'view|tracking|0'));
   const matches = await f.tap('sub:p:latest', 'matches');
   assert.ok(matches.reply_markup.inline_keyboard.flat().some(
