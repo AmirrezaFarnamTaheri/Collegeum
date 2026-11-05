@@ -96,6 +96,7 @@ test('settings is a compact four-destination hub with secondary controls grouped
 
 test('nested Settings back labels identify their actual destinations', () => {
   const expected = [
+    ['academic_regions', 'sub:p:academic', /Academic roles/],
     ['history', 'sub:p:browse', /Browsing/],
     ['display', 'sub:p:browse', /Browsing/],
     ['privacy', 'sub:p:account', /Account/],
