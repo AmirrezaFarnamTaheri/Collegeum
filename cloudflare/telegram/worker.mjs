@@ -1,7 +1,7 @@
 /** Owner-only webhook bot. The Durable Object serializes updates and syncs. */
 import {ask, reservePublic} from './assistant.mjs';
-import {subscriberCommand, subscriberUpdate, validPreferences, matchesPreferences,
-  openAcademicListing, visibleAcademicMatch, pageSize, panel} from './subscribers.mjs';
+import {subscriberCommand, subscriberUpdate, validPreferences,
+  openAcademicListing, visibleAcademicMatch, browseMatchingListings, pageSize, panel} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const GENERAL_CAREER_TOPICS = new Set([
@@ -38,6 +38,29 @@ const moreMenu = () => ({inline_keyboard: [
   [nav("❔ Help", "help"), nav("← Home", "menu")],
   [{text: '🔔 Alert delivery', callback_data: 'sub:p:delivery'}],
 ]});
+// One selection path for academic listing screens and detail Previous/Next.
+// Tracking mirrors remain available in Saved/Applied/Hidden even if closed.
+const ownerAcademicRows = (kind, rows, marks, member, now, query = "") => {
+  const available = rows.filter(r => !["invalid", "applied"].includes(marks.get(r.url_hash)) &&
+    visibleAcademicMatch(r, member, now));
+  let selected = ["valid", "applied", "hidden"].includes(kind)
+    ? rows.filter(r => marks.get(r.url_hash) === (kind === "hidden" ? "invalid" : kind) &&
+      (kind !== "valid" || openAcademicListing(r, now)))
+    : available;
+  if (kind === "closing")
+    selected = selected.filter(r => r.deadline && Date.parse(r.deadline) <= now + 7 * 86400000);
+  if (kind === "new")
+    selected = selected.filter(r => Date.parse(r.first_seen_at) >= now - 7 * 86400000 &&
+      Date.parse(r.first_seen_at) <= now);
+  if (kind === "search")
+    selected = selected.filter(r => query.toLowerCase().split(/\s+/).every(term =>
+      [r.title, r.institution, r.country, r.city, r.summary, r.principal_investigator]
+        .join(" ").toLowerCase().includes(term)));
+  return [...selected].sort((a, b) => kind === "new"
+    ? Date.parse(b.first_seen_at) - Date.parse(a.first_seen_at)
+    : (Date.parse(a.deadline) || Infinity) - (Date.parse(b.deadline) || Infinity) ||
+      a.title.localeCompare(b.title));
+};
 
 export async function sameSecret(actual, expected) {
   if (!actual || !expected) return false;
@@ -433,15 +456,7 @@ export class TelegramBot {
       '✅ Save · ❌ Hide · 📝 Applied. Tap again to undo.\n' +
       '/positions shows My matches across selected academic and career roles.\n' +
       'Replies use the latest uploaded snapshot. Check the original advert before applying.', reply_markup: menu()};
-    let selected = ["valid", "applied", "hidden"].includes(kind)
-      ? rows.filter(r => marks.get(r.url_hash) === (kind === "hidden" ? "invalid" : kind) && (kind !== "valid" || open(r)))
-      : available;
-    if (kind === "closing") selected = selected.filter(r => r.deadline && Date.parse(r.deadline) <= now + 7 * 86400000);
-    if (kind === "new") selected = selected.filter(r => Date.parse(r.first_seen_at) >= now - 7 * 86400000 && Date.parse(r.first_seen_at) <= now);
-    if (kind === "search") selected = selected.filter(r => query.toLowerCase().split(/\s+/).every(term =>
-      [r.title, r.institution, r.country, r.city, r.summary, r.principal_investigator].join(" ").toLowerCase().includes(term)));
-    selected.sort((a, b) => kind === "new" ? Date.parse(b.first_seen_at) - Date.parse(a.first_seen_at) :
-      (Date.parse(a.deadline) || Infinity) - (Date.parse(b.deadline) || Infinity) || a.title.localeCompare(b.title));
+    const selected = ownerAcademicRows(kind, rows, marks, member, now, query);
     const count = Math.max(1, Math.ceil(selected.length / size));
     page = Math.min(Math.max(0, page), count - 1);
     const chunk = selected.slice(page * size, page * size + size);
