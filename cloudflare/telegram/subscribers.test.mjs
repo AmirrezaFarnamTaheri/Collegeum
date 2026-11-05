@@ -155,7 +155,8 @@ test('Latest lookback survives pagination and refuses unapproved windows', async
   assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b =>
     b.callback_data === 'sub:p:latest:90:1' && /Back/.test(b.text)));
   assert.equal(values.has('match_window:42'), false);
-  assert.match(sent.at(-2).text, /last 90 days/i);
+  await subscriberUpdate(bot, msg, {data: 'sub:p:latest:90:1'}, 'archive:return');
+  assert.match(sent.at(-1).text, /last 90 days/i);
   assert.ok(sent.at(-1).reply_markup.inline_keyboard.flat().some(b => b.text === '2/3'));
   assert.equal((sent.at(-1).text.match(/<a href=/g) || []).length, 4);
   await subscriberUpdate(bot, msg, {data: 'sub:p:latest:999:0'}, 'archive:bad');
