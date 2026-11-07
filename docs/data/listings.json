@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-07T14:57:48Z",
+ "generated_at": "2026-11-07T20:14:16Z",
  "count": 205,
  "listings": [
   {
@@ -998,16 +998,14 @@
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 29,
    "disciplines": [
-    "Econometrics",
-    "Finance",
-    "Applied Microeconomics"
+    "Other"
    ],
-   "visa": "explicit",
-   "summary": "This is a four-year fixed-term postdoctoral research fellowship in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics or a related field, strong programming skills in MATLAB, R, or Python, and the ability to supervise postgraduate students.",
+   "visa": "not_offered",
+   "summary": "A postdoctoral research fellow position at Macquarie University's Department of Economics, led by Professor Shuping Shi, offering a 4-year fixed-term contract with a salary range of $104,481-$127,138 plus superannuation and leave loading. The role involves econometric research in policy evaluation and high-frequency financial market dynamics.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.985,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -4586,16 +4584,16 @@
    "deadline": "2027-01-15T23:59:59Z",
    "days_left": 69,
    "disciplines": [
-    "Applied Microeconomics",
-    "Macroeconomics",
-    "Development Economics"
+    "Labor Economics",
+    "Development Economics",
+    "Political Economy"
    ],
    "visa": "unknown",
-   "summary": "The role is a postdoctoral research fellowship at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia at the University of Hong Kong, jointly hosted by the Faculty of Social Sciences and the HKU Business School. It suits a researcher with a PhD in economics or a related discipline, with expertise in labour economics, trade, development, or political economy, large-scale datasets, causal inference methods, and text analysis.",
+   "summary": "The Post-doctoral Fellow will conduct quantitative and qualitative data analyses on income and wealth inequality in Asia at the James M. and Cathleen D. Stone Centre, contributing to research publications and conferences. The position suits candidates with a PhD in economics or a related field, expertise in labour economics, trade, development or political economy, and experience with large‑scale datasets, text analysis, and causal inference methods.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.993,
    "first_seen_at": "2026-10-15T13:28:02Z",
    "deadline_note": null,
    "visa_note": null,
