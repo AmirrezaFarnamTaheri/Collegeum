@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-07T05:53:35Z",
+ "generated_at": "2026-11-07T14:57:48Z",
  "count": 205,
  "listings": [
   {
@@ -715,14 +715,15 @@
    "days_left": 27,
    "disciplines": [
     "Econometrics",
-    "Quantitative Social Sciences"
+    "Quantitative Social Sciences",
+    "Other"
    ],
    "visa": "unknown",
-   "summary": "The role is a postdoctoral researcher specializing in urban modeling and cost analysis to develop predictive models of urbanization costs. It requires a Ph.D. and seeks candidates with research experience in urban, environmental, or socio-economic issues.",
+   "summary": "The position is a postdoctoral researcher focusing on spatial data science and urban modeling to estimate urbanization costs. It is suited for candidates with a Ph.D. and experience in urban, environmental, or socio-economic research.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.924,
+   "confidence": 0.97,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -997,14 +998,16 @@
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 29,
    "disciplines": [
-    "Econometrics"
+    "Econometrics",
+    "Finance",
+    "Applied Microeconomics"
    ],
-   "visa": "inferred",
-   "summary": "The position is a fixed-term postdoctoral research fellowship in econometrics at Macquarie University, North Ryde, Australia. It is suited for candidates with a PhD (completed or near completion) in econometrics, statistics, economics or a related field.",
+   "visa": "explicit",
+   "summary": "This is a four-year fixed-term postdoctoral research fellowship in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics or a related field, strong programming skills in MATLAB, R, or Python, and the ability to supervise postgraduate students.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.97,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -1024,7 +1027,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "2027-07",
+   "start_term": "Second half of 2027",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -1089,7 +1092,7 @@
     "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral associate in the Division of Social Science at NYU Abu Dhabi, involving half independent research and half collaborative research with faculty on behavioral and experimental economics topics. It is suitable for candidates who hold or expect to hold a PhD in economics, management, sociology, public policy, data science, or a related field, with expertise in experimental methods and quantitative analysis.",
+   "summary": "The postdoctoral associate will conduct independent and collaborative research in behavioral and experimental social science, working with Professors Berkay Özcan and Ernesto Reuben. The position is suitable for candidates with a PhD in economics, management, sociology, public policy, or related fields, and experience in experimental methods and quantitative analysis.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
