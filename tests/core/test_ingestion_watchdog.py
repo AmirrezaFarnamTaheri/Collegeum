@@ -191,6 +191,25 @@ class WatchdogWorkflowSafetyTests(TestCase):
         self.assertNotIn('on:\n  schedule:', workflow)
 
 
+    def test_routine_recovery_reports_historical_gaps_without_repeated_failure(self):
+        from pathlib import Path
+
+        workflow = Path(
+            ".github/workflows/ingestion-freshness-recovery.yml"
+        ).read_text(encoding="utf-8")
+        # Cadence is still audited and annotated in the watchdog; making
+        # every completed recovery observer fail on the same old missing
+        # tick obscures a genuine freshness/dispatch failure.
+        self.assertIn("            python3 -S tools/ingestion_watchdog.py", workflow.splitlines())
+        self.assertIn(
+            "            python3 -S tools/ingestion_watchdog.py --dispatch",
+            workflow.splitlines(),
+        )
+        self.assertNotIn(
+            "python3 -S tools/ingestion_watchdog.py --strict-cadence", workflow
+        )
+
+
 class CadenceEvidenceTests(TestCase):
     """Reconcile run *creation* separately from successful health persistence."""
 
