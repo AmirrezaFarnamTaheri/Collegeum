@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-08T05:58:45Z",
+ "generated_at": "2026-11-08T15:09:09Z",
  "count": 205,
  "listings": [
   {
@@ -3938,15 +3938,15 @@
    "city": "Bristol",
    "is_remote": false,
    "duration_years": 4.0,
-   "deadline": "2026-12-01T00:00:00Z",
+   "deadline": "2026-12-01T23:59:59Z",
    "days_left": 23,
    "disciplines": [
     "Finance",
     "Business and Management",
-    "Other"
+    "Environmental and Energy Economics"
    ],
    "visa": "unknown",
-   "summary": "Four-year fully funded PhD studentship with a stipend of at least £21,805 per annum plus full tuition fees for home/EU or international students. The award includes mandatory Graduate Teaching Assistant responsibilities with additional hourly pay, and research should align with the school's themes in Technology and Society, Financial Systems, or Sustainability.",
+   "summary": "The University of Bristol Business School offers four-year PhD bursaries with a stipend of at least £21,805 per annum, full tuition fees, and additional graduate teaching assistant income. The studentships support research aligned with the school's interdisciplinary themes of Technology and Society, Financial Systems, and Sustainability, starting in autumn 2027.",
    "language": "en",
    "apply_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
    "source_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
@@ -3957,16 +3957,16 @@
    "alternate_sources": [
     "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries"
    ],
-   "salary_min": 21805.0,
-   "salary_max": 21805.0,
+   "salary_min": null,
+   "salary_max": null,
    "salary_currency": "GBP",
-   "salary_period": "year",
-   "salary_raw": "£21,805 per annum stipend plus full tuition fees and additional GTA income",
+   "salary_period": null,
+   "salary_raw": "£21,805 per annum stipend, full tuition fees (home/EU or international), additional GTA income at hourly rate",
    "tools_required": [],
    "tools_preferred": [],
    "min_degree": "masters",
    "degree_note": null,
-   "start_term": "Autumn 2027",
+   "start_term": "autumn 2027",
    "start_date": "2026-10-21",
    "kind": "phd",
    "sector": "academic"
@@ -4574,25 +4574,25 @@
   {
    "id": 216,
    "title": "Post-doctoral Fellow (HKU Stone Centre on Socio-Economic Inequality in Asia)",
-   "institution": "The University of Hong Kong",
+   "institution": "THE UNIVERSITY OF HONG KONG",
    "principal_investigator": "Professor Tarani Chandola, Professor Uta Schönberg, and Professor Ming Wen",
    "country": "Hong Kong",
    "city": "Pok Fu Lam",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2027-01-15T23:59:59Z",
+   "deadline": "2027-01-15T00:00:00Z",
    "days_left": 68,
    "disciplines": [
-    "Econometrics",
     "Labor Economics",
-    "Political Economy"
+    "International Trade",
+    "Development Economics"
    ],
    "visa": "unknown",
-   "summary": "The University of Hong Kong is inviting applications for a post-doctoral fellow at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia. The position involves quantitative and qualitative data analyses, manuscript preparation, and presenting research, and is aimed at a post-PhD researcher in economics or a related field with causal inference and large-scale data experience.",
+   "summary": "The role is a post-doctoral fellow position at the James M. and Cathleen D. Stone Centre on Socio-Economic Inequality in Asia, University of Hong Kong. It is suited for candidates with a PhD in economics or related fields who have experience in large-scale data analysis and causal inference.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/416604/post-doctoral-fellow-hku-stone-centre-on-socio-economic-inequality-in-asia-?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.97,
    "first_seen_at": "2026-10-15T13:28:02Z",
    "deadline_note": null,
    "visa_note": null,
@@ -4603,7 +4603,7 @@
    "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
-   "salary_raw": "Competitive salary",
+   "salary_raw": "Competitive salary commensurate with qualifications and experience",
    "tools_required": [
     "Python",
     "Stata",
