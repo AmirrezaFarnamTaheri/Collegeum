@@ -56,6 +56,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      # Cadence gaps stay visible as warnings in the watchdog summary. They are
+      # not by themselves failures of this separate freshness-recovery job.
+      # Keep --strict-cadence for explicit forensic checks, not periodic recovery.
       - name: Evaluate freshness and dispatch only if no newer ingestion exists
         env:
           GH_TOKEN: ${{ github.token }}
@@ -65,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$CHECK_ONLY" = "true" ]; then
-            python3 -S tools/ingestion_watchdog.py --strict-cadence
+            python3 -S tools/ingestion_watchdog.py
           else
-            python3 -S tools/ingestion_watchdog.py --strict-cadence --dispatch
+            python3 -S tools/ingestion_watchdog.py --dispatch
           fi
