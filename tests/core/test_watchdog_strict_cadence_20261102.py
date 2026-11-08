@@ -51,8 +51,13 @@ class StrictCadenceTests(TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(calls, 1)
 
-    def test_recovery_workflow_activates_strict_cadence_for_both_modes(self) -> None:
+    def test_routine_recovery_keeps_cadence_diagnostics_nonfatal(self) -> None:
         workflow = Path(
             ".github/workflows/ingestion-freshness-recovery.yml"
         ).read_text(encoding="utf-8")
-        self.assertEqual(workflow.count("--strict-cadence"), 2)
+        commands = [line.strip() for line in workflow.splitlines()
+                    if line.strip().startswith("python3 -S tools/ingestion_watchdog.py")]
+        self.assertEqual(commands, [
+            "python3 -S tools/ingestion_watchdog.py",
+            "python3 -S tools/ingestion_watchdog.py --dispatch",
+        ])
