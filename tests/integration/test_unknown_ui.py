@@ -35,6 +35,13 @@ const listings = [
 """ + badge + analytics + r"""
 renderAnalytics(listings);
 const html = $('#analytics-wrap').innerHTML;
+assert.match(html,/Indexed Listings/);
+assert.doesNotMatch(html,/Active Roles/);
+assert.match(html,/current availability not independently verified/i);
+assert.doesNotMatch(html,/roles open-ended/i);
+assert.match(html,/rolling review noted/i);
+assert.doesNotMatch(html,/Top recruiting institutions/i);
+assert.match(html,/institutions represented in indexed listings/i);
 assert.match(html,/20%[\s\S]*Rolling Review/);
 assert.match(html,/2 unstated or unverified; 1 past deadline/);
 assert.match(html,/1 stated, 1 inferred; 2 unknown/);
