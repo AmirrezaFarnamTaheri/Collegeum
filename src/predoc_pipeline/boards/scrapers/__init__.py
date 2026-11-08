@@ -2,8 +2,8 @@
 
 from . import (  # noqa: F401
     bite_jobs,
-    emply_embedded,
     econjobmarket_ads,
+    emply_embedded,
     eth_softfactors,
     link_scan,
     linkedin_scraper,
