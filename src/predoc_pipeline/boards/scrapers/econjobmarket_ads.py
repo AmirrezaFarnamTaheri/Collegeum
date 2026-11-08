@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, date, datetime
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlsplit
 
 from ..models import JobPostSchema
@@ -70,11 +70,11 @@ class EconJobMarketAdsScraper(BaseScraper):
             raise SourceSkipped("EJM advertisement redisplay approval not configured")
         if self.urls() != [_PUBLIC_ADS]:
             raise ValueError("Unexpected EJM public advertisement endpoint")
-        return await self.http.get_json(
+        return cast(list[Any], await self.http.get_json(
             _PUBLIC_ADS,
             headers={"Accept": "application/json"},
             stop_on_429=True,
-        )
+        ))
 
     def parse_postings(self, raw_data: list[Any]) -> list[JobPostSchema]:
         if not isinstance(raw_data, list) or not raw_data:
