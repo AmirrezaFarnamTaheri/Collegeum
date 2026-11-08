@@ -52,7 +52,7 @@ assert.match(html,/0 distinct reported institution names/);
 assert.doesNotMatch(html,/75 institutions/);
 renderAnalytics(listings.slice(0, 2));
 const filteredHtml = $('#analytics-wrap').innerHTML;
-assert.match(filteredHtml,/Analyzing <b>2<\\/b> of 5 indexed positions matching selected filters/);
+assert.ok(filteredHtml.includes('Analyzing <b>2</b> of 5 indexed positions matching selected filters'));
 assert.match(filteredHtml,/40% of index; current availability not independently verified/);
 assert.doesNotMatch(filteredHtml,/Active Roles|matching active criteria/);
 
