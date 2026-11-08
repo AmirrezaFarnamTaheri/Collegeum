@@ -280,6 +280,21 @@ def _merge_hints(result: ExtractionResult, hints: dict[str, Any]) -> ExtractionR
     return result.model_copy(update=update) if update else result
 
 
+def _meaningful_refresh_facts(facts: dict[str, Any]) -> dict[str, Any]:
+    """Do not downgrade reviewed facts when a later extraction has no answer.
+
+    A published requirement such as a verified master's degree cannot be
+    erased by a later model response of "unstated". Explicit corrections
+    remain possible through the existing reviewed fact-refresh mechanism.
+    """
+    return {
+        key: value for key, value in facts.items()
+        if value not in (None, "", "[]", "unknown")
+        and not (key == "min_degree" and isinstance(value, str)
+                 and value.strip().casefold() == "unstated")
+    }
+
+
 def _really_same(db: Database, other_id: int, listing: PredocListing, item: RawItem) -> bool:
     """Veto a near-duplicate match that is really two different jobs.
 
@@ -636,8 +651,7 @@ def _post_extract(
                         "last_seen_at", "status", "signature"):
                 facts.pop(key)
             # Partial extraction must not erase previously observed nullable facts.
-            facts = {key: value for key, value in facts.items()
-                     if value not in (None, "", "[]", "unknown")}
+            facts = _meaningful_refresh_facts(facts)
             # ...but a *corrected* extraction must be able to replace a value
             # that was previously wrong. Clear a stored bound only when its
             # salary text establishes a parse artefact, such as a calendar
