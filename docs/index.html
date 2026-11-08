@@ -2163,7 +2163,7 @@
           <div>
             <strong>Market Scope:</strong>
             ${isFiltered 
-              ? `Analyzing <b>${total}</b> of ${listings.length} positions matching active criteria.` 
+              ? `Analyzing <b>${total}</b> of ${listings.length} indexed positions matching selected filters.` 
               : `Analyzing all <b>${total}</b> indexed appointments with ${institutionNames.size} distinct reported institution names. This is listing coverage, not a count of healthy monitors.`}
           </div>
           ${isFiltered ? '<button class="analytics-scope-reset" id="analytics-reset-scope">Reset all filters</button>' : ''}
@@ -2177,8 +2177,8 @@
         <div class="analytics-metrics-grid">
           <div class="metric-card">
             <span class="stat-val">${total}</span>
-            <span class="stat-lbl">Active Roles</span>
-            <span class="stat-sub">${isFiltered ? `${Math.round((total / listings.length) * 100)}% of board` : '100% of index'}</span>
+            <span class="stat-lbl">Indexed Listings</span>
+            <span class="stat-sub">${isFiltered ? `${Math.round((total / listings.length) * 100)}% of index` : '100% of index'}; current availability not independently verified</span>
           </div>
           <div class="metric-card">
             <span class="stat-val">${visaPct}%</span>
@@ -2193,7 +2193,7 @@
           <div class="metric-card">
             <span class="stat-val">${rollingPct}%</span>
             <span class="stat-lbl">Rolling Review</span>
-            <span class="stat-sub">${rollingCount} roles open-ended</span>
+            <span class="stat-sub">Rolling review noted for ${rollingCount} listings; verify deadlines</span>
           </div>
         </div>
 
@@ -2221,7 +2221,7 @@
 
           <div class="analytics-panel">
             <h3 class="analytics-panel-title">Institutional Hubs</h3>
-            <div class="analytics-panel-sub">Top recruiting institutions in view</div>
+            <div class="analytics-panel-sub">Top institutions represented in indexed listings</div>
             <div class="analytics-bar-list">
               ${topInsts.map(([inst, count]) => {
                 const relPct = Math.round((count / maxInstCount) * 100);
