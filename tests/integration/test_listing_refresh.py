@@ -50,3 +50,25 @@ def test_refresh_rejects_identity_lifecycle_and_unknown_fields(tmp_path, field):
         assert dict(db.listing(listing_id)) == before
         with pytest.raises(ValueError, match='does not exist'):
             db.refresh_listing_facts(999, {'summary': 'missing'})
+
+
+def test_missing_extracted_degree_cannot_erase_verified_degree(tmp_path):
+    from predoc_pipeline.pipeline import _meaningful_refresh_facts
+
+    path = tmp_path / "state.db"
+    init(path)
+    with Database(path) as db:
+        listing_id = insert(db)
+        db.refresh_listing_facts(listing_id, {"min_degree": "masters"})
+        db.refresh_listing_facts(
+            listing_id,
+            _meaningful_refresh_facts({
+                "min_degree": "unstated",
+                "summary": "Updated role description.",
+            }),
+        )
+        refreshed = db.listing(listing_id)
+        assert refreshed["min_degree"] == "masters"
+        assert refreshed["summary"] == "Updated role description."
+
+
