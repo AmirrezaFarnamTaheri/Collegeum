@@ -46,6 +46,8 @@ class CadenceAudit:
     unsettled: int = 0
     max_creation_delay_seconds: int | None = None
     missing_ticks: tuple[str, ...] = ()
+    late_pending: int = 0
+    late_pending_ticks: tuple[str, ...] = ()
 
 
 def _timestamp(value: Any) -> datetime:
@@ -142,7 +144,7 @@ def audit_cadence(
             return CadenceAudit(False, "untrusted-run-history")
         all_created.append(created)
         if (item.get("event") == "schedule"
-                and item.get("name", "predoc-pipeline") == "predoc-pipeline"):
+                and item.get("name") == "predoc-pipeline"):
             scheduled.append(created)
 
     start = now - lookback
@@ -157,6 +159,7 @@ def audit_cadence(
     expected = observed = delayed = missing = unsettled = 0
     max_delay: int | None = None
     missing_ticks: list[str] = []
+    late_pending_ticks: list[str] = []
     while tick <= now:
         expected += 1
         next_tick = tick + timedelta(hours=4)
@@ -172,11 +175,13 @@ def audit_cadence(
             missing_ticks.append(tick.isoformat().replace("+00:00", "Z"))
         else:
             unsettled += 1
+            if now > tick + timedelta(minutes=30):
+                late_pending_ticks.append(tick.isoformat().replace("+00:00", "Z"))
         tick = next_tick
     return CadenceAudit(
         True, "unobserved-schedule-slots" if missing else "schedule-slots-observed",
         expected, observed, delayed, missing, unsettled, max_delay,
-        tuple(missing_ticks),
+        tuple(missing_ticks), len(late_pending_ticks), tuple(late_pending_ticks),
     )
 
 
@@ -236,10 +241,12 @@ def _summary(
                 f"scheduled slots (last 24h): {cadence.expected}; "
                 f"observed: {cadence.observed}; delayed >30m: {cadence.delayed}; "
                 f"unobserved mature slots: {cadence.missing}; "
-                f"unsettled slots: {cadence.unsettled}; max run-creation lag: {lag}"
+                f"unsettled slots: {cadence.unsettled}; "
+                f"unobserved >30m (not mature): {cadence.late_pending}; "
+                f"max run-creation lag: {lag}"
             )
             print(f"Ingestion cadence: {cadence_text}", flush=True)
-            if cadence.missing:
+            if cadence.missing or cadence.late_pending:
                 print(f"::warning title=Ingestion cron coverage::{cadence_text}", flush=True)
         else:
             cadence_text = f"unverified ({cadence.reason}); insufficient history for gap claims"
@@ -261,6 +268,9 @@ def _summary(
                 if cadence.verified and cadence.missing_ticks:
                     fh.write("- No scheduled run observed for mature slots: "
                              + ", ".join(cadence.missing_ticks) + "\n")
+                if cadence.verified and cadence.late_pending_ticks:
+                    fh.write("- Scheduled slots >30m overdue but still maturing: "
+                             + ", ".join(cadence.late_pending_ticks) + "\n")
                 fh.write(
                     "- Run creation timestamps do not measure job queueing or "
                     "prove GitHub dropped a cron event. Manual recovery runs "
