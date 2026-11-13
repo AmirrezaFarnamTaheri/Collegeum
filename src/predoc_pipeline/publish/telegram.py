@@ -376,6 +376,8 @@ def render_digest_batches(
     page_size: int = 6,
     feedback: bool = True,
     status_of: Any = None,
+    bot_username: str = "",
+    historical: bool = False,
 ) -> list[RenderedPage]:
     """Many new listings as a few numbered messages, each with ✅ ❌ 📝 rows.
 
@@ -406,11 +408,14 @@ def render_digest_batches(
         kind_label = f"predoc listing{'s' if total != 1 else ''}"
     else:
         kind_label = f"research position{'s' if total != 1 else ''}"
-    head = f"🎓 <b>{total} new {kind_label}</b>\n\n"
+    head = (f"🎓 <b>Previously collected Economics PhD positions · {total}</b>\n\n"
+            if historical else f"🎓 <b>{total} new {kind_label}</b>\n\n")
     footer = ""
     if site_url:
         footer += (f'\n\n<a href="{escape_attribute(site_url, quote=True)}">'
                    'Browse and filter all listings</a>')
+    if historical:
+        footer += "\n\n<i>Stored vacancies; current availability is not independently verified. Check the official advert.</i>"
     if feedback:
         footer += f"\n\n<i>{esc(LEGEND)}</i>"
     pages = []
@@ -418,10 +423,22 @@ def render_digest_batches(
                                  page_size=min(page_size, 30)):
         chunk = listings[page.start:page.end]
         keyboard = None
-        if feedback:
-            keyboard = {"inline_keyboard": [
-                feedback_row(h, status_of(h), i) for i, (h, _) in enumerate(chunk, page.start + 1)
-            ]}
+        buttons = []
+        for i, (h, _) in enumerate(chunk, page.start + 1):
+            row = []
+            if bot_username:
+                import re
+                if not re.fullmatch(r"[A-Za-z0-9_]{5,32}", bot_username):
+                    raise ValueError("invalid Telegram bot username")
+                if not re.fullmatch(r"[a-f0-9]{64}", h):
+                    raise ValueError("invalid vacancy hash for Save in bot")
+                row.append({"text": f"🔖 Save {i}",
+                            "url": f"https://t.me/{bot_username}?start=f_{h[:16]}"})
+            if feedback:
+                row.extend(feedback_row(h, status_of(h), i))
+            if row:
+                buttons.append(row)
+        keyboard = {"inline_keyboard": buttons} if buttons else None
         pages.append(RenderedPage(page.start, page.end, page.html, keyboard))
     return pages
 
