@@ -415,7 +415,8 @@ def render_digest_batches(
         footer += (f'\n\n<a href="{escape_attribute(site_url, quote=True)}">'
                    'Browse and filter all listings</a>')
     if historical:
-        footer += "\n\n<i>Stored vacancies; current availability is not independently verified. Check the official advert.</i>"
+        footer += ("\n\n<i>Stored vacancies; current availability is not "
+                   "independently verified. Check the official advert.</i>")
     if feedback:
         footer += f"\n\n<i>{esc(LEGEND)}</i>"
     pages = []
