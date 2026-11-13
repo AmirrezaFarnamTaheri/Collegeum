@@ -1043,3 +1043,20 @@ test('reject forged favorites callbacks in someone elses chat and hydrate from a
   assert.match(output.text, /Predoc in Economics/);
   assert.match(output.text, /example.org\/job/);
 });
+
+
+test('authenticated sync exports scoped user favorites but public status does not', async () => {
+  const instance = bot();
+  const prefix = 'a'.repeat(16);
+  await instance.fetch(post('/webhook', {update_id: 13001,
+    message: {chat: {id: 997, type: 'private'}, from: {id: 997},
+      text: '/start f_' + prefix}}));
+  const response = await instance.fetch(post('/sync', snapshot));
+  assert.equal(response.status, 200);
+  const synced = await response.json();
+  assert.equal(typeof synced.favorites?.['997']?.[prefix], 'string');
+  assert.equal(synced.favorites?.['998'], undefined);
+  const publicStatus = await instance.fetch(new Request('https://example.workers.dev/status'));
+  assert.equal(publicStatus.status, 200);
+  assert.equal('favorites' in await publicStatus.json(), false);
+});
