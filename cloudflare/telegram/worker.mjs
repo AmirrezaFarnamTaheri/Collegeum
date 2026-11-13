@@ -603,7 +603,7 @@ export class TelegramBot {
     const buttons = [];
     for (const [key] of values.slice(actual * 5, actual * 5 + 5)) {
       const prefix = key.split(':').at(-1);
-      const candidates = [...(await this.ctx.storage.list({prefix:`listing:${prefix}`}))].values();
+      const candidates = [...(await this.ctx.storage.list({prefix:`listing:${prefix}`})).values()];
       const listing = candidates.length === 1 ? candidates[0] : null;
       const n = actual * 5 + entries.length + 1;
       entries.push(listing
@@ -714,11 +714,13 @@ export class TelegramBot {
   }
 
   async callback(callback,updateKey) {
+    if (String(callback.data || '').startsWith('fav:'))
+      return this.favoriteCallback(callback,updateKey);
     const parts = String(callback.data || "").split("|");
     const message = callback.message;
     // Older Telegram messages may still contain academic-only view|positions|N
     // buttons. Preserve their page number and show the unified My matches view.
-    if (parts[0] === 'fav') return this.favoriteCallback(callback,updateKey);
+
     if (parts[0] === "view" && parts[1] === "positions" && parts.length === 3 &&
         /^\d{1,6}$/.test(parts[2])) {
       const page = Math.min(Number(parts[2]), 499);
