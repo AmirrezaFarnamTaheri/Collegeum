@@ -1002,3 +1002,44 @@ test('legacy owner positions pagination callback opens unified My matches withou
   assert.equal(await instance.ctx.storage.get('page_size:42'), 4);
   assert.equal((await instance.dataset()).marks.size, 0);
 });
+
+
+test('any private user can bookmark before snapshot, independently and idempotently', async () => {
+  const instance = bot();
+  for (const [id, user, text] of [
+    [12001, 997, '/start f_' + 'b'.repeat(16)],
+    [12002, 998, '/start f_' + 'b'.repeat(16)],
+    [12003, 997, '/start f_' + 'b'.repeat(16)],
+  ]) {
+    await instance.fetch(post('/webhook', {update_id: id,
+      message: {chat: {id: user, type: 'private'}, from: {id: user}, text}}));
+  }
+  assert.equal((await instance.ctx.storage.list({prefix:'favorite:997:'})).size, 1);
+  assert.equal((await instance.ctx.storage.list({prefix:'favorite:998:'})).size, 1);
+  await instance.fetch(post('/webhook', {update_id: 12004,
+    message: {chat: {id: 998, type:'private'}, from:{id:998}, text:'/favorites'}}));
+  assert.match(instance.calls.at(-1).payload.text, /Saved|favorite/i);
+  await instance.fetch(post('/webhook', {update_id: 12005, callback_query: {
+    id:'r', from:{id:997}, message:{chat:{id:997,type:'private'},message_id:5},
+    data:'fav:remove:'+'b'.repeat(16)}}));
+  assert.equal((await instance.ctx.storage.list({prefix:'favorite:997:'})).size, 0);
+  assert.equal((await instance.ctx.storage.list({prefix:'favorite:998:'})).size, 1);
+  assert.equal(await instance.ctx.storage.get('subscriber:997'), undefined);
+});
+
+test('reject forged favorites callbacks in someone elses chat and hydrate from authenticated sync', async () => {
+  const instance = bot();
+  const key = 'a'.repeat(16);
+  await instance.fetch(post('/webhook', {update_id:12101,
+    message:{chat:{id:997,type:'private'},from:{id:997},text:'/start f_'+key}}));
+  await instance.fetch(post('/webhook', {update_id:12102,callback_query:{
+    id:'forged',from:{id:998},message:{chat:{id:997,type:'private'},message_id:7},
+    data:'fav:remove:'+key}}));
+  assert.equal((await instance.ctx.storage.list({prefix:'favorite:997:'})).size, 1);
+  await instance.fetch(post('/sync',snapshot));
+  await instance.fetch(post('/webhook', {update_id:12103,
+    message:{chat:{id:997,type:'private'},from:{id:997},text:'/favorites'}}));
+  const output = instance.calls.at(-1).payload;
+  assert.match(output.text, /Predoc in Economics/);
+  assert.match(output.text, /example.org\/job/);
+});
