@@ -1236,6 +1236,7 @@ def _publish_non_us_econ_phds(
         return
 
     from .core.output_quality import suppressed_public_alias
+    policy = Policy(prefs)
     # Reuse existing alias graph so historical mirrors cannot be sent twice.
     candidates: list[tuple[int, PredocListing]] = []
     for group in db.publication_alias_groups():
@@ -1254,7 +1255,7 @@ def _publish_non_us_econ_phds(
         for row in group:
             if row["status"] != "published" or row["closed_at"] or row["expired_at"]:
                 continue
-            if suppressed_public_alias(row["url_hash"]):
+            if suppressed_public_alias(row["url_hash"]) or policy.check_stored(row):
                 continue
             if application_url_issue(row["apply_url"]):
                 continue
