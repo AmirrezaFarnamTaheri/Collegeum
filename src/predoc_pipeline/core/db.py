@@ -793,11 +793,7 @@ class Database:
         closed, or filtered rows can still connect a known receipt or uncertain
         submission to an eligible alias; discovering them never changes state.
         """
-        rows = self.conn.execute(
-            "SELECT id, apply_url, source_url, status, telegram_message_id, "
-            "telegram_delivery_revision "
-            "FROM listings ORDER BY id"
-        ).fetchall()
+        rows = self.conn.execute("SELECT * FROM listings ORDER BY id").fetchall()
         by_url: dict[str, list[sqlite3.Row]] = {}
         for row in rows:
             for value in (row["apply_url"], row["source_url"]):
