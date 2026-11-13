@@ -1104,6 +1104,7 @@ def _broadcast(
             page_size=digest_page_size,
             feedback=include_feedback,
             status_of=status_of,
+            bot_username=settings.telegram_bot_username,
         )
         for page in pages:
             chunk = listings[page.start:page.end]
@@ -1144,8 +1145,10 @@ def _broadcast(
     for listing_id, listing in listings:
         keyboard = render_keyboard(
             listing,
-            url_hash=hashes[listing_id] if include_feedback else None,
+            url_hash=hashes[listing_id] if include_feedback or settings.telegram_bot_username else None,
             status=status_of(hashes[listing_id]) if include_feedback else None,
+            bot_username=settings.telegram_bot_username,
+            feedback=include_feedback,
         )
         try:
             try:
@@ -1203,6 +1206,123 @@ def _broadcast(
             institution=truncate(listing.institution, 60),
             confidence=round(listing.confidence, 2),
         )
+
+
+def _publish_non_us_econ_phds(
+    db: Database,
+    telegram: TelegramClient | None,
+    settings: Settings,
+    stats: RunStats,
+    router: Router,
+    prefs: Preferences,
+    *,
+    fresh_ids: set[int],
+    verify: bool = True,
+    transport: Any = None,
+) -> None:
+    """Backfill previously web-published Economics PhDs without altering web/X receipts.
+
+    The journal is authoritative across runner restarts. Unknown delivery is
+    never an implicit retry. A bounded historical batch is resumed next cycle.
+    """
+    if not settings.telegram_non_us_econ_phd_enabled:
+        return
+    if not settings.telegram_bot_username:
+        log.warning("telegram_phd_disabled_no_bot_username")
+        return
+    if telegram is None:
+        log.warning("telegram_phd_no_channel_credentials")
+        return
+
+    from .core.output_quality import suppressed_public_alias
+    from .core.urls import canonicalize_url
+    # Reuse existing alias graph so historical mirrors cannot be sent twice.
+    candidates: list[tuple[int, PredocListing]] = []
+    for group in db.publication_alias_groups():
+        # A confirmed or unresolved send by any mirror controls the whole group.
+        confirmed = next((row["telegram_message_id"] for row in group
+                          if row["telegram_message_id"]), None)
+        if confirmed is not None:
+            for row in group:
+                if (db.telegram_state(row["id"]) != "confirmed"
+                        and row["status"] == "published"):
+                    db.record_telegram_delivery(row["id"], "confirmed", message_id=int(confirmed))
+            continue
+        if any(db.telegram_state(row["id"]) in {"uncertain", "permanent_failure"}
+               or row["status"] == "delivery-uncertain" for row in group):
+            continue
+        for row in group:
+            if row["status"] != "published" or row["closed_at"] or row["expired_at"]:
+                continue
+            if suppressed_public_alias(row["url_hash"]):
+                continue
+            if application_url_issue(row["apply_url"]):
+                continue
+            if authentication_page_text(row["summary"] or ""):
+                continue
+            if db.telegram_state(row["id"]) not in {"not_attempted", "pending"}:
+                continue
+            try:
+                listing = _listing_from_row(row)
+            except (TypeError, ValueError):
+                continue
+            if not router.telegram_phd_eligible(listing):
+                continue
+            if listing.deadline is not None and listing.deadline < utcnow():
+                continue
+            candidates.append((int(row["id"]), listing))
+            break  # send at most one advert per alias component
+        if len(candidates) >= settings.telegram_non_us_econ_phd_backfill_limit:
+            break
+
+    if not candidates:
+        return
+    # Fetch official advert links before broadcast; do not infer that a 200
+    # proves funding or an open position. Evidence of closure is excluded.
+    if verify:
+        candidates = _verify_before_sending(candidates, prefs, db, stats, transport)
+    if not candidates:
+        return
+    # Historical (previously web-published) records must not be presented as new.
+    for historical in (True, False):
+        selected = [(lid, job) for lid, job in candidates
+                    if (lid not in fresh_ids) == historical]
+        if not selected:
+            continue
+        pages = render_digest_batches(
+            [(url_hash(job.apply_url), job) for _, job in selected],
+            site_url=settings.site_url,
+            page_size=min(6, prefs.telegram.digest_page_size),
+            feedback=False, bot_username=settings.telegram_bot_username,
+            historical=historical,
+        )
+        for page in pages:
+            chunk = selected[page.start:page.end]
+            for lid, _ in chunk:
+                db.record_telegram_delivery(lid, "pending")
+            try:
+                receipt = telegram.send_message(
+                    chat_id=settings.telegram_public_channel_id,
+                    html=page.html, keyboard=page.keyboard,
+                )
+            except TelegramError as exc:
+                stats.errors += 1
+                for lid, _ in chunk:
+                    if exc.uncertain:
+                        db.record_telegram_delivery(lid, "uncertain")
+                    elif exc.permanent and not _chat_level(exc):
+                        db.record_telegram_delivery(lid, "permanent_failure")
+                if _chat_level(exc):
+                    log.warning("telegram_phd_channel_unavailable", error=str(exc))
+                    return
+                log.warning("telegram_phd_backfill_failed", count=len(chunk),
+                            uncertain=exc.uncertain, error=str(exc))
+                continue
+            for lid, job in chunk:
+                db.record_telegram_delivery(lid, "confirmed", message_id=receipt)
+                stats.published += 1
+            log.info("telegram_phd_published", count=len(chunk),
+                     historical=historical)
 
 
 def _chat_level(exc: TelegramError) -> bool:
@@ -1752,6 +1872,10 @@ def run(
                 x_client=x_client,
                 feedback=feedback,
                 digest_page_size=prefs.telegram.digest_page_size,
+            )
+            _publish_non_us_econ_phds(
+                db, telegram, settings, stats, router, prefs,
+                fresh_ids=sent_now, transport=board_transport,
             )
             _retry_x_publications(
                 x_client, settings, db, stats, prefs, policy, feedback, router,
