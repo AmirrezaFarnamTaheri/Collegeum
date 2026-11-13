@@ -1145,7 +1145,8 @@ def _broadcast(
     for listing_id, listing in listings:
         keyboard = render_keyboard(
             listing,
-            url_hash=hashes[listing_id] if include_feedback or settings.telegram_bot_username else None,
+            url_hash=(hashes[listing_id] if include_feedback or settings.telegram_bot_username
+                      else None),
             status=status_of(hashes[listing_id]) if include_feedback else None,
             bot_username=settings.telegram_bot_username,
             feedback=include_feedback,
@@ -1235,7 +1236,6 @@ def _publish_non_us_econ_phds(
         return
 
     from .core.output_quality import suppressed_public_alias
-    from .core.urls import canonicalize_url
     # Reuse existing alias graph so historical mirrors cannot be sent twice.
     candidates: list[tuple[int, PredocListing]] = []
     for group in db.publication_alias_groups():
@@ -1318,7 +1318,7 @@ def _publish_non_us_econ_phds(
                 log.warning("telegram_phd_backfill_failed", count=len(chunk),
                             uncertain=exc.uncertain, error=str(exc))
                 continue
-            for lid, job in chunk:
+            for lid, _ in chunk:
                 db.record_telegram_delivery(lid, "confirmed", message_id=receipt)
                 stats.published += 1
             log.info("telegram_phd_published", count=len(chunk),
