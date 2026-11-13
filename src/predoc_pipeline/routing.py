@@ -28,6 +28,7 @@ __all__ = ["Channel", "Router"]
 
 _POSTDOC = re.compile(r"\bpost-?\s?doc(?:tor(?:al)?)?\b", re.IGNORECASE)
 _PREDOC = re.compile(r"\bpre-?\s?(doc(toral)?|phd)\b", re.IGNORECASE)
+_PHD_TITLE = re.compile(r"^\s*(?:ph\.?d\.?|doctoral)(?:\s|[-:])", re.IGNORECASE)
 _PHD_JOB_MARKET = re.compile(
     r"\bph\.?d\.?\s+researcher\b.*\bph\.?d\.?\s+job\s+market\b", re.I
 )
@@ -121,7 +122,7 @@ class Router:
         for match in _DOCTORAL_DUTY.finditer(summary):
             if not re.search(r"\b(?:not|no|may|can|optional|opportunity)\b", match[0], re.I):
                 return "phd"
-        if PHD_POSITION.search(title):
+        if _PHD_TITLE.search(title) or PHD_POSITION.search(title):
             return "phd"
         if _POSTDOC_ROLE.search(summary):
             return "postdoc"
