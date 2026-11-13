@@ -50,7 +50,7 @@ __all__ = [
     "Database",
 ]
 
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS listings (
   signature                 BLOB,
   alternate_sources         TEXT    NOT NULL DEFAULT '[]',
   telegram_message_id       INTEGER,
+  telegram_delivery_state    TEXT NOT NULL DEFAULT 'not_attempted',
+  telegram_delivery_state_revision INTEGER NOT NULL DEFAULT 0,
   telegram_delivery_revision INTEGER NOT NULL DEFAULT 0
     CHECK(typeof(telegram_delivery_revision) = 'integer' AND telegram_delivery_revision >= 0),
   x_post_id                 TEXT,
@@ -248,6 +250,8 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("listings", "department", "TEXT"),
     ("listings", "fields", "TEXT"),
     ("listings", "x_post_id", "TEXT"),
+    ("listings", "telegram_delivery_state", "TEXT NOT NULL DEFAULT 'not_attempted'"),
+    ("listings", "telegram_delivery_state_revision", "INTEGER NOT NULL DEFAULT 0"),
     ("listings", "telegram_delivery_revision", "INTEGER NOT NULL DEFAULT 0 "
      "CHECK(typeof(telegram_delivery_revision) = 'integer' AND telegram_delivery_revision >= 0)"),
     ("listings", "salary_min", "REAL"),
@@ -587,6 +591,46 @@ class Database:
                     "published_at=? WHERE id=?",
                     (message_id, now(), listing_id),
                 )
+
+    def telegram_state(self, listing_id: int) -> str:
+        """Public-channel delivery evidence independent of the listing status."""
+        row = self.listing(listing_id)
+        if row is None:
+            raise ValueError(f"Unknown listing {listing_id}")
+        if row["telegram_message_id"] is not None:
+            return "confirmed"
+        return row["telegram_delivery_state"] or "not_attempted"
+
+    def record_telegram_delivery(
+        self, listing_id: int, state: str, *, message_id: int | None = None,
+    ) -> None:
+        """Record a channel delivery without changing web/X status or publication time."""
+        allowed = {"pending", "confirmed", "uncertain", "permanent_failure"}
+        if state not in allowed:
+            raise ValueError("invalid Telegram channel delivery state")
+        if (state == "confirmed") != (message_id is not None):
+            raise ValueError("Confirmed Telegram sends require a message ID")
+        if message_id is not None and (type(message_id) is not int or not 0 < message_id < 2**63):
+            raise ValueError("Telegram message ID must be a positive 64-bit integer")
+        with self.transaction():
+            row = self.listing(listing_id)
+            if row is None:
+                raise ValueError(f"Unknown listing {listing_id}")
+            old_state = self.telegram_state(listing_id)
+            if old_state == "confirmed":
+                if state == "confirmed" and row["telegram_message_id"] == message_id:
+                    return
+                raise ValueError("cannot replace a confirmed Telegram delivery")
+            if old_state == "uncertain" and state == "pending":
+                raise ValueError("uncertain Telegram delivery requires operator reconciliation")
+            if old_state == state and message_id is None:
+                return
+            self.conn.execute(
+                "UPDATE listings SET telegram_delivery_state=?, "
+                "telegram_message_id=COALESCE(telegram_message_id, ?), "
+                "telegram_delivery_state_revision=telegram_delivery_state_revision+1 "
+                "WHERE id=?", (state, message_id, listing_id),
+            )
 
     def mark_x_published(self, listing_id: int, x_post_id: str | None) -> None:
         with self.transaction():
@@ -1114,6 +1158,25 @@ class Database:
                 )
             updates[field] = local if local is not None else saved
 
+        # A confirmed acknowledgement always wins; an uncertain result is
+        # preserved across stale journal/cache merges until explicitly resolved.
+        local_delivery = ("confirmed" if existing["telegram_message_id"] is not None
+                          else existing["telegram_delivery_state"] or "not_attempted")
+        remote_delivery = ("confirmed" if incoming.get("telegram_message_id") is not None
+                           else incoming.get("telegram_delivery_state", "not_attempted"))
+        local_delivery_rev = existing["telegram_delivery_state_revision"]
+        remote_delivery_rev = incoming.get("telegram_delivery_state_revision", 0)
+        if updates["telegram_message_id"] is not None:
+            updates["telegram_delivery_state"] = "confirmed"
+        elif "uncertain" in (local_delivery, remote_delivery):
+            # Never discard an unresolved send based solely on a newer fact refresh.
+            updates["telegram_delivery_state"] = "uncertain"
+        else:
+            updates["telegram_delivery_state"] = (
+                local_delivery if local_delivery_rev >= remote_delivery_rev else remote_delivery
+            )
+        updates["telegram_delivery_state_revision"] = max(local_delivery_rev, remote_delivery_rev)
+
         def latest(field: str) -> Any:
             local, saved = existing[field], incoming.get(field)
             return max(local, saved) if local is not None and saved is not None else (
@@ -1166,7 +1229,8 @@ class Database:
             # Lifecycle receipts and closure evidence are merged separately.
             protected = {
                 "id", "url_hash", "signature", "status", "telegram_message_id",
-                "telegram_delivery_revision",
+                "telegram_delivery_revision", "telegram_delivery_state",
+                "telegram_delivery_state_revision",
                 "x_post_id", "published_at", "expired_at", "closed_at",
                 "closed_reason", "first_seen_at", "last_seen_at",
                 "last_checked_at", "missing_404_at", "missing_404_observations",
@@ -1214,6 +1278,14 @@ class Database:
                     raise ValueError(
                         "Telegram delivery revision must be a nonnegative 64-bit integer"
                     )
+                delivery_state = data.get("telegram_delivery_state", "not_attempted")
+                if delivery_state not in {
+                    "not_attempted", "pending", "confirmed", "uncertain", "permanent_failure"
+                }:
+                    raise ValueError("invalid telegram_delivery_state")
+                state_revision = data.get("telegram_delivery_state_revision", 0)
+                if type(state_revision) is not int or not 0 <= state_revision < 2**63:
+                    raise ValueError("invalid telegram_delivery_state_revision")
                 data["disciplines"] = json.dumps(data.get("disciplines") or [])
                 data["alternate_sources"] = json.dumps(data.get("alternate_sources") or [])
                 data["is_remote"] = int(bool(data.get("is_remote")))
