@@ -96,6 +96,9 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_PUBLIC_CHANNEL_ID: ${{ secrets.TELEGRAM_PUBLIC_CHANNEL_ID }}
+          TELEGRAM_BOT_USERNAME: ${{ vars.TELEGRAM_BOT_USERNAME }}
+          TELEGRAM_NON_US_ECON_PHD_ENABLED: ${{ vars.TELEGRAM_NON_US_ECON_PHD_ENABLED || 'false' }}
+          TELEGRAM_NON_US_ECON_PHD_BACKFILL_LIMIT: ${{ vars.TELEGRAM_NON_US_ECON_PHD_BACKFILL_LIMIT || '30' }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
           # Operational alerts are opt-in for safety (they need a distinct
           # private admin chat), but the scheduled workflow IS the operator, so
