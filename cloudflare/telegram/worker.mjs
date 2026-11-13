@@ -607,8 +607,8 @@ export class TelegramBot {
       const listing = candidates.length === 1 ? candidates[0] : null;
       const n = actual * 5 + entries.length + 1;
       entries.push(listing
-        ? `<b>${n}. ${esc(listing.title.slice(0, 150))}</b>\\n🏛 ${esc(listing.institution.slice(0, 100))}\\n${listing.closed_at || listing.expired_at ? '⚠️ Known closed/expired.' : 'ℹ️ Current availability is not independently verified.'}`
-        : `<b>${n}. Saved position ${prefix}</b>\\nℹ️ Details not in the latest bot snapshot.`);
+        ? `<b>${n}. ${esc(listing.title.slice(0, 150))}</b>\n🏛 ${esc(listing.institution.slice(0, 100))}\n${listing.closed_at || listing.expired_at ? '⚠️ Known closed/expired.' : 'ℹ️ Current availability is not independently verified.'}`
+        : `<b>${n}. Saved position ${prefix}</b>\nℹ️ Details not in the latest bot snapshot.`);
       const actions = [];
       if (listing && safeUrl(listing.apply_url))
         actions.push({text:`↗ ${n} Open advert`,url:safeUrl(listing.apply_url)});
@@ -619,7 +619,7 @@ export class TelegramBot {
     if (actual) navs.push({text:'← Previous',callback_data:`fav:page:${actual-1}`});
     if (actual + 1 < count) navs.push({text:'Next →',callback_data:`fav:page:${actual+1}`});
     if (navs.length) buttons.push(navs);
-    return {text:`🔖 <b>My favorites · ${values.length}</b>\\n\\n${entries.join('\\n\\n') || 'No saved positions yet. Use 🔖 Save in bot on a channel post.'}`,
+    return {text:`🔖 <b>My favorites · ${values.length}</b>\n\n${entries.join('\n\n') || 'No saved positions yet. Use 🔖 Save in bot on a channel post.'}`,
       parse_mode:'HTML', reply_markup:{inline_keyboard:buttons}};
   }
 
@@ -629,9 +629,9 @@ export class TelegramBot {
     if (prefix) {
       const status = await this.saveFavorite(id, prefix);
       reply = await this.favoriteRows(id);
-      reply.text = status === 'full' ? 'Favorite limit reached (200). Remove one first.\\n\\n' + reply.text
-        : status === 'already' ? 'Already saved.\\n\\n' + reply.text
-        : '✅ Saved in your private favorites.\\n\\n' + reply.text;
+      reply.text = status === 'full' ? 'Favorite limit reached (200). Remove one first.\n\n' + reply.text
+        : status === 'already' ? 'Already saved.\n\n' + reply.text
+        : '✅ Saved in your private favorites.\n\n' + reply.text;
     } else reply = await this.favoriteRows(id);
     await this.deliver(updateKey,'sendMessage',{chat_id:id,...reply,link_preview_options:{is_disabled:true}});
   }
@@ -651,7 +651,7 @@ export class TelegramBot {
         await tx.delete(`page_size:${id}`);
         await tx.delete(`match_window:${id}`);
       });
-    } else if (parts[1] !== 'page' || !/^\\d{1,3}$/.test(parts[2])) return;
+    } else if (parts[1] !== 'page' || !/^\d{1,3}$/.test(parts[2])) return;
     const content = await this.favoriteRows(id, parts[1] === 'page' ? Number(parts[2]) : 0);
     try {await this.api('answerCallbackQuery',{callback_query_id:callback.id});} catch {}
     await this.deliver(updateKey,'editMessageText',{chat_id:id,message_id:message.message_id,
