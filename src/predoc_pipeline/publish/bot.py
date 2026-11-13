@@ -548,7 +548,7 @@ def _handle_message(
                       and (msg.get("chat") or {}).get("type") == "private"
                       and _chat_id(msg.get("from")) == chat)
     import re
-    saving = re.fullmatch(r"/start(?:@[A-Za-z0-9_]+)?\\s+f_([a-f0-9]{16})", text_input)
+    saving = re.fullmatch(r"/start(?:@[A-Za-z0-9_]+)?\s+f_([a-f0-9]{16})", text_input)
     if private_sender and (saving or kind in ("favorites", "delete") or
                            (not owner and text_input.lower().split("@", 1)[0] == "/saved")):
         if saving:
