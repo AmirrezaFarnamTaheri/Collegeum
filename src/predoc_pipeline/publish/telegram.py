@@ -304,6 +304,7 @@ def render_keyboard(
     url_hash: str | None = None,
     status: str | None = None,
     bot_username: str = "",
+    feedback: bool = True,
 ) -> dict[str, Any]:
     """Inline buttons. The apply button is only shown when it means something.
 
@@ -330,7 +331,7 @@ def render_keyboard(
             raise ValueError("Save link requires the full stable listing URL hash")
         rows.append([{"text": "🔖 Save in bot",
                       "url": f"https://t.me/{bot_username}?start=f_{url_hash[:16]}"}])
-    if url_hash and status is not None:
+    if url_hash and feedback:
         rows.append(feedback_row(url_hash, status))
     return {"inline_keyboard": rows}
 
