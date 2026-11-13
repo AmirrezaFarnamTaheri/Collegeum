@@ -58,6 +58,7 @@ COMMANDS = [
     ("pause", "Pause your alerts"),
     ("resume", "Resume your alerts"),
     ("ask", "Ask questions about stored vacancies"),
+    ("favorites", "Your private saved job bookmarks"),
     ("help", "How Collegeum alerts work"),
     ("stop", "Unsubscribe (with confirmation)"),
 ]
@@ -98,6 +99,7 @@ ALIASES = {
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
     "saved": "valid", "hidden": "hidden", "invalid": "hidden", "help": "help",
     "ownerhelp": "help", "start": "help",
+    "favorites": "favorites", "bookmarks": "favorites", "delete": "delete",
 }
 HELP = (
     "🤖 <b>Predoc bot</b>\n\n"
@@ -494,6 +496,38 @@ def _chat_id(obj: dict[str, Any] | None) -> int | None:
         return None
 
 
+def _favorite_screen(
+    store: FeedbackStore, user: int, rows: list[sqlite3.Row],
+) -> tuple[str, dict[str, Any]]:
+    from ..core.textproc import escape_telegram_html as esc
+    from ..core.output_quality import application_url_issue
+
+    saved = store.favorites(user)
+    lines = [f"🔖 <b>My favorites · {len(saved)}</b>"]
+    keyboard: list[list[dict[str, str]]] = []
+    for number, prefix in enumerate(saved[:20], 1):
+        matches = [row for row in rows if row["url_hash"].startswith(prefix)]
+        row = matches[0] if len(matches) == 1 else None
+        if row:
+            lines.append(
+                f"{number}. <b>{esc(row['title'][:120])}</b> — {esc(row['institution'][:100])}"
+                + (" ⚠️ Known closed" if row["closed_at"] or row["expired_at"] else
+                   " · availability unverified")
+            )
+        else:
+            lines.append(f"{number}. Saved position {prefix} · details pending snapshot sync")
+        buttons = []
+        if row and application_url_issue(row["apply_url"]) is None:
+            buttons.append({"text": f"↗ Open {number}", "url": row["apply_url"]})
+        buttons.append({"text": f"✕ Remove {number}", "callback_data": f"fav:remove:{prefix}"})
+        keyboard.append(buttons)
+    if len(saved) > 20:
+        lines.append("Showing 20 most recent bookmarks. Other saved items are preserved.")
+    if not saved:
+        lines.append("Nothing saved yet. Tap 🔖 Save in bot on a channel post.")
+    return "\\n\\n".join(lines), {"inline_keyboard": keyboard}
+
+
 def _handle_message(
     bot: _Bot,
     msg: dict[str, Any],
@@ -510,6 +544,31 @@ def _handle_message(
     if not kind:
         return
     text_input = (msg.get('text') or '').strip()
+    private_sender = (chat is not None and chat > 0
+                      and (msg.get("chat") or {}).get("type") == "private"
+                      and _chat_id(msg.get("from")) == chat)
+    import re
+    saving = re.fullmatch(r"/start(?:@[A-Za-z0-9_]+)?\\s+f_([a-f0-9]{16})", text_input)
+    if private_sender and (saving or kind in ("favorites", "delete") or
+                           (not owner and text_input.lower().split("@", 1)[0] == "/saved")):
+        if saving:
+            try:
+                fresh = store.add_favorite(chat, saving.group(1))
+                note = "✅ Saved to your private favorites." if fresh else "Already in your favorites."
+            except ValueError:
+                note = "Favorites limit reached (200). Remove one first."
+            body, keyboard = _favorite_screen(store, chat, rows)
+            bot.send(str(chat), note + "\\n\\n" + body, keyboard)
+        elif kind == "delete":
+            bot.send(str(chat), "Delete your private favorites and active subscriptions?",
+                     {"inline_keyboard": [[{"text": "Delete my data",
+                       "callback_data": "fav:delete:yes"}]]})
+        else:
+            body, keyboard = _favorite_screen(store, chat, rows)
+            bot.send(str(chat), body, keyboard)
+        summary["received"] += 1
+        summary["commands"] += 1
+        return
     natural_question = kind == 'help' and not text_input.startswith('/') and bool(
         settings and settings.get_openrouter_keys())
     is_ai = kind in ('ask', 'forget') or natural_question
@@ -610,10 +669,39 @@ def _handle_tap(
     page_size: int = 5, max_items: int = 60, site_url: str = '',
 ) -> bool:
     """Returns True when public exports need refreshing, including replay recovery."""
-    if _chat_id(cq.get("from")) not in owners:
+    data = cq.get('data') or ''
+    message = cq.get("message") or {}
+    chat = _chat_id(message.get("chat"))
+    user = _chat_id(cq.get("from"))
+    if isinstance(data, str) and data.startswith("fav:"):
+        parts = data.split(":")
+        if (chat is None or chat <= 0 or chat != user
+                or (message.get("chat") or {}).get("type") != "private"):
+            summary["ignored"] += 1
+            return False
+        if parts == ["fav", "delete", "yes"]:
+            store.delete_favorites(chat)
+            store.remove_subscriber(chat)
+        elif len(parts) == 3 and parts[1] == "remove":
+            import re
+            if re.fullmatch(r"[a-f0-9]{16}", parts[2]) is None:
+                return False
+            store.remove_favorite(chat, parts[2])
+        else:
+            return False
+        body, keyboard = _favorite_screen(store, chat, rows or [])
+        try:
+            bot.call("answerCallbackQuery", {"callback_query_id": cq["id"]})
+        except (TelegramError, KeyError):
+            pass
+        if message.get("message_id"):
+            bot.call("editMessageText", {"chat_id": chat, "message_id": message["message_id"],
+                     "text": body, "parse_mode": "HTML", "reply_markup": keyboard})
+        summary["taps"] += 1
+        return False
+    if user not in owners:
         summary["ignored"] += 1
         return False
-    data = cq.get('data') or ''
     if isinstance(data, str) and data.startswith(('view|', 'detail|')):
         from .browse import VIEWS, details, home, menu_keyboard, more, screen, valid_prefix
 
