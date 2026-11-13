@@ -327,6 +327,16 @@ export class TelegramBot {
         return json({error: "invalid mark"}, 400);
     }
     const subscribers = payload.subscribers || {};
+    const initialFavorites = payload.favorites || {};
+    if (!initialFavorites || Array.isArray(initialFavorites) || typeof initialFavorites !== 'object' ||
+        Object.keys(initialFavorites).length > 10000 ||
+        Object.entries(initialFavorites).some(([user, items]) =>
+          !/^[1-9]\\d{0,15}$/.test(user) || !items || typeof items !== 'object' ||
+          Array.isArray(items) || Object.keys(items).length > FAVORITE_LIMIT ||
+          Object.entries(items).some(([prefix, savedAt]) =>
+            !FAVORITE_PREFIX.test(prefix) || typeof savedAt !== 'string' ||
+            !Number.isFinite(Date.parse(savedAt)))))
+      return json({error:'invalid private favorites'},400);
     const careers = payload.career_listings || [];
     const sourceStatus = payload.source_status || {};
     if (!sourceStatus || typeof sourceStatus !== 'object' || Array.isArray(sourceStatus) ||
@@ -355,6 +365,15 @@ export class TelegramBot {
         for (const [hash, mark] of Object.entries(initialMarks)) await tx.put(`mark:${hash}`, mark);
         await tx.put("initialized", true);
       }
+      // Seed private bookmarks only on first authorization; after that the
+      // webhook owns all writes, including deletions. An old pipeline snapshot
+      // must never resurrect a removed bookmark.
+      if (!await tx.get('favorites_initialized')) {
+        for (const [user, saved] of Object.entries(initialFavorites))
+          for (const [prefix, saved_at] of Object.entries(saved))
+            await tx.put(`favorite:${user}:${prefix}`, {saved_at});
+        await tx.put('favorites_initialized',true);
+      }
       await tx.put("snapshot_at", payload.generated_at);
       await tx.put('career_listings', careers);
       await tx.put('snapshot_counts', {
@@ -382,7 +401,14 @@ export class TelegramBot {
       .map(([key, value]) => [key.slice(5), value]));
     const profiles = Object.fromEntries([...(await this.ctx.storage.list({prefix: 'subscriber:'}))]
       .map(([key, value]) => [key.slice('subscriber:'.length), value]));
-    return json({marks, snapshot_at: payload.generated_at, subscriber_protocol: 1, subscribers: profiles});
+    const favorites = {};
+    for (const [key, value] of await this.ctx.storage.list({prefix:'favorite:'})) {
+      const [, user, prefix] = key.split(':');
+      if (!FAVORITE_PREFIX.test(prefix) || !/^[1-9]\\d*$/.test(user)) continue;
+      (favorites[user] ||= {})[prefix] = value.saved_at;
+    }
+    return json({marks, favorites, snapshot_at: payload.generated_at,
+      subscriber_protocol: 1, subscribers: profiles});
   }
 
   async api(method, payload) {
@@ -617,6 +643,14 @@ export class TelegramBot {
     if (parts[1] === 'remove') {
       if (!FAVORITE_PREFIX.test(parts[2])) return;
       await this.removeFavorite(id, parts[2]);
+    } else if (parts[1] === 'delete' && parts[2] === 'yes') {
+      await this.ctx.storage.transaction(async tx => {
+        const all = await tx.list({prefix:`favorite:${id}:`});
+        for (const key of all.keys()) await tx.delete(key);
+        await tx.put(`subscriber:${id}`,null);
+        await tx.delete(`page_size:${id}`);
+        await tx.delete(`match_window:${id}`);
+      });
     } else if (parts[1] !== 'page' || !/^\\d{1,3}$/.test(parts[2])) return;
     const content = await this.favoriteRows(id, parts[1] === 'page' ? Number(parts[2]) : 0);
     try {await this.api('answerCallbackQuery',{callback_query_id:callback.id});} catch {}
@@ -630,6 +664,14 @@ export class TelegramBot {
     let kind = word.replace(/^\//, "").split("@")[0].toLowerCase();
     const favoriteStart = kind === 'start' && words.length === 1 &&
       /^f_[a-f0-9]{16}$/.test(words[0]) ? words[0].slice(2) : null;
+    if (kind === 'delete') {
+      await this.deliver(updateKey,'sendMessage',{chat_id:message.chat.id,
+        text:'Delete all your private favorites and active subscription data?',
+        reply_markup:{inline_keyboard:[[{
+          text:'Confirm delete my data',callback_data:'fav:delete:yes'
+        }]]}});
+      return;
+    }
     if (favoriteStart || ['favorites','bookmarks'].includes(kind) || (!owner && kind === 'saved')) {
       await this.favoriteCommand(message,updateKey,favoriteStart);
       return;
