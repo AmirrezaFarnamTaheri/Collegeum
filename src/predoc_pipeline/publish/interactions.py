@@ -121,7 +121,7 @@ def private_message(
         "/status": "home", "/more": "more", "/academic": "academic",
         "/careers": "careers", "/markets": "careers", "/guide": "help",
         "/lifesciences": "life_sciences",
-        "/stop": "stop", "/delete": "stop", "/help": "help",
+        "/stop": "stop", "/help": "help",
         "/sources": "sources", "/delivery": "delivery",
         "/privacy": "privacy",
     }
