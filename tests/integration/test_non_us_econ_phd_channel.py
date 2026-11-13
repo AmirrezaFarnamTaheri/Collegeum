@@ -76,3 +76,40 @@ def test_telegram_receipt_survives_journal_and_preserves_web_publication(tmp_pat
         assert db.telegram_state(1) == "confirmed"
         assert row["x_post_id"] == "tweet-1"
         assert row["published_at"] == original
+
+
+def test_operator_confirmed_absence_allows_channel_retry_without_web_mutation(tmp_path):
+    db_file = tmp_path / "source.db"
+    cached_file = tmp_path / "restored.db"
+    init(db_file)
+    init(cached_file)
+    with Database(db_file) as db:
+        lid = db.insert_listing({
+            "url_hash": "c"*64, "apply_url": "https://example.edu/jobs/456",
+            "source_url": "https://example.edu/jobs/456", "source": "test",
+            "title": "PhD Researcher in Economics", "institution": "Example University",
+            "country": "Germany", "summary": "Doctoral research in economics",
+        })
+        db.mark_published(lid, None, x_post_id="tweet-2")
+        published_at = db.listing(lid)["published_at"]
+        db.record_telegram_delivery(lid, "pending")
+        db.record_telegram_delivery(lid, "uncertain")
+        held = tmp_path / "held.ndjson"
+        state.write_journal(db, held)
+        db.resolve_phd_channel_delivery(lid, confirmed_not_delivered=True)
+        assert db.telegram_state(lid) == "not_attempted"
+        assert db.listing(lid)["published_at"] == published_at
+        assert db.listing(lid)["x_post_id"] == "tweet-2"
+        # Older uncertainty must not resurrect a manually resolved hold.
+        state.restore_if_needed(db, held)
+        assert db.telegram_state(lid) == "not_attempted"
+
+        db.record_telegram_delivery(lid, "pending")
+        db.record_telegram_delivery(lid, "confirmed", message_id=998)
+        assert db.telegram_state(lid) == "confirmed"
+        state.write_journal(db, tmp_path / "confirmed.ndjson")
+    with Database(cached_file) as db:
+        state.restore_if_needed(db, held)
+        assert db.telegram_state(1) == "uncertain"
+        state.restore_if_needed(db, tmp_path / "confirmed.ndjson")
+        assert db.telegram_state(1) == "confirmed"
