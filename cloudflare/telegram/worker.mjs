@@ -404,7 +404,7 @@ export class TelegramBot {
     const favorites = {};
     for (const [key, value] of await this.ctx.storage.list({prefix:'favorite:'})) {
       const [, user, prefix] = key.split(':');
-      if (!FAVORITE_PREFIX.test(prefix) || !/^[1-9]\\d*$/.test(user)) continue;
+      if (!FAVORITE_PREFIX.test(prefix) || !/^[1-9]\d*$/.test(user)) continue;
       (favorites[user] ||= {})[prefix] = value.saved_at;
     }
     return json({marks, favorites, snapshot_at: payload.generated_at,
@@ -609,6 +609,8 @@ export class TelegramBot {
       entries.push(listing
         ? `<b>${n}. ${esc(listing.title.slice(0, 150))}</b>\n🏛 ${esc(listing.institution.slice(0, 100))}\n${listing.closed_at || listing.expired_at ? '⚠️ Known closed/expired.' : 'ℹ️ Current availability is not independently verified.'}`
         : `<b>${n}. Saved position ${prefix}</b>\nℹ️ Details not in the latest bot snapshot.`);
+      if (listing && safeUrl(listing.apply_url))
+        entries[entries.length - 1] += `\n<a href="${esc(safeUrl(listing.apply_url))}">Open official advert ↗</a>`;
       const actions = [];
       if (listing && safeUrl(listing.apply_url))
         actions.push({text:`↗ ${n} Open advert`,url:safeUrl(listing.apply_url)});
