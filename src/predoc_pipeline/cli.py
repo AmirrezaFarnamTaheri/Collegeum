@@ -264,6 +264,48 @@ def telegram_reconcile(
     )
 
 
+@app.command("telegram-phd-reconcile")
+def telegram_phd_reconcile(
+    listing_id: int = typer.Argument(..., help="ID of the uncertain PhD channel listing"),
+    message_id: int | None = typer.Option(
+        None, "--message-id", help="Confirmed message ID in the existing public channel"),
+    confirmed_not_delivered: bool = typer.Option(
+        False, "--confirmed-not-delivered",
+        help="Operator verified the public channel did not accept this send"),
+) -> None:
+    """Manually resolve an ambiguous additive Economics PhD channel publication.
+
+    This command never contacts Telegram, sends messages, or alters website/X
+    publication. Inspect channel history independently before invoking it.
+    """
+    from . import state
+
+    if (message_id is None) == (not confirmed_not_delivered):
+        typer.secho(
+            "Supply exactly one of --message-id or --confirmed-not-delivered",
+            fg=typer.colors.RED, err=True,
+        )
+        raise typer.Exit(2)
+    settings = _settings()
+    init_db(settings.db_path)
+    with Database(settings.db_path) as db:
+        state.restore_if_needed(db, settings.state_path, settings.seen_state_path)
+        try:
+            db.resolve_phd_channel_delivery(
+                listing_id, message_id=message_id,
+                confirmed_not_delivered=confirmed_not_delivered,
+            )
+        except ValueError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(1) from exc
+        state.write_journal(db, settings.state_path)
+    typer.echo(
+        f"PhD channel listing {listing_id} reconciled: "
+        + (f"confirmed message {message_id}" if message_id is not None
+           else "confirmed no delivery; eligible for a later guarded retry")
+    )
+
+
 @app.command("subscriber-plan")
 def subscriber_plan(
     output: Annotated[
