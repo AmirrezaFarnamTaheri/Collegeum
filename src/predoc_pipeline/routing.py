@@ -61,17 +61,17 @@ _US_NAMES = frozenset({"united states", "united states of america", "usa", "us",
 # Strictly an Economics doctoral *vacancy* check, not a generic academic
 # programme or completed-PhD research appointment.
 _ECON_SUBJECT = re.compile(
-    r"\\beconom\\w*|\\beconometr\\w*|\\bpolitical economy\\b|"
-    r"\\b(?:applied microeconomics|macroeconomics|microeconomics)\\b", re.I,
+    r"\beconom\w*|\beconometr\w*|\bpolitical economy\b|"
+    r"\b(?:applied microeconomics|macroeconomics|microeconomics)\b", re.I,
 )
 _DOCTORAL_ADMISSIONS = re.compile(
-    r"\\b(?:general admission|admissions? to|degree programme|degree program|"
+    r"\b(?:general admission|admissions? to|degree programme|degree program|"
     r"graduate programme|graduate program|phd programme admission|"
-    r"phd program admission|doctoral school admission|call for admissions)\\b", re.I,
+    r"phd program admission|doctoral school admission|call for admissions)\b", re.I,
 )
 _NON_ECON_TITLE = re.compile(
-    r"\\b(?:genetics?|molecular biology|neuroscience|clinical|medicine|"
-    r"physics|chemistry|biochemistry|computer science)\\b", re.I,
+    r"\b(?:genetics?|molecular biology|neuroscience|clinical|medicine|"
+    r"physics|chemistry|biochemistry|computer science)\b", re.I,
 )
 _KNOWN_UNSPECIFIED = frozenset({
     "", "unknown", "unspecified", "not stated", "other", "worldwide",
