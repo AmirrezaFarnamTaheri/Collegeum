@@ -3,13 +3,15 @@ import {ask, reservePublic} from './assistant.mjs';
 import {subscriberCommand, subscriberUpdate, validPreferences,
   openAcademicListing, visibleAcademicMatch, browseMatchingListings, pageSize, panel} from './subscribers.mjs';
 const HASH = /^[a-f0-9]{64}$/;
+const FAVORITE_PREFIX = /^[a-f0-9]{16}$/;
+const FAVORITE_LIMIT = 200;
 const STATUS = new Set(["valid", "invalid", "applied"]);
 const GENERAL_CAREER_TOPICS = new Set([
   'data_scientist', 'data_analyst', 'econ_consulting', 'research_analyst',
 ]);
 const VIEWS = new Set(["valid", "applied", "hidden", "new", "closing", "search"]);
 const COMMANDS = new Set([...VIEWS, 'positions', 'menu', 'more', 'home', 'help', 'start', 'forget', 'saved',
-  'interested', 'jobs', 'list', 'tracking']);
+  'interested', 'jobs', 'list', 'tracking', 'favorites', 'bookmarks']);
 const aiQuestion = message => {
   const input = String(message.text || '').trim();
   const word = input.split(/\s+/)[0].replace(/^\//, '').split('@')[0].toLowerCase();
@@ -166,7 +168,7 @@ export class TelegramBot {
       (callback?.from?.id ?? message.from?.id) === message.chat.id;
     if (!message || (!owner && !publicChat) ||
         (callback && !owners.has(String(callback.from?.id)) &&
-          !(publicChat && String(callback.data || '').startsWith('sub:')))) return json({ok: true, ignored: true});
+          !(publicChat && /^(?:sub:|fav:)/.test(String(callback.data || ''))))) return json({ok: true, ignored: true});
     const question = callback ? null : aiQuestion(message);
     if (question !== null && question.trim() && question.length <= 1000 &&
         this.env.AI_ENABLED !== 'false' && (owner || this.env.PUBLIC_AI_ENABLED === 'true'))
@@ -545,10 +547,93 @@ export class TelegramBot {
     return neighbors;
   }
 
+  favoriteKey(user, prefix) {
+    if (!Number.isSafeInteger(user) || user <= 0 || !FAVORITE_PREFIX.test(prefix))
+      throw new Error('invalid favorite identity');
+    return `favorite:${user}:${prefix}`;
+  }
+
+  async saveFavorite(user, prefix) {
+    const name = this.favoriteKey(user, prefix);
+    return this.ctx.storage.transaction(async tx => {
+      if (await tx.get(name)) return 'already';
+      if ((await tx.list({prefix: `favorite:${user}:`})).size >= FAVORITE_LIMIT)
+        return 'full';
+      await tx.put(name, {saved_at: new Date().toISOString()});
+      return 'saved';
+    });
+  }
+
+  async removeFavorite(user, prefix) {
+    await this.ctx.storage.delete(this.favoriteKey(user, prefix));
+  }
+
+  async favoriteRows(user, page = 0) {
+    const values = [...(await this.ctx.storage.list({prefix:`favorite:${user}:`}))];
+    values.sort((a,b) => (b[1]?.saved_at || '').localeCompare(a[1]?.saved_at || ''));
+    const count = Math.max(1, Math.ceil(values.length / 5));
+    const actual = Math.min(page, count - 1);
+    const entries = [];
+    const buttons = [];
+    for (const [key] of values.slice(actual * 5, actual * 5 + 5)) {
+      const prefix = key.split(':').at(-1);
+      const candidates = [...(await this.ctx.storage.list({prefix:`listing:${prefix}`}))].values();
+      const listing = candidates.length === 1 ? candidates[0] : null;
+      const n = actual * 5 + entries.length + 1;
+      entries.push(listing
+        ? `<b>${n}. ${esc(listing.title.slice(0, 150))}</b>\\n🏛 ${esc(listing.institution.slice(0, 100))}\\n${listing.closed_at || listing.expired_at ? '⚠️ Known closed/expired.' : 'ℹ️ Current availability is not independently verified.'}`
+        : `<b>${n}. Saved position ${prefix}</b>\\nℹ️ Details not in the latest bot snapshot.`);
+      const actions = [];
+      if (listing && safeUrl(listing.apply_url))
+        actions.push({text:`↗ ${n} Open advert`,url:safeUrl(listing.apply_url)});
+      actions.push({text:`✕ ${n} Remove`,callback_data:`fav:remove:${prefix}`});
+      buttons.push(actions);
+    }
+    const navs = [];
+    if (actual) navs.push({text:'← Previous',callback_data:`fav:page:${actual-1}`});
+    if (actual + 1 < count) navs.push({text:'Next →',callback_data:`fav:page:${actual+1}`});
+    if (navs.length) buttons.push(navs);
+    return {text:`🔖 <b>My favorites · ${values.length}</b>\\n\\n${entries.join('\\n\\n') || 'No saved positions yet. Use 🔖 Save in bot on a channel post.'}`,
+      parse_mode:'HTML', reply_markup:{inline_keyboard:buttons}};
+  }
+
+  async favoriteCommand(message, updateKey, prefix = null) {
+    const id = message.chat.id;
+    let reply;
+    if (prefix) {
+      const status = await this.saveFavorite(id, prefix);
+      reply = await this.favoriteRows(id);
+      reply.text = status === 'full' ? 'Favorite limit reached (200). Remove one first.\\n\\n' + reply.text
+        : status === 'already' ? 'Already saved.\\n\\n' + reply.text
+        : '✅ Saved in your private favorites.\\n\\n' + reply.text;
+    } else reply = await this.favoriteRows(id);
+    await this.deliver(updateKey,'sendMessage',{chat_id:id,...reply,link_preview_options:{is_disabled:true}});
+  }
+
+  async favoriteCallback(callback, updateKey) {
+    const message = callback.message, id = message.chat.id;
+    const parts = String(callback.data || '').split(':');
+    if (parts[0] !== 'fav' || parts.length !== 3) return;
+    if (parts[1] === 'remove') {
+      if (!FAVORITE_PREFIX.test(parts[2])) return;
+      await this.removeFavorite(id, parts[2]);
+    } else if (parts[1] !== 'page' || !/^\\d{1,3}$/.test(parts[2])) return;
+    const content = await this.favoriteRows(id, parts[1] === 'page' ? Number(parts[2]) : 0);
+    try {await this.api('answerCallbackQuery',{callback_query_id:callback.id});} catch {}
+    await this.deliver(updateKey,'editMessageText',{chat_id:id,message_id:message.message_id,
+      ...content,link_preview_options:{is_disabled:true}});
+  }
+
   async command(message, owner = true, admission = {}, updateKey) {
     const [word, ...words] = String(message.text || "/menu").trim().split(/\s+/);
     const aliases = {start: "menu", home: "menu", saved: "valid", interested: "valid"};
     let kind = word.replace(/^\//, "").split("@")[0].toLowerCase();
+    const favoriteStart = kind === 'start' && words.length === 1 &&
+      /^f_[a-f0-9]{16}$/.test(words[0]) ? words[0].slice(2) : null;
+    if (favoriteStart || ['favorites','bookmarks'].includes(kind) || (!owner && kind === 'saved')) {
+      await this.favoriteCommand(message,updateKey,favoriteStart);
+      return;
+    }
     if ((subscriberCommand(kind) && (kind !== 'start' || !owner)) ||
         (!owner && ['help', 'more', 'menu', 'home'].includes(kind))) {
       await subscriberUpdate(this,message,null,updateKey);
@@ -591,6 +676,7 @@ export class TelegramBot {
     const message = callback.message;
     // Older Telegram messages may still contain academic-only view|positions|N
     // buttons. Preserve their page number and show the unified My matches view.
+    if (parts[0] === 'fav') return this.favoriteCallback(callback,updateKey);
     if (parts[0] === "view" && parts[1] === "positions" && parts.length === 3 &&
         /^\d{1,6}$/.test(parts[2])) {
       const page = Math.min(Number(parts[2]), 499);
