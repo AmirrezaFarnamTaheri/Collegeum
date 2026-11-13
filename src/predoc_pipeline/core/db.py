@@ -632,6 +632,44 @@ class Database:
                 "WHERE id=?", (state, message_id, listing_id),
             )
 
+    def resolve_phd_channel_delivery(
+        self, listing_id: int, *, message_id: int | None = None,
+        confirmed_not_delivered: bool = False,
+    ) -> None:
+        """Operator-verified recovery of an independent public PhD channel send.
+
+        Does not touch website/X publication state, timestamps or receipts.
+        Propagates the verdict across URL aliases and records a new revision so
+        stale journal imports cannot revive the previous uncertain outcome.
+        """
+        if (message_id is None) == (not confirmed_not_delivered):
+            raise ValueError("Provide exactly one verified delivery outcome")
+        if message_id is not None and (type(message_id) is not int or
+                                       not 0 < message_id < 2**63):
+            raise ValueError("Invalid confirmed Telegram message ID")
+        with self.transaction():
+            row = self.listing(listing_id)
+            if row is None:
+                raise ValueError(f"Unknown listing {listing_id}")
+            if self.telegram_state(listing_id) != "uncertain":
+                if message_id is not None and row["telegram_message_id"] == message_id:
+                    return
+                raise ValueError("PhD channel delivery is not uncertain")
+            connected = next(group for group in self.publication_alias_groups()
+                             if any(candidate["id"] == listing_id for candidate in group))
+            revision = max(int(candidate["telegram_delivery_state_revision"])
+                           for candidate in connected) + 1
+            new_state = "confirmed" if message_id is not None else "not_attempted"
+            for candidate in connected:
+                if candidate["telegram_message_id"] is not None:
+                    continue
+                self.conn.execute(
+                    "UPDATE listings SET telegram_delivery_state=?, "
+                    "telegram_message_id=COALESCE(telegram_message_id, ?), "
+                    "telegram_delivery_state_revision=? WHERE id=?",
+                    (new_state, message_id, revision, candidate["id"]),
+                )
+
     def mark_x_published(self, listing_id: int, x_post_id: str | None) -> None:
         with self.transaction():
             self.conn.execute(
@@ -1164,13 +1202,17 @@ class Database:
         remote_delivery_rev = incoming.get("telegram_delivery_state_revision", 0)
         if updates["telegram_message_id"] is not None:
             updates["telegram_delivery_state"] = "confirmed"
+        elif local_delivery_rev != remote_delivery_rev:
+            # Operator resolutions advance the delivery revision. A stale
+            # uncertain cache cannot resurrect the older unresolved hold.
+            updates["telegram_delivery_state"] = (
+                local_delivery if local_delivery_rev > remote_delivery_rev else remote_delivery
+            )
         elif "uncertain" in (local_delivery, remote_delivery):
-            # Never discard an unresolved send based solely on a newer fact refresh.
+            # Equal-revision conflicts conservatively preserve uncertainty.
             updates["telegram_delivery_state"] = "uncertain"
         else:
-            updates["telegram_delivery_state"] = (
-                local_delivery if local_delivery_rev >= remote_delivery_rev else remote_delivery
-            )
+            updates["telegram_delivery_state"] = local_delivery
         updates["telegram_delivery_state_revision"] = max(local_delivery_rev, remote_delivery_rev)
 
         def latest(field: str) -> Any:
