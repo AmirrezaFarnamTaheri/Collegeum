@@ -58,7 +58,6 @@ COMMANDS = [
     ("pause", "Pause your alerts"),
     ("resume", "Resume your alerts"),
     ("ask", "Ask questions about stored vacancies"),
-    ("favorites", "Your private saved job bookmarks"),
     ("help", "How Collegeum alerts work"),
     ("stop", "Unsubscribe (with confirmation)"),
 ]
