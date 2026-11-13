@@ -303,6 +303,7 @@ def render_keyboard(
     *,
     url_hash: str | None = None,
     status: str | None = None,
+    bot_username: str = "",
 ) -> dict[str, Any]:
     """Inline buttons. The apply button is only shown when it means something.
 
@@ -321,7 +322,15 @@ def render_keyboard(
         ]
     else:
         rows = [[{"text": "Open listing", "url": listing.source_url}]]
-    if url_hash:
+    if url_hash and bot_username:
+        import re
+        if not re.fullmatch(r"[A-Za-z0-9_]{5,32}", bot_username):
+            raise ValueError("TELEGRAM_BOT_USERNAME must be a Telegram username without @")
+        if not re.fullmatch(r"[a-f0-9]{64}", url_hash):
+            raise ValueError("Save link requires the full stable listing URL hash")
+        rows.append([{"text": "🔖 Save in bot",
+                      "url": f"https://t.me/{bot_username}?start=f_{url_hash[:16]}"}])
+    if url_hash and status is not None:
         rows.append(feedback_row(url_hash, status))
     return {"inline_keyboard": rows}
 
