@@ -1,11 +1,11 @@
 """Non-US Economics PhDs receive additive, durable Telegram publication."""
 from __future__ import annotations
 
+from predoc_pipeline import state
 from predoc_pipeline.boards.config import Preferences
 from predoc_pipeline.core.db import Database, init
 from predoc_pipeline.models import Discipline, Location, PredocListing
 from predoc_pipeline.routing import Channel, Router
-from predoc_pipeline import state
 
 
 def listing(country="Germany", title="PhD Researcher in Applied Economics",
@@ -42,7 +42,9 @@ def test_additive_non_us_economics_doctoral_routing():
         title="PhD in Economics - application to graduate degree programme",
         summary="Applications for general admission to the economics PhD programme.",
     )) == frozenset({Channel.WEB})
-    assert router.destinations(listing(title="Predoctoral Research Assistant")) == frozenset({Channel.TELEGRAM})
+    assert router.destinations(listing(title="Predoctoral Research Assistant")) == frozenset(
+        {Channel.TELEGRAM}
+    )
 
 
 def test_telegram_receipt_survives_journal_and_preserves_web_publication(tmp_path):
