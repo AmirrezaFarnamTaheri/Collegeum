@@ -275,7 +275,7 @@ class FeedbackStore:
         return sorted(saved, key=lambda k: saved[k], reverse=True)
 
     def add_favorite(self, user: int, prefix: str) -> bool:
-        user_id, prefix = self._favorite_identity(user, prefix)
+        user_id, _ = self._favorite_identity(user, prefix)
         saved = self.data["favorites"].setdefault(user_id, {})
         if prefix in saved:
             return False
@@ -286,7 +286,7 @@ class FeedbackStore:
         return True
 
     def remove_favorite(self, user: int, prefix: str) -> bool:
-        user_id, prefix = self._favorite_identity(user, prefix)
+        user_id, _ = self._favorite_identity(user, prefix)
         saved = self.data["favorites"].get(user_id, {})
         if prefix not in saved:
             return False
