@@ -22,6 +22,7 @@ from __future__ import annotations
 import builtins
 import json
 import os
+import re
 import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -213,6 +214,18 @@ def _validate_feedback(path: Path, data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(cursor, str):
         raise _corrupt(path, "invalid private delivery cursor")
     data["ops"], data["delivery_cursor"] = ops, cursor
+    favorites = data.get("favorites", {})
+    if not isinstance(favorites, dict) or len(favorites) > 10000:
+        raise _corrupt(path, "invalid private favorites")
+    for user, saved in favorites.items():
+        if not isinstance(user, str) or not user.isdecimal() or int(user) <= 0:
+            raise _corrupt(path, "invalid favorite owner")
+        if not isinstance(saved, dict) or len(saved) > 200 or any(
+            re.fullmatch(r"[a-f0-9]{16}", prefix) is None or not isinstance(at, str)
+            for prefix, at in saved.items()
+        ):
+            raise _corrupt(path, "invalid favorite records")
+    data["favorites"] = favorites
     data["marks"], data["callbacks"], data["subscribers"] = marks, callbacks, subscribers
     return data
 
@@ -247,6 +260,45 @@ class FeedbackStore:
     @classmethod
     def from_settings(cls, settings: Any) -> FeedbackStore:
         return cls(settings.feedback_path, key=getattr(settings, "feedback_encryption_key", ""))
+
+    @staticmethod
+    def _favorite_identity(user: int, prefix: str | None = None) -> tuple[str, str | None]:
+        if type(user) is not int or not 0 < user <= 2**53 - 1:
+            raise ValueError("invalid favorite user identity")
+        if prefix is not None and re.fullmatch(r"[a-f0-9]{16}", prefix) is None:
+            raise ValueError("invalid favorite listing hash prefix")
+        return str(user), prefix
+
+    def favorites(self, user: int) -> list[str]:
+        user_id, _ = self._favorite_identity(user)
+        saved = self.data["favorites"].get(user_id, {})
+        return sorted(saved, key=lambda k: saved[k], reverse=True)
+
+    def add_favorite(self, user: int, prefix: str) -> bool:
+        user_id, prefix = self._favorite_identity(user, prefix)
+        saved = self.data["favorites"].setdefault(user_id, {})
+        if prefix in saved:
+            return False
+        if len(saved) >= 200:
+            raise ValueError("favorites limit reached (200)")
+        saved[prefix] = _now()
+        self._dirty = True
+        return True
+
+    def remove_favorite(self, user: int, prefix: str) -> bool:
+        user_id, prefix = self._favorite_identity(user, prefix)
+        saved = self.data["favorites"].get(user_id, {})
+        if prefix not in saved:
+            return False
+        del saved[prefix]
+        self._dirty = True
+        return True
+
+    def delete_favorites(self, user: int) -> None:
+        user_id, _ = self._favorite_identity(user)
+        if user_id in self.data["favorites"]:
+            del self.data["favorites"][user_id]
+            self._dirty = True
 
     @property
     def marks(self) -> dict[str, dict[str, Any]]:
