@@ -331,7 +331,7 @@ export class TelegramBot {
     if (!initialFavorites || Array.isArray(initialFavorites) || typeof initialFavorites !== 'object' ||
         Object.keys(initialFavorites).length > 10000 ||
         Object.entries(initialFavorites).some(([user, items]) =>
-          !/^[1-9]\\d{0,15}$/.test(user) || !items || typeof items !== 'object' ||
+          !/^[1-9]\d{0,15}$/.test(user) || !items || typeof items !== 'object' ||
           Array.isArray(items) || Object.keys(items).length > FAVORITE_LIMIT ||
           Object.entries(items).some(([prefix, savedAt]) =>
             !FAVORITE_PREFIX.test(prefix) || typeof savedAt !== 'string' ||
