@@ -13,6 +13,7 @@ The rules live in ``[routing]`` of ``config/preferences.toml``.
 
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 from enum import StrEnum
@@ -56,6 +57,27 @@ _PHD_IN_FIELD_REQUIRED = re.compile(
     r"\s+(?:is\s+)?(?:required|essential|mandatory)\b", re.IGNORECASE,
 )
 _US_NAMES = frozenset({"united states", "united states of america", "usa", "us", "u.s.", "u.s.a."})
+
+
+# Strictly an Economics doctoral *vacancy* check, not a generic academic
+# programme or completed-PhD research appointment.
+_ECON_SUBJECT = re.compile(
+    r"\\beconom\\w*|\\beconometr\\w*|\\bpolitical economy\\b|"
+    r"\\b(?:applied microeconomics|macroeconomics|microeconomics)\\b", re.I,
+)
+_DOCTORAL_ADMISSIONS = re.compile(
+    r"\\b(?:general admission|admissions? to|degree programme|degree program|"
+    r"graduate programme|graduate program|phd programme admission|"
+    r"phd program admission|doctoral school admission|call for admissions)\\b", re.I,
+)
+_NON_ECON_TITLE = re.compile(
+    r"\\b(?:genetics?|molecular biology|neuroscience|clinical|medicine|"
+    r"physics|chemistry|biochemistry|computer science)\\b", re.I,
+)
+_KNOWN_UNSPECIFIED = frozenset({
+    "", "unknown", "unspecified", "not stated", "other", "worldwide",
+    "international", "remote", "multiple", "global",
+})
 
 
 class Channel(StrEnum):
@@ -182,6 +204,38 @@ class Router:
         if self._web_employer(institution):
             return Channel.WEB
         return Channel.TELEGRAM
+
+    def telegram_phd_eligible(self, listing: PredocListing) -> bool:
+        """True only for doctoral Economics vacancies with a known non-US workplace."""
+        country = (listing.location.country or "").strip().lower()
+        if country in _KNOWN_UNSPECIFIED or country in _US_NAMES:
+            return False
+        if self.region(listing.location.country, listing.location.city, "") == "US":
+            return False
+        if self.position_kind(
+            listing.title, listing.summary,
+            min_degree=listing.min_degree, degree_note=listing.degree_note,
+        ) != "phd":
+            return False
+        text = f"{listing.title} {listing.summary or ''}"
+        if _DOCTORAL_ADMISSIONS.search(text):
+            return False
+        if _NON_ECON_TITLE.search(listing.title) and not _ECON_SUBJECT.search(listing.title):
+            return False
+        disciplines = [getattr(d, "value", str(d)) for d in listing.disciplines]
+        return bool(_ECON_SUBJECT.search(text) or any(_ECON_SUBJECT.search(d) for d in disciplines))
+
+    def destinations(self, listing: PredocListing) -> frozenset[Channel]:
+        """Publication outputs; an Economics PhD keeps its existing web/X route."""
+        original = self.channel_for(listing)
+        if original is Channel.WEB and self.telegram_phd_eligible(listing):
+            return frozenset((Channel.WEB, Channel.TELEGRAM))
+        return frozenset((original,))
+
+    def destinations_for_row(self, row: sqlite3.Row) -> frozenset[Channel]:
+        """Use the same typed listing contract for the journal/backfill path."""
+        from .pipeline import _listing_from_row
+        return self.destinations(_listing_from_row(row))
 
     def channel_for(self, listing: PredocListing) -> Channel:
         return self.channel(
