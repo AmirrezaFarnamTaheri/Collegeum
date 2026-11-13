@@ -1,8 +1,9 @@
 """Historical Economics PhDs must be delivered once without rewriting web/X state."""
+from pathlib import Path
 from unittest.mock import Mock
 
 from predoc_pipeline import pipeline
-from predoc_pipeline.boards.config import Preferences
+from predoc_pipeline.boards.config import Preferences, load_preferences
 from predoc_pipeline.core.db import Database, init
 from predoc_pipeline.models import Discipline, Location, PredocListing
 from predoc_pipeline.publish.telegram import render_keyboard
@@ -47,9 +48,12 @@ def test_phd_backfill_once_and_preserves_existing_web_receipts(tmp_path):
         telegram = Mock()
         telegram.send_message.return_value = 789
         stats = pipeline.RunStats()
-        router = Router(Preferences())
+        # Production opts into doctoral vacancies; default Preferences() excludes them.
+        prefs = load_preferences(Path(__file__).resolve().parents[2] / "config/preferences.toml")
+        assert not prefs.filters.exclude_phd_positions
+        router = Router(prefs)
         pipeline._publish_non_us_econ_phds(
-            db, telegram, config, stats, router, Preferences(), fresh_ids=set(),
+            db, telegram, config, stats, router, prefs, fresh_ids=set(),
             verify=False,
         )
         assert telegram.send_message.call_count == 1
@@ -60,7 +64,7 @@ def test_phd_backfill_once_and_preserves_existing_web_receipts(tmp_path):
         assert db.telegram_state(lid) == "confirmed"
         assert "Previously collected" in telegram.send_message.call_args.kwargs["html"]
         pipeline._publish_non_us_econ_phds(
-            db, telegram, config, stats, router, Preferences(), fresh_ids=set(),
+            db, telegram, config, stats, router, prefs, fresh_ids=set(),
             verify=False,
         )
         assert telegram.send_message.call_count == 1
