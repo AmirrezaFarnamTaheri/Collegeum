@@ -499,8 +499,8 @@ def _chat_id(obj: dict[str, Any] | None) -> int | None:
 def _favorite_screen(
     store: FeedbackStore, user: int, rows: list[sqlite3.Row],
 ) -> tuple[str, dict[str, Any]]:
-    from ..core.textproc import escape_telegram_html as esc
     from ..core.output_quality import application_url_issue
+    from ..core.textproc import escape_telegram_html as esc
 
     saved = store.favorites(user)
     lines = [f"🔖 <b>My favorites · {len(saved)}</b>"]
@@ -554,7 +554,8 @@ def _handle_message(
         if saving:
             try:
                 fresh = store.add_favorite(chat, saving.group(1))
-                note = "✅ Saved to your private favorites." if fresh else "Already in your favorites."
+                note = ("✅ Saved to your private favorites." if fresh
+                        else "Already in your favorites.")
             except ValueError:
                 note = "Favorites limit reached (200). Remove one first."
             body, keyboard = _favorite_screen(store, chat, rows)
