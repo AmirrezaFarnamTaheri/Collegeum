@@ -2,11 +2,11 @@
 from unittest.mock import Mock
 
 from predoc_pipeline import pipeline
+from predoc_pipeline.boards.config import Preferences
 from predoc_pipeline.core.db import Database, init
 from predoc_pipeline.models import Discipline, Location, PredocListing
 from predoc_pipeline.publish.telegram import render_keyboard
 from predoc_pipeline.routing import Router
-from predoc_pipeline.boards.config import Preferences
 from predoc_pipeline.settings import Settings
 
 
