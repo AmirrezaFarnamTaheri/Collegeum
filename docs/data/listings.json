@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-14T01:05:25Z",
+ "generated_at": "2026-11-14T11:36:31Z",
  "count": 220,
  "listings": [
   {
@@ -991,19 +991,19 @@
    "city": "Cambridge",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2026-11-16T23:59:59Z",
+   "deadline": "2026-11-16T00:00:00Z",
    "days_left": 2,
    "disciplines": [
     "Development Economics",
     "Political Economy",
-    "Quantitative Social Sciences"
+    "Applied Microeconomics"
    ],
    "visa": "unknown",
-   "summary": "The position is a predoctoral research role at Harvard Kennedy School focusing on development and political economy projects related to norms, gender, networks, and media. It is open on a rolling application basis until November 16.",
+   "summary": "The role is a predoctoral research fellowship supervised by Eliana La Ferrara at Harvard Kennedy School, focusing on development and political economy, including norms, gender, networks, and media. Applications are accepted on a rolling basis until November 16, 2026.",
    "language": "en",
    "apply_url": "https://t.co/8RD8r6pJS8",
    "source_url": "https://bit.ly/4z2Oasl",
-   "confidence": 0.903,
+   "confidence": 0.91,
    "first_seen_at": "2026-11-09T18:47:12Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2004,7 +2004,7 @@
   {
    "id": 370,
    "title": "Postdoctoral Researcher in Spatial Data Science",
-   "institution": "MOHAMMED VI POLYTECHNIC UNIVERSITY",
+   "institution": "Mohammed VI Polytechnic University",
    "principal_investigator": null,
    "country": "Morocco",
    "city": "Benguerir",
@@ -2013,16 +2013,15 @@
    "deadline": "2026-12-04T00:00:00Z",
    "days_left": 20,
    "disciplines": [
-    "Econometrics",
     "Public Policy",
-    "Environmental and Energy Economics"
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "This is a postdoctoral research position in Spatial Data Science at MOHAMMED VI POLYTECHNIC UNIVERSITY, seeking a researcher to develop predictive models that estimate the direct and indirect costs of urbanization using real case studies and scenario simulations. The role is aimed at candidates with a Ph.D. in Data Science, Urban Planning, Urban Economics, or related fields, proficient in MATLAB, Python, R, and other data tools, and interested in African issues.",
+   "summary": "The position focuses on developing a predictive model to estimate the direct and indirect costs of urbanization based on urban morphology, calibrating it with real case studies, and simulating various climatic and social scenarios. It is suitable for candidates holding a PhD in data science, urban planning, or a related field, with strong skills in Python, R, and MATLAB, and experience in urban modeling.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.931,
+   "confidence": 0.946,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2035,8 +2034,8 @@
    "salary_period": null,
    "salary_raw": "competitive salary on an international scale",
    "tools_required": [
-    "MATLAB",
     "Python",
+    "MATLAB",
     "R"
    ],
    "tools_preferred": [],
@@ -2291,7 +2290,7 @@
    "id": 362,
    "title": "Postdoctoral Research Fellow (Econometrics)",
    "institution": "Macquarie University",
-   "principal_investigator": "Shuping Shi",
+   "principal_investigator": "Professor Shuping Shi",
    "country": "Australia",
    "city": "North Ryde",
    "is_remote": false,
@@ -2299,14 +2298,16 @@
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 22,
    "disciplines": [
-    "Econometrics"
+    "Econometrics",
+    "Finance",
+    "Public Policy"
    ],
-   "visa": "inferred",
-   "summary": "The position is a full-time, fixed-term postdoctoral research fellowship in econometrics at Macquarie University, Australia. It is suited for candidates with a PhD (completed or near completion) in econometrics, statistics, economics or a related field.",
+   "visa": "explicit",
+   "summary": "The Macquarie University Department of Economics invites postdoctoral researchers to join a research project led by Professor Shuping Shi, focusing on econometric methods for counterfactual policy evaluation and high‑frequency financial market dynamics. The role requires a PhD (or near completion) in econometrics, statistics, economics or a related field, along with a strong publication record and independent research ability.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -2317,7 +2318,7 @@
    "salary_max": 127138.0,
    "salary_currency": "AUD",
    "salary_period": "year",
-   "salary_raw": "$104,481 to $127,138 plus 17% employer's superannuation and annual leave loading",
+   "salary_raw": "From $104,481 to $127,138 plus 17% employer's superannuation and annual leave loading (commensurate with experience & qualifications)",
    "tools_required": [
     "MATLAB",
     "R",
@@ -2384,18 +2385,19 @@
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T23:59:59Z",
+   "deadline": "2026-12-05T00:00:00Z",
    "days_left": 21,
    "disciplines": [
     "Behavioral/Experimental Economics",
+    "Labor Economics",
     "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The role is a postdoctoral associate in Behavioral and Experimental Social Science at New York University Abu Dhabi, involving independent and collaborative research. It is intended for candidates with a recent PhD in economics, management, organizational behavior, sociology, public policy, data science or related fields.",
+   "summary": "Postdoctoral Associate in the Division of Social Science at NYU Abu Dhabi, available for up to three years beginning September 1, 2027. The role combines independent research with collaborative behavioral and experimental social science projects under Berkay Özcan and Ernesto Reuben.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.953,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2411,7 +2413,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "September 2027",
+   "start_term": "September 1, 2027",
    "start_date": "2027-09-01",
    "kind": "postdoc",
    "sector": "academic"
@@ -4999,7 +5001,7 @@
     "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "This is a PhD studentship position at the University of Bristol Business School offering a bursary of £21,805 per annum for a four-year program. The role is designed for outstanding applicants with a first or high 2:1 honours degree and a master's qualification.",
+   "summary": "The University of Bristol Business School offers four-year PhD bursaries of £21,805 per annum plus full tuition fees, with mandatory Graduate Teaching Assistant responsibilities compensated at an additional hourly rate. It suits applicants with a first or high 2:1 honours degree and a completed or in-progress master's degree, particularly those researching technology and society, financial systems, or sustainability.",
    "language": "en",
    "apply_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
    "source_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
@@ -5019,7 +5021,7 @@
    "tools_preferred": [],
    "min_degree": "masters",
    "degree_note": null,
-   "start_term": "2026-10-21",
+   "start_term": "Autumn 2027",
    "start_date": "2026-10-21",
    "kind": "phd",
    "sector": "academic"
@@ -7371,7 +7373,9 @@
    "first_seen_at": "2026-10-11T09:52:51Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://bit.ly/4a4S5Mc"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
