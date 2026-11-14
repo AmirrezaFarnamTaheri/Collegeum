@@ -98,6 +98,7 @@ ALIASES = {
     "open": "positions", "applied": "applied", "valid": "valid", "interested": "valid",
     "saved": "valid", "hidden": "hidden", "invalid": "hidden", "help": "help",
     "ownerhelp": "help", "start": "help",
+    "favorites": "favorites", "bookmarks": "favorites", "delete": "delete",
 }
 HELP = (
     "🤖 <b>Predoc bot</b>\n\n"
@@ -494,6 +495,78 @@ def _chat_id(obj: dict[str, Any] | None) -> int | None:
         return None
 
 
+def _favorite_screen(
+    store: FeedbackStore, user: int, rows: list[sqlite3.Row], *, page: int = 0,
+) -> tuple[str, dict[str, Any]]:
+    from ..core.output_quality import application_url_issue
+    from ..core.textproc import escape_telegram_html as esc
+    from ..core.textproc import telegram_visible_length
+    from .telegram import MAX_MESSAGE_CHARS, SAFETY_CHARS
+
+    saved = store.favorites(user)
+    header = f"🔖 <b>My favorites · {len(saved)}</b>"
+    if not saved:
+        return (header + "\n\nNothing saved yet. Tap 🔖 Save in bot on a channel post.",
+                {"inline_keyboard": []})
+
+    blocks: list[tuple[str, list[dict[str, str]], str]] = []
+    for number, prefix in enumerate(saved, 1):
+        matches = [row for row in rows if row["url_hash"].startswith(prefix)]
+        row = matches[0] if len(matches) == 1 else None
+        if row:
+            text = (
+                f"{number}. <b>{esc(row['title'][:120])}</b> — {esc(row['institution'][:100])}"
+                + (" ⚠️ Known closed" if row["closed_at"] or row["expired_at"] else
+                   " · availability unverified")
+            )
+        else:
+            text = f"{number}. Saved position {prefix} · details pending snapshot sync"
+        buttons: list[dict[str, str]] = []
+        if row and application_url_issue(row["apply_url"]) is None:
+            buttons.append({"text": f"↗ Open {number}", "url": row["apply_url"]})
+        buttons.append({"text": f"✕ Remove {number}",
+                        "callback_data": f"fav:remove:{prefix}"})
+        blocks.append((text, buttons, prefix))
+
+    # Reserve space for the repeated header, page indicator and a save notice.
+    # Visible UTF-16 units, rather than raw HTML bytes, are Telegram's limit.
+    budget = MAX_MESSAGE_CHARS - SAFETY_CHARS - 64
+    reserve = "\n\nPage 200 of 200"
+    pages: list[list[tuple[str, list[dict[str, str]], str]]] = []
+    current: list[tuple[str, list[dict[str, str]], str]] = []
+    for block in blocks:
+        prospective = [*current, block]
+        trial = header + "\n\n" + "\n\n".join(item[0] for item in prospective) + reserve
+        if current and (len(current) >= 12 or telegram_visible_length(trial) > budget):
+            pages.append(current)
+            current = [block]
+        else:
+            current = prospective
+    if current:
+        pages.append(current)
+
+    actual = min(max(0, page), len(pages) - 1)
+    selected = pages[actual]
+    keyboard: list[list[dict[str, str]]] = []
+    for _, actions, _ in selected:
+        buttons = [button.copy() for button in actions]
+        buttons[-1]["callback_data"] += f":{actual}"
+        keyboard.append(buttons)
+    navigation: list[dict[str, str]] = []
+    if actual:
+        navigation.append({"text": "← Previous",
+                           "callback_data": f"fav:page:{actual - 1}"})
+    if actual + 1 < len(pages):
+        navigation.append({"text": "Next →",
+                           "callback_data": f"fav:page:{actual + 1}"})
+    if navigation:
+        keyboard.append(navigation)
+    body = header + "\n\n" + "\n\n".join(item[0] for item in selected)
+    if len(pages) > 1:
+        body += f"\n\nPage {actual + 1} of {len(pages)}"
+    return body, {"inline_keyboard": keyboard}
+
+
 def _handle_message(
     bot: _Bot,
     msg: dict[str, Any],
@@ -510,6 +583,32 @@ def _handle_message(
     if not kind:
         return
     text_input = (msg.get('text') or '').strip()
+    private_sender = (chat is not None and chat > 0
+                      and (msg.get("chat") or {}).get("type") == "private"
+                      and _chat_id(msg.get("from")) == chat)
+    import re
+    saving = re.fullmatch(r"/start(?:@[A-Za-z0-9_]+)?\s+f_([a-f0-9]{16})", text_input)
+    if chat is not None and private_sender and (saving or kind in ("favorites", "delete") or
+                           (not owner and text_input.lower().split("@", 1)[0] == "/saved")):
+        if saving:
+            try:
+                fresh = store.add_favorite(chat, saving.group(1))
+                note = ("✅ Saved to your private favorites." if fresh
+                        else "Already in your favorites.")
+            except ValueError:
+                note = "Favorites limit reached (200). Remove one first."
+            body, keyboard = _favorite_screen(store, chat, rows)
+            bot.send(str(chat), note + "\n\n" + body, keyboard)
+        elif kind == "delete":
+            bot.send(str(chat), "Delete your private favorites and active subscriptions?",
+                     {"inline_keyboard": [[{"text": "Delete my data",
+                       "callback_data": "fav:delete:yes"}]]})
+        else:
+            body, keyboard = _favorite_screen(store, chat, rows)
+            bot.send(str(chat), body, keyboard)
+        summary["received"] += 1
+        summary["commands"] += 1
+        return
     natural_question = kind == 'help' and not text_input.startswith('/') and bool(
         settings and settings.get_openrouter_keys())
     is_ai = kind in ('ask', 'forget') or natural_question
@@ -610,10 +709,54 @@ def _handle_tap(
     page_size: int = 5, max_items: int = 60, site_url: str = '',
 ) -> bool:
     """Returns True when public exports need refreshing, including replay recovery."""
-    if _chat_id(cq.get("from")) not in owners:
+    data = cq.get('data') or ''
+    message = cq.get("message") or {}
+    chat = _chat_id(message.get("chat"))
+    user = _chat_id(cq.get("from"))
+    if isinstance(data, str) and data.startswith("fav:"):
+        parts = data.split(":")
+        if (chat is None or chat <= 0 or chat != user
+                or (message.get("chat") or {}).get("type") != "private"):
+            summary["ignored"] += 1
+            return False
+        page = 0
+        if parts == ["fav", "delete", "yes"]:
+            if not store.callback_seen(str(cq.get("id") or "")):
+                store.delete_favorites(chat)
+                store.remove_subscriber(chat)
+                store.remember_callback(str(cq.get("id") or ""))
+                store.save()  # checkpoint deletion before an uncertain Telegram reply
+        elif len(parts) in (3, 4) and parts[1] == "remove":
+            import re
+            if re.fullmatch(r"[a-f0-9]{16}", parts[2]) is None:
+                return False
+            if len(parts) == 4:
+                if re.fullmatch(r"\d{1,3}", parts[3]) is None:
+                    return False
+                page = int(parts[3])
+            if not store.callback_seen(str(cq.get("id") or "")):
+                store.remove_favorite(chat, parts[2])
+                store.remember_callback(str(cq.get("id") or ""))
+                store.save()
+        elif (len(parts) == 3 and parts[1] == "page"
+              and parts[2].isascii() and parts[2].isdigit()
+              and len(parts[2]) <= 3):
+            page = int(parts[2])
+        else:
+            return False
+        body, keyboard = _favorite_screen(store, chat, rows or [], page=page)
+        try:
+            bot.call("answerCallbackQuery", {"callback_query_id": cq["id"]})
+        except (TelegramError, KeyError):
+            pass
+        if message.get("message_id"):
+            bot.call("editMessageText", {"chat_id": chat, "message_id": message["message_id"],
+                     "text": body, "parse_mode": "HTML", "reply_markup": keyboard})
+        summary["taps"] += 1
+        return False
+    if user not in owners:
         summary["ignored"] += 1
         return False
-    data = cq.get('data') or ''
     if isinstance(data, str) and data.startswith(('view|', 'detail|')):
         from .browse import VIEWS, details, home, menu_keyboard, more, screen, valid_prefix
 

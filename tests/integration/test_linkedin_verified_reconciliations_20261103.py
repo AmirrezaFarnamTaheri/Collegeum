@@ -100,8 +100,10 @@ def test_kings_distinct_official_requisitions_have_verified_deadlines():
     assert "160625" in second["deadline_note"]
     assert "kcl.ac.uk/jobs/160868-" in first["apply_url"]
     assert first["url_hash"] != second["url_hash"]
-    assert 247 in public
-    assert 248 not in public  # closed by recorded deadline, not title dedupe
+    # Both verified application deadlines have elapsed in the committed
+    # November production projection. They remain distinct journal records.
+    assert 247 not in public
+    assert 248 not in public
 
 
 def test_two_historically_unlinked_decisions_use_only_exact_journal_hashes():

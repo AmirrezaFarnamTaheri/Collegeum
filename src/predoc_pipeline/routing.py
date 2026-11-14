@@ -28,6 +28,7 @@ __all__ = ["Channel", "Router"]
 
 _POSTDOC = re.compile(r"\bpost-?\s?doc(?:tor(?:al)?)?\b", re.IGNORECASE)
 _PREDOC = re.compile(r"\bpre-?\s?(doc(toral)?|phd)\b", re.IGNORECASE)
+_PHD_TITLE = re.compile(r"^\s*(?:ph\.?d\.?|doctoral)(?:\s|[-:])", re.IGNORECASE)
 _PHD_JOB_MARKET = re.compile(
     r"\bph\.?d\.?\s+researcher\b.*\bph\.?d\.?\s+job\s+market\b", re.I
 )
@@ -56,6 +57,28 @@ _PHD_IN_FIELD_REQUIRED = re.compile(
     r"\s+(?:is\s+)?(?:required|essential|mandatory)\b", re.IGNORECASE,
 )
 _US_NAMES = frozenset({"united states", "united states of america", "usa", "us", "u.s.", "u.s.a."})
+
+
+# Strictly an Economics doctoral *vacancy* check, not a generic academic
+# programme or completed-PhD research appointment.
+_ECON_SUBJECT = re.compile(
+    r"\beconom\w*|\beconometr\w*|\bpolitical economy\b|"
+    r"\b(?:applied microeconomics|macroeconomics|microeconomics)\b", re.I,
+)
+_DOCTORAL_ADMISSIONS = re.compile(
+    r"\b(?:general admission|admissions? to|"
+    r"applications? (?:to|for) (?:the )?(?:(?:graduate|degree) )?program(?:me)?|"
+    r"phd programme admission|"
+    r"phd program admission|doctoral school admission|call for admissions)\b", re.I,
+)
+_NON_ECON_TITLE = re.compile(
+    r"\b(?:genetics?|molecular biology|neuroscience|clinical|medicine|"
+    r"physics|chemistry|biochemistry|computer science)\b", re.I,
+)
+_KNOWN_UNSPECIFIED = frozenset({
+    "", "unknown", "unspecified", "not stated", "other", "worldwide",
+    "international", "remote", "multiple", "global",
+})
 
 
 class Channel(StrEnum):
@@ -97,11 +120,6 @@ class Router:
             # A doctoral qualification is not evidence of a *postdoctoral*
             # appointment. Only explicitly postdoctoral roles get that label.
             return "postdoc" if _POSTDOC_ROLE.search(summary) else "research"
-        for match in _DOCTORAL_DUTY.finditer(summary):
-            if not re.search(r"\b(?:not|no|may|can|optional|opportunity)\b", match[0], re.I):
-                return "phd"
-        if PHD_POSITION.search(title):
-            return "phd"
         if _POSTDOC_ROLE.search(summary):
             return "postdoc"
         normalized_degree = re.sub(r"[^a-z]", "", str(min_degree or "").lower())
@@ -123,6 +141,11 @@ class Router:
                 qualified = True
         if qualified:
             return "research"
+        for match in _DOCTORAL_DUTY.finditer(summary):
+            if not re.search(r"\b(?:not|no|may|can|optional|opportunity)\b", match[0], re.I):
+                return "phd"
+        if _PHD_TITLE.search(title) or PHD_POSITION.search(title):
+            return "phd"
         if _PREDOC.search(title):
             return "predoc"
         return "predoc"
@@ -182,6 +205,41 @@ class Router:
         if self._web_employer(institution):
             return Channel.WEB
         return Channel.TELEGRAM
+
+    def telegram_phd_eligible(self, listing: PredocListing) -> bool:
+        """True only for doctoral Economics vacancies with a known non-US workplace."""
+        country = (listing.location.country or "").strip().lower()
+        if country in _KNOWN_UNSPECIFIED or country in _US_NAMES:
+            return False
+        # Only positively identified non-US workplaces are eligible.
+        if self.region(listing.location.country, listing.location.city, "") not in {
+            "UK", "Europe", "Canada", "Other",
+        }:
+            return False
+        if self.position_kind(
+            listing.title, listing.summary,
+            min_degree=listing.min_degree, degree_note=listing.degree_note,
+        ) != "phd":
+            return False
+        text = f"{listing.title} {listing.summary or ''}"
+        if _DOCTORAL_ADMISSIONS.search(text):
+            return False
+        if _NON_ECON_TITLE.search(listing.title) and not _ECON_SUBJECT.search(listing.title):
+            return False
+        disciplines = [getattr(d, "value", str(d)) for d in listing.disciplines]
+        return bool(_ECON_SUBJECT.search(text) or any(_ECON_SUBJECT.search(d) for d in disciplines))
+
+    def destinations(self, listing: PredocListing) -> frozenset[Channel]:
+        """Publication outputs; an Economics PhD keeps its existing web/X route."""
+        original = self.channel_for(listing)
+        if original is Channel.WEB and self.telegram_phd_eligible(listing):
+            return frozenset((Channel.WEB, Channel.TELEGRAM))
+        return frozenset((original,))
+
+    def destinations_for_row(self, row: sqlite3.Row) -> frozenset[Channel]:
+        """Use the same typed listing contract for the journal/backfill path."""
+        from .pipeline import _listing_from_row
+        return self.destinations(_listing_from_row(row))
 
     def channel_for(self, listing: PredocListing) -> Channel:
         return self.channel(

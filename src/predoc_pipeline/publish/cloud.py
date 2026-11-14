@@ -112,6 +112,7 @@ def sync_cloud(
     source_status = {lang: sources_panel(settings.career_health_path, lang=lang)[0]
                      for lang in ('en', 'fa')}
     payload = {'generated_at': format_ts(), 'listings': records, 'marks': store.marks,
+               'favorites': store.data['favorites'],
                'subscriber_protocol': 1, 'subscribers': profiles, 'career_listings': careers,
                'source_status': source_status}
     owns_client = http_client is None
@@ -132,6 +133,24 @@ def sync_cloud(
     if data.get('subscriber_protocol') != 1:
         raise ValueError('Deploy a subscriber-capable Worker before enabling webhook mode')
     incoming = _validate_subscribers(data.get('subscribers'))
+    remote_favorites = data.get('favorites')
+    if remote_favorites is None and not store.data['favorites']:
+        # Staged deployments: existing Worker versions have no favorites yet.
+        remote_favorites = {}
+    if not isinstance(remote_favorites, dict) or len(remote_favorites) > 10000:
+        raise ValueError('Deploy a favorites-capable Worker before syncing bookmarks')
+    for user, saved in remote_favorites.items():
+        if (not isinstance(user, str) or not user.isascii() or not user.isdecimal()
+                or int(user) <= 0 or not isinstance(saved, dict) or len(saved) > 200):
+            raise ValueError('Invalid webhook private favorites')
+        for prefix, at in saved.items():
+            if (not isinstance(prefix, str) or len(prefix) != 16
+                    or any(c not in '0123456789abcdef' for c in prefix)
+                    or not isinstance(at, str)
+                    or (stamp := parse_datetime(at)) is None or stamp > utcnow()):
+                raise ValueError('Invalid webhook favorite receipt')
+    if remote_favorites and not store.key:
+        raise ValueError('Webhook favorites backup requires encrypted storage')
     if incoming and not store.key:
         raise ValueError('Webhook subscriber sync requires encrypted local storage')
     if set(store.subscribers) - incoming.keys():
@@ -147,6 +166,9 @@ def sync_cloud(
         if any(mark.get(field) is not None and not isinstance(mark[field], str)
                for field in ('title', 'institution', 'url')):
             raise ValueError('Invalid webhook mark metadata')
+    if store.data['favorites'] != remote_favorites:
+        store.data['favorites'] = remote_favorites
+        store.mark_dirty()
     changed = 0
     for identifier, preferences in incoming.items():
         if preferences is None:

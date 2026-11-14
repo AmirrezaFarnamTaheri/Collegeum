@@ -7,6 +7,7 @@ updates never invert preferences twice.
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from typing import Any
 
@@ -115,13 +116,18 @@ def private_message(
     if not tokens:
         return False
     command = tokens[0].lower().split("@")[0]
+    # Polling deep links must reach the private favorites handler. The outer
+    # per-user rate limit is still applied before either handler is called.
+    if (command == "/start" and len(tokens) == 2
+            and re.fullmatch(r"f_[a-f0-9]{16}", tokens[1])):
+        return False
     pages = {
         "/start": "home", "/settings": "home", "/subscribe": "subscriptions",
         "/subscriptions": "subscriptions", "/regions": "academic_regions",
         "/status": "home", "/more": "more", "/academic": "academic",
         "/careers": "careers", "/markets": "careers", "/guide": "help",
         "/lifesciences": "life_sciences",
-        "/stop": "stop", "/delete": "stop", "/help": "help",
+        "/stop": "stop", "/help": "help",
         "/sources": "sources", "/delivery": "delivery",
         "/privacy": "privacy",
     }
