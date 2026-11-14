@@ -163,7 +163,7 @@ def test_confirmed_source_facts_survive_public_rebuild(tmp_path: Path):
     rows = {
         entry["id"]: entry
         for line in (root / "data/listings.ndjson").read_text("utf-8").splitlines()
-        if (entry := json.loads(line)) and entry["id"] in {28, 46, 77, 139, 173}
+        if (entry := json.loads(line)) and entry["id"] in {28, 46, 77, 139, 173, 297}
     }
     assert rows[46]["institution"].startswith("University of Pennsylvania")
     assert "upenn.wd1.myworkdayjobs.com" in rows[46]["apply_url"]
@@ -186,7 +186,16 @@ def test_confirmed_source_facts_survive_public_rebuild(tmp_path: Path):
     # becomes the sole browse listing.
     assert 46 not in entries
     assert 297 in entries
-    assert entries[297]["salary_min"] == rows[46]["salary_min"]
+    # This Workday requisition lists an HR pay range of $45,278-$50,000,
+    # although its narrative advertises an estimated $50,000-$60,000.
+    # Preserve both source observations without overwriting the direct
+    # Workday canonical record with the older secondary-source estimate.
+    assert rows[46]["salary_min"] == 50000
+    assert rows[46]["salary_max"] == 60000
+    assert rows[297]["salary_min"] == 45278
+    assert rows[297]["salary_max"] == 50000
+    assert entries[297]["salary_min"] == rows[297]["salary_min"]
+    assert entries[297]["salary_max"] == rows[297]["salary_max"]
     assert entries[77]["kind"] == "research"
     assert entries[77]["salary_min"] == rows[77]["salary_min"]
     assert entries[139]["min_degree"] == "masters"
@@ -237,8 +246,9 @@ def test_verified_corrections_survive_actual_dashboard_and_rss_regeneration(
     )
     assert "University of Pennsylvania" in published[297]["institution"]
     assert "upenn.wd1.myworkdayjobs.com" in published[297]["apply_url"]
-    assert published[297]["salary_min"] == 50000
-    assert published[297]["salary_max"] == 60000
+    # Rebuilding from the journal must retain Workday's canonical HR pay range.
+    assert published[297]["salary_min"] == 45278
+    assert published[297]["salary_max"] == 50000
     assert published[77]["kind"] == "research"
     assert published[77]["salary_min"] == 114952.5
     assert published[77]["salary_max"] == 156778
