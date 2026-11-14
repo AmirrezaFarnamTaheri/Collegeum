@@ -64,6 +64,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           CHECK_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.check_only || false }}
+          # Only trusted successful main push CI is eligible for release-aware
+          # recovery; ordinary Telegram syncs retain the old age-based gate.
+          RELEASE_CHECK: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ci' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' }}
+          CI_RUN_CREATED_AT: ${{ github.event.workflow_run.created_at || '' }}
+          CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha || '' }}
         shell: bash
         run: |
           set -euo pipefail
