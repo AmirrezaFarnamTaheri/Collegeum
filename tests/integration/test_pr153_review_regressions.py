@@ -39,9 +39,13 @@ def test_completed_phd_qualification_is_not_a_doctoral_vacancy():
 
 
 def test_enrollment_is_not_mistaken_for_general_admissions():
-    job = _listing(summary="The successful candidate enrolls in the graduate programme in economics.")
+    job = _listing(
+        summary="The successful candidate enrolls in the graduate programme in economics."
+    )
     assert Channel.TELEGRAM in Router(Preferences()).destinations(job)
-    admissions = _listing(summary="Applications for the graduate programme in economics are invited.")
+    admissions = _listing(
+        summary="Applications for the graduate programme in economics are invited."
+    )
     assert Channel.TELEGRAM not in Router(Preferences()).destinations(admissions)
 
 

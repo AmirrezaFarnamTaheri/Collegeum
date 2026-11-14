@@ -499,7 +499,8 @@ def _favorite_screen(
     store: FeedbackStore, user: int, rows: list[sqlite3.Row], *, page: int = 0,
 ) -> tuple[str, dict[str, Any]]:
     from ..core.output_quality import application_url_issue
-    from ..core.textproc import escape_telegram_html as esc, telegram_visible_length
+    from ..core.textproc import escape_telegram_html as esc
+    from ..core.textproc import telegram_visible_length
     from .telegram import MAX_MESSAGE_CHARS, SAFETY_CHARS
 
     saved = store.favorites(user)
