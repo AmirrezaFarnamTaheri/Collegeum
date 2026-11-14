@@ -65,6 +65,19 @@ _ECON_SUBJECT = re.compile(
     r"\beconom\w*|\beconometr\w*|\bpolitical economy\b|"
     r"\b(?:applied microeconomics|macroeconomics|microeconomics)\b", re.I,
 )
+# A predicted discipline is not sufficient evidence for a public PhD broadcast:
+# migration/engineering/law roles were tagged 'Political Economy', 'Energy
+# Economics', or 'Law and Economics' despite unrelated research topics.
+# Require the *research focus* to appear in the title or project description,
+# rather than merely in a degree requirement or the inferred disciplines.
+_ECON_PHD_RESEARCH_FOCUS = re.compile(
+    r"\b(?:research (?:group|project|in|on|into|combining)|"
+    r"project (?:studying|investigating|in|on)|"
+    r"focus(?:es|ed|ing)? (?:on|in)|"
+    r"(?:dissertation|thesis) (?:in|on))"
+    r"[^.!?\n]{0,120}\b(?:econom\w*|econometr\w*|political economy)\b",
+    re.I,
+)
 _DOCTORAL_ADMISSIONS = re.compile(
     r"\b(?:general admission|admissions? to|"
     r"applications? (?:to|for) (?:the )?(?:(?:graduate|degree) )?program(?:me)?|"
@@ -226,8 +239,10 @@ class Router:
             return False
         if _NON_ECON_TITLE.search(listing.title) and not _ECON_SUBJECT.search(listing.title):
             return False
-        disciplines = [getattr(d, "value", str(d)) for d in listing.disciplines]
-        return bool(_ECON_SUBJECT.search(text) or any(_ECON_SUBJECT.search(d) for d in disciplines))
+        return bool(
+            _ECON_SUBJECT.search(listing.title)
+            or _ECON_PHD_RESEARCH_FOCUS.search(listing.summary or "")
+        )
 
     def destinations(self, listing: PredocListing) -> frozenset[Channel]:
         """Publication outputs; an Economics PhD keeps its existing web/X route."""
