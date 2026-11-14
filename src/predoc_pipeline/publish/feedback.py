@@ -276,7 +276,10 @@ class FeedbackStore:
 
     def add_favorite(self, user: int, prefix: str) -> bool:
         user_id, _ = self._favorite_identity(user, prefix)
-        saved = self.data["favorites"].setdefault(user_id, {})
+        favorites = self.data["favorites"]
+        if user_id not in favorites and len(favorites) >= 10_000:
+            raise ValueError("favorites owner limit reached (10000)")
+        saved = favorites.setdefault(user_id, {})
         if prefix in saved:
             return False
         if len(saved) >= 200:

@@ -1218,6 +1218,7 @@ def _publish_non_us_econ_phds(
     prefs: Preferences,
     *,
     fresh_ids: set[int],
+    hidden: set[str] | None = None,
     verify: bool = True,
     transport: Any = None,
 ) -> None:
@@ -1251,6 +1252,9 @@ def _publish_non_us_econ_phds(
             continue
         if any(db.telegram_state(row["id"]) in {"uncertain", "permanent_failure"}
                or row["status"] == "delivery-uncertain" for row in group):
+            continue
+        # An owner-hidden mirror suppresses the entire alias group.
+        if hidden and any(row["url_hash"] in hidden for row in group):
             continue
         for row in group:
             if row["status"] != "published" or row["closed_at"] or row["expired_at"]:
@@ -1876,7 +1880,7 @@ def run(
             )
             _publish_non_us_econ_phds(
                 db, telegram, settings, stats, router, prefs,
-                fresh_ids=sent_now, transport=board_transport,
+                fresh_ids=sent_now, hidden=hidden, transport=board_transport,
             )
             _retry_x_publications(
                 x_client, settings, db, stats, prefs, policy, feedback, router,

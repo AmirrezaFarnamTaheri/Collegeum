@@ -66,8 +66,9 @@ _ECON_SUBJECT = re.compile(
     r"\b(?:applied microeconomics|macroeconomics|microeconomics)\b", re.I,
 )
 _DOCTORAL_ADMISSIONS = re.compile(
-    r"\b(?:general admission|admissions? to|degree programme|degree program|"
-    r"graduate programme|graduate program|phd programme admission|"
+    r"\b(?:general admission|admissions? to|"
+    r"applications? (?:to|for) (?:the )?(?:(?:graduate|degree) )?program(?:me)?|"
+    r"phd programme admission|"
     r"phd program admission|doctoral school admission|call for admissions)\b", re.I,
 )
 _NON_ECON_TITLE = re.compile(
@@ -119,11 +120,6 @@ class Router:
             # A doctoral qualification is not evidence of a *postdoctoral*
             # appointment. Only explicitly postdoctoral roles get that label.
             return "postdoc" if _POSTDOC_ROLE.search(summary) else "research"
-        for match in _DOCTORAL_DUTY.finditer(summary):
-            if not re.search(r"\b(?:not|no|may|can|optional|opportunity)\b", match[0], re.I):
-                return "phd"
-        if _PHD_TITLE.search(title) or PHD_POSITION.search(title):
-            return "phd"
         if _POSTDOC_ROLE.search(summary):
             return "postdoc"
         normalized_degree = re.sub(r"[^a-z]", "", str(min_degree or "").lower())
@@ -145,6 +141,11 @@ class Router:
                 qualified = True
         if qualified:
             return "research"
+        for match in _DOCTORAL_DUTY.finditer(summary):
+            if not re.search(r"\b(?:not|no|may|can|optional|opportunity)\b", match[0], re.I):
+                return "phd"
+        if _PHD_TITLE.search(title) or PHD_POSITION.search(title):
+            return "phd"
         if _PREDOC.search(title):
             return "predoc"
         return "predoc"
@@ -210,7 +211,10 @@ class Router:
         country = (listing.location.country or "").strip().lower()
         if country in _KNOWN_UNSPECIFIED or country in _US_NAMES:
             return False
-        if self.region(listing.location.country, listing.location.city, "") == "US":
+        # Only positively identified non-US workplaces are eligible.
+        if self.region(listing.location.country, listing.location.city, "") not in {
+            "UK", "Europe", "Canada", "Other",
+        }:
             return False
         if self.position_kind(
             listing.title, listing.summary,

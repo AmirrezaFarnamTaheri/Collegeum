@@ -614,7 +614,7 @@ export class TelegramBot {
       const actions = [];
       if (listing && safeUrl(listing.apply_url))
         actions.push({text:`↗ ${n} Open advert`,url:safeUrl(listing.apply_url)});
-      actions.push({text:`✕ ${n} Remove`,callback_data:`fav:remove:${prefix}`});
+      actions.push({text:`✕ ${n} Remove`,callback_data:`fav:remove:${prefix}:${actual}`});
       buttons.push(actions);
     }
     const navs = [];
@@ -641,20 +641,33 @@ export class TelegramBot {
   async favoriteCallback(callback, updateKey) {
     const message = callback.message, id = message.chat.id;
     const parts = String(callback.data || '').split(':');
-    if (parts[0] !== 'fav' || parts.length !== 3) return;
+    if (parts[0] !== 'fav' || ![3, 4].includes(parts.length)) return;
     if (parts[1] === 'remove') {
-      if (!FAVORITE_PREFIX.test(parts[2])) return;
-      await this.removeFavorite(id, parts[2]);
-    } else if (parts[1] === 'delete' && parts[2] === 'yes') {
+      if (!FAVORITE_PREFIX.test(parts[2]) ||
+          (parts.length === 4 && !/^\d{1,3}$/.test(parts[3]))) return;
       await this.ctx.storage.transaction(async tx => {
+        const claim = await tx.get(updateKey) || {};
+        if (claim.favorite_mutation_applied) return;
+        await tx.delete(this.favoriteKey(id, parts[2]));
+        // Recovering a failed reply must not delete a newly re-saved favorite.
+        await tx.put(updateKey, {...claim, favorite_mutation_applied:true});
+      });
+    } else if (parts[1] === 'delete' && parts[2] === 'yes' && parts.length === 3) {
+      await this.ctx.storage.transaction(async tx => {
+        const claim = await tx.get(updateKey) || {};
+        if (claim.favorite_mutation_applied) return;
         const all = await tx.list({prefix:`favorite:${id}:`});
         for (const key of all.keys()) await tx.delete(key);
         await tx.put(`subscriber:${id}`,null);
         await tx.delete(`page_size:${id}`);
         await tx.delete(`match_window:${id}`);
+        await tx.put(updateKey, {...claim, favorite_mutation_applied:true});
       });
-    } else if (parts[1] !== 'page' || !/^\d{1,3}$/.test(parts[2])) return;
-    const content = await this.favoriteRows(id, parts[1] === 'page' ? Number(parts[2]) : 0);
+    } else if (parts[1] !== 'page' || parts.length !== 3 ||
+               !/^\d{1,3}$/.test(parts[2])) return;
+    const page = parts[1] === 'page' ? Number(parts[2]) :
+      parts.length === 4 ? Number(parts[3]) : 0;
+    const content = await this.favoriteRows(id, page);
     try {await this.api('answerCallbackQuery',{callback_query_id:callback.id});} catch {}
     await this.deliver(updateKey,'editMessageText',{chat_id:id,message_id:message.message_id,
       ...content,link_preview_options:{is_disabled:true}});
