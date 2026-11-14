@@ -110,6 +110,7 @@ class PublisherRevisionCliTests(TestCase):
             with patch.dict("os.environ", {
                 "GH_TOKEN": "test", "GITHUB_REPOSITORY": "Owner/Repo",
                 "RELEASE_CHECK": "true", "GITHUB_SHA": NEW_SHA,
+                "CI_HEAD_SHA": NEW_SHA,
                 "CI_RUN_CREATED_AT": ci_created,
             }), patch.object(watchdog, "_request", requests):
                 result = watchdog.main(["--health", str(health_path), "--dispatch"])
@@ -132,3 +133,4 @@ class PublisherRevisionCliTests(TestCase):
         self.assertIn("github.event.workflow_run.event == 'push'", workflow)
         self.assertIn("RELEASE_CHECK:", workflow)
         self.assertIn("CI_RUN_CREATED_AT:", workflow)
+        self.assertIn("CI_HEAD_SHA:", workflow)

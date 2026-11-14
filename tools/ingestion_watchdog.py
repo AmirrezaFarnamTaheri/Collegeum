@@ -24,6 +24,17 @@ FUTURE_SKEW = timedelta(minutes=2)
 ACTIVE_STATUSES = {"queued", "requested", "waiting", "pending", "in_progress"}
 KNOWN_STATUSES = ACTIVE_STATUSES | {"completed"}
 _REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_SHA = re.compile(r"^[0-9a-f]{40}$")
+# Only changes that affect the public-publishing contract merit a CI-triggered
+# ingestion; a dashboard, docs, test or state-only push must not send anything.
+_PUBLISHER_FILES = {
+    ".github/workflows/pipeline.yml",
+    "config/preferences.toml",
+    "src/predoc_pipeline/pipeline.py",
+    "src/predoc_pipeline/routing.py",
+    "src/predoc_pipeline/settings.py",
+    "src/predoc_pipeline/publish/telegram.py",
+}
 
 
 @dataclass(frozen=True)
@@ -111,6 +122,82 @@ def evaluate(
     if any(created > generated for created, _ in main_runs):
         return Decision(False, "newer-run-without-health-checkpoint", age)
     return Decision(True, "stale-without-newer-run", age)
+
+
+
+def _publisher_revision_baseline(
+    runs: Any, *, now: datetime, trigger_created_at: str, main_sha: str,
+) -> str | None:
+    """Find an old main pipeline SHA with no newer or pending execution."""
+    if now.tzinfo is None or not _SHA.fullmatch(main_sha):
+        return None
+    now = now.astimezone(UTC)
+    try:
+        trigger_at = _timestamp(trigger_created_at)
+    except (ValueError, OverflowError, TypeError):
+        return None
+    if trigger_at > now + FUTURE_SKEW:
+        return None
+    if not isinstance(runs, list) or not runs:
+        return None
+    main_runs: list[tuple[datetime, str, str]] = []
+    for item in runs:
+        if not isinstance(item, dict):
+            return None
+        if item.get("head_branch") != "main":
+            continue
+        status, sha = item.get("status"), item.get("head_sha")
+        if status not in KNOWN_STATUSES or not isinstance(sha, str):
+            return None
+        if not _SHA.fullmatch(sha):
+            return None
+        try:
+            created = _timestamp(item.get("created_at"))
+        except (ValueError, TypeError, OverflowError):
+            return None
+        if created > now + FUTURE_SKEW:
+            return None
+        main_runs.append((created, status, sha))
+    if not main_runs or any(status in ACTIVE_STATUSES for _, status, _ in main_runs):
+        return None
+    created, _, previous_sha = max(main_runs, key=lambda item: item[0])
+    # A run created after this CI began could already be executing the new
+    # publisher via checkout(ref=main), even if its event SHA looks old.
+    if created >= trigger_at or previous_sha == main_sha:
+        return None
+    return previous_sha
+
+
+def evaluate_publisher_revision(
+    runs: Any,
+    comparison: Any,
+    *,
+    now: datetime,
+    trigger_created_at: str,
+    main_sha: str,
+) -> Decision:
+    """Fail closed unless a newer tested publisher has never run on main."""
+    previous_sha = _publisher_revision_baseline(
+        runs, now=now, trigger_created_at=trigger_created_at, main_sha=main_sha,
+    )
+    if previous_sha is None:
+        return Decision(False, "publisher-revision-already-covered-or-unverified")
+    if not isinstance(comparison, dict) or comparison.get("status") != "ahead":
+        return Decision(False, "untrusted-publisher-comparison")
+    base = comparison.get("base_commit")
+    if not isinstance(base, dict) or base.get("sha") != previous_sha:
+        return Decision(False, "untrusted-publisher-comparison")
+    files = comparison.get("files")
+    if not isinstance(files, list) or not files or len(files) >= 300:
+        return Decision(False, "untrusted-publisher-comparison")
+    if any(not isinstance(file, dict) or
+           not isinstance(file.get("filename"), str) or
+           file.get("status") not in {"added", "modified", "removed", "renamed"}
+           for file in files):
+        return Decision(False, "untrusted-publisher-comparison")
+    if not any(file["filename"] in _PUBLISHER_FILES for file in files):
+        return Decision(False, "no-publisher-change")
+    return Decision(True, "publisher-revision-not-ingested")
 
 
 def audit_cadence(
@@ -298,8 +385,39 @@ def main(argv: list[str] | None = None) -> int:
         if not isinstance(response, dict) or not isinstance(response.get("workflow_runs"), list):
             raise RuntimeError("GitHub Actions run history is unavailable")
         now = datetime.now(UTC)
-        decision = evaluate(health, response["workflow_runs"], now=now)
-        cadence = audit_cadence(response["workflow_runs"], now=now)
+        runs = response["workflow_runs"]
+        decision = evaluate(health, runs, now=now)
+        cadence = audit_cadence(runs, now=now)
+        if (decision.reason == "fresh"
+                and os.environ.get("RELEASE_CHECK") == "true"
+                and os.environ.get("GITHUB_SHA") == os.environ.get("CI_HEAD_SHA")):
+            # This path is enabled only by trusted successful main push CI in
+            # the workflow, never by an untrusted PR or scheduled sync.
+            main_sha = os.environ.get("GITHUB_SHA", "")
+            trigger_at = os.environ.get("CI_RUN_CREATED_AT", "")
+            previous_sha = _publisher_revision_baseline(
+                runs, now=now, trigger_created_at=trigger_at, main_sha=main_sha,
+            )
+            if previous_sha is not None:
+                # GitHub compare is authoritative about whether the checked
+                # in publisher changed since the last recorded ingestion.
+                compare_url = (
+                    f"https://api.github.com/repos/{repo}/compare/"
+                    f"{previous_sha}...{main_sha}"
+                )
+                try:
+                    comparison = _request(compare_url, token)
+                except RuntimeError:
+                    # Missing or malformed comparison must NEVER dispatch.
+                    comparison = None
+                release = evaluate_publisher_revision(
+                    runs, comparison, now=now,
+                    trigger_created_at=trigger_at, main_sha=main_sha,
+                )
+                if release.dispatch:
+                    decision = Decision(
+                        True, release.reason, age_seconds=decision.age_seconds,
+                    )
         action = "none"
         if decision.dispatch:
             if args.dispatch:
