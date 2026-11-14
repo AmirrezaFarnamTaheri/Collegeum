@@ -1229,12 +1229,17 @@ def _publish_non_us_econ_phds(
     """
     if not settings.telegram_non_us_econ_phd_enabled:
         return
-    if not settings.telegram_bot_username:
-        log.warning("telegram_phd_disabled_no_bot_username")
-        return
     if telegram is None:
         log.warning("telegram_phd_no_channel_credentials")
         return
+    # A missing or malformed username only affects private Save links.
+    # Public PhD announcements use the SAME configured Predoc channel.
+    bot_username = settings.telegram_bot_username.strip()
+    if bot_username and re.fullmatch(r"[A-Za-z0-9_]{5,32}", bot_username) is None:
+        log.warning("telegram_phd_favorites_disabled_invalid_bot_username")
+        bot_username = ""
+    if not bot_username:
+        log.info("telegram_phd_publishing_without_save_links")
 
     from .core.output_quality import suppressed_public_alias
     policy = Policy(prefs)
@@ -1298,7 +1303,7 @@ def _publish_non_us_econ_phds(
             [(url_hash(job.apply_url), job) for _, job in selected],
             site_url=settings.site_url,
             page_size=min(6, prefs.telegram.digest_page_size),
-            feedback=False, bot_username=settings.telegram_bot_username,
+            feedback=False, bot_username=bot_username,
             historical=historical,
         )
         for page in pages:

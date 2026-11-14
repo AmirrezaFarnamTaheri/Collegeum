@@ -2,6 +2,8 @@
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
+
 from predoc_pipeline import pipeline
 from predoc_pipeline.boards.config import load_preferences
 from predoc_pipeline.core.db import Database, init
@@ -10,7 +12,10 @@ from predoc_pipeline.routing import Router
 from predoc_pipeline.settings import Settings
 
 
-def test_enabled_phd_backfill_uses_existing_predoc_channel_without_bot_username(tmp_path):
+@pytest.mark.parametrize("username", ["", "invalid-username!"])
+def test_enabled_phd_backfill_uses_existing_predoc_channel_without_bot_username(
+    tmp_path, username,
+):
     """Channel publishing must not be blocked by an undeployed favorites UI."""
     path = tmp_path / "jobs.db"
     init(path)
@@ -27,7 +32,7 @@ def test_enabled_phd_backfill_uses_existing_predoc_channel_without_bot_username(
         _env_file=None,
         telegram_bot_token="offline-test-token",
         telegram_public_channel_id="@existing_predoc_channel",
-        telegram_bot_username="",
+        telegram_bot_username=username,
         telegram_non_us_econ_phd_enabled=True,
         telegram_non_us_econ_phd_backfill_limit=6,
     )
