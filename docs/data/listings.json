@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-11-15T06:23:32Z",
- "count": 220,
+ "generated_at": "2026-11-15T08:36:30Z",
+ "count": 219,
  "listings": [
   {
    "id": 437,
@@ -49,7 +49,7 @@
    "country": "Sweden",
    "city": "Gothenburg",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2027-01-11T23:59:59Z",
    "days_left": 57,
    "disciplines": [
@@ -126,7 +126,7 @@
    "country": "United States",
    "city": "Durham, NC",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -210,7 +210,7 @@
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-12-13T23:59:59Z",
    "days_left": 28,
    "disciplines": [
@@ -293,7 +293,7 @@
    "country": "Switzerland",
    "city": "Lausanne",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -332,7 +332,7 @@
    "country": "Switzerland",
    "city": "Lausanne",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -428,8 +428,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 4807,
-   "salary_max": 4807,
+   "salary_min": 4807.0,
+   "salary_max": 4807.0,
    "salary_currency": "EUR",
    "salary_period": null,
    "salary_raw": "between 3131 and 4807 € bruts selon expérience",
@@ -453,7 +453,7 @@
    "country": "Germany",
    "city": "Freiburg im Breisgau",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-12-07T23:59:59Z",
    "days_left": 22,
    "disciplines": [
@@ -531,7 +531,7 @@
    "country": "United Kingdom",
    "city": "London",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-12-02T00:00:00Z",
    "days_left": 17,
    "disciplines": [
@@ -547,8 +547,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 50766,
-   "salary_max": 50766,
+   "salary_min": 50766.0,
+   "salary_max": 50766.0,
    "salary_currency": "GBP",
    "salary_period": null,
    "salary_raw": "£50,766 pro-rata, including London Weighting Allowance",
@@ -587,8 +587,8 @@
    "deadline_note": "Ongoing Deadline",
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": "year",
    "salary_raw": "$59,000–62,000 annual",
@@ -634,8 +634,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": "year",
    "salary_raw": "$59,000–62,000 annual salary, additional $2,000 professional development fund",
@@ -661,7 +661,7 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -679,8 +679,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": "year",
    "salary_raw": "$59,000–62,000 annual salary, additional $2,000 professional development fund",
@@ -705,7 +705,7 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -723,8 +723,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": "year",
    "salary_raw": "$59,000–62,000 annual salary, additional $2,000 professional development fund",
@@ -753,7 +753,7 @@
    "country": "Netherlands",
    "city": "Enschede",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-12-16T00:00:00Z",
    "days_left": 31,
    "disciplines": [
@@ -771,8 +771,8 @@
    "alternate_sources": [
     "https://www.academictransfer.com/en/jobs/365505/postdoctoral-researcher-in-health-technology-assessment-informal-caregiver-impacts-in-hta-i-care"
    ],
-   "salary_min": 3706,
-   "salary_max": 4599,
+   "salary_min": 3706.0,
+   "salary_max": 4599.0,
    "salary_currency": "EUR",
    "salary_period": null,
    "salary_raw": "€ 3,706 to € 4,599 (scale 10 CAO-NU), depending on your qualifications and experience",
@@ -873,7 +873,7 @@
    "country": "Sweden",
    "city": "Gothenburg",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2027-01-04T23:59:59Z",
    "days_left": 50,
    "disciplines": [
@@ -1345,7 +1345,7 @@
    "country": "United States",
    "city": "Cambridge",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -1388,7 +1388,7 @@
    "country": "United States",
    "city": "Evanston",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-12-17T23:59:59Z",
    "days_left": 32,
    "disciplines": [
@@ -1472,7 +1472,7 @@
    "country": "Germany",
    "city": "Oldenburg",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-30T23:59:59Z",
    "days_left": 15,
    "disciplines": [
@@ -1557,7 +1557,7 @@
    "country": "Germany",
    "city": "Witten",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-24T00:00:00Z",
    "days_left": 9,
    "disciplines": [
@@ -1599,7 +1599,7 @@
    "country": "United Kingdom",
    "city": "London",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-27T23:59:00Z",
    "days_left": 12,
    "disciplines": [
@@ -1619,8 +1619,8 @@
    "alternate_sources": [
     "https://www.jobs.ac.uk/job/DTO342/research-officer-in-income-and-or-wealth-inequalities"
    ],
-   "salary_min": 44143,
-   "salary_max": 52749,
+   "salary_min": 44143.0,
+   "salary_max": 52749.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£44,143 to £52,749 pa inclusive with potential to progress to £56,607 pa inclusive of London allowance",
@@ -1680,7 +1680,7 @@
    "country": "United Kingdom",
    "city": "Bristol",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-12-19T23:59:59Z",
    "days_left": 34,
    "disciplines": [
@@ -1720,7 +1720,7 @@
    "country": "United States",
    "city": "San Francisco",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -1733,13 +1733,13 @@
    "language": "en",
    "apply_url": "https://www.linkedin.com/jobs/view/4458540402",
    "source_url": "https://www.linkedin.com/jobs/view/4458540402",
-   "confidence": 1,
+   "confidence": 1.0,
    "first_seen_at": "2026-11-06T06:37:43Z",
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 80000,
-   "salary_max": 80000,
+   "salary_min": 80000.0,
+   "salary_max": 80000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$80,000.00",
@@ -1806,7 +1806,7 @@
    "country": "United States",
    "city": "Charlottesville",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -1849,7 +1849,7 @@
    "country": "United States",
    "city": "Kansas City",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-30T00:00:00Z",
    "days_left": 15,
    "disciplines": [
@@ -1867,8 +1867,8 @@
    "deadline_note": null,
    "visa_note": "Existing work authorisation may be required (“authorized to work in the United States”)",
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 76300,
+   "salary_min": 59000.0,
+   "salary_max": 76300.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000 - 76,300 / Research Associate I",
@@ -1945,8 +1945,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 50000,
-   "salary_max": 54000,
+   "salary_min": 50000.0,
+   "salary_max": 54000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$50,000 - $54,000",
@@ -2008,7 +2008,7 @@
    "country": "Norway",
    "city": "Tromsø",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -2042,7 +2042,7 @@
   {
    "id": 370,
    "title": "Postdoctoral Researcher in Spatial Data Science",
-   "institution": "Mohammed VI Polytechnic University",
+   "institution": "MOHAMMED VI POLYTECHNIC UNIVERSITY",
    "principal_investigator": null,
    "country": "Morocco",
    "city": "Benguerir",
@@ -2051,15 +2051,15 @@
    "deadline": "2026-12-04T00:00:00Z",
    "days_left": 19,
    "disciplines": [
-    "Public Policy",
-    "Development Economics"
+    "Econometrics",
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral researcher in spatial data science focused on urban modeling and cost analysis, aiming to develop a predictive model for urbanization costs based on urban morphology and simulate scenarios under various climatic and social contexts. The role requires a PhD in Data Science, Urban Planning, Urban Economics, or a related field, along with experience in urban modeling tools such as MATLAB, Python, and R.",
+   "summary": "This postdoctoral position seeks a researcher to build an innovative model that estimates the direct and indirect costs of urbanization using spatial data and case studies. It is aimed at candidates holding a Ph.D. in data science, urban planning, or urban economics, with proficiency in Python, R, MATLAB, and geospatial tools, and fluency in French and English.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.924,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2092,7 +2092,7 @@
    "country": "Finland",
    "city": "Helsinki",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-12-15T23:59:59Z",
    "days_left": 30,
    "disciplines": [
@@ -2131,7 +2131,7 @@
    "country": "Sweden",
    "city": "Växjö",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -2209,7 +2209,7 @@
    "country": "Germany",
    "city": "Dresden",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -2266,8 +2266,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 2700,
-   "salary_max": 3300,
+   "salary_min": 2700.0,
+   "salary_max": 3300.0,
    "salary_currency": "EUR",
    "salary_period": null,
    "salary_raw": "approximately €2,700-€3,300 depending on the appointee’s qualifications and experience",
@@ -2288,7 +2288,7 @@
    "country": "Finland",
    "city": "Tampere",
    "is_remote": false,
-   "duration_years": 5,
+   "duration_years": 5.0,
    "deadline": "2026-12-13T21:59:00Z",
    "days_left": 28,
    "disciplines": [
@@ -2307,8 +2307,8 @@
    "alternate_sources": [
     "https://www.linkedin.com/jobs/view/4486517144"
    ],
-   "salary_min": 3900,
-   "salary_max": 4200,
+   "salary_min": 3900.0,
+   "salary_max": 4200.0,
    "salary_currency": "EUR",
    "salary_period": "month",
    "salary_raw": "3,900 to 4,200 EUR/month",
@@ -2329,7 +2329,7 @@
    "country": "Norway",
    "city": "Trondheim",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-11-20T23:59:59Z",
    "days_left": 5,
    "disciplines": [
@@ -2370,26 +2370,26 @@
    "country": "Australia",
    "city": "North Ryde",
    "is_remote": false,
-   "duration_years": 4,
-   "deadline": "2026-12-06T00:00:00Z",
+   "duration_years": 4.0,
+   "deadline": "2026-12-06T12:59:00Z",
    "days_left": 21,
    "disciplines": [
     "Econometrics"
    ],
    "visa": "explicit",
-   "summary": "The position is a postdoctoral research fellow in econometrics at Macquarie University, Sydney, focusing on counterfactual policy evaluation and high-frequency financial-market methods. The role is suited for candidates with a PhD in econometrics, statistics, economics or related field and strong research skills.",
+   "summary": "Macquarie University is advertising a full-time, fixed-term (four-year) Postdoctoral Research Fellow in Econometrics at its North Ryde (Sydney) campus, to work on a project led by Professor Shuping Shi covering counterfactual policy evaluation with nonstationary outcomes and high-frequency financial-market econometrics. The role requires a PhD completed or near completion in econometrics, statistics, economics or a related field, with a strong research record and programming skills in MATLAB, R or Python; international applicants are welcome and visa sponsorship may be considered for the…",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.985,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
    "alternate_sources": [
     "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing"
    ],
-   "salary_min": 104481,
-   "salary_max": 127138,
+   "salary_min": 104481.0,
+   "salary_max": 127138.0,
    "salary_currency": "AUD",
    "salary_period": "year",
    "salary_raw": "$104,481 to $127,138 plus 17% employer's superannuation and annual leave loading",
@@ -2401,7 +2401,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "Second half 2027",
+   "start_term": "second half of 2027",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -2414,7 +2414,7 @@
    "country": "Norway",
    "city": "Trondheim",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-12-11T23:59:59Z",
    "days_left": 26,
    "disciplines": [
@@ -2458,20 +2458,18 @@
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
-   "duration_years": 3,
-   "deadline": "2026-12-05T00:00:00Z",
+   "duration_years": 3.0,
+   "deadline": "2026-12-05T23:59:59Z",
    "days_left": 20,
    "disciplines": [
-    "Behavioral/Experimental Economics",
-    "Labor Economics",
-    "Quantitative Social Sciences"
+    "Behavioral/Experimental Economics"
    ],
    "visa": "unknown",
-   "summary": "A fixed-term postdoctoral associate appointment in the Division of Social Science at NYU Abu Dhabi, with half the time on independent research and half on collaborative projects with Professors Berkay Özcan and Ernesto Reuben in behavioral and experimental economics, including decision-making, social norms and cooperation, inequality and discrimination, and labor-market and organizational outcomes. Candidates must hold a PhD received within the past five years in economics, management or organizational behavior, sociology, public policy, data science or a closely related field, with…",
+   "summary": "The Postdoctoral Associate in Behavioral and Experimental Social Science is a fixed-term postdoctoral research appointment at New York University Abu Dhabi, beginning September 1, 2027, for up to three years. The role will support both independent and collaborative behavioral and experimental social science research with Professors Berkay Özcan and Ernesto Reuben.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.939,
+   "confidence": 0.924,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2500,7 +2498,7 @@
    "country": "United Kingdom",
    "city": "Bath",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-16T00:00:00Z",
    "days_left": 1,
    "disciplines": [
@@ -2516,8 +2514,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 38784,
-   "salary_max": 46049,
+   "salary_min": 38784.0,
+   "salary_max": 46049.0,
    "salary_currency": "GBP",
    "salary_period": null,
    "salary_raw": "£38,784 to £46,049",
@@ -2538,7 +2536,7 @@
    "country": "Germany",
    "city": "Mannheim",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-12-06T00:00:00Z",
    "days_left": 21,
    "disciplines": [
@@ -2578,7 +2576,7 @@
    "country": "United Kingdom",
    "city": "Cambridge",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-11-24T00:00:00Z",
    "days_left": 9,
    "disciplines": [
@@ -2595,8 +2593,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 33662,
-   "salary_max": 46970,
+   "salary_min": 33662.0,
+   "salary_max": 46970.0,
    "salary_currency": "GBP",
    "salary_period": null,
    "salary_raw": "£33,662 to £46,970",
@@ -2617,7 +2615,7 @@
    "country": "Sweden",
    "city": "Alnarp",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-11-27T00:00:00Z",
    "days_left": 12,
    "disciplines": [
@@ -2661,7 +2659,7 @@
    "country": "United States",
    "city": "Miami",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-10-31T00:00:00Z",
    "days_left": 350,
    "disciplines": [
@@ -2701,7 +2699,7 @@
    "country": "Denmark",
    "city": "Roskilde",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -2740,7 +2738,7 @@
    "country": "Finland",
    "city": "Helsinki",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-12-15T23:59:59Z",
    "days_left": 30,
    "disciplines": [
@@ -2797,8 +2795,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 2200,
-   "salary_max": 2200,
+   "salary_min": 2200.0,
+   "salary_max": 2200.0,
    "salary_currency": "EUR",
    "salary_period": null,
    "salary_raw": "Salaire mensuel brut : entre 2 200 € et 2 420€ selon grille de l’Université",
@@ -2819,7 +2817,7 @@
    "country": "Sweden",
    "city": "Linköping",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-12-08T00:00:00Z",
    "days_left": 23,
    "disciplines": [
@@ -2899,7 +2897,7 @@
    "country": "United States",
    "city": "University Park, PA",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -2943,7 +2941,7 @@
    "country": "France",
    "city": "Toulouse",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -3000,8 +2998,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 62400,
-   "salary_max": 71760,
+   "salary_min": 62400.0,
+   "salary_max": 71760.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$62,400.00 - $71,760.00",
@@ -3062,7 +3060,7 @@
    "country": "United States",
    "city": "Columbia",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -3144,7 +3142,7 @@
    "country": "United Kingdom",
    "city": "Oxford",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-12-03T00:00:00Z",
    "days_left": 18,
    "disciplines": [
@@ -3164,8 +3162,8 @@
    "alternate_sources": [
     "https://www.jobs.ac.uk/job/DTN056/postdoctoral-prize-research-fellowships-in-politics"
    ],
-   "salary_min": 41700,
-   "salary_max": 41700,
+   "salary_min": 41700.0,
+   "salary_max": 41700.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£41,700 per annum",
@@ -3205,8 +3203,8 @@
    "alternate_sources": [
     "https://www.linkedin.com/jobs/view/4483116680"
    ],
-   "salary_min": 58000,
-   "salary_max": 58000,
+   "salary_min": 58000.0,
+   "salary_max": 58000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$58,000",
@@ -3296,8 +3294,8 @@
    "alternate_sources": [
     "https://www.linkedin.com/jobs/view/4482245948"
    ],
-   "salary_min": 50000,
-   "salary_max": 54000,
+   "salary_min": 50000.0,
+   "salary_max": 54000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$50,000 - $54,000",
@@ -3322,7 +3320,7 @@
    "country": "Norway",
    "city": "Tromsø",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -3380,8 +3378,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 1170,
-   "salary_max": 1170,
+   "salary_min": 1170.0,
+   "salary_max": 1170.0,
    "salary_currency": "EUR",
    "salary_period": "month",
    "salary_raw": "€1,170 per month plus an accommodation allowance",
@@ -3663,8 +3661,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 15,
-   "salary_max": 15,
+   "salary_min": 15.0,
+   "salary_max": 15.0,
    "salary_currency": "USD",
    "salary_period": "hour",
    "salary_raw": "$15.00 per hour",
@@ -3685,7 +3683,7 @@
    "country": "United States",
    "city": "Philadelphia",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -3704,8 +3702,8 @@
    "alternate_sources": [
     "https://upenn.wd1.myworkdayjobs.com/Wharton/job/Dinan-Hall---3rd-Floor/Pre-Doctoral-Research-Specialist_JR00128503"
    ],
-   "salary_min": 57000,
-   "salary_max": 61000,
+   "salary_min": 57000.0,
+   "salary_max": 61000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$57,000-61,000 plus benefits",
@@ -3729,7 +3727,7 @@
    "country": "United States",
    "city": "Philadelphia",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -3748,8 +3746,8 @@
    "alternate_sources": [
     "https://upenn.wd1.myworkdayjobs.com/Wharton/job/Dinan-Hall---4th-Floor/Pre-Doctoral-Research-Specialist--Real-Estate-Center-_JR00124462"
    ],
-   "salary_min": 61000,
-   "salary_max": 65000,
+   "salary_min": 61000.0,
+   "salary_max": 65000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$61,000-$65,000",
@@ -3770,7 +3768,7 @@
    "country": "United States",
    "city": "Philadelphia, Pennsylvania",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -3786,8 +3784,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 50000,
-   "salary_max": 60000,
+   "salary_min": 50000.0,
+   "salary_max": 60000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$50,000-60,000 plus benefits",
@@ -3831,8 +3829,8 @@
    "alternate_sources": [
     "https://urban.wd115.myworkdayjobs.com/Urban-Careers/job/The-Urban-Institute-DC/Research-Assistant---Quantitative--Health--Income--and-Benefits-Policy-Division-_R-801655"
    ],
-   "salary_min": 52520,
-   "salary_max": 52520,
+   "salary_min": 52520.0,
+   "salary_max": 52520.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "Min $52,520 - Mid $59,085- Max $65,650",
@@ -3943,7 +3941,7 @@
    "country": "United States",
    "city": "Philadelphia",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -3962,8 +3960,8 @@
    "alternate_sources": [
     "https://upenn.wd1.myworkdayjobs.com/Wharton/job/Solomon-Lab-Psychology/Pre-Doctoral-Research-Specialist_JR00127654-1"
    ],
-   "salary_min": 45278,
-   "salary_max": 50000,
+   "salary_min": 45278.0,
+   "salary_max": 50000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$45,278.00 - $50,000.00",
@@ -4108,7 +4106,7 @@
    "country": "Norway",
    "city": "Tromsø",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -4147,7 +4145,7 @@
    "country": "United Kingdom",
    "city": "London",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-22T00:00:00Z",
    "days_left": 7,
    "disciplines": [
@@ -4165,8 +4163,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 50733,
-   "salary_max": 67351,
+   "salary_min": 50733.0,
+   "salary_max": 67351.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£50,733 - £67,351 per annum",
@@ -4270,7 +4268,7 @@
    "country": "Sweden",
    "city": "Gothenburg",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2027-01-28T23:59:59Z",
    "days_left": 74,
    "disciplines": [
@@ -4309,7 +4307,7 @@
    "country": "Germany",
    "city": "Mannheim",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-25T23:59:59Z",
    "days_left": 10,
    "disciplines": [
@@ -4349,7 +4347,7 @@
    "country": "Germany",
    "city": "Munich",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-18T00:00:00Z",
    "days_left": 3,
    "disciplines": [
@@ -4367,8 +4365,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 68200,
-   "salary_max": 68200,
+   "salary_min": 68200.0,
+   "salary_max": 68200.0,
    "salary_currency": "EUR",
    "salary_period": "year",
    "salary_raw": "TV-L E 13 or E 14 (starting at 68,200 EUR incl. special annual payment)",
@@ -4509,7 +4507,7 @@
    "country": "Denmark",
    "city": "Aarhus",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-16T23:59:59Z",
    "days_left": 1,
    "disciplines": [
@@ -4547,7 +4545,7 @@
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-25T23:59:59Z",
    "days_left": 10,
    "disciplines": [
@@ -4589,7 +4587,7 @@
    "country": "Norway",
    "city": "Tromsø",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -4834,7 +4832,7 @@
    "country": "Denmark",
    "city": "Roskilde",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2027-01-10T22:59:00Z",
    "days_left": 56,
    "disciplines": [
@@ -4911,7 +4909,7 @@
    "country": "Canada",
    "city": "Calgary",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-12-15T23:59:59Z",
    "days_left": 30,
    "disciplines": [
@@ -4930,8 +4928,8 @@
    "alternate_sources": [
     "https://www.linkedin.com/jobs/view/4482185013"
    ],
-   "salary_min": 60000,
-   "salary_max": 60000,
+   "salary_min": 60000.0,
+   "salary_max": 60000.0,
    "salary_currency": "CAD",
    "salary_period": "year",
    "salary_raw": "$60,000 CAD per annum, plus University of Calgary Plan C health benefits",
@@ -5028,7 +5026,7 @@
    "country": "United Kingdom",
    "city": "Hatfield",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2027-01-04T23:59:00Z",
    "days_left": 50,
    "disciplines": [
@@ -5045,8 +5043,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 21805,
-   "salary_max": 21805,
+   "salary_min": 21805.0,
+   "salary_max": 21805.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "a minimum annual bursary of £21,805 (pro-rata for part-time study) and a full tuition fee waiver for three years (or six years part-time)",
@@ -5067,7 +5065,7 @@
    "country": "United Kingdom",
    "city": "Bristol",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-12-01T23:59:00Z",
    "days_left": 16,
    "disciplines": [
@@ -5087,8 +5085,8 @@
    "alternate_sources": [
     "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries"
    ],
-   "salary_min": 21805,
-   "salary_max": 21805,
+   "salary_min": 21805.0,
+   "salary_max": 21805.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£21,805 per annum stipend + full tuition fees (home/EU or international) + additional GTA income",
@@ -5147,7 +5145,7 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-04-20T23:59:59Z",
    "days_left": 156,
    "disciplines": [
@@ -5165,8 +5163,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 50000,
-   "salary_max": 50000,
+   "salary_min": 50000.0,
+   "salary_max": 50000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$50,000.00",
@@ -5229,7 +5227,7 @@
    "country": "United Kingdom",
    "city": "London",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-30T00:00:00Z",
    "days_left": 15,
    "disciplines": [
@@ -5354,7 +5352,7 @@
    "country": "Norway",
    "city": "Tromsø",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -5432,7 +5430,7 @@
    "country": "United Kingdom",
    "city": "London",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-11-15T23:59:00Z",
    "days_left": 0,
    "disciplines": [
@@ -5450,8 +5448,8 @@
    "alternate_sources": [
     "https://www.jobs.ac.uk/job/DTH457/2-x-research-officers"
    ],
-   "salary_min": 43277,
-   "salary_max": 49573,
+   "salary_min": 43277.0,
+   "salary_max": 49573.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£43,277 to £49,573 pa inclusive with potential to progress to £51,714 pa inclusive of London allowance.",
@@ -5549,7 +5547,7 @@
    "country": "Norway",
    "city": "Tromsø",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -5588,7 +5586,7 @@
    "country": "Germany",
    "city": "Berlin",
    "is_remote": false,
-   "duration_years": 5,
+   "duration_years": 5.0,
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 61,
    "disciplines": [
@@ -5628,7 +5626,7 @@
    "country": "Hong Kong",
    "city": "Pok Fu Lam",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 61,
    "disciplines": [
@@ -5713,7 +5711,7 @@
    "country": "Luxembourg",
    "city": "Belvaux",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-12-31T00:00:00Z",
    "days_left": 46,
    "disciplines": [
@@ -5841,7 +5839,7 @@
    "country": "United States",
    "city": "Princeton",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -5919,7 +5917,7 @@
    "country": "Hong Kong",
    "city": "Hong Kong",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-12-01T15:59:00Z",
    "days_left": 16,
    "disciplines": [
@@ -5958,7 +5956,7 @@
    "country": "Italy",
    "city": "Padua",
    "is_remote": false,
-   "duration_years": 4,
+   "duration_years": 4.0,
    "deadline": "2026-11-30T00:00:00Z",
    "days_left": 15,
    "disciplines": [
@@ -5998,7 +5996,7 @@
    "country": "Germany",
    "city": "Heidelberg",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-22T22:59:00Z",
    "days_left": 7,
    "disciplines": [
@@ -6137,8 +6135,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 33002,
-   "salary_max": 35608,
+   "salary_min": 33002.0,
+   "salary_max": 35608.0,
    "salary_currency": "GBP",
    "salary_period": null,
    "salary_raw": "£33,002 - £35,608",
@@ -6249,7 +6247,7 @@
    "country": "United States",
    "city": "Ann Arbor",
    "is_remote": true,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -6265,8 +6263,8 @@
    "deadline_note": null,
    "visa_note": "Existing work authorisation may be required (“authorized to work in the United States”)",
    "alternate_sources": [],
-   "salary_min": 20,
-   "salary_max": 22,
+   "salary_min": 20.0,
+   "salary_max": 22.0,
    "salary_currency": "USD",
    "salary_period": "hour",
    "salary_raw": "$20-$22/hour",
@@ -6290,7 +6288,7 @@
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2027-01-15T23:59:59Z",
    "days_left": 61,
    "disciplines": [
@@ -6459,7 +6457,7 @@
    "country": "United Kingdom",
    "city": "Oxford",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-19T12:00:00Z",
    "days_left": 4,
    "disciplines": [
@@ -6476,8 +6474,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 41636,
-   "salary_max": 47779,
+   "salary_min": 41636.0,
+   "salary_max": 47779.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£41,636 to £47,779 per annum, with a discretionary range to £53,483 per annum, including the Oxford University Weighting (OUW) and the possibility of a market pay supplement",
@@ -6498,7 +6496,7 @@
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2027-01-15T00:00:00Z",
    "days_left": 61,
    "disciplines": [
@@ -6562,8 +6560,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 41636,
-   "salary_max": 47779,
+   "salary_min": 41636.0,
+   "salary_max": 47779.0,
    "salary_currency": "GBP",
    "salary_period": "year",
    "salary_raw": "£41,636 to £47,779 per annum",
@@ -6584,7 +6582,7 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-02-08T23:59:59Z",
    "days_left": 85,
    "disciplines": [
@@ -6602,8 +6600,8 @@
    "alternate_sources": [
     "https://bit.ly/4ySSueu"
    ],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -6648,8 +6646,8 @@
    "alternate_sources": [
     "https://uchicago.wd5.myworkdayjobs.com/External/job/Chicago-IL/Research-Professional_JR34894"
    ],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -6675,7 +6673,7 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2026-11-20T23:59:59Z",
    "days_left": 5,
    "disciplines": [
@@ -6695,8 +6693,8 @@
    "alternate_sources": [
     "https://uchicago.wd5.myworkdayjobs.com/External/job/Charles-M-Harper-Center/Research-Professional_JR33684"
    ],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -6721,7 +6719,7 @@
    "country": "United States",
    "city": "Cambridge",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-07-15T00:00:00Z",
    "days_left": 242,
    "disciplines": [
@@ -6741,8 +6739,8 @@
    "alternate_sources": [
     "https://blueprintlabs.mit.edu/careers/predoctoral-researcher"
    ],
-   "salary_min": 69294,
-   "salary_max": 69294,
+   "salary_min": 69294.0,
+   "salary_max": 69294.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$69,294",
@@ -6786,8 +6784,8 @@
    "alternate_sources": [
     "https://uchicago.wd5.myworkdayjobs.com/External/job/Chicago-IL/Research-Professional--EPIC_JR34256"
    ],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -6812,7 +6810,7 @@
    "country": "Germany",
    "city": "Hannover",
    "is_remote": false,
-   "duration_years": 3,
+   "duration_years": 3.0,
    "deadline": "2026-11-22T11:00:00Z",
    "days_left": 7,
    "disciplines": [
@@ -6852,7 +6850,7 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-03-14T23:59:59Z",
    "days_left": 119,
    "disciplines": [
@@ -6868,8 +6866,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -6894,7 +6892,7 @@
    "country": "United States",
    "city": "Chicago",
    "is_remote": false,
-   "duration_years": 1,
+   "duration_years": 1.0,
    "deadline": "2027-03-14T23:59:59Z",
    "days_left": 119,
    "disciplines": [
@@ -6913,8 +6911,8 @@
    "alternate_sources": [
     "https://uchicago.wd5.myworkdayjobs.com/External/job/Chicago-IL/Research-Professional_JR35086"
    ],
-   "salary_min": 59000,
-   "salary_max": 62000,
+   "salary_min": 59000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$59,000.00 - $62,000.00",
@@ -6957,8 +6955,8 @@
    "alternate_sources": [
     "https://bit.ly/4yvcsMl"
    ],
-   "salary_min": 50000,
-   "salary_max": 60000,
+   "salary_min": 50000.0,
+   "salary_max": 60000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$50,000-60,000",
@@ -7001,8 +6999,8 @@
    "alternate_sources": [
     "https://bit.ly/4ynHYM4"
    ],
-   "salary_min": 50000,
-   "salary_max": 60000,
+   "salary_min": 50000.0,
+   "salary_max": 60000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$50,000-60,000",
@@ -7264,7 +7262,7 @@
    "country": "United States",
    "city": "Cambridge",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -7552,7 +7550,7 @@
    "country": "United States",
    "city": "Boston",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": null,
    "days_left": null,
    "disciplines": [
@@ -7643,19 +7641,20 @@
    "deadline": null,
    "days_left": null,
    "disciplines": [
-    "Public Policy",
-    "Environmental and Energy Economics"
+    "Applied Microeconomics"
    ],
    "visa": "unknown",
-   "summary": "This is a pre-doctoral research assistant position in climate change and public health at Columbia University under Professor Robert Metcalfe. The role is intended for individuals seeking research experience before pursuing a PhD.",
+   "summary": "The Staff Associate I will support research and academic projects with Professor Robert Metcalfe at Columbia University, focusing on applied microeconomics and the impacts of AI on economic outcomes. The role suits candidates able to follow established protocols, apply analytical skills, and assist with administrative research tasks.",
    "language": "en",
    "apply_url": "https://theeconomicmisfit.com/2026/09/23/pre-doc-research-assistant-under-professor-robert-metcalfe-at-columbia-university/",
    "source_url": "https://theeconomicmisfit.com/2026/09/23/pre-doc-research-assistant-under-professor-robert-metcalfe-at-columbia-university",
-   "confidence": 0.729,
+   "confidence": 0.884,
    "first_seen_at": "2026-10-11T09:51:14Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://theeconomicmisfit.com/2026/09/23/pre-doc-research-assistant-under-professor-robert-metcalfe-at-columbia-university"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -7719,13 +7718,13 @@
    "city": "Princeton",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2027-01-15T00:00:00Z",
+   "deadline": "2027-01-15T23:59:59Z",
    "days_left": 61,
    "disciplines": [
-    "Applied Microeconomics"
+    "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "Full-time predoctoral research role at Princeton University, working with Ilyana Kuziemko, Henrik Kleven, and Evan Soltas on public economics. The position is suitable for candidates with a background in economics or related disciplines who are enrolled in or planning to pursue a PhD.",
+   "summary": "The full-time predoctoral research role at Princeton University focuses on public economics and is supervised by Ilyana Kuziemko, Henrik Kleven, and Evan Soltas. The position is intended for a predoctoral researcher, with an application deadline of January 15, 2027.",
    "language": "en",
    "apply_url": "https://bit.ly/4xP280Q",
    "source_url": "https://bit.ly/4xP280Q",
@@ -7814,7 +7813,7 @@
    "visa_note": "Priority to citizens/residents (“Priority will be given to Canadian”); Relocation assistance mentioned; sponsorship unstated (“Relocation assistance”)",
    "alternate_sources": [],
    "salary_min": 114952.5,
-   "salary_max": 156778,
+   "salary_max": 156778.0,
    "salary_currency": "CAD",
    "salary_period": "year",
    "salary_raw": "Starting annual base salary CAD $114,952.50–$156,778.00 per year (2026 scales)",
@@ -7835,7 +7834,7 @@
    "country": "France",
    "city": "Paris",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-30T23:59:59Z",
    "days_left": 15,
    "disciplines": [
@@ -7855,8 +7854,8 @@
    "alternate_sources": [
     "https://www.sciencespo.fr/liepp/fr/actualites/appel-a-candidatures-contrat-post-doctoral-de-24-mois"
    ],
-   "salary_min": 3400,
-   "salary_max": 3400,
+   "salary_min": 3400.0,
+   "salary_max": 3400.0,
    "salary_currency": "EUR",
    "salary_period": "month",
    "salary_raw": "3400€ brut/mois",
@@ -7954,7 +7953,7 @@
    "country": "Sweden",
    "city": "Gothenburg",
    "is_remote": false,
-   "duration_years": 2,
+   "duration_years": 2.0,
    "deadline": "2026-11-19T23:59:59Z",
    "days_left": 4,
    "disciplines": [
@@ -8148,52 +8147,6 @@
    "sector": "institutional"
   },
   {
-   "id": 53,
-   "title": "Research Associate - Good Business Lab",
-   "institution": "Good Business Lab (advertised by J-PAL)",
-   "principal_investigator": null,
-   "country": "Colombia",
-   "city": null,
-   "is_remote": true,
-   "duration_years": null,
-   "deadline": null,
-   "days_left": null,
-   "disciplines": [
-    "Econometrics",
-    "Labor Economics",
-    "Development Economics"
-   ],
-   "visa": "unknown",
-   "summary": "Research Associate - Good Business Lab Location: Colombia Start Date (Earliest): 4 October 2026 Length of Commitment: Less than one year About Us: Good Business Lab is an independent, non-profit labor innovation company. We use rigorous academic research to prove that worker well-being programs have business impacts. We develop market-ready, scalable interventions that benefit both workers and businesses. Our goal is to disrupt the traditional notion of business and show that worker well-being can be a good business practice. The founders of the lab are Ach Adhvaryu - Professor of Economics...",
-   "language": "en",
-   "apply_url": "https://www.povertyactionlab.org/careers/research-associate-good-business-lab-job-105625",
-   "source_url": "https://www.povertyactionlab.org/careers/research-associate-good-business-lab-job-105625",
-   "confidence": 0.887,
-   "first_seen_at": "2026-10-07T13:07:14Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [
-    "https://www.povertyactionlab.org/careers/research-associate-good-business-lab-job-105625"
-   ],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [
-    "Python",
-    "Stata",
-    "R"
-   ],
-   "tools_preferred": [],
-   "min_degree": "bachelors",
-   "degree_note": "bachelor",
-   "start_term": null,
-   "start_date": null,
-   "kind": "predoc",
-   "sector": "academic"
-  },
-  {
    "id": 39,
    "title": "Research Assistant",
    "institution": "Opportunity and Inclusive Growth Institute (Institute), Federal Reserve Bank of Minneapolis",
@@ -8301,8 +8254,8 @@
    "alternate_sources": [
     "https://bit.ly/4zFggLT"
    ],
-   "salary_min": 70500,
-   "salary_max": 70500,
+   "salary_min": 70500.0,
+   "salary_max": 70500.0,
    "salary_currency": "USD",
    "salary_period": "year",
    "salary_raw": "$70,500 annually, plus benefits",
@@ -8429,8 +8382,8 @@
    "alternate_sources": [
     "https://uchicago.wd5.myworkdayjobs.com/External/job/Chicago-IL/Research-Professional--BFI_JR32644"
    ],
-   "salary_min": 55000,
-   "salary_max": 62000,
+   "salary_min": 55000.0,
+   "salary_max": 62000.0,
    "salary_currency": "USD",
    "salary_period": null,
    "salary_raw": "$55,000.00 - $62,000.00",
