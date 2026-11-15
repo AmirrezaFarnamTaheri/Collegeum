@@ -78,6 +78,39 @@ _ECON_PHD_RESEARCH_FOCUS = re.compile(
     r"[^.!?\n]{0,120}\b(?:econom\w*|econometr\w*|political economy)\b",
     re.I,
 )
+# Explicitly adjacent quantitative/human-science PhDs are part of the
+# existing non-US academic channel. Require the subject in the advert, not
+# inferred discipline tags (which caused unrelated Law and Engineering sends).
+_ADJACENT_PHD_TOPIC = re.compile(
+    r"\b(?:computational\s+(?:human|social|behaviou?ral)\s+sciences?|"
+    r"computational\s+(?:demograph\w*|sociolog\w*)|"
+    r"digital(?:\s+and\s+computational)?\s+demograph\w*|"
+    r"demograph(?:y|ic\w*)|"
+    r"population\s+(?:studies|health|dynamics|data\s+science)|"
+    r"quantitative\s+social\s+sciences?|social\s+data\s+sciences?)\b",
+    re.I,
+)
+_ADJACENT_PHD_RESEARCH_FOCUS = re.compile(
+    r"\b(?:research (?:project|group|in|on|into|combining)|"
+    r"project (?:in|on|studying|investigating|focus(?:es|ed|ing)? on)|"
+    r"focus(?:es|ed|ing)? (?:on|in))"
+    r"[^.!?\n]{0,120}\b(?:computational\s+(?:human|social)\s+sciences?|"
+    r"computational\s+(?:demograph\w*|sociolog\w*)|"
+    r"demograph(?:y|ic\w*)|population\s+(?:studies|health|dynamics|data\s+science)|"
+    r"quantitative\s+social\s+sciences?|social\s+data\s+sciences?)\b",
+    re.I,
+)
+_SPECIFIC_PHD_STUDENTSHIP = re.compile(
+    r"\b(?:ph\.?d\.?|doctoral)\s+"
+    r"(?:studentship|scholarship|fellowship|research(?:er)?\s+position)\b",
+    re.I,
+)
+_STUDENTSHIP_FUNDING = re.compile(
+    r"\b(?:jointly|fully|specifically)\s+funded\b|"
+    r"\bfunded\s+(?:\d+[\s-]year\s+)?"
+    r"(?:ph\.?d\.?|doctoral|studentship|research|fellowship|position)\b",
+    re.I,
+)
 _DOCTORAL_ADMISSIONS = re.compile(
     r"\b(?:general admission|admissions? to|"
     r"applications? (?:to|for) (?:the )?(?:(?:graduate|degree) )?program(?:me)?|"
@@ -220,7 +253,7 @@ class Router:
         return Channel.TELEGRAM
 
     def telegram_phd_eligible(self, listing: PredocListing) -> bool:
-        """True only for doctoral Economics vacancies with a known non-US workplace."""
+        """Economics and adjacent quantitative-human-science PhDs outside the US."""
         country = (listing.location.country or "").strip().lower()
         if country in _KNOWN_UNSPECIFIED or country in _US_NAMES:
             return False
@@ -234,14 +267,26 @@ class Router:
             min_degree=listing.min_degree, degree_note=listing.degree_note,
         ) != "phd":
             return False
-        text = f"{listing.title} {listing.summary or ''}"
-        if _DOCTORAL_ADMISSIONS.search(text):
+        title = listing.title
+        summary = listing.summary or ""
+        text = f"{title} {summary}"
+        # A named, funded doctoral studentship may require university
+        # registration as a condition of taking the award. That is not the
+        # same as advertising generic degree-programme admissions.
+        specific_funded_award = bool(
+            _SPECIFIC_PHD_STUDENTSHIP.search(title)
+            and _STUDENTSHIP_FUNDING.search(summary)
+        )
+        if _DOCTORAL_ADMISSIONS.search(text) and not specific_funded_award:
             return False
-        if _NON_ECON_TITLE.search(listing.title) and not _ECON_SUBJECT.search(listing.title):
+        title_econ = bool(_ECON_SUBJECT.search(title))
+        title_adjacent = bool(_ADJACENT_PHD_TOPIC.search(title))
+        if _NON_ECON_TITLE.search(title) and not (title_econ or title_adjacent):
             return False
         return bool(
-            _ECON_SUBJECT.search(listing.title)
-            or _ECON_PHD_RESEARCH_FOCUS.search(listing.summary or "")
+            title_econ or title_adjacent
+            or _ECON_PHD_RESEARCH_FOCUS.search(summary)
+            or _ADJACENT_PHD_RESEARCH_FOCUS.search(summary)
         )
 
     def destinations(self, listing: PredocListing) -> frozenset[Channel]:

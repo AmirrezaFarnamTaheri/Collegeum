@@ -116,7 +116,10 @@ MASTERS_FOR_PHD = re.compile(
 OUT_OF_SCOPE_TITLE = re.compile(
     r"\b(?:experimental physics|physics|statistics|statistical sciences|"
     r"classroom|educational science|education research|social science|"
-    r"economic\w*|econometrics|business administration|political science)\b",
+    r"economic\w*|econometrics|nationalekonomi|business administration|"
+    r"political science|computing science|computer science|symbolic AI|"
+    r"artificial intelligence|machine learning|"
+    r"computational (?:human|social) science|psychology|legal and ethical)\b",
     re.I,
 )
 
@@ -254,11 +257,16 @@ def classify_post_decision(
     if not valid or len(post.url) > 1024 or not 5 <= len(post.title) <= 500:
         return None, "invalid_url"
     key = "career:" + hashlib.sha256(post.url.encode("utf-8")).hexdigest()[:32]
+    # Some ATS adapters emit internal numeric location IDs, e.g. "7".
+    # Never show those as a city: fall back to the verified country.
+    raw_location = (post.location or "").strip()
+    if re.fullmatch(r"\d{1,8}", raw_location):
+        raw_location = ""
     result = {
         "key": key, "category": CATEGORY, "scope": "",
         "title": post.title[:200],
         "employer": (post.institution or "Research institution")[:160],
-        "location": (post.location or country)[:100],
+        "location": (raw_location or country)[:100],
         "country": country, "source": post.source[:80], "url": post.url,
         "research_priority": "focus" if primary else "related",
         "funding_status": "unverified",
