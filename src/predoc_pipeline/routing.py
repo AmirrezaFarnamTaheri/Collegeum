@@ -1,12 +1,15 @@
 """Decide where an accepted listing is published.
 
-Two destinations, never both:
+The base route selects web/X or Telegram. The additive doctoral publisher can
+also send vetted non-US PhD vacancies to the EXISTING Predoc Telegram channel,
+without removing their original web/X publication or resetting any receipts.
 
-* ``web``: the website and X. US positions; PhD, postdoctoral, and
-  PhD-qualified staff research positions; and institutional employers
-  explicitly included by routing configuration.
-* ``telegram``: pre-doctoral roles outside the US at universities and
-  research institutes.
+* ``web``: the website and X. US positions; doctoral, postdoctoral, and
+  PhD-qualified staff research positions; institutional employers configured
+  for the website.
+* ``telegram``: non-US predoctoral roles at eligible academic employers,
+  plus explicitly vetted non-US doctoral research in economics and adjacent
+  computational, demographic and quantitative human/social sciences.
 
 The rules live in ``[routing]`` of ``config/preferences.toml``.
 """
@@ -243,9 +246,8 @@ class Router:
         kind = self.position_kind(
             title, summary, min_degree=min_degree, degree_note=degree_note,
         )
-        # The public Telegram channel is explicitly predoc-only: a future
-        # preference edit cannot silently send doctorate-qualified or doctoral
-        # student vacancies into that channel.
+        # Base channel routing is still predoc-only; reviewed additive
+        # doctoral publishing is handled separately by destinations().
         if kind != "predoc" or kind in self.cfg.web_position_kinds:
             return Channel.WEB
         if self._web_employer(institution):

@@ -408,7 +408,7 @@ def render_digest_batches(
         kind_label = f"predoc listing{'s' if total != 1 else ''}"
     else:
         kind_label = f"research position{'s' if total != 1 else ''}"
-    head = (f"🎓 <b>Previously collected Economics PhD positions · {total}</b>\n\n"
+    head = (f"🎓 <b>Previously collected PhD positions · {total}</b>\n\n"
             if historical else f"🎓 <b>{total} new {kind_label}</b>\n\n")
     footer = ""
     if site_url:
