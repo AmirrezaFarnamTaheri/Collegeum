@@ -38,7 +38,6 @@ import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from html import escape as escape_attribute
 from pathlib import Path
 from typing import Any, cast
 
@@ -72,7 +71,6 @@ from .publish.telegram import (
     TelegramError,
     render_card,
     render_historical_card,
-    render_digest_batches,
     render_keyboard,
 )
 from .routing import Channel, Router
@@ -1036,14 +1034,8 @@ def _broadcast(
     if not listings:
         return
 
-    # Private feedback buttons require a durable encrypted marks store.
-    # Public channel publication remains available with TELEGRAM_BOT_TOKEN
-    # even when private encryption is unavailable to this workflow.
-    include_feedback = bool(
-        settings.telegram_feedback_buttons and settings.feedback_encryption_key
-    )
-    digest_page_size = max(1, digest_page_size)
-    status_of = feedback.status if feedback is not None else (lambda _h: None)
+    # Keep legacy digest_page_size/feedback arguments for existing callers,
+    # but every public vacancy now gets an independent card and receipt.
     send_kw: dict[str, Any] = {"sleep": sleep} if sleep else {}
 
     kept, aliases = _group_broadcast_candidates(listings, db)
@@ -1164,14 +1156,8 @@ def _publish_non_us_econ_phds(
     if telegram is None:
         log.warning("telegram_phd_no_channel_credentials")
         return
-    # A missing or malformed username only affects private Save links.
     # Public PhD announcements use the SAME configured Predoc channel.
-    bot_username = settings.telegram_bot_username.strip()
-    if bot_username and re.fullmatch(r"[A-Za-z0-9_]{5,32}", bot_username) is None:
-        log.warning("telegram_phd_favorites_disabled_invalid_bot_username")
-        bot_username = ""
-    if not bot_username:
-        log.info("telegram_phd_publishing_without_save_links")
+    # Channel Save callbacks do not require an optional bot username.
 
     from .core.output_quality import suppressed_public_alias
     policy = Policy(prefs)
