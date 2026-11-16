@@ -719,8 +719,8 @@ def _handle_tap(
         import re
 
         prefix = data.removeprefix("fav:save:")
-        callback_id = str(cq.get("id") or "")
-        if not callback_id or re.fullmatch(r"[a-f0-9]{16}", prefix) is None:
+        favorite_callback_id = str(cq.get("id") or "")
+        if not favorite_callback_id or re.fullmatch(r"[a-f0-9]{16}", prefix) is None:
             summary["ignored"] += 1
             return False
         if user is None or user <= 0 or chat is None or chat >= 0 or (
@@ -730,17 +730,17 @@ def _handle_tap(
             return False
         if not store.key:
             note = "Saving is temporarily unavailable."
-        elif store.callback_seen(callback_id):
+        elif store.callback_seen(favorite_callback_id):
             note = "Already processed."
         else:
             try:
-                new = store.add_favorite(user, prefix)
-                note = "🔖 Saved to your favorites." if new else "Already saved."
+                favorite_added = store.add_favorite(user, prefix)
+                note = "🔖 Saved to your favorites." if favorite_added else "Already saved."
             except ValueError:
                 note = "Favorites limit reached (200)."
-            store.remember_callback(callback_id)
+            store.remember_callback(favorite_callback_id)
             store.save()
-        bot.call("answerCallbackQuery", {"callback_query_id": callback_id,
+        bot.call("answerCallbackQuery", {"callback_query_id": favorite_callback_id,
                  "text": note})
         summary["taps"] += 1
         return False
