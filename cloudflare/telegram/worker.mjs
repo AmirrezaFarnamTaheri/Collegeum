@@ -166,9 +166,13 @@ export class TelegramBot {
     const publicChat = message?.chat?.type === 'private' &&
       Number.isSafeInteger(message?.chat?.id) && message.chat.id > 0 &&
       (callback?.from?.id ?? message.from?.id) === message.chat.id;
-    if (!message || (!owner && !publicChat) ||
+    const channelSave = callback?.message?.chat?.type === 'channel' &&
+      Number.isSafeInteger(callback.from?.id) && callback.from.id > 0 &&
+      /^fav:save:[a-f0-9]{16}$/.test(String(callback.data || ''));
+    if (!message || (!owner && !publicChat && !channelSave) ||
         (callback && !owners.has(String(callback.from?.id)) &&
-          !(publicChat && /^(?:sub:|fav:)/.test(String(callback.data || ''))))) return json({ok: true, ignored: true});
+          !(publicChat && /^(?:sub:|fav:)/.test(String(callback.data || ''))) &&
+          !channelSave)) return json({ok: true, ignored: true});
     const question = callback ? null : aiQuestion(message);
     if (question !== null && question.trim() && question.length <= 1000 &&
         this.env.AI_ENABLED !== 'false' && (owner || this.env.PUBLIC_AI_ENABLED === 'true'))
@@ -639,8 +643,38 @@ export class TelegramBot {
   }
 
   async favoriteCallback(callback, updateKey) {
-    const message = callback.message, id = message.chat.id;
+    const message = callback.message;
     const parts = String(callback.data || '').split(':');
+    if (parts[1] === 'save' && parts.length === 3) {
+      // Channel messages belong to a public chat. Save only to the identity
+      // Telegram supplies in callback.from, never to the channel's identity.
+      const user = callback.from?.id;
+      if (message.chat?.type !== 'channel' ||
+          !Number.isSafeInteger(user) || user <= 0 ||
+          !FAVORITE_PREFIX.test(parts[2])) return;
+      let status = 'already';
+      await this.ctx.storage.transaction(async tx => {
+        const claim = await tx.get(updateKey) || {};
+        if (claim.favorite_mutation_applied) return;
+        const key = this.favoriteKey(user, parts[2]);
+        if (!await tx.get(key)) {
+          const saved = await tx.list({prefix: `favorite:${user}:`});
+          if (saved.size >= FAVORITE_LIMIT) status = 'full';
+          else {
+            await tx.put(key, {saved_at: new Date().toISOString()});
+            status = 'saved';
+          }
+        }
+        await tx.put(updateKey, {...claim, favorite_mutation_applied:true});
+      });
+      await this.deliver(updateKey,'answerCallbackQuery',{
+        callback_query_id: callback.id,
+        text: status === 'saved' ? '🔖 Saved to your favorites.' :
+          status === 'full' ? 'Favorites limit reached (200).' : 'Already saved.',
+      });
+      return;
+    }
+    const id = message.chat.id;
     if (parts[0] !== 'fav' || ![3, 4].includes(parts.length)) return;
     if (parts[1] === 'remove') {
       if (!FAVORITE_PREFIX.test(parts[2]) ||
