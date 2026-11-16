@@ -317,7 +317,7 @@ def test_filled_positions_leave_the_dashboard_on_recheck(settings):
     assert all("Stockholm" not in r["institution"] for r in dashboard["listings"])
 
 
-def test_digest_for_many_new_listings_is_paged_with_numbered_buttons(settings):
+def test_large_new_batch_always_publishes_one_card_per_listing(settings):
     many = settings.model_copy(update={
         "telegram_digest_threshold": 2,
         "feedback_encryption_key": generate_key(),
@@ -326,10 +326,12 @@ def test_digest_for_many_new_listings_is_paged_with_numbered_buttons(settings):
     stats = run(many, fake)
     msgs = fake.sent()
     assert stats.published == 4
-    # preferences.toml: digest_page_size = 6 -> one message with 4 numbered rows
-    assert len(msgs) == 1 and "4 new predoc listings" in msgs[0]["text"]
-    rows = msgs[0]["reply_markup"]["inline_keyboard"]
-    assert [r[0]["text"] for r in rows] == ["✅ 1", "✅ 2", "✅ 3", "✅ 4"]
+    assert len(msgs) == 4
+    for msg in msgs:
+        buttons = msg["reply_markup"]["inline_keyboard"]
+        assert [button["text"] for button in buttons[0]] == ["Open listing", "🔖 Save"]
+        assert buttons[1 - 1][1]["callback_data"].startswith("fav:save:")
+        assert "new predoc listings" not in msg["text"]
 
 
 def test_blocked_bot_keeps_everything_pending(settings):
