@@ -713,6 +713,37 @@ def _handle_tap(
     message = cq.get("message") or {}
     chat = _chat_id(message.get("chat"))
     user = _chat_id(cq.get("from"))
+    # A public channel button has a negative chat ID, but callback.from is
+    # the actual tapping user. Never store the channel itself as a favorite.
+    if isinstance(data, str) and data.startswith("fav:save:"):
+        import re
+
+        prefix = data.removeprefix("fav:save:")
+        favorite_callback_id = str(cq.get("id") or "")
+        if not favorite_callback_id or re.fullmatch(r"[a-f0-9]{16}", prefix) is None:
+            summary["ignored"] += 1
+            return False
+        if user is None or user <= 0 or chat is None or chat >= 0 or (
+            (message.get("chat") or {}).get("type") != "channel"
+        ):
+            summary["ignored"] += 1
+            return False
+        if not store.key:
+            note = "Saving is temporarily unavailable."
+        elif store.callback_seen(favorite_callback_id):
+            note = "Already processed."
+        else:
+            try:
+                favorite_added = store.add_favorite(user, prefix)
+                note = "🔖 Saved to your favorites." if favorite_added else "Already saved."
+            except ValueError:
+                note = "Favorites limit reached (200)."
+            store.remember_callback(favorite_callback_id)
+            store.save()
+        bot.call("answerCallbackQuery", {"callback_query_id": favorite_callback_id,
+                 "text": note})
+        summary["taps"] += 1
+        return False
     if isinstance(data, str) and data.startswith("fav:"):
         parts = data.split(":")
         if (chat is None or chat <= 0 or chat != user

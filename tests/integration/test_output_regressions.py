@@ -1,6 +1,5 @@
 """Rendered size, structural validity and delivery membership at output boundaries."""
 
-import html
 import re
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -129,11 +128,10 @@ def test_digest_delivery_marks_only_the_members_of_successful_pages(tmp_path):
         stats = pipeline.RunStats()
         pipeline._broadcast(accepted, telegram, settings, db, stats, digest_page_size=30)
         assert len(telegram.sent) >= 2
-        failed_indices = {int(n) for n in re.findall(r"(\d+)\. Research Assistant",
-                                                   html.unescape(telegram.sent[1]))}
+        assert len(telegram.sent) == 30
         for i, (lid, _) in enumerate(accepted, 1):
-            assert (db.listing(lid)["status"] == "published") is (i not in failed_indices)
-        assert stats.published == 30 - len(failed_indices)
+            assert (db.listing(lid)["status"] == "published") is (i != 2)
+        assert stats.published == 29
 
 
 @pytest.mark.parametrize("page_size", [0, 1, 30])

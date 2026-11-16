@@ -54,11 +54,9 @@ def test_enabled_phd_backfill_uses_existing_predoc_channel_without_bot_username(
         sent = telegram.send_message.call_args.kwargs
         assert sent["chat_id"] == "@existing_predoc_channel"
         assert "Previously collected" in sent["html"]
-        assert all(
-            "Save" not in button["text"]
-            for row in (sent["keyboard"] or {}).get("inline_keyboard", [])
-            for button in row
-        )
+        buttons = sent["keyboard"]["inline_keyboard"][0]
+        assert [button["text"] for button in buttons] == ["Open listing", "🔖 Save"]
+        assert buttons[1]["callback_data"].startswith("fav:save:")
         assert db.telegram_state(lid) == "confirmed"
         assert db.listing(lid)["telegram_message_id"] == 980
         assert db.listing(lid)["published_at"] == published_at

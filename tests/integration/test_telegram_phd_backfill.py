@@ -32,6 +32,21 @@ def test_save_button_deep_link_encodes_stable_listing_key():
     assert links[0]["url"] == "https://t.me/collegeum_example_bot?start=f_" + "a"*16
 
 
+def test_public_card_keeps_source_link_alongside_open_and_save():
+    job = _phd().model_copy(update={
+        "apply_url": "https://example.org/official/apply",
+        "source_url": "https://example.org/official/description",
+    })
+    keyboard = render_keyboard(
+        job, url_hash="b" * 64, channel_favorites=True, feedback=False,
+    )
+    rows = keyboard["inline_keyboard"]
+    assert [button["text"] for button in rows[0]] == ["Open listing", "🔖 Save"]
+    assert rows[0][0]["url"] == job.apply_url
+    assert rows[0][1]["callback_data"] == "fav:save:" + "b" * 16
+    assert rows[1] == [{"text": "Source", "url": job.source_url}]
+
+
 def test_phd_backfill_once_and_preserves_existing_web_receipts(tmp_path):
     path = tmp_path / "jobs.db"
     init(path)

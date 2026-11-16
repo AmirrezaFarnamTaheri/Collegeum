@@ -165,10 +165,9 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertIn('"telegram_private_sync_skipped"', pipeline_code)
         self.assertIn('public_channel="unaffected"', pipeline_code)
-        self.assertIn(
-            'settings.telegram_feedback_buttons and settings.feedback_encryption_key',
-            pipeline_code,
-        )
+        # Public channel cards no longer depend on a private encryption key:
+        # the channel Save callback is associated with its tapping user.
+        self.assertIn('channel_favorites=True', pipeline_code)
         telegram = workflow("telegram.yml")
         self.assertIn("Public channel announcements use TELEGRAM_BOT_TOKEN", telegram)
         self.assertIn("FEEDBACK_ENCRYPTION_KEY was not injected", telegram)

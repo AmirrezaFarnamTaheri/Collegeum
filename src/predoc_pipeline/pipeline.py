@@ -38,7 +38,6 @@ import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from html import escape as escape_attribute
 from pathlib import Path
 from typing import Any, cast
 
@@ -71,7 +70,7 @@ from .publish.telegram import (
     TelegramClient,
     TelegramError,
     render_card,
-    render_digest_batches,
+    render_historical_card,
     render_keyboard,
 )
 from .routing import Channel, Router
@@ -1029,20 +1028,17 @@ def _broadcast(
 
     Web listings (US, PhD/postdoc, banks, international organizations, firms) are
     published by the dashboard export and posted to X when configured. Telegram
-    listings (non-US predocs) go out as cards or as a few numbered digest messages;
-    with a personal chat configured (see ``Settings.owner_ids``) every card and
-    digest carries ✅ ❌ 📝 buttons and ``telegram-sync`` records the taps.
+    listings (non-US predocs) always receive independent cards and receipts.
+    Channel Save callbacks create private per-user bookmarks.
     """
     if not listings:
         return
 
-    # Private feedback buttons require a durable encrypted marks store.
-    # Public channel publication remains available with TELEGRAM_BOT_TOKEN
-    # even when private encryption is unavailable to this workflow.
+    # Keep legacy digest_page_size/feedback arguments for existing callers,
+    # but every public vacancy now gets an independent card and receipt.
     include_feedback = bool(
         settings.telegram_feedback_buttons and settings.feedback_encryption_key
     )
-    digest_page_size = max(1, digest_page_size)
     status_of = feedback.status if feedback is not None else (lambda _h: None)
     send_kw: dict[str, Any] = {"sleep": sleep} if sleep else {}
 
@@ -1093,87 +1089,21 @@ def _broadcast(
 
     hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
 
-    if (
-        settings.telegram_digest_threshold > 0
-        and len(listings) > settings.telegram_digest_threshold
-    ):
-        # A backfill should not fire forty separate notifications.
-        pages = render_digest_batches(
-            [(hashes[lid], listing) for lid, listing in listings],
-            site_url=settings.site_url,
-            page_size=digest_page_size,
-            feedback=include_feedback,
-            status_of=status_of,
-            bot_username=settings.telegram_bot_username,
-        )
-        for page in pages:
-            chunk = listings[page.start:page.end]
-            try:
-                message_id = telegram.send_message(
-                    chat_id=settings.telegram_public_channel_id,
-                    html=page.html,
-                    keyboard=page.keyboard,
-                    **send_kw,
-                )
-            except TelegramError as exc:
-                stats.errors += 1
-                db.log_dlq(
-                    run_id=stats.run_id,
-                    stage="digest",
-                    source="telegram",
-                    source_url="",
-                    payload=f"{len(chunk)} listings",
-                    error=str(exc),
-                )
-                if getattr(exc, "uncertain", False):
-                    # A message may have been delivered without its acknowledgement.
-                    # Never automatically resend any member of this digest.
-                    for listing_id, _ in chunk:
-                        record_delivery(listing_id, "delivery-uncertain")
-                    log.error("telegram_digest_needs_reconciliation",
-                              listing_ids=[lid for lid, _ in chunk])
-                    continue
-                if _chat_level(exc):
-                    _telegram_setup_problem(settings, exc)
-                    return
-                continue  # a definite failed send can be retried next run
-            for listing_id, _ in chunk:
-                record_delivery(listing_id, "published", message_id)
-            stats.published += len(chunk)
-        return
-
     for listing_id, listing in listings:
         keyboard = render_keyboard(
-            listing,
-            url_hash=(hashes[listing_id] if include_feedback or settings.telegram_bot_username
-                      else None),
-            status=status_of(hashes[listing_id]) if include_feedback else None,
-            bot_username=settings.telegram_bot_username,
+            listing, url_hash=hashes[listing_id], channel_favorites=True,
             feedback=include_feedback,
+            status=status_of(hashes[listing_id]) if include_feedback else None,
         )
         try:
-            try:
-                message_id = telegram.send_message(
-                    chat_id=settings.telegram_public_channel_id,
-                    html=render_card(listing),
-                    keyboard=keyboard,
-                    **send_kw,
-                )
-            except TelegramError as exc:
-                if exc.status != 400 or not keyboard:
-                    raise
-                # Telegram refuses the whole message when one button URL is
-                # malformed; the link is also in the text, so send it without.
-                # The URL goes in an HTML attribute, so it must be escaped
-                # for attribute context (quotes included) -- not merely for
-                # text context. escape_telegram_html leaves quotes intact.
-                link = escape_attribute(listing.apply_url, quote=True)
-                message_id = telegram.send_message(
-                    chat_id=settings.telegram_public_channel_id,
-                    html=render_card(listing) + f'\n\n<a href="{link}">Open the advert</a>',
-                    keyboard=None,
-                    **send_kw,
-                )
+            # Fail visibly instead of silently publishing a card with missing
+            # actions after Telegram rejects its keyboard.
+            message_id = telegram.send_message(
+                chat_id=settings.telegram_public_channel_id,
+                html=render_card(listing),
+                keyboard=keyboard,
+                **send_kw,
+            )
         except TelegramError as exc:
             stats.errors += 1
             db.log_dlq(
@@ -1232,14 +1162,8 @@ def _publish_non_us_econ_phds(
     if telegram is None:
         log.warning("telegram_phd_no_channel_credentials")
         return
-    # A missing or malformed username only affects private Save links.
     # Public PhD announcements use the SAME configured Predoc channel.
-    bot_username = settings.telegram_bot_username.strip()
-    if bot_username and re.fullmatch(r"[A-Za-z0-9_]{5,32}", bot_username) is None:
-        log.warning("telegram_phd_favorites_disabled_invalid_bot_username")
-        bot_username = ""
-    if not bot_username:
-        log.info("telegram_phd_publishing_without_save_links")
+    # Channel Save callbacks do not require an optional bot username.
 
     from .core.output_quality import suppressed_public_alias
     policy = Policy(prefs)
@@ -1299,40 +1223,33 @@ def _publish_non_us_econ_phds(
                     if (lid not in fresh_ids) == historical]
         if not selected:
             continue
-        pages = render_digest_batches(
-            [(url_hash(job.apply_url), job) for _, job in selected],
-            site_url=settings.site_url,
-            page_size=min(6, prefs.telegram.digest_page_size),
-            feedback=False, bot_username=bot_username,
-            historical=historical,
-        )
-        for page in pages:
-            chunk = selected[page.start:page.end]
-            for lid, _ in chunk:
-                db.record_telegram_delivery(lid, "pending")
+        for lid, job in selected:
+            db.record_telegram_delivery(lid, "pending")
             try:
                 receipt = telegram.send_message(
                     chat_id=settings.telegram_public_channel_id,
-                    html=page.html, keyboard=page.keyboard,
+                    html=render_historical_card(job) if historical else render_card(job),
+                    keyboard=render_keyboard(
+                        job, url_hash=url_hash(job.apply_url), channel_favorites=True,
+                        feedback=False,
+                    ),
                 )
             except TelegramError as exc:
                 stats.errors += 1
-                for lid, _ in chunk:
-                    if exc.uncertain:
-                        db.record_telegram_delivery(lid, "uncertain")
-                    elif exc.permanent and not _chat_level(exc):
-                        db.record_telegram_delivery(lid, "permanent_failure")
+                if exc.uncertain:
+                    db.record_telegram_delivery(lid, "uncertain")
+                elif exc.permanent and not _chat_level(exc):
+                    db.record_telegram_delivery(lid, "permanent_failure")
                 if _chat_level(exc):
                     log.warning("telegram_phd_channel_unavailable", error=str(exc))
                     return
-                log.warning("telegram_phd_backfill_failed", count=len(chunk),
+                log.warning("telegram_phd_backfill_failed", listing_id=lid,
                             uncertain=exc.uncertain, error=str(exc))
                 continue
-            for lid, _ in chunk:
-                db.record_telegram_delivery(lid, "confirmed", message_id=receipt)
-                stats.published += 1
-            log.info("telegram_phd_published", count=len(chunk),
-                     historical=historical)
+            db.record_telegram_delivery(lid, "confirmed", message_id=receipt)
+            stats.published += 1
+            log.info("telegram_phd_published", listing_id=lid,
+                     historical=historical, message_id=receipt)
 
 
 def _chat_level(exc: TelegramError) -> bool:

@@ -1060,3 +1060,36 @@ test('authenticated sync exports scoped user favorites but public status does no
   assert.equal(publicStatus.status, 200);
   assert.equal('favorites' in await publicStatus.json(), false);
 });
+
+test('public channel Save callbacks bookmark the tapping user, not the channel', async () => {
+  const instance = bot();
+  const prefix = 'c'.repeat(16);
+  const tap = (update, user) => ({update_id: update, callback_query: {
+    id: String(update), from: {id: user},
+    message: {chat: {id: -100123456, type: 'channel'}, message_id: 19},
+    data: 'fav:save:' + prefix,
+  }});
+  for (const [id, user] of [[14301, 997], [14302, 998], [14303, 997]]) {
+    const result = await instance.fetch(post('/webhook', tap(id, user)));
+    assert.equal(result.status, 200);
+  }
+  assert.equal((await instance.ctx.storage.list({prefix: 'favorite:997:'})).size, 1);
+  assert.equal((await instance.ctx.storage.list({prefix: 'favorite:998:'})).size, 1);
+  assert.equal((await instance.ctx.storage.list({prefix: 'favorite:-100123456:'})).size, 0);
+  assert.equal(instance.calls.filter(call => call.method === 'answerCallbackQuery').length, 3);
+  assert.equal(instance.calls.filter(call => call.method === 'sendMessage').length, 0);
+});
+
+test('unrelated public channel callbacks cannot modify favorites', async () => {
+  const instance = bot();
+  for (const [id, data] of [[14311, 'fav:remove:' + 'd'.repeat(16)],
+                           [14312, 'fav:save:malformed'],
+                           [14313, 'fb|v|' + 'd'.repeat(16)]]) {
+    const result = await instance.fetch(post('/webhook', {update_id: id,
+      callback_query: {id: String(id), from: {id: 997},
+        message: {chat: {id: -100123456, type: 'channel'}, message_id: 19}, data}}));
+    assert.equal(result.status, 200);
+  }
+  assert.equal((await instance.ctx.storage.list({prefix: 'favorite:'})).size, 0);
+  assert.equal(instance.calls.length, 0);
+});

@@ -54,6 +54,7 @@ __all__ = [
     "TelegramError",
     "TelegramClient",
     "render_card",
+    "render_historical_card",
     "render_keyboard",
     "render_digest",
     "render_digest_pages",
@@ -226,7 +227,7 @@ def _format_other(listing: PredocListing) -> str | None:
     return "; ".join(notes) if notes else None
 
 
-def render_card(listing: PredocListing) -> str:
+def render_card(listing: PredocListing, *, extra_budget: int = 0) -> str:
     """One vacancy as an enriched Telegram HTML card, guaranteed under the length limit."""
     esc = escape_telegram_html
     location_bits = [b for b in (listing.location.city, listing.location.country) if b]
@@ -286,7 +287,7 @@ def render_card(listing: PredocListing) -> str:
 
     # Build the body last and size it against what remains of the budget.
     fixed = "\n".join(lines) + "\n\n\n" + tag_line
-    budget = MAX_MESSAGE_CHARS - SAFETY_CHARS - telegram_visible_length(fixed)
+    budget = MAX_MESSAGE_CHARS - SAFETY_CHARS - extra_budget - telegram_visible_length(fixed)
     summary_budget = max(0, min(MAX_SUMMARY_CHARS, budget))
     summary = truncate_utf16(squish(listing.summary), summary_budget) if summary_budget > 40 else ""
 
@@ -298,6 +299,17 @@ def render_card(listing: PredocListing) -> str:
     return body
 
 
+def render_historical_card(listing: PredocListing) -> str:
+    """One previously collected vacancy, never misleadingly labeled as new."""
+    prefix = "🎓 <b>Previously collected PhD position</b>\n\n"
+    notice = (
+        "\n\n<i>Stored vacancy; current availability is not independently "
+        "verified. Check the official advert.</i>"
+    )
+    reserved = telegram_visible_length(prefix + notice)
+    return prefix + render_card(listing, extra_budget=reserved) + notice
+
+
 def render_keyboard(
     listing: PredocListing,
     *,
@@ -305,6 +317,7 @@ def render_keyboard(
     status: str | None = None,
     bot_username: str = "",
     feedback: bool = True,
+    channel_favorites: bool = False,
 ) -> dict[str, Any]:
     """Inline buttons. The apply button is only shown when it means something.
 
@@ -314,6 +327,22 @@ def render_keyboard(
 
     With ``url_hash`` a second row of ✅ ❌ 📝 buttons is added (personal bots).
     """
+    if channel_favorites:
+        # Telegram attaches callback.from to the *person* tapping this public
+        # channel button. The bot stores favorites by that user, not the channel.
+        if not url_hash or not re.fullmatch(r"[a-f0-9]{64}", url_hash):
+            raise ValueError("Channel Save requires a full stable listing hash")
+        rows = [[
+            {"text": "Open listing", "url": listing.apply_url or listing.source_url},
+            {"text": "🔖 Save", "callback_data": f"fav:save:{url_hash[:16]}"},
+        ]]
+        # Retain navigation to the discovery/source advert when an independent
+        # application URL exists; the primary row remains exactly Open + Save.
+        if listing.apply_url and listing.source_url and listing.apply_url != listing.source_url:
+            rows.append([{"text": "Source", "url": listing.source_url}])
+        if feedback:
+            rows.append(feedback_row(url_hash, status))
+        return {"inline_keyboard": rows}
     if listing.apply_url and listing.apply_url != listing.source_url:
         rows = [
             [
@@ -324,7 +353,6 @@ def render_keyboard(
     else:
         rows = [[{"text": "Open listing", "url": listing.source_url}]]
     if url_hash and bot_username:
-        import re
         if not re.fullmatch(r"[A-Za-z0-9_]{5,32}", bot_username):
             raise ValueError("TELEGRAM_BOT_USERNAME must be a Telegram username without @")
         if not re.fullmatch(r"[a-f0-9]{64}", url_hash):
