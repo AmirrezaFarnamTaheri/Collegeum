@@ -332,10 +332,13 @@ def render_keyboard(
         # channel button. The bot stores favorites by that user, not the channel.
         if not url_hash or not re.fullmatch(r"[a-f0-9]{64}", url_hash):
             raise ValueError("Channel Save requires a full stable listing hash")
-        return {"inline_keyboard": [[
+        rows = [[
             {"text": "Open listing", "url": listing.apply_url or listing.source_url},
             {"text": "🔖 Save", "callback_data": f"fav:save:{url_hash[:16]}"},
-        ]]}
+        ]]
+        if feedback:
+            rows.append(feedback_row(url_hash, status))
+        return {"inline_keyboard": rows}
     if listing.apply_url and listing.apply_url != listing.source_url:
         rows = [
             [
