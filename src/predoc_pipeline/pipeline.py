@@ -1036,6 +1036,10 @@ def _broadcast(
 
     # Keep legacy digest_page_size/feedback arguments for existing callers,
     # but every public vacancy now gets an independent card and receipt.
+    include_feedback = bool(
+        settings.telegram_feedback_buttons and settings.feedback_encryption_key
+    )
+    status_of = feedback.status if feedback is not None else (lambda _h: None)
     send_kw: dict[str, Any] = {"sleep": sleep} if sleep else {}
 
     kept, aliases = _group_broadcast_candidates(listings, db)
@@ -1088,6 +1092,8 @@ def _broadcast(
     for listing_id, listing in listings:
         keyboard = render_keyboard(
             listing, url_hash=hashes[listing_id], channel_favorites=True,
+            feedback=include_feedback,
+            status=status_of(hashes[listing_id]) if include_feedback else None,
         )
         try:
             # Fail visibly instead of silently publishing a card with missing
@@ -1225,6 +1231,7 @@ def _publish_non_us_econ_phds(
                     html=render_historical_card(job) if historical else render_card(job),
                     keyboard=render_keyboard(
                         job, url_hash=url_hash(job.apply_url), channel_favorites=True,
+                        feedback=False,
                     ),
                 )
             except TelegramError as exc:
