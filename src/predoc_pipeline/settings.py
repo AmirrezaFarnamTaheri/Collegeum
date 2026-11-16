@@ -63,7 +63,8 @@ class Settings(BaseSettings):
     # Where new positions are posted. For a personal bot, put YOUR chat id here
     # (the number `predoc-pipeline telegram-chat-id` prints); a channel works too.
     telegram_public_channel_id: str = ""
-    # Optional public bot username, without @. Legacy private deep links only; public\n    # channel Save callbacks do not depend on it.
+    # Optional bot username for legacy private deep links.
+    # Public channel Save callbacks do not depend on it.
     telegram_bot_username: str = ""
     # Enable after the compatible bot Worker/polling code is deployed.
     telegram_non_us_econ_phd_enabled: bool = False
