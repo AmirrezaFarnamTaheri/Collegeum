@@ -346,7 +346,6 @@ def render_keyboard(
     else:
         rows = [[{"text": "Open listing", "url": listing.source_url}]]
     if url_hash and bot_username:
-        import re
         if not re.fullmatch(r"[A-Za-z0-9_]{5,32}", bot_username):
             raise ValueError("TELEGRAM_BOT_USERNAME must be a Telegram username without @")
         if not re.fullmatch(r"[a-f0-9]{64}", url_hash):
