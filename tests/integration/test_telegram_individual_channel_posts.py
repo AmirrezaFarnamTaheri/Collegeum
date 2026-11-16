@@ -92,7 +92,7 @@ def test_historical_phds_have_separate_receipts_and_save_controls(tmp_path):
         for i, (lid, job) in enumerate(zip(ids, jobs, strict=True)):
             sent = tg.send_message.call_args_list[i].kwargs
             assert "Previously collected" in sent["html"]
-            assert "Current availability" in sent["html"]
+            assert "current availability" in sent["html"]
             assert job.title in sent["html"]
             assert jobs[1 - i].title not in sent["html"]
             _assert_channel_card(sent, job)
