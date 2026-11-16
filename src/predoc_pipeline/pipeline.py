@@ -71,6 +71,7 @@ from .publish.telegram import (
     TelegramClient,
     TelegramError,
     render_card,
+    render_historical_card,
     render_digest_batches,
     render_keyboard,
 )
@@ -1029,9 +1030,8 @@ def _broadcast(
 
     Web listings (US, PhD/postdoc, banks, international organizations, firms) are
     published by the dashboard export and posted to X when configured. Telegram
-    listings (non-US predocs) go out as cards or as a few numbered digest messages;
-    with a personal chat configured (see ``Settings.owner_ids``) every card and
-    digest carries ✅ ❌ 📝 buttons and ``telegram-sync`` records the taps.
+    listings (non-US predocs) always receive independent cards and receipts.
+    Channel Save callbacks create private per-user bookmarks.
     """
     if not listings:
         return
@@ -1093,63 +1093,9 @@ def _broadcast(
 
     hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
 
-    if (
-        settings.telegram_digest_threshold > 0
-        and len(listings) > settings.telegram_digest_threshold
-    ):
-        # A backfill should not fire forty separate notifications.
-        pages = render_digest_batches(
-            [(hashes[lid], listing) for lid, listing in listings],
-            site_url=settings.site_url,
-            page_size=digest_page_size,
-            feedback=include_feedback,
-            status_of=status_of,
-            bot_username=settings.telegram_bot_username,
-        )
-        for page in pages:
-            chunk = listings[page.start:page.end]
-            try:
-                message_id = telegram.send_message(
-                    chat_id=settings.telegram_public_channel_id,
-                    html=page.html,
-                    keyboard=page.keyboard,
-                    **send_kw,
-                )
-            except TelegramError as exc:
-                stats.errors += 1
-                db.log_dlq(
-                    run_id=stats.run_id,
-                    stage="digest",
-                    source="telegram",
-                    source_url="",
-                    payload=f"{len(chunk)} listings",
-                    error=str(exc),
-                )
-                if getattr(exc, "uncertain", False):
-                    # A message may have been delivered without its acknowledgement.
-                    # Never automatically resend any member of this digest.
-                    for listing_id, _ in chunk:
-                        record_delivery(listing_id, "delivery-uncertain")
-                    log.error("telegram_digest_needs_reconciliation",
-                              listing_ids=[lid for lid, _ in chunk])
-                    continue
-                if _chat_level(exc):
-                    _telegram_setup_problem(settings, exc)
-                    return
-                continue  # a definite failed send can be retried next run
-            for listing_id, _ in chunk:
-                record_delivery(listing_id, "published", message_id)
-            stats.published += len(chunk)
-        return
-
     for listing_id, listing in listings:
         keyboard = render_keyboard(
-            listing,
-            url_hash=(hashes[listing_id] if include_feedback or settings.telegram_bot_username
-                      else None),
-            status=status_of(hashes[listing_id]) if include_feedback else None,
-            bot_username=settings.telegram_bot_username,
-            feedback=include_feedback,
+            listing, url_hash=hashes[listing_id], channel_favorites=True,
         )
         try:
             try:
@@ -1299,40 +1245,32 @@ def _publish_non_us_econ_phds(
                     if (lid not in fresh_ids) == historical]
         if not selected:
             continue
-        pages = render_digest_batches(
-            [(url_hash(job.apply_url), job) for _, job in selected],
-            site_url=settings.site_url,
-            page_size=min(6, prefs.telegram.digest_page_size),
-            feedback=False, bot_username=bot_username,
-            historical=historical,
-        )
-        for page in pages:
-            chunk = selected[page.start:page.end]
-            for lid, _ in chunk:
-                db.record_telegram_delivery(lid, "pending")
+        for lid, job in selected:
+            db.record_telegram_delivery(lid, "pending")
             try:
                 receipt = telegram.send_message(
                     chat_id=settings.telegram_public_channel_id,
-                    html=page.html, keyboard=page.keyboard,
+                    html=render_historical_card(job) if historical else render_card(job),
+                    keyboard=render_keyboard(
+                        job, url_hash=url_hash(job.apply_url), channel_favorites=True,
+                    ),
                 )
             except TelegramError as exc:
                 stats.errors += 1
-                for lid, _ in chunk:
-                    if exc.uncertain:
-                        db.record_telegram_delivery(lid, "uncertain")
-                    elif exc.permanent and not _chat_level(exc):
-                        db.record_telegram_delivery(lid, "permanent_failure")
+                if exc.uncertain:
+                    db.record_telegram_delivery(lid, "uncertain")
+                elif exc.permanent and not _chat_level(exc):
+                    db.record_telegram_delivery(lid, "permanent_failure")
                 if _chat_level(exc):
                     log.warning("telegram_phd_channel_unavailable", error=str(exc))
                     return
-                log.warning("telegram_phd_backfill_failed", count=len(chunk),
+                log.warning("telegram_phd_backfill_failed", listing_id=lid,
                             uncertain=exc.uncertain, error=str(exc))
                 continue
-            for lid, _ in chunk:
-                db.record_telegram_delivery(lid, "confirmed", message_id=receipt)
-                stats.published += 1
-            log.info("telegram_phd_published", count=len(chunk),
-                     historical=historical)
+            db.record_telegram_delivery(lid, "confirmed", message_id=receipt)
+            stats.published += 1
+            log.info("telegram_phd_published", listing_id=lid,
+                     historical=historical, message_id=receipt)
 
 
 def _chat_level(exc: TelegramError) -> bool:
