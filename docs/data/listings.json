@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-16T06:24:17Z",
+ "generated_at": "2026-11-16T10:30:44Z",
  "count": 221,
  "listings": [
   {
@@ -1375,14 +1375,15 @@
    "days_left": 0,
    "disciplines": [
     "Development Economics",
-    "Political Economy"
+    "Political Economy",
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The position is a predoc research role at Harvard Kennedy School, with projects in development and political economy, including norms, gender, networks, and media. The role involves working with Eliana La Ferrara and is for a researcher before starting a PhD.",
+   "summary": "This position is a pre-doctoral research role at Harvard Kennedy School focusing on development and political economy topics such as norms, gender, networks, and media. Applications are accepted on a rolling basis with a deadline of November 16.",
    "language": "en",
    "apply_url": "https://t.co/8RD8r6pJS8",
    "source_url": "https://bit.ly/4z2Oasl",
-   "confidence": 0.91,
+   "confidence": 0.939,
    "first_seen_at": "2026-11-09T18:47:12Z",
    "deadline_note": null,
    "visa_note": null,
@@ -1453,15 +1454,14 @@
    "deadline": "2026-11-30T00:00:00Z",
    "days_left": 14,
    "disciplines": [
-    "Business and Management",
-    "Public Policy"
+    "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "The role is a full-time, fixed-term doctoral position (Doktorandin/Doktorand) in Social Entrepreneurship at Berner Fachhochschule in Bern, Switzerland. Applications are due by 30 November 2026 and the position suits candidates undertaking doctoral research in social entrepreneurship.",
+   "summary": "The role is a full-time, fixed-term doctoral candidate position in Social Entrepreneurship at Berner Fachhochschule in Bern, Switzerland. Applications are invited with a hard deadline of 30 November 2026.",
    "language": "de",
    "apply_url": "https://www.academics.de/jobs/doktorandin-oder-doktorand-in-social-entrepreneurship-berner-fachhochschule-1112466",
    "source_url": "https://www.academics.de/jobs/doktorandin-oder-doktorand-in-social-entrepreneurship-berner-fachhochschule-1112466",
-   "confidence": 0.88,
+   "confidence": 0.895,
    "first_seen_at": "2026-11-09T18:46:39Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2754,21 +2754,22 @@
    "institution": "Macquarie University",
    "principal_investigator": "Professor Shuping Shi",
    "country": "Australia",
-   "city": "Sydney",
+   "city": "North Ryde",
    "is_remote": false,
    "duration_years": 4.0,
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 20,
    "disciplines": [
     "Econometrics",
-    "Finance"
+    "Finance",
+    "Public Policy"
    ],
    "visa": "explicit",
-   "summary": "This is a postdoctoral research fellow position in econometrics at Macquarie University, focusing on developing methods for counterfactual policy evaluation and high-frequency financial econometrics. The role is suitable for candidates with a PhD in econometrics or a related field, a strong publication record, and proficiency in MATLAB, R, or Python.",
+   "summary": "Position: Postdoctoral Research Fellow (Econometrics) at Macquarie University, invited to join a research project led by Professor Shuping Shi. The project aims to develop econometric methods for counterfactual policy evaluation and to advance high-frequency econometric techniques for financial-market dynamics using intraday data.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 1.0,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -2779,7 +2780,7 @@
    "salary_max": 127138.0,
    "salary_currency": "AUD",
    "salary_period": "year",
-   "salary_raw": "$104,481 to $127,138 plus 17% employer's superannuation and annual leave loading",
+   "salary_raw": "$104,481 to $127,138 plus 17% employer's superannuation and annual leave loading (commensurate with experience & qualifications)",
    "tools_required": [
     "MATLAB",
     "R",
@@ -2846,17 +2847,19 @@
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T00:00:00Z",
+   "deadline": "2026-12-05T23:59:59Z",
    "days_left": 19,
    "disciplines": [
-    "Behavioral/Experimental Economics"
+    "Behavioral/Experimental Economics",
+    "Quantitative Social Sciences",
+    "Applied Microeconomics"
    ],
    "visa": "unknown",
-   "summary": "The position is a fixed-term Postdoctoral Associate in behavioral and experimental social science at NYU Abu Dhabi, with half the time spent on independent research and half on collaborative research. It is for applicants who have or expect to receive a PhD and have experience with experimental or behavioral research methods and quantitative analysis.",
+   "summary": "The Postdoctoral Associate will conduct independent and collaborative research in behavioral and experimental social science, focusing on topics such as decision-making, social norms, inequality, and labor-market outcomes. The position suits candidates with expertise in experimental methods, quantitative analysis, and experience designing and implementing laboratory, online, survey, or field studies.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.924,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
@@ -5339,19 +5342,18 @@
    "city": "Bristol",
    "is_remote": false,
    "duration_years": 4.0,
-   "deadline": "2026-12-01T23:59:59Z",
+   "deadline": "2026-12-01T00:00:00Z",
    "days_left": 15,
    "disciplines": [
     "Finance",
-    "Business and Management",
-    "Applied Microeconomics"
+    "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "The University of Bristol Business School offers PhD bursaries of £21,805 per annum for outstanding applicants, including mandatory Graduate Teaching Assistant responsibilities. The position suits candidates with a first or high 2:1 honours degree and a master’s qualification (or equivalent) interested in interdisciplinary research in finance, technology and society, or sustainability.",
+   "summary": "The University of Bristol Business School offers four-year PhD bursaries of at least £21,805 per annum plus full tuition fees, with mandatory Graduate Teaching Assistant duties compensated separately at an hourly rate. Applications are invited for Accounting and Finance or Management PhDs, particularly within the research themes of Technology and Society, Financial Systems, and Sustainability.",
    "language": "en",
    "apply_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
    "source_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
-   "confidence": 0.98,
+   "confidence": 0.972,
    "first_seen_at": "2026-10-21T13:50:59Z",
    "deadline_note": null,
    "visa_note": null,
@@ -5362,12 +5364,12 @@
    "salary_max": 21805.0,
    "salary_currency": "GBP",
    "salary_period": "year",
-   "salary_raw": "£21,805 per annum",
+   "salary_raw": "£21,805 per annum stipend plus full tuition fees, and additional GTA income depending on hours worked",
    "tools_required": [],
    "tools_preferred": [],
    "min_degree": "masters",
    "degree_note": null,
-   "start_term": "Autumn 2027",
+   "start_term": "autumn 2027",
    "start_date": "2026-10-21",
    "kind": "phd",
    "sector": "academic"
