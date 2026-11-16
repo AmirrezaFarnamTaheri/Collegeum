@@ -20,8 +20,14 @@ def test_passau_phd_degree_from_employer_advert_not_scraped_phd_marker():
     assert row["min_degree"] == "masters"
     assert row["deadline"].startswith("2026-11-22T")
     assert "University of Passau" in row["degree_note"]
-    assert row["telegram_delivery_state"] == "not_attempted"
-    assert row["telegram_message_id"] is None
+    # The originally unannounced eligible vacancy may now have been
+    # delivered by the scheduled backfill. Respect its durable receipt.
+    assert row["telegram_delivery_state"] in ("not_attempted", "confirmed")
+    if row["telegram_delivery_state"] == "confirmed":
+        assert isinstance(row["telegram_message_id"], int)
+        assert row["telegram_message_id"] > 0
+    else:
+        assert row["telegram_message_id"] is None
 
     listing = PredocListing(
         title=row["title"],
