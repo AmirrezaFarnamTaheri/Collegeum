@@ -117,6 +117,6 @@ def test_channel_save_callback_uses_tapping_user_not_public_chat(tmp_path):
         _handle_tap(bot, tap(identifier, user, f"fav:save:{prefix}"), {}, store, set(), summary)
     assert store.favorites(991) == [prefix]
     assert store.favorites(992) == [prefix]
-    assert store.favorites(-10012345) == []
+    assert "-10012345" not in store.data["favorites"]
     assert bot.call.call_count == 3
     assert all(call.args[0] == "answerCallbackQuery" for call in bot.call.call_args_list)
