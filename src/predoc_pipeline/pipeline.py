@@ -1098,28 +1098,14 @@ def _broadcast(
             listing, url_hash=hashes[listing_id], channel_favorites=True,
         )
         try:
-            try:
-                message_id = telegram.send_message(
-                    chat_id=settings.telegram_public_channel_id,
-                    html=render_card(listing),
-                    keyboard=keyboard,
-                    **send_kw,
-                )
-            except TelegramError as exc:
-                if exc.status != 400 or not keyboard:
-                    raise
-                # Telegram refuses the whole message when one button URL is
-                # malformed; the link is also in the text, so send it without.
-                # The URL goes in an HTML attribute, so it must be escaped
-                # for attribute context (quotes included) -- not merely for
-                # text context. escape_telegram_html leaves quotes intact.
-                link = escape_attribute(listing.apply_url, quote=True)
-                message_id = telegram.send_message(
-                    chat_id=settings.telegram_public_channel_id,
-                    html=render_card(listing) + f'\n\n<a href="{link}">Open the advert</a>',
-                    keyboard=None,
-                    **send_kw,
-                )
+            # Fail visibly instead of silently publishing a card with missing
+            # actions after Telegram rejects its keyboard.
+            message_id = telegram.send_message(
+                chat_id=settings.telegram_public_channel_id,
+                html=render_card(listing),
+                keyboard=keyboard,
+                **send_kw,
+            )
         except TelegramError as exc:
             stats.errors += 1
             db.log_dlq(
