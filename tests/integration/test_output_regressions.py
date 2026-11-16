@@ -1,6 +1,5 @@
 """Rendered size, structural validity and delivery membership at output boundaries."""
 
-import html
 import re
 from pathlib import Path
 from xml.etree import ElementTree as ET
