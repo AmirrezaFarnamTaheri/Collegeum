@@ -336,6 +336,10 @@ def render_keyboard(
             {"text": "Open listing", "url": listing.apply_url or listing.source_url},
             {"text": "🔖 Save", "callback_data": f"fav:save:{url_hash[:16]}"},
         ]]
+        # Retain navigation to the discovery/source advert when an independent
+        # application URL exists; the primary row remains exactly Open + Save.
+        if listing.apply_url and listing.source_url and listing.apply_url != listing.source_url:
+            rows.append([{"text": "Source", "url": listing.source_url}])
         if feedback:
             rows.append(feedback_row(url_hash, status))
         return {"inline_keyboard": rows}
