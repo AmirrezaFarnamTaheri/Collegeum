@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     # Where new positions are posted. For a personal bot, put YOUR chat id here
     # (the number `predoc-pipeline telegram-chat-id` prints); a channel works too.
     telegram_public_channel_id: str = ""
-    # Public bot username, without @. Required for channel Save in bot deep links.
+    # Optional public bot username, without @. Legacy private deep links only; public\n    # channel Save callbacks do not depend on it.
     telegram_bot_username: str = ""
     # Enable after the compatible bot Worker/polling code is deployed.
     telegram_non_us_econ_phd_enabled: bool = False
@@ -75,9 +75,8 @@ class Settings(BaseSettings):
     telegram_operational_alerts_enabled: bool = False
     telegram_digest_threshold: int = Field(
         0,
-        description="Above this many new listings in one run, post a compact "
-                    "digest instead of one card each. Set to 0 (default) to disable "
-                    "digest mode and always post individual cards regardless of count.",
+        description="Retained for backward-compatible configuration only. Public channel "
+                    "announcements always publish one message per listing.",
     )
     telegram_feedback_buttons: bool = Field(
         False,
