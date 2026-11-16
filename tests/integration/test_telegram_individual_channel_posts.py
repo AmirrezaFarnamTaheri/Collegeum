@@ -8,7 +8,7 @@ from predoc_pipeline.core.db import Database, init
 from predoc_pipeline.core.urls import url_hash
 from predoc_pipeline.models import Discipline, Location, PredocListing
 from predoc_pipeline.publish.bot import _handle_tap
-from predoc_pipeline.publish.feedback import FeedbackStore
+from predoc_pipeline.publish.feedback import FeedbackStore, generate_key
 from predoc_pipeline.routing import Router
 from predoc_pipeline.settings import Settings
 
@@ -104,7 +104,7 @@ def test_historical_phds_have_separate_receipts_and_save_controls(tmp_path):
 
 
 def test_channel_save_callback_uses_tapping_user_not_public_chat(tmp_path):
-    store = FeedbackStore(tmp_path / "favorites.json")
+    store = FeedbackStore(tmp_path / "favorites.json", key=generate_key())
     bot = Mock()
     summary = {"ignored": 0, "taps": 0}
     prefix = "a" * 16
