@@ -51,7 +51,7 @@ def test_same_run_aliases_follow_actual_send_and_recovery(tmp_path, digest, outc
         stats = pipeline.RunStats()
         pipeline._broadcast(candidates, telegram, settings, db, stats)
 
-        assert telegram.send_message.call_count == (1 if digest else 2)
+        assert telegram.send_message.call_count == 2  # Every distinct vacancy has its own card
         expected = {
             "success": "published", "failed": "pending", "uncertain": "delivery-uncertain",
         }[outcome]
