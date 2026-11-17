@@ -1,7 +1,46 @@
 {
- "generated_at": "2026-11-17T03:01:23Z",
- "count": 220,
+ "generated_at": "2026-11-17T11:16:33Z",
+ "count": 221,
  "listings": [
+  {
+   "id": 452,
+   "title": "Research Officer, Health and Conflict in the Middle East and North Africa",
+   "institution": "London School of Economics and Political Science - Middle East Centre",
+   "principal_investigator": "Tiziana Leone",
+   "country": "United Kingdom",
+   "city": "London",
+   "is_remote": false,
+   "duration_years": 1.5,
+   "deadline": "2027-01-08T23:59:00Z",
+   "days_left": 52,
+   "disciplines": [
+    "Public Policy",
+    "Quantitative Social Sciences"
+   ],
+   "visa": "explicit",
+   "summary": "The Research Officer will work under Professor Tiziana Leone at LSE's Middle East Centre on interdisciplinary research on population health, conflict and crises in MENA, and help prepare a major funding application. The fixed-term 18-month post requires a PhD and quantitative expertise in managing large datasets and advanced statistical modelling, with experience in at least one MENA country.",
+   "language": "en",
+   "apply_url": "https://www.jobs.ac.uk/job/DTR311/research-officer-health-and-conflict-in-the-middle-east-and-north-africa",
+   "source_url": "https://www.jobs.ac.uk/job/DTR311/research-officer-health-and-conflict-in-the-middle-east-and-north-africa",
+   "confidence": 0.965,
+   "first_seen_at": "2026-11-17T11:12:28Z",
+   "deadline_note": null,
+   "visa_note": null,
+   "alternate_sources": [],
+   "salary_min": 44143.0,
+   "salary_max": 52749.0,
+   "salary_currency": "GBP",
+   "salary_period": "year",
+   "salary_raw": "£44,143 to £52,749 pa inclusive with potential to progress to £56,607 pa inclusive of London allowance",
+   "tools_required": [],
+   "tools_preferred": [],
+   "min_degree": "phd",
+   "degree_note": null,
+   "start_term": null,
+   "start_date": null,
+   "kind": "research",
+   "sector": "academic"
+  },
   {
    "id": 451,
    "title": "Postdoctoral Fellow in Global Entrepreneurship",
@@ -67,7 +106,9 @@
    "first_seen_at": "2026-11-16T18:28:08Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://workwithus.warwick.ac.uk/job/COVENTRY-Research-Fellow-CV4-7AL/1457729533"
+   ],
    "salary_min": 36320.0,
    "salary_max": 46970.0,
    "salary_currency": "GBP",
@@ -2033,19 +2074,19 @@
    "city": "London",
    "is_remote": false,
    "duration_years": 2.0,
-   "deadline": "2026-11-27T23:59:00Z",
+   "deadline": "2026-11-27T00:00:00Z",
    "days_left": 10,
    "disciplines": [
-    "Applied Microeconomics",
-    "Public Policy",
-    "Quantitative Social Sciences"
+    "Quantitative Social Sciences",
+    "Development Economics",
+    "Behavioral/Experimental Economics"
    ],
    "visa": "unknown",
-   "summary": "The role is a full-time, fixed-term post-doctoral Research Officer position at the London School of Economics and Political Science's International Inequalities Institute, funded for 24 months to conduct original research on income and/or wealth inequalities. It suits candidates with a completed PhD (or near completion) in economics or a relevant social science and proven quantitative research skills.",
+   "summary": "The Research Officer position at the London School of Economics involves conducting original research on income and wealth inequalities for a 24‑month fixed‑term contract. Candidates should have a completed PhD (or near completion) in economics or a relevant social science and quantitative research experience.",
    "language": "en",
    "apply_url": "https://www.jobs.ac.uk/job/DTO342/research-officer-in-income-and-or-wealth-inequalities",
    "source_url": "https://www.jobs.ac.uk/job/DTO342/research-officer-in-income-and-or-wealth-inequalities",
-   "confidence": 0.972,
+   "confidence": 0.98,
    "first_seen_at": "2026-11-06T16:00:01Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2484,16 +2525,15 @@
    "deadline": "2026-12-04T00:00:00Z",
    "days_left": 17,
    "disciplines": [
-    "Econometrics",
     "Public Policy",
     "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "This is a postdoctoral research position seeking a specialist in spatial data science to develop predictive models of direct and indirect costs of urbanization based on urban morphology. It is aimed at candidates holding a Ph.D. in data science, urban planning, or related fields, and with interest in African issues and sustainable urban planning.",
+   "summary": "This is a postdoctoral research position at Mohammed VI Polytechnic University specializing in urban modeling and cost analysis to develop a predictive model of urbanization costs. The role is suitable for candidates with a PhD in data science, urban planning, or urban economics, with experience in urban modeling and machine learning.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.924,
+   "confidence": 0.946,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -2504,7 +2544,7 @@
    "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
-   "salary_raw": "competitive salary on an international scale",
+   "salary_raw": "Competitive salary on an international scale",
    "tools_required": [
     "MATLAB",
     "Python",
@@ -2808,14 +2848,15 @@
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 19,
    "disciplines": [
-    "Econometrics"
+    "Econometrics",
+    "Finance"
    ],
    "visa": "explicit",
-   "summary": "The position is a four‑year fixed‑term postdoctoral research fellowship in econometrics at Macquarie University, Australia. It is suited for candidates with a PhD (completed or near completion) in econometrics, statistics, economics or a related field.",
+   "summary": "The Department of Economics at Macquarie University invites applications for a postdoctoral research fellow to join a project led by Professor Shuping Shi, which develops econometric methods for counterfactual policy evaluation and high-frequency financial-market analysis. The position is a four-year fixed-term appointment requiring a PhD in econometrics or a related field and a strong research record.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 1.0,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -2887,7 +2928,7 @@
   {
    "id": 360,
    "title": "Postdoctoral Associate in Behavioral and Experimental Social Science",
-   "institution": "NEW YORK UNIVERSITY ABU DHABI",
+   "institution": "New York University Abu Dhabi",
    "principal_investigator": "Berkay Özcan and Ernesto Reuben",
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
@@ -2897,14 +2938,14 @@
    "days_left": 18,
    "disciplines": [
     "Behavioral/Experimental Economics",
-    "Quantitative Social Sciences"
+    "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral associate in behavioral and experimental social science at NYU Abu Dhabi, focusing on independent and collaborative research. It seeks candidates with a PhD in economics, management, organizational behavior, sociology, public policy, data science, or a related discipline received within the past five years.",
+   "summary": "The Postdoctoral Associate in Behavioral and Experimental Social Science is a fixed-term postdoctoral research appointment at NYU Abu Dhabi. The role will involve independent and collaborative behavioral and experimental research, and it is suited to candidates who have or expect to receive a PhD in a relevant field and have earned the doctorate within the past five years.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.953,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
@@ -4723,7 +4764,8 @@
    "deadline_note": null,
    "visa_note": null,
    "alternate_sources": [
-    "https://www.linkedin.com/jobs/view/4489577308"
+    "https://www.linkedin.com/jobs/view/4489577308",
+    "https://www.ifo.de/stellenangebot-deprecated/postdoctoral-researcher-fmd-ifo-center-international-economics"
    ],
    "salary_min": 68200.0,
    "salary_max": 68200.0,
@@ -5352,14 +5394,14 @@
    "days_left": 14,
    "disciplines": [
     "Finance",
-    "Business and Management"
+    "Environmental and Energy Economics"
    ],
    "visa": "unknown",
-   "summary": "The University of Bristol Business School offers PhD bursaries of £21,805 per annum for four years, starting in autumn 2027, with teaching responsibilities. Applicants should hold a first or high 2:1 honours degree and a master's qualification.",
+   "summary": "This is a four-year PhD studentship (bursary) at the University of Bristol Business School that provides a stipend of at least £21,805 per year and a Graduate Teaching Assistant position. It is aimed at candidates with a first or high 2:1 honours degree in a relevant subject and a completed or ongoing master’s qualification, focusing on technology and society, financial systems and sustainability.",
    "language": "en",
    "apply_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
    "source_url": "https://www.jobs.ac.uk/job/DTI904/phd-studentshipuniversity-of-bristol-business-school-phd-bursaries",
-   "confidence": 0.95,
+   "confidence": 0.98,
    "first_seen_at": "2026-10-21T13:50:59Z",
    "deadline_note": null,
    "visa_note": null,
@@ -5373,7 +5415,7 @@
    "salary_raw": "£21,805 per annum",
    "tools_required": [],
    "tools_preferred": [],
-   "min_degree": "masters",
+   "min_degree": "bachelors",
    "degree_note": null,
    "start_term": "Autumn 2027",
    "start_date": "2026-10-21",
