@@ -44,7 +44,11 @@ reliable four-runs-per-day cadence all 251 receive an initial attempted check
 within 11 successful runs (under three days). A recorded check is eligible
 for renewal after 11 days; the monitor makes no network requests if none are
 due. Trusted source-code or seed changes also bootstrap a check on `main`
-without waiting for the next cron.
+without waiting for the next cron. On trusted checker updates, the bounded
+batch can recheck previously readable programme pages whose deadlines were
+inconclusive, so improved extraction takes effect without manual overrides.
+This mode does not retry robots-blocked, access-restricted or failed sources
+early.
 A previously verified deadline is
 **withdrawn** if source evidence ages beyond 14 days, or the date passes.
 After every check it commits only the derived
