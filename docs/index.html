@@ -2654,7 +2654,11 @@
           (!statusFilter || (statusFilter === 'verified' ?
             row.status === 'verified' : row.status !== 'verified'));
       });
-      const verified = phdAdmissions.filter(r => r.status === 'verified').length;
+      const todayUtc = new Date().toISOString().slice(0, 10);
+      const verified = phdAdmissions.filter(r =>
+        r.status === 'verified' && typeof r.deadline_iso === 'string' &&
+        r.deadline_iso >= todayUtc
+      ).length;
       $('#phd-admissions-summary').textContent =
         `${shown.length} of ${phdAdmissions.length} programmes · ${verified} with an automatically
         corroborated official-source deadline. Yearless, stale or ambiguous dates are not presented as confirmed.`;
@@ -2663,7 +2667,9 @@
         const structure = row.programme_structure_hint
           ? `Reported structure: ${esc(row.programme_structure_hint)} (recheck at source)`
           : 'Programme structure: confirm with university';
-        const confirmed = row.status === 'verified' && /^20\\d{2}-\\d{2}-\\d{2}$/.test(row.deadline_iso || '');
+        const confirmed = row.status === 'verified' &&
+          /^20\\d{2}-\\d{2}-\\d{2}$/.test(row.deadline_iso || '') &&
+          row.deadline_iso >= todayUtc;
         const verdict = confirmed
           ? `Official-source date: ${esc(row.deadline_iso)} (confirm before applying)`
           : 'Deadline not officially corroborated';
