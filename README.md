@@ -14,6 +14,16 @@ cost.
 
 **Live dashboard:** https://amirrezafarnamtaheri.github.io/Collegeum
 
+**Economics PhD admissions:** The dashboard also has a separately labelled
+[official-university programme directory](https://amirrezafarnamtaheri.github.io/Collegeum/#phd-admissions).
+It maintains 251 programme discovery leads adapted from an MIT-licensed
+reference, but *never* trusts its undated third-party deadlines. An isolated
+daily monitor automatically checks the primary institution pages and surfaces
+only explicit, current-year official-source dates. Admissions remain separate
+from actual research vacancies and Telegram posting; see
+[PhD admissions source policy](docs/ECON_PHD_ADMISSIONS.md).
+
+
 ## What it does
 
 The pipeline runs on GitHub Actions every four hours and performs a full cycle:
