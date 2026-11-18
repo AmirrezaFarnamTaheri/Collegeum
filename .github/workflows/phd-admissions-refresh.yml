@@ -42,7 +42,18 @@ jobs:
       - name: Validate reference catalogue offline
         run: python3 -S tools/update_phd_admissions.py --check
       - name: Check primary university pages with robots-aware bounded rotation
-        run: python3 -S tools/update_phd_admissions.py --batch-size 25
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          args=(--batch-size 25)
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            # Checker/seed changes justify a bounded recheck of previously
+            # readable but inconclusive pages, not provider-blocked URLs.
+            args+=(--recheck-no-explicit)
+          fi
+          python3 -S tools/update_phd_admissions.py "${args[@]}"
       - name: Commit only derived public official-source observations
         shell: bash
         run: |
