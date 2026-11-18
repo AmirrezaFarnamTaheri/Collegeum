@@ -1,87 +1,137 @@
-"""Safeguards for the independent, MIT-attributed Economics PhD admissions reference.
-
-This catalogue is not a vacancy source: undated upstream deadline guidance must
-never enter live listing, deadline-countdown, or Telegram publishing paths.
-"""
+"""Contract and offline regression tests for official Economics PhD admissions monitoring."""
 from __future__ import annotations
 
 import json
-import re
 import unittest
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
+from tools.update_phd_admissions import (
+    collect_official_deadline, eligible_for_check, validate_catalogues,
+)
+
 ROOT = Path(__file__).resolve().parents[2]
-CATALOG = ROOT / "docs/data/phd_admissions.json"
 
 
 class EconomicsPhDAdmissionsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
+        cls.seeds = json.loads(
+            (ROOT / "config/phd_admissions_seeds.json").read_text(encoding="utf-8")
+        )
+        cls.public = json.loads(
+            (ROOT / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
+        )
 
-    def test_upstream_251_programmes_are_preserved_and_unique(self):
-        entries = self.catalog["programmes"]
-        self.assertEqual(len(entries), 251)
-        keys = [(row["institution"].casefold(), row["country_code"]) for row in entries]
-        self.assertEqual(len(set(keys)), len(keys))
-        self.assertEqual([row["institution"] for row in entries],
-                         sorted((row["institution"] for row in entries), key=str.casefold))
-        for row in entries:
-            with self.subTest(institution=row["institution"]):
-                self.assertRegex(row["country_code"], r"^[A-Z]{2}$")
-                self.assertTrue(row["institution"].strip())
-                self.assertTrue(row["deadline_guidance"].strip())
-                self.assertNotRegex(row["deadline_guidance"], r"<[^>]*>")
-                self.assertTrue(row["programme_structure"] is None or
-                                (isinstance(row["programme_structure"], str) and
-                                 bool(row["programme_structure"].strip())))
-                url = urlparse(row["programme_url"])
+    def test_all_251_official_programme_leads_preserved(self):
+        self.assertEqual(len(self.seeds["programmes"]), 251)
+        self.assertEqual(len(self.public["programmes"]), 251)
+        validate_catalogues(self.seeds, self.public)
+        keys = [(p["institution"].casefold(), p["country_code"])
+                for p in self.seeds["programmes"]]
+        self.assertEqual(len(keys), len(set(keys)))
+        for entry in self.seeds["programmes"]:
+            with self.subTest(programme=entry["institution"]):
+                url = urlparse(entry["official_programme_url"])
                 self.assertIn(url.scheme, ("https", "http"))
                 self.assertTrue(url.netloc)
+                self.assertNotIn("deadline", entry)
+                self.assertNotIn("deadline_guidance", entry)
 
-    def test_provenance_and_uncertainty_are_explicit(self):
-        source = self.catalog["source"]
-        self.assertEqual(self.catalog["kind"], "economics_phd_admissions_reference")
-        self.assertEqual(self.catalog["scope"], "reference_only")
-        self.assertEqual(source["name"], "Economics PhD App Deadlines")
-        self.assertEqual(source["repository_url"],
-                         "https://github.com/paultran47/econ-grad-app-deadlines")
-        self.assertRegex(source["upstream_commit"], r"^[0-9a-f]{40}$")
-        self.assertEqual(source["upstream_path"], "index.md")
-        self.assertEqual(source["license"], "MIT")
-        self.assertRegex(source["snapshot_date_utc"], r"^20[0-9]{2}-[0-9]{2}-[0-9]{2}$")
-        self.assertIs(source["deadline_years_verified"], False)
-        self.assertIs(source["current_cycle_verified"], False)
-        for row in self.catalog["programmes"]:
-            self.assertFalse(set(row) & {"deadline", "deadline_iso", "days_left",
-                                         "funded", "active", "published", "application_open"})
+    def test_upstream_is_only_a_lead_not_deadline_authority(self):
+        self.assertEqual(self.seeds["source"]["license"], "MIT")
+        self.assertEqual(self.seeds["source"]["upstream_commit"],
+                         "49604886769441a11c1e79ab7d1fab68ba5b3d36")
+        self.assertEqual(self.public["kind"], "economics_phd_admissions_observations")
+        self.assertEqual(self.public["scope"], "official_programme_sources_only")
+        self.assertIs(self.public["source"]["deadline_values_reused"], False)
+        for entry in self.public["programmes"]:
+            self.assertNotIn("deadline_guidance", entry)
+            self.assertNotIn("published", entry)
+            if entry["status"] != "verified":
+                self.assertIsNone(entry["deadline_iso"])
+            if entry["status"] == "verified":
+                self.assertTrue(entry["evidence_url"])
+                self.assertTrue(entry["evidence_excerpt"])
+                self.assertTrue(entry["checked_at"])
 
-    def test_native_dashboard_keeps_admissions_separate_from_vacancies(self):
+    def test_ambiguous_or_yearless_deadlines_are_never_verified(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        samples = [
+            "PhD in Economics Application deadline: 15 December.",
+            "PhD in Economics: Rolling admissions.",
+            "Economics PhD deadline: 1 December 2026; domestic deadline: 15 January 2027.",
+            "Statistics PhD deadline: December 20, 2026. Economics is also offered here.",
+            "Economics PhD deadline was December 1, 2025.",
+        ]
+        for html in samples:
+            with self.subTest(html=html):
+                status, date, excerpt = collect_official_deadline(html, now=now)
+                self.assertNotEqual(status, "verified")
+                self.assertIsNone(date)
+
+    def test_explicit_current_year_deadline_has_source_context(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        cases = [
+            ("<h1>Economics PhD admission</h1>"
+             "<p>Applications deadline: December 15, 2026.</p>", "2026-12-15"),
+            ("<p>Economics doctoral applications deadline: 10 January 2027.</p>",
+             "2027-01-10"),
+        ]
+        for html, expected in cases:
+            with self.subTest(html=html):
+                status, date, excerpt = collect_official_deadline(html, now=now)
+                self.assertEqual(status, "verified")
+                self.assertEqual(date, expected)
+                self.assertIn("deadline", excerpt.lower())
+
+    def test_stale_verified_evidence_is_not_current(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        self.assertTrue(eligible_for_check(
+            {"status": "verified", "checked_at": "2026-10-25T00:00:00Z"}, now=now
+        ))
+        self.assertFalse(eligible_for_check(
+            {"status": "verified", "checked_at": "2026-11-18T00:00:00Z"}, now=now
+        ))
+
+    def test_dashboard_is_native_and_never_mixes_vacancy_feed(self):
         page = (ROOT / "docs/index.html").read_text(encoding="utf-8")
-        self.assertIn('href="#phd-admissions"', page)
-        self.assertIn('id="phd-admissions"', page)
-        self.assertIn("data/phd_admissions.json", page)
-        self.assertIn('id="phd-admissions-search"', page)
-        self.assertIn('id="phd-admissions-country"', page)
-        self.assertIn('id="phd-admissions-more"', page)
-        self.assertIn("Admissions are not employment vacancies", page)
-        self.assertIn("not verified for the current admission cycle", page)
-        self.assertIn("paultran47/econ-grad-app-deadlines", page)
-        self.assertIn("licenses/econ-grad-app-deadlines-MIT.txt", page)
+        for text in (
+            'href="#phd-admissions"', 'id="phd-admissions"',
+            'data/phd_admissions.json', 'id="phd-admissions-search"',
+            'id="phd-admissions-country"', 'id="phd-admissions-more"',
+            "Admissions are not employment vacancies",
+            "not verified for the current admission cycle",
+            "paultran47/econ-grad-app-deadlines",
+        ):
+            self.assertIn(text, page)
+        self.assertIn("function renderAdmissions()", page)
+        self.assertNotIn("listings = listings.concat(admissions", page)
 
-    def test_pages_deployment_includes_catalogue_and_license(self):
-        workflow = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
-        self.assertIn("phd_admissions.json", workflow)
-        self.assertIn("econ-grad-app-deadlines-MIT.txt", workflow)
+    def test_daily_refresh_is_automatic_but_not_broadcasting(self):
+        workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("schedule:", workflow)
+        self.assertIn("tools/update_phd_admissions.py", workflow)
+        self.assertIn("contents: write", workflow)
+        self.assertNotIn("telegram", workflow.lower())
+        pages = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
+        self.assertIn("phd-admissions-refresh", pages)
+        self.assertIn("phd_admissions.json", pages)
+        self.assertIn("econ-grad-app-deadlines-MIT.txt", pages)
 
-    def test_mit_notice_is_retained_in_project(self):
+    def test_mit_license_and_official_only_policy_documented(self):
         notice = (ROOT / "docs/licenses/econ-grad-app-deadlines-MIT.txt").read_text(
             encoding="utf-8"
         )
         self.assertIn("Copyright (c) 2026 Paul L. Tran", notice)
         self.assertIn("The above copyright notice and this permission notice", notice)
         self.assertIn("THE SOFTWARE IS PROVIDED", notice)
+        docs = (ROOT / "docs/ECON_PHD_ADMISSIONS.md").read_text(encoding="utf-8")
+        self.assertIn("official", docs.lower())
+        self.assertIn("not", docs.lower())
 
 
 if __name__ == "__main__":
