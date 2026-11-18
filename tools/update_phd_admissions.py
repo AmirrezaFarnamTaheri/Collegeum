@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import re
 import sys
 import urllib.error
@@ -38,16 +37,26 @@ DATE_PATTERN = re.compile(
 )
 PROGRAMME = re.compile(
     r"(?:economics?\s+(?:ph\.?d\.?|doctor(?:al|ate))|"
-    r"(?:ph\.?d\.?|doctor(?:al|ate))\s+(?:in\s+)?economics?)",
+    r"(?:ph\.?d\.?|doctor(?:al|ate))\s+(?:in\s+)?economics?|"
+    r"(?:ph\.?d\.?|doctoral)\s+programmes?\s+in\s+[^.?!\n]{0,80}?\beconomics?)",
     re.I,
 )
 DEADLINE = re.compile(
     r"(?:application(?:s)?\s+)?deadlines?|"
     r"applications?\s+(?:close|due|must\s+be\s+submitted)|"
     r"apply\s+by|"
-    r"submission\s+deadline",
+    r"submission\s+deadline|"
+    r"closes?\s+on|closing\s+date",
     re.I,
 )
+# Explicitly exclude ancillary document, exam, funding and decision deadlines.
+# Their dates can sit immediately beside the programme application deadline.
+ANCILLARY = re.compile(
+    r"\b(?:document|supporting|transcript|reference|recommendation|"
+    r"language|test|gmat|gre|scholarship|appeal|decision|interview)\b",
+    re.I,
+)
+
 STATUSES = {
     "unverified", "verified", "no_explicit_deadline", "ambiguous_deadline",
     "robots_disallowed", "robots_unavailable", "fetch_failed",
@@ -60,14 +69,25 @@ class PageText(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.chunks: list[str] = []
         self.ignored = 0
+        self.headings: list[str] = []
+        self._heading_parts: list[str] = []
+        self._in_h1 = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "h1":
+            self._in_h1 = True
+            self._heading_parts = []
         if tag in {"script", "style", "svg", "noscript", "template"}:
             self.ignored += 1
         elif tag in {"p", "div", "h1", "h2", "h3", "li", "tr", "br"}:
             self.chunks.append(" ")
 
     def handle_endtag(self, tag: str) -> None:
+        if tag == "h1":
+            heading = " ".join(" ".join(self._heading_parts).split())
+            if heading:
+                self.headings.append(heading)
+            self._in_h1 = False
         if tag in {"script", "style", "svg", "noscript", "template"}:
             self.ignored = max(0, self.ignored - 1)
         elif tag in {"p", "div", "h1", "h2", "h3", "li", "tr"}:
@@ -76,6 +96,8 @@ class PageText(HTMLParser):
     def handle_data(self, data: str) -> None:
         if not self.ignored:
             self.chunks.append(data)
+            if self._in_h1:
+                self._heading_parts.append(data)
 
     def text(self) -> str:
         return " ".join(" ".join(self.chunks).split())
@@ -107,23 +129,37 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
     parser.feed(html[:MAX_HTML_BYTES])
     text = parser.text()[:MAX_HTML_BYTES]
     candidates: list[tuple[str, str]] = []
+    # A specific programme H1 makes its admission schedule authoritative for
+    # the page, while generic multi-programme pages still need nearby context.
+    programme_page = any(PROGRAMME.search(heading) for heading in parser.headings)
     for match in DATE_PATTERN.finditer(text):
         day = _parse_date(match)
         if day is None or not (now.date() <= day <= date(now.year + 2, 12, 31)):
             continue
         before = text[max(0, match.start() - 310):match.start()]
-        # The school/programme and the deadline must be before the date,
-        # not mentioned afterwards in a list of unrelated courses.
-        programmes = list(PROGRAMME.finditer(before))
         deadlines = list(DEADLINE.finditer(before))
-        if not programmes or not deadlines:
+        if not deadlines:
             continue
-        programme = programmes[-1]
         deadline = deadlines[-1]
-        if programme.start() > deadline.start() or deadline.start() - programme.end() > 165:
+        if len(before) - deadline.end() > 65:
             continue
-        if len(before) - deadline.end() > 110:
+        # A test or supporting-document cutoff is not the application cutoff.
+        qualifier = before[max(0, deadline.start() - 38):deadline.end()]
+        if ANCILLARY.search(qualifier):
             continue
+        # "Closes on" may describe many things; accept it only when a nearby
+        # application period or application form is the stated subject.
+        if deadline.group().lower().startswith(("close", "closing")):
+            context = before[max(0, deadline.start() - 135):deadline.start()]
+            if not re.search(r"\bapplications?\b", context, re.I):
+                continue
+        if not programme_page:
+            programmes = list(PROGRAMME.finditer(before))
+            if not programmes:
+                continue
+            programme = programmes[-1]
+            if programme.end() > deadline.start() or deadline.start() - programme.end() > 165:
+                continue
         excerpt = text[max(0, match.start() - 115):min(len(text), match.end() + 20)]
         candidates.append((day.isoformat(), excerpt.strip()))
     distinct = {day for day, _ in candidates}
@@ -267,10 +303,17 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         raise ValueError("batch_size must be 1..40")
     validate_catalogues(seeds, public)
     programmes = [dict(item) for item in public["programmes"]]
-    # Stable daily shards, covers all 251 records in ceil(251 / batch_size) days.
-    shard_count = math.ceil(len(programmes) / batch_size)
-    shard = now.date().toordinal() % shard_count
-    start, end = shard * batch_size, min((shard + 1) * batch_size, len(programmes))
+    # Always check never-visited programmes before revisiting previous sources.
+    # An absent GitHub schedule must not strand a calendar shard for 11 days.
+    def priority(index: int) -> tuple[datetime, int]:
+        checked = _timestamp(programmes[index].get("checked_at"))
+        return checked or datetime.min.replace(tzinfo=UTC), index
+
+    due = sorted(
+        (i for i, item in enumerate(programmes) if eligible_for_check(item, now=now)),
+        key=priority,
+    )
+    selected = set(due[:batch_size])
     stamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, entry in enumerate(programmes):
         old = _timestamp(entry.get("checked_at"))
@@ -280,7 +323,7 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         ):
             entry.update(status="stale", deadline_iso=None, evidence_url=None,
                          evidence_excerpt=None)
-        if not (start <= index < end) or not eligible_for_check(entry, now=now):
+        if index not in selected:
             continue
         result = fetcher(entry["official_programme_url"], now=now)
         status = result.get("status")

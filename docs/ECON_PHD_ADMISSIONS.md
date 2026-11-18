@@ -37,9 +37,13 @@ Its copyright and permission notice is at
 ## Automatic refresh
 
 The independent `phd-admissions-refresh` workflow runs daily at 03:17 UTC
-(subject to GitHub Actions scheduler delay), with a rotating shard of 25 official
-URLs per day. All 251 are scheduled for an attempt within 11 days. A recorded
-check is eligible for renewal after 11 days; a previously verified deadline is
+(subject to GitHub Actions scheduler delay), checking the 25 oldest due official
+URLs per day. Never-checked programmes take priority so missed GitHub schedules
+cannot silently strand skipped calendar shards. At a reliable daily cadence all
+251 receive an initial attempted check within 11 runs; a recorded
+check is eligible for renewal after 11 days. Trusted source-code or seed
+changes also bootstrap a check on `main` without waiting for the next cron.
+A previously verified deadline is
 **withdrawn** if source evidence ages beyond 14 days, or the date passes.
 After every check it commits only the derived
 `docs/data/phd_admissions.json`. The existing Pages deployment publishes the

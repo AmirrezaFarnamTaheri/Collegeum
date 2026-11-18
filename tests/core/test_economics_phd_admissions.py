@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import unittest
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -89,6 +89,53 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
                 self.assertEqual(date, expected)
                 self.assertIn("deadline", excerpt.lower())
 
+    def test_official_admissions_period_uses_closing_not_open_or_documents(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        university_html = """
+            <h1>Aalto Doctoral Programme in Business, Economics and Finance</h1>
+            <h2>Application instructions 2027</h2>
+            <p>Admission schedule 2027: Application period opens on
+            8 December 2026 at 09:00 (UTC+2) and closes on
+            5 January 2027 at 23:59 (UTC+2).</p>
+            <p>After submitting your application by the deadline on
+            5 January 2027, attach electronic application documents
+            before the document deadline on 12 January 2027.</p>
+            <p>Admission decisions are published 19 February 2027.</p>
+        """
+        status, deadline, evidence = collect_official_deadline(
+            university_html, now=now
+        )
+        self.assertEqual(status, "verified")
+        self.assertEqual(deadline, "2027-01-05")
+        self.assertIn("5 January 2027", evidence)
+
+    def test_official_applicant_categories_cannot_be_silently_collapsed(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        university_html = """
+            <h1>PhD in Economics admissions</h1>
+            <p>International application deadline: 15 December 2026.</p>
+            <p>Domestic application deadline: 10 January 2027.</p>
+        """
+        status, deadline, evidence = collect_official_deadline(
+            university_html, now=now
+        )
+        self.assertEqual(status, "ambiguous_deadline")
+        self.assertIsNone(deadline)
+        self.assertIsNone(evidence)
+
+    def test_official_document_only_date_is_not_application_deadline(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        university_html = """
+            <h1>Economics PhD admissions</h1>
+            <p>The supporting document deadline is 12 January 2027.</p>
+            <p>Application closing date: please refer to the portal.</p>
+        """
+        status, deadline, _ = collect_official_deadline(
+            university_html, now=now
+        )
+        self.assertNotEqual(status, "verified")
+        self.assertIsNone(deadline)
+
     def test_stale_verified_evidence_is_not_current(self):
         now = datetime(2026, 11, 19, tzinfo=UTC)
         self.assertTrue(eligible_for_check(
@@ -96,6 +143,32 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         ))
         self.assertFalse(eligible_for_check(
             {"status": "verified", "checked_at": "2026-11-18T00:00:00Z"}, now=now
+        ))
+
+    def test_missed_daily_workflows_do_not_skip_never_checked_programmes(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        def fetch(_url: str, *, now: datetime) -> dict:
+            return {"status": "no_explicit_deadline"}
+        first = refresh(self.seeds, self.public, now=now, batch_size=25,
+                        fetcher=fetch)
+        first_checked = [
+            i for i, item in enumerate(first["programmes"])
+            if item["checked_at"] is not None
+        ]
+        self.assertEqual(len(first_checked), 25)
+        # GitHub may drop schedules for days. Never revisit previously checked
+        # sources ahead of 226 still-unchecked programme leads.
+        later = refresh(self.seeds, first, now=now + timedelta(days=11),
+                        batch_size=25, fetcher=fetch)
+        newly_checked = [
+            i for i, item in enumerate(later["programmes"])
+            if i not in first_checked and item["checked_at"] is not None
+        ]
+        self.assertEqual(len(newly_checked), 25)
+        self.assertTrue(all(
+            later["programmes"][i]["checked_at"] ==
+            first["programmes"][i]["checked_at"]
+            for i in first_checked
         ))
 
     def test_expired_observation_is_withdrawn_without_waiting_for_manual_approval(self):
@@ -143,6 +216,16 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertIn("phd-admissions-refresh", pages)
         self.assertIn("phd_admissions.json", pages)
         self.assertIn("econ-grad-app-deadlines-MIT.txt", pages)
+
+    def test_initial_source_changes_bootstrap_without_refresh_commit_loop(self):
+        workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("  push:", workflow)
+        self.assertIn("branches: [main]", workflow)
+        self.assertIn('"tools/update_phd_admissions.py"', workflow)
+        self.assertIn('"config/phd_admissions_seeds.json"', workflow)
+        self.assertNotIn('"docs/data/phd_admissions.json"', workflow)
 
     def test_mit_license_and_official_only_policy_documented(self):
         notice = (ROOT / "docs/licenses/econ-grad-app-deadlines-MIT.txt").read_text(
