@@ -8,7 +8,10 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from tools.update_phd_admissions import (
-    collect_official_deadline, eligible_for_check, refresh, validate_catalogues,
+    collect_official_deadline,
+    eligible_for_check,
+    refresh,
+    validate_catalogues,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
