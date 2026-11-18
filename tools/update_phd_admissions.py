@@ -87,7 +87,7 @@ def _parse_date(match: re.Match[str]) -> date | None:
             return date.fromisoformat(match.group("iso"))
         day = int(match.group("day") or match.group("day2"))
         month_name = (match.group("month") or match.group("month2")).lower()[:3]
-        month = "jan feb mar apr may jun jul aug sep oct nov dec".split().index(month_name) + 1
+        month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].index(month_name) + 1
         return date(int(match.group("year") or match.group("year2")), month, day)
     except (ValueError, TypeError):
         return None
@@ -169,7 +169,7 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
         raise ValueError("Duplicate seeds")
     if [_key(r) for r in rows] != [_key(r) for r in observations]:
         raise ValueError("Seed/observation ordering mismatch")
-    for seed, observation in zip(rows, observations):
+    for seed, observation in zip(rows, observations, strict=True):
         if not isinstance(seed.get("institution"), str) or not isinstance(
             seed.get("country_code"), str
         ):
