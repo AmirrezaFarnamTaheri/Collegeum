@@ -10,7 +10,8 @@
     "license_path": "licenses/econ-grad-app-deadlines-MIT.txt",
     "snapshot_date_utc": "2026-11-19",
     "deadline_years_verified": false,
-    "current_cycle_verified": false
+    "current_cycle_verified": false,
+    "url_transport_upgrades": "4 HTTP links converted to HTTPS candidates on the same institutional hosts"
   },
   "programmes": [
     {
@@ -214,7 +215,7 @@
     {
       "institution": "Cornell University",
       "country_code": "US",
-      "official_programme_url": "http://economics.cornell.edu/prospective-incoming-grad-students",
+      "official_programme_url": "https://economics.cornell.edu/prospective-incoming-grad-students",
       "programme_structure_hint": null
     },
     {
@@ -442,7 +443,7 @@
     {
       "institution": "London School of Economics and Political Science",
       "country_code": "UK",
-      "official_programme_url": "http://www.lse.ac.uk/economics/study/research/phd-admissions-faqs",
+      "official_programme_url": "https://www.lse.ac.uk/economics/study/research/phd-admissions-faqs",
       "programme_structure_hint": "Master's + PhD"
     },
     {
@@ -520,7 +521,7 @@
     {
       "institution": "New York University",
       "country_code": "US",
-      "official_programme_url": "http://gsas.nyu.edu/admissions/gsas-application-resource-center/2017-programs--requirements--and-deadlines/economics.html",
+      "official_programme_url": "https://gsas.nyu.edu/admissions/gsas-application-resource-center/2017-programs--requirements--and-deadlines/economics.html",
       "programme_structure_hint": null
     },
     {
@@ -1282,7 +1283,7 @@
     {
       "institution": "University of Rochester",
       "country_code": "US",
-      "official_programme_url": "http://www.sas.rochester.edu/eco/graduate/apply.html",
+      "official_programme_url": "https://www.sas.rochester.edu/eco/graduate/apply.html",
       "programme_structure_hint": null
     },
     {
