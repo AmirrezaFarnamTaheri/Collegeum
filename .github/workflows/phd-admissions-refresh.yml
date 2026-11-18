@@ -5,6 +5,9 @@ name: phd-admissions-refresh
 on:
   schedule:
     - cron: "17 3 * * *"
+    - cron: "17 9 * * *"
+    - cron: "17 15 * * *"
+    - cron: "17 21 * * *"
   # Run the first official-source batch immediately when the checker or
   # seed inventory changes on main. Do not trigger on generated catalogue
   # commits, preventing a self-sustaining Actions loop.
