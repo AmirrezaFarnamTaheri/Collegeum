@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from tools.update_phd_admissions import (
-    collect_official_deadline, eligible_for_check, validate_catalogues,
+    collect_official_deadline, eligible_for_check, refresh, validate_catalogues,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -94,6 +94,24 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertFalse(eligible_for_check(
             {"status": "verified", "checked_at": "2026-11-18T00:00:00Z"}, now=now
         ))
+
+    def test_expired_observation_is_withdrawn_without_waiting_for_manual_approval(self):
+        now = datetime(2027, 1, 5, tzinfo=UTC)
+        old = json.loads(json.dumps(self.public))
+        index = 0
+        old["programmes"][index].update(
+            status="verified", checked_at="2026-12-01T03:17:00Z",
+            deadline_iso="2026-12-15",
+            evidence_url=old["programmes"][index]["official_programme_url"],
+            evidence_excerpt="Economics PhD applications deadline 15 December 2026"
+        )
+        validate_catalogues(self.seeds, old)
+        updated = refresh(self.seeds, old, now=now, batch_size=25,
+                          fetcher=lambda url, now: {"status": "no_explicit_deadline"})
+        changed = updated["programmes"][index]
+        self.assertEqual(changed["status"], "stale")
+        self.assertIsNone(changed["deadline_iso"])
+        self.assertIsNone(changed["evidence_url"])
 
     def test_dashboard_is_native_and_never_mixes_vacancy_feed(self):
         page = (ROOT / "docs/index.html").read_text(encoding="utf-8")
