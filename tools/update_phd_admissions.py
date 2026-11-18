@@ -141,7 +141,19 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
         if not deadlines:
             continue
         deadline = deadlines[-1]
-        if len(before) - deadline.end() > 65:
+        gap = before[deadline.end():]
+        # Universities sometimes write "application deadline to the <named
+        # Economics PhD programme> for the autumn intake is <DATE>".
+        # This ties the longer gap to the actual programme and deadline;
+        # it does not permit unrelated sessions, documents or awards.
+        long_form = (
+            65 < len(gap) <= 190
+            and re.fullmatch(r"\s+(?:to|for)\s+.+\bis\s*", gap, flags=re.I | re.S)
+            is not None
+            and PROGRAMME.search(gap) is not None
+            and ANCILLARY.search(gap) is None
+        )
+        if len(gap) > 65 and not long_form:
             continue
         # A test or supporting-document cutoff is not the application cutoff.
         qualifier = before[max(0, deadline.start() - 38):deadline.end()]
@@ -153,7 +165,7 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
             context = before[max(0, deadline.start() - 135):deadline.start()]
             if not re.search(r"\bapplications?\b", context, re.I):
                 continue
-        if not programme_page:
+        if not programme_page and not long_form:
             programmes = list(PROGRAMME.finditer(before))
             if not programmes:
                 continue
@@ -298,7 +310,7 @@ def check_official_url(url: str, *, now: datetime) -> dict:
 
 
 def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
-            fetcher=check_official_url) -> dict:
+            recheck_no_explicit: bool = False, fetcher=check_official_url) -> dict:
     if batch_size < 1 or batch_size > 40:
         raise ValueError("batch_size must be 1..40")
     validate_catalogues(seeds, public)
@@ -309,11 +321,24 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         checked = _timestamp(programmes[index].get("checked_at"))
         return checked or datetime.min.replace(tzinfo=UTC), index
 
-    due = sorted(
-        (i for i, item in enumerate(programmes) if eligible_for_check(item, now=now)),
+    # A trusted parser-source change may correct earlier "no date found"
+    # results even while they are younger than the 11-day interval. Retry
+    # only successfully read but inconclusive sources, never robots-blocked
+    # or failed/restricted providers.
+    readable_negatives = sorted(
+        (i for i, item in enumerate(programmes)
+         if recheck_no_explicit
+         and item.get("status") in {"no_explicit_deadline", "ambiguous_deadline"}
+         and _timestamp(item.get("checked_at")) is not None),
         key=priority,
     )
-    selected = set(due[:batch_size])
+    rechecking = set(readable_negatives)
+    due = sorted(
+        (i for i, item in enumerate(programmes)
+         if i not in rechecking and eligible_for_check(item, now=now)),
+        key=priority,
+    )
+    selected = set((readable_negatives + due)[:batch_size])
     stamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, entry in enumerate(programmes):
         old = _timestamp(entry.get("checked_at"))
@@ -346,6 +371,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Validate offline; never fetch")
     parser.add_argument("--batch-size", type=int, default=25)
+    parser.add_argument(
+        "--recheck-no-explicit", action="store_true",
+        help="On trusted parser updates, retry accessible uncorroborated pages",
+    )
     args = parser.parse_args(argv)
     seeds = json.loads(SEEDS.read_text(encoding="utf-8"))
     public = json.loads(PUBLIC.read_text(encoding="utf-8"))
@@ -354,7 +383,10 @@ def main(argv: list[str] | None = None) -> int:
         print("PhD admissions: catalogue and provenance valid; network not used")
         return 0
     now = datetime.now(UTC)
-    updated = refresh(seeds, public, now=now, batch_size=args.batch_size)
+    updated = refresh(
+        seeds, public, now=now, batch_size=args.batch_size,
+        recheck_no_explicit=args.recheck_no_explicit,
+    )
     PUBLIC.write_text(json.dumps(updated, ensure_ascii=False, indent=2) + "\n",
                       encoding="utf-8")
     statuses: dict[str, int] = {}

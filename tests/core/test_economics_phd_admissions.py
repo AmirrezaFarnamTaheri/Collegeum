@@ -136,6 +136,71 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertNotEqual(status, "verified")
         self.assertIsNone(deadline)
 
+    def test_official_long_form_programme_deadline_is_not_dropped(self):
+        """Institutional pages often put programme + intake between label and date."""
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        institutional_html = """
+          <h1>Application</h1>
+          <p>The application deadline to the Berlin School of Economics
+          PhD Program for the autumn 2027 intake is January 15, 2027.</p>
+          <p>An information session will take place on December 2, 2026.</p>
+          <p>Interviews will take place on March 3, 2027.</p>
+          <p>Recommendation letters must reach the school by January 19, 2027.</p>
+        """
+        status, deadline, evidence = collect_official_deadline(
+            institutional_html, now=now
+        )
+        self.assertEqual(status, "verified")
+        self.assertEqual(deadline, "2027-01-15")
+        self.assertIn("January 15, 2027", evidence)
+
+    def test_applicant_document_or_interview_date_is_not_mistaken_for_application(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        institutional_html = """
+          <h1>Application</h1>
+          <p>The supporting-document deadline to Berlin School of Economics
+          PhD Program for autumn 2027 intake is January 19, 2027.</p>
+          <p>The interview date to Berlin School of Economics PhD Program
+          is March 3, 2027.</p>
+        """
+        status, deadline, evidence = collect_official_deadline(
+            institutional_html, now=now
+        )
+        self.assertNotEqual(status, "verified")
+        self.assertIsNone(deadline)
+        self.assertIsNone(evidence)
+
+    def test_checks_multiple_times_daily_without_rechecking_fresh_sources(self):
+        workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
+            encoding="utf-8"
+        )
+        schedules = [line for line in workflow.splitlines() if line.strip().startswith(
+            '- cron:'
+        )]
+        self.assertEqual(len(schedules), 4, schedules)
+        self.assertTrue(all('17' in entry for entry in schedules))
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+
+        def fetch(_url: str, *, now: datetime) -> dict:
+            return {"status": "no_explicit_deadline"}
+
+        first = refresh(self.seeds, self.public, now=now, batch_size=25, fetcher=fetch)
+        later = refresh(self.seeds, first, now=now + timedelta(hours=6),
+                        batch_size=25, fetcher=fetch)
+        first_ids = {
+            index for index, row in enumerate(first["programmes"])
+            if row["checked_at"] == now.isoformat().replace("+00:00", "Z")
+        }
+        second_ids = {
+            index for index, row in enumerate(later["programmes"])
+            if row["checked_at"] == (now + timedelta(hours=6)).isoformat().replace(
+                "+00:00", "Z"
+            )
+        }
+        self.assertEqual(len(first_ids), 25)
+        self.assertEqual(len(second_ids), 25)
+        self.assertFalse(first_ids & second_ids)
+
     def test_stale_verified_evidence_is_not_current(self):
         now = datetime(2026, 11, 19, tzinfo=UTC)
         self.assertTrue(eligible_for_check(
@@ -151,19 +216,24 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             return {"status": "no_explicit_deadline"}
         first = refresh(self.seeds, self.public, now=now, batch_size=25,
                         fetcher=fetch)
-        first_checked = [
-            i for i, item in enumerate(first["programmes"])
+        baseline_checked = {
+            i for i, item in enumerate(self.public["programmes"])
             if item["checked_at"] is not None
-        ]
+        }
+        first_checked = {
+            i for i, item in enumerate(first["programmes"])
+            if i not in baseline_checked and item["checked_at"] is not None
+        }
         self.assertEqual(len(first_checked), 25)
         # GitHub may drop schedules for days. Never revisit previously checked
-        # sources ahead of 226 still-unchecked programme leads.
+        # sources ahead of the unvisited programme leads.
         later = refresh(self.seeds, first, now=now + timedelta(days=11),
                         batch_size=25, fetcher=fetch)
-        newly_checked = [
+        newly_checked = {
             i for i, item in enumerate(later["programmes"])
-            if i not in first_checked and item["checked_at"] is not None
-        ]
+            if i not in baseline_checked and i not in first_checked
+            and item["checked_at"] is not None
+        }
         self.assertEqual(len(newly_checked), 25)
         self.assertTrue(all(
             later["programmes"][i]["checked_at"] ==
@@ -216,6 +286,42 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertIn("phd-admissions-refresh", pages)
         self.assertIn("phd_admissions.json", pages)
         self.assertIn("econ-grad-app-deadlines-MIT.txt", pages)
+
+    def test_parser_change_rechecks_readable_negative_without_retrying_blocked(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        sample = json.loads(json.dumps(self.public))
+        for row in sample["programmes"]:
+            row.update(status="unverified", checked_at=None,
+                       deadline_iso=None, evidence_url=None, evidence_excerpt=None)
+        recent = (now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+        readable = sample["programmes"][0]
+        blocked = sample["programmes"][1]
+        readable.update(status="no_explicit_deadline", checked_at=recent)
+        blocked.update(status="robots_disallowed", checked_at=recent)
+        seen = []
+
+        def fetch(url: str, *, now: datetime) -> dict:
+            seen.append(url)
+            return {"status": "no_explicit_deadline"}
+
+        refreshed = refresh(
+            self.seeds, sample, now=now, batch_size=25, fetcher=fetch,
+            recheck_no_explicit=True,
+        )
+        self.assertEqual(len(seen), 25)
+        self.assertIn(readable["official_programme_url"], seen)
+        self.assertNotIn(blocked["official_programme_url"], seen)
+        self.assertEqual(
+            refreshed["programmes"][0]["checked_at"],
+            now.isoformat().replace("+00:00", "Z"),
+        )
+        self.assertEqual(refreshed["programmes"][1]["checked_at"], recent)
+
+        workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("--recheck-no-explicit", workflow)
+        self.assertIn("github.event_name", workflow)
 
     def test_initial_source_changes_bootstrap_without_refresh_commit_loop(self):
         workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
