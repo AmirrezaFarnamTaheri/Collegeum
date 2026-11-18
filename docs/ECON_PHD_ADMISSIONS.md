@@ -36,13 +36,15 @@ Its copyright and permission notice is at
 
 ## Automatic refresh
 
-The independent `phd-admissions-refresh` workflow runs daily at 03:17 UTC
-(subject to GitHub Actions scheduler delay), checking the 25 oldest due official
-URLs per day. Never-checked programmes take priority so missed GitHub schedules
-cannot silently strand skipped calendar shards. At a reliable daily cadence all
-251 receive an initial attempted check within 11 runs; a recorded
-check is eligible for renewal after 11 days. Trusted source-code or seed
-changes also bootstrap a check on `main` without waiting for the next cron.
+The independent `phd-admissions-refresh` workflow runs at **03:17, 09:17,
+15:17 and 21:17 UTC** (subject to GitHub Actions scheduler delays). Each run
+checks at most 25 oldest-due official programme URLs. Never-checked programmes
+take priority so missed GitHub schedules cannot strand calendar shards. At a
+reliable four-runs-per-day cadence all 251 receive an initial attempted check
+within 11 successful runs (under three days). A recorded check is eligible
+for renewal after 11 days; the monitor makes no network requests if none are
+due. Trusted source-code or seed changes also bootstrap a check on `main`
+without waiting for the next cron.
 A previously verified deadline is
 **withdrawn** if source evidence ages beyond 14 days, or the date passes.
 After every check it commits only the derived
