@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import unittest
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -143,6 +143,31 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         ))
         self.assertFalse(eligible_for_check(
             {"status": "verified", "checked_at": "2026-11-18T00:00:00Z"}, now=now
+        ))
+
+    def test_missed_daily_workflows_do_not_skip_never_checked_programmes(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        fetch = lambda url, now: {"status": "no_explicit_deadline"}
+        first = refresh(self.seeds, self.public, now=now, batch_size=25,
+                        fetcher=fetch)
+        first_checked = [
+            i for i, item in enumerate(first["programmes"])
+            if item["checked_at"] is not None
+        ]
+        self.assertEqual(len(first_checked), 25)
+        # GitHub may drop schedules for days. Never revisit previously checked
+        # sources ahead of 226 still-unchecked programme leads.
+        later = refresh(self.seeds, first, now=now + timedelta(days=11),
+                        batch_size=25, fetcher=fetch)
+        newly_checked = [
+            i for i, item in enumerate(later["programmes"])
+            if i not in first_checked and item["checked_at"] is not None
+        ]
+        self.assertEqual(len(newly_checked), 25)
+        self.assertTrue(all(
+            later["programmes"][i]["checked_at"] ==
+            first["programmes"][i]["checked_at"]
+            for i in first_checked
         ))
 
     def test_expired_observation_is_withdrawn_without_waiting_for_manual_approval(self):
