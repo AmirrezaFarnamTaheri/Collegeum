@@ -216,6 +216,16 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertIn("phd_admissions.json", pages)
         self.assertIn("econ-grad-app-deadlines-MIT.txt", pages)
 
+    def test_initial_source_changes_bootstrap_without_refresh_commit_loop(self):
+        workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("  push:", workflow)
+        self.assertIn("branches: [main]", workflow)
+        self.assertIn('"tools/update_phd_admissions.py"', workflow)
+        self.assertIn('"config/phd_admissions_seeds.json"', workflow)
+        self.assertNotIn('"docs/data/phd_admissions.json"', workflow)
+
     def test_mit_license_and_official_only_policy_documented(self):
         notice = (ROOT / "docs/licenses/econ-grad-app-deadlines-MIT.txt").read_text(
             encoding="utf-8"
