@@ -18,7 +18,7 @@ cost.
 [official-university programme directory](https://amirrezafarnamtaheri.github.io/Collegeum/#phd-admissions).
 It maintains 251 programme discovery leads adapted from an MIT-licensed
 reference, but *never* trusts its undated third-party deadlines. An isolated
-daily monitor automatically checks the primary institution pages and surfaces
+scheduled monitor checks primary institution pages four times daily in safe batches and surfaces
 only explicit, current-year official-source dates. Admissions remain separate
 from actual research vacancies and Telegram posting; see
 [PhD admissions source policy](docs/ECON_PHD_ADMISSIONS.md).
