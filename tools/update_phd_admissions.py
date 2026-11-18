@@ -141,7 +141,19 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
         if not deadlines:
             continue
         deadline = deadlines[-1]
-        if len(before) - deadline.end() > 65:
+        gap = before[deadline.end():]
+        # Universities sometimes write "application deadline to the <named
+        # Economics PhD programme> for the autumn intake is <DATE>".
+        # This ties the longer gap to the actual programme and deadline;
+        # it does not permit unrelated sessions, documents or awards.
+        long_form = (
+            65 < len(gap) <= 190
+            and re.fullmatch(r"\s+(?:to|for)\s+.+\bis\s*", gap, flags=re.I | re.S)
+            is not None
+            and PROGRAMME.search(gap) is not None
+            and ANCILLARY.search(gap) is None
+        )
+        if len(gap) > 65 and not long_form:
             continue
         # A test or supporting-document cutoff is not the application cutoff.
         qualifier = before[max(0, deadline.start() - 38):deadline.end()]
@@ -153,7 +165,7 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
             context = before[max(0, deadline.start() - 135):deadline.start()]
             if not re.search(r"\bapplications?\b", context, re.I):
                 continue
-        if not programme_page:
+        if not programme_page and not long_form:
             programmes = list(PROGRAMME.finditer(before))
             if not programmes:
                 continue
