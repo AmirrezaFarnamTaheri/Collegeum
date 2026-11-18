@@ -89,6 +89,53 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
                 self.assertEqual(date, expected)
                 self.assertIn("deadline", excerpt.lower())
 
+    def test_official_admissions_period_uses_closing_not_open_or_documents(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        university_html = """
+            <h1>Aalto Doctoral Programme in Business, Economics and Finance</h1>
+            <h2>Application instructions 2027</h2>
+            <p>Admission schedule 2027: Application period opens on
+            8 December 2026 at 09:00 (UTC+2) and closes on
+            5 January 2027 at 23:59 (UTC+2).</p>
+            <p>After submitting your application by the deadline on
+            5 January 2027, attach electronic application documents
+            before the document deadline on 12 January 2027.</p>
+            <p>Admission decisions are published 19 February 2027.</p>
+        """
+        status, deadline, evidence = collect_official_deadline(
+            university_html, now=now
+        )
+        self.assertEqual(status, "verified")
+        self.assertEqual(deadline, "2027-01-05")
+        self.assertIn("5 January 2027", evidence)
+
+    def test_official_applicant_categories_cannot_be_silently_collapsed(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        university_html = """
+            <h1>PhD in Economics admissions</h1>
+            <p>International application deadline: 15 December 2026.</p>
+            <p>Domestic application deadline: 10 January 2027.</p>
+        """
+        status, deadline, evidence = collect_official_deadline(
+            university_html, now=now
+        )
+        self.assertEqual(status, "ambiguous_deadline")
+        self.assertIsNone(deadline)
+        self.assertIsNone(evidence)
+
+    def test_official_document_only_date_is_not_application_deadline(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        university_html = """
+            <h1>Economics PhD admissions</h1>
+            <p>The supporting document deadline is 12 January 2027.</p>
+            <p>Application closing date: please refer to the portal.</p>
+        """
+        status, deadline, _ = collect_official_deadline(
+            university_html, now=now
+        )
+        self.assertNotEqual(status, "verified")
+        self.assertIsNone(deadline)
+
     def test_stale_verified_evidence_is_not_current(self):
         now = datetime(2026, 11, 19, tzinfo=UTC)
         self.assertTrue(eligible_for_check(
