@@ -37,6 +37,9 @@ jobs:
       - name: Core tests (stdlib only, no dependencies installed)
         run: PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
 
+      - name: Validate verified-only PhD admissions catalogue offline
+        run: python3 -S tools/update_phd_admissions.py --check
+
       - name: Validate committed dashboard, RSS and journal contracts (stdlib only)
         run: python3 -S tools/audit_publications.py --strict --json-report build/publication-audit.json
 
