@@ -1403,6 +1403,54 @@
       .rv, .row { opacity: 1; transform: none; }
     }
 
+    /* Economics doctoral admissions: a separate reference directory, not vacancies. */
+    .admissions-note {
+      padding: 16px 20px;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--card);
+      margin: 16px 0 20px;
+      color: var(--soft);
+      font-size: 13px;
+    }
+    .admissions-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr) minmax(170px, 1fr);
+      gap: 10px;
+      margin: 20px 0 14px;
+    }
+    .admissions-list { display: grid; gap: 0; }
+    .admissions-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 17px 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .admissions-entry:last-child { border-bottom: 0; }
+    .admissions-entry h3 { font: 600 17px var(--serif); line-height: 1.35; }
+    .admissions-entry p { color: var(--soft); font-size: 12.5px; margin-top: 4px; overflow-wrap: anywhere; }
+    .admissions-entry .status { font: 500 11px var(--mono); color: var(--soft); }
+    .admissions-entry .status.verified { color: var(--ok); }
+    .admissions-entry a {
+      font-size: 12px;
+      color: var(--acc);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      white-space: nowrap;
+    }
+    .admissions-more { margin: 16px auto 6px; display: block; }
+    @media (max-width: 780px) {
+      .admissions-controls { grid-template-columns: minmax(0, 1fr) minmax(135px, 1fr); }
+      .admissions-controls .search-input-wrap { grid-column: 1 / -1; }
+    }
+    @media (max-width: 520px) {
+      .admissions-entry { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+      .admissions-controls { grid-template-columns: 1fr; }
+      .admissions-controls .search-input-wrap { grid-column: auto; }
+    }
+
   </style>
 </head>
 <body>
@@ -1423,6 +1471,7 @@
 
       <nav>
         <a href="#board">Board</a>
+        <a href="#phd-admissions">PhD admissions</a>
         <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
         <a href="https://github.com/AmirrezaFarnamTaheri/Collegeum" target="_blank" rel="noopener">GitHub</a>
       </nav>
@@ -1443,6 +1492,7 @@
         </p>
         <div class="cta">
           <a class="btn" href="#board">Browse positions</a>
+          <a class="btn alt" href="#phd-admissions">PhD programmes</a>
         </div>
         <p style="font-size:13px; color:var(--soft); margin-top:14px;">
           More predoc positions on Telegram: <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener" style="color:var(--acc);">@PredocCollegeum</a>
@@ -1543,6 +1593,50 @@
       <p class="note" id="src" style="font-size:12.5px; color:var(--soft); margin-top:8px;"></p>
     </section>
 
+
+    <!-- Admissions research: distinct data and provenance from paid research vacancies. -->
+    <section id="phd-admissions" aria-labelledby="phd-admissions-heading">
+      <h2 class="rv" id="phd-admissions-heading">Economics PhD admissions</h2>
+      <p class="sub rv">Browse official university programme pages, research doctoral structures,
+        and check admission deadlines at their source.</p>
+      <div class="admissions-note">
+        <strong>Admissions are not employment vacancies.</strong> These 251 university links
+        began as discovery leads from
+        <a href="https://github.com/paultran47/econ-grad-app-deadlines"
+           target="_blank" rel="noopener">Paul L. Tran's MIT-licensed directory</a>.
+        Collegeum checks each institution's own programme page on a rotating schedule.
+        Dates from the third-party directory are never reused as confirmed deadlines.
+        A programme without a current, explicit official-source date is
+        <strong>not verified for the current admission cycle</strong>.
+        Always confirm dates, funding and eligibility with the university itself.
+        <a href="licenses/econ-grad-app-deadlines-MIT.txt">MIT attribution</a>.
+      </div>
+      <div class="admissions-controls">
+        <div class="search-input-wrap">
+          <input class="search-input" type="search" id="phd-admissions-search"
+                 placeholder="Find a university or programme…" aria-label="Search Economics PhD programmes">
+        </div>
+        <select class="filter-select" id="phd-admissions-country" aria-label="Country for PhD admissions">
+          <option value="">All countries</option>
+        </select>
+        <select class="filter-select" id="phd-admissions-status" aria-label="Deadline verification">
+          <option value="">All programmes</option>
+          <option value="verified">Official deadline found</option>
+          <option value="unverified">Needs official confirmation</option>
+        </select>
+      </div>
+      <p class="note" id="phd-admissions-summary" aria-live="polite">Loading programme references…</p>
+      <div class="rows-container admissions-list" id="phd-admissions-results" aria-live="polite"></div>
+      <button class="export-btn admissions-more" id="phd-admissions-more" type="button" hidden>
+        Show more programmes
+      </button>
+      <p class="note" style="font-size:12px;color:var(--soft);margin-top:14px;">
+        Official-source monitoring is conservative: missing, blocked, out-of-date and ambiguous
+        pages stay unverified. A successful pipeline or a directory link does not establish that
+        admissions are open.
+      </p>
+    </section>
+
   </main>
 
   <!-- Detail Dossier Modal -->
@@ -1609,6 +1703,7 @@
           <a href="https://github.com/AmirrezaFarnamTaheri/Collegeum" target="_blank" rel="noopener">GitHub</a>
           <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
           <a href="architecture.html">Architecture</a>
+          <a href="#phd-admissions">PhD admissions</a>
           <a href="mailto:taherifarnam@gmail.com">Contact</a>
         </nav>
         <details class="support-disclosure">
@@ -2528,6 +2623,108 @@
       URL.revokeObjectURL(url);
       toast(`Exported ${rows.length} positions to CSV`);
     };
+
+
+    // Programme admissions are NEVER merged into listings or publisher state.
+    // Only the university's own dated evidence can yield an official date.
+    let phdAdmissions = [];
+    let phdAdmissionsLimit = 30;
+    const phdNames = typeof Intl.DisplayNames === 'function'
+      ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+    const admissionsCountry = code => {
+      try { return phdNames ? (phdNames.of(code) || code) : code; }
+      catch (_) { return code; }
+    };
+    const admissionsSafeUrl = raw => {
+      try {
+        const u = new URL(raw);
+        if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+        if (u.username || u.password || !u.hostname) return null;
+        return u.href;
+      } catch (_) { return null; }
+    };
+    function renderAdmissions() {
+      const query = $('#phd-admissions-search').value.trim().toLowerCase();
+      const country = $('#phd-admissions-country').value;
+      const statusFilter = $('#phd-admissions-status').value;
+      const shown = phdAdmissions.filter(row => {
+        const matches = !query || (row.institution || '').toLowerCase().includes(query) ||
+          admissionsCountry(row.country_code || '').toLowerCase().includes(query);
+        return matches && (!country || row.country_code === country) &&
+          (!statusFilter || (statusFilter === 'verified' ?
+            row.status === 'verified' : row.status !== 'verified'));
+      });
+      const todayUtc = new Date().toISOString().slice(0, 10);
+      const verified = phdAdmissions.filter(r =>
+        r.status === 'verified' && typeof r.deadline_iso === 'string' &&
+        r.deadline_iso >= todayUtc
+      ).length;
+      $('#phd-admissions-summary').textContent =
+        `${shown.length} of ${phdAdmissions.length} programmes · ${verified} with an automatically
+        corroborated official-source deadline. Yearless, stale or ambiguous dates are not presented as confirmed.`;
+      $('#phd-admissions-results').innerHTML = shown.slice(0, phdAdmissionsLimit).map(row => {
+        const countryName = admissionsCountry(row.country_code || '');
+        const structure = row.programme_structure_hint
+          ? `Reported structure: ${esc(row.programme_structure_hint)} (recheck at source)`
+          : 'Programme structure: confirm with university';
+        const confirmed = row.status === 'verified' &&
+          /^20\\d{2}-\\d{2}-\\d{2}$/.test(row.deadline_iso || '') &&
+          row.deadline_iso >= todayUtc;
+        const verdict = confirmed
+          ? `Official-source date: ${esc(row.deadline_iso)} (confirm before applying)`
+          : 'Deadline not officially corroborated';
+        const link = admissionsSafeUrl(row.official_programme_url);
+        const evidence = confirmed ? admissionsSafeUrl(row.evidence_url) : null;
+        return `
+          <article class="admissions-entry">
+            <div>
+              <h3>${esc(row.institution)}</h3>
+              <p>${esc(countryName)} · ${structure}</p>
+              <p class="status ${confirmed ? 'verified' : ''}">${verdict}</p>
+            </div>
+            <div>
+              ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">University programme ↗</a>` : 'Source unavailable'}
+              ${evidence && evidence !== link
+                ? `<p><a href="${esc(evidence)}" target="_blank" rel="noopener noreferrer">Date evidence ↗</a></p>`
+                : ''}
+            </div>
+          </article>`;
+      }).join('') || '<div class="empty-state">No programmes match these filters.</div>';
+      const more = $('#phd-admissions-more');
+      more.hidden = shown.length <= phdAdmissionsLimit;
+      more.textContent = `Show more programmes (${shown.length - phdAdmissionsLimit} remaining)`;
+    }
+    ['phd-admissions-search', 'phd-admissions-country', 'phd-admissions-status']
+      .forEach(id => $('#' + id).addEventListener('input', () => {
+        phdAdmissionsLimit = 30;
+        renderAdmissions();
+      }));
+    $('#phd-admissions-more').onclick = () => {
+      phdAdmissionsLimit += 30;
+      renderAdmissions();
+    };
+    fetch('data/phd_admissions.json', { cache: 'no-store' })
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then(payload => {
+        if (payload.kind !== 'economics_phd_admissions_observations' ||
+            payload.scope !== 'official_programme_sources_only' ||
+            !Array.isArray(payload.programmes)) throw Error('Untrusted programme format');
+        phdAdmissions = payload.programmes;
+        const country = $('#phd-admissions-country');
+        [...new Set(phdAdmissions.map(x => x.country_code).filter(Boolean))].sort(
+          (a, b) => admissionsCountry(a).localeCompare(admissionsCountry(b))
+        ).forEach(code => {
+          const option = document.createElement('option');
+          option.value = code;
+          option.textContent = admissionsCountry(code);
+          country.appendChild(option);
+        });
+        renderAdmissions();
+      })
+      .catch(() => {
+        $('#phd-admissions-summary').textContent =
+          'Programme catalogue unavailable; no deadlines can be verified here.';
+      });
 
     // Load Listings Data from pipeline
     fetch('data/listings.json', { cache: 'no-store' })
