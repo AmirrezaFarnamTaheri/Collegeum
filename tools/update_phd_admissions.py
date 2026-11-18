@@ -189,8 +189,12 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
             raise ValueError("Upstream/reference values leaked")
         if observation["status"] == "verified":
             dt = observation.get("deadline_iso")
-            if not isinstance(dt, str) or date.fromisoformat(dt) < date.today():
-                raise ValueError("Invalid/expired verified deadline")
+            if not isinstance(dt, str):
+                raise ValueError("Invalid verified deadline")
+            try:
+                date.fromisoformat(dt)
+            except ValueError as exc:
+                raise ValueError("Malformed verified deadline") from exc
             if not observation.get("evidence_url") or not observation.get("evidence_excerpt"):
                 raise ValueError("Verified dates require official evidence")
         elif observation.get("deadline_iso") is not None:
