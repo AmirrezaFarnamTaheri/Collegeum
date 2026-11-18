@@ -287,6 +287,42 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertIn("phd_admissions.json", pages)
         self.assertIn("econ-grad-app-deadlines-MIT.txt", pages)
 
+    def test_parser_change_rechecks_readable_negative_without_retrying_blocked(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        sample = json.loads(json.dumps(self.public))
+        for row in sample["programmes"]:
+            row.update(status="unverified", checked_at=None,
+                       deadline_iso=None, evidence_url=None, evidence_excerpt=None)
+        recent = (now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+        readable = sample["programmes"][0]
+        blocked = sample["programmes"][1]
+        readable.update(status="no_explicit_deadline", checked_at=recent)
+        blocked.update(status="robots_disallowed", checked_at=recent)
+        seen = []
+
+        def fetch(url: str, *, now: datetime) -> dict:
+            seen.append(url)
+            return {"status": "no_explicit_deadline"}
+
+        refreshed = refresh(
+            self.seeds, sample, now=now, batch_size=25, fetcher=fetch,
+            recheck_no_explicit=True,
+        )
+        self.assertEqual(len(seen), 25)
+        self.assertIn(readable["official_programme_url"], seen)
+        self.assertNotIn(blocked["official_programme_url"], seen)
+        self.assertEqual(
+            refreshed["programmes"][0]["checked_at"],
+            now.isoformat().replace("+00:00", "Z"),
+        )
+        self.assertEqual(refreshed["programmes"][1]["checked_at"], recent)
+
+        workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("--recheck-no-explicit", workflow)
+        self.assertIn("github.event_name", workflow)
+
     def test_initial_source_changes_bootstrap_without_refresh_commit_loop(self):
         workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
             encoding="utf-8"
