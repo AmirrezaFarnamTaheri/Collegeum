@@ -1,0 +1,1775 @@
+{
+  "kind": "economics_phd_admissions_reference",
+  "scope": "reference_only",
+  "source": {
+    "name": "Economics PhD App Deadlines",
+    "author": "Paul L. Tran",
+    "repository_url": "https://github.com/paultran47/econ-grad-app-deadlines",
+    "upstream_commit": "49604886769441a11c1e79ab7d1fab68ba5b3d36",
+    "upstream_path": "index.md",
+    "license": "MIT",
+    "license_path": "licenses/econ-grad-app-deadlines-MIT.txt",
+    "snapshot_date_utc": "2026-11-19",
+    "deadline_years_verified": false,
+    "current_cycle_verified": false
+  },
+  "programmes": [
+    {
+      "institution": "Aalto University",
+      "country_code": "FI",
+      "programme_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "08 Jan"
+    },
+    {
+      "institution": "Aarhus University",
+      "country_code": "DK",
+      "programme_url": "https://bss.au.dk/en/research/phd/application/assessment-procedure",
+      "programme_structure": null,
+      "deadline_guidance": "03 Feb"
+    },
+    {
+      "institution": "American University",
+      "country_code": "US",
+      "programme_url": "https://www.american.edu/cas/economics/phd/phd-requirements.cfm",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Arizona State University",
+      "country_code": "US",
+      "programme_url": "https://wpcarey.asu.edu/economics-degrees/phd-admissions",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Aston University",
+      "country_code": "UK",
+      "programme_url": "https://www.aston.ac.uk/study/courses/phd-aston-business-school",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Jun"
+    },
+    {
+      "institution": "Ateneo de Manila University",
+      "country_code": "PH",
+      "programme_url": "https://www.ateneo.edu/ls/graduate/admissions/latest-deadlines",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Mar"
+    },
+    {
+      "institution": "Athens University of Economics and Business",
+      "country_code": "GR",
+      "programme_url": "https://dept.aueb.gr/en/econ/content/doctoral-program-department-economics",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Aug"
+    },
+    {
+      "institution": "Auburn University",
+      "country_code": "US",
+      "programme_url": "https://cla.auburn.edu/economics/graduate-program/admission-information/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Auckland University of Technology",
+      "country_code": "NZ",
+      "programme_url": "https://www.aut.ac.nz/courses/doctor-of-philosophy",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Jul"
+    },
+    {
+      "institution": "Australian National University",
+      "country_code": "AU",
+      "programme_url": "https://cbe.anu.edu.au/study/graduate-research-programs/doctor-philosophy-phd/phd-economics",
+      "programme_structure": "MPhil + PhD",
+      "deadline_guidance": "31 Aug; (International); 31 Oct; (Domestic)"
+    },
+    {
+      "institution": "Autonomous University of Barcelona",
+      "country_code": "ES",
+      "programme_url": "https://www.uab.cat/web/study/phds/phds/all-phd-programmes-1345698226438.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Sep"
+    },
+    {
+      "institution": "Barcelona School of Economics",
+      "country_code": "ES",
+      "programme_url": "https://bse.eu/study/masters-programs/upf-phd-track",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Berlin School of Economics",
+      "country_code": "DE",
+      "programme_url": "https://berlinschoolofeconomics.de/phd-programm/application",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "BI Norwegian Business School",
+      "country_code": "NO",
+      "programme_url": "https://www.bi.edu/programmes-and-individual-courses/phd/economics/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Bocconi University",
+      "country_code": "IT",
+      "programme_url": "https://www.unibocconi.it/en/programs/phd/admissions",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Boston College",
+      "country_code": "US",
+      "programme_url": "https://www.bc.edu/content/bc-web/schools/morrissey/departments/economics/graduate/admissions.html",
+      "programme_structure": null,
+      "deadline_guidance": "02 Jan"
+    },
+    {
+      "institution": "Boston University",
+      "country_code": "US",
+      "programme_url": "https://www.bu.edu/econ/admissions/apply-for-a-phd/",
+      "programme_structure": null,
+      "deadline_guidance": "07 Jan"
+    },
+    {
+      "institution": "Brown University",
+      "country_code": "US",
+      "programme_url": "https://www.brown.edu/graduateprograms/economics-phd",
+      "programme_structure": null,
+      "deadline_guidance": "01 Jan"
+    },
+    {
+      "institution": "Ca' Foscari University of Venice",
+      "country_code": "IT",
+      "programme_url": "https://www.unive.it/web/en/2161/annual-call",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "28 Aug"
+    },
+    {
+      "institution": "California Institute of Technology",
+      "country_code": "US",
+      "programme_url": "https://www.hss.caltech.edu/graduate-studies/social-sciences-phd-program/admissions",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Carnegie Mellon University",
+      "country_code": "US",
+      "programme_url": "https://www.cmu.edu/tepper/programs/phd/admissions/index.html",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Catholic University of Louvain",
+      "country_code": "BE",
+      "programme_url": "https://www.uclouvain.be/en/enrolment/when-should-i-apply",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Mar"
+    },
+    {
+      "institution": "CEMFI",
+      "country_code": "ES",
+      "programme_url": "https://www.cemfi.es/programs/phd/admissions.asp",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "Central European University",
+      "country_code": "AT",
+      "programme_url": "https://www.ceu.edu/admissions/doctoral#doctoral-degree-deadlines",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "04 Feb"
+    },
+    {
+      "institution": "Charles University",
+      "country_code": "CZ",
+      "programme_url": "https://fsv.cuni.cz/en/admissions/phd-programmes/economics-and-finance",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "30 Apr"
+    },
+    {
+      "institution": "Chulalongkorn University",
+      "country_code": "TH",
+      "programme_url": "https://www.econ.chula.ac.th/en/ph-d-in-economics-international/#1678612623230-e185f2d7-44af",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "10 May"
+    },
+    {
+      "institution": "City St George's, University of London",
+      "country_code": "UK",
+      "programme_url": "https://www.city.ac.uk/prospective-students/courses/research/economics#accordion496136-header2",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "12 Dec"
+    },
+    {
+      "institution": "City University of Hong Kong",
+      "country_code": "HK",
+      "programme_url": "https://www.cb.cityu.edu.hk/ef/programmes/economics/phd/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "City University of New York",
+      "country_code": "US",
+      "programme_url": "https://www.gc.cuny.edu/economics",
+      "programme_structure": null,
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "Colorado State University",
+      "country_code": "US",
+      "programme_url": "https://economics.colostate.edu/graduate/graduate-admissions-and-funding/",
+      "programme_structure": null,
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "Columbia University",
+      "country_code": "US",
+      "programme_url": "https://gsas.columbia.edu/degree-programs/phd-programs/economics",
+      "programme_structure": null,
+      "deadline_guidance": "04 Dec"
+    },
+    {
+      "institution": "Complutesnse University of Madrid",
+      "country_code": "ES",
+      "programme_url": "https://www.ucm.es/doctorado/programa-doctorado-economia-ucm/admision",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "17 Sep"
+    },
+    {
+      "institution": "Copenhagen Business School",
+      "country_code": "DK",
+      "programme_url": "https://www.cbs.dk/en/research/phd-programmes/admission",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Sep"
+    },
+    {
+      "institution": "Cornell University",
+      "country_code": "US",
+      "programme_url": "http://economics.cornell.edu/prospective-incoming-grad-students",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Deakin University",
+      "country_code": "AU",
+      "programme_url": "https://www.deakin.edu.au/faculty-of-business-and-law/deakin-business-school/study-with-us/phd-program",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "24 Aug; (International); 24 Oct; (Domestic)"
+    },
+    {
+      "institution": "DIW Berlin",
+      "country_code": "DE",
+      "programme_url": "https://www.diw.de/de/diw_01.c.799242.de/application.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Drexel University",
+      "country_code": "US",
+      "programme_url": "https://www.lebow.drexel.edu/admissions/doctorate/admission-standards",
+      "programme_structure": null,
+      "deadline_guidance": "10 Jan"
+    },
+    {
+      "institution": "Duke University",
+      "country_code": "US",
+      "programme_url": "https://econ.duke.edu/phd-program/prospective-students/application-instructions",
+      "programme_structure": null,
+      "deadline_guidance": "06 Jan"
+    },
+    {
+      "institution": "Durham University",
+      "country_code": "UK",
+      "programme_url": "https://www.durham.ac.uk/business/about/departments/economics/phd-in-economics/",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "09 Jan"
+    },
+    {
+      "institution": "Emory University",
+      "country_code": "US",
+      "programme_url": "https://economics.emory.edu/doctoral/apply-to-phd/faq.html",
+      "programme_structure": null,
+      "deadline_guidance": "01 Jan"
+    },
+    {
+      "institution": "Erasmus University Rotterdam",
+      "country_code": "NL",
+      "programme_url": "https://www.eur.nl/en/ese/research/phd/admission-requirements",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "16 Mar; Tinbergen Institute; (MRes)"
+    },
+    {
+      "institution": "ESSEC Business School",
+      "country_code": "FR",
+      "programme_url": "https://essec.edu/en/program/program-phd/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "ETC Zurich",
+      "country_code": "CH",
+      "programme_url": "https://ethz.ch/en/doctorate/registration-admission/zulassungsbedingungen.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "Rolling; basis"
+    },
+    {
+      "institution": "European University Institute",
+      "country_code": "IT",
+      "programme_url": "https://www.eui.eu/apply?id=doctoral-programme-in-economics",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Florida International University",
+      "country_code": "US",
+      "programme_url": "https://admissions.fiu.edu/how-to-apply/graduate-applicant/steps-to-apply/index.html#deadlines",
+      "programme_structure": null,
+      "deadline_guidance": "15 Feb"
+    },
+    {
+      "institution": "Florida State University",
+      "country_code": "US",
+      "programme_url": "https://cosspp.fsu.edu/economics/phd-program/ph-d-program-overview/phd-faq/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Jan"
+    },
+    {
+      "institution": "Fordham University",
+      "country_code": "US",
+      "programme_url": "https://www.fordham.edu/graduate-school-of-arts-and-sciences/admissions/how-to-apply/application-deadlines/",
+      "programme_structure": null,
+      "deadline_guidance": "09 Jan"
+    },
+    {
+      "institution": "Free University of Brussels",
+      "country_code": "BE",
+      "programme_url": "https://ecares.ulb.be/phd/apply/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Mar; (Non-EU); 30 Sep; (EU)"
+    },
+    {
+      "institution": "George Mason University",
+      "country_code": "US",
+      "programme_url": "https://economics.gmu.edu/programs/la-phd-econ",
+      "programme_structure": null,
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "George Washington University",
+      "country_code": "US",
+      "programme_url": "https://economics.columbian.gwu.edu/faq-prospective-phd-students1",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Georgetown University",
+      "country_code": "US",
+      "programme_url": "https://econ.georgetown.edu/academics/phd/admissions/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Georgia Institute of Technology",
+      "country_code": "US",
+      "programme_url": "https://econ.gatech.edu/graduate/phd-econ",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec; (International); 01 Jan; (Domestic)"
+    },
+    {
+      "institution": "Georgia State University",
+      "country_code": "US",
+      "programme_url": "https://www.gsu.edu/program/economics-phd/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Goethe-University Frankfurt",
+      "country_code": "DE",
+      "programme_url": "https://www.gsefm.eu/applicants/requirements-and-deadlines.html",
+      "programme_structure": "MSc + PhD",
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "Hanken School of Economics",
+      "country_code": "FI",
+      "programme_url": "https://www.hanken.fi/en/apply/application/phd-programme",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Aug"
+    },
+    {
+      "institution": "Harvard University",
+      "country_code": "US",
+      "programme_url": "https://economics.harvard.edu/admissions",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "HEC Paris",
+      "country_code": "FR",
+      "programme_url": "https://www.hec.edu/en/phd-program/admissions",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "18 Dec"
+    },
+    {
+      "institution": "Heriot-Watt University",
+      "country_code": "UK",
+      "programme_url": "https://www.hw.ac.uk/study/how-to-apply/postgraduate-programmes",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "XX Jul; (International); XX Aug; (Don't need visa)"
+    },
+    {
+      "institution": "Hitotsubashi University",
+      "country_code": "JP",
+      "programme_url": "https://www.econ.hit-u.ac.jp/eng/page/graduate/admission.html",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "03 Apr"
+    },
+    {
+      "institution": "HKUST",
+      "country_code": "HK",
+      "programme_url": "https://econ.hkust.edu.hk/programs-n-courses/mphd/mphd-introduction",
+      "programme_structure": "MPhil + PhD",
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "Imperial College London",
+      "country_code": "UK",
+      "programme_url": "https://www.imperial.ac.uk/business-school/phd/economics/",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "02 Dec"
+    },
+    {
+      "institution": "Indiana University Bloomington",
+      "country_code": "US",
+      "programme_url": "https://economics.indiana.edu/graduate/how-to-apply/phd-index.html",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec; (International); 15 Jan; (Domestic)"
+    },
+    {
+      "institution": "Iowa State University",
+      "country_code": "US",
+      "programme_url": "https://www.econ.iastate.edu/frequently-asked-questions",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Johns Hopkins University",
+      "country_code": "US",
+      "programme_url": "https://econ.jhu.edu/graduate/phd-program/admissions/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Jan"
+    },
+    {
+      "institution": "Keio University",
+      "country_code": "JP",
+      "programme_url": "https://www.keio.ac.jp/en/grad-admissions/doctoral/gsecon/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "25 Dec"
+    },
+    {
+      "institution": "King's College London",
+      "country_code": "UK",
+      "programme_url": "https://www.kcl.ac.uk/business/research/phd-pages/phd-home",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "Kyoto University",
+      "country_code": "JP",
+      "programme_url": "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "13 Mar; Start AAO screening; 2-3 months before"
+    },
+    {
+      "institution": "Kyushu University",
+      "country_code": "JP",
+      "programme_url": "https://www.econ.kyushu-u.ac.jp/english/pa_index/pa_7/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "30 Nov; (International); 28 Feb; (Domestic)"
+    },
+    {
+      "institution": "Lincoln University",
+      "country_code": "NZ",
+      "programme_url": "https://www.lincoln.ac.nz/study/apply-and-enrol/apply/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Dec; (International); 01 Feb; (Domestic)"
+    },
+    {
+      "institution": "LMU Munich",
+      "country_code": "DE",
+      "programme_url": "https://www.econ.lmu.de/en/faculty/mgse/program-application/index.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "London Business School",
+      "country_code": "UK",
+      "programme_url": "https://www.london.edu/phd#howtoapply",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "07 Jan"
+    },
+    {
+      "institution": "London School of Economics and Political Science",
+      "country_code": "UK",
+      "programme_url": "http://www.lse.ac.uk/economics/study/research/phd-admissions-faqs",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "10 Dec"
+    },
+    {
+      "institution": "Louisiana State University",
+      "country_code": "US",
+      "programme_url": "https://www.lsu.edu/business/economics/phd-economics.php",
+      "programme_structure": null,
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "Luiss University",
+      "country_code": "IT",
+      "programme_url": "https://phd.luiss.it/economics/open-calls/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "XX Mar"
+    },
+    {
+      "institution": "Lund University",
+      "country_code": "SE",
+      "programme_url": "https://www.lusem.lu.se/organisation/department-economics/doctoral-studies-department-economics/application-phd-programme-economics",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "Massachusetts Institute of Technology",
+      "country_code": "US",
+      "programme_url": "https://economics.mit.edu/academic-programs/phd-program/admissions",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Massey University",
+      "country_code": "NZ",
+      "programme_url": "https://www.massey.ac.nz/study/admission-and-enrolment/key-admission-and-course-enrolment-dates/admission-application-due-dates/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Oct; (International); 05 Feb; (Domestic)"
+    },
+    {
+      "institution": "McGill University",
+      "country_code": "CA",
+      "programme_url": "https://www.mcgill.ca/economics/graduates/admissions",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "McMaster University",
+      "country_code": "CA",
+      "programme_url": "https://economics.mcmaster.ca/graduate-programs/phd-economics/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "Michigan State University",
+      "country_code": "US",
+      "programme_url": "https://econ.msu.edu/academics/graduate/application-info",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Monash University",
+      "country_code": "AU",
+      "programme_url": "https://www.monash.edu/business/research/phd-programs/how-to-apply/integrated",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "Nanyang Technological University",
+      "country_code": "SG",
+      "programme_url": "https://www.ntu.edu.sg/education/graduate-programme/ph.d.-in-economics",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "National Taiwan University",
+      "country_code": "TW",
+      "programme_url": "https://econ.ntu.edu.tw/en/archives/9373",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "13 Nov"
+    },
+    {
+      "institution": "National University of Singapore",
+      "country_code": "SG",
+      "programme_url": "https://fass.nus.edu.sg/ecs/doctor-of-philosophy-economics/",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "New York University",
+      "country_code": "US",
+      "programme_url": "http://gsas.nyu.edu/admissions/gsas-application-resource-center/2017-programs--requirements--and-deadlines/economics.html",
+      "programme_structure": null,
+      "deadline_guidance": "18 Dec"
+    },
+    {
+      "institution": "Newcastle University",
+      "country_code": "UK",
+      "programme_url": "https://www.ncl.ac.uk/postgraduate/degrees/8240f-66/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "XX Jul"
+    },
+    {
+      "institution": "NHH Norwegian School of Economics",
+      "country_code": "NO",
+      "programme_url": "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "North Carolina State University",
+      "country_code": "US",
+      "programme_url": "https://poole.ncsu.edu/gradecon/admissions-financial-aid/requirements/",
+      "programme_structure": null,
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "Northwestern University",
+      "country_code": "US",
+      "programme_url": "https://www.economics.northwestern.edu/graduate/prospective/admissions.html",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "NYU Stern School of Business",
+      "country_code": "US",
+      "programme_url": "https://www.stern.nyu.edu/programs-admissions/phd/admissions/how-to-apply",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Ohio State University",
+      "country_code": "US",
+      "programme_url": "https://gpadmissions.osu.edu/programs/program.aspx?prog=0064#&&tab=apply",
+      "programme_structure": null,
+      "deadline_guidance": "30 Nov"
+    },
+    {
+      "institution": "Osaka University",
+      "country_code": "JP",
+      "programme_url": "https://www.econ.osaka-u.ac.jp/en/en-graduate/en-g-notice/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "17 Dec"
+    },
+    {
+      "institution": "Paris School of Economics",
+      "country_code": "FR",
+      "programme_url": "https://ed-economie.pantheonsorbonne.fr/inscriptions/modalites-candidature-en-doctorat",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "20 Oct"
+    },
+    {
+      "institution": "Peking University",
+      "country_code": "CN",
+      "programme_url": "https://english.phbs.pku.edu.cn/Academics/PhD.htm",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "28 Feb"
+    },
+    {
+      "institution": "Pennsylvania State University",
+      "country_code": "US",
+      "programme_url": "https://econ.la.psu.edu/ph-d-program/ph-d-admission/how-and-when-to-apply/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Polytechnic Institute of Paris",
+      "country_code": "FR",
+      "programme_url": "https://www.ip-paris.fr/en/education/phd-track/phd-track-economics",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "20 Jan"
+    },
+    {
+      "institution": "Pontifical Catholic University of Chile",
+      "country_code": "CL",
+      "programme_url": "https://doctorados.uc.cl/program/doctoral-program-in-economics/",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "03 Nov"
+    },
+    {
+      "institution": "Princeton University",
+      "country_code": "US",
+      "programme_url": "https://economics.princeton.edu/graduate-program/phd-admissions/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "Purdue University",
+      "country_code": "US",
+      "programme_url": "https://business.purdue.edu/phd/admissions.php",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Queen Mary University of London",
+      "country_code": "UK",
+      "programme_url": "https://www.qmul.ac.uk/sef/postgraduate/phd/mres/",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "16 Jan"
+    },
+    {
+      "institution": "Queen's University",
+      "country_code": "CA",
+      "programme_url": "https://www.econ.queensu.ca/graduate/phd/prospective-students",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Feb"
+    },
+    {
+      "institution": "Queen's University Belfast",
+      "country_code": "UK",
+      "programme_url": "https://www.qub.ac.uk/courses/postgraduate-research/economics-phd.html#projects",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "20 Jan"
+    },
+    {
+      "institution": "Rice University",
+      "country_code": "US",
+      "programme_url": "https://economics.rice.edu/graduate-program/phd/online-application",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Rutgers University-New Brunswick",
+      "country_code": "US",
+      "programme_url": "https://economics.rutgers.edu/academics/graduate/program/prospective-students/graduate-faqs",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Sapienza University of Rome",
+      "country_code": "IT",
+      "programme_url": "https://www.uniroma1.it/en/pagina/admissions-2025-2026-phd-programmes",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "19 Jun"
+    },
+    {
+      "institution": "Sciences Po",
+      "country_code": "FR",
+      "programme_url": "https://www.sciencespo.fr/ecole-recherche/en/admissions/phd/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "10 Feb"
+    },
+    {
+      "institution": "Seoul National University",
+      "country_code": "KR",
+      "programme_url": "https://econ.snu.ac.kr/graduate/requirements",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "08 Mar"
+    },
+    {
+      "institution": "Simon Fraser University",
+      "country_code": "CA",
+      "programme_url": "https://www.sfu.ca/economics/graduate/admissions.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "20 Jan"
+    },
+    {
+      "institution": "Singapore Management University",
+      "country_code": "SG",
+      "programme_url": "https://economics.smu.edu.sg/phd-economics/admissions/online-application",
+      "programme_structure": "MPhil + PhD",
+      "deadline_guidance": "31 Dec"
+    },
+    {
+      "institution": "Singapore University of Technology and Design",
+      "country_code": "SG",
+      "programme_url": "https://www.sutd.edu.sg/programme-listing/sutd-phd-programme/application/#tabs",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Apr"
+    },
+    {
+      "institution": "Sogang University",
+      "country_code": "KR",
+      "programme_url": "https://econeng.sogang.ac.kr/econeng/econeng04_6.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "XX Apr"
+    },
+    {
+      "institution": "Stanford University",
+      "country_code": "US",
+      "programme_url": "https://economics.stanford.edu/graduate/applying-stanford",
+      "programme_structure": null,
+      "deadline_guidance": "03 Dec"
+    },
+    {
+      "institution": "Stockholm School of Economics",
+      "country_code": "SE",
+      "programme_url": "https://www.hhs.se/en/education/phd/economics/admission/",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Stockholm University",
+      "country_code": "SE",
+      "programme_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/phd-programme-in-economics/applying-to-the-phd-programme-in-economics",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "Swansea University",
+      "country_code": "UK",
+      "programme_url": "https://www.swansea.ac.uk/postgraduate/research/social-sciences/economics/phd-mphil-economics/#how-to-apply=is-expanded",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jul; (International); 15 Aug; (Domestic)"
+    },
+    {
+      "institution": "Syracuse University",
+      "country_code": "US",
+      "programme_url": "https://www.maxwell.syr.edu/academics/economics-department/admission",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Texas A&M University",
+      "country_code": "US",
+      "programme_url": "https://artsci.tamu.edu/economics/academics/graduate/phd-program/application-and-admissions.html",
+      "programme_structure": null,
+      "deadline_guidance": "10 Jan"
+    },
+    {
+      "institution": "Texas State University",
+      "country_code": "US",
+      "programme_url": "https://mycatalog.txstate.edu/graduate/admission-information/application-deadlines/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Jun; (International); 15 Jun; (Domestic)"
+    },
+    {
+      "institution": "Texas Tech University",
+      "country_code": "US",
+      "programme_url": "https://www.depts.ttu.edu/economics/FAQsphd.php",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Tilburg University",
+      "country_code": "NL",
+      "programme_url": "https://www.tilburguniversity.edu/education/masters-programmes/research-master-economics/application",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "01 Apr (Non-EU); 01 Jun (EU)"
+    },
+    {
+      "institution": "Tohoku University",
+      "country_code": "JP",
+      "programme_url": "https://www.econ.tohoku.ac.jp/en/gpem/gpem-admission",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "27 Feb; (Pre-application); 31 Mar; (Application)"
+    },
+    {
+      "institution": "Tokai University",
+      "country_code": "JP",
+      "programme_url": "https://www.tokai-seikei.jp/admissioninformation",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "XX Jan; (International)"
+    },
+    {
+      "institution": "Toulouse School of Economics",
+      "country_code": "FR",
+      "programme_url": "https://www.tse-fr.eu/doctoral-program",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "12 Jan"
+    },
+    {
+      "institution": "Trinity College Dublin",
+      "country_code": "IE",
+      "programme_url": "https://www.tcd.ie/economics/news-and-events/department-news/phd-in-economics-applications-now-open/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "Tsinghua University",
+      "country_code": "CN",
+      "programme_url": "https://yz.tsinghua.edu.cn/en/info/1035/1046.htm",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Tufts University",
+      "country_code": "US",
+      "programme_url": "https://asegrad.tufts.edu/applying/application-deadlines",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "UC, Davis",
+      "country_code": "US",
+      "programme_url": "https://economics.ucdavis.edu/graduate-program/prosp-students/admission-information",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "UC, Irvine",
+      "country_code": "US",
+      "programme_url": "https://www.economics.uci.edu/grad/admissions.php",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "UC, Los Angeles",
+      "country_code": "US",
+      "programme_url": "https://economics.ucla.edu/graduate/prospective-students",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "UC, Merced",
+      "country_code": "US",
+      "programme_url": "https://graduatedivision.ucmerced.edu/prospective-students/application-dates",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "UC, San Diego",
+      "country_code": "US",
+      "programme_url": "https://economics.ucsd.edu/graduate-program/prospective-students/index.html",
+      "programme_structure": null,
+      "deadline_guidance": "03 Dec"
+    },
+    {
+      "institution": "UC, Santa Barbara",
+      "country_code": "US",
+      "programme_url": "https://econ.ucsb.edu/programs/graduate",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "UMass Amherst",
+      "country_code": "US",
+      "programme_url": "https://www.umass.edu/economics/admissions",
+      "programme_structure": null,
+      "deadline_guidance": "10 Jan"
+    },
+    {
+      "institution": "UNC-Chapel Hill",
+      "country_code": "US",
+      "programme_url": "https://gradschool.unc.edu/degree-programs/#594",
+      "programme_structure": null,
+      "deadline_guidance": "16 Dec"
+    },
+    {
+      "institution": "University College Dublin",
+      "country_code": "IE",
+      "programme_url": "https://www.ucd.ie/economics/phd/application/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "25 Jan"
+    },
+    {
+      "institution": "University College London",
+      "country_code": "UK",
+      "programme_url": "https://www.ucl.ac.uk/prospective-students/graduate/research-degrees/economics-mres-mphil-phd",
+      "programme_structure": "MRes + MPhil/PhD",
+      "deadline_guidance": "13 Jan; (Rolling basis)"
+    },
+    {
+      "institution": "University of Adelaide",
+      "country_code": "AU",
+      "programme_url": "https://www.adelaide.edu.au/graduate-research/future-students/how-to-apply#step-1-check-your-eligibility",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Jan; (International); 08 Jun; (Domestic)"
+    },
+    {
+      "institution": "University of Alberta",
+      "country_code": "CA",
+      "programme_url": "https://www.ualberta.ca/en/economics/graduate-programs/phd-in-economics.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "University of Alicante",
+      "country_code": "ES",
+      "programme_url": "https://sa.ua.es/en/preinscripcion-doctorado/applications-phd.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "24 Oct; (Pre-registration)"
+    },
+    {
+      "institution": "University of Amsterdam",
+      "country_code": "NL",
+      "programme_url": "https://ase.uva.nl/research/phd-research/phd-research.html",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "01 Dec; Tinbergen Institute; (MRes)"
+    },
+    {
+      "institution": "University of Arizona",
+      "country_code": "US",
+      "programme_url": "https://eller.arizona.edu/programs/doctoral/economics/admissions",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Arkansas",
+      "country_code": "US",
+      "programme_url": "https://walton.uark.edu/graduate-programs/phd-programs/economics.php",
+      "programme_structure": null,
+      "deadline_guidance": "08 Jan"
+    },
+    {
+      "institution": "University of Auckland",
+      "country_code": "NZ",
+      "programme_url": "https://www.auckland.ac.nz/en/study/applications-and-admissions/how-to-apply/postgraduate-application-closing-dates.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Dec; (International); 08 Dec; (Domestic)"
+    },
+    {
+      "institution": "University of Barcelona",
+      "country_code": "ES",
+      "programme_url": "https://www.ub.edu/school-economics/phd-in-economics/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "30 Apr"
+    },
+    {
+      "institution": "University of Bath",
+      "country_code": "UK",
+      "programme_url": "https://www.bath.ac.uk/courses/postgraduate-research/phd-economics-full-time/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "30 Jun; (International); 31 Jul; (Domestic)"
+    },
+    {
+      "institution": "University of Belgarde",
+      "country_code": "RS",
+      "programme_url": "https://www.ekof.bg.ac.rs/studies/phd/study-programmes/economics-business-management-and-statistics/?lang=en",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "XX Sep"
+    },
+    {
+      "institution": "University of Bern",
+      "country_code": "CH",
+      "programme_url": "https://www.unibe.ch/studies/dates/phd_candidates/index_eng.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Oct"
+    },
+    {
+      "institution": "University of Birmingham",
+      "country_code": "UK",
+      "programme_url": "https://www.birmingham.ac.uk/postgraduate/courses/research/business/economics#EntryRequirementsTab",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Apr"
+    },
+    {
+      "institution": "University of Bologna",
+      "country_code": "IT",
+      "programme_url": "https://phd.unibo.it/economics/en/admission/timeline-and-deadlines-overview",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "03 Apr"
+    },
+    {
+      "institution": "University of Bonn",
+      "country_code": "DE",
+      "programme_url": "https://www.econ.uni-bonn.de/bgse/en/doctoral-program/program-overview",
+      "programme_structure": "MSc + PhD",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Bristol",
+      "country_code": "UK",
+      "programme_url": "https://www.bristol.ac.uk/economics/study/postgraduate-research/",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "University of British Columbia",
+      "country_code": "CA",
+      "programme_url": "https://economics.ubc.ca/graduate/prospective-students/phd-program/faq/",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "University of California, Berkeley",
+      "country_code": "US",
+      "programme_url": "https://www.econ.berkeley.edu/grad/admissions/instructions",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "University of Cambridge",
+      "country_code": "UK",
+      "programme_url": "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececmpmer",
+      "programme_structure": "MPhil + PhD",
+      "deadline_guidance": "03 Dec"
+    },
+    {
+      "institution": "University of Cape Town",
+      "country_code": "ZA",
+      "programme_url": "https://commerce.uct.ac.za/school-economics/programmes-postgraduate/phd-economics-coursework-and-dissertation",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Jul"
+    },
+    {
+      "institution": "University of Carlos III of Madrid",
+      "country_code": "ES",
+      "programme_url": "https://economics.uc3m.es/home-phd/",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "University of Chicago",
+      "country_code": "US",
+      "programme_url": "https://socialsciences.uchicago.edu/admissions/deadlines-decisions",
+      "programme_structure": null,
+      "deadline_guidance": "04 Dec"
+    },
+    {
+      "institution": "University of Cologne",
+      "country_code": "DE",
+      "programme_url": "https://cgs.uni-koeln.de/en/doctoral-phd-programmes/phd-programme-in-economics/admission",
+      "programme_structure": "MSc + PhD",
+      "deadline_guidance": "15 Mar"
+    },
+    {
+      "institution": "University of Colorado Boulder",
+      "country_code": "US",
+      "programme_url": "https://www.colorado.edu/economics/graduate-program",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec; (International); 15 Jan; (Domestic)"
+    },
+    {
+      "institution": "University of Copenhagen",
+      "country_code": "DK",
+      "programme_url": "https://www.economics.ku.dk/phd/til-ansoegere/",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Edinburgh",
+      "country_code": "UK",
+      "programme_url": "https://www.ed.ac.uk/studying/postgraduate/degrees/index.php?r=site/view&edition=2024&id=278",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Aug"
+    },
+    {
+      "institution": "University of Essex",
+      "country_code": "UK",
+      "programme_url": "https://www.essex.ac.uk/courses/pr00897/5/phd-economics",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "01 Jul"
+    },
+    {
+      "institution": "University of Exeter",
+      "country_code": "UK",
+      "programme_url": "https://www.exeter.ac.uk/study/postgraduate/courses/economics/mres_economics-phd/",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "01 Sep; (Need visa); 17 Sep; (Don't need visa)"
+    },
+    {
+      "institution": "University of Florida",
+      "country_code": "US",
+      "programme_url": "https://economics.clas.ufl.edu/academics/phd/application-information/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Geneva",
+      "country_code": "CH",
+      "programme_url": "https://www.unige.ch/gsem/en/programs/phd/economics/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "28 Feb"
+    },
+    {
+      "institution": "University of Georgia",
+      "country_code": "US",
+      "programme_url": "https://www.terry.uga.edu/phd/economics/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Glasgow",
+      "country_code": "UK",
+      "programme_url": "https://www.gla.ac.uk/postgraduate/research/economics/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Mar"
+    },
+    {
+      "institution": "University of Gothenburg",
+      "country_code": "SE",
+      "programme_url": "https://www.gu.se/en/school-business-economics-law/economics/doctoral-studies/admission-and-general-information",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "University of Groningen",
+      "country_code": "NL",
+      "programme_url": "https://www.rug.nl/research/gradschool-economics-and-business/phd-programme/prospective-phd/admissions-vacancies/admissions",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "XX Feb; (Contact Rina Koning)"
+    },
+    {
+      "institution": "University of Hawaii at Manoa",
+      "country_code": "US",
+      "programme_url": "https://www.economics.hawaii.edu/grad/prospective.html",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Helsinki",
+      "country_code": "FI",
+      "programme_url": "https://www.helsinki.fi/en/admissions-and-education/apply-doctoral-programmes/doctoral-programmes/doctoral-programmes-humanities-and-social-sciences/doctoral-programme-economics/admissions-doctoral-studies",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "16 Sep"
+    },
+    {
+      "institution": "University of Hong Kong",
+      "country_code": "HK",
+      "programme_url": "https://fbeo.fbe.hku.hk/phd/admissions/admission-application-and-tuition-fee",
+      "programme_structure": "MPhil + PhD",
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "University of Houston",
+      "country_code": "US",
+      "programme_url": "https://www.uh.edu/class/economics/graduate/admissions/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Illinois at Urbana-Champaign",
+      "country_code": "US",
+      "programme_url": "https://economics.illinois.edu/academics/phd-program",
+      "programme_structure": null,
+      "deadline_guidance": "10 Jan"
+    },
+    {
+      "institution": "University of Illinois Chicago",
+      "country_code": "US",
+      "programme_url": "https://econ.uic.edu/graduate/admissions/application-deadlines/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Feb"
+    },
+    {
+      "institution": "University of Kansas",
+      "country_code": "US",
+      "programme_url": "https://economics.ku.edu/phd-program",
+      "programme_structure": null,
+      "deadline_guidance": "06 Jan"
+    },
+    {
+      "institution": "University of Konstanz",
+      "country_code": "DE",
+      "programme_url": "https://www.gsbs.uni-konstanz.de/application/how-to-apply/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Oct"
+    },
+    {
+      "institution": "University of Lancaster",
+      "country_code": "UK",
+      "programme_url": "https://www.lancaster.ac.uk/study/postgraduate/postgraduate-courses/economics-phd-integrated/2025/",
+      "programme_structure": "MSc + PhD",
+      "deadline_guidance": "XX Jan"
+    },
+    {
+      "institution": "University of Lausanne",
+      "country_code": "CH",
+      "programme_url": "https://www.unil.ch/hec-phd/home/menuinst/programs/phd-in-economics/applications.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "University of Leeds",
+      "country_code": "UK",
+      "programme_url": "https://business.leeds.ac.uk/research-degrees-apply/doc/apply-4",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 May; (International); 30 Jun; (Domestic)"
+    },
+    {
+      "institution": "University of Lisbon",
+      "country_code": "PT",
+      "programme_url": "https://www.iseg.ulisboa.pt/secretaria/en/applications/doctoral-applications/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "02 Feb"
+    },
+    {
+      "institution": "University of Liverpool",
+      "country_code": "UK",
+      "programme_url": "https://www.liverpool.ac.uk/study/postgraduate-research/degrees/economics/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "Rolling; basis"
+    },
+    {
+      "institution": "University of Malaya",
+      "country_code": "MY",
+      "programme_url": "https://fpe.um.edu.my/doctor-of-philosophy-by-research",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "Rolling; basis"
+    },
+    {
+      "institution": "University of Manchester",
+      "country_code": "UK",
+      "programme_url": "https://www.manchester.ac.uk/study/postgraduate-research/programmes/list/02976/phd-economics/",
+      "programme_structure": "MSc + PhD",
+      "deadline_guidance": "30 Jun"
+    },
+    {
+      "institution": "University of Mannheim",
+      "country_code": "DE",
+      "programme_url": "https://www.uni-mannheim.de/gess/apply/admission-requirements/for-cdse/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "31 Mar"
+    },
+    {
+      "institution": "University of Maryland",
+      "country_code": "US",
+      "programme_url": "https://www.econ.umd.edu/graduate/applications-and-admissions-faq",
+      "programme_structure": null,
+      "deadline_guidance": "02 Dec"
+    },
+    {
+      "institution": "University of Melbourne",
+      "country_code": "AU",
+      "programme_url": "https://study.unimelb.edu.au/find/courses/graduate/doctoral-program-in-economics/entry-requirements/",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "31 Aug"
+    },
+    {
+      "institution": "University of Michigan",
+      "country_code": "US",
+      "programme_url": "https://lsa.umich.edu/econ/doctoral-program/phd-application-process.html",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "University of Milan",
+      "country_code": "IT",
+      "programme_url": "https://phdeconomics.unimi.it/application/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "27 Jun"
+    },
+    {
+      "institution": "University of Minnesota",
+      "country_code": "US",
+      "programme_url": "https://cla.umn.edu/economics/graduate/how-apply-phd-program",
+      "programme_structure": null,
+      "deadline_guidance": "12 Dec"
+    },
+    {
+      "institution": "University of Mississippi",
+      "country_code": "US",
+      "programme_url": "https://olemiss.edu/programs/libarts/phd-in-economics/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Mar"
+    },
+    {
+      "institution": "University of Missouri",
+      "country_code": "US",
+      "programme_url": "https://economics.missouri.edu/grad/apply#phd",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Montreal",
+      "country_code": "CA",
+      "programme_url": "https://admission.umontreal.ca/programmes/doctorat-en-sciences-economiques/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "University of Naples Federico II",
+      "country_code": "IT",
+      "programme_url": "https://www.dises.unina.it/dottorati-di-ricerca/phd-in-economics",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Apr"
+    },
+    {
+      "institution": "University of Nebraska--Lincoln",
+      "country_code": "US",
+      "programme_url": "https://business.unl.edu/graduate-programs/phd-programs/phd-economics/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "University of Nevada, Reno",
+      "country_code": "US",
+      "programme_url": "https://www.unr.edu/business/degree-programs/economics/phd/admissions",
+      "programme_structure": null,
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "University of New Mexico",
+      "country_code": "US",
+      "programme_url": "https://econ.unm.edu/phd-program/prospective-students/index.html",
+      "programme_structure": null,
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "University of Notre Dame",
+      "country_code": "US",
+      "programme_url": "https://graduateschool.nd.edu/degree-programs/economics-phd---doctoral/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Nottingham",
+      "country_code": "UK",
+      "programme_url": "https://www.nottingham.ac.uk/pgstudy/how-to-apply/research.aspx",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "03 Aug; (International); 24 Aug; (Domestic)"
+    },
+    {
+      "institution": "University of Oklahoma",
+      "country_code": "US",
+      "programme_url": "https://www.ou.edu/cas/economics/academics/graduate#phd",
+      "programme_structure": null,
+      "deadline_guidance": "01 Jan"
+    },
+    {
+      "institution": "University of Oregon",
+      "country_code": "US",
+      "programme_url": "https://socialsciences.uoregon.edu/economics/apply/graduate-admissions",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Oslo",
+      "country_code": "NO",
+      "programme_url": "https://www.sv.uio.no/english/research/phd/application/phd-fellowship/admission-econ-2017.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Otago",
+      "country_code": "NZ",
+      "programme_url": "https://www.otago.ac.nz/economics/study/postgraduate/phd-in-economics",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "[Email](mailto:economics@otago.ac.nz); for deadline"
+    },
+    {
+      "institution": "University of Ottawa",
+      "country_code": "CA",
+      "programme_url": "https://www.uottawa.ca/study/graduate-studies/program-specific-requirements",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "01 Dec; (International); 01 Feb; (Domestic)"
+    },
+    {
+      "institution": "University of Oxford",
+      "country_code": "UK",
+      "programme_url": "https://www.ox.ac.uk/admissions/graduate/courses/mphil-dphil-economics",
+      "programme_structure": "MPhil + PhD",
+      "deadline_guidance": "27 Jan"
+    },
+    {
+      "institution": "University of Pennsylvania",
+      "country_code": "US",
+      "programme_url": "https://economics.sas.upenn.edu/graduate/prospective-students/admissions-information-phd-program-economics",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "University of Pennsylvania Wharton",
+      "country_code": "US",
+      "programme_url": "https://doctoral.wharton.upenn.edu/application-requirements/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "University of Pittsburgh",
+      "country_code": "US",
+      "programme_url": "https://www.econ.pitt.edu/doctoral/doctoral/admissions",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Pompeu Fabra",
+      "country_code": "ES",
+      "programme_url": "https://www.upf.edu/web/econ/incoming-students1",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Putra Malaysia",
+      "country_code": "MY",
+      "programme_url": "https://econ.upm.edu.my/programme/phd/doctor_of_philosophy_phd-64405",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "30 Jun; (International); 31 Jul; (Domestic)"
+    },
+    {
+      "institution": "University of Queensland",
+      "country_code": "AU",
+      "programme_url": "https://study.uq.edu.au/admissions/phd-mphil-professional-doctorate/application-dates",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "31 Mar"
+    },
+    {
+      "institution": "University of Rochester",
+      "country_code": "US",
+      "programme_url": "http://www.sas.rochester.edu/eco/graduate/apply.html",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "University of South Carolina",
+      "country_code": "US",
+      "programme_url": "https://sc.edu/study/colleges_schools/moore/study/phd_programs/admission_requirements/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "University of Southampton",
+      "country_code": "UK",
+      "programme_url": "https://www.southampton.ac.uk/economics/postgraduate/research_degrees/courses/integrated-phd-in-economics.page",
+      "programme_structure": "MSc + PhD",
+      "deadline_guidance": "XX May"
+    },
+    {
+      "institution": "University of Southern California",
+      "country_code": "US",
+      "programme_url": "https://dornsife.usc.edu/econ/doctoral-admissions/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "University of St Andrews",
+      "country_code": "UK",
+      "programme_url": "https://www.st-andrews.ac.uk/economics-finance/prospective/pgr/application/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "30 Jun"
+    },
+    {
+      "institution": "University of St Gallen",
+      "country_code": "CH",
+      "programme_url": "https://www.unisg.ch/en/studying/admission/admission-phd/economics-and-econometrics/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "30 Nov"
+    },
+    {
+      "institution": "University of Stavanger",
+      "country_code": "NO",
+      "programme_url": "https://www.uis.no/en/research/phd-at-uis",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "Rolling; basis"
+    },
+    {
+      "institution": "University of Surrey",
+      "country_code": "UK",
+      "programme_url": "https://www.surrey.ac.uk/postgraduate/economics-phd",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "03 Jul"
+    },
+    {
+      "institution": "University of Sydney",
+      "country_code": "AU",
+      "programme_url": "https://www.sydney.edu.au/courses/courses/pr/doctor-of-philosophy-arts-and-social-sciences0.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 May; (International); 15 Jul; (Domestic)"
+    },
+    {
+      "institution": "University of Technology Sydney",
+      "country_code": "AU",
+      "programme_url": "https://www.uts.edu.au/study/business/business-courses/graduate-research/economics-phd-program",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "29 Oct; (International); 30 Sep; (Domestic)"
+    },
+    {
+      "institution": "University of Tennessee, Knoxville",
+      "country_code": "US",
+      "programme_url": "https://haslam.utk.edu/economics/phd/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Feb"
+    },
+    {
+      "institution": "University of Texas at Austin",
+      "country_code": "US",
+      "programme_url": "https://liberalarts.utexas.edu/economics/ph-d-program/admissions/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "University of Tokyo",
+      "country_code": "JP",
+      "programme_url": "https://www.student.e.u-tokyo.ac.jp/grad/d-nyushi.html",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "06 Jan"
+    },
+    {
+      "institution": "University of Toronto",
+      "country_code": "CA",
+      "programme_url": "https://www.economics.utoronto.ca/index.php/index/graduate/phd",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "16 Jan"
+    },
+    {
+      "institution": "University of Turin",
+      "country_code": "IT",
+      "programme_url": "https://www.phdpareto.carloalberto.org/how-to-apply/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "16 Jun"
+    },
+    {
+      "institution": "University of Utah",
+      "country_code": "US",
+      "programme_url": "https://econ.utah.edu/phd-program/phd-admissions.php",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Vienna",
+      "country_code": "AT",
+      "programme_url": "https://www.vgse.at/application/dates-deadlines/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "15 Feb"
+    },
+    {
+      "institution": "University of Virginia",
+      "country_code": "US",
+      "programme_url": "https://economics.virginia.edu/admission",
+      "programme_structure": null,
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Warsaw",
+      "country_code": "PL",
+      "programme_url": "https://en.uw.edu.pl/doctoral-schools-admissions/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "19 Jun"
+    },
+    {
+      "institution": "University of Warwick",
+      "country_code": "UK",
+      "programme_url": "https://warwick.ac.uk/study/postgraduate/courses/mres-phd-economics",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "University of Washington",
+      "country_code": "US",
+      "programme_url": "https://econ.washington.edu/graduate-application-procedure-forms",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "University of Western Australia",
+      "country_code": "AU",
+      "programme_url": "https://www.uwa.edu.au/study/courses/doctor-of-philosophy",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "Rolling; basis"
+    },
+    {
+      "institution": "University of Wisconsin-Madison",
+      "country_code": "US",
+      "programme_url": "https://econ.wisc.edu/doctoral/admissions/#application-process",
+      "programme_structure": null,
+      "deadline_guidance": "05 Dec"
+    },
+    {
+      "institution": "University of Wyoming",
+      "country_code": "US",
+      "programme_url": "https://www.uwyo.edu/economics/graduate/admissions/index.html",
+      "programme_structure": null,
+      "deadline_guidance": "31 Jan"
+    },
+    {
+      "institution": "University of York",
+      "country_code": "UK",
+      "programme_url": "https://www.york.ac.uk/economics/study/postgraduate-research/phd-economics/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "Rolling; basis"
+    },
+    {
+      "institution": "University of Zurich",
+      "country_code": "CH",
+      "programme_url": "https://www.econ.uzh.ch/en/study/phd/zurichgse/faq.html",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "15 Jan"
+    },
+    {
+      "institution": "UNSW Sydney",
+      "country_code": "AU",
+      "programme_url": "https://www.unsw.edu.au/business/study-with-us/postgraduate-research/phd-degrees/doctor-philosophy-phd-economics",
+      "programme_structure": "MPDBS + PhD",
+      "deadline_guidance": "10 Aug"
+    },
+    {
+      "institution": "Uppsala University",
+      "country_code": "SE",
+      "programme_url": "https://www.uu.se/en/department/economics/education/phd-programme-in-economics/applications-and-admissions",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "30 Jan"
+    },
+    {
+      "institution": "UT Dallas",
+      "country_code": "US",
+      "programme_url": "https://graduate-admissions.utdallas.edu/apply-to-ut-dallas/deadlines-and-fees/",
+      "programme_structure": null,
+      "deadline_guidance": "15 Dec"
+    },
+    {
+      "institution": "Vanderbilt University",
+      "country_code": "US",
+      "programme_url": "https://as.vanderbilt.edu/economics/phd-admissions/",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "Victoria University of Wellington",
+      "country_code": "NZ",
+      "programme_url": "https://www.wgtn.ac.nz/fgr/apply/how/entry-requirements",
+      "programme_structure": "Master's + PhD",
+      "deadline_guidance": "01 Mar"
+    },
+    {
+      "institution": "Vienna University of Economics and Business",
+      "country_code": "AT",
+      "programme_url": "https://www.wu.ac.at/en/economics/study/phd-economics/admission",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "XX Jan/Feb"
+    },
+    {
+      "institution": "Vrije Universiteit Amsterdam",
+      "country_code": "NL",
+      "programme_url": "https://vu.nl/en/about-vu/faculties/school-of-business-and-economics/more-about/phd-at-sbe",
+      "programme_structure": "MRes + PhD",
+      "deadline_guidance": "01 Dec; Tinbergen Institute; (MRes)"
+    },
+    {
+      "institution": "Waseda University",
+      "country_code": "JP",
+      "programme_url": "https://www.waseda.jp/fpse/gse/en/applicants/process/",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "13 Mar"
+    },
+    {
+      "institution": "Washington State University",
+      "country_code": "US",
+      "programme_url": "https://gradschool.wsu.edu/degrees/doctor-of-philosophy-economics/",
+      "programme_structure": null,
+      "deadline_guidance": "10 Jan"
+    },
+    {
+      "institution": "Washington University in St. Louis",
+      "country_code": "US",
+      "programme_url": "https://economics.wustl.edu/phd-admissions",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "West Virginia University",
+      "country_code": "US",
+      "programme_url": "https://graduateadmissions.wvu.edu/academics/graduate-programs/economics-d",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "Western University",
+      "country_code": "CA",
+      "programme_url": "https://economics.uwo.ca/graduate/future-student/admission-requirements.html",
+      "programme_structure": "MA + PhD",
+      "deadline_guidance": "01 Mar"
+    },
+    {
+      "institution": "Yale University",
+      "country_code": "US",
+      "programme_url": "https://gsas.yale.edu/admissions/phdmasters-application-process/dates-deadlines",
+      "programme_structure": null,
+      "deadline_guidance": "01 Dec"
+    },
+    {
+      "institution": "York University",
+      "country_code": "CA",
+      "programme_url": "https://futurestudents.yorku.ca/graduate/programs/economics",
+      "programme_structure": "PhD only",
+      "deadline_guidance": "Rolling; basis"
+    }
+  ]
+}
