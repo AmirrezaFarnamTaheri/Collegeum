@@ -87,7 +87,10 @@ def _parse_date(match: re.Match[str]) -> date | None:
             return date.fromisoformat(match.group("iso"))
         day = int(match.group("day") or match.group("day2"))
         month_name = (match.group("month") or match.group("month2")).lower()[:3]
-        months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+        months = (
+            "jan", "feb", "mar", "apr", "may", "jun",
+            "jul", "aug", "sep", "oct", "nov", "dec",
+        )
         month = months.index(month_name) + 1
         return date(int(match.group("year") or match.group("year2")), month, day)
     except (ValueError, TypeError):
