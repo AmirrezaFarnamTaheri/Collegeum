@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import re
 import sys
 import urllib.error
@@ -304,10 +303,17 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         raise ValueError("batch_size must be 1..40")
     validate_catalogues(seeds, public)
     programmes = [dict(item) for item in public["programmes"]]
-    # Stable daily shards, covers all 251 records in ceil(251 / batch_size) days.
-    shard_count = math.ceil(len(programmes) / batch_size)
-    shard = now.date().toordinal() % shard_count
-    start, end = shard * batch_size, min((shard + 1) * batch_size, len(programmes))
+    # Always check never-visited programmes before revisiting previous sources.
+    # An absent GitHub schedule must not strand a calendar shard for 11 days.
+    def priority(index: int) -> tuple[datetime, int]:
+        checked = _timestamp(programmes[index].get("checked_at"))
+        return checked or datetime.min.replace(tzinfo=UTC), index
+
+    due = sorted(
+        (i for i, item in enumerate(programmes) if eligible_for_check(item, now=now)),
+        key=priority,
+    )
+    selected = set(due[:batch_size])
     stamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, entry in enumerate(programmes):
         old = _timestamp(entry.get("checked_at"))
@@ -317,7 +323,7 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         ):
             entry.update(status="stale", deadline_iso=None, evidence_url=None,
                          evidence_excerpt=None)
-        if not (start <= index < end) or not eligible_for_check(entry, now=now):
+        if index not in selected:
             continue
         result = fetcher(entry["official_programme_url"], now=now)
         status = result.get("status")
