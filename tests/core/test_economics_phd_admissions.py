@@ -216,19 +216,24 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             return {"status": "no_explicit_deadline"}
         first = refresh(self.seeds, self.public, now=now, batch_size=25,
                         fetcher=fetch)
-        first_checked = [
-            i for i, item in enumerate(first["programmes"])
+        baseline_checked = {
+            i for i, item in enumerate(self.public["programmes"])
             if item["checked_at"] is not None
-        ]
+        }
+        first_checked = {
+            i for i, item in enumerate(first["programmes"])
+            if i not in baseline_checked and item["checked_at"] is not None
+        }
         self.assertEqual(len(first_checked), 25)
         # GitHub may drop schedules for days. Never revisit previously checked
-        # sources ahead of 226 still-unchecked programme leads.
+        # sources ahead of the unvisited programme leads.
         later = refresh(self.seeds, first, now=now + timedelta(days=11),
                         batch_size=25, fetcher=fetch)
-        newly_checked = [
+        newly_checked = {
             i for i, item in enumerate(later["programmes"])
-            if i not in first_checked and item["checked_at"] is not None
-        ]
+            if i not in baseline_checked and i not in first_checked
+            and item["checked_at"] is not None
+        }
         self.assertEqual(len(newly_checked), 25)
         self.assertTrue(all(
             later["programmes"][i]["checked_at"] ==
