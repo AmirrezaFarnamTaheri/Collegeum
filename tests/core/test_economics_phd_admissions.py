@@ -136,6 +136,71 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertNotEqual(status, "verified")
         self.assertIsNone(deadline)
 
+    def test_official_long_form_programme_deadline_is_not_dropped(self):
+        """Institutional pages often put programme + intake between label and date."""
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        institutional_html = """
+          <h1>Application</h1>
+          <p>The application deadline to the Berlin School of Economics
+          PhD Program for the autumn 2027 intake is January 15, 2027.</p>
+          <p>An information session will take place on December 2, 2026.</p>
+          <p>Interviews will take place on March 3, 2027.</p>
+          <p>Recommendation letters must reach the school by January 19, 2027.</p>
+        """
+        status, deadline, evidence = collect_official_deadline(
+            institutional_html, now=now
+        )
+        self.assertEqual(status, "verified")
+        self.assertEqual(deadline, "2027-01-15")
+        self.assertIn("January 15, 2027", evidence)
+
+    def test_applicant_document_or_interview_date_is_not_mistaken_for_application(self):
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+        institutional_html = """
+          <h1>Application</h1>
+          <p>The supporting-document deadline to Berlin School of Economics
+          PhD Program for autumn 2027 intake is January 19, 2027.</p>
+          <p>The interview date to Berlin School of Economics PhD Program
+          is March 3, 2027.</p>
+        """
+        status, deadline, evidence = collect_official_deadline(
+            institutional_html, now=now
+        )
+        self.assertNotEqual(status, "verified")
+        self.assertIsNone(deadline)
+        self.assertIsNone(evidence)
+
+    def test_checks_multiple_times_daily_without_rechecking_fresh_sources(self):
+        workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
+            encoding="utf-8"
+        )
+        schedules = [line for line in workflow.splitlines() if line.strip().startswith(
+            '- cron:'
+        )]
+        self.assertEqual(len(schedules), 4, schedules)
+        self.assertTrue(all('17' in entry for entry in schedules))
+        now = datetime(2026, 11, 19, tzinfo=UTC)
+
+        def fetch(_url: str, *, now: datetime) -> dict:
+            return {"status": "no_explicit_deadline"}
+
+        first = refresh(self.seeds, self.public, now=now, batch_size=25, fetcher=fetch)
+        later = refresh(self.seeds, first, now=now + timedelta(hours=6),
+                        batch_size=25, fetcher=fetch)
+        first_ids = {
+            index for index, row in enumerate(first["programmes"])
+            if row["checked_at"] == now.isoformat().replace("+00:00", "Z")
+        }
+        second_ids = {
+            index for index, row in enumerate(later["programmes"])
+            if row["checked_at"] == (now + timedelta(hours=6)).isoformat().replace(
+                "+00:00", "Z"
+            )
+        }
+        self.assertEqual(len(first_ids), 25)
+        self.assertEqual(len(second_ids), 25)
+        self.assertFalse(first_ids & second_ids)
+
     def test_stale_verified_evidence_is_not_current(self):
         now = datetime(2026, 11, 19, tzinfo=UTC)
         self.assertTrue(eligible_for_check(
