@@ -377,7 +377,7 @@
     {
       "institution": "Cornell University",
       "country_code": "US",
-      "official_programme_url": "http://economics.cornell.edu/prospective-incoming-grad-students",
+      "official_programme_url": "https://economics.cornell.edu/prospective-incoming-grad-students",
       "programme_structure_hint": null,
       "status": "unverified",
       "checked_at": null,
@@ -795,7 +795,7 @@
     {
       "institution": "London School of Economics and Political Science",
       "country_code": "UK",
-      "official_programme_url": "http://www.lse.ac.uk/economics/study/research/phd-admissions-faqs",
+      "official_programme_url": "https://www.lse.ac.uk/economics/study/research/phd-admissions-faqs",
       "programme_structure_hint": "Master's + PhD",
       "status": "unverified",
       "checked_at": null,
@@ -938,7 +938,7 @@
     {
       "institution": "New York University",
       "country_code": "US",
-      "official_programme_url": "http://gsas.nyu.edu/admissions/gsas-application-resource-center/2017-programs--requirements--and-deadlines/economics.html",
+      "official_programme_url": "https://gsas.nyu.edu/admissions/gsas-application-resource-center/2017-programs--requirements--and-deadlines/economics.html",
       "programme_structure_hint": null,
       "status": "unverified",
       "checked_at": null,
@@ -2335,7 +2335,7 @@
     {
       "institution": "University of Rochester",
       "country_code": "US",
-      "official_programme_url": "http://www.sas.rochester.edu/eco/graduate/apply.html",
+      "official_programme_url": "https://www.sas.rochester.edu/eco/graduate/apply.html",
       "programme_structure_hint": null,
       "status": "unverified",
       "checked_at": null,
