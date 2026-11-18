@@ -147,7 +147,8 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
 
     def test_missed_daily_workflows_do_not_skip_never_checked_programmes(self):
         now = datetime(2026, 11, 19, tzinfo=UTC)
-        fetch = lambda url, now: {"status": "no_explicit_deadline"}
+        def fetch(_url: str, *, now: datetime) -> dict:
+            return {"status": "no_explicit_deadline"}
         first = refresh(self.seeds, self.public, now=now, batch_size=25,
                         fetcher=fetch)
         first_checked = [
