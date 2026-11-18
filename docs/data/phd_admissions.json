@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-18T21:06:19Z",
+  "generated_at": "2026-11-18T21:51:39Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -50,7 +50,7 @@
       "official_programme_url": "https://wpcarey.asu.edu/economics-degrees/phd-admissions",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -61,7 +61,7 @@
       "official_programme_url": "https://www.aston.ac.uk/study/courses/phd-aston-business-school",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -83,7 +83,7 @@
       "official_programme_url": "https://dept.aueb.gr/en/econ/content/doctoral-program-department-economics",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -94,7 +94,7 @@
       "official_programme_url": "https://cla.auburn.edu/economics/graduate-program/admission-information/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -116,7 +116,7 @@
       "official_programme_url": "https://cbe.anu.edu.au/study/graduate-research-programs/doctor-philosophy-phd/phd-economics",
       "programme_structure_hint": "MPhil + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -127,7 +127,7 @@
       "official_programme_url": "https://www.uab.cat/web/study/phds/phds/all-phd-programmes-1345698226438.html",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -138,7 +138,7 @@
       "official_programme_url": "https://bse.eu/study/masters-programs/upf-phd-track",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -148,11 +148,11 @@
       "country_code": "DE",
       "official_programme_url": "https://berlinschoolofeconomics.de/phd-programm/application",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null
+      "status": "verified",
+      "checked_at": "2026-11-18T21:51:39Z",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
+      "evidence_excerpt": "plication deadline to the Berlin School of Economics PhD Program for an intake into the program in October 2027 is January 15, 2027. Application Portal"
     },
     {
       "institution": "BI Norwegian Business School",
@@ -171,7 +171,7 @@
       "official_programme_url": "https://www.unibocconi.it/en/programs/phd/admissions",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -182,7 +182,7 @@
       "official_programme_url": "https://www.bc.edu/content/bc-web/schools/morrissey/departments/economics/graduate/admissions.html",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -193,7 +193,7 @@
       "official_programme_url": "https://www.bu.edu/econ/admissions/apply-for-a-phd/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -226,7 +226,7 @@
       "official_programme_url": "https://www.hss.caltech.edu/graduate-studies/social-sciences-phd-program/admissions",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -237,7 +237,7 @@
       "official_programme_url": "https://www.cmu.edu/tepper/programs/phd/admissions/index.html",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -270,7 +270,7 @@
       "official_programme_url": "https://www.ceu.edu/admissions/doctoral#doctoral-degree-deadlines",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -291,8 +291,8 @@
       "country_code": "TH",
       "official_programme_url": "https://www.econ.chula.ac.th/en/ph-d-in-economics-international/#1678612623230-e185f2d7-44af",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -302,8 +302,8 @@
       "country_code": "UK",
       "official_programme_url": "https://www.city.ac.uk/prospective-students/courses/research/economics#accordion496136-header2",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -313,8 +313,8 @@
       "country_code": "HK",
       "official_programme_url": "https://www.cb.cityu.edu.hk/ef/programmes/economics/phd/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -324,8 +324,8 @@
       "country_code": "US",
       "official_programme_url": "https://www.gc.cuny.edu/economics",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -335,8 +335,8 @@
       "country_code": "US",
       "official_programme_url": "https://economics.colostate.edu/graduate/graduate-admissions-and-funding/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -346,8 +346,8 @@
       "country_code": "US",
       "official_programme_url": "https://gsas.columbia.edu/degree-programs/phd-programs/economics",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -357,8 +357,8 @@
       "country_code": "ES",
       "official_programme_url": "https://www.ucm.es/doctorado/programa-doctorado-economia-ucm/admision",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -368,8 +368,8 @@
       "country_code": "DK",
       "official_programme_url": "https://www.cbs.dk/en/research/phd-programmes/admission",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -379,8 +379,8 @@
       "country_code": "US",
       "official_programme_url": "https://economics.cornell.edu/prospective-incoming-grad-students",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -390,8 +390,8 @@
       "country_code": "AU",
       "official_programme_url": "https://www.deakin.edu.au/faculty-of-business-and-law/deakin-business-school/study-with-us/phd-program",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
@@ -401,8 +401,8 @@
       "country_code": "DE",
       "official_programme_url": "https://www.diw.de/de/diw_01.c.799242.de/application.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-18T21:51:39Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
