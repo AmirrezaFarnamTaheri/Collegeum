@@ -11,6 +11,27 @@
       "url": "https://ieb.ub.edu/en/news/"
     },
     {
+      "id": "ieb-application-calls",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "country_code": "ES",
+      "mode": "index",
+      "url": "https://ieb.ub.edu/en/call-for-application/"
+    },
+    {
+      "id": "ieb-economics-2027",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "country_code": "ES",
+      "mode": "detail",
+      "url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/"
+    },
+    {
+      "id": "ieb-energy-climate",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "country_code": "ES",
+      "mode": "detail",
+      "url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/"
+    },
+    {
       "id": "henley-finance-accounting",
       "institution": "Henley Business School",
       "country_code": "UK",
