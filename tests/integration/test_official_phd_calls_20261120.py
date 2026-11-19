@@ -10,12 +10,12 @@ from predoc_pipeline.publish.official_calls import (
     eligible_calls,
     publish_official_calls,
 )
-from predoc_pipeline.publish.telegram import TelegramError
 from tools.update_official_calls import (
     discover_links,
     extract_call,
     refresh_sources,
 )
+from predoc_pipeline.publish.telegram import TelegramError
 
 NOW = datetime(2026, 11, 20, 8, tzinfo=UTC)
 IEB = "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/"
