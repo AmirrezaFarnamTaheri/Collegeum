@@ -109,6 +109,11 @@ jobs:
           # Explicit 'false' opts out, while production defaults to published.
           TELEGRAM_OFFICIAL_CALLS_ENABLED: ${{ vars.TELEGRAM_OFFICIAL_CALLS_ENABLED || 'true' }}
           TELEGRAM_OFFICIAL_CALLS_MAX_PER_RUN: ${{ vars.TELEGRAM_OFFICIAL_CALLS_MAX_PER_RUN || '2' }}
+          # Exactly-once *attempt*: create a permanent GitHub intent before each
+          # admissions/funding Telegram send. Failed GitHub writes abort the send.
+          # Never permit a repo variable to silently disable this on main.
+          TELEGRAM_GIT_DURABLE_INTENTS_ENABLED: 'true'
+          GITHUB_TOKEN: ${{ github.token }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
           # Operational alerts are opt-in for safety (they need a distinct
           # private admin chat), but the scheduled workflow IS the operator, so

@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from html import escape
 from pathlib import Path
@@ -18,6 +19,7 @@ from urllib.parse import urlsplit
 
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
+from .telegram_intents import enforce_production_reservation
 
 log = get_logger(__name__)
 
@@ -177,7 +179,7 @@ def _read_receipts(path: Path) -> dict[str, Any]:
             not isinstance(receipt, dict) or
             receipt.get("state") not in {
                 "pending", "confirmed", "uncertain", "permanent_failure",
-                "reissue_authorized",
+                "reissue_authorized", "retry_held",
             }
         ):
             raise ValueError("Corrupted delivery receipt; hold all sends")
@@ -386,6 +388,7 @@ def publish_official_admissions(
     telegram: TelegramClient | None,
     *, chat_id: str, enabled: bool, max_messages: int = 2,
     now: datetime | None = None,
+    reserve_intent: Callable[[str, str, str], None] | None = None,
 ) -> int:
     """Bounded, separate announcements through the EXISTING Telegram channel.
 
@@ -394,6 +397,7 @@ def publish_official_admissions(
     """
     if not enabled or telegram is None or not chat_id:
         return 0
+    enforce_production_reservation(reserve_intent)
     if not 1 <= max_messages <= 10:
         raise ValueError("Maximum 1..10 admissions per run")
     stamp = now or datetime.now(UTC)
@@ -433,6 +437,18 @@ def publish_official_admissions(
         # Persist a hold before attempting a potentially accepted remote send.
         # The pipeline's normal checkpoint commit preserves the journal in git.
         _checkpoint(ledger_path, ledger)
+        if previous is not None and previous.get("state") == "reissue_authorized":
+            marker = (f"reissue:{previous['prior_message_id']}:"
+                      f"{previous.get('reissue_authorized_at', '')}")
+        elif previous is not None and previous.get("state") == "confirmed":
+            # A truly new cycle may be sent even when this institution
+            # already has an older confirmed admission, but never replayed
+            # after a crash within that same deadline cycle.
+            marker = f"cycle:{row['deadline_iso']}"
+        else:
+            marker = "initial"
+        if reserve_intent is not None:
+            reserve_intent("admissions", key, marker)
         html, buttons = _message(row)
         try:
             message_id = telegram.send_message(
@@ -443,9 +459,12 @@ def publish_official_admissions(
                 attempt["state"] = "uncertain"
             elif exc.permanent:
                 attempt["state"] = "permanent_failure"
+            elif reserve_intent is not None:
+                # The pre-send GitHub intent is immutable; even a definite
+                # rate limit cannot be replayed without explicit review.
+                attempt["state"] = "retry_held"
             else:
-                # Known no-delivery rate limits can retry later. For an
-                # authorised reissue, never discard the prior-message audit.
+                # Local-only legacy behavior for known non-delivery responses.
                 if previous is not None and previous.get("state") == "reissue_authorized":
                     ledger["deliveries"][key] = previous
                 else:

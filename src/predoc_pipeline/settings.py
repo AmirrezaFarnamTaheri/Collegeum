@@ -80,6 +80,8 @@ class Settings(BaseSettings):
     telegram_official_calls_max_per_run: int = Field(2, ge=1, le=10)
     official_calls_catalog_path: str = "docs/data/official_phd_calls.json"
     official_calls_delivery_path: str = "data/official_phd_calls_telegram.json"
+    # Main GitHub ingestion opts in; local runs cannot silently write to GitHub.
+    telegram_git_durable_intents_enabled: bool = False
     # Dedicated operator-only private destination, never the public chat.
     telegram_admin_chat_id: str = ""
     # Maintenance/errors are written to internal health/logs only by default.
