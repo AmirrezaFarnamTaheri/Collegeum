@@ -70,6 +70,14 @@
       "mode": "detail",
       "url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
       "title": "Leadership and Organisations PhD Studentships"
+    },
+    {
+      "id": "reading-international-studentships",
+      "institution": "University of Reading",
+      "country_code": "UK",
+      "mode": "detail",
+      "url": "https://www.reading.ac.uk/doctoral-researcher-college/funding/phd-studentships/international-phd-studentships",
+      "title": "International PhD studentships"
     }
   ]
 }
