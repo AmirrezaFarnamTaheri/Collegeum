@@ -89,6 +89,32 @@ def test_official_address_in_footer_can_corrobate_italian_institution():
     assert "Fiesole" in fact["evidence_excerpt"]
 
 
+def test_copyright_footer_with_full_postal_address_is_proof():
+    html = """
+        <h1>Doctoral Programme in Economics</h1>
+        <p>Deadline 15 January 2027 at 14:00 CET (Time in Italy).</p>
+        <footer>© European University Institute 2026, Badia Fiesolana -
+        Via dei Roccettini 9, I-50014 San Domenico di Fiesole (FI) - Italy
+        </footer>
+    """
+    fact = extract_official_country(
+        html, evidence_url="https://www.eui.eu/apply?id=doctoral-programme-in-economics",
+        checked_at=NOW,
+    )
+    assert fact is not None
+    assert fact["value"] == "Italy"
+    assert "I-50014" in fact["evidence_excerpt"]
+
+
+def test_copyright_mention_without_postal_address_is_not_location_proof():
+    html = """
+        <h1>Economics PhD</h1>
+        <p>Current application deadlines are displayed in Italy time.</p>
+        <footer>© Example 2026. Applicants from Spain welcome.</footer>
+    """
+    assert extract_official_country(html, evidence_url=BSE, checked_at=NOW) is None
+
+
 def test_robots_disallowed_contact_page_is_never_read():
     def page(url: str) -> tuple[str, str]:
         assert url == BSE
