@@ -96,12 +96,10 @@ def _independently_non_us(row: dict[str, Any], official_host: str) -> bool:
     ):
         return False
     excerpt = fact.get("evidence_excerpt")
-    if (
-        not isinstance(excerpt, str)
-        or not re.search(r"\b" + re.escape(expected) + r"\b", excerpt, re.I)
-    ):
-        return False
-    return True
+    return (
+        isinstance(excerpt, str)
+        and bool(re.search(r"\b" + re.escape(expected) + r"\b", excerpt, re.I))
+    )
 
 
 def eligible_official_admissions(
