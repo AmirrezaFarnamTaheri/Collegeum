@@ -2694,6 +2694,7 @@
         const link = admissionsSafeUrl(row.official_programme_url);
         const evidence = confirmed ? admissionsSafeUrl(row.evidence_url) : null;
         const officialFacts = [
+          ['Admission route', 'admission_route'],
           ['Duration', 'duration'], ['Language', 'language'],
           ['Eligibility', 'entry_requirement'], ['Funding', 'funding_note'],
           ['Stipend', 'stipend'], ['Tuition', 'tuition'],
