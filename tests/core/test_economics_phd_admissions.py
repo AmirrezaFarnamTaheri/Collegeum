@@ -386,6 +386,40 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
                 self.assertEqual(row["official_details"]["tuition"]["value"],
                                  "No tuition fees")
 
+    def test_trusted_extractor_upgrade_rechecks_verified_with_existing_old_details(self):
+        now = datetime(2026, 11, 19, 13, 0, tzinfo=UTC)
+        original = json.loads(json.dumps(self.public))
+        earlier = [
+            row for row in original["programmes"]
+            if row["status"] == "verified" and row.get("official_details")
+        ]
+        self.assertGreaterEqual(len(earlier), 2)
+        expected = {row["official_programme_url"] for row in earlier}
+        checked = []
+
+        def fetch(url: str, *, now: datetime) -> dict:
+            checked.append(url)
+            if url in expected:
+                old = next(row for row in earlier if row["official_programme_url"] == url)
+                return {
+                    "status": "verified", "deadline_iso": old["deadline_iso"],
+                    "evidence_url": old["evidence_url"],
+                    "evidence_excerpt": old["evidence_excerpt"],
+                    "official_details": {},
+                    "investigated_urls": [old["evidence_url"]],
+                }
+            return {"status": "no_explicit_deadline"}
+
+        refreshed = refresh(
+            self.seeds, original, now=now, batch_size=25,
+            fetcher=fetch, recheck_no_explicit=True,
+        )
+        self.assertTrue(expected.issubset(set(checked)))
+        for row in refreshed["programmes"]:
+            if row["official_programme_url"] in expected:
+                self.assertFalse(row["official_details"])
+                self.assertEqual(row["status"], "verified")
+
     def test_initial_source_changes_bootstrap_without_refresh_commit_loop(self):
         workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
             encoding="utf-8"
