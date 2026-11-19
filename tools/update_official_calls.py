@@ -34,7 +34,7 @@ STATUSES = {"verified", "no_explicit_deadline", "ambiguous_deadline", "unrelated
             "not_seen"}
 DATE_RE = re.compile(
     r"\b(?P<iso>20\d{2}-\d{2}-\d{2})\b|"
-    r"\b(?P<d1>\d{1,2})\s+(?P<m1>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|"
+    r"\b(?P<d1>\d{1,2})(?:st|nd|rd|th)?\s+(?P<m1>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|"
     r"May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|"
     r"Nov(?:ember)?|Dec(?:ember)?)\s*,?\s*(?P<y1>20\d{2})\b|"
     r"\b(?P<m2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|"
@@ -208,6 +208,16 @@ def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date,
                 r"(?:studentship|scholarship)\s+applications?.{0,125}"
                 r"(?:will\s+close\s+on)\s*$", before, re.I,
             ))
+        if not funding and kind == "phd_studentship":
+            # On a PhD-studentship-specific official page, a clearly marked
+            # funding Deadline section may say "deadline for applications"
+            # instead of repeating "studentship". Never generalize this to
+            # a university-wide PhD admissions page.
+            funding = bool(re.search(
+                r"\bDeadline\s+(?:The\s+)?deadline\s+for\s+applications\s+is\s+"
+                r"(?:(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+)?$",
+                before, re.I,
+            ))
         submission = kind != "phd_studentship" and bool(re.search(
             r"interested\s+candidates\s+must\s+complete\s+both.{0,100}"
             r"(?:steps\s+)?(?:by|before)\s*$", before, re.I,
@@ -240,10 +250,9 @@ def extract_call(
                or not SUBJECT.search(label + " " + text[:450])
                or EXCLUDE.search(title)
                or not safe_official_url(url, source["url"]))
-    relevant = (CALL_TITLE.search(label)
-                or (re.search(r"\bphd\b", title, re.I)
-                    and re.search(r"\b(?:studentships?|scholarships?)\b",
-                                  text[:15000], re.I)))
+    # Mentioning scholarship terms somewhere in a generic admissions page
+    # does not create an independent current funding call.
+    relevant = CALL_TITLE.search(label) is not None
     status = "unrelated" if invalid or not relevant else "no_explicit_deadline"
     kind = ("phd_studentship" if "studentship" in (label + " " + text[:500]).lower()
             else "phd_fellowship" if "fellowship" in label.lower()
