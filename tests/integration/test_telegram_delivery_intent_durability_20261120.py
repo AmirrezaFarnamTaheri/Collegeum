@@ -10,9 +10,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from predoc_pipeline.publish.telegram_intents import GitHubIntentReserver
 from predoc_pipeline.publish.admissions import publish_official_admissions
 from predoc_pipeline.publish.official_calls import publish_official_calls
+from predoc_pipeline.publish.telegram_intents import GitHubIntentReserver
 
 NOW = datetime(2026, 11, 20, 8, tzinfo=UTC)
 URL = "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/"
