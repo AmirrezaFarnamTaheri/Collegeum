@@ -8,7 +8,17 @@
       "institution": "Berlin School of Economics",
       "message_id": 129,
       "sent_at": "2026-11-19T09:01:41Z",
-      "state": "confirmed"
+      "state": "reissue_authorized",
+      "prior_message_id": 129,
+      "reissue_authorized_at": "2026-11-19T18:09:48Z",
+      "history": [
+        {
+          "message_id": 129,
+          "deleted_confirmed_at": "2026-11-19T18:09:48Z",
+          "state": "operator_confirmed_removed",
+          "confirmation_source": "user"
+        }
+      ]
     },
     "6d312c5c3ca3fce1cf68812bbb63334e": {
       "attempted_at": "2026-11-19T09:01:41Z",
@@ -18,7 +28,17 @@
       "institution": "Aalto University",
       "message_id": 128,
       "sent_at": "2026-11-19T09:01:41Z",
-      "state": "confirmed"
+      "state": "reissue_authorized",
+      "prior_message_id": 128,
+      "reissue_authorized_at": "2026-11-19T18:09:48Z",
+      "history": [
+        {
+          "message_id": 128,
+          "deleted_confirmed_at": "2026-11-19T18:09:48Z",
+          "state": "operator_confirmed_removed",
+          "confirmation_source": "user"
+        }
+      ]
     }
   },
   "version": 1
