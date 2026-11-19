@@ -263,7 +263,15 @@ def extract_official_details(
                 add("duration", value, block + " " + following)
         if (
             re.fullmatch(r"(?:eligibility|entry requirements?)\s*:?", block, re.I)
-            and re.search(r"\b(?:master'?s?|degree|diploma)\b", following, re.I)
+            and re.search(
+                r"\b(?:master(?:'s|’s)?|bachelor(?:'s|’s)?|"
+                r"university\s+degree|higher\s+education\s+degree)\b",
+                following, re.I,
+            )
+            and not re.search(
+                r"\b(?:cannot\s+confirm|outside\s+the\s+actual\s+application|"
+                r"assessed\s+based\s+on\s+documents)\b", following, re.I,
+            )
         ):
             add("entry_requirement", following, block + " " + following)
         if re.search(r"\b(?:no tuition fees|free of tuition fees)\b", block, re.I):
@@ -304,30 +312,65 @@ def extract_official_details(
         if re.search(r"\b(?:two|2)\s+academic\s+reference\s+letters?\b", block, re.I):
             add("references", "Two academic reference letters", block)
 
+    # Select the *specific funding sentence*, not the first 175 characters
+    # of a long paragraph that may omit later dissertation-phase conditions.
+    sentences = [
+        sentence.strip()
+        for block in blocks
+        for sentence in re.split(r"(?<=[.!?])\s+", block)
+    ]
     funding = [
-        block for block in blocks
-        if re.search(r"\bfunding\b", block, re.I)
+        sentence for sentence in sentences
+        if re.search(r"\bfunding\b", sentence, re.I)
         and re.search(
             r"\b(?:first\s+(?:two|2)\s+years?|first\s+study\s+year|"
             r"expected\s+length|conditional\s+on|performance\s+criteria)\b",
-            block, re.I,
+            sentence, re.I,
         )
     ]
     if funding:
-        qualified = [block for block in funding if re.search(r"\bconditional\b", block, re.I)]
+        qualified = [sentence for sentence in funding if "conditional" in sentence.lower()]
         chosen = (qualified or funding)[0]
         add("funding_note", chosen, chosen)
+
+    # Some official sites print structured labels directly inside DIVs.
+    # Accept a tightly adjacent label/value only on a programme-specific H1.
+    if any(PROGRAMME.search(heading) for heading in parser.headings):
+        full_text = parser.text()
+        if "language" not in facts:
+            language = re.search(
+                r"\blanguage\s+of\s+instruction\s*:\s*"
+                r"(English|German|French|Spanish|Finnish|Swedish)\b",
+                full_text, re.I,
+            )
+            if language:
+                add("language", language.group(1), language.group())
+        if "duration" not in facts:
+            duration = re.search(
+                r"\bduration\s*:\s*(\d{1,2})\s+years?"
+                r"(?:\s*,?\s*(full[- ]time|part[- ]time))?\b",
+                full_text, re.I,
+            )
+            if duration:
+                years = duration.group(1)
+                value = years + (" year" if years == "1" else " years")
+                if duration.group(2):
+                    value += ", " + duration.group(2).lower()
+                    value = value.replace("full time", "full-time")
+                add("duration", value, duration.group())
     return facts
 
 
 _LINK_RELEVANCE = re.compile(
-    r"\b(?:phd|doctoral|doctorate|admissions?|applications?|"
-    r"apply|deadlines?|fees|funding|scholarships?)\b", re.I,
+    r"\b(?:admissions?|applications?|apply|deadlines?|"
+    r"fees|funding|scholarships?|eligibility|requirements?)\b", re.I,
 )
 _LINK_SKIP = re.compile(
     r"\.(?:pdf|docx?|xlsx?|zip|png|jpe?g)(?:$|\?)|"
     r"/(?:login|log-in|signin|sign-in|signup|register|logout|"
-    r"account|captcha|search|api)(?:/|$|\?)", re.I,
+    r"account|captcha|search|api|job-market|about-us|"
+    r"alumni|faculty|events?|news|press)(?:/|$|\?)|"
+    r"\b(?:authenticity-of-documents|job-market-candidates)\b", re.I,
 )
 
 
@@ -374,7 +417,7 @@ def select_official_links(
         if re.search(r"economics?|phd|doctoral", blob, re.I):
             score += 2
         if re.search(r"fees|funding", blob, re.I):
-            score += 1
+            score += 3
         if candidate not in scores or score > scores[candidate]:
             scores[candidate] = score
     return sorted(scores, key=lambda url: (-scores[url], url))[:max_links]
