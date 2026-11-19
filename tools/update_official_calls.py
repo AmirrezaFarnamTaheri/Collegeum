@@ -65,6 +65,7 @@ class CallHTML(HTMLParser):
         self.headings: list[str] = []
         self.links: list[tuple[str, str]] = []
         self._ignored = 0
+        self._first_h1_index: int | None = None
         self._heading: list[str] | None = None
         self._link: list[str] | None = None
         self._href: str | None = None
@@ -78,6 +79,8 @@ class CallHTML(HTMLParser):
         if tag in {"p", "li", "div", "h1", "h2", "h3", "footer", "br", "tr"}:
             self.chunks.append(" ")
         if tag == "h1":
+            if self._first_h1_index is None:
+                self._first_h1_index = len(self.chunks)
             self._heading = []
         if tag == "a":
             self._href = dict(attrs).get("href")
@@ -113,6 +116,14 @@ class CallHTML(HTMLParser):
 
     def text(self) -> str:
         return " ".join(" ".join(self.chunks).split())
+
+    def call_text(self) -> str:
+        """Exclude the entire preceding university navigation from a call's facts."""
+        selected = (
+            self.chunks[self._first_h1_index:]
+            if self._first_h1_index is not None else self.chunks
+        )
+        return " ".join(" ".join(selected).split())
 
 
 def safe_official_url(raw: str, root: str) -> str | None:
@@ -243,11 +254,11 @@ def extract_call(
         raise ValueError("Expected timezone-aware clock")
     parsed = CallHTML()
     parsed.feed(html[:MAX_HTML_BYTES])
-    text = parsed.text()
+    text = parsed.call_text()
     title = (parsed.headings[0] if parsed.headings else source.get("title", "")).strip()
     label = f"{title} {source.get('title', '')}"
     invalid = (not title or len(title) > 150
-               or not SUBJECT.search(label + " " + text[:450])
+               or not (SUBJECT.search(title) or SUBJECT.search(text[:600]))
                or EXCLUDE.search(title)
                or not safe_official_url(url, source["url"]))
     # Mentioning scholarship terms somewhere in a generic admissions page
