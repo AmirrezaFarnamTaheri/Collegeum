@@ -54,7 +54,7 @@ def test_blocked_or_unverified_programmes_never_trigger():
 
 def test_authorized_reissue_is_one_time_and_requires_newer_authorization():
     import hashlib
-    key = hashlib.sha256("DE|berlin school of economics".encode()).hexdigest()[:32]
+    key = hashlib.sha256(b"DE|berlin school of economics").hexdigest()[:32]
     ledger = {"version": 1, "deliveries": {key: {
         "state": "reissue_authorized",
         "prior_message_id": 129,
