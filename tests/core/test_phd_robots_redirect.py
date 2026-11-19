@@ -1,8 +1,8 @@
 """Robots policy must be enforced on HTTP redirect destinations before fetching."""
 from __future__ import annotations
 
-import urllib.request
 import unittest
+import urllib.request
 from datetime import UTC, datetime
 from unittest.mock import patch
 
