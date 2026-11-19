@@ -297,7 +297,8 @@ def official_calls_health(
     backlog = sum(call_key(row) not in delivered for row in eligible)
     state_counts: dict[str, int] = {}
     for source in catalog["sources"]:
-        label = source.get("status") if isinstance(source, dict) else "invalid"
+        raw_label = source.get("status") if isinstance(source, dict) else None
+        label = raw_label if isinstance(raw_label, str) else "invalid"
         state_counts[label] = state_counts.get(label, 0) + 1
     confirmed = [receipt for receipt in delivered.values()
                  if receipt.get("state") == "confirmed" and receipt.get("sent_at")]
