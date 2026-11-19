@@ -2643,6 +2643,24 @@
         return u.href;
       } catch (_) { return null; }
     };
+    // Display only fresh official facts; ignore untrusted or stale URLs.
+    function admissionsFact(row, key) {
+      const fact = row.official_details && row.official_details[key];
+      if (!fact || typeof fact.value !== 'string' || !fact.value.trim() ||
+          !fact.evidence_excerpt || fact.checked_at !== row.checked_at) return null;
+      const checked = Date.parse(fact.checked_at);
+      if (!Number.isFinite(checked) || checked > Date.now() ||
+          Date.now() - checked > 14 * 86400000) return null;
+      const source = admissionsSafeUrl(fact.evidence_url);
+      const lead = admissionsSafeUrl(row.official_programme_url);
+      if (!source || !lead) return null;
+      try {
+        const host = url => new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+        if (host(source) !== host(lead)) return null;
+      } catch (_) { return null; }
+      return { value: fact.value.slice(0, 175), source };
+    }
+
     function renderAdmissions() {
       const query = $('#phd-admissions-search').value.trim().toLowerCase();
       const country = $('#phd-admissions-country').value;
@@ -2675,12 +2693,26 @@
           : 'Deadline not officially corroborated';
         const link = admissionsSafeUrl(row.official_programme_url);
         const evidence = confirmed ? admissionsSafeUrl(row.evidence_url) : null;
+        const officialFacts = [
+          ['Duration', 'duration'], ['Language', 'language'],
+          ['Eligibility', 'entry_requirement'], ['Funding', 'funding_note'],
+          ['Stipend', 'stipend'], ['Tuition', 'tuition'],
+          ['Other fees', 'semester_fee'], ['Tests', 'tests'],
+          ['References', 'references'],
+        ].map(([label, key]) => {
+          const fact = admissionsFact(row, key);
+          if (!fact) return '';
+          return '<p>' + esc(label) + ': ' + esc(fact.value) +
+            ' <a href="' + esc(fact.source) +
+            '" target="_blank" rel="noopener noreferrer">source ↗</a></p>';
+        }).join('');
         return `
           <article class="admissions-entry">
             <div>
               <h3>${esc(row.institution)}</h3>
               <p>${esc(countryName)} · ${structure}</p>
               <p class="status ${confirmed ? 'verified' : ''}">${verdict}</p>
+              ${officialFacts}
             </div>
             <div>
               ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">University programme ↗</a>` : 'Source unavailable'}
