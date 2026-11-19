@@ -1,64 +1,62 @@
 {
   "deliveries": {
     "54edd99a41f1473f072b8d50f0b302ec": {
-      "attempted_at": "2026-11-19T09:01:41Z",
+      "attempted_at": "2026-11-19T20:07:47Z",
       "country_code": "DE",
       "deadline_iso": "2027-01-15",
       "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
-      "institution": "Berlin School of Economics",
-      "message_id": 129,
-      "sent_at": "2026-11-19T09:01:41Z",
-      "state": "reissue_authorized",
       "history": [
         {
+          "authorization_attempted_at": "2026-11-19T18:09:48Z",
           "message_id": 129,
-          "state": "reissue_authorization_retracted",
-          "authorization_attempted_at": "2026-11-19T18:09:48Z"
-        },
-        {
-          "state": "safety_hold_for_explicit_deletion_confirmation",
-          "message_id": 129,
-          "recorded_at": "2026-11-19T18:12:59Z"
+          "state": "reissue_authorization_retracted"
         },
         {
           "message_id": 129,
+          "recorded_at": "2026-11-19T18:12:59Z",
+          "state": "safety_hold_for_explicit_deletion_confirmation"
+        },
+        {
+          "confirmation_source": "user statement: deleted Telegram channel posts 128 and 129",
           "deleted_confirmed_at": "2026-11-19T19:24:00Z",
-          "state": "operator_confirmed_removed",
-          "confirmation_source": "user statement: deleted Telegram channel posts 128 and 129"
+          "message_id": 129,
+          "state": "operator_confirmed_removed"
         }
       ],
-      "prior_message_id": 129,
-      "reissue_authorized_at": "2026-11-19T19:24:00Z"
+      "institution": "Berlin School of Economics",
+      "message_id": 131,
+      "replaces_message_id": 129,
+      "sent_at": "2026-11-19T20:07:47Z",
+      "state": "confirmed"
     },
     "6d312c5c3ca3fce1cf68812bbb63334e": {
-      "attempted_at": "2026-11-19T09:01:41Z",
+      "attempted_at": "2026-11-19T20:07:47Z",
       "country_code": "FI",
       "deadline_iso": "2027-01-05",
       "evidence_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
-      "institution": "Aalto University",
-      "message_id": 128,
-      "sent_at": "2026-11-19T09:01:41Z",
-      "state": "reissue_authorized",
       "history": [
         {
+          "authorization_attempted_at": "2026-11-19T18:09:48Z",
           "message_id": 128,
-          "state": "reissue_authorization_retracted",
-          "authorization_attempted_at": "2026-11-19T18:09:48Z"
-        },
-        {
-          "state": "safety_hold_for_explicit_deletion_confirmation",
-          "message_id": 128,
-          "recorded_at": "2026-11-19T18:12:59Z"
+          "state": "reissue_authorization_retracted"
         },
         {
           "message_id": 128,
+          "recorded_at": "2026-11-19T18:12:59Z",
+          "state": "safety_hold_for_explicit_deletion_confirmation"
+        },
+        {
+          "confirmation_source": "user statement: deleted Telegram channel posts 128 and 129",
           "deleted_confirmed_at": "2026-11-19T19:24:00Z",
-          "state": "operator_confirmed_removed",
-          "confirmation_source": "user statement: deleted Telegram channel posts 128 and 129"
+          "message_id": 128,
+          "state": "operator_confirmed_removed"
         }
       ],
-      "prior_message_id": 128,
-      "reissue_authorized_at": "2026-11-19T19:24:00Z"
+      "institution": "Aalto University",
+      "message_id": 130,
+      "replaces_message_id": 128,
+      "sent_at": "2026-11-19T20:07:47Z",
+      "state": "confirmed"
     }
   },
   "version": 1
