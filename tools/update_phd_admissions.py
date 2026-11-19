@@ -374,7 +374,9 @@ _LINK_SKIP = re.compile(
 )
 
 
-def _institutional_url(raw: str, root_url: str) -> str | None:
+def _institutional_url(
+    raw: str, root_url: str, *, for_provenance: bool = False,
+) -> str | None:
     try:
         root = urllib.parse.urlsplit(root_url)
         resolved = urllib.parse.urlsplit(urllib.parse.urljoin(root_url, raw))
@@ -387,7 +389,8 @@ def _institutional_url(raw: str, root_url: str) -> str | None:
         resolved.scheme != "https" or host != root_host
         or resolved.username is not None or resolved.password is not None
         or port not in (None, 443) or not resolved.path.startswith("/")
-        or _LINK_SKIP.search(resolved.path) or len(resolved.query) > 128
+        or (not for_provenance and _LINK_SKIP.search(resolved.path))
+        or len(resolved.query) > 128
     ):
         return None
     return urllib.parse.urlunsplit(
@@ -570,7 +573,9 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
         if not isinstance(urls, list) or len(urls) > 4:
             raise ValueError("Unbounded programme source provenance")
         if any(
-            not isinstance(source, str) or _institutional_url(source, url) is None
+            not isinstance(source, str) or _institutional_url(
+                source, url, for_provenance=True,
+            ) is None
             for source in urls
         ):
             raise ValueError("Programme provenance must stay on institutional host")
@@ -592,7 +597,9 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
                 raise ValueError("Missing field-level official evidence")
             if len(item["value"]) > 175 or len(item["evidence_excerpt"]) > 220:
                 raise ValueError("Oversized field evidence")
-            if _institutional_url(item["evidence_url"], url) is None:
+            if _institutional_url(
+                item["evidence_url"], url, for_provenance=True,
+            ) is None:
                 raise ValueError("External programme evidence is forbidden")
             if urls and item["evidence_url"] not in urls:
                 raise ValueError("Field evidence was not investigated")
