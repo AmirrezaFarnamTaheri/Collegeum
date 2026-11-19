@@ -55,6 +55,7 @@ def test_economics_specific_call_retains_economics_tag():
     economics = {
         **SOURCE, "id": "ieb-economics", "institution": "IEB",
         "country_code": "ES", "url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
+        "title": "PhD Scholarship in Economics 2027",
     }
     html = """
 <h1>PhD Scholarship in Economics 2027</h1>
