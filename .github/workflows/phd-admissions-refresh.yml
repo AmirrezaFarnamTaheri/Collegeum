@@ -23,6 +23,8 @@ on:
     paths:
       - "tools/update_phd_admissions.py"
       - "config/phd_admissions_seeds.json"
+      - "tools/update_official_calls.py"
+      - "config/official_phd_calls_sources.json"
       - ".github/workflows/phd-admissions-refresh.yml"
   workflow_dispatch:
 
@@ -73,15 +75,19 @@ jobs:
             args+=(--recheck-no-explicit)
           fi
           python3 -S tools/update_phd_admissions.py "${args[@]}"
+      - name: Validate independent PhD call source registry offline
+        run: python3 -S tools/update_official_calls.py --check
+      - name: Check bounded official institutional funding-call pages
+        run: python3 -S tools/update_official_calls.py
       - name: Commit only derived public official-source observations
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- docs/data/phd_admissions.json
+          git add -- docs/data/phd_admissions.json docs/data/official_phd_calls.json
           if git diff --cached --quiet; then
-            echo "No programme observation changes"
+            echo "No official programme or funding-call observation changes"
             exit 0
           fi
           git commit -m "data: refresh official Economics PhD admissions observations [skip ci]"
