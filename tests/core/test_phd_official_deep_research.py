@@ -229,3 +229,57 @@ def test_unsupported_pdf_or_external_redirect_cannot_be_verified():
     )
     assert result["status"] == "unsafe_redirect"
     assert result["deadline_iso"] is None
+
+
+def test_generic_eligibility_disclaimer_is_not_a_degree_requirement():
+    html = """
+        <h1>Aalto Doctoral Programme in Business, Economics and Finance</h1>
+        <h3>Eligibility:</h3>
+        <p>Please note that we cannot confirm the eligibility of an
+        individual prospective applicant outside the actual application
+        process. Eligibility is assessed based on documents.</p>
+    """
+    facts = extract_official_details(html, evidence_url=AALTO, checked_at=NOW)
+    assert "entry_requirement" not in facts
+
+
+def test_funding_sentence_retains_conditional_stage_not_promotional_prefix():
+    html = """
+        <h1>Berlin School of Economics PhD Programme</h1>
+        <p>There are no tuition fees. Berlin School of Economics students
+        will receive funding for the expected length of the program.
+        For the Qualification Phase, a monthly stipend of 1,650 Euros
+        is provided. Funding for the Dissertation Phase is conditional on
+        having fulfilled the program's performance criteria.</p>
+    """
+    facts = extract_official_details(html, evidence_url=BERLIN, checked_at=NOW)
+    value = facts["funding_note"]["value"].lower()
+    assert "funding" in value and "conditional" in value
+    assert "dissertation phase" in value
+    assert not value.startswith("there are no tuition fees")
+
+
+def test_link_discovery_prefers_admissions_funding_over_job_market_about_pages():
+    page = """
+        <h1>Berlin School of Economics PhD application</h1>
+        <a href="/job-market/job-market-candidates">PhD job-market candidates</a>
+        <a href="/about-us/about-us">About the PhD programme</a>
+        <a href="/phd-program/application-schedule">Application deadline</a>
+        <a href="/phd-program/funding">Funding and fees</a>
+    """
+    links = select_official_links(page, BERLIN, max_links=2)
+    assert len(links) == 2
+    assert any("application" in link for link in links)
+    assert any("funding" in link for link in links)
+    assert all("job-market" not in link and "about-us" not in link for link in links)
+
+
+def test_simple_official_label_value_in_div_is_not_lost():
+    html = """
+        <h1>Aalto Doctoral Programme in Business, Economics and Finance</h1>
+        <div>Language of instruction: English</div>
+        <div>Duration: 4 years, full-time</div>
+    """
+    f = extract_official_details(html, evidence_url=AALTO, checked_at=NOW)
+    assert f["language"]["value"] == "English"
+    assert f["duration"]["value"] == "4 years, full-time"
