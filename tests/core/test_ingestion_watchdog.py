@@ -201,10 +201,8 @@ class WatchdogWorkflowSafetyTests(TestCase):
         # every completed recovery observer fail on the same old missing
         # tick obscures a genuine freshness/dispatch failure.
         self.assertIn("            python3 -S tools/ingestion_watchdog.py", workflow.splitlines())
-        self.assertIn(
-            "            python3 -S tools/ingestion_watchdog.py --dispatch",
-            workflow.splitlines(),
-        )
+        self.assertIn("--dispatch --admissions-trigger", workflow)
+        self.assertIn("python3 -S tools/ingestion_watchdog.py --dispatch", workflow)
         self.assertNotIn(
             "python3 -S tools/ingestion_watchdog.py --strict-cadence", workflow
         )

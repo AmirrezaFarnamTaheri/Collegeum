@@ -59,5 +59,6 @@ class StrictCadenceTests(TestCase):
                     if line.strip().startswith("python3 -S tools/ingestion_watchdog.py")]
         self.assertEqual(commands, [
             "python3 -S tools/ingestion_watchdog.py",
+            "python3 -S tools/ingestion_watchdog.py --dispatch --admissions-trigger",
             "python3 -S tools/ingestion_watchdog.py --dispatch",
         ])
