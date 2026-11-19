@@ -179,6 +179,18 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     label = {"phd_studentship": "PhD studentship", "phd_fellowship": "PhD fellowship",
              "phd_scholarship": "PhD scholarship"}[row["kind"]]
     deadline = date.fromisoformat(row["deadline_iso"]).strftime("%d %b %Y")
+    # Broad university-wide schemes must not be tagged Economics-only.
+    scope = row.get("subject_scope")
+    if scope not in {"economics", "finance", "multidisciplinary"}:
+        if re.search(r"\b(?:economics?|econometrics?)\b", row["title"], re.I):
+            scope = "economics"
+        elif re.search(r"\b(?:finance|accounting|accountancy)\b", row["title"], re.I):
+            scope = "finance"
+    tags = "#PhD #Scholarships"
+    if scope == "economics":
+        tags += " #Economics"
+    elif scope == "finance":
+        tags += " #Finance"
     lines = [
         f"🎓 <b>{escape(label)} · Official institutional call</b>",
         f"<b>{title}</b>", institution, "",
@@ -205,7 +217,7 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         "a salaried job or an ordinary university admission deadline. "
         "Verify eligibility and funding conditions with the institution.</i>",
         f"🔎 Official call checked: {escape(row['checked_at'][:10])} UTC",
-        "#PhD #Scholarships #Economics",
+        tags,
     ])
     keyboard = {"inline_keyboard": [[{
         "text": "Open official call",
