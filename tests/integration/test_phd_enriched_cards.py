@@ -1,8 +1,6 @@
 """Telegram programme cards share the existing vacancy-card layout and provenance."""
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 from predoc_pipeline.publish.admissions import _message
 
 NOW = "2026-11-19T12:00:00Z"
