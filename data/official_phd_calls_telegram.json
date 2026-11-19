@@ -1,4 +1,27 @@
 {
-  "version": 1,
-  "deliveries": {}
+  "deliveries": {
+    "6561a47cdaa8b1095624a0020f5b38f5": {
+      "attempted_at": "2026-11-19T21:29:43Z",
+      "deadline_iso": "2026-12-11",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "intake_year": 2027,
+      "message_id": 134,
+      "official_url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
+      "sent_at": "2026-11-19T21:29:43Z",
+      "state": "confirmed",
+      "title": "PhD Scholarship in Economics 2027"
+    },
+    "f431c672e2a83d1dc45b9dc132b18ee2": {
+      "attempted_at": "2026-11-19T21:29:43Z",
+      "deadline_iso": "2026-12-11",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "intake_year": 2027,
+      "message_id": 133,
+      "official_url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/",
+      "sent_at": "2026-11-19T21:29:43Z",
+      "state": "confirmed",
+      "title": "Call for expressions of interest – PhD Fellowship in Energy and Climate Economics"
+    }
+  },
+  "version": 1
 }
