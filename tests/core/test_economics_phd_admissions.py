@@ -344,11 +344,16 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
 
     def test_trusted_source_update_enriches_existing_verified_admissions(self):
         now = datetime(2026, 11, 19, 12, 0, tzinfo=UTC)
+        # Explicitly remove the extracted details from a local fixture.
+        # This regression must survive real catalogue enrichment over time.
+        sample = json.loads(json.dumps(self.public))
         verified = [
-            row for row in self.public["programmes"]
-            if row["status"] == "verified" and not row.get("official_details")
+            row for row in sample["programmes"]
+            if row["status"] == "verified"
         ]
-        self.assertGreaterEqual(len(verified), 2)
+        self.assertTrue(verified)
+        for row in verified:
+            row["official_details"] = {}
         urls = {row["official_programme_url"] for row in verified}
         checked = []
 
@@ -377,7 +382,7 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             return {"status": "no_explicit_deadline"}
 
         result = refresh(
-            self.seeds, self.public, now=now, batch_size=25,
+            self.seeds, sample, now=now, batch_size=25,
             fetcher=fetch, recheck_no_explicit=True,
         )
         self.assertTrue(urls.issubset(set(checked)))

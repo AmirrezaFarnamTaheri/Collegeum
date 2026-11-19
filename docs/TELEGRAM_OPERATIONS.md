@@ -513,9 +513,11 @@ enter `data/listings.ndjson`, the website vacancies board, X, or personalised
 research-job alerts. The admissions catalogue is maintained through the
 separate official university checker; only records with `status=verified`,
 a future dated application deadline, a source check within 14 days, and
-official HTTPS evidence are eligible. The institution's non-US country must
-also be corroborated by its country-code university domain, rather than
-accepted from the third-party discovery list alone. Unverified, blocked,
+official HTTPS evidence are eligible. The institution's non-US country must be corroborated either by a
+matching national university domain or by an independently sourced mailing
+address on the official institutional host, with retained source URL, excerpt
+and check timestamp. A generic `.eu`/`.org`/`.com` domain by itself does not
+prove location. No country is accepted merely from the upstream directory. Unverified, blocked,
 stale, ambiguous, US and unknown-country programmes are not announced.
 
 The **existing production** `predoc-pipeline` Telegram client sends these

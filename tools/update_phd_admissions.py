@@ -17,6 +17,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import urllib.robotparser
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
@@ -76,6 +77,7 @@ class PageText(HTMLParser):
         self._anchor_href: str | None = None
         self._anchor_parts: list[str] = []
         self.blocks: list[str] = []
+        self.address_blocks: list[str] = []
         self._block_tag: str | None = None
         self._block_parts: list[str] = []
 
@@ -84,7 +86,7 @@ class PageText(HTMLParser):
             self._in_h1 = True
             self._heading_parts = []
         if (
-            tag in {"h1", "h2", "h3", "h4", "p", "li", "dt", "dd", "th", "td"}
+            tag in {"h1", "h2", "h3", "h4", "p", "li", "dt", "dd", "th", "td", "address"}
             and self._block_tag is None
         ):
             self._block_tag = tag
@@ -113,6 +115,8 @@ class PageText(HTMLParser):
             block = " ".join(" ".join(self._block_parts).split())
             if block:
                 self.blocks.append(block)
+                if tag == "address":
+                    self.address_blocks.append(block)
             self._block_tag = None
             self._block_parts = []
         if tag in {"script", "style", "svg", "noscript", "template"}:
@@ -212,6 +216,84 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
         day, excerpt = candidates[0]
         return "verified", day, excerpt[:180]
     return "no_explicit_deadline", None, None
+
+
+
+
+# Generic (e.g. .eu, .org) university domains do not independently prove
+# where a programme is based. A university's own mailing address can supply
+# a separately cited country fact, never the upstream lead's country alone.
+OFFICIAL_COUNTRY_NAMES = (
+    "Austria", "Australia", "Belgium", "Canada", "Switzerland",
+    "Chile", "China", "Czechia", "Germany", "Denmark", "Spain",
+    "Finland", "France", "Greece", "Hong Kong", "Ireland", "Italy",
+    "Japan", "South Korea", "Malaysia", "Netherlands", "Norway",
+    "New Zealand", "Philippines", "Poland", "Portugal", "Serbia",
+    "Sweden", "Singapore", "Thailand", "Taiwan", "United Kingdom",
+    "United States", "South Africa",
+)
+OFFICIAL_COUNTRY_WORD = re.compile(
+    r"\b(?:" + "|".join(
+        re.escape(country) for country in OFFICIAL_COUNTRY_NAMES
+    ) + r")\b", re.I,
+)
+ADDRESS_LABEL = re.compile(
+    r"\b(?:mailing|postal|campus|institutional)\s+address\b", re.I,
+)
+
+
+def extract_official_country(
+    html: str, *, evidence_url: str, checked_at: datetime,
+) -> dict[str, str] | None:
+    """Use an institutional address, never general country or travel mentions.
+
+    Multiple different countries in contact/address evidence are ambiguous.
+    The source, exact excerpt and check time remain available for auditing.
+    """
+    parser = PageText()
+    parser.feed(html[:MAX_HTML_BYTES])
+    blocks = parser.blocks
+    candidates: list[str] = list(parser.address_blocks)
+    for index, block in enumerate(blocks):
+        if ADDRESS_LABEL.search(block):
+            candidates.extend(blocks[index + 1:index + 4])
+        elif re.search(r"^\s*(?:mailing|postal)\s+address\s*:", block, re.I):
+            candidates.append(block)
+    # Some university footers publish their *institutional mailing address*
+    # as raw footer text rather than a <p> or <address> element. Require a
+    # copyright marker, a street indicator and a postal code together:
+    # "Time in Italy" or generic study-abroad mentions do not qualify.
+    tail = parser.text()[-1600:]
+    marker = tail.rfind("©")
+    if marker >= 0:
+        footer_address = tail[marker:marker + 220]
+        if (
+            re.search(r"\b(?:Via|Street|Road|Avenue|Carrer)\b",
+                      footer_address, re.I)
+            and re.search(r"\b(?:[A-Z]-)?\d{4,5}\b", footer_address)
+        ):
+            candidates.append(footer_address)
+    found: dict[str, str] = {}
+    for address in candidates:
+        matches = list(OFFICIAL_COUNTRY_WORD.finditer(address))
+        for match in matches:
+            name = next(
+                (item for item in OFFICIAL_COUNTRY_NAMES
+                 if item.casefold() == match.group().casefold()),
+                None,
+            )
+            if name is not None:
+                found[name] = " ".join(address.split())[:220]
+    if len(found) != 1:
+        return None
+    name, excerpt = next(iter(found.items()))
+    return {
+        "value": name, "evidence_url": evidence_url,
+        "evidence_excerpt": excerpt,
+        "checked_at": checked_at.isoformat(
+            timespec="seconds",
+        ).replace("+00:00", "Z"),
+    }
 
 
 
@@ -476,6 +558,25 @@ def select_official_links(
     return sorted(scores, key=lambda url: (-scores[url], url))[:max_links]
 
 
+
+def select_official_contact_link(html: str, source_url: str) -> str | None:
+    """Select a documented same-host contact page for address verification."""
+    parser = PageText()
+    parser.feed(html[:MAX_HTML_BYTES])
+    links = parser.links[:300] + parser.links[-150:]
+    for href, label in links:
+        candidate = _institutional_url(href, source_url)
+        if candidate is None:
+            continue
+        path = urllib.parse.urlsplit(candidate).path.rstrip("/").lower()
+        if (
+            re.fullmatch(r"/(?:(?:en|eng)/)?(?:contact|contacts|contact-us)", path)
+            and re.search(r"\bcontact\b", label, re.I)
+        ):
+            return candidate
+    return None
+
+
 def investigate_official_pages(
     official_url: str, *, now: datetime, fetch_html,
     robots_allowed, max_pages: int = 3,
@@ -566,9 +667,15 @@ def investigate_official_pages(
             ambiguous = True
         elif status == "verified" and day and excerpt:
             dates.append((day, final_url, excerpt))
-        for field, fact in extract_official_details(
+        page_facts = extract_official_details(
             html, evidence_url=final_url, checked_at=now,
-        ).items():
+        )
+        country_fact = extract_official_country(
+            html, evidence_url=final_url, checked_at=now,
+        )
+        if country_fact is not None:
+            page_facts["institution_country"] = country_fact
+        for field, fact in page_facts.items():
             if field in conflicts:
                 continue
             previous = details.get(field)
@@ -578,6 +685,18 @@ def investigate_official_pages(
             elif previous is None:
                 details[field] = fact
         if len(seen) + len(queue) < max_pages:
+            # A generic university domain (.eu, .org, ...) does not itself
+            # certify the country. Dedicate one *bounded, robots-aware*
+            # follow-up to a linked institutional contact address if needed.
+            generic = (
+                (urllib.parse.urlsplit(official_url).hostname or "")
+                .lower().split(".")[-1]
+                in {"eu", "org", "com", "net", "edu", "int"}
+            )
+            if generic and "institution_country" not in details and len(seen) == 1:
+                contact = select_official_contact_link(html, final_url)
+                if contact and contact not in seen and contact not in queue:
+                    queue.append(contact)
             more = select_official_links(
                 html, final_url, max_links=max_pages - len(seen) - len(queue),
             )
@@ -680,6 +799,7 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
             "language", "duration", "entry_requirement", "tuition",
             "application_open_iso", "stipend", "semester_fee", "tests",
             "references", "funding_note", "admission_route",
+            "institution_country",
         }
         if fields.keys() - allowed_fields:
             raise ValueError("Unsupported official programme fact")
@@ -714,19 +834,33 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
 
 
 class OfficialOnlyRedirect(urllib.request.HTTPRedirectHandler):
-    def __init__(self, allowed_host: str) -> None:
+    def __init__(
+        self, allowed_host: str,
+        robots_allowed: Callable[[str], bool] | None = None,
+    ) -> None:
         self.allowed_host = allowed_host.lower().removeprefix("www.")
+        self.robots_allowed = robots_allowed
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         parsed = urllib.parse.urlsplit(newurl)
         host = (parsed.hostname or "").lower().removeprefix("www.")
         if parsed.scheme != "https" or host != self.allowed_host:
             raise ValueError("unsafe_redirect")
+        # urllib follows redirects without re-entering our outer verifier.
+        # Inspect the destination BEFORE urllib fetches it, including when
+        # the source path was permitted but the redirected path is blocked.
+        if self.robots_allowed is not None and not self.robots_allowed(newurl):
+            raise ValueError("robots_disallowed_redirect")
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def _read_url(url: str, *, host: str, limit: int) -> tuple[int, bytes, str]:
-    opener = urllib.request.build_opener(OfficialOnlyRedirect(host))
+def _read_url(
+    url: str, *, host: str, limit: int,
+    allowed_redirect: Callable[[str], bool] | None = None,
+) -> tuple[int, bytes, str]:
+    opener = urllib.request.build_opener(
+        OfficialOnlyRedirect(host, robots_allowed=allowed_redirect),
+    )
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "text/html"})
     with opener.open(req, timeout=9) as response:
         data = response.read(limit + 1)
@@ -761,14 +895,19 @@ def check_official_url(url: str, *, now: datetime) -> dict:
     def fetch_page(page_url: str) -> tuple[str, str]:
         status, data, final_url = _read_url(
             page_url, host=host, limit=MAX_HTML_BYTES,
+            allowed_redirect=allowed,
         )
         if status != 200 or data.lstrip().startswith(b"%PDF"):
             raise ValueError("unsupported official source response")
         return data.decode("utf-8", errors="replace"), final_url
 
+    suffix = host.lower().split(".")[-1]
+    # Preserve two admissions links; allow one additional official address
+    # page only where the domain suffix cannot independently prove location.
+    page_budget = 4 if suffix in {"eu", "org", "com", "net", "edu", "int"} else 3
     return investigate_official_pages(
         url, now=now, fetch_html=fetch_page, robots_allowed=allowed,
-        max_pages=3,
+        max_pages=page_budget,
     )
 
 def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,

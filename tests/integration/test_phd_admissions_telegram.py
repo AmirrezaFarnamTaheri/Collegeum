@@ -57,6 +57,52 @@ def test_general_phd_admissions_in_non_us_are_telegram_eligible():
     }
 
 
+def test_generic_eu_host_requires_current_independent_institution_country_proof():
+    official = "https://bse.eu/masters-degrees/economics-finance/upf-phd-track"
+    contact = "https://bse.eu/contact"
+    berlin = _record(
+        name="Barcelona School of Economics", country="ES",
+        url=official, deadline="2027-01-15",
+    )
+    berlin["evidence_url"] = "https://bse.eu/masters-degrees/admissions"
+    berlin["evidence_excerpt"] = "PhD Track application deadline: January 15, 2027"
+    berlin["official_details"] = {
+        "admission_route": {
+            "value": "PhD track — first-year Master's-stage entry",
+            "evidence_url": official,
+            "evidence_excerpt": "First year of the PhD in Economics.",
+            "checked_at": berlin["checked_at"],
+        },
+        "institution_country": {
+            "value": "Spain",
+            "evidence_url": contact,
+            "evidence_excerpt": "Mailing address: 08005 Barcelona, Catalonia, Spain",
+            "checked_at": berlin["checked_at"],
+        },
+    }
+    berlin["investigated_urls"] = [official, berlin["evidence_url"], contact]
+    assert len(eligible_official_admissions(_catalog(berlin), now=NOW)) == 1
+    for key, value in (
+        ("official_details", {}),
+        ("country_code", "US"),
+        ("country_code", "IT"),
+    ):
+        wrong = {**berlin, key: value}
+        assert eligible_official_admissions(_catalog(wrong), now=NOW) == []
+    location = dict(berlin["official_details"]["institution_country"])
+    for change in (
+        {"evidence_url": "https://fake-spain.example/contact"},
+        {"checked_at": "2026-10-01T00:00:00Z"},
+        {"value": "United States"},
+        {"evidence_excerpt": "No location is stated"},
+    ):
+        bad = dict(berlin)
+        bad["official_details"] = {
+            **berlin["official_details"], "institution_country": {**location, **change},
+        }
+        assert eligible_official_admissions(_catalog(bad), now=NOW) == []
+
+
 def test_no_third_party_unverified_us_expired_or_unproven_location_broadcast():
     berlin = _record()
     us = _record("American University", "US", "https://www.american.edu/phd", "2027-01-15")
