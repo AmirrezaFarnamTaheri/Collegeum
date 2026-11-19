@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-19T22:41:51Z",
+  "generated_at": "2026-11-19T23:47:35Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -1820,275 +1820,392 @@
       "country_code": "US",
       "official_programme_url": "https://economics.stanford.edu/graduate/applying-stanford",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.stanford.edu/graduate/applying-stanford",
+        "https://economics.stanford.edu/graduate/applying-stanford/frequently-asked-questions",
+        "https://economics.stanford.edu/graduate/graduate-degree-programs/doctoral-program/graduate-degree-field-requirements"
+      ]
     },
     {
       "institution": "Stockholm School of Economics",
       "country_code": "SE",
       "official_programme_url": "https://www.hhs.se/en/education/phd/economics/admission/",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.hhs.se/education/phd/economics/economics-application/",
+        "https://www.hhs.se/education/information/tuition-and-fees/",
+        "https://www.hhs.se/education/information/scholarships/"
+      ]
     },
     {
       "institution": "Stockholm University",
       "country_code": "SE",
       "official_programme_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/phd-programme-in-economics/applying-to-the-phd-programme-in-economics",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Swansea University",
       "country_code": "UK",
       "official_programme_url": "https://www.swansea.ac.uk/postgraduate/research/social-sciences/economics/phd-mphil-economics/#how-to-apply=is-expanded",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.swansea.ac.uk/postgraduate/research/social-sciences/economics/phd-mphil-economics/#how-to-apply=is-expanded",
+        "https://www.swansea.ac.uk/postgraduate/research/social-sciences/economics/phd-mphil-economics/",
+        "https://www.swansea.ac.uk/admissions/english-language-requirements/"
+      ]
     },
     {
       "institution": "Syracuse University",
       "country_code": "US",
       "official_programme_url": "https://www.maxwell.syr.edu/academics/economics-department/admission",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.maxwell.syr.edu/academics/economics-department/admission",
+        "https://www.maxwell.syr.edu/admissions-financial-aid",
+        "https://www.maxwell.syr.edu/admissions-financial-aid/graduate-admission-financial-aid",
+        "https://www.maxwell.syr.edu/admissions-financial-aid/graduate-admission-financial-aid/how-to-apply/application-fee-waiver-request"
+      ]
     },
     {
       "institution": "Texas A&M University",
       "country_code": "US",
       "official_programme_url": "https://artsci.tamu.edu/economics/academics/graduate/phd-program/application-and-admissions.html",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://artsci.tamu.edu/economics/academics/graduate/phd-program/application-and-admissions.html",
+        "https://artsci.tamu.edu/economics/academics/tuition-fees.html",
+        "https://artsci.tamu.edu/economics/academics/graduate/ms-program/funding-opportunities.html",
+        "https://artsci.tamu.edu/economics/academics/graduate/ms-program/application-and-admissions.html"
+      ]
     },
     {
       "institution": "Texas State University",
       "country_code": "US",
       "official_programme_url": "https://mycatalog.txstate.edu/graduate/admission-information/application-deadlines/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://mycatalog.txstate.edu/graduate/admission-information/application-deadlines/",
+        "https://mycatalog.txstate.edu/graduate/admission-information/masters-doctoral-degree-seeking-applicants/",
+        "https://mycatalog.txstate.edu/graduate/additional-fees-expenses/",
+        "https://mycatalog.txstate.edu/graduate/admission-documents/"
+      ]
     },
     {
       "institution": "Texas Tech University",
       "country_code": "US",
       "official_programme_url": "https://www.depts.ttu.edu/economics/FAQsphd.php",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Tilburg University",
       "country_code": "NL",
       "official_programme_url": "https://www.tilburguniversity.edu/education/masters-programmes/research-master-economics/application",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.tilburguniversity.edu/education/masters-programs/research-master-economics-academic-economics/application",
+        "https://www.tilburguniversity.edu/education/masters-programs/research-master-economics-academic-economics/tuition-fees-scholarships",
+        "https://www.tilburguniversity.edu/education/masters-programs/research-master-economics-academic-economics/application"
+      ]
     },
     {
       "institution": "Tohoku University",
       "country_code": "JP",
       "official_programme_url": "https://www.econ.tohoku.ac.jp/en/gpem/gpem-admission",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.econ.tohoku.ac.jp/en/gpem/gpem-admission"
+      ]
     },
     {
       "institution": "Tokai University",
       "country_code": "JP",
       "official_programme_url": "https://www.tokai-seikei.jp/admissioninformation",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.tokai-seikei.jp/admissioninformation",
+        "https://www.tokai-seikei.jp/admission"
+      ]
     },
     {
       "institution": "Toulouse School of Economics",
       "country_code": "FR",
       "official_programme_url": "https://www.tse-fr.eu/doctoral-program",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.tse-fr.eu/doctoral-program"
+      ]
     },
     {
       "institution": "Trinity College Dublin",
       "country_code": "IE",
       "official_programme_url": "https://www.tcd.ie/economics/news-and-events/department-news/phd-in-economics-applications-now-open/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Tsinghua University",
       "country_code": "CN",
       "official_programme_url": "https://yz.tsinghua.edu.cn/en/info/1035/1046.htm",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Tufts University",
       "country_code": "US",
       "official_programme_url": "https://asegrad.tufts.edu/applying/application-deadlines",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://asegrad.tufts.edu/applying/application-deadlines",
+        "https://asegrad.tufts.edu/",
+        "https://asegrad.tufts.edu/about/admissions-team",
+        "https://asegrad.tufts.edu/applying/admissions-process"
+      ]
     },
     {
       "institution": "UC, Davis",
       "country_code": "US",
       "official_programme_url": "https://economics.ucdavis.edu/graduate-program/prosp-students/admission-information",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "UC, Irvine",
       "country_code": "US",
       "official_programme_url": "https://www.economics.uci.edu/grad/admissions.php",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.economics.uci.edu/grad/admissions.php",
+        "https://www.economics.uci.edu/grad/faq/admissions.php",
+        "https://www.economics.uci.edu/grad/requirements.php"
+      ]
     },
     {
       "institution": "UC, Los Angeles",
       "country_code": "US",
       "official_programme_url": "https://economics.ucla.edu/graduate/prospective-students",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.ucla.edu/graduate/prospective-students",
+        "https://economics.ucla.edu/graduate/admissions/faqs/",
+        "https://economics.ucla.edu/undergraduate/honors-and-scholarships/",
+        "https://economics.ucla.edu/undergraduate/honors-and-scholarships/departmental-scholarships-2"
+      ]
     },
     {
       "institution": "UC, Merced",
       "country_code": "US",
       "official_programme_url": "https://graduatedivision.ucmerced.edu/prospective-students/application-dates",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "UC, San Diego",
       "country_code": "US",
       "official_programme_url": "https://economics.ucsd.edu/graduate-program/prospective-students/index.html",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.ucsd.edu/graduate-program/prospective-students/index.html",
+        "https://economics.ucsd.edu/graduate-program/prospective-students/faqs.html",
+        "https://economics.ucsd.edu/graduate-program/current-students/index.html",
+        "https://economics.ucsd.edu/undergraduate-program/major-minor-requirements/index.html"
+      ]
     },
     {
       "institution": "UC, Santa Barbara",
       "country_code": "US",
       "official_programme_url": "https://econ.ucsb.edu/programs/graduate",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://econ.ucsb.edu/programs/graduate",
+        "https://econ.ucsb.edu/programs/graduate/apply"
+      ]
     },
     {
       "institution": "UMass Amherst",
       "country_code": "US",
       "official_programme_url": "https://www.umass.edu/economics/admissions",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.umass.edu/economics/admissions",
+        "https://www.umass.edu/economics/academics/graduate/conference-workshops",
+        "https://www.umass.edu/admissions",
+        "https://www.umass.edu/admissions/visit"
+      ]
     },
     {
       "institution": "UNC-Chapel Hill",
       "country_code": "US",
       "official_programme_url": "https://gradschool.unc.edu/degree-programs/#594",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://gradschool.unc.edu/degree-programs/#594"
+      ]
     },
     {
       "institution": "University College Dublin",
       "country_code": "IE",
       "official_programme_url": "https://www.ucd.ie/economics/phd/application/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University College London",
       "country_code": "UK",
       "official_programme_url": "https://www.ucl.ac.uk/prospective-students/graduate/research-degrees/economics-mres-mphil-phd",
       "programme_structure_hint": "MRes + MPhil/PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T23:47:35Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of Adelaide",
