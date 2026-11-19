@@ -39,7 +39,14 @@ Its copyright and permission notice is at
   `no_explicit_deadline`, not a guessed recurring deadline. Stale observations,
   non-HTTPS seeds, provider errors and robots-disallowed checks are similarly
   non-actionable. No date is inferred from an undated deadline, term start,
-  a yearless month/day, or the upstream table.
+  a yearless month/day, or the upstream table. A Master's-degree admissions
+  deadline cannot by itself be labelled a direct PhD deadline. For an
+  officially linked first-year PhD track (such as BSE's UPF PhD track),
+  Collegeum records a separate `admission_route` fact citing the official
+  university programme and accepts the Master's-stage date only when the
+  university's own application page also names the PhD track. Cards label
+  this clearly as Master's-stage doctoral entry, not a standalone
+  funded research job or an unconditional direct PhD appointment.
 - The static Collegeum dashboard has a separate **PhD admissions** directory
   with search, country filtering, status filtering, and institution links.
   General non-US admissions with a **fresh, explicit, officially verified**
