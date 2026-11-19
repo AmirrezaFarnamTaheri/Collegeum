@@ -163,8 +163,8 @@ def _location_proof(text: str, country: str, url: str) -> str | None:
     # institution name or an upstream discovery-list country assumption.
     if country == "ES" and re.search(
         r"(?:C/\s*John\s+M\.\s*Keynes.{0,55}08034\s+Barcelona|"
-        r"08034\s+Barcelona.{0,80}(?:Tel\.?\s*)?\+34)", text, re.I,
-    ) and re.search(r"(?:Tel\.?\s*)?\+34\s*\d{2}", text, re.I):
+        r"08034\s+Barcelona.{0,80}(?:Tel\.?\s*)?\+\s*34)", text, re.I,
+    ) and re.search(r"(?:Tel\.?\s*)?\+\s*34\s*\d{2}", text, re.I):
         return "ES: official postal address 08034 Barcelona and telephone +34"
     return None
 
@@ -182,7 +182,8 @@ def _intake(title: str, text: str) -> int | None:
             return int(match.group(1))
     match = re.search(
         r"(?:starting|start(?:s|ing)?)\s+(?:in\s+)?"
-        r"(?:September|October|Autumn)[^\d]{0,8}(20\d{2})", text, re.I,
+        r"(?:September|October|Autumn)"
+        r"(?:\s*(?:/|or)\s*(?:September|October))?\s+(20\d{2})", text, re.I,
     )
     return int(match.group(1)) if match else None
 
@@ -377,6 +378,24 @@ def refresh_sources(
         if status == "ok" and isinstance(response.get("html"), str):
             if source["mode"] == "index":
                 urls = discover_links(response["html"], source)
+                # Older but still-open official calls can scroll off a paginated
+                # university index. Recheck at most two within the same source
+                # and deadline window, without trusting cached dates for sending.
+                historical = sorted(
+                    (
+                        row for row in prior
+                        if row.get("source_id") == source["id"]
+                        and row.get("status") == "verified"
+                        and isinstance(row.get("deadline_iso"), str)
+                        and row["deadline_iso"] >= now.date().isoformat()
+                        and isinstance(row.get("official_url"), str)
+                        and safe_official_url(row["official_url"], source["url"])
+                            == row["official_url"]
+                        and row["official_url"] not in urls
+                    ),
+                    key=lambda item: (item["deadline_iso"], item["official_url"]),
+                )[:2]
+                urls.extend(row["official_url"] for row in historical)
             else:
                 urls = [source["url"]]
         elif status not in STATUSES:
