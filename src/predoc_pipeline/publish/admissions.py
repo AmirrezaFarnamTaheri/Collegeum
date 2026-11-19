@@ -179,7 +179,7 @@ def _read_receipts(path: Path) -> dict[str, Any]:
             not isinstance(receipt, dict) or
             receipt.get("state") not in {
                 "pending", "confirmed", "uncertain", "permanent_failure",
-                "reissue_authorized",
+                "reissue_authorized", "retry_held",
             }
         ):
             raise ValueError("Corrupted delivery receipt; hold all sends")
@@ -459,9 +459,12 @@ def publish_official_admissions(
                 attempt["state"] = "uncertain"
             elif exc.permanent:
                 attempt["state"] = "permanent_failure"
+            elif reserve_intent is not None:
+                # The pre-send GitHub intent is immutable; even a definite
+                # rate limit cannot be replayed without explicit review.
+                attempt["state"] = "retry_held"
             else:
-                # Known no-delivery rate limits can retry later. For an
-                # authorised reissue, never discard the prior-message audit.
+                # Local-only legacy behavior for known non-delivery responses.
                 if previous is not None and previous.get("state") == "reissue_authorized":
                     ledger["deliveries"][key] = previous
                 else:
