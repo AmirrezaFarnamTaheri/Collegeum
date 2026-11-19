@@ -329,6 +329,36 @@ def extract_official_details(
                 )
                 break
 
+    # The BSE/UPF first PhD-track year uses a Master's application portal.
+    # Do not inherit zero-tuition assumptions from *other* direct doctorates:
+    # retain a specific first-year fee and optional merit support only when
+    # the official doctoral-track page states them explicitly.
+    track_page = (
+        "/masters-degrees/" in urllib.parse.urlsplit(evidence_url).path
+        and "admission_route" in facts
+    )
+    if track_page:
+        for block in blocks:
+            fee = re.search(
+                r"\bstudent\s+fee\s*:\s*€\s*([\d,]+)\b", block, re.I,
+            )
+            if fee:
+                add("tuition", f"€{fee.group(1)} (first-year programme fee)", block)
+            if (
+                re.search(r"\bGRE\s+score\s+is\s+required\b", block, re.I)
+                and re.search(r"\bPhD[\s-]+track\b", block, re.I)
+            ):
+                add("tests", "GRE required for PhD-track entry", block)
+            if re.search(
+                r"\bfunding\s+opportunities\b.*\bawarded\s+on\s+the\s+basis\s+of"
+                r"\s+academic\s+excellence\b", block, re.I,
+            ):
+                add(
+                    "funding_note",
+                    "Merit-based support; award not guaranteed (first-year PhD track)",
+                    block,
+                )
+
     # Select the *specific funding sentence*, not the first 175 characters
     # of a long paragraph that may omit later dissertation-phase conditions.
     sentences = [
