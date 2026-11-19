@@ -497,21 +497,42 @@ def investigate_official_pages(
             and re.search(r"\bmaster(?:'?s|’s)?\s+degrees?\b", heading, re.I)
             for heading in page_parser.headings
         )
-        if status == "ambiguous_deadline":
+        if masters_admissions:
+            # A university's Master's admission date is NOT automatically a
+            # doctorate application deadline. Only its explicit, adjacent
+            # "Application deadline: <full year>" dates are candidates;
+            # even those need an independently corroborated PhD-track route.
+            stage_candidates: list[tuple[str, str, str]] = []
+            track_named = re.search(
+                r"\bPhD[\s-]+Track\s+Program(?:me)?\b",
+                page_parser.text()[:14000], re.I,
+            )
+            if track_named:
+                for block in page_parser.blocks:
+                    label = re.search(
+                        r"\b(?:first\s+round\s+)?application\s+deadline\s*:\s*",
+                        block, re.I,
+                    )
+                    if not label:
+                        continue
+                    match = DATE_PATTERN.search(block, label.end())
+                    if not match or match.start() - label.end() > 15:
+                        continue
+                    proposed = _parse_date(match)
+                    if proposed and now.date() <= proposed <= date(
+                        now.year + 2, 12, 31,
+                    ):
+                        stage_candidates.append(
+                            (proposed.isoformat(), final_url, block[:180]),
+                        )
+            if len({date_iso for date_iso, _, _ in stage_candidates}) > 1:
+                ambiguous = True
+            else:
+                masters_stage_dates.extend(stage_candidates)
+        elif status == "ambiguous_deadline":
             ambiguous = True
         elif status == "verified" and day and excerpt:
-            candidate = (day, final_url, excerpt)
-            if masters_admissions:
-                # BSE's Master’s application date applies to entry into its
-                # verified first-year UPF PhD track, but is not a generic
-                # direct doctoral application deadline.
-                if re.search(
-                    r"\bPhD[\s-]+Track\s+Program(?:me)?\b",
-                    page_parser.text()[:14000], re.I,
-                ):
-                    masters_stage_dates.append(candidate)
-            else:
-                dates.append(candidate)
+            dates.append((day, final_url, excerpt))
         for field, fact in extract_official_details(
             html, evidence_url=final_url, checked_at=now,
         ).items():
