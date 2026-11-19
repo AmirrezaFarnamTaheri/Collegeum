@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-19T21:44:40Z",
+ "generated_at": "2026-11-19T22:10:56Z",
  "count": 231,
  "listings": [
   {
@@ -3397,18 +3397,18 @@
    "city": "North Ryde",
    "is_remote": false,
    "duration_years": 4.0,
-   "deadline": "2026-12-06T00:00:00Z",
+   "deadline": "2026-12-06T12:59:00Z",
    "days_left": 17,
    "disciplines": [
     "Econometrics",
-    "Business and Management"
+    "Finance"
    ],
-   "visa": "inferred",
-   "summary": "This is a fixed-term postdoctoral research position in econometrics at Macquarie University, Sydney, Australia, focusing on counterfactual policy evaluation and high-frequency financial-market methods. Applicants must hold a PhD completed or near completion and have a strong research record in econometrics or a related field.",
+   "visa": "explicit",
+   "summary": "This is a four-year fixed-term postdoctoral research fellowship in econometrics at Macquarie University's Department of Economics, working under Professor Shuping Shi on counterfactual policy evaluation and high-frequency financial econometrics. The role requires a PhD in econometrics or a related field, strong programming skills in MATLAB, R, or Python, and involves independent research, collaboration, and postgraduate supervision.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -3480,24 +3480,25 @@
   {
    "id": 360,
    "title": "Postdoctoral Associate in Behavioral and Experimental Social Science",
-   "institution": "New York University Abu Dhabi",
-   "principal_investigator": "Berkay Özcan; Ernesto Reuben",
+   "institution": "NEW YORK UNIVERSITY ABU DHABI",
+   "principal_investigator": "Professors Berkay Özcan and Ernesto Reuben",
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T00:00:00Z",
+   "deadline": "2026-12-05T23:59:59Z",
    "days_left": 16,
    "disciplines": [
     "Behavioral/Experimental Economics",
-    "Quantitative Social Sciences"
+    "Quantitative Social Sciences",
+    "Applied Microeconomics"
    ],
    "visa": "unknown",
-   "summary": "This is a fixed-term postdoctoral associate position in the Division of Social Science at NYU Abu Dhabi, with half-time independent research and half-time collaborative behavioral and experimental social science research. It is suited to candidates with a recent PhD in economics, management or organizational behavior, sociology, public policy, data science, or a closely related discipline and expertise in experimental or behavioral methods and quantitative analysis.",
+   "summary": "The role is a Postdoctoral Associate in Behavioral and Experimental Social Science at NYU Abu Dhabi, focusing on independent and collaborative research in behavioral and experimental economics and related social science areas. It suits candidates with a PhD completed within the past five years in economics, management, sociology, public policy, data science, or closely related fields, and expertise in experimental or behavioral research methods and quantitative analysis.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.953,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
