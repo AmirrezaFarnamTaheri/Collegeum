@@ -24,7 +24,9 @@ log = get_logger(__name__)
 MAX_AGE = timedelta(days=14)
 MAX_AHEAD = timedelta(days=366)
 KINDS = {"phd_scholarship", "phd_studentship", "phd_fellowship"}
-DELIVERY_STATES = {"pending", "confirmed", "uncertain", "permanent_failure"}
+DELIVERY_STATES = {
+    "pending", "confirmed", "uncertain", "permanent_failure", "retry_held",
+}
 TITLE_RE = re.compile(r"\bph\.?\s*d\.?\b|doctoral", re.I)
 DATE_RE = re.compile(r"20\d{2}-\d{2}-\d{2}\Z")
 
@@ -273,8 +275,13 @@ def publish_official_calls(
                 attempt["state"] = "uncertain"
             elif exc.permanent:
                 attempt["state"] = "permanent_failure"
+            elif reserve_intent is not None:
+                # A remote pre-send reservation cannot safely be reused, even
+                # after Telegram explicitly rejects a rate-limited request.
+                # Hold for operator reconciliation rather than inducing 422 loops.
+                attempt["state"] = "retry_held"
             else:
-                # Only errors known not to have reached Telegram can be retried.
+                # Local-only mode retains its original retry semantics.
                 ledger["deliveries"].pop(key, None)
             _checkpoint(ledger_path, ledger)
             log.warning("telegram_official_call_not_confirmed",
@@ -312,7 +319,10 @@ def official_calls_health(
         return {"status": "unavailable", "eligible": None, "unpublished": None}
     eligible = eligible_calls(catalog, now=checked)
     delivered = ledger["deliveries"]
-    backlog = sum(call_key(row) not in delivered for row in eligible)
+    backlog = sum(
+        delivered.get(call_key(row), {}).get("state") != "confirmed"
+        for row in eligible
+    )
     state_counts: dict[str, int] = {}
     for source in catalog["sources"]:
         raw_label = source.get("status") if isinstance(source, dict) else None
@@ -322,12 +332,23 @@ def official_calls_health(
                  if receipt.get("state") == "confirmed" and receipt.get("sent_at")]
     last = max((item["sent_at"] for item in confirmed), default=None)
     uncertain = sum(1 for item in delivered.values() if item.get("state") == "uncertain")
+    pending = sum(1 for item in delivered.values() if item.get("state") == "pending")
+    retry_held = sum(1 for item in delivered.values() if item.get("state") == "retry_held")
+    permanent = sum(
+        1 for item in delivered.values() if item.get("state") == "permanent_failure"
+    )
+    degraded = any(k != "ok" for k in state_counts) or bool(
+        uncertain or pending or retry_held or permanent
+    )
     return {
-        "status": "ok" if not any(k != "ok" for k in state_counts) else "degraded",
+        "status": "degraded" if degraded else "ok",
         "sources": state_counts,
         "eligible": len(eligible),
         "unpublished": backlog,
         "confirmed": len(confirmed),
+        "pending": pending,
+        "retry_held": retry_held,
+        "permanent_failure": permanent,
         "uncertain": uncertain,
         "last_confirmed_at": last,
         "generated_at": catalog.get("generated_at"),
