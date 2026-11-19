@@ -312,6 +312,56 @@ def extract_official_details(
         if re.search(r"\b(?:two|2)\s+academic\s+reference\s+letters?\b", block, re.I):
             add("references", "Two academic reference letters", block)
 
+    # A Master's first-year entry is eligible as a PhD track ONLY when the
+    # university explicitly identifies it as Year 1 of an Economics PhD.
+    # The discovery list's "Master's + PhD" hint is not supporting evidence.
+    if "/masters-degrees/" in urllib.parse.urlsplit(evidence_url).path:
+        for block in blocks:
+            if re.search(
+                r"\b(?:first year|year\s*1)\s+of\s+(?:the\s+)?"
+                r"PhD\s+in\s+Economics\b",
+                block, re.I,
+            ):
+                add(
+                    "admission_route",
+                    "PhD track — first-year Master's-stage entry",
+                    block,
+                )
+                break
+
+    # The BSE/UPF first PhD-track year uses a Master's application portal.
+    # Do not inherit zero-tuition assumptions from *other* direct doctorates:
+    # retain a specific first-year fee and optional merit support only when
+    # the official doctoral-track page states them explicitly.
+    track_page = (
+        "/masters-degrees/" in urllib.parse.urlsplit(evidence_url).path
+        and "admission_route" in facts
+    )
+    if track_page:
+        for index, block in enumerate(blocks):
+            fee = re.search(
+                r"\bstudent\s+fee\s*:\s*€\s*([\d,]+)\b", block, re.I,
+            )
+            if fee:
+                add("tuition", f"€{fee.group(1)} (first-year programme fee)", block)
+            if (
+                re.search(r"\bGRE\s+score\s+is\s+required\b", block, re.I)
+                and re.search(
+                    r"\bPhD[\s-]+track\b",
+                    " ".join(blocks[max(0, index - 2):index + 1]), re.I,
+                )
+            ):
+                add("tests", "GRE required for PhD-track entry", block)
+            if re.search(
+                r"\bfunding\s+opportunities\b.*\bawarded\s+on\s+the\s+basis\s+of"
+                r"\s+academic\s+excellence\b", block, re.I,
+            ):
+                add(
+                    "funding_note",
+                    "Merit-based support; award not guaranteed (first-year PhD track)",
+                    block,
+                )
+
     # Select the *specific funding sentence*, not the first 175 characters
     # of a long paragraph that may omit later dissertation-phase conditions.
     sentences = [
@@ -444,6 +494,7 @@ def investigate_official_pages(
     seen: set[str] = set()
     investigated: list[str] = []
     dates: list[tuple[str, str, str]] = []
+    masters_stage_dates: list[tuple[str, str, str]] = []
     details: dict[str, dict[str, str]] = {}
     conflicts: set[str] = set()
     ambiguous = False
@@ -472,7 +523,46 @@ def investigate_official_pages(
             continue
         investigated.append(final_url)
         status, day, excerpt = collect_official_deadline(html, now=now)
-        if status == "ambiguous_deadline":
+        page_parser = PageText()
+        page_parser.feed(html[:MAX_HTML_BYTES])
+        masters_admissions = any(
+            re.search(r"\badmissions?\b", heading, re.I)
+            and re.search(r"\bmaster(?:'?s|’s)?\s+degrees?\b", heading, re.I)
+            for heading in page_parser.headings
+        )
+        if masters_admissions:
+            # A university's Master's admission date is NOT automatically a
+            # doctorate application deadline. Only its explicit, adjacent
+            # "Application deadline: <full year>" dates are candidates;
+            # even those need an independently corroborated PhD-track route.
+            stage_candidates: list[tuple[str, str, str]] = []
+            track_named = re.search(
+                r"\bPhD[\s-]+Track\s+Program(?:me)?\b",
+                page_parser.text()[:14000], re.I,
+            )
+            if track_named:
+                for block in page_parser.blocks:
+                    label = re.search(
+                        r"\b(?:first\s+round\s+)?application\s+deadline\s*:\s*",
+                        block, re.I,
+                    )
+                    if not label:
+                        continue
+                    match = DATE_PATTERN.search(block, label.end())
+                    if not match or match.start() - label.end() > 15:
+                        continue
+                    proposed = _parse_date(match)
+                    if proposed and now.date() <= proposed <= date(
+                        now.year + 2, 12, 31,
+                    ):
+                        stage_candidates.append(
+                            (proposed.isoformat(), final_url, block[:180]),
+                        )
+            if len({date_iso for date_iso, _, _ in stage_candidates}) > 1:
+                ambiguous = True
+            else:
+                masters_stage_dates.extend(stage_candidates)
+        elif status == "ambiguous_deadline":
             ambiguous = True
         elif status == "verified" and day and excerpt:
             dates.append((day, final_url, excerpt))
@@ -494,6 +584,10 @@ def investigate_official_pages(
             for candidate in more:
                 if candidate not in seen and candidate not in queue:
                     queue.append(candidate)
+    # Only promote a Master's-stage application date when a separate official
+    # PhD Track programme page established the first-year doctoral linkage.
+    if "admission_route" in details:
+        dates.extend(masters_stage_dates)
     distinct = {day for day, _, _ in dates}
     if ambiguous or len(distinct) > 1:
         status = "ambiguous_deadline"
@@ -585,7 +679,7 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
         allowed_fields = {
             "language", "duration", "entry_requirement", "tuition",
             "application_open_iso", "stipend", "semester_fee", "tests",
-            "references", "funding_note",
+            "references", "funding_note", "admission_route",
         }
         if fields.keys() - allowed_fields:
             raise ValueError("Unsupported official programme fact")

@@ -252,6 +252,9 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         f"📍 {escape(country)}",
         "🔬 Economics",
     ]
+    route = _verified_detail(row, "admission_route")
+    if route:
+        lines.append("🎓 Entry route: " + escape(route))
     duration = _verified_detail(row, "duration")
     if duration:
         lines.append("⏳ " + escape(duration))
