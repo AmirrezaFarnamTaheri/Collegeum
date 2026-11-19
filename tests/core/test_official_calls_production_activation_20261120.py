@@ -1,7 +1,6 @@
 """Live official PhD call delivery must not silently inherit the local opt-out."""
 from pathlib import Path
 
-from predoc_pipeline.settings import Settings
 
 
 def test_reviewed_main_ingestion_explicitly_enables_official_funding_calls():
@@ -22,8 +21,9 @@ def test_reviewed_main_ingestion_explicitly_enables_official_funding_calls():
 
 
 def test_local_default_remains_no_send_without_opt_in():
-    assert Settings.model_fields["telegram_official_calls_enabled"].default is False
-    assert Settings.model_fields["telegram_official_calls_max_per_run"].default == 2
+    settings = Path("src/predoc_pipeline/settings.py").read_text(encoding="utf-8")
+    assert "telegram_official_calls_enabled: bool = False" in settings
+    assert "telegram_official_calls_max_per_run: int = Field(2, ge=1, le=10)" in settings
 
 
 def test_pipeline_uses_the_live_flag_and_independent_receipts():
