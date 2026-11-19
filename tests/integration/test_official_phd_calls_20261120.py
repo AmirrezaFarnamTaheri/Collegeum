@@ -223,3 +223,20 @@ def test_approved_direct_calls_survive_unlinked_pagination_index():
                              fetcher=lambda url: pages[url])
     assert len(result["calls"]) == 2
     assert len(eligible_calls(result, now=NOW)) == 2
+
+
+def test_open_call_remains_monitored_after_scrolling_off_index():
+    """Previously verified opportunities must be rechecked within the request cap."""
+    source = SOURCES["sources"][0]
+    prior = extract_call(IEB_HTML, url=IEB, source=source, now=NOW)
+    responses = {
+        source["url"]: {"status": "ok", "html": "<h1>News</h1><p>Older posts only</p>"},
+        IEB: {"status": "ok", "html": IEB_HTML},
+    }
+    inspected = []
+    def fetch(url):
+        inspected.append(url)
+        return responses[url]
+    result = refresh_sources({"kind": SOURCES["kind"], "version": SOURCES["version"], "sources": [source]}, _catalog(prior), now=NOW, fetcher=fetch)
+    assert inspected == [source["url"], IEB]
+    assert len(eligible_calls(result, now=NOW)) == 1
