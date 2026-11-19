@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from html import escape
 from pathlib import Path
@@ -17,6 +18,7 @@ from urllib.parse import urlsplit
 
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
+from .telegram_intents import enforce_production_reservation
 
 log = get_logger(__name__)
 MAX_AGE = timedelta(days=14)
@@ -230,10 +232,12 @@ def publish_official_calls(
     catalog_path: str | Path, receipt_path: str | Path,
     telegram: TelegramClient | None, *, chat_id: str,
     enabled: bool, max_messages: int = 2, now: datetime | None = None,
+    reserve_intent: Callable[[str, str, str], None] | None = None,
 ) -> int:
     """One bounded Telegram message per independent, source-verified call."""
     if not enabled or telegram is None or not chat_id:
         return 0
+    enforce_production_reservation(reserve_intent)
     if not 1 <= max_messages <= 10:
         raise ValueError("Official call publication must be limited to 1..10 messages")
     try:
@@ -259,6 +263,8 @@ def publish_official_calls(
         }
         ledger["deliveries"][key] = attempt
         _checkpoint(ledger_path, ledger)  # Hold before any network send.
+        if reserve_intent is not None:
+            reserve_intent("calls", key, "initial")
         message, keyboard = _message(row)
         try:
             receipt = telegram.send_message(chat_id=chat_id, html=message, keyboard=keyboard)
