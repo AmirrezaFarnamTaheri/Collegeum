@@ -494,7 +494,7 @@ remain a separately reviewed, explicit operator action.
 
 ## Non-US interdisciplinary doctoral vacancies and private favorites
 
-The doctoral publisher adds eligible, known non-US Economics and adjacent computational human/social sciences, population studies and demography PhD vacancies to the **same Telegram channel as Predocs**, using the existing `TELEGRAM_PUBLIC_CHANNEL_ID` and bot token. Previously collected PhDs receive individual cards labelled “Previously collected PhD position”, not a grouped or Economics-only digest. No new Telegram channel or bot is created. It preserves the website/X route and original publication timestamp. US, unknown-location, unrelated, program-admission, postdoctoral, and already-PhD-qualified staff openings are excluded. Local settings remain opt-in; the scheduled production `predoc-pipeline` workflow is enabled by default for this authorized rollout unless the repository variable `TELEGRAM_NON_US_ECON_PHD_ENABLED` is explicitly `false`.
+The doctoral publisher adds eligible, known non-US Economics and adjacent computational human/social sciences, population studies and demography PhD vacancies to the **same Telegram channel as Predocs**, using the existing `TELEGRAM_PUBLIC_CHANNEL_ID` and bot token. Previously collected PhDs receive individual cards labelled “Previously collected PhD position”, not a grouped or Economics-only digest. No new Telegram channel or bot is created. It preserves the website/X route and original publication timestamp. US, unknown-location, unrelated, postdoctoral, and already-PhD-qualified staff openings are excluded from the **doctoral vacancy route**. General programme admissions instead use the independently verified official admissions publisher described below. Local settings remain opt-in; the scheduled production `predoc-pipeline` workflow is enabled by default for this authorized rollout unless the repository variable `TELEGRAM_NON_US_ECON_PHD_ENABLED` is explicitly `false`.
 
 The first scheduled production batch defaults to **at most six eligible listings per cycle** (override with repository variable `TELEGRAM_NON_US_ECON_PHD_BACKFILL_LIMIT`). An explicitly set `TELEGRAM_NON_US_ECON_PHD_ENABLED=false` remains a kill switch. Each listing is published as its own channel card with **Open listing** and **🔖 Save** buttons, including large new batches and historical PhD backfills. Channel Save uses the Telegram callback's verified tapping user ID, not the channel ID; it no longer needs `TELEGRAM_BOT_USERNAME`. Deploy and test the compatible code to the **existing** Worker or polling bot *before* allowing new callback-bearing channel posts, retaining its webhook, durable state, and private encryption key. Never replace the bot/channel for this rollout. Historical cards carry **Previously collected PhD position** and a current-availability disclaimer. A successful link check is not independent proof of funding/open status.
 
@@ -503,3 +503,41 @@ The existing `data/listings.ndjson` journal is authoritative for per-item public
 All channel users may save independently. Webhook favorites are private Durable Object `favorite:<user>:<prefix>` records; polling uses the encrypted private `FeedbackStore`. A channel tap saves without opening a private conversation, with a private Telegram callback toast as confirmation. A first-time user may save before the latest authenticated listing snapshot and see the job details later. This neither opts the user into alerts nor shares owner tracking marks. `/favorites` and `/bookmarks` show per-user records; private `/delete` requires confirmation, while unsubscribe does not erase saved favorites. Preserve encryption keys and the same Worker account, Durable Object and webhook. Never run webhook and polling consumers simultaneously. The sync protocol backs up authoritative Worker favorites into encrypted private state and seeds them only on first activation. Verify two different private users cannot access or remove each other's bookmarks. Never copy user association data into public Git artifacts.
 
 **Rollout and rollback:** This staged same-channel publication is authorized. Validate Python 3.11/3.12 and Worker tests, and review the historical candidates before the first send; the pipeline continues to enforce current policy, link checks, alias deduplication and existing receipts. Confirm the first-run `telegram_phd_published` log, confirmed journal receipts, and absence of duplicate sends on subsequent runs. Enabling publication does **not** deploy a Worker, activate a webhook, or enable private favorites. For rollback, set repository variable `TELEGRAM_NON_US_ECON_PHD_ENABLED=false`; never reset journal acknowledgements, favorites, subscriber state, or uncertain-delivery holds.
+
+
+## General non-US Economics PhD programme admissions in the same channel
+
+**General PhD degree admissions are included**, even if no paid appointment,
+funding or supervisor is confirmed. They are not job vacancies and do not
+enter `data/listings.ndjson`, the website vacancies board, X, or personalised
+research-job alerts. The admissions catalogue is maintained through the
+separate official university checker; only records with `status=verified`,
+a future dated application deadline, a source check within 14 days, and
+official HTTPS evidence are eligible. The institution's non-US country must
+also be corroborated by its country-code university domain, rather than
+accepted from the third-party discovery list alone. Unverified, blocked,
+stale, ambiguous, US and unknown-country programmes are not announced.
+
+The **existing production** `predoc-pipeline` Telegram client sends these
+admissions with the heading **PhD programme admission**, an official
+deadline and university links. The card clearly says *not an employment
+vacancy* and *funding and salary not verified*. It does not imply the
+application window is currently open. Programme cards have no vacancy
+Save callback because the favorites index contains employment listings.
+
+`TELEGRAM_PHD_ADMISSIONS_ENABLED` is disabled for local runs, enabled by
+default in the authorized scheduled workflow (explicit repository variable
+`false` disables it). `TELEGRAM_PHD_ADMISSIONS_MAX_PER_RUN` defaults to two,
+with a hard maximum of ten. `data/phd_admissions_telegram.json` is a
+distinct, committed public-channel receipt journal: confirmed message IDs
+prevent repeat sends; an uncertain or pending delivery is held for operator
+reconciliation. Subsequent real admission cycles may be announced after a
+180-day separation, not from a minor deadline revision. Do not discard or
+reset the ledger, and do not treat a receipt as funding verification.
+
+The admissions refresh workflow itself has no Telegram credentials and
+never publishes; publication is sequenced with other public channel sends
+under the existing production pipeline lock. A successful workflow is not
+proof that every programme was announced. Use the receipt ledger and the
+`telegram_phd_admission_published` logs to audit delivery. Never replay
+uncertain posts or switch bots/channels to recover them.

@@ -31,8 +31,10 @@ Its copyright and permission notice is at
   a yearless month/day, or the upstream table.
 - The static Collegeum dashboard has a separate **PhD admissions** directory
   with search, country filtering, status filtering, and institution links.
-  There is **no** Telegram backfill, vacancy creation, deduplication or
-  conversion of programme admissions into funded research-employment offers.
+  General non-US admissions with a **fresh, explicit, officially verified**
+  future deadline are separately announced in the existing Telegram channel.
+  There is no conversion into funded research-employment vacancies, X posts
+  or personalised research-job notifications. Funding is explicitly unverified.
 
 ## Automatic refresh
 
@@ -70,7 +72,19 @@ For a bounded live execution **in the authorised Actions environment**:
 python3 -S tools/update_phd_admissions.py --batch-size 25
 ```
 
-Never switch these dates into the job-board, health.json, or Telegram
-publishing pipelines. A university's official programme website remains the
+The programme catalogue never joins the employment job-board or
+`health.json`. Telegram announcements run only through the existing production
+publisher with its own `data/phd_admissions_telegram.json` receipt journal.
+They require a current official-source deadline, a fresh check, a matching
+institutional HTTPS source and corroborated non-US country-domain evidence.
+Country codes copied from the upstream directory are not sufficient on
+their own. Unknown-country, US, blocked, stale, yearless and ambiguous
+admissions do not generate posts. The bot sends at most two programme
+announcements per normal run by default. Repeated or uncertain sends are
+held, not blindly retried, and prior confirmed posts are never deleted by
+an admissions-source refresh. A crash after Telegram accepts a send but
+before its git checkpoint can still require manual channel reconciliation;
+the system does not promise unconditional exactly-once delivery.
+A university's official programme website remains the
 decision authority for eligibility, funding and deadlines. Even an
 automatically corroborated date should be rechecked before submitting.

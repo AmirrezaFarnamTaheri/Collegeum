@@ -65,6 +65,7 @@ from .logging_setup import get_logger
 from .models import CoercionError, ExtractionResult, PredocListing, RawItem, coerce
 from .models import salary_value_is_artifact as _implausible_salary
 from .policy import Policy
+from .publish.admissions import publish_official_admissions
 from .publish.feedback import FeedbackStore
 from .publish.telegram import (
     TelegramClient,
@@ -1804,6 +1805,26 @@ def run(
                 db, telegram, settings, stats, router, prefs,
                 fresh_ids=sent_now, hidden=hidden, transport=board_transport,
             )
+            # General PhD admissions are NOT vacancy rows. They are broadcast
+            # from independently corroborated official university observations,
+            # with separate delivery receipts, never via listings or X.
+            try:
+                publish_official_admissions(
+                    settings.phd_admissions_catalog_path,
+                    settings.phd_admissions_delivery_path,
+                    telegram=telegram,
+                    chat_id=settings.telegram_public_channel_id,
+                    enabled=settings.telegram_phd_admissions_enabled,
+                    max_messages=settings.telegram_phd_admissions_max_per_run,
+                    now=utcnow(),
+                )
+            except (ValueError, OSError) as exc:
+                # An unreadable receipt ledger is a hard no-send condition,
+                # but must never discard already collected vacancy state.
+                stats.errors += 1
+                log.error("telegram_phd_admissions_journal_unavailable",
+                          error=str(exc))
+
             _retry_x_publications(
                 x_client, settings, db, stats, prefs, policy, feedback, router,
                 skip=sent_now, transport=board_transport,
