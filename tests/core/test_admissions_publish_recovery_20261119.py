@@ -1,5 +1,5 @@
 """A completed official-source refresh must not strand publishable programmes."""
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from tools.ingestion_watchdog import evaluate_admissions_trigger
 
