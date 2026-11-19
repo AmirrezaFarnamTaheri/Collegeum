@@ -212,6 +212,246 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
     return "no_explicit_deadline", None, None
 
 
+
+def extract_official_details(
+    html: str, *, evidence_url: str, checked_at: datetime,
+) -> dict[str, dict[str, str]]:
+    """Conservative programme facts; every field retains its source and timestamp."""
+    parser = PageText()
+    parser.feed(html[:MAX_HTML_BYTES])
+    if PROGRAMME.search(parser.text()[:7000]) is None:
+        return {}
+    blocks = parser.blocks or [parser.text()[:MAX_HTML_BYTES]]
+    stamp = checked_at.isoformat(timespec="seconds").replace("+00:00", "Z")
+    facts: dict[str, dict[str, str]] = {}
+
+    def add(key: str, value: str, excerpt: str) -> None:
+        value = " ".join(value.split())[:175]
+        excerpt = " ".join(excerpt.split())[:220]
+        if value and excerpt:
+            item = {
+                "value": value, "evidence_url": evidence_url,
+                "evidence_excerpt": excerpt, "checked_at": stamp,
+            }
+            if key not in facts or facts[key]["value"] == value:
+                facts[key] = item
+
+    for index, block in enumerate(blocks):
+        following = blocks[index + 1] if index + 1 < len(blocks) else ""
+        if re.fullmatch(r"(?:language(?: of instruction)?|teaching language)\s*:?", block, re.I):
+            if re.fullmatch(r"English|German|French|Spanish|Finnish|Swedish", following, re.I):
+                add("language", following, block + " " + following)
+        if re.fullmatch(r"(?:duration|study duration)\s*:?", block, re.I):
+            m = re.fullmatch(
+                r"(\d{1,2})\s+years?(?:\s*,?\s*(full[- ]time|part[- ]time))?",
+                following, re.I,
+            )
+            if m:
+                years = m.group(1)
+                value = years + (" year" if years == "1" else " years")
+                if m.group(2):
+                    value += ", " + m.group(2).lower().replace("full time", "full-time")
+                add("duration", value, block + " " + following)
+        if re.fullmatch(r"(?:eligibility|entry requirements?)\s*:?", block, re.I):
+            if re.search(r"\b(?:master'?s?|degree|diploma)\b", following, re.I):
+                add("entry_requirement", following, block + " " + following)
+        if re.search(r"\b(?:no tuition fees|free of tuition fees)\b", block, re.I):
+            add("tuition", "No tuition fees", block)
+        if re.search(r"\bapplicants?\s+should\s+have\s+a\s+master", block, re.I):
+            add("entry_requirement", block, block)
+        opening = re.search(
+            r"\bapplication\s+(?:period\s+)?opens?\s+on\s+", block, re.I,
+        )
+        if opening:
+            m = DATE_PATTERN.search(block, opening.end())
+            if m and m.start() - opening.end() < 12:
+                day = _parse_date(m)
+                if day and checked_at.date() <= day <= date(checked_at.year + 2, 12, 31):
+                    add("application_open_iso", day.isoformat(), block)
+        stipend = re.search(
+            r"\bmonthly\s+stipend\s+of\s+([\d,]+)\s*(?:Euros?|EUR|€)\b",
+            block, re.I,
+        )
+        if stipend and re.search(r"\bqualification\s+phase\b", block, re.I):
+            add("stipend", f"€{stipend.group(1)}/month (qualification phase)", block)
+        semester = re.search(
+            r"\bsemester\s+fee\s+of\s+(approximately\s+)?"
+            r"([\d,]+\s*[-–]\s*[\d,]+)\s*€",
+            block, re.I,
+        )
+        if semester:
+            amount = re.sub(r"\s*[-–]\s*", "–", semester.group(2))
+            qualifier = " (approx.)" if semester.group(1) else ""
+            add("semester_fee", f"€{amount}/semester{qualifier}", block)
+        if (
+            re.search(r"\b(?:GRE|GMAT)\b", block, re.I)
+            and re.search(r"\bnot\s+mandatory\b", block, re.I)
+            and re.search(r"\brecommended\b", block, re.I)
+        ):
+            names = [name for name in ("GRE", "GMAT") if name in block.upper()]
+            add("tests", "/".join(names) + ": recommended, not mandatory", block)
+        if re.search(r"\b(?:two|2)\s+academic\s+reference\s+letters?\b", block, re.I):
+            add("references", "Two academic reference letters", block)
+
+    funding = [
+        block for block in blocks
+        if re.search(r"\bfunding\b", block, re.I)
+        and re.search(
+            r"\b(?:first\s+(?:two|2)\s+years?|first\s+study\s+year|"
+            r"expected\s+length|conditional\s+on|performance\s+criteria)\b",
+            block, re.I,
+        )
+    ]
+    if funding:
+        qualified = [block for block in funding if re.search(r"\bconditional\b", block, re.I)]
+        chosen = (qualified or funding)[0]
+        add("funding_note", chosen, chosen)
+    return facts
+
+
+_LINK_RELEVANCE = re.compile(
+    r"\b(?:phd|doctoral|doctorate|admissions?|applications?|"
+    r"apply|deadlines?|fees|funding|scholarships?)\b", re.I,
+)
+_LINK_SKIP = re.compile(
+    r"\.(?:pdf|docx?|xlsx?|zip|png|jpe?g)(?:$|\?)|"
+    r"/(?:login|log-in|signin|sign-in|signup|register|logout|"
+    r"account|captcha|search|api)(?:/|$|\?)", re.I,
+)
+
+
+def _institutional_url(raw: str, root_url: str) -> str | None:
+    root = urllib.parse.urlsplit(root_url)
+    resolved = urllib.parse.urlsplit(urllib.parse.urljoin(root_url, raw))
+    host = (resolved.hostname or "").lower().removeprefix("www.")
+    root_host = (root.hostname or "").lower().removeprefix("www.")
+    if (
+        resolved.scheme != "https" or host != root_host
+        or resolved.username is not None or resolved.password is not None
+        or resolved.port not in (None, 443) or not resolved.path.startswith("/")
+        or _LINK_SKIP.search(resolved.path) or len(resolved.query) > 128
+    ):
+        return None
+    return urllib.parse.urlunsplit(
+        (resolved.scheme, resolved.netloc, resolved.path, resolved.query, "")
+    )
+
+
+def select_official_links(
+    html: str, source_url: str, *, max_links: int = 2,
+) -> list[str]:
+    """Prioritise relevant same-host HTML pages, never portals or aggregators."""
+    if not 0 <= max_links <= 4:
+        raise ValueError("max_links must be 0..4")
+    parser = PageText()
+    parser.feed(html[:MAX_HTML_BYTES])
+    scores: dict[str, int] = {}
+    for href, label in parser.links[:300]:
+        candidate = _institutional_url(href, source_url)
+        if not candidate or candidate == source_url:
+            continue
+        blob = f"{label} {urllib.parse.urlsplit(candidate).path.replace('-', ' ')}"
+        if not _LINK_RELEVANCE.search(blob):
+            continue
+        score = 1
+        if re.search(r"admissions?|applications?|deadlines?|apply", blob, re.I):
+            score += 3
+        if re.search(r"economics?|phd|doctoral", blob, re.I):
+            score += 2
+        if re.search(r"fees|funding", blob, re.I):
+            score += 1
+        if candidate not in scores or score > scores[candidate]:
+            scores[candidate] = score
+    return sorted(scores, key=lambda url: (-scores[url], url))[:max_links]
+
+
+def investigate_official_pages(
+    official_url: str, *, now: datetime, fetch_html,
+    robots_allowed, max_pages: int = 3,
+) -> dict:
+    """Bounded same-host research; callbacks are mocked in offline tests."""
+    if not 1 <= max_pages <= 4:
+        raise ValueError("max_pages must be 1..4")
+    root = urllib.parse.urlsplit(official_url)
+    empty = {
+        "deadline_iso": None, "evidence_url": None, "evidence_excerpt": None,
+        "official_details": {}, "investigated_urls": [],
+    }
+    if root.scheme != "https" or not root.hostname:
+        return {"status": "insecure_source", **empty}
+    queue = [official_url]
+    seen: set[str] = set()
+    investigated: list[str] = []
+    dates: list[tuple[str, str, str]] = []
+    details: dict[str, dict[str, str]] = {}
+    conflicts: set[str] = set()
+    ambiguous = False
+    first_error: str | None = None
+    while queue and len(seen) < max_pages:
+        url = queue.pop(0)
+        if url in seen:
+            continue
+        seen.add(url)
+        if _institutional_url(url, official_url) is None:
+            first_error = first_error or "unsafe_redirect"
+            continue
+        if not robots_allowed(url):
+            first_error = first_error or "robots_disallowed"
+            continue
+        try:
+            html, final_url = fetch_html(url)
+        except (OSError, TimeoutError, ValueError, UnicodeError):
+            first_error = first_error or "fetch_failed"
+            continue
+        if _institutional_url(final_url, official_url) is None:
+            first_error = first_error or "unsafe_redirect"
+            continue
+        if not isinstance(html, str) or not html.lstrip().startswith("<"):
+            first_error = first_error or "fetch_failed"
+            continue
+        investigated.append(final_url)
+        status, day, excerpt = collect_official_deadline(html, now=now)
+        if status == "ambiguous_deadline":
+            ambiguous = True
+        elif status == "verified" and day and excerpt:
+            dates.append((day, final_url, excerpt))
+        for field, fact in extract_official_details(
+            html, evidence_url=final_url, checked_at=now,
+        ).items():
+            if field in conflicts:
+                continue
+            previous = details.get(field)
+            if previous and previous["value"] != fact["value"]:
+                details.pop(field)
+                conflicts.add(field)
+            elif previous is None:
+                details[field] = fact
+        if len(seen) + len(queue) < max_pages:
+            more = select_official_links(
+                html, final_url, max_links=max_pages - len(seen) - len(queue),
+            )
+            for candidate in more:
+                if candidate not in seen and candidate not in queue:
+                    queue.append(candidate)
+    distinct = {day for day, _, _ in dates}
+    if ambiguous or len(distinct) > 1:
+        status = "ambiguous_deadline"
+    elif len(distinct) == 1:
+        status = "verified"
+    elif investigated:
+        status = "no_explicit_deadline"
+    else:
+        status = first_error or "fetch_failed"
+    chosen = dates[0] if status == "verified" else None
+    return {
+        "status": status,
+        "deadline_iso": chosen[0] if chosen else None,
+        "evidence_url": chosen[1] if chosen else None,
+        "evidence_excerpt": chosen[2] if chosen else None,
+        "official_details": details,
+        "investigated_urls": investigated,
+    }
+
 def _timestamp(value: object) -> datetime | None:
     if not isinstance(value, str):
         return None
