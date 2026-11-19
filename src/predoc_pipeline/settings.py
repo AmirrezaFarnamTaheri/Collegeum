@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     # Enable after the compatible bot Worker/polling code is deployed.
     telegram_non_us_econ_phd_enabled: bool = False
     telegram_non_us_econ_phd_backfill_limit: int = Field(30, ge=1, le=100)
+    # University admissions are distinct from advertised paid PhD vacancies.
+    # Local runs opt in; the authorized production workflow sets the flag.
+    telegram_phd_admissions_enabled: bool = False
+    telegram_phd_admissions_max_per_run: int = Field(2, ge=1, le=10)
+    phd_admissions_catalog_path: str = "docs/data/phd_admissions.json"
+    phd_admissions_delivery_path: str = "data/phd_admissions_telegram.json"
     # Dedicated operator-only private destination, never the public chat.
     telegram_admin_chat_id: str = ""
     # Maintenance/errors are written to internal health/logs only by default.
