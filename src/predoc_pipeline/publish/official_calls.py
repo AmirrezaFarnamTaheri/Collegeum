@@ -205,7 +205,9 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         "a salaried job or an ordinary university admission deadline. "
         "Verify eligibility and funding conditions with the institution.</i>",
         f"🔎 Official call checked: {escape(row['checked_at'][:10])} UTC",
-        "#PhD #Scholarships #Economics",
+        "#PhD #Scholarships" + (
+            " #Economics" if re.search(r"\beconomics?\b", row["title"], re.I) else ""
+        ),
     ])
     keyboard = {"inline_keyboard": [[{
         "text": "Open official call",
