@@ -11,7 +11,11 @@ from unittest.mock import Mock, patch
 import pytest
 
 from predoc_pipeline.publish.admissions import publish_official_admissions
-from predoc_pipeline.publish.official_calls import official_calls_health, publish_official_calls
+from predoc_pipeline.publish.official_calls import (
+    call_key,
+    official_calls_health,
+    publish_official_calls,
+)
 from predoc_pipeline.publish.telegram import TelegramError
 from predoc_pipeline.publish.telegram_intents import GitHubIntentReserver
 
@@ -282,13 +286,9 @@ def test_truly_new_admissions_cycle_uses_distinct_reservation_operation(tmp_path
 
 
 def test_unconfirmed_durable_intent_remains_visible_as_undelivered(tmp_path: Path):
-    import hashlib
-
     catalog = tmp_path / "calls.json"
     ledger = tmp_path / "ledger.json"
     catalog.write_text(json.dumps(_calls()), encoding="utf-8")
-    from predoc_pipeline.publish.official_calls import call_key
-
     key = call_key(CALL)
     ledger.write_text(json.dumps({"version": 1, "deliveries": {
         key: {"state": "pending", "attempted_at": "2026-11-20T07:35:00Z",
