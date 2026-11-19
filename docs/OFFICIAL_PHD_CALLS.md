@@ -8,15 +8,17 @@ claiming to scrape LinkedIn feeds or circumventing any 403/429 access restrictio
 ## Current official coverage
 
 The approved registry at `config/official_phd_calls_sources.json` currently
-checks IEB/University of Barcelona's **News** index (with bounded discovery
-of independent doctoral calls) and five relevant Henley Business School
+checks both IEB/University of Barcelona's **News** and **Call for Applications**
+indexes, plus the two currently open Economics and Energy/Climate 2027
+PhD call pages directly (so pagination cannot hide them), and five Henley
 departmental PhD opportunities pages (Finance and Accounting, International
 Business and Strategy, Informatics and Operations, Entrepreneurship, and
 Leadership/Organisations). Additional institutions can be added to this reviewed
 registry without changing the parser or publisher.
 
-The monitor follows **at most six** relevant IEB same-host HTML call links per
-index run, never arbitrary third-party search links or PDFs. It uses one bounded
+The monitor follows **at most six new** relevant IEB same-host HTML call links per
+index run and rechecks **at most two** still-open previous calls after they
+scroll off an index, never arbitrary third-party search links or PDFs. It uses one bounded
 read for each approved Henley page. The resolver rejects external links, insecure
 schemes, credentials, unexpected redirects, oversized responses and restricted
 paths. Every fetched URL must be permitted by its own host's robots.txt.
