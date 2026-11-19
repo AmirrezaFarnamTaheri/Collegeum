@@ -60,3 +60,44 @@ def test_generic_admissions_page_does_not_become_studentship():
     invalid_source = {**SOURCE, "title": "General PhD Admissions"}
     call = extract_call(html, url=READING, source=invalid_source, now=NOW)
     assert call["status"] != "verified"
+
+
+
+def test_navigation_heavy_official_page_uses_content_after_h1_for_subject_scope():
+    """Real University of Reading pages include a large menu before the call."""
+    navigation = "<nav>" + (
+        "<a href='/doctoral-opportunities'>Doctoral opportunities and fees</a>"
+        * 35
+    ) + "</nav>"
+    html = HTML.replace("<h1>", navigation + "<main><h1>").replace(
+        "</html>", "</main></html>"
+    )
+    call = extract_call(html, url=READING, source=SOURCE, now=NOW)
+    assert call["status"] == "verified"
+    assert call["deadline_iso"] == "2027-01-15"
+    assert eligible_calls({
+        "kind": "official_phd_call_observations", "version": 1,
+        "calls": [call],
+    }, now=NOW) == [call]
+
+
+def test_business_school_navigation_alone_is_not_evidence_of_relevant_funding():
+    """Do not claim an unrelated doctoral fund matches Economics by site navigation."""
+    navigation = (
+        "<nav><a href='/business'>Henley Business School</a>"
+        "<a href='/finance'>Finance department</a></nav>"
+    )
+    unrelated = HTML.replace(
+        "qualified applicants for research within social sciences and within\n"
+        "the Henley Business School.",
+        "applicants exclusively in marine biology and molecular engineering.",
+    )
+    html = unrelated.replace("<h1>", navigation + "<main><h1>").replace(
+        "</html>", "</main></html>"
+    )
+    call = extract_call(html, url=READING, source=SOURCE, now=NOW)
+    assert call["status"] == "unrelated"
+    assert eligible_calls({
+        "kind": "official_phd_call_observations", "version": 1,
+        "calls": [call],
+    }, now=NOW) == []
