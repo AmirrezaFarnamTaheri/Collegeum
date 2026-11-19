@@ -332,14 +332,18 @@ _LINK_SKIP = re.compile(
 
 
 def _institutional_url(raw: str, root_url: str) -> str | None:
-    root = urllib.parse.urlsplit(root_url)
-    resolved = urllib.parse.urlsplit(urllib.parse.urljoin(root_url, raw))
-    host = (resolved.hostname or "").lower().removeprefix("www.")
-    root_host = (root.hostname or "").lower().removeprefix("www.")
+    try:
+        root = urllib.parse.urlsplit(root_url)
+        resolved = urllib.parse.urlsplit(urllib.parse.urljoin(root_url, raw))
+        host = (resolved.hostname or "").lower().removeprefix("www.")
+        root_host = (root.hostname or "").lower().removeprefix("www.")
+        port = resolved.port
+    except ValueError:
+        return None
     if (
         resolved.scheme != "https" or host != root_host
         or resolved.username is not None or resolved.password is not None
-        or resolved.port not in (None, 443) or not resolved.path.startswith("/")
+        or port not in (None, 443) or not resolved.path.startswith("/")
         or _LINK_SKIP.search(resolved.path) or len(resolved.query) > 128
     ):
         return None
@@ -519,6 +523,38 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
             raise ValueError("Unknown verification state")
         if "deadline_guidance" in observation or "published" in observation:
             raise ValueError("Upstream/reference values leaked")
+        urls = observation.get("investigated_urls", [])
+        if not isinstance(urls, list) or len(urls) > 4:
+            raise ValueError("Unbounded programme source provenance")
+        if any(
+            not isinstance(source, str) or _institutional_url(source, url) is None
+            for source in urls
+        ):
+            raise ValueError("Programme provenance must stay on institutional host")
+        fields = observation.get("official_details", {})
+        if not isinstance(fields, dict):
+            raise ValueError("Malformed official programme facts")
+        allowed_fields = {
+            "language", "duration", "entry_requirement", "tuition",
+            "application_open_iso", "stipend", "semester_fee", "tests",
+            "references", "funding_note",
+        }
+        if fields.keys() - allowed_fields:
+            raise ValueError("Unsupported official programme fact")
+        for item in fields.values():
+            if not isinstance(item, dict) or any(
+                not isinstance(item.get(k), str) or not item[k].strip()
+                for k in ("value", "evidence_url", "evidence_excerpt", "checked_at")
+            ):
+                raise ValueError("Missing field-level official evidence")
+            if len(item["value"]) > 175 or len(item["evidence_excerpt"]) > 220:
+                raise ValueError("Oversized field evidence")
+            if _institutional_url(item["evidence_url"], url) is None:
+                raise ValueError("External programme evidence is forbidden")
+            if urls and item["evidence_url"] not in urls:
+                raise ValueError("Field evidence was not investigated")
+            if item["checked_at"] != observation.get("checked_at"):
+                raise ValueError("Field evidence must be from current source check")
         if observation["status"] == "verified":
             dt = observation.get("deadline_iso")
             if not isinstance(dt, str):
@@ -614,13 +650,22 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
          and _timestamp(item.get("checked_at")) is not None),
         key=priority,
     )
-    rechecking = set(readable_negatives)
+    # Trusted checker upgrades also enrich already-verified admissions before
+    # their 11-day renewal. A missing fact must never be guessed from upstream.
+    needs_details = sorted(
+        (i for i, item in enumerate(programmes)
+         if recheck_no_explicit and item.get("status") == "verified"
+         and not item.get("official_details")
+         and i not in readable_negatives),
+        key=priority,
+    )
+    rechecking = set(readable_negatives + needs_details)
     due = sorted(
         (i for i, item in enumerate(programmes)
          if i not in rechecking and eligible_for_check(item, now=now)),
         key=priority,
     )
-    selected = set((readable_negatives + due)[:batch_size])
+    selected = set((readable_negatives + needs_details + due)[:batch_size])
     stamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, entry in enumerate(programmes):
         old = _timestamp(entry.get("checked_at"))
@@ -628,8 +673,12 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
             old is None or now - old > EXPIRY or
             entry.get("deadline_iso", "") < now.date().isoformat()
         ):
-            entry.update(status="stale", deadline_iso=None, evidence_url=None,
-                         evidence_excerpt=None)
+            entry.update(
+                status="stale", deadline_iso=None, evidence_url=None,
+                evidence_excerpt=None, official_details={}, investigated_urls=[],
+            )
+        if old and now - old > EXPIRY:
+            entry.update(official_details={}, investigated_urls=[])
         if index not in selected:
             continue
         result = fetcher(entry["official_programme_url"], now=now)
