@@ -511,8 +511,12 @@ def main(argv: list[str] | None = None) -> int:
         decision = evaluate(health, runs, now=now)
         cadence = audit_cadence(runs, now=now)
         if args.admissions_trigger and not decision.dispatch:
-            admission_catalog = json.loads(Path("docs/data/phd_admissions.json").read_text(encoding="utf-8"))
-            admission_ledger = json.loads(Path("data/phd_admissions_telegram.json").read_text(encoding="utf-8"))
+            admission_catalog = json.loads(
+                Path("docs/data/phd_admissions.json").read_text(encoding="utf-8")
+            )
+            admission_ledger = json.loads(
+                Path("data/phd_admissions_telegram.json").read_text(encoding="utf-8")
+            )
             recovery = evaluate_admissions_trigger(
                 admission_catalog, admission_ledger, runs, now=now,
             )
