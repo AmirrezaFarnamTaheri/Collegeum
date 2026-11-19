@@ -189,6 +189,6 @@ def test_production_workflow_enables_reservations_not_only_telegram_publishing()
     workflow = Path(".github/workflows/pipeline.yml").read_text(encoding="utf-8")
     settings = Path("src/predoc_pipeline/settings.py").read_text(encoding="utf-8")
     assert "TELEGRAM_GIT_DURABLE_INTENTS_ENABLED: 'true'" in workflow
-    assert "GITHUB_TOKEN: \${{ github.token }}" in workflow
+    assert "GITHUB_TOKEN: ${{ github.token }}" in workflow
     assert "telegram_git_durable_intents_enabled: bool = False" in settings
     assert "github.ref == 'refs/heads/main'" in workflow
