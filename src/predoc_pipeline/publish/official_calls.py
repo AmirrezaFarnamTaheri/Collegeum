@@ -277,3 +277,39 @@ def publish_official_calls(
         log.info("telegram_official_call_published", message_id=receipt,
                  institution=row["institution"], deadline=row["deadline_iso"])
     return sent
+
+
+def official_calls_health(
+    catalog_path: str | Path, receipt_path: str | Path, *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Public-safe counts distinguish monitored sources from actual delivery."""
+    checked = now or datetime.now(UTC)
+    try:
+        catalog = json.loads(Path(catalog_path).read_text(encoding="utf-8"))
+        if not isinstance(catalog, dict) or not isinstance(catalog.get("sources"), list):
+            raise ValueError("Invalid official call catalogue")
+        ledger = _load_receipts(Path(receipt_path))
+    except (OSError, json.JSONDecodeError, ValueError):
+        return {"status": "unavailable", "eligible": None, "unpublished": None}
+    eligible = eligible_calls(catalog, now=checked)
+    delivered = ledger["deliveries"]
+    backlog = sum(call_key(row) not in delivered for row in eligible)
+    state_counts: dict[str, int] = {}
+    for source in catalog["sources"]:
+        label = source.get("status") if isinstance(source, dict) else "invalid"
+        state_counts[label] = state_counts.get(label, 0) + 1
+    confirmed = [receipt for receipt in delivered.values()
+                 if receipt.get("state") == "confirmed" and receipt.get("sent_at")]
+    last = max((item["sent_at"] for item in confirmed), default=None)
+    uncertain = sum(1 for item in delivered.values() if item.get("state") == "uncertain")
+    return {
+        "status": "ok" if not any(k != "ok" for k in state_counts) else "degraded",
+        "sources": state_counts,
+        "eligible": len(eligible),
+        "unpublished": backlog,
+        "confirmed": len(confirmed),
+        "uncertain": uncertain,
+        "last_confirmed_at": last,
+        "generated_at": catalog.get("generated_at"),
+    }
