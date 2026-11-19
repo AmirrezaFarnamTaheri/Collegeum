@@ -249,7 +249,8 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             status="verified", checked_at="2026-12-01T03:17:00Z",
             deadline_iso="2026-12-15",
             evidence_url=old["programmes"][index]["official_programme_url"],
-            evidence_excerpt="Economics PhD applications deadline 15 December 2026"
+            evidence_excerpt="Economics PhD applications deadline 15 December 2026",
+            official_details={}, investigated_urls=[],
         )
         validate_catalogues(self.seeds, old)
         updated = refresh(self.seeds, old, now=now, batch_size=25,
@@ -291,8 +292,11 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         now = datetime(2026, 11, 19, tzinfo=UTC)
         sample = json.loads(json.dumps(self.public))
         for row in sample["programmes"]:
-            row.update(status="unverified", checked_at=None,
-                       deadline_iso=None, evidence_url=None, evidence_excerpt=None)
+            row.update(
+                status="unverified", checked_at=None,
+                deadline_iso=None, evidence_url=None, evidence_excerpt=None,
+                official_details={}, investigated_urls=[],
+            )
         recent = (now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
         readable = sample["programmes"][0]
         blocked = sample["programmes"][1]
