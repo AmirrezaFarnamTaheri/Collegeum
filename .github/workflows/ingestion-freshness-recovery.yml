@@ -5,7 +5,7 @@ name: ingestion-freshness-recovery
 # scheduler may delay/drop schedule events in periods of high load.
 on:
   workflow_run:
-    workflows: ["ci", "telegram-sync"]
+    workflows: ["ci", "telegram-sync", "phd-admissions-refresh"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -42,7 +42,12 @@ jobs:
            github.event.workflow_run.event == 'push' &&
            github.event.workflow_run.conclusion == 'success') ||
           (github.event.workflow_run.name == 'telegram-sync' &&
-           github.event.workflow_run.event == 'schedule')
+           github.event.workflow_run.event == 'schedule') ||
+          (github.event.workflow_run.name == 'phd-admissions-refresh' &&
+           github.event.workflow_run.conclusion == 'success' &&
+           (github.event.workflow_run.event == 'schedule' ||
+            github.event.workflow_run.event == 'push' ||
+            github.event.workflow_run.event == 'workflow_run'))
         )
       )
     runs-on: ubuntu-latest
@@ -66,6 +71,7 @@ jobs:
           CHECK_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.check_only || false }}
           # Only trusted successful main push CI is eligible for release-aware
           # recovery; ordinary Telegram syncs retain the old age-based gate.
+          ADMISSIONS_TRIGGER: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'phd-admissions-refresh' && github.event.workflow_run.conclusion == 'success' }}
           RELEASE_CHECK: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ci' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' }}
           CI_RUN_CREATED_AT: ${{ github.event.workflow_run.created_at || '' }}
           CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha || '' }}
@@ -75,5 +81,9 @@ jobs:
           if [ "$CHECK_ONLY" = "true" ]; then
             python3 -S tools/ingestion_watchdog.py
           else
-            python3 -S tools/ingestion_watchdog.py --dispatch
+            if [ "$ADMISSIONS_TRIGGER" = "true" ]; then
+              python3 -S tools/ingestion_watchdog.py --dispatch --admissions-trigger
+            else
+              python3 -S tools/ingestion_watchdog.py --dispatch
+            fi
           fi
