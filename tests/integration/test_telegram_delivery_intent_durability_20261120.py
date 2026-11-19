@@ -192,3 +192,88 @@ def test_production_workflow_enables_reservations_not_only_telegram_publishing()
     assert "GITHUB_TOKEN: ${{ github.token }}" in workflow
     assert "telegram_git_durable_intents_enabled: bool = False" in settings
     assert "github.ref == 'refs/heads/main'" in workflow
+
+
+
+def test_runner_crash_after_telegram_accepts_cannot_resend_with_fresh_ledger(
+    tmp_path: Path,
+):
+    """The remote create-only intent survives even if the local receipt vanishes."""
+    catalog = tmp_path / "calls.json"
+    ledger = tmp_path / "ledger.json"
+    catalog.write_text(json.dumps(_calls()), encoding="utf-8")
+    telegram = Mock()
+    telegram.send_message.side_effect = RuntimeError("runner died after Telegram request")
+    store = GitHubIntentReserver(repository="Owner/Repo", token="test-token")
+    first = Mock()
+    first.status = 201
+    first.__enter__ = Mock(return_value=first)
+    first.__exit__ = Mock(return_value=None)
+    already_reserved = urllib.error.HTTPError(
+        "https://api.github.com", 422, "reservation exists", None, None,
+    )
+    with patch("urllib.request.urlopen", side_effect=[first, already_reserved]):
+        with pytest.raises(RuntimeError, match="runner died"):
+            publish_official_calls(
+                catalog, ledger, telegram, chat_id="@channel",
+                enabled=True, now=NOW, reserve_intent=store.reserve,
+            )
+        # Simulate loss of the ephemeral runner's local pending checkpoint.
+        ledger.unlink()
+        telegram.send_message.side_effect = None
+        telegram.send_message.return_value = 916
+        with pytest.raises(OSError, match="reservation"):
+            publish_official_calls(
+                catalog, ledger, telegram, chat_id="@channel",
+                enabled=True, now=NOW, reserve_intent=store.reserve,
+            )
+    assert telegram.send_message.call_count == 1
+
+
+def test_production_main_fails_closed_if_intent_store_unavailable(tmp_path: Path):
+    catalog = tmp_path / "calls.json"
+    ledger = tmp_path / "ledger.json"
+    catalog.write_text(json.dumps(_calls()), encoding="utf-8")
+    telegram = Mock()
+    with patch.dict("os.environ", {
+        "GITHUB_ACTIONS": "true", "GITHUB_REF": "refs/heads/main",
+        "GITHUB_WORKFLOW": "predoc-pipeline",
+    }):
+        with pytest.raises(OSError, match="durable"):
+            publish_official_calls(
+                catalog, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
+            )
+        with pytest.raises(OSError, match="durable"):
+            admissions = tmp_path / "adm.json"
+            admissions.write_text(json.dumps(ADMISSIONS), encoding="utf-8")
+            publish_official_admissions(
+                admissions, tmp_path / "adm_receipts.json", telegram,
+                chat_id="@channel", enabled=True, now=NOW,
+            )
+    telegram.send_message.assert_not_called()
+
+
+def test_truly_new_admissions_cycle_uses_distinct_reservation_operation(tmp_path: Path):
+    from predoc_pipeline.publish.admissions import _delivery_key
+
+    catalog = tmp_path / "adm.json"
+    ledger = tmp_path / "receipts.json"
+    row = ADMISSIONS["programmes"][0]
+    key = _delivery_key(row)
+    catalog.write_text(json.dumps(ADMISSIONS), encoding="utf-8")
+    ledger.write_text(json.dumps({"version": 1, "deliveries": {
+        key: {
+            "state": "confirmed", "message_id": 609,
+            "sent_at": "2026-01-01T00:00:00Z",
+            "deadline_iso": "2026-03-01",
+            "institution": row["institution"], "country_code": "DE",
+        }
+    }}), encoding="utf-8")
+    telegram = Mock()
+    telegram.send_message.return_value = 917
+    markers = []
+    assert publish_official_admissions(
+        catalog, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
+        reserve_intent=lambda ns, key, operation: markers.append(operation),
+    ) == 1
+    assert markers == ["cycle:2027-01-15"]
