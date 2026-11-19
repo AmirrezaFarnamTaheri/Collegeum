@@ -83,10 +83,12 @@ class PageText(HTMLParser):
         if tag == "h1":
             self._in_h1 = True
             self._heading_parts = []
-        if tag in {"h1", "h2", "h3", "h4", "p", "li", "dt", "dd", "th", "td"}:
-            if self._block_tag is None:
-                self._block_tag = tag
-                self._block_parts = []
+        if (
+            tag in {"h1", "h2", "h3", "h4", "p", "li", "dt", "dd", "th", "td"}
+            and self._block_tag is None
+        ):
+            self._block_tag = tag
+            self._block_parts = []
         if tag == "a" and not self.ignored:
             self._anchor_href = dict(attrs).get("href")
             self._anchor_parts = []
@@ -238,9 +240,16 @@ def extract_official_details(
 
     for index, block in enumerate(blocks):
         following = blocks[index + 1] if index + 1 < len(blocks) else ""
-        if re.fullmatch(r"(?:language(?: of instruction)?|teaching language)\s*:?", block, re.I):
-            if re.fullmatch(r"English|German|French|Spanish|Finnish|Swedish", following, re.I):
-                add("language", following, block + " " + following)
+        if (
+            re.fullmatch(
+                r"(?:language(?: of instruction)?|teaching language)\s*:?",
+                block, re.I,
+            )
+            and re.fullmatch(
+                r"English|German|French|Spanish|Finnish|Swedish", following, re.I,
+            )
+        ):
+            add("language", following, block + " " + following)
         if re.fullmatch(r"(?:duration|study duration)\s*:?", block, re.I):
             m = re.fullmatch(
                 r"(\d{1,2})\s+years?(?:\s*,?\s*(full[- ]time|part[- ]time))?",
@@ -252,9 +261,11 @@ def extract_official_details(
                 if m.group(2):
                     value += ", " + m.group(2).lower().replace("full time", "full-time")
                 add("duration", value, block + " " + following)
-        if re.fullmatch(r"(?:eligibility|entry requirements?)\s*:?", block, re.I):
-            if re.search(r"\b(?:master'?s?|degree|diploma)\b", following, re.I):
-                add("entry_requirement", following, block + " " + following)
+        if (
+            re.fullmatch(r"(?:eligibility|entry requirements?)\s*:?", block, re.I)
+            and re.search(r"\b(?:master'?s?|degree|diploma)\b", following, re.I)
+        ):
+            add("entry_requirement", following, block + " " + following)
         if re.search(r"\b(?:no tuition fees|free of tuition fees)\b", block, re.I):
             add("tuition", "No tuition fees", block)
         if re.search(r"\bapplicants?\s+should\s+have\s+a\s+master", block, re.I):
