@@ -89,3 +89,53 @@ def test_confirmed_message_is_unchanged_until_deletion_is_explicit(tmp_path):
         catalog, receipts, bot, chat_id="@channel", enabled=True, now=now,
     ) == 0
     bot.send_message.assert_called_once()
+
+
+def test_429_does_not_erase_old_message_identity_during_reissue(tmp_path):
+    from predoc_pipeline.publish.telegram import TelegramError
+
+    now = datetime(2026, 11, 19, 12, 0, tzinfo=UTC)
+    url = "https://www.aalto.fi/en/study-options/doctoral-economics"
+    programme = {
+        "institution": "Aalto University", "country_code": "FI",
+        "status": "verified", "deadline_iso": "2027-01-05",
+        "checked_at": "2026-11-19T10:00:00Z",
+        "official_programme_url": url, "evidence_url": url,
+        "evidence_excerpt": "Economics PhD deadline 5 January 2027",
+    }
+    key = _delivery_key(programme)
+    ledger_path = tmp_path / "receipts.json"
+    catalogue = tmp_path / "catalog.json"
+    ledger_path.write_text(json.dumps({
+        "version": 1,
+        "deliveries": {
+            key: {
+                "state": "confirmed", "message_id": 128,
+                "institution": "Aalto University",
+                "country_code": "FI", "deadline_iso": "2027-01-05",
+                "sent_at": "2026-11-19T09:01:41Z",
+            },
+        },
+    }))
+    catalogue.write_text(json.dumps({
+        "kind": "economics_phd_admissions_observations",
+        "scope": "official_programme_sources_only",
+        "source": {"deadline_values_reused": False},
+        "programmes": [programme],
+    }))
+    authorize_reissue(
+        ledger_path, institution="Aalto University", country_code="FI",
+        original_message_id=128, deleted_confirmed=True, now=now,
+    )
+    bot = Mock()
+    bot.send_message.side_effect = TelegramError(
+        "429; Telegram did not accept the request", status=429,
+        permanent=False, uncertain=False,
+    )
+    assert publish_official_admissions(
+        catalogue, ledger_path, bot, chat_id="@channel", enabled=True, now=now,
+    ) == 0
+    restored = json.loads(ledger_path.read_text())["deliveries"][key]
+    assert restored["state"] == "reissue_authorized"
+    assert restored["prior_message_id"] == 128
+    assert restored["history"][0]["message_id"] == 128
