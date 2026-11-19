@@ -11,6 +11,17 @@
       "state": "confirmed",
       "title": "PhD Scholarship in Economics 2027"
     },
+    "8e6a7f5119ad361fc14191714e1d53c0": {
+      "attempted_at": "2026-11-19T21:44:39Z",
+      "deadline_iso": "2027-01-15",
+      "institution": "University of Reading",
+      "intake_year": 2027,
+      "message_id": 135,
+      "official_url": "https://www.reading.ac.uk/doctoral-researcher-college/funding/phd-studentships/international-phd-studentships",
+      "sent_at": "2026-11-19T21:44:39Z",
+      "state": "confirmed",
+      "title": "International PhD studentships"
+    },
     "f431c672e2a83d1dc45b9dc132b18ee2": {
       "attempted_at": "2026-11-19T21:29:43Z",
       "deadline_iso": "2026-12-11",
