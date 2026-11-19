@@ -62,6 +62,9 @@ class CallHTML(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.chunks: list[str] = []
+        # Keep the article beginning at its first H1 distinct from site navigation.
+        self.content_chunks: list[str] = []
+        self._content_started = False
         self.headings: list[str] = []
         self.links: list[tuple[str, str]] = []
         self._ignored = 0
@@ -75,10 +78,13 @@ class CallHTML(HTMLParser):
             return
         if self._ignored:
             return
+        if tag == "h1":
+            self._content_started = True
+            self._heading = []
         if tag in {"p", "li", "div", "h1", "h2", "h3", "footer", "br", "tr"}:
             self.chunks.append(" ")
-        if tag == "h1":
-            self._heading = []
+            if self._content_started:
+                self.content_chunks.append(" ")
         if tag == "a":
             self._href = dict(attrs).get("href")
             self._link = []
@@ -101,11 +107,15 @@ class CallHTML(HTMLParser):
             self._link, self._href = None, None
         if tag in {"p", "li", "div", "h1", "h2", "h3", "footer", "tr"}:
             self.chunks.append(" ")
+            if self._content_started:
+                self.content_chunks.append(" ")
 
     def handle_data(self, data: str) -> None:
         if self._ignored:
             return
         self.chunks.append(data)
+        if self._content_started:
+            self.content_chunks.append(data)
         if self._heading is not None:
             self._heading.append(data)
         if self._link is not None:
@@ -113,6 +123,9 @@ class CallHTML(HTMLParser):
 
     def text(self) -> str:
         return " ".join(" ".join(self.chunks).split())
+
+    def content_text(self) -> str:
+        return " ".join(" ".join(self.content_chunks).split())
 
 
 def safe_official_url(raw: str, root: str) -> str | None:
@@ -244,25 +257,28 @@ def extract_call(
     parsed = CallHTML()
     parsed.feed(html[:MAX_HTML_BYTES])
     text = parsed.text()
+    # Long institutional menus can exceed 450 characters; only the primary
+    # funding call's article, not navigation/footer, establishes subject fit.
+    article = parsed.content_text() or text
     title = (parsed.headings[0] if parsed.headings else source.get("title", "")).strip()
     label = f"{title} {source.get('title', '')}"
     invalid = (not title or len(title) > 150
-               or not SUBJECT.search(label + " " + text[:450])
+               or not SUBJECT.search(label + " " + article[:1800])
                or EXCLUDE.search(title)
                or not safe_official_url(url, source["url"]))
     # Mentioning scholarship terms somewhere in a generic admissions page
     # does not create an independent current funding call.
     relevant = CALL_TITLE.search(label) is not None
     status = "unrelated" if invalid or not relevant else "no_explicit_deadline"
-    kind = ("phd_studentship" if "studentship" in (label + " " + text[:500]).lower()
+    kind = ("phd_studentship" if "studentship" in (label + " " + article[:500]).lower()
             else "phd_fellowship" if "fellowship" in label.lower()
             else "phd_scholarship")
-    intake_year = _intake(title, text)
+    intake_year = _intake(title, article)
     date_iso = None
     deadline_kind = None
     excerpt = None
     if status != "unrelated":
-        values = _date_candidates(text, kind=kind, now=now)
+        values = _date_candidates(article, kind=kind, now=now)
         dates = {item[0] for item in values}
         if any(item[1] == "ambiguous" for item in values) or len(dates) > 1:
             status = "ambiguous_deadline"
@@ -273,14 +289,22 @@ def extract_call(
     recommended = None
     if kind == "phd_studentship":
         rec = re.search(r"(?:strongly\s+advise|recommend)\s+submitting\s+your\s+"
-                        r"application\s+no\s+later\s+than\s+", text, re.I)
+                        r"application\s+no\s+later\s+than\s+", article, re.I)
         if rec:
-            match = DATE_RE.search(text, rec.end())
+            match = DATE_RE.search(article, rec.end())
             if match and match.start() - rec.end() <= 6:
                 day = _date(match)
                 if day and now.date() <= day <= date(now.year + 2, 12, 31):
                     recommended = day.isoformat()
     proof = _location_proof(text, str(source["country_code"]), url)
+    # A broad, multi-disciplinary funding scheme is eligible, but must never
+    # be advertised as Economics-only merely because one eligible school is
+    # Henley. Only an Economics-specific call title earns the Economics label.
+    scope = (
+        "economics" if re.search(r"\b(?:economics?|econometrics?)\b", title, re.I)
+        else "finance" if re.search(r"\b(?:finance|accounting|accountancy)\b", title, re.I)
+        else "multidisciplinary"
+    )
     return {
         "source_id": source["id"],
         "institution": source["institution"],
@@ -289,6 +313,7 @@ def extract_call(
         "title": title if status != "unrelated" else source.get("title", title)[:150],
         "status": status,
         "kind": kind,
+        "subject_scope": scope,
         "intake_year": intake_year,
         "deadline_iso": date_iso,
         "deadline_kind": deadline_kind,
