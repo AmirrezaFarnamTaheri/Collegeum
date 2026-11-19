@@ -187,12 +187,16 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         f"deadline: {escape(deadline)}</b>",
     ]
     recommended = row.get("recommended_admission_iso")
-    if recommended and DATE_RE.fullmatch(recommended):
-        day = date.fromisoformat(recommended)
-        lines.append(
-            f"💡 Recommended PhD admission submission (not scholarship deadline): "
-            f"{escape(day.strftime('%d %b %Y'))}"
-        )
+    if isinstance(recommended, str) and DATE_RE.fullmatch(recommended):
+        try:
+            day = date.fromisoformat(recommended)
+        except ValueError:
+            day = None
+        if day is not None:
+            lines.append(
+                "💡 Recommended PhD admission submission (not scholarship deadline): "
+                + escape(day.strftime("%d %b %Y"))
+            )
     if row["kind"] == "phd_studentship":
         lines.append("ℹ️ A prior PhD admission offer may be required; check the official terms.")
     lines.extend([
