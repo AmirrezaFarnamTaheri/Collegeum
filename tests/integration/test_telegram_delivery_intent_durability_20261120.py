@@ -11,7 +11,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from predoc_pipeline.publish.admissions import publish_official_admissions
-from predoc_pipeline.publish.official_calls import publish_official_calls
+from predoc_pipeline.publish.official_calls import official_calls_health, publish_official_calls
+from predoc_pipeline.publish.telegram import TelegramError
 from predoc_pipeline.publish.telegram_intents import GitHubIntentReserver
 
 NOW = datetime(2026, 11, 20, 8, tzinfo=UTC)
@@ -277,3 +278,51 @@ def test_truly_new_admissions_cycle_uses_distinct_reservation_operation(tmp_path
         reserve_intent=lambda ns, key, operation: markers.append(operation),
     ) == 1
     assert markers == ["cycle:2027-01-15"]
+
+
+
+def test_unconfirmed_durable_intent_remains_visible_as_undelivered(tmp_path: Path):
+    import hashlib
+
+    catalog = tmp_path / "calls.json"
+    ledger = tmp_path / "ledger.json"
+    catalog.write_text(json.dumps(_calls()), encoding="utf-8")
+    from predoc_pipeline.publish.official_calls import call_key
+
+    key = call_key(CALL)
+    ledger.write_text(json.dumps({"version": 1, "deliveries": {
+        key: {"state": "pending", "attempted_at": "2026-11-20T07:35:00Z",
+              "official_url": URL},
+    }}), encoding="utf-8")
+    health = official_calls_health(catalog, ledger, now=NOW)
+    assert health["pending"] == 1
+    assert health["unpublished"] == 1
+    assert health["confirmed"] == 0
+    assert health["status"] == "degraded"
+
+
+def test_definite_telegram_rejection_retains_durable_intent_for_review(
+    tmp_path: Path,
+):
+    """A reserved operation cannot auto-retry even if Telegram replied 429."""
+    catalog = tmp_path / "calls.json"
+    ledger = tmp_path / "ledger.json"
+    catalog.write_text(json.dumps(_calls()), encoding="utf-8")
+    telegram = Mock()
+    telegram.send_message.side_effect = TelegramError("rate limited", status=429)
+    accepted_reservations = []
+    assert publish_official_calls(
+        catalog, ledger, telegram, chat_id="@channel",
+        enabled=True, now=NOW,
+        reserve_intent=lambda ns, key, op: accepted_reservations.append(op),
+    ) == 0
+    state = next(iter(json.loads(ledger.read_text())["deliveries"].values()))
+    assert state["state"] == "retry_held"
+    assert accepted_reservations == ["initial"]
+    telegram.send_message.side_effect = None
+    assert publish_official_calls(
+        catalog, ledger, telegram, chat_id="@channel",
+        enabled=True, now=NOW,
+        reserve_intent=lambda ns, key, op: accepted_reservations.append(op),
+    ) == 0
+    telegram.send_message.assert_called_once()
