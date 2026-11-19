@@ -19,8 +19,10 @@ cost.
 It maintains 251 programme discovery leads adapted from an MIT-licensed
 reference, but *never* trusts its undated third-party deadlines. An isolated
 scheduled monitor checks primary institution pages four times daily in safe batches and surfaces
-only explicit, current-year official-source dates. Admissions remain separate
-from actual research vacancies and Telegram posting; see
+only explicit, current-year official-source dates. Fresh, verified non-US
+programme admissions also receive **separately labelled Telegram announcements**
+in the existing channel; they are not funded research vacancies and never enter
+vacancy/X feeds or subscription alerts. See
 [PhD admissions source policy](docs/ECON_PHD_ADMISSIONS.md).
 
 
