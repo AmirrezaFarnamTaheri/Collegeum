@@ -338,7 +338,7 @@ def extract_official_details(
         and "admission_route" in facts
     )
     if track_page:
-        for block in blocks:
+        for index, block in enumerate(blocks):
             fee = re.search(
                 r"\bstudent\s+fee\s*:\s*€\s*([\d,]+)\b", block, re.I,
             )
