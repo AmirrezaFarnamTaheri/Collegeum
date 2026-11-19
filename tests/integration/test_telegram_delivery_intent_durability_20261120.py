@@ -288,7 +288,9 @@ def test_truly_new_admissions_cycle_uses_distinct_reservation_operation(tmp_path
 def test_unconfirmed_durable_intent_remains_visible_as_undelivered(tmp_path: Path):
     catalog = tmp_path / "calls.json"
     ledger = tmp_path / "ledger.json"
-    catalog.write_text(json.dumps(_calls()), encoding="utf-8")
+    catalog.write_text(json.dumps({**_calls(), "sources": [
+        {"id": "ieb", "status": "ok"},
+    ]}), encoding="utf-8")
     key = call_key(CALL)
     ledger.write_text(json.dumps({"version": 1, "deliveries": {
         key: {"state": "pending", "attempted_at": "2026-11-20T07:35:00Z",
