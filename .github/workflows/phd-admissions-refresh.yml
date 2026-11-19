@@ -8,6 +8,13 @@ on:
     - cron: "17 9 * * *"
     - cron: "17 15 * * *"
     - cron: "17 21 * * *"
+  # GitHub can drop cron events. An independently scheduled, successful
+  # main-branch Telegram sync provides a fallback *trigger only*.
+  # This workflow never reads Telegram secrets or sends messages.
+  workflow_run:
+    workflows: ["telegram-sync"]
+    types: [completed]
+    branches: [main]
   # Run the first official-source batch immediately when the checker or
   # seed inventory changes on main. Do not trigger on generated catalogue
   # commits, preventing a self-sustaining Actions loop.
@@ -28,7 +35,19 @@ concurrency:
 
 jobs:
   refresh:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      (
+        github.event_name != 'workflow_run' &&
+        github.ref == 'refs/heads/main'
+      ) ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.name == 'telegram-sync' &&
+        github.event.workflow_run.event == 'schedule' &&
+        github.event.workflow_run.conclusion == 'success'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
