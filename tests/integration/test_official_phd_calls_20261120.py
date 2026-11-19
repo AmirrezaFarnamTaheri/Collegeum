@@ -237,6 +237,10 @@ def test_open_call_remains_monitored_after_scrolling_off_index():
     def fetch(url):
         inspected.append(url)
         return responses[url]
-    result = refresh_sources({"kind": SOURCES["kind"], "version": SOURCES["version"], "sources": [source]}, _catalog(prior), now=NOW, fetcher=fetch)
+    registry = {
+        "kind": SOURCES["kind"], "version": SOURCES["version"],
+        "sources": [source],
+    }
+    result = refresh_sources(registry, _catalog(prior), now=NOW, fetcher=fetch)
     assert inspected == [source["url"], IEB]
     assert len(eligible_calls(result, now=NOW)) == 1
