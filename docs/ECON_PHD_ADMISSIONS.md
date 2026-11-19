@@ -13,10 +13,21 @@ Its copyright and permission notice is at
 - `config/phd_admissions_seeds.json` keeps 251 programme names, country codes,
   official programme links and **unverified** structure hints. No upstream
   deadline data is imported or used by a publisher.
-- `tools/update_phd_admissions.py` checks each primary university programme
-  link using a bounded HTTPS read that respects robots.txt. It does **not**
-  follow arbitrary external links, search for a more convenient source,
-  bypass access controls, or scrape the upstream directory again.
+- `tools/update_phd_admissions.py` investigates the university's primary
+  programme URL and **at most two relevant, linked pages on the same HTTPS
+  institutional host**, checking robots.txt before every page. It does
+  **not** follow arbitrary external links, logins, PDFs or aggregators,
+  bypass access controls, or scrape the upstream directory again. Blocked,
+  off-host, contradictory, unsupported and unreachable evidence fails closed.
+  An accessible page with no explicit current-cycle deadline remains unverified.
+- Each safely extracted detail (duration, teaching language, entry criteria,
+  admissions opening date, tuition, qualifying funding statement, stipend,
+  additional fees, tests, references) carries its own official URL, excerpt
+  and UTC check time in `official_details`; `investigated_urls` records
+  visited primary sources. Contradictory details are suppressed. No amount,
+  universal eligibility rule, full funding promise or fee waiver is inferred
+  from a discovery lead. The dashboard and Telegram cards only show fresh,
+  attributable details; the institution's wording and conditions govern.
 - `docs/data/phd_admissions.json` is the **only public programme observation
   catalogue**, separate from `docs/data/listings.json` and the application
   journal. On initial adoption, all 251 programme deadlines are **unverified**.
@@ -34,7 +45,9 @@ Its copyright and permission notice is at
   General non-US admissions with a **fresh, explicit, officially verified**
   future deadline are separately announced in the existing Telegram channel.
   There is no conversion into funded research-employment vacancies, X posts
-  or personalised research-job notifications. Funding is explicitly unverified.
+  or personalised research-job notifications. Funding is not assumed: any
+  conditional funding or fee details must be supported by field-level official
+  evidence and are presented with their original limitations.
 
 ## Automatic refresh
 
@@ -50,7 +63,8 @@ without waiting for the next cron. On trusted checker updates, the bounded
 batch can recheck previously readable programme pages whose deadlines were
 inconclusive, so improved extraction takes effect without manual overrides.
 This mode does not retry robots-blocked, access-restricted or failed sources
-early.
+early. A trusted code upgrade also rechecks previously verified records missing
+the new official detail fields, without promoting third-party assertions.
 A previously verified deadline is
 **withdrawn** if source evidence ages beyond 14 days, or the date passes.
 After every check it commits only the derived

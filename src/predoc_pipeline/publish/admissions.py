@@ -148,6 +148,7 @@ def _read_receipts(path: Path) -> dict[str, Any]:
             not isinstance(receipt, dict) or
             receipt.get("state") not in {
                 "pending", "confirmed", "uncertain", "permanent_failure",
+                "reissue_authorized",
             }
         ):
             raise ValueError("Corrupted delivery receipt; hold all sends")
@@ -155,6 +156,11 @@ def _read_receipts(path: Path) -> dict[str, Any]:
             type(receipt.get("message_id")) is not int or receipt["message_id"] < 1
         ):
             raise ValueError("Missing confirmed Telegram message ID")
+        if receipt["state"] == "reissue_authorized" and (
+            type(receipt.get("prior_message_id")) is not int
+            or receipt["prior_message_id"] < 1
+        ):
+            raise ValueError("Missing removed message ID for authorized reissue")
     return payload
 
 
@@ -171,6 +177,10 @@ def _checkpoint(path: Path, payload: dict[str, Any]) -> None:
 def _has_prior_send(
     receipt: dict[str, Any], *, deadline: date, now: datetime,
 ) -> bool:
+    if receipt.get("state") == "reissue_authorized":
+        # A named operator confirmed removal of the exact prior message ID.
+        # A new pending checkpoint is recorded BEFORE any Telegram send.
+        return False
     if receipt.get("state") != "confirmed":
         # Pending, uncertain, and permanently refused sends require operator
         # reconciliation; restarting a runner never authorizes retry.
@@ -190,27 +200,152 @@ def _has_prior_send(
     )
 
 
+COUNTRY_NAMES = {
+    "AT": "Austria", "AU": "Australia", "BE": "Belgium",
+    "CA": "Canada", "CH": "Switzerland", "CL": "Chile", "CN": "China",
+    "CZ": "Czechia", "DE": "Germany", "DK": "Denmark", "ES": "Spain",
+    "FI": "Finland", "FR": "France", "GR": "Greece", "HK": "Hong Kong",
+    "IE": "Ireland", "IT": "Italy", "JP": "Japan",
+    "KR": "South Korea", "MY": "Malaysia", "NL": "Netherlands",
+    "NO": "Norway", "NZ": "New Zealand", "PH": "Philippines",
+    "PL": "Poland", "PT": "Portugal", "RS": "Serbia",
+    "SE": "Sweden", "SG": "Singapore", "TH": "Thailand",
+    "TW": "Taiwan", "UK": "United Kingdom", "US": "United States",
+    "ZA": "South Africa",
+}
+
+
+def _verified_detail(row: dict[str, Any], field: str) -> str | None:
+    """Never echo a claimed fact without fresh same-university evidence."""
+    details = row.get("official_details")
+    if not isinstance(details, dict):
+        return None
+    fact = details.get(field)
+    if not isinstance(fact, dict):
+        return None
+    value = fact.get("value")
+    if not isinstance(value, str) or not value.strip():
+        return None
+    checked = row.get("checked_at")
+    if fact.get("checked_at") != checked:
+        return None
+    host = _official_host(row.get("official_programme_url"))
+    if not host or _official_host(fact.get("evidence_url")) != host:
+        return None
+    if not isinstance(fact.get("evidence_excerpt"), str):
+        return None
+    if not fact["evidence_excerpt"].strip():
+        return None
+    return value.strip()[:175]
+
+
 def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-    institution = escape(row["institution"][:170])
-    country = escape(row["country_code"])
+    """Native Collegeum-style card; admissions remain distinct from vacancies."""
+    institution = escape(row["institution"][:140])
+    country = COUNTRY_NAMES.get(row["country_code"], row["country_code"])
     deadline = date.fromisoformat(row["deadline_iso"]).strftime("%d %b %Y")
     checked = escape(row["checked_at"][:10])
-    html = (
-        "🎓 <b>PhD programme admission · Economics</b>\n"
-        f"<b>{institution}</b> · {country}\n\n"
-        f"📅 <b>Official application deadline: {deadline}</b>\n"
-        f"🔎 Official source checked: {checked} UTC\n\n"
-        "<i>General programme admission, not an employment vacancy. "
-        "Funding and salary: not verified. Applications may not yet be open; "
-        "confirm eligibility and current availability on the university page.</i>"
-    )
+    lines = [
+        "🎓 <b>PhD programme admission · Economics</b>",
+        f"<i>{institution}</i>",
+        "",
+        f"📍 {escape(country)}",
+        "🔬 Economics",
+    ]
+    duration = _verified_detail(row, "duration")
+    if duration:
+        lines.append("⏳ " + escape(duration))
+    lines.append(f"📅 <b>{escape(deadline)}</b>")
+    opening = _verified_detail(row, "application_open_iso")
+    if opening:
+        try:
+            date_label = date.fromisoformat(opening).strftime("%d %b %Y")
+            lines.append("🗓 Opens: " + escape(date_label))
+        except ValueError:
+            pass
+    language = _verified_detail(row, "language")
+    if language:
+        lines.append("🗣 Language: " + escape(language))
+    entry = _verified_detail(row, "entry_requirement")
+    if entry:
+        lines.append("🎓 Entry: " + escape(entry))
+    funding = _verified_detail(row, "funding_note")
+    if funding:
+        lines.append("💰 Funding: " + escape(funding))
+    else:
+        lines.append("💰 Funding: not verified")
+    stipend = _verified_detail(row, "stipend")
+    if stipend:
+        lines.append("💶 Stipend: " + escape(stipend))
+    tuition = _verified_detail(row, "tuition")
+    if tuition:
+        lines.append("🏛 Tuition: " + escape(tuition))
+    semester_fee = _verified_detail(row, "semester_fee")
+    if semester_fee:
+        lines.append("💳 Other fees: " + escape(semester_fee))
+    tests = _verified_detail(row, "tests")
+    if tests:
+        lines.append("📝 Tests: " + escape(tests))
+    references = _verified_detail(row, "references")
+    if references:
+        lines.append("✉️ References: " + escape(references))
+    lines.append("🛂 Visa: not verified")
+    lines.extend([
+        "",
+        "<i>General PhD admission, not an employment vacancy. "
+        "Funding and eligibility depend on official university terms; "
+        "the application portal may not be open yet.</i>",
+        f"🔎 Official university source checked: {checked} UTC",
+        "",
+        f"#Economics #{''.join(country.split())} #PhD #Admissions",
+    ])
+    html = "\n".join(lines)
     primary = row["evidence_url"]
     programme = row["official_programme_url"]
     keyboard = {"inline_keyboard": [
-        [{"text": "University admissions", "url": primary}],
+        [{"text": "Official admissions", "url": primary}],
         *([[{"text": "Programme details", "url": programme}]] if programme != primary else []),
     ]}
     return html, keyboard
+
+
+
+def authorize_reissue(
+    receipt_path: str | Path, *, institution: str, country_code: str,
+    original_message_id: int, deleted_confirmed: bool,
+    now: datetime | None = None,
+) -> None:
+    """Allow one replacement only after an operator confirms *actual* removal.
+
+    A future intention to delete a message is not confirmation. This method
+    never calls Telegram and does not reset any other programme's receipt.
+    """
+    if not deleted_confirmed:
+        raise ValueError("Do not reissue before the old channel post is deleted")
+    if type(original_message_id) is not int or original_message_id < 1:
+        raise ValueError("Expected positive original Telegram message ID")
+    ledger_path = Path(receipt_path)
+    ledger = _read_receipts(ledger_path)
+    key = _delivery_key({"institution": institution, "country_code": country_code})
+    old = ledger["deliveries"].get(key)
+    if not isinstance(old, dict) or old.get("state") != "confirmed":
+        raise ValueError("Only a confirmed delivery can be replaced")
+    if old.get("message_id") != original_message_id:
+        raise ValueError("Message ID differs; never replace another post")
+    stamp = (now or datetime.now(UTC)).isoformat(
+        timespec="seconds",
+    ).replace("+00:00", "Z")
+    history = list(old.get("history", []))
+    history.append({
+        "message_id": original_message_id,
+        "deleted_confirmed_at": stamp,
+        "state": "operator_confirmed_removed",
+    })
+    old["state"] = "reissue_authorized"
+    old["prior_message_id"] = original_message_id
+    old["reissue_authorized_at"] = stamp
+    old["history"] = history
+    _checkpoint(ledger_path, ledger)
 
 
 def publish_official_admissions(
@@ -259,6 +394,9 @@ def publish_official_admissions(
             "evidence_url": row["evidence_url"],
             "attempted_at": stamp.isoformat(timespec="seconds").replace("+00:00", "Z"),
         }
+        if previous is not None and previous.get("state") == "reissue_authorized":
+            attempt["replaces_message_id"] = previous["prior_message_id"]
+            attempt["history"] = list(previous.get("history", []))
         ledger["deliveries"][key] = attempt
         # Persist a hold before attempting a potentially accepted remote send.
         # The pipeline's normal checkpoint commit preserves the journal in git.
@@ -274,8 +412,12 @@ def publish_official_admissions(
             elif exc.permanent:
                 attempt["state"] = "permanent_failure"
             else:
-                # Known no-delivery rate limits can retry in a later cycle.
-                ledger["deliveries"].pop(key, None)
+                # Known no-delivery rate limits can retry later. For an
+                # authorised reissue, never discard the prior-message audit.
+                if previous is not None and previous.get("state") == "reissue_authorized":
+                    ledger["deliveries"][key] = previous
+                else:
+                    ledger["deliveries"].pop(key, None)
             _checkpoint(ledger_path, ledger)
             log.warning("telegram_phd_admission_not_confirmed",
                         institution=row["institution"], uncertain=exc.uncertain,

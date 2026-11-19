@@ -519,11 +519,15 @@ accepted from the third-party discovery list alone. Unverified, blocked,
 stale, ambiguous, US and unknown-country programmes are not announced.
 
 The **existing production** `predoc-pipeline` Telegram client sends these
-admissions with the heading **PhD programme admission**, an official
-deadline and university links. The card clearly says *not an employment
-vacancy* and *funding and salary not verified*. It does not imply the
-application window is currently open. Programme cards have no vacancy
-Save callback because the favorites index contains employment listings.
+admissions as native Collegeum cards, with a PhD programme title, italicised
+institution, country, discipline, bold official deadline, verified academic
+details, concise explanation, hashtags and university links. The card clearly
+says *not an employment vacancy*. It shows funding, stipend, tuition and
+requirements **only when individually backed by fresh official-source
+excerpts**; otherwise funding remains *not verified*. A no-tuition statement
+never implies that other registration/semester fees are absent. The application
+portal is not presumed open. Programme cards have no vacancy Save callback,
+because the favorites index contains employment listings.
 
 `TELEGRAM_PHD_ADMISSIONS_ENABLED` is disabled for local runs, enabled by
 default in the authorized scheduled workflow (explicit repository variable
@@ -541,3 +545,21 @@ under the existing production pipeline lock. A successful workflow is not
 proof that every programme was announced. Use the receipt ledger and the
 `telegram_phd_admission_published` logs to audit delivery. Never replay
 uncertain posts or switch bots/channels to recover them.
+
+### Correcting confirmed channel announcements without duplicates
+
+The initial admissions announcements have confirmed Telegram IDs **128**
+(Aalto University) and **129** (Berlin School of Economics) in the independent
+receipt journal. **A code update never reposts either message.** If an
+administrator removes a specific channel message, they must confirm the
+deletion and its exact original Telegram ID before authorising one replacement
+using `authorize_reissue` from
+`predoc_pipeline.publish.admissions`. This action preserves an audit trail
+with the old ID and requires an affirmative `deleted_confirmed=True`;
+a future intention to delete is not enough. Wrong IDs, absent receipts, pending
+or uncertain deliveries are rejected. After authorised replacement the normal
+publisher creates a pending checkpoint before attempting Telegram, saves
+the new message ID on confirmation, and retains the old ID in `history`.
+Never delete/reset the entire ledger. Even the authorised replacement path
+is bounded, uses the same channel and still requires fresh eligible
+official-source data. Do not initiate a manual ingestion run solely to repost.
