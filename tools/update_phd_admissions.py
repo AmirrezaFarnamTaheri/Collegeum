@@ -17,6 +17,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import urllib.robotparser
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
@@ -833,19 +834,33 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
 
 
 class OfficialOnlyRedirect(urllib.request.HTTPRedirectHandler):
-    def __init__(self, allowed_host: str) -> None:
+    def __init__(
+        self, allowed_host: str,
+        robots_allowed: Callable[[str], bool] | None = None,
+    ) -> None:
         self.allowed_host = allowed_host.lower().removeprefix("www.")
+        self.robots_allowed = robots_allowed
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         parsed = urllib.parse.urlsplit(newurl)
         host = (parsed.hostname or "").lower().removeprefix("www.")
         if parsed.scheme != "https" or host != self.allowed_host:
             raise ValueError("unsafe_redirect")
+        # urllib follows redirects without re-entering our outer verifier.
+        # Inspect the destination BEFORE urllib fetches it, including when
+        # the source path was permitted but the redirected path is blocked.
+        if self.robots_allowed is not None and not self.robots_allowed(newurl):
+            raise ValueError("robots_disallowed_redirect")
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def _read_url(url: str, *, host: str, limit: int) -> tuple[int, bytes, str]:
-    opener = urllib.request.build_opener(OfficialOnlyRedirect(host))
+def _read_url(
+    url: str, *, host: str, limit: int,
+    allowed_redirect: Callable[[str], bool] | None = None,
+) -> tuple[int, bytes, str]:
+    opener = urllib.request.build_opener(
+        OfficialOnlyRedirect(host, robots_allowed=allowed_redirect),
+    )
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "text/html"})
     with opener.open(req, timeout=9) as response:
         data = response.read(limit + 1)
@@ -880,6 +895,7 @@ def check_official_url(url: str, *, now: datetime) -> dict:
     def fetch_page(page_url: str) -> tuple[str, str]:
         status, data, final_url = _read_url(
             page_url, host=host, limit=MAX_HTML_BYTES,
+            allowed_redirect=allowed,
         )
         if status != 200 or data.lstrip().startswith(b"%PDF"):
             raise ValueError("unsupported official source response")
