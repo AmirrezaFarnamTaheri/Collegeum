@@ -543,6 +543,25 @@ def select_official_links(
     return sorted(scores, key=lambda url: (-scores[url], url))[:max_links]
 
 
+
+def select_official_contact_link(html: str, source_url: str) -> str | None:
+    """Select a documented same-host contact page for address verification."""
+    parser = PageText()
+    parser.feed(html[:MAX_HTML_BYTES])
+    links = parser.links[:300] + parser.links[-150:]
+    for href, label in links:
+        candidate = _institutional_url(href, source_url)
+        if candidate is None:
+            continue
+        path = urllib.parse.urlsplit(candidate).path.rstrip("/").lower()
+        if (
+            re.fullmatch(r"/(?:(?:en|eng)/)?(?:contact|contacts|contact-us)", path)
+            and re.search(r"\bcontact\b", label, re.I)
+        ):
+            return candidate
+    return None
+
+
 def investigate_official_pages(
     official_url: str, *, now: datetime, fetch_html,
     robots_allowed, max_pages: int = 3,
@@ -633,9 +652,15 @@ def investigate_official_pages(
             ambiguous = True
         elif status == "verified" and day and excerpt:
             dates.append((day, final_url, excerpt))
-        for field, fact in extract_official_details(
+        page_facts = extract_official_details(
             html, evidence_url=final_url, checked_at=now,
-        ).items():
+        )
+        country_fact = extract_official_country(
+            html, evidence_url=final_url, checked_at=now,
+        )
+        if country_fact is not None:
+            page_facts["institution_country"] = country_fact
+        for field, fact in page_facts.items():
             if field in conflicts:
                 continue
             previous = details.get(field)
@@ -645,6 +670,18 @@ def investigate_official_pages(
             elif previous is None:
                 details[field] = fact
         if len(seen) + len(queue) < max_pages:
+            # A generic university domain (.eu, .org, ...) does not itself
+            # certify the country. Dedicate one *bounded, robots-aware*
+            # follow-up to a linked institutional contact address if needed.
+            generic = (
+                (urllib.parse.urlsplit(official_url).hostname or "")
+                .lower().split(".")[-1]
+                in {"eu", "org", "com", "net", "edu", "int"}
+            )
+            if generic and "institution_country" not in details and len(seen) == 1:
+                contact = select_official_contact_link(html, final_url)
+                if contact and contact not in seen and contact not in queue:
+                    queue.append(contact)
             more = select_official_links(
                 html, final_url, max_links=max_pages - len(seen) - len(queue),
             )
@@ -747,6 +784,7 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
             "language", "duration", "entry_requirement", "tuition",
             "application_open_iso", "stipend", "semester_fee", "tests",
             "references", "funding_note", "admission_route",
+            "institution_country",
         }
         if fields.keys() - allowed_fields:
             raise ValueError("Unsupported official programme fact")
@@ -833,9 +871,13 @@ def check_official_url(url: str, *, now: datetime) -> dict:
             raise ValueError("unsupported official source response")
         return data.decode("utf-8", errors="replace"), final_url
 
+    suffix = host.lower().split(".")[-1]
+    # Preserve two admissions links; allow one additional official address
+    # page only where the domain suffix cannot independently prove location.
+    page_budget = 4 if suffix in {"eu", "org", "com", "net", "edu", "int"} else 3
     return investigate_official_pages(
         url, now=now, fetch_html=fetch_page, robots_allowed=allowed,
-        max_pages=3,
+        max_pages=page_budget,
     )
 
 def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
