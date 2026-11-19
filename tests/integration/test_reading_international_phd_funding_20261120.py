@@ -1,7 +1,7 @@
 """Verify a separate university-wide international PhD studentship safely."""
 from datetime import UTC, datetime
 
-from predoc_pipeline.publish.official_calls import call_key, eligible_calls
+from predoc_pipeline.publish.official_calls import _message, call_key, eligible_calls
 from tools.update_official_calls import extract_call
 
 NOW = datetime(2026, 11, 20, 8, tzinfo=UTC)
@@ -79,6 +79,9 @@ def test_navigation_heavy_official_page_uses_content_after_h1_for_subject_scope(
         "kind": "official_phd_call_observations", "version": 1,
         "calls": [call],
     }, now=NOW) == [call]
+    message, _ = _message(call)
+    assert "#PhD #Scholarships" in message
+    assert "#Economics" not in message
 
 
 def test_business_school_navigation_alone_is_not_evidence_of_relevant_funding():
