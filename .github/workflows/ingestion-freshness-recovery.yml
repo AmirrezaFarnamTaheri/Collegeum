@@ -71,7 +71,8 @@ jobs:
           CHECK_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.check_only || false }}
           # Only trusted successful main push CI is eligible for release-aware
           # recovery; ordinary Telegram syncs retain the old age-based gate.
-          ADMISSIONS_TRIGGER: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'phd-admissions-refresh' && github.event.workflow_run.conclusion == 'success' }}
+          # Also reconcile authorized reissues and new verified leads following a trusted main CI push.
+          ADMISSIONS_TRIGGER: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.name == 'phd-admissions-refresh' || (github.event.workflow_run.name == 'ci' && github.event.workflow_run.event == 'push')) }}
           RELEASE_CHECK: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ci' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' }}
           CI_RUN_CREATED_AT: ${{ github.event.workflow_run.created_at || '' }}
           CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha || '' }}
