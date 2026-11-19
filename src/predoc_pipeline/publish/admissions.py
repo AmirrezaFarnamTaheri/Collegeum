@@ -7,10 +7,10 @@ never silently send the same programme again.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from html import escape
 from pathlib import Path
