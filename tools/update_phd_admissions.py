@@ -545,38 +545,40 @@ def _read_url(url: str, *, host: str, limit: int) -> tuple[int, bytes, str]:
 
 
 def check_official_url(url: str, *, now: datetime) -> dict:
-    """Respect robots.txt and use a single institutional host. Never crawl links."""
+    """Robots-aware bounded institutional research (no cross-domain crawling)."""
     parsed = urllib.parse.urlsplit(url)
     if parsed.scheme != "https" or not parsed.hostname:
         return {"status": "insecure_source"}
-    base = f"https://{parsed.hostname}"
-    robots_url = base + "/robots.txt"
+    host = parsed.hostname
+    robots_url = f"https://{host}/robots.txt"
+    robot = urllib.robotparser.RobotFileParser()
+    robot.set_url(robots_url)
     try:
-        _, data, _ = _read_url(robots_url, host=parsed.hostname, limit=MAX_ROBOTS_BYTES)
-        robot = urllib.robotparser.RobotFileParser()
-        robot.set_url(robots_url)
+        _, data, _ = _read_url(robots_url, host=host, limit=MAX_ROBOTS_BYTES)
         robot.parse(data.decode("utf-8", errors="replace").splitlines())
-        if not robot.can_fetch(USER_AGENT, url):
-            return {"status": "robots_disallowed"}
     except urllib.error.HTTPError as exc:
-        if exc.code != 404:
+        if exc.code == 404:
+            robot.allow_all = True
+        else:
             return {"status": "robots_unavailable"}
     except (OSError, TimeoutError, ValueError, UnicodeError):
         return {"status": "robots_unavailable"}
-    try:
-        code, data, final_url = _read_url(url, host=parsed.hostname, limit=MAX_HTML_BYTES)
-        if code != 200:
-            return {"status": "fetch_failed"}
-        html = data.decode("utf-8", errors="replace")
-        status, deadline, excerpt = collect_official_deadline(html, now=now)
-        return {"status": status, "deadline_iso": deadline,
-                "evidence_url": final_url if status == "verified" else None,
-                "evidence_excerpt": excerpt}
-    except ValueError as exc:
-        return {"status": "unsafe_redirect" if str(exc) == "unsafe_redirect" else "fetch_failed"}
-    except (urllib.error.URLError, urllib.error.HTTPError, OSError, TimeoutError, UnicodeError):
-        return {"status": "fetch_failed"}
 
+    def allowed(page_url: str) -> bool:
+        return robot.can_fetch(USER_AGENT, page_url)
+
+    def fetch_page(page_url: str) -> tuple[str, str]:
+        status, data, final_url = _read_url(
+            page_url, host=host, limit=MAX_HTML_BYTES,
+        )
+        if status != 200 or data.lstrip().startswith(b"%PDF"):
+            raise ValueError("unsupported official source response")
+        return data.decode("utf-8", errors="replace"), final_url
+
+    return investigate_official_pages(
+        url, now=now, fetch_html=fetch_page, robots_allowed=allowed,
+        max_pages=3,
+    )
 
 def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
             recheck_no_explicit: bool = False, fetcher=check_official_url) -> dict:
@@ -623,8 +625,12 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         status = result.get("status")
         if status not in STATUSES - {"unverified", "stale"}:
             raise ValueError("Untrusted verifier status")
-        entry.update(status=status, checked_at=stamp, deadline_iso=None,
-                     evidence_url=None, evidence_excerpt=None)
+        entry.update(
+            status=status, checked_at=stamp, deadline_iso=None,
+            evidence_url=None, evidence_excerpt=None,
+            official_details=result.get("official_details") or {},
+            investigated_urls=result.get("investigated_urls") or [],
+        )
         if status == "verified":
             entry.update(deadline_iso=result["deadline_iso"],
                          evidence_url=result["evidence_url"],
