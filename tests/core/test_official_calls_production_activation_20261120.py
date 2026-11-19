@@ -2,7 +2,6 @@
 from pathlib import Path
 
 
-
 def test_reviewed_main_ingestion_explicitly_enables_official_funding_calls():
     workflow = Path(".github/workflows/pipeline.yml").read_text(encoding="utf-8")
     # Missing an env key makes Settings silently default to False.
