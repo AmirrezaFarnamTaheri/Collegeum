@@ -105,6 +105,10 @@ jobs:
           # General non-US Economics PhD admissions; verified primary-source dates only.
           TELEGRAM_PHD_ADMISSIONS_ENABLED: ${{ vars.TELEGRAM_PHD_ADMISSIONS_ENABLED || 'true' }}
           TELEGRAM_PHD_ADMISSIONS_MAX_PER_RUN: ${{ vars.TELEGRAM_PHD_ADMISSIONS_MAX_PER_RUN || '2' }}
+          # Independent official PhD funding calls verified from institution pages.
+          # Explicit 'false' opts out, while production defaults to published.
+          TELEGRAM_OFFICIAL_CALLS_ENABLED: ${{ vars.TELEGRAM_OFFICIAL_CALLS_ENABLED || 'true' }}
+          TELEGRAM_OFFICIAL_CALLS_MAX_PER_RUN: ${{ vars.TELEGRAM_OFFICIAL_CALLS_MAX_PER_RUN || '2' }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
           # Operational alerts are opt-in for safety (they need a distinct
           # private admin chat), but the scheduled workflow IS the operator, so
