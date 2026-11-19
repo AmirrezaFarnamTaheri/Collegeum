@@ -665,7 +665,7 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
          if i not in rechecking and eligible_for_check(item, now=now)),
         key=priority,
     )
-    selected = set((readable_negatives + needs_details + due)[:batch_size])
+    selected = set((needs_details + readable_negatives + due)[:batch_size])
     stamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, entry in enumerate(programmes):
         old = _timestamp(entry.get("checked_at"))
