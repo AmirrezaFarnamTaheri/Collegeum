@@ -13,10 +13,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import urllib.robotparser
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "config/official_phd_calls_sources.json"
@@ -172,14 +173,18 @@ def _intake(title: str, text: str) -> int | None:
     match = re.search(r"\b(20\d{2})\b", title)
     if match:
         return int(match.group(1))
-    for expression in (
+    for match in re.finditer(
         r"(?:studentship|scholarship) applications for the (20\d{2})/\d{2} academic year",
-        r"(?:starting|start(?:s|ing)?)\s+(?:in\s+)?(?:September|October|Autumn)[^\d]{0,8}(20\d{2})",
+        text, re.I,
     ):
-        match = re.search(expression, text, re.I)
-        if match:
+        # A previous, closed cycle is not an open scholarship.
+        if re.search(r"\bnow\s+open\b", text[match.end():match.end() + 95], re.I):
             return int(match.group(1))
-    return None
+    match = re.search(
+        r"(?:starting|start(?:s|ing)?)\s+(?:in\s+)?"
+        r"(?:September|October|Autumn)[^\d]{0,8}(20\d{2})", text, re.I,
+    )
+    return int(match.group(1)) if match else None
 
 
 def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date, str, str]]:
@@ -230,16 +235,15 @@ def extract_call(
     text = parsed.text()
     title = (parsed.headings[0] if parsed.headings else source.get("title", "")).strip()
     label = f"{title} {source.get('title', '')}"
-    if (not title or len(title) > 150 or not SUBJECT.search(label + " " + text[:450])
-            or EXCLUDE.search(title) or not safe_official_url(url, source["url"])):
-        status = "unrelated"
-    elif not (CALL_TITLE.search(label)
-              or (re.search(r"\bphd\b", title, re.I)
-                  and re.search(r"\b(?:studentships?|scholarships?)\b",
-                                text[:15000], re.I))):
-        status = "unrelated"
-    else:
-        status = "no_explicit_deadline"
+    invalid = (not title or len(title) > 150
+               or not SUBJECT.search(label + " " + text[:450])
+               or EXCLUDE.search(title)
+               or not safe_official_url(url, source["url"]))
+    relevant = (CALL_TITLE.search(label)
+                or (re.search(r"\bphd\b", title, re.I)
+                    and re.search(r"\b(?:studentships?|scholarships?)\b",
+                                  text[:15000], re.I)))
+    status = "unrelated" if invalid or not relevant else "no_explicit_deadline"
     kind = ("phd_studentship" if "studentship" in (label + " " + text[:500]).lower()
             else "phd_fellowship" if "fellowship" in label.lower()
             else "phd_scholarship")
@@ -390,7 +394,8 @@ def refresh_sources(
                 }
                 continue
             final_url = detail.get("final_url", url)
-            if not isinstance(final_url, str) or safe_official_url(final_url, source["url"]) != final_url:
+            if (not isinstance(final_url, str)
+                    or safe_official_url(final_url, source["url"]) != final_url):
                 failures += 1
                 continue
             html = detail.get("html")
