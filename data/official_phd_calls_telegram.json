@@ -11,6 +11,17 @@
       "state": "confirmed",
       "title": "PhD Scholarship in Economics 2027"
     },
+    "6e79b2d86afb73a5cede09283e883dbe": {
+      "attempted_at": "2026-11-19T23:55:55Z",
+      "deadline_iso": "2027-02-21",
+      "institution": "Henley Business School",
+      "intake_year": 2026,
+      "message_id": 136,
+      "official_url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
+      "sent_at": "2026-11-19T23:55:55Z",
+      "state": "confirmed",
+      "title": "Accounting PhD Opportunities"
+    },
     "8e6a7f5119ad361fc14191714e1d53c0": {
       "attempted_at": "2026-11-19T21:44:39Z",
       "deadline_iso": "2027-01-15",
@@ -21,6 +32,17 @@
       "sent_at": "2026-11-19T21:44:39Z",
       "state": "confirmed",
       "title": "International PhD studentships"
+    },
+    "917c278377f9444d7e030b8c668829ae": {
+      "attempted_at": "2026-11-19T23:55:55Z",
+      "deadline_iso": "2027-02-21",
+      "institution": "Henley Business School",
+      "intake_year": 2026,
+      "message_id": 137,
+      "official_url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
+      "sent_at": "2026-11-19T23:55:55Z",
+      "state": "confirmed",
+      "title": "Entrepreneurship and Innovation PhD Opportunities"
     },
     "f431c672e2a83d1dc45b9dc132b18ee2": {
       "attempted_at": "2026-11-19T21:29:43Z",
