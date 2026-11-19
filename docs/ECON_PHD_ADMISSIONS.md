@@ -62,8 +62,16 @@ Its copyright and permission notice is at
 ## Automatic refresh
 
 The independent `phd-admissions-refresh` workflow runs at **03:17, 09:17,
-15:17 and 21:17 UTC** (subject to GitHub Actions scheduler delays). Each run
-checks at most 25 oldest-due official programme URLs. Never-checked programmes
+15:17 and 21:17 UTC** (subject to GitHub Actions scheduler delays). A
+**successful scheduled `telegram-sync` completion on the repository's own
+`main` branch** also triggers this same, isolated refresh as a fallback
+when GitHub drops or delays a cron slot; failed, fork, PR and manual
+Telegram-sync events cannot trigger this privileged write workflow.
+Telegram sync supplies only the trusted completion signal: the admissions
+checker receives no Telegram credentials, sends no Telegram messages and
+never dispatches production ingestion. Its existing concurrency lock
+serializes overlapping checks. Each run checks at most 25 oldest-due
+official programme URLs. Never-checked programmes
 take priority so missed GitHub schedules cannot strand calendar shards. At a
 reliable four-runs-per-day cadence all 251 receive an initial attempted check
 within 11 successful runs (under three days). A recorded check is eligible
