@@ -192,7 +192,7 @@ def _intake(title: str, text: str) -> int | None:
         if re.search(r"\bnow\s+open\b", text[match.end():match.end() + 95], re.I):
             return int(match.group(1))
     match = re.search(
-        r"(?:starting|start(?:s|ing)?)\s+(?:in\s+)?"
+        r"(?:starting|start(?:s|ing)?|commenc(?:e|es|ing)|begin(?:s|ning)?)\s+(?:in\s+)?"
         r"(?:September|October|Autumn)"
         r"(?:\s*(?:/|or)\s*(?:September|October))?\s+(20\d{2})", text, re.I,
     )
