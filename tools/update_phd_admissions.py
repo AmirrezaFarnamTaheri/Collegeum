@@ -700,12 +700,14 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
          and _timestamp(item.get("checked_at")) is not None),
         key=priority,
     )
-    # Trusted checker upgrades also enrich already-verified admissions before
-    # their 11-day renewal. A missing fact must never be guessed from upstream.
+    # Trusted checker updates may change the interpretation of *previously*
+    # extracted facts (e.g. a conditional funding statement). Refresh all
+    # already-verified programme observations in the bounded push-triggered
+    # batch, including existing detail fields, without promoting upstream data.
+    # Scheduled refreshes preserve the normal 11-day cadence.
     needs_details = sorted(
         (i for i, item in enumerate(programmes)
          if recheck_no_explicit and item.get("status") == "verified"
-         and not item.get("official_details")
          and i not in readable_negatives),
         key=priority,
     )
