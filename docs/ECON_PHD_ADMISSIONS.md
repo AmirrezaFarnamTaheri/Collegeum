@@ -14,8 +14,11 @@ Its copyright and permission notice is at
   official programme links and **unverified** structure hints. No upstream
   deadline data is imported or used by a publisher.
 - `tools/update_phd_admissions.py` investigates the university's primary
-  programme URL and **at most two relevant, linked pages on the same HTTPS
-  institutional host**, checking robots.txt before every page. It does
+  programme URL and **at most two relevant linked admissions/funding pages**
+  on the same HTTPS institutional host. For generic domains (`.eu`, `.org`,
+  `.com`, etc.), one additional linked official contact page may corroborate
+  the institution's country through its mailing address (four pages maximum).
+  Every page requires robots.txt permission. It does
   **not** follow arbitrary external links, logins, PDFs or aggregators,
   bypass access controls, or scrape the upstream directory again. Blocked,
   off-host, contradictory, unsupported and unreachable evidence fails closed.
@@ -97,9 +100,11 @@ The programme catalogue never joins the employment job-board or
 `health.json`. Telegram announcements run only through the existing production
 publisher with its own `data/phd_admissions_telegram.json` receipt journal.
 They require a current official-source deadline, a fresh check, a matching
-institutional HTTPS source and corroborated non-US country-domain evidence.
-Country codes copied from the upstream directory are not sufficient on
-their own. Unknown-country, US, blocked, stale, yearless and ambiguous
+institutional HTTPS source and independent non-US country evidence:
+either the university's national domain or a current, source-cited institutional
+mailing address on its own HTTPS host. Generic domains such as `.eu` cannot
+prove country by themselves. Country codes copied from the upstream directory
+are not sufficient on their own. Unknown-country, US, blocked, stale, yearless and ambiguous
 admissions do not generate posts. The bot sends at most two programme
 announcements per normal run by default. Repeated or uncertain sends are
 held, not blindly retried, and prior confirmed posts are never deleted by
