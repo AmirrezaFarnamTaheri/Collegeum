@@ -148,6 +148,7 @@ def _read_receipts(path: Path) -> dict[str, Any]:
             not isinstance(receipt, dict) or
             receipt.get("state") not in {
                 "pending", "confirmed", "uncertain", "permanent_failure",
+                "reissue_authorized",
             }
         ):
             raise ValueError("Corrupted delivery receipt; hold all sends")
@@ -155,6 +156,11 @@ def _read_receipts(path: Path) -> dict[str, Any]:
             type(receipt.get("message_id")) is not int or receipt["message_id"] < 1
         ):
             raise ValueError("Missing confirmed Telegram message ID")
+        if receipt["state"] == "reissue_authorized" and (
+            type(receipt.get("prior_message_id")) is not int
+            or receipt["prior_message_id"] < 1
+        ):
+            raise ValueError("Missing removed message ID for authorized reissue")
     return payload
 
 
@@ -171,6 +177,10 @@ def _checkpoint(path: Path, payload: dict[str, Any]) -> None:
 def _has_prior_send(
     receipt: dict[str, Any], *, deadline: date, now: datetime,
 ) -> bool:
+    if receipt.get("state") == "reissue_authorized":
+        # A named operator confirmed removal of the exact prior message ID.
+        # A new pending checkpoint is recorded BEFORE any Telegram send.
+        return False
     if receipt.get("state") != "confirmed":
         # Pending, uncertain, and permanently refused sends require operator
         # reconciliation; restarting a runner never authorizes retry.
@@ -299,6 +309,45 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return html, keyboard
 
 
+
+def authorize_reissue(
+    receipt_path: str | Path, *, institution: str, country_code: str,
+    original_message_id: int, deleted_confirmed: bool,
+    now: datetime | None = None,
+) -> None:
+    """Allow one replacement only after an operator confirms *actual* removal.
+
+    A future intention to delete a message is not confirmation. This method
+    never calls Telegram and does not reset any other programme's receipt.
+    """
+    if not deleted_confirmed:
+        raise ValueError("Do not reissue before the old channel post is deleted")
+    if type(original_message_id) is not int or original_message_id < 1:
+        raise ValueError("Expected positive original Telegram message ID")
+    ledger_path = Path(receipt_path)
+    ledger = _read_receipts(ledger_path)
+    key = _delivery_key({"institution": institution, "country_code": country_code})
+    old = ledger["deliveries"].get(key)
+    if not isinstance(old, dict) or old.get("state") != "confirmed":
+        raise ValueError("Only a confirmed delivery can be replaced")
+    if old.get("message_id") != original_message_id:
+        raise ValueError("Message ID differs; never replace another post")
+    stamp = (now or datetime.now(UTC)).isoformat(
+        timespec="seconds",
+    ).replace("+00:00", "Z")
+    history = list(old.get("history", []))
+    history.append({
+        "message_id": original_message_id,
+        "deleted_confirmed_at": stamp,
+        "state": "operator_confirmed_removed",
+    })
+    old["state"] = "reissue_authorized"
+    old["prior_message_id"] = original_message_id
+    old["reissue_authorized_at"] = stamp
+    old["history"] = history
+    _checkpoint(ledger_path, ledger)
+
+
 def publish_official_admissions(
     catalog_path: str | Path,
     receipt_path: str | Path,
@@ -345,6 +394,9 @@ def publish_official_admissions(
             "evidence_url": row["evidence_url"],
             "attempted_at": stamp.isoformat(timespec="seconds").replace("+00:00", "Z"),
         }
+        if previous is not None and previous.get("state") == "reissue_authorized":
+            attempt["replaces_message_id"] = previous["prior_message_id"]
+            attempt["history"] = list(previous.get("history", []))
         ledger["deliveries"][key] = attempt
         # Persist a hold before attempting a potentially accepted remote send.
         # The pipeline's normal checkpoint commit preserves the journal in git.
