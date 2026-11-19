@@ -7,11 +7,11 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+
 from predoc_pipeline.publish.admissions import (
     eligible_official_admissions,
     publish_official_admissions,
 )
-
 from predoc_pipeline.publish.telegram import TelegramError
 
 NOW = datetime(2026, 11, 19, 8, 0, tzinfo=UTC)
