@@ -72,11 +72,24 @@ class PageText(HTMLParser):
         self.headings: list[str] = []
         self._heading_parts: list[str] = []
         self._in_h1 = False
+        self.links: list[tuple[str, str]] = []
+        self._anchor_href: str | None = None
+        self._anchor_parts: list[str] = []
+        self.blocks: list[str] = []
+        self._block_tag: str | None = None
+        self._block_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag == "h1":
             self._in_h1 = True
             self._heading_parts = []
+        if tag in {"h1", "h2", "h3", "h4", "p", "li", "dt", "dd", "th", "td"}:
+            if self._block_tag is None:
+                self._block_tag = tag
+                self._block_parts = []
+        if tag == "a" and not self.ignored:
+            self._anchor_href = dict(attrs).get("href")
+            self._anchor_parts = []
         if tag in {"script", "style", "svg", "noscript", "template"}:
             self.ignored += 1
         elif tag in {"p", "div", "h1", "h2", "h3", "li", "tr", "br"}:
@@ -88,6 +101,18 @@ class PageText(HTMLParser):
             if heading:
                 self.headings.append(heading)
             self._in_h1 = False
+        if tag == "a":
+            label = " ".join(" ".join(self._anchor_parts).split())
+            if self._anchor_href and label:
+                self.links.append((self._anchor_href, label))
+            self._anchor_href = None
+            self._anchor_parts = []
+        if tag == self._block_tag:
+            block = " ".join(" ".join(self._block_parts).split())
+            if block:
+                self.blocks.append(block)
+            self._block_tag = None
+            self._block_parts = []
         if tag in {"script", "style", "svg", "noscript", "template"}:
             self.ignored = max(0, self.ignored - 1)
         elif tag in {"p", "div", "h1", "h2", "h3", "li", "tr"}:
@@ -98,6 +123,10 @@ class PageText(HTMLParser):
             self.chunks.append(data)
             if self._in_h1:
                 self._heading_parts.append(data)
+            if self._anchor_href is not None:
+                self._anchor_parts.append(data)
+            if self._block_tag is not None:
+                self._block_parts.append(data)
 
     def text(self) -> str:
         return " ".join(" ".join(self.chunks).split())
