@@ -11,7 +11,6 @@ from unittest.mock import Mock, patch
 import pytest
 
 from predoc_pipeline.publish.telegram_intents import GitHubIntentReserver
-
 from predoc_pipeline.publish.admissions import publish_official_admissions
 from predoc_pipeline.publish.official_calls import publish_official_calls
 
