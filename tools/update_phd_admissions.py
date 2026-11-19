@@ -258,6 +258,20 @@ def extract_official_country(
             candidates.extend(blocks[index + 1:index + 4])
         elif re.search(r"^\s*(?:mailing|postal)\s+address\s*:", block, re.I):
             candidates.append(block)
+    # Some university footers publish their *institutional mailing address*
+    # as raw footer text rather than a <p> or <address> element. Require a
+    # copyright marker, a street indicator and a postal code together:
+    # "Time in Italy" or generic study-abroad mentions do not qualify.
+    tail = parser.text()[-1600:]
+    marker = tail.rfind("©")
+    if marker >= 0:
+        footer_address = tail[marker:marker + 220]
+        if (
+            re.search(r"\b(?:Via|Street|Road|Avenue|Carrer)\b",
+                      footer_address, re.I)
+            and re.search(r"\b(?:[A-Z]-)?\d{4,5}\b", footer_address)
+        ):
+            candidates.append(footer_address)
     found: dict[str, str] = {}
     for address in candidates:
         matches = list(OFFICIAL_COUNTRY_WORD.finditer(address))
