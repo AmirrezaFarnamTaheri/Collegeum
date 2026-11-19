@@ -12,6 +12,7 @@ from predoc_pipeline.publish.admissions import (
     eligible_official_admissions,
     publish_official_admissions,
 )
+
 from predoc_pipeline.publish.telegram import TelegramError
 
 NOW = datetime(2026, 11, 19, 8, 0, tzinfo=UTC)
@@ -144,7 +145,8 @@ def test_uncertain_telegram_submission_is_held_and_never_blindly_retried(tmp_pat
     assert publish_official_admissions(
         catalog, receipt, telegram, chat_id="@channel", enabled=True, now=NOW,
     ) == 0
-    assert next(iter(json.loads(receipt.read_text())["deliveries"].values()))["state"] == "uncertain"
+    entries = json.loads(receipt.read_text())["deliveries"]
+    assert next(iter(entries.values()))["state"] == "uncertain"
     telegram.send_message.side_effect = None
     assert publish_official_admissions(
         catalog, receipt, telegram, chat_id="@channel",
