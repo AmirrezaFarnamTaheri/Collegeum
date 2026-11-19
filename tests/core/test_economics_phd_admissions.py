@@ -281,12 +281,31 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertIn("schedule:", workflow)
         self.assertIn("tools/update_phd_admissions.py", workflow)
         self.assertIn("contents: write", workflow)
-        self.assertNotIn("telegram-sync", workflow.lower())
+        self.assertNotIn("telegram_bot_token", workflow.lower())
         self.assertNotIn("predoc-pipeline", workflow.lower())
         pages = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
         self.assertIn("phd-admissions-refresh", pages)
         self.assertIn("phd_admissions.json", pages)
         self.assertIn("econ-grad-app-deadlines-MIT.txt", pages)
+
+    def test_recovery_runs_only_after_trusted_main_scheduled_sync(self):
+        workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
+            encoding="utf-8"
+        )
+        # A missed GitHub cron must not permanently strand new institutions.
+        self.assertIn("workflow_run:", workflow)
+        self.assertIn('workflows: ["telegram-sync"]', workflow)
+        self.assertIn("types: [completed]", workflow)
+        self.assertIn("github.event.workflow_run.head_repository.full_name", workflow)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'", workflow)
+        self.assertIn("github.event.workflow_run.event == 'schedule'", workflow)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", workflow)
+        self.assertIn("github.event.workflow_run.name == 'telegram-sync'", workflow)
+        self.assertIn("github.event_name == 'workflow_run'", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+        self.assertNotIn("actions: write", workflow)
+        self.assertNotIn("TELEGRAM_BOT_TOKEN", workflow)
+        self.assertNotIn("GH_TOKEN", workflow)
 
     def test_parser_change_rechecks_readable_negative_without_retrying_blocked(self):
         now = datetime(2026, 11, 19, tzinfo=UTC)
