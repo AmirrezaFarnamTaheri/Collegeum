@@ -355,3 +355,28 @@ def test_official_admission_route_is_not_derived_from_upstream_hint():
         html, evidence_url="https://www.aalto.fi/en/phd", checked_at=NOW,
     )
     assert "admission_route" not in f
+
+
+
+def test_phd_track_first_year_fee_and_gre_requirement_are_not_assumed_free():
+    page = """
+        <h1>PhD Track Program</h1>
+        <p>This program is the first year of the PhD in Economics
+        and Finance at Universitat Pompeu Fabra (UPF).</p>
+        <h2>Tuition Fee</h2><p>Student Fee: €18,500</p>
+        <h2>Admissions and Entry Requirements</h2>
+        <p>Candidates of the PhD-track program must meet these criteria:
+        A GRE score is required to be considered for admission.</p>
+        <h2>Tuition Funding and Scholarships</h2>
+        <p>Funding opportunities at BSE are awarded on the basis
+        of academic excellence.</p>
+    """
+    official = "https://bse.eu/masters-degrees/economics-finance/upf-phd-track"
+    facts = extract_official_details(
+        page, evidence_url=official, checked_at=NOW,
+    )
+    assert "18,500" in facts["tuition"]["value"]
+    assert "required" in facts["tests"]["value"].lower()
+    assert "merit" in facts["funding_note"]["value"].lower()
+    assert "guaranteed" in facts["funding_note"]["value"].lower()
+    assert all(item["evidence_url"] == official for item in facts.values())
