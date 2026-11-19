@@ -283,3 +283,75 @@ def test_simple_official_label_value_in_div_is_not_lost():
     f = extract_official_details(html, evidence_url=AALTO, checked_at=NOW)
     assert f["language"]["value"] == "English"
     assert f["duration"]["value"] == "4 years, full-time"
+
+
+
+def test_official_phd_track_is_first_year_of_doctorate_via_masters_stage():
+    track_url = "https://bse.eu/masters-degrees/economics-finance/upf-phd-track"
+    admission_url = "https://bse.eu/masters-degrees/admissions"
+    pages = {
+        track_url: (
+            "<h1>PhD Track Program</h1>"
+            "<p>This program is the first year of the PhD in Economics and "
+            "Finance at Universitat Pompeu Fabra (UPF).</p>"
+            '<a href="/masters-degrees/admissions">PhD track admissions</a>',
+            track_url,
+        ),
+        admission_url: (
+            "<h1>Admission Process for Master’s Degrees</h1>"
+            "<p>2027-2028 applications are open! First Round Application "
+            "deadline: January 15, 2027.</p>"
+            "<p>If you are applying to the PhD Track Program, a GRE score "
+            "is required.</p>",
+            admission_url,
+        ),
+    }
+    result = investigate_official_pages(
+        track_url, now=NOW, fetch_html=lambda url: pages[url],
+        robots_allowed=lambda url: True,
+    )
+    assert result["status"] == "verified"
+    assert result["deadline_iso"] == "2027-01-15"
+    assert result["evidence_url"] == admission_url
+    route = result["official_details"]["admission_route"]
+    assert "phd track" in route["value"].lower()
+    assert "master" in route["value"].lower()
+    assert route["evidence_url"] == track_url
+
+
+def test_masters_admissions_deadline_does_not_equal_doctoral_admission_without_track():
+    programme = "https://bse.eu/programmes/economics-phd"
+    admission = "https://bse.eu/masters-degrees/admissions"
+    pages = {
+        programme: (
+            "<h1>Economics PhD prospective students</h1>"
+            '<a href="/masters-degrees/admissions">Admissions</a>',
+            programme,
+        ),
+        admission: (
+            "<h1>Admission Process for Master’s Degrees</h1>"
+            "<p>2027-2028 applications are open. First Round Application "
+            "deadline: January 15, 2027.</p>"
+            "<p>We provide an Economics PhD track introduction in the FAQ.</p>",
+            admission,
+        ),
+    }
+    result = investigate_official_pages(
+        programme, now=NOW, fetch_html=lambda url: pages[url],
+        robots_allowed=lambda url: True,
+    )
+    assert result["status"] != "verified"
+    assert result["deadline_iso"] is None
+    assert "admission_route" not in result["official_details"]
+
+
+def test_official_admission_route_is_not_derived_from_upstream_hint():
+    html = """
+        <h1>Economics PhD admission</h1>
+        <p>Application deadline: January 15, 2027.</p>
+        <p>Master's degree required for entry.</p>
+    """
+    f = extract_official_details(
+        html, evidence_url="https://www.aalto.fi/en/phd", checked_at=NOW,
+    )
+    assert "admission_route" not in f
