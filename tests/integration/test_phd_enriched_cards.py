@@ -87,3 +87,31 @@ def test_malicious_university_markup_is_escaped():
     assert "<script>" not in html
     assert "href='https://attacker.test'" not in html
     assert "&lt;script&gt;" in html
+
+
+
+def test_verified_phd_track_masters_route_is_labelled_not_misrepresented():
+    row = _row()
+    official = "https://bse.eu/masters-degrees/economics-finance/upf-phd-track"
+    row.update(
+        institution="Barcelona School of Economics", country_code="ES",
+        official_programme_url=official,
+        evidence_url="https://bse.eu/masters-degrees/admissions",
+        deadline_iso="2027-01-15",
+    )
+    row["official_details"] = {
+        "admission_route": {
+            "value": "PhD track — first-year Master's-stage entry",
+            "evidence_url": official,
+            "evidence_excerpt": (
+                "This program is the first year of the PhD in Economics and "
+                "Finance at Universitat Pompeu Fabra (UPF)."
+            ),
+            "checked_at": NOW,
+        },
+    }
+    body, _ = _message(row)
+    assert "PhD track" in body
+    assert "Master" in body
+    assert "🎓 Entry route:" in body
+    assert "not an employment vacancy" in body
