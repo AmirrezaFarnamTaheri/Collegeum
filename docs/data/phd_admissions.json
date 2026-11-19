@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-19T14:28:10Z",
+  "generated_at": "2026-11-19T18:17:11Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -1003,275 +1003,406 @@
       "country_code": "US",
       "official_programme_url": "https://economics.indiana.edu/graduate/how-to-apply/phd-index.html",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.indiana.edu/graduate/how-to-apply/phd-index.html",
+        "https://economics.indiana.edu/graduate/how-to-apply/mseds-index.html",
+        "https://economics.indiana.edu/undergraduate/economics-amp/how-to-apply.html",
+        "https://economics.indiana.edu/graduate/fellowships-funding.html"
+      ]
     },
     {
       "institution": "Iowa State University",
       "country_code": "US",
       "official_programme_url": "https://www.econ.iastate.edu/frequently-asked-questions",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.econ.iastate.edu/frequently-asked-questions",
+        "https://www.econ.iastate.edu/how-apply-graduate-program",
+        "https://www.econ.iastate.edu/ms-program",
+        "https://www.econ.iastate.edu/ms-program/ms-degree-requirements"
+      ]
     },
     {
       "institution": "Johns Hopkins University",
       "country_code": "US",
       "official_programme_url": "https://econ.jhu.edu/graduate/phd-program/admissions/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Keio University",
       "country_code": "JP",
       "official_programme_url": "https://www.keio.ac.jp/en/grad-admissions/doctoral/gsecon/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.keio.ac.jp/en/admissions/grad/doctoral/gsecon/",
+        "https://www.keio.ac.jp/en/admissions/fee/",
+        "https://www.keio.ac.jp/en/admissions/grad/doctoral/"
+      ]
     },
     {
       "institution": "King's College London",
       "country_code": "UK",
       "official_programme_url": "https://www.kcl.ac.uk/business/research/phd-pages/phd-home",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Kyoto University",
       "country_code": "JP",
       "official_programme_url": "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
+        "https://www.econ.kyoto-u.ac.jp/kueac/application/",
+        "https://www.econ.kyoto-u.ac.jp/kueac/application/masters/"
+      ]
     },
     {
       "institution": "Kyushu University",
       "country_code": "JP",
       "official_programme_url": "https://www.econ.kyushu-u.ac.jp/english/pa_index/pa_7/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.econ.kyushu-u.ac.jp/english/pa_index/pa_7/",
+        "https://www.econ.kyushu-u.ac.jp/english/pa_index/",
+        "https://www.econ.kyushu-u.ac.jp/english/pa_index/pa_index2/pa_15/"
+      ]
     },
     {
       "institution": "Lincoln University",
       "country_code": "NZ",
       "official_programme_url": "https://www.lincoln.ac.nz/study/apply-and-enrol/apply/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "LMU Munich",
       "country_code": "DE",
       "official_programme_url": "https://www.econ.lmu.de/en/faculty/mgse/program-application/index.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "unsafe_redirect",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "London Business School",
       "country_code": "UK",
       "official_programme_url": "https://www.london.edu/phd#howtoapply",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.london.edu/phd#howtoapply",
+        "https://www.london.edu/masters-degrees/executive-mba/apply",
+        "https://www.london.edu/masters-degrees/executive-mba/fees-financing-and-scholarships",
+        "https://www.london.edu/masters-degrees/financial-aid/search-for-funding"
+      ]
     },
     {
       "institution": "London School of Economics and Political Science",
       "country_code": "UK",
       "official_programme_url": "https://www.lse.ac.uk/economics/study/research/phd-admissions-faqs",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Louisiana State University",
       "country_code": "US",
       "official_programme_url": "https://www.lsu.edu/business/economics/phd-economics.php",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.lsu.edu/business/economics/phd-economics.php",
+        "https://lsu.edu/graduateschool/admissions/apply.php",
+        "https://www.lsu.edu/admission/index.php",
+        "https://www.lsu.edu/admissions/apply/index.php"
+      ]
     },
     {
       "institution": "Luiss University",
       "country_code": "IT",
       "official_programme_url": "https://phd.luiss.it/economics/open-calls/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://phd.luiss.it/economics/open-calls/",
+        "https://phd.luiss.it/economics/admission-and-ranking-list-2/"
+      ]
     },
     {
       "institution": "Lund University",
       "country_code": "SE",
       "official_programme_url": "https://www.lusem.lu.se/organisation/department-economics/doctoral-studies-department-economics/application-phd-programme-economics",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.lusem.lu.se/organisation/department-economics/doctoral-studies-economics/application-phd-programme",
+        "https://www.lusem.lu.se/organisation/department-economic-history/doctoral-studies-department-economic-history/how-apply-doctoral-studies-department-economic-history",
+        "https://www.lusem.lu.se/study/application-and-admission"
+      ]
     },
     {
       "institution": "Massachusetts Institute of Technology",
       "country_code": "US",
       "official_programme_url": "https://economics.mit.edu/academic-programs/phd-program/admissions",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.mit.edu/academic-programs/phd-program/admissions",
+        "https://economics.mit.edu/contact",
+        "https://economics.mit.edu/academic-programs/phd-program/admissions-faq"
+      ]
     },
     {
       "institution": "Massey University",
       "country_code": "NZ",
       "official_programme_url": "https://www.massey.ac.nz/study/admission-and-enrolment/key-admission-and-course-enrolment-dates/admission-application-due-dates/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.massey.ac.nz/study/admission-and-enrolment/key-admission-and-course-enrolment-dates/admission-application-due-dates/",
+        "https://www.massey.ac.nz/study/admission-and-enrolment/",
+        "https://www.massey.ac.nz/study/admission-and-enrolment/application-checklists-for-domestic-students/"
+      ]
     },
     {
       "institution": "McGill University",
       "country_code": "CA",
       "official_programme_url": "https://www.mcgill.ca/economics/graduates/admissions",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.mcgill.ca/economics/graduates/admissions",
+        "https://www.mcgill.ca/economics/category/tags/admission-mcgill-university",
+        "https://www.mcgill.ca/economics/category/tags/application-graduate-program"
+      ]
     },
     {
       "institution": "McMaster University",
       "country_code": "CA",
       "official_programme_url": "https://economics.mcmaster.ca/graduate-programs/phd-economics/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.mcmaster.ca/graduate-programs/phd-economics/"
+      ]
     },
     {
       "institution": "Michigan State University",
       "country_code": "US",
       "official_programme_url": "https://econ.msu.edu/academics/graduate/application-info",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://econ.msu.edu/academics/graduate/application-info",
+        "https://econ.msu.edu/contact",
+        "https://econ.msu.edu/admissions",
+        "https://econ.msu.edu/academics/undergraduate/scholarships"
+      ]
     },
     {
       "institution": "Monash University",
       "country_code": "AU",
       "official_programme_url": "https://www.monash.edu/business/research/phd-programs/how-to-apply/integrated",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Nanyang Technological University",
       "country_code": "SG",
       "official_programme_url": "https://www.ntu.edu.sg/education/graduate-programme/ph.d.-in-economics",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {
+        "institution_country": {
+          "value": "Singapore",
+          "evidence_url": "https://www.ntu.edu.sg/admissions/graduate/programme/ph.d.-in-economics",
+          "evidence_excerpt": "Novena Campus 11 Mandalay Road, Singapore 308232 Tel: (65) 65138572",
+          "checked_at": "2026-11-19T18:17:11Z"
+        }
+      },
+      "investigated_urls": [
+        "https://www.ntu.edu.sg/admissions/graduate/programme/ph.d.-in-economics",
+        "https://www.ntu.edu.sg/admissions/graduate/financialmatters/pgtuitionfees",
+        "https://www.ntu.edu.sg/admissions"
+      ]
     },
     {
       "institution": "National Taiwan University",
       "country_code": "TW",
       "official_programme_url": "https://econ.ntu.edu.tw/en/archives/9373",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://econ.ntu.edu.tw/en/archives/9373",
+        "https://econ.ntu.edu.tw/en/archives/9779",
+        "https://econ.ntu.edu.tw/en/archives/9792"
+      ]
     },
     {
       "institution": "National University of Singapore",
       "country_code": "SG",
       "official_programme_url": "https://fass.nus.edu.sg/ecs/doctor-of-philosophy-economics/",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://fass.nus.edu.sg/ecs/doctor-of-philosophy-economics/",
+        "https://fass.nus.edu.sg/graduate/research/application-information/",
+        "https://fass.nus.edu.sg/ecs/requirements-for-economics-major/"
+      ]
     },
     {
       "institution": "New York University",
       "country_code": "US",
       "official_programme_url": "https://gsas.nyu.edu/admissions/gsas-application-resource-center/2017-programs--requirements--and-deadlines/economics.html",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Newcastle University",
       "country_code": "UK",
       "official_programme_url": "https://www.ncl.ac.uk/postgraduate/degrees/8240f-66/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T18:17:11Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.ncl.ac.uk/postgraduate/degrees/8240f-66/",
+        "https://www.ncl.ac.uk/careers/making-applications/",
+        "https://www.ncl.ac.uk/careers/making-applications/interviews-assessments/"
+      ]
     },
     {
       "institution": "NHH Norwegian School of Economics",
