@@ -8,7 +8,7 @@
       "institution": "Berlin School of Economics",
       "message_id": 129,
       "sent_at": "2026-11-19T09:01:41Z",
-      "state": "confirmed",
+      "state": "reissue_authorized",
       "history": [
         {
           "message_id": 129,
@@ -19,9 +19,16 @@
           "state": "safety_hold_for_explicit_deletion_confirmation",
           "message_id": 129,
           "recorded_at": "2026-11-19T18:12:59Z"
+        },
+        {
+          "message_id": 129,
+          "deleted_confirmed_at": "2026-11-19T19:24:00Z",
+          "state": "operator_confirmed_removed",
+          "confirmation_source": "user statement: deleted Telegram channel posts 128 and 129"
         }
       ],
-      "reissue_hold_reason": "deletion_not_independently_confirmed"
+      "prior_message_id": 129,
+      "reissue_authorized_at": "2026-11-19T19:24:00Z"
     },
     "6d312c5c3ca3fce1cf68812bbb63334e": {
       "attempted_at": "2026-11-19T09:01:41Z",
@@ -31,7 +38,7 @@
       "institution": "Aalto University",
       "message_id": 128,
       "sent_at": "2026-11-19T09:01:41Z",
-      "state": "confirmed",
+      "state": "reissue_authorized",
       "history": [
         {
           "message_id": 128,
@@ -42,9 +49,16 @@
           "state": "safety_hold_for_explicit_deletion_confirmation",
           "message_id": 128,
           "recorded_at": "2026-11-19T18:12:59Z"
+        },
+        {
+          "message_id": 128,
+          "deleted_confirmed_at": "2026-11-19T19:24:00Z",
+          "state": "operator_confirmed_removed",
+          "confirmation_source": "user statement: deleted Telegram channel posts 128 and 129"
         }
       ],
-      "reissue_hold_reason": "deletion_not_independently_confirmed"
+      "prior_message_id": 128,
+      "reissue_authorized_at": "2026-11-19T19:24:00Z"
     }
   },
   "version": 1
