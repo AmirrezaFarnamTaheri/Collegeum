@@ -412,8 +412,12 @@ def publish_official_admissions(
             elif exc.permanent:
                 attempt["state"] = "permanent_failure"
             else:
-                # Known no-delivery rate limits can retry in a later cycle.
-                ledger["deliveries"].pop(key, None)
+                # Known no-delivery rate limits can retry later. For an
+                # authorised reissue, never discard the prior-message audit.
+                if previous is not None and previous.get("state") == "reissue_authorized":
+                    ledger["deliveries"][key] = previous
+                else:
+                    ledger["deliveries"].pop(key, None)
             _checkpoint(ledger_path, ledger)
             log.warning("telegram_phd_admission_not_confirmed",
                         institution=row["institution"], uncertain=exc.uncertain,
