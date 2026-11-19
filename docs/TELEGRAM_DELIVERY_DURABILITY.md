@@ -54,6 +54,13 @@ the channel and GitHub run audit. If a Telegram message was confirmed,
 reconcile its receipt. Otherwise require the explicit operator workflow for
 a replacement; never delete a reservation merely to force a send.
 
+When a GitHub reservation exists but Telegram explicitly refuses a send
+(such as HTTP 429), the receipt becomes **retry_held**, not an automatic retry.
+The official-call health summary reports pending, retry_held, uncertain, and
+permanent_failure states separately; all are unconfirmed publication backlog.
+This makes an access or rate-limit failure visible without risking a second
+accepted send.
+
 Issue #176 tracks the original crash window and recovery policy. Regression
 tests cover duplicate HTTP 422, unknown API outcome, lost runner-local ledger,
 admissions lifecycle, explicit reissues, and fail-closed missing configuration.
