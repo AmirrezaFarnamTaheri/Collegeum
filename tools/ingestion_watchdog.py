@@ -8,6 +8,7 @@ confined to the small CLI adapter at the bottom.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -18,6 +19,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 STALE_AFTER = timedelta(hours=8)  # Two nominal four-hour ingestion intervals.
 FUTURE_SKEW = timedelta(minutes=2)
@@ -200,6 +202,124 @@ def evaluate_publisher_revision(
     return Decision(True, "publisher-revision-not-ingested")
 
 
+
+def evaluate_admissions_trigger(
+    catalog: Any, ledger: Any, runs: Any, *, now: datetime,
+) -> Decision:
+    """Request one ordinary pipeline run for unprocessed official admissions.
+
+    This is only a trigger gate, not the authoritative publication eligibility
+    checker. The publisher independently revalidates every official source.
+    Never dispatch when a recent or active ingestion might have processed the
+    catalogue, or when ledger/source provenance is unreadable.
+    """
+    if now.tzinfo is None:
+        raise ValueError("Expected an aware clock")
+    now = now.astimezone(UTC)
+    if (
+        not isinstance(catalog, dict)
+        or catalog.get("kind") != "economics_phd_admissions_observations"
+        or catalog.get("scope") != "official_programme_sources_only"
+        or not isinstance(catalog.get("source"), dict)
+        or catalog["source"].get("deadline_values_reused") is not False
+        or not isinstance(catalog.get("programmes"), list)
+        or not isinstance(ledger, dict) or ledger.get("version") != 1
+        or not isinstance(ledger.get("deliveries"), dict)
+        or not isinstance(runs, list) or not runs
+    ):
+        return Decision(False, "untrusted-admissions-evidence")
+    main_runs = []
+    for run in runs:
+        if not isinstance(run, dict):
+            return Decision(False, "untrusted-run-history")
+        if run.get("head_branch") != "main":
+            continue
+        if run.get("name") != "predoc-pipeline" or run.get("status") not in KNOWN_STATUSES:
+            return Decision(False, "untrusted-run-history")
+        try:
+            created = _timestamp(run.get("created_at"))
+        except (ValueError, TypeError, OverflowError):
+            return Decision(False, "untrusted-run-history")
+        if created > now + FUTURE_SKEW:
+            return Decision(False, "untrusted-run-history")
+        main_runs.append((created, run["status"]))
+    if not main_runs:
+        return Decision(False, "untrusted-run-history")
+    if any(status in ACTIVE_STATUSES for _, status in main_runs):
+        return Decision(False, "pipeline-already-running")
+    latest = max(created for created, _ in main_runs)
+    for row in catalog["programmes"]:
+        if not isinstance(row, dict) or row.get("status") != "verified":
+            continue
+        name, country = row.get("institution"), row.get("country_code")
+        if (
+            not isinstance(name, str) or not name.strip()
+            or not isinstance(country, str) or not re.fullmatch(r"[A-Z]{2}", country)
+            or country == "US"
+        ):
+            continue
+        try:
+            checked = _timestamp(row.get("checked_at"))
+            deadline = datetime.fromisoformat(str(row.get("deadline_iso"))).date()
+        except (ValueError, TypeError, OverflowError):
+            continue
+        if (checked > now or now - checked > timedelta(days=14)
+                or deadline < now.date() or deadline > (now + timedelta(days=366)).date()):
+            continue
+        official, evidence = row.get("official_programme_url"), row.get("evidence_url")
+        if not isinstance(official, str) or not isinstance(evidence, str):
+            continue
+        source, fact_url = urlsplit(official), urlsplit(evidence)
+        if (
+            source.scheme != "https" or fact_url.scheme != "https"
+            or not source.hostname or not fact_url.hostname
+            or source.hostname.lower().removeprefix("www.")
+                != fact_url.hostname.lower().removeprefix("www.")
+            or source.username or fact_url.username or source.password or fact_url.password
+            or source.port not in (None, 443) or fact_url.port not in (None, 443)
+        ):
+            continue
+        excerpt = row.get("evidence_excerpt")
+        if (
+            not isinstance(excerpt, str)
+            or str(deadline.year) not in excerpt
+            or not re.search(r"\b(?:deadline|closes?|closing)\b", excerpt, re.I)
+        ):
+            continue
+        suffix = "uk" if country in {"UK", "GB"} else country.lower()
+        host = source.hostname.lower().removeprefix("www.")
+        corroborated = host.endswith("." + suffix)
+        if not corroborated:
+            fact = (row.get("official_details") or {}).get("institution_country")
+            corroborated = bool(
+                isinstance(fact, dict)
+                and isinstance(fact.get("value"), str)
+                and fact.get("checked_at") == row.get("checked_at")
+                and isinstance(fact.get("evidence_url"), str)
+                and fact["evidence_url"] in row.get("investigated_urls", [])
+                and urlsplit(fact["evidence_url"]).hostname
+                and urlsplit(fact["evidence_url"]).hostname.lower().removeprefix("www.") == host
+                and isinstance(fact.get("evidence_excerpt"), str)
+                and fact["value"].casefold() in fact["evidence_excerpt"].casefold()
+            )
+        if not corroborated:
+            continue
+        key = hashlib.sha256(f"{country}|{name.strip().casefold()}".encode()).hexdigest()[:32]
+        receipt = ledger["deliveries"].get(key)
+        if receipt is None and checked > latest:
+            return Decision(True, "new-verified-admissions-awaiting-publisher")
+        if isinstance(receipt, dict) and receipt.get("state") == "reissue_authorized":
+            try:
+                authorized = _timestamp(receipt.get("reissue_authorized_at"))
+            except (ValueError, TypeError, OverflowError):
+                continue
+            if (authorized <= now and authorized > latest
+                    and type(receipt.get("prior_message_id")) is int
+                    and receipt["prior_message_id"] > 0):
+                return Decision(True, "authorized-admissions-reissue-awaiting-publisher")
+    return Decision(False, "no-new-eligible-admissions")
+
+
 def audit_cadence(
     runs: Any, *, now: datetime, lookback: timedelta = timedelta(hours=24),
 ) -> CadenceAudit:
@@ -368,6 +488,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dispatch", action="store_true",
                         help="Allow exactly one guarded workflow_dispatch with dry_run=false")
+    parser.add_argument("--admissions-trigger", action="store_true",
+                        help="Check for verified admissions awaiting the publisher")
     parser.add_argument("--strict-cadence", action="store_true",
                         help="Fail the monitor for verified unobserved mature cron slots")
     parser.add_argument("--health", default="docs/data/health.json", type=Path)
@@ -388,6 +510,14 @@ def main(argv: list[str] | None = None) -> int:
         runs = response["workflow_runs"]
         decision = evaluate(health, runs, now=now)
         cadence = audit_cadence(runs, now=now)
+        if args.admissions_trigger and not decision.dispatch:
+            admission_catalog = json.loads(Path("docs/data/phd_admissions.json").read_text(encoding="utf-8"))
+            admission_ledger = json.loads(Path("data/phd_admissions_telegram.json").read_text(encoding="utf-8"))
+            recovery = evaluate_admissions_trigger(
+                admission_catalog, admission_ledger, runs, now=now,
+            )
+            if recovery.dispatch:
+                decision = recovery
         if (decision.reason == "fresh"
                 and os.environ.get("RELEASE_CHECK") == "true"
                 and os.environ.get("GITHUB_SHA") == os.environ.get("CI_HEAD_SHA")):
