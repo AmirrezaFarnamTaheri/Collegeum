@@ -13,7 +13,9 @@ indexes, plus the two currently open Economics and Energy/Climate 2027
 PhD call pages directly (so pagination cannot hide them), and five Henley
 departmental PhD opportunities pages (Finance and Accounting, International
 Business and Strategy, Informatics and Operations, Entrepreneurship, and
-Leadership/Organisations). Additional institutions can be added to this reviewed
+Leadership/Organisations), plus the University of Reading's distinct
+**International PhD Studentship Competition** for all eligible research
+areas, explicitly including Henley Business School. Additional institutions can be added to this reviewed
 registry without changing the parser or publisher.
 
 The monitor follows **at most six new** relevant IEB same-host HTML call links per
@@ -41,6 +43,11 @@ Examples from the November 2026 verified primary-source investigation:
   cutoff, **10 January 2027** is a recommended PhD admission-application date,
   and **30 June 2027** is a different PhD programme deadline. They are never
   treated as interchangeable dates.
+- University of Reading's separate International PhD Studentship Competition
+  (including Henley applicants) closes **15 January 2027**. Its official page
+  calls this the application deadline, and the parser requires the funding
+  page's own Deadline section and handles day ordinals (15th). This is **not**
+  the Henley departmental studentship closing 21 February 2027.
 - CEMFI's independently monitored **programme** admission remains outside
   this scholarship ledger. Its current official verification is policy-blocked
   and is not promoted by social-post dates.
