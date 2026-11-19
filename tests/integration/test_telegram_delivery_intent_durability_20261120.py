@@ -326,3 +326,38 @@ def test_definite_telegram_rejection_retains_durable_intent_for_review(
         reserve_intent=lambda ns, key, op: accepted_reservations.append(op),
     ) == 0
     telegram.send_message.assert_called_once()
+
+
+
+def test_admissions_authorized_reissue_rate_limit_does_not_loop_dispatch(
+    tmp_path: Path,
+):
+    from predoc_pipeline.publish.admissions import _delivery_key
+
+    catalog = tmp_path / "adm.json"
+    ledger = tmp_path / "receipts.json"
+    row = ADMISSIONS["programmes"][0]
+    key = _delivery_key(row)
+    catalog.write_text(json.dumps(ADMISSIONS), encoding="utf-8")
+    ledger.write_text(json.dumps({"version": 1, "deliveries": {
+        key: {"state": "reissue_authorized", "prior_message_id": 701,
+              "reissue_authorized_at": "2026-11-20T07:15:00Z",
+              "institution": row["institution"], "country_code": "DE"}
+    }}), encoding="utf-8")
+    telegram = Mock()
+    telegram.send_message.side_effect = TelegramError("rate limited", status=429)
+    reservations = []
+    assert publish_official_admissions(
+        catalog, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
+        reserve_intent=lambda ns, key, op: reservations.append(op),
+    ) == 0
+    status = json.loads(ledger.read_text())["deliveries"][key]
+    assert status["state"] == "retry_held"
+    assert status["replaces_message_id"] == 701
+    assert reservations == ["reissue:701:2026-11-20T07:15:00Z"]
+    telegram.send_message.side_effect = None
+    assert publish_official_admissions(
+        catalog, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
+        reserve_intent=lambda ns, key, op: reservations.append(op),
+    ) == 0
+    telegram.send_message.assert_called_once()
