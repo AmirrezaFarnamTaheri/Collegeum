@@ -1,0 +1,25 @@
+{
+  "deliveries": {
+    "54edd99a41f1473f072b8d50f0b302ec": {
+      "attempted_at": "2026-11-19T09:01:41Z",
+      "country_code": "DE",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
+      "institution": "Berlin School of Economics",
+      "message_id": 129,
+      "sent_at": "2026-11-19T09:01:41Z",
+      "state": "confirmed"
+    },
+    "6d312c5c3ca3fce1cf68812bbb63334e": {
+      "attempted_at": "2026-11-19T09:01:41Z",
+      "country_code": "FI",
+      "deadline_iso": "2027-01-05",
+      "evidence_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
+      "institution": "Aalto University",
+      "message_id": 128,
+      "sent_at": "2026-11-19T09:01:41Z",
+      "state": "confirmed"
+    }
+  },
+  "version": 1
+}
