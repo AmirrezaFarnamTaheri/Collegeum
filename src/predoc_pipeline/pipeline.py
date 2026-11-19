@@ -66,6 +66,7 @@ from .models import CoercionError, ExtractionResult, PredocListing, RawItem, coe
 from .models import salary_value_is_artifact as _implausible_salary
 from .policy import Policy
 from .publish.admissions import publish_official_admissions
+from .publish.official_calls import official_calls_health, publish_official_calls
 from .publish.feedback import FeedbackStore
 from .publish.telegram import (
     TelegramClient,
@@ -1825,6 +1826,22 @@ def run(
                 log.error("telegram_phd_admissions_journal_unavailable",
                           error=str(exc))
 
+            # Each current official PhD funding call has its own identity and
+            # at-most-once receipt; it is not a generic admission or vacancy.
+            try:
+                publish_official_calls(
+                    settings.official_calls_catalog_path,
+                    settings.official_calls_delivery_path,
+                    telegram=telegram,
+                    chat_id=settings.telegram_public_channel_id,
+                    enabled=settings.telegram_official_calls_enabled,
+                    max_messages=settings.telegram_official_calls_max_per_run,
+                    now=utcnow(),
+                )
+            except (ValueError, OSError) as exc:
+                stats.errors += 1
+                log.error("telegram_official_calls_journal_unavailable", error=str(exc))
+
             _retry_x_publications(
                 x_client, settings, db, stats, prefs, policy, feedback, router,
                 skip=sent_now, transport=board_transport,
@@ -1904,6 +1921,21 @@ def run(
                     db, settings.health_json, stats=stats.as_dict(),
                     preserve_existing=not state_ready,
                 )
+                # A green source refresh does not imply any Telegram delivery.
+                # Expose distinct checked/eligible/unpublished/confirmed counts.
+                health_path = Path(settings.health_json)
+                health = json.loads(health_path.read_text(encoding="utf-8"))
+                health["official_calls"] = official_calls_health(
+                    settings.official_calls_catalog_path,
+                    settings.official_calls_delivery_path,
+                    now=utcnow(),
+                )
+                temporary = health_path.with_name(health_path.name + ".tmp")
+                temporary.write_text(
+                    json.dumps(health, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+                temporary.replace(health_path)
             except Exception:  # pragma: no cover - never mask the real outcome
                 log.exception("health_export_failed")
         db.close()
