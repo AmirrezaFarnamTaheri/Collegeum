@@ -187,3 +187,39 @@ def test_uncertain_delivery_remains_held_in_ledger(tmp_path):
                                   enabled=True, now=NOW) == 0
     assert next(iter(json.loads(ledger.read_text())["deliveries"].values()))[
         "state"] == "uncertain"
+
+
+def test_live_style_climate_fellowship_intake_and_spaced_phone_still_verify():
+    """Real IEB announcement writes September/October and Tel. + 34."""
+    realistic = CLIMATE_HTML.replace(
+        "starting September 2027", "starting in September/October 2027"
+    ).replace("Tel. +34", "Tel. + 34")
+    row = extract_call(realistic, url=CLIMATE, source=_source(CLIMATE), now=NOW)
+    assert row["status"] == "verified"
+    assert row["intake_year"] == 2027
+    assert row["location_evidence"]
+    assert eligible_calls(_catalog(row), now=NOW) == [row]
+
+
+def test_approved_direct_calls_survive_unlinked_pagination_index():
+    """A paginated university index cannot be the sole source of known open calls."""
+    registry = {
+        "kind": "official_phd_call_sources", "version": 1,
+        "sources": [
+            {**SOURCES["sources"][0], "url": "https://ieb.ub.edu/en/call-for-application/"},
+            {**_source(IEB), "mode": "detail"},
+            {**_source(CLIMATE), "id": "ieb-climate", "mode": "detail"},
+        ],
+    }
+    registry["sources"][0]["id"] = "ieb-calls-index"
+    pages = {
+        "https://ieb.ub.edu/en/call-for-application/": {
+            "status": "ok", "html": "<h1>Calls for applications</h1><p>Archive</p>"
+        },
+        IEB: {"status": "ok", "html": IEB_HTML},
+        CLIMATE: {"status": "ok", "html": CLIMATE_HTML},
+    }
+    result = refresh_sources(registry, _catalog(), now=NOW,
+                             fetcher=lambda url: pages[url])
+    assert len(result["calls"]) == 2
+    assert len(eligible_calls(result, now=NOW)) == 2
