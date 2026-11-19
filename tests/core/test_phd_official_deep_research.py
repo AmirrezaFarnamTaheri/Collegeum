@@ -365,8 +365,8 @@ def test_phd_track_first_year_fee_and_gre_requirement_are_not_assumed_free():
         and Finance at Universitat Pompeu Fabra (UPF).</p>
         <h2>Tuition Fee</h2><p>Student Fee: €18,500</p>
         <h2>Admissions and Entry Requirements</h2>
-        <p>Candidates of the PhD-track program must meet these criteria:
-        A GRE score is required to be considered for admission.</p>
+        <p>Candidates of the PhD-track program must meet these criteria:</p>
+        <ul><li>A GRE score is required to be considered for admission.</li></ul>
         <h2>Tuition Funding and Scholarships</h2>
         <p>Funding opportunities at BSE are awarded on the basis
         of academic excellence.</p>
