@@ -75,6 +75,7 @@ from .publish.telegram import (
     render_historical_card,
     render_keyboard,
 )
+from .publish.telegram_intents import GitHubIntentReserver
 from .routing import Channel, Router
 from .settings import Settings
 
@@ -1806,6 +1807,21 @@ def run(
                 db, telegram, settings, stats, router, prefs,
                 fresh_ids=sent_now, hidden=hidden, transport=board_transport,
             )
+            # Fail closed if trusted production GitHub intent persistence
+            # cannot be initialized. Local runs default to not using it.
+            durable_reserve = None
+            if (
+                telegram is not None
+                and settings.telegram_git_durable_intents_enabled
+                and (settings.telegram_phd_admissions_enabled
+                     or settings.telegram_official_calls_enabled)
+            ):
+                try:
+                    durable_reserve = GitHubIntentReserver.from_environment().reserve
+                except OSError as exc:
+                    stats.errors += 1
+                    log.error("telegram_durable_reservation_unavailable", error=str(exc))
+
             # General PhD admissions are NOT vacancy rows. They are broadcast
             # from independently corroborated official university observations,
             # with separate delivery receipts, never via listings or X.
@@ -1818,6 +1834,7 @@ def run(
                     enabled=settings.telegram_phd_admissions_enabled,
                     max_messages=settings.telegram_phd_admissions_max_per_run,
                     now=utcnow(),
+                    reserve_intent=durable_reserve,
                 )
             except (ValueError, OSError) as exc:
                 # An unreadable receipt ledger is a hard no-send condition,
@@ -1837,6 +1854,7 @@ def run(
                     enabled=settings.telegram_official_calls_enabled,
                     max_messages=settings.telegram_official_calls_max_per_run,
                     now=utcnow(),
+                    reserve_intent=durable_reserve,
                 )
             except (ValueError, OSError) as exc:
                 stats.errors += 1
