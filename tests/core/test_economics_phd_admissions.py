@@ -323,6 +323,65 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertIn("--recheck-no-explicit", workflow)
         self.assertIn("github.event_name", workflow)
 
+    def test_source_facts_fail_validation_when_unattributed_or_external(self):
+        corrupted = json.loads(json.dumps(self.public))
+        row = corrupted["programmes"][0]
+        row["investigated_urls"] = [row["official_programme_url"]]
+        row["official_details"] = {
+            "tuition": {
+                "value": "No tuition fees",
+                "evidence_url": "https://admissions-aggregator.example/fees",
+                "evidence_excerpt": "No tuition fees",
+                "checked_at": row["checked_at"],
+            },
+        }
+        with self.assertRaises(ValueError):
+            validate_catalogues(self.seeds, corrupted)
+
+    def test_trusted_source_update_enriches_existing_verified_admissions(self):
+        now = datetime(2026, 11, 19, 12, 0, tzinfo=UTC)
+        verified = [
+            row for row in self.public["programmes"]
+            if row["status"] == "verified" and not row.get("official_details")
+        ]
+        self.assertGreaterEqual(len(verified), 2)
+        urls = {row["official_programme_url"] for row in verified}
+        checked = []
+
+        def fetch(url: str, *, now: datetime) -> dict:
+            checked.append(url)
+            if url in urls:
+                old = next(
+                    row for row in verified
+                    if row["official_programme_url"] == url
+                )
+                return {
+                    "status": "verified",
+                    "deadline_iso": old["deadline_iso"],
+                    "evidence_url": old["evidence_url"],
+                    "evidence_excerpt": old["evidence_excerpt"],
+                    "official_details": {
+                        "tuition": {
+                            "value": "No tuition fees",
+                            "evidence_url": old["evidence_url"],
+                            "evidence_excerpt": "Official university: no tuition fees",
+                            "checked_at": now.isoformat().replace("+00:00", "Z"),
+                        },
+                    },
+                    "investigated_urls": [old["evidence_url"]],
+                }
+            return {"status": "no_explicit_deadline"}
+
+        result = refresh(
+            self.seeds, self.public, now=now, batch_size=25,
+            fetcher=fetch, recheck_no_explicit=True,
+        )
+        self.assertTrue(urls.issubset(set(checked)))
+        for row in result["programmes"]:
+            if row["official_programme_url"] in urls:
+                self.assertEqual(row["official_details"]["tuition"]["value"],
+                                 "No tuition fees")
+
     def test_initial_source_changes_bootstrap_without_refresh_commit_loop(self):
         workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(
             encoding="utf-8"
