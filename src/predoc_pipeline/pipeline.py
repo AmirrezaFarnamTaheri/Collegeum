@@ -1812,7 +1812,7 @@ def run(
                 publish_official_admissions(
                     settings.phd_admissions_catalog_path,
                     settings.phd_admissions_delivery_path,
-                    telegram,
+                    telegram=telegram,
                     chat_id=settings.telegram_public_channel_id,
                     enabled=settings.telegram_phd_admissions_enabled,
                     max_messages=settings.telegram_phd_admissions_max_per_run,
