@@ -46,12 +46,13 @@ def _official_host(value: object) -> str | None:
         return None
     try:
         url = urlsplit(value)
+        port = url.port
     except ValueError:
         return None
     if (
         url.scheme != "https" or not url.hostname or
         url.username is not None or url.password is not None or
-        url.port not in (None, 443)
+        port not in (None, 443)
     ):
         return None
     return url.hostname.lower().removeprefix("www.")
@@ -70,7 +71,37 @@ def _independently_non_us(row: dict[str, Any], official_host: str) -> bool:
     if country == "US":
         return False
     suffix = COUNTRY_TLD_EXCEPTIONS.get(country, country.lower())
-    return official_host.endswith("." + suffix)
+    if official_host.endswith("." + suffix):
+        return True
+    # A generic .eu/.org/.com host must never prove a country on its own.
+    # Only the institution's *own inspected contact/mailing address* can
+    # corroborate a non-US programme location outside national TLDs.
+    expected = COUNTRY_NAMES.get(country)
+    if not expected:
+        return False
+    details = row.get("official_details")
+    if not isinstance(details, dict):
+        return False
+    fact = details.get("institution_country")
+    if not isinstance(fact, dict) or fact.get("value") != expected:
+        return False
+    if fact.get("checked_at") != row.get("checked_at"):
+        return False
+    if _official_host(fact.get("evidence_url")) != official_host:
+        return False
+    investigated = row.get("investigated_urls")
+    if (
+        not isinstance(investigated, list)
+        or fact["evidence_url"] not in investigated
+    ):
+        return False
+    excerpt = fact.get("evidence_excerpt")
+    if (
+        not isinstance(excerpt, str)
+        or not re.search(r"\b" + re.escape(expected) + r"\b", excerpt, re.I)
+    ):
+        return False
+    return True
 
 
 def eligible_official_admissions(
