@@ -33,10 +33,14 @@ def test_failed_scheduled_sync_can_invoke_guarded_freshness_recovery():
         r"github\.event\.workflow_run\.event == 'schedule'\)",
         expression, re.DOTALL,
     )
-    assert not re.search(
-        r"github\.event\.workflow_run\.conclusion == 'success'\s*&&\s*\(",
-        expression,
+    # Success requirements on other source events must not suppress failed syncs.
+    telegram_clause = re.search(
+        r"\(github\.event\.workflow_run\.name == 'telegram-sync'[^)]*\)",
+        expression, re.DOTALL,
     )
+    assert telegram_clause is not None
+    assert "conclusion" not in telegram_clause.group()
+
 
 
 def test_recovery_code_still_prevents_duplicate_ingestion_when_triggered():
