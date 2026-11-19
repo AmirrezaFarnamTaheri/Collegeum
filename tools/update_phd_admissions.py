@@ -76,6 +76,7 @@ class PageText(HTMLParser):
         self._anchor_href: str | None = None
         self._anchor_parts: list[str] = []
         self.blocks: list[str] = []
+        self.address_blocks: list[str] = []
         self._block_tag: str | None = None
         self._block_parts: list[str] = []
 
@@ -84,7 +85,7 @@ class PageText(HTMLParser):
             self._in_h1 = True
             self._heading_parts = []
         if (
-            tag in {"h1", "h2", "h3", "h4", "p", "li", "dt", "dd", "th", "td"}
+            tag in {"h1", "h2", "h3", "h4", "p", "li", "dt", "dd", "th", "td", "address"}
             and self._block_tag is None
         ):
             self._block_tag = tag
@@ -113,6 +114,8 @@ class PageText(HTMLParser):
             block = " ".join(" ".join(self._block_parts).split())
             if block:
                 self.blocks.append(block)
+                if tag == "address":
+                    self.address_blocks.append(block)
             self._block_tag = None
             self._block_parts = []
         if tag in {"script", "style", "svg", "noscript", "template"}:
@@ -212,6 +215,70 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
         day, excerpt = candidates[0]
         return "verified", day, excerpt[:180]
     return "no_explicit_deadline", None, None
+
+
+
+
+# Generic (e.g. .eu, .org) university domains do not independently prove
+# where a programme is based. A university's own mailing address can supply
+# a separately cited country fact, never the upstream lead's country alone.
+OFFICIAL_COUNTRY_NAMES = (
+    "Austria", "Australia", "Belgium", "Canada", "Switzerland",
+    "Chile", "China", "Czechia", "Germany", "Denmark", "Spain",
+    "Finland", "France", "Greece", "Hong Kong", "Ireland", "Italy",
+    "Japan", "South Korea", "Malaysia", "Netherlands", "Norway",
+    "New Zealand", "Philippines", "Poland", "Portugal", "Serbia",
+    "Sweden", "Singapore", "Thailand", "Taiwan", "United Kingdom",
+    "United States", "South Africa",
+)
+OFFICIAL_COUNTRY_WORD = re.compile(
+    r"\b(?:" + "|".join(
+        re.escape(country) for country in OFFICIAL_COUNTRY_NAMES
+    ) + r")\b", re.I,
+)
+ADDRESS_LABEL = re.compile(
+    r"\b(?:mailing|postal|campus|institutional)\s+address\b", re.I,
+)
+
+
+def extract_official_country(
+    html: str, *, evidence_url: str, checked_at: datetime,
+) -> dict[str, str] | None:
+    """Use an institutional address, never general country or travel mentions.
+
+    Multiple different countries in contact/address evidence are ambiguous.
+    The source, exact excerpt and check time remain available for auditing.
+    """
+    parser = PageText()
+    parser.feed(html[:MAX_HTML_BYTES])
+    blocks = parser.blocks
+    candidates: list[str] = list(parser.address_blocks)
+    for index, block in enumerate(blocks):
+        if ADDRESS_LABEL.search(block):
+            candidates.extend(blocks[index + 1:index + 4])
+        elif re.search(r"^\s*(?:mailing|postal)\s+address\s*:", block, re.I):
+            candidates.append(block)
+    found: dict[str, str] = {}
+    for address in candidates:
+        matches = list(OFFICIAL_COUNTRY_WORD.finditer(address))
+        for match in matches:
+            name = next(
+                (item for item in OFFICIAL_COUNTRY_NAMES
+                 if item.casefold() == match.group().casefold()),
+                None,
+            )
+            if name is not None:
+                found[name] = " ".join(address.split())[:220]
+    if len(found) != 1:
+        return None
+    name, excerpt = next(iter(found.items()))
+    return {
+        "value": name, "evidence_url": evidence_url,
+        "evidence_excerpt": excerpt,
+        "checked_at": checked_at.isoformat(
+            timespec="seconds",
+        ).replace("+00:00", "Z"),
+    }
 
 
 
