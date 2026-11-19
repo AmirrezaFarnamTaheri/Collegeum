@@ -51,7 +51,7 @@ class GitHubIntentReserver:
                 repository=os.environ.get("GITHUB_REPOSITORY", ""),
                 token=os.environ.get("GITHUB_TOKEN", ""),
             )
-        except ValueError as exc:
+        except ValueError:
             raise OSError("Durable Telegram reservation credentials unavailable") from None
 
     def reserve(self, namespace: str, key: str, operation: str) -> None:
