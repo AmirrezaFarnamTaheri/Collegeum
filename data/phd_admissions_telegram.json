@@ -57,6 +57,16 @@
       "replaces_message_id": 128,
       "sent_at": "2026-11-19T20:07:47Z",
       "state": "confirmed"
+    },
+    "a058ef2c0d86c9532294dc4b78fa880d": {
+      "attempted_at": "2026-11-19T21:14:57Z",
+      "country_code": "IT",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://www.eui.eu/apply?id=doctoral-programme-in-economics",
+      "institution": "European University Institute",
+      "message_id": 132,
+      "sent_at": "2026-11-19T21:14:57Z",
+      "state": "confirmed"
     }
   },
   "version": 1
