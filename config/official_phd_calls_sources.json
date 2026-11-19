@@ -1,0 +1,75 @@
+{
+  "kind": "official_phd_call_sources",
+  "version": 1,
+  "description": "Independent official Economics, Finance and related quantitative/business PhD scholarships and fellowships. Institutional sources only; no social-feed scraping.",
+  "sources": [
+    {
+      "id": "ieb-news",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "country_code": "ES",
+      "mode": "index",
+      "url": "https://ieb.ub.edu/en/news/"
+    },
+    {
+      "id": "ieb-application-calls",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "country_code": "ES",
+      "mode": "index",
+      "url": "https://ieb.ub.edu/en/call-for-application/"
+    },
+    {
+      "id": "ieb-economics-2027",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "country_code": "ES",
+      "mode": "detail",
+      "url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/"
+    },
+    {
+      "id": "ieb-energy-climate",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "country_code": "ES",
+      "mode": "detail",
+      "url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/"
+    },
+    {
+      "id": "henley-finance-accounting",
+      "institution": "Henley Business School",
+      "country_code": "UK",
+      "mode": "detail",
+      "url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
+      "title": "Finance and Accounting PhD Studentships"
+    },
+    {
+      "id": "henley-international-business",
+      "institution": "Henley Business School",
+      "country_code": "UK",
+      "mode": "detail",
+      "url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
+      "title": "International Business and Strategy PhD Studentships"
+    },
+    {
+      "id": "henley-informatics",
+      "institution": "Henley Business School",
+      "country_code": "UK",
+      "mode": "detail",
+      "url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
+      "title": "Informatics and Operations PhD Studentships"
+    },
+    {
+      "id": "henley-entrepreneurship",
+      "institution": "Henley Business School",
+      "country_code": "UK",
+      "mode": "detail",
+      "url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
+      "title": "Entrepreneurship and Innovation PhD Studentships"
+    },
+    {
+      "id": "henley-leadership",
+      "institution": "Henley Business School",
+      "country_code": "UK",
+      "mode": "detail",
+      "url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
+      "title": "Leadership and Organisations PhD Studentships"
+    }
+  ]
+}

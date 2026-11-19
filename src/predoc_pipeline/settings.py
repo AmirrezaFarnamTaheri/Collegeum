@@ -75,6 +75,11 @@ class Settings(BaseSettings):
     telegram_phd_admissions_max_per_run: int = Field(2, ge=1, le=10)
     phd_admissions_catalog_path: str = "docs/data/phd_admissions.json"
     phd_admissions_delivery_path: str = "data/phd_admissions_telegram.json"
+    # Independent official doctoral funding calls (not generic admissions or jobs).
+    telegram_official_calls_enabled: bool = False
+    telegram_official_calls_max_per_run: int = Field(2, ge=1, le=10)
+    official_calls_catalog_path: str = "docs/data/official_phd_calls.json"
+    official_calls_delivery_path: str = "data/official_phd_calls_telegram.json"
     # Dedicated operator-only private destination, never the public chat.
     telegram_admin_chat_id: str = ""
     # Maintenance/errors are written to internal health/logs only by default.

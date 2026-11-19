@@ -36,6 +36,9 @@ _PUBLISHER_FILES = {
     "src/predoc_pipeline/routing.py",
     "src/predoc_pipeline/settings.py",
     "src/predoc_pipeline/publish/telegram.py",
+    "src/predoc_pipeline/publish/official_calls.py",
+    "tools/update_official_calls.py",
+    "config/official_phd_calls_sources.json",
 }
 
 
@@ -320,6 +323,101 @@ def evaluate_admissions_trigger(
     return Decision(False, "no-new-eligible-admissions")
 
 
+
+def evaluate_official_calls_trigger(
+    catalog: Any, ledger: Any, runs: Any, *, now: datetime,
+) -> Decision:
+    """Trigger only for fresh, official and unprocessed funding-call evidence."""
+    if now.tzinfo is None:
+        raise ValueError("Expected aware time")
+    now = now.astimezone(UTC)
+    if (not isinstance(catalog, dict)
+            or catalog.get("kind") != "official_phd_call_observations"
+            or catalog.get("version") != 1
+            or not isinstance(catalog.get("calls"), list)
+            or len(catalog["calls"]) > 100
+            or not isinstance(ledger, dict) or ledger.get("version") != 1
+            or not isinstance(ledger.get("deliveries"), dict)
+            or not isinstance(runs, list) or not runs):
+        return Decision(False, "untrusted-official-call-evidence")
+    observed: list[datetime] = []
+    for item in runs:
+        if not isinstance(item, dict):
+            return Decision(False, "untrusted-run-history")
+        if item.get("head_branch") != "main":
+            continue
+        if (item.get("name") != "predoc-pipeline"
+                or item.get("status") not in KNOWN_STATUSES):
+            return Decision(False, "untrusted-run-history")
+        try:
+            created = _timestamp(item.get("created_at"))
+        except (ValueError, TypeError, OverflowError):
+            return Decision(False, "untrusted-run-history")
+        if created > now + FUTURE_SKEW:
+            return Decision(False, "untrusted-run-history")
+        if item["status"] in ACTIVE_STATUSES:
+            return Decision(False, "pipeline-already-running")
+        observed.append(created)
+    if not observed:
+        return Decision(False, "untrusted-run-history")
+    newest = max(observed)
+    for row in catalog["calls"]:
+        if (not isinstance(row, dict) or row.get("status") != "verified"
+                or row.get("kind") not in {
+                    "phd_scholarship", "phd_studentship", "phd_fellowship",
+                } or row.get("deadline_kind") not in {"funding", "scholarship"}
+                or type(row.get("intake_year")) is not int):
+            continue
+        try:
+            checked = _timestamp(row.get("checked_at"))
+            deadline = datetime.fromisoformat(row.get("deadline_iso")).date()
+        except (ValueError, TypeError, OverflowError):
+            continue
+        if (checked <= newest or checked > now
+                or now - checked > timedelta(days=14)
+                or deadline < now.date()
+                or deadline > (now + timedelta(days=366)).date()):
+            continue
+        official, evidence = row.get("official_url"), row.get("evidence_url")
+        if not isinstance(official, str) or official != evidence:
+            continue
+        try:
+            source = urlsplit(official)
+            host = source.hostname.lower() if source.hostname else ""
+            if (source.scheme != "https" or not host or source.port not in (None, 443)
+                    or source.username or source.password or source.query or source.fragment):
+                continue
+        except ValueError:
+            continue
+        country, proof = row.get("country_code"), row.get("location_evidence")
+        national = "uk" if country in {"UK", "GB"} else str(country).lower()
+        valid_country = (
+            (country in {"UK", "GB", "ES", "DE", "FI", "FR", "NL", "IT",
+                         "SE", "NO", "DK", "CH", "AT", "BE"}
+             and host.removeprefix("www.").endswith("." + national)
+             and proof == f"{country}: official national institutional domain "
+                          f"{host.removeprefix('www.')}")
+            or (country == "ES" and host == "ieb.ub.edu"
+                and proof == "ES: official postal address 08034 Barcelona and telephone +34")
+        )
+        if not valid_country or row.get("location_evidence_url") != official:
+            continue
+        excerpt = row.get("evidence_excerpt")
+        if (not isinstance(excerpt, str)
+                or row["deadline_iso"][:4] not in excerpt
+                or not re.search(r"\b(?:by|before|deadline|close|closing|due)\b",
+                                 excerpt, re.I)):
+            continue
+        identity = (
+            f"{host.removeprefix('www.')}|"
+            f"{source.path.rstrip('/').lower()}|{row['intake_year']}"
+        )
+        key = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
+        if key not in ledger["deliveries"]:
+            return Decision(True, "new-official-calls-awaiting-publisher")
+    return Decision(False, "no-new-eligible-official-calls")
+
+
 def audit_cadence(
     runs: Any, *, now: datetime, lookback: timedelta = timedelta(hours=24),
 ) -> CadenceAudit:
@@ -522,6 +620,18 @@ def main(argv: list[str] | None = None) -> int:
             )
             if recovery.dispatch:
                 decision = recovery
+            else:
+                official_catalog = json.loads(
+                    Path("docs/data/official_phd_calls.json").read_text(encoding="utf-8")
+                )
+                official_ledger = json.loads(
+                    Path("data/official_phd_calls_telegram.json").read_text(encoding="utf-8")
+                )
+                recovery = evaluate_official_calls_trigger(
+                    official_catalog, official_ledger, runs, now=now,
+                )
+                if recovery.dispatch:
+                    decision = recovery
         if (decision.reason == "fresh"
                 and os.environ.get("RELEASE_CHECK") == "true"
                 and os.environ.get("GITHUB_SHA") == os.environ.get("CI_HEAD_SHA")):
