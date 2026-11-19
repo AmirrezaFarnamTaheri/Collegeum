@@ -102,6 +102,9 @@ jobs:
           TELEGRAM_NON_US_ECON_PHD_ENABLED: ${{ vars.TELEGRAM_NON_US_ECON_PHD_ENABLED || 'true' }}
           # Stage historical posts at six listings/cycle; use a variable to tune.
           TELEGRAM_NON_US_ECON_PHD_BACKFILL_LIMIT: ${{ vars.TELEGRAM_NON_US_ECON_PHD_BACKFILL_LIMIT || '6' }}
+          # General non-US Economics PhD admissions; verified primary-source dates only.
+          TELEGRAM_PHD_ADMISSIONS_ENABLED: ${{ vars.TELEGRAM_PHD_ADMISSIONS_ENABLED || 'true' }}
+          TELEGRAM_PHD_ADMISSIONS_MAX_PER_RUN: ${{ vars.TELEGRAM_PHD_ADMISSIONS_MAX_PER_RUN || '2' }}
           TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
           # Operational alerts are opt-in for safety (they need a distinct
           # private admin chat), but the scheduled workflow IS the operator, so
@@ -179,6 +182,7 @@ jobs:
                    data/life_sources_health.json \
                    data/linkedin_econ_search_state.json \
                    data/linkedin_life_search_state.json \
+                   data/phd_admissions_telegram.json \
                    docs/data/listings.json \
                    docs/data/health.json docs/feed.xml; do
             if [ -e "$f" ]; then git add "$f"; fi
