@@ -346,7 +346,10 @@ def extract_official_details(
                 add("tuition", f"€{fee.group(1)} (first-year programme fee)", block)
             if (
                 re.search(r"\bGRE\s+score\s+is\s+required\b", block, re.I)
-                and re.search(r"\bPhD[\s-]+track\b", block, re.I)
+                and re.search(
+                    r"\bPhD[\s-]+track\b",
+                    " ".join(blocks[max(0, index - 2):index + 1]), re.I,
+                )
             ):
                 add("tests", "GRE required for PhD-track entry", block)
             if re.search(
