@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-19T21:36:40Z",
+  "generated_at": "2026-11-19T22:41:51Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -1421,275 +1421,399 @@
       "country_code": "NO",
       "official_programme_url": "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/",
+        "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/admission/",
+        "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/vacant-phd-positions/"
+      ]
     },
     {
       "institution": "North Carolina State University",
       "country_code": "US",
       "official_programme_url": "https://poole.ncsu.edu/gradecon/admissions-financial-aid/requirements/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://poole.ncsu.edu/gradecon/admissions-financial-aid/requirements/",
+        "https://poole.ncsu.edu/gradecon/admissions-financial-aid/",
+        "https://poole.ncsu.edu/gradecon/admissions-financial-aid/assistantships-fellowships/",
+        "https://poole.ncsu.edu/gradecon/admissions-financial-aid/faqs/"
+      ]
     },
     {
       "institution": "Northwestern University",
       "country_code": "US",
       "official_programme_url": "https://www.economics.northwestern.edu/graduate/prospective/admissions.html",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.northwestern.edu/graduate/prospective/admissions.html",
+        "https://economics.northwestern.edu/graduate/funding/departmental-funding.html",
+        "https://economics.northwestern.edu/graduate/funding/graduate-student-awards.html",
+        "https://economics.northwestern.edu/graduate/funding/"
+      ]
     },
     {
       "institution": "NYU Stern School of Business",
       "country_code": "US",
       "official_programme_url": "https://www.stern.nyu.edu/programs-admissions/phd/admissions/how-to-apply",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.stern.nyu.edu/programs-admissions/phd/admissions/how-to-apply",
+        "https://www.stern.nyu.edu/programs-admissions/phd",
+        "https://www.stern.nyu.edu/programs-admissions/phd/academics",
+        "https://www.stern.nyu.edu/programs-admissions/phd/academics/degree-requirements"
+      ]
     },
     {
       "institution": "Ohio State University",
       "country_code": "US",
       "official_programme_url": "https://gpadmissions.osu.edu/programs/program.aspx?prog=0064#&&tab=apply",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://gpadmissions.osu.edu/programs/program.aspx?prog=0064#&&tab=apply",
+        "https://gpadmissions.osu.edu/grad/steps-to-apply.html",
+        "https://gpadmissions.osu.edu/index.html",
+        "https://gpadmissions.osu.edu/intl/additional-requirements-to-apply.html"
+      ]
     },
     {
       "institution": "Osaka University",
       "country_code": "JP",
       "official_programme_url": "https://www.econ.osaka-u.ac.jp/en/en-graduate/en-g-notice/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.econ.osaka-u.ac.jp/en/en-graduate/en-g-notice/",
+        "https://www.econ.osaka-u.ac.jp/admission/g-notice/",
+        "https://www.econ.osaka-u.ac.jp/en/en-admission/"
+      ]
     },
     {
       "institution": "Paris School of Economics",
       "country_code": "FR",
       "official_programme_url": "https://ed-economie.pantheonsorbonne.fr/inscriptions/modalites-candidature-en-doctorat",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://ed-economie.pantheonsorbonne.fr/inscriptions/modalites-de-candidature-en-doctorat"
+      ]
     },
     {
       "institution": "Peking University",
       "country_code": "CN",
       "official_programme_url": "https://english.phbs.pku.edu.cn/Academics/PhD.htm",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Pennsylvania State University",
       "country_code": "US",
       "official_programme_url": "https://econ.la.psu.edu/ph-d-program/ph-d-admission/how-and-when-to-apply/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Polytechnic Institute of Paris",
       "country_code": "FR",
       "official_programme_url": "https://www.ip-paris.fr/en/education/phd-track/phd-track-economics",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.ip-paris.fr/en/education/phd-track/phd-track-economics",
+        "https://www.ip-paris.fr/en/education/useful-information/admissions",
+        "https://www.ip-paris.fr/en/education/graduate-programs/masters-science/faqs"
+      ]
     },
     {
       "institution": "Pontifical Catholic University of Chile",
       "country_code": "CL",
       "official_programme_url": "https://doctorados.uc.cl/program/doctoral-program-in-economics/",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Princeton University",
       "country_code": "US",
       "official_programme_url": "https://economics.princeton.edu/graduate-program/phd-admissions/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.princeton.edu/graduate-program/phd-admissions/",
+        "https://economics.princeton.edu/contact-us/",
+        "https://economics.princeton.edu/graduate-program/phd-admissions/common-admission-questions/",
+        "https://economics.princeton.edu/graduate-program/phd-admissions/visiting-exchange-student/"
+      ]
     },
     {
       "institution": "Purdue University",
       "country_code": "US",
       "official_programme_url": "https://business.purdue.edu/phd/admissions.php",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://business.purdue.edu/phd/admissions.php",
+        "https://business.purdue.edu/phd/funding.php",
+        "https://business.purdue.edu/fast-tracks/apply.php",
+        "https://business.purdue.edu/undergraduate/admissions/scholarships.php"
+      ]
     },
     {
       "institution": "Queen Mary University of London",
       "country_code": "UK",
       "official_programme_url": "https://www.qmul.ac.uk/sef/postgraduate/phd/mres/",
       "programme_structure_hint": "MRes + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.qmul.ac.uk/sef/postgraduate/phd/mres/",
+        "https://www.qmul.ac.uk/sef/research/postdoctoral-funding-opportunities/",
+        "https://www.qmul.ac.uk/sef/undergraduate/funding-and-scholarships/"
+      ]
     },
     {
       "institution": "Queen's University",
       "country_code": "CA",
       "official_programme_url": "https://www.econ.queensu.ca/graduate/phd/prospective-students",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Queen's University Belfast",
       "country_code": "UK",
       "official_programme_url": "https://www.qub.ac.uk/courses/postgraduate-research/economics-phd.html#projects",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Rice University",
       "country_code": "US",
       "official_programme_url": "https://economics.rice.edu/graduate-program/phd/online-application",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.rice.edu/graduate-program/phd/online-application",
+        "https://economics.rice.edu/graduate-program/phd/admissions-faq",
+        "https://economics.rice.edu/admissions",
+        "https://economics.rice.edu/graduate-program/phd/admissions-faq"
+      ]
     },
     {
       "institution": "Rutgers University-New Brunswick",
       "country_code": "US",
       "official_programme_url": "https://economics.rutgers.edu/academics/graduate/program/prospective-students/graduate-faqs",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.rutgers.edu/academics/graduate/program/prospective-students/graduate-faqs",
+        "https://economics.rutgers.edu/contact",
+        "https://economics.rutgers.edu/academics/graduate/ma-program/admissions-information",
+        "https://economics.rutgers.edu/academics/graduate/ma-program/program-requirements"
+      ]
     },
     {
       "institution": "Sapienza University of Rome",
       "country_code": "IT",
       "official_programme_url": "https://www.uniroma1.it/en/pagina/admissions-2025-2026-phd-programmes",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Sciences Po",
       "country_code": "FR",
       "official_programme_url": "https://www.sciencespo.fr/ecole-recherche/en/admissions/phd/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.sciencespo.fr/ecole-recherche/en/admissions/phd/",
+        "https://www.sciencespo.fr/ecole-recherche/en/admissions/phd/phd-tuition-fees-funding/",
+        "https://www.sciencespo.fr/admissions/en/phd/"
+      ]
     },
     {
       "institution": "Seoul National University",
       "country_code": "KR",
       "official_programme_url": "https://econ.snu.ac.kr/graduate/requirements",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Simon Fraser University",
       "country_code": "CA",
       "official_programme_url": "https://www.sfu.ca/economics/graduate/admissions.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.sfu.ca/economics/graduate/admissions.html",
+        "https://www.sfu.ca/gradstudies/apply/tuition-and-fees/tuition-types.html",
+        "https://www.sfu.ca/economics/graduate/awards.html"
+      ]
     },
     {
       "institution": "Singapore Management University",
       "country_code": "SG",
       "official_programme_url": "https://economics.smu.edu.sg/phd-economics/admissions/online-application",
       "programme_structure_hint": "MPhil + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.smu.edu.sg/phd-economics/admissions/online-application",
+        "https://economics.smu.edu.sg/phd-economics/admissions/admission-requirements",
+        "https://economics.smu.edu.sg/phd-economics/admissions/faqs"
+      ]
     },
     {
       "institution": "Singapore University of Technology and Design",
       "country_code": "SG",
       "official_programme_url": "https://www.sutd.edu.sg/programme-listing/sutd-phd-programme/application/#tabs",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.sutd.edu.sg/programme-listing/sutd-phd-programme/application/#tabs",
+        "https://www.sutd.edu.sg/admissions/graduate/phd",
+        "https://www.sutd.edu.sg/admissions/graduate/phd/"
+      ]
     },
     {
       "institution": "Sogang University",
       "country_code": "KR",
       "official_programme_url": "https://econeng.sogang.ac.kr/econeng/econeng04_6.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-19T22:41:51Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Stanford University",
