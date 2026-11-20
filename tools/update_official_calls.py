@@ -30,6 +30,7 @@ MAX_SOURCES = 20
 MAX_CALLS = 100
 MAX_CHECK_AGE = timedelta(days=14)
 STATUSES = {"verified", "no_explicit_deadline", "ambiguous_deadline", "unrelated",
+            "closed",
             "robots_unavailable", "robots_disallowed", "fetch_failed", "unsafe_redirect",
             "not_seen"}
 DATE_RE = re.compile(
@@ -44,7 +45,8 @@ DATE_RE = re.compile(
     re.I,
 )
 CALL_TITLE = re.compile(r"\bph\.?\s*d\.?\b.*\b(?:scholarships?|fellowships?|studentships?)\b|"
-                        r"\b(?:scholarships?|fellowships?|studentships?)\b.*\bph\.?\s*d\.?\b", re.I)
+                        r"\b(?:scholarships?|fellowships?|studentships?|bursar(?:y|ies))\b.*\bph\.?\s*d\.?\b|"
+                        r"\bph\.?\s*d\.?\b.*\bbursar(?:y|ies)\b", re.I)
 EXCLUDE = re.compile(r"\b(?:post[-\s]?doc(?:toral)?|assistant professor|"
                      r"visiting professor|workshop|seminar|conference)\b", re.I)
 SUBJECT = re.compile(r"\b(?:economics?|finance|account(?:ing|ancy)|"
@@ -183,23 +185,97 @@ def _location_proof(text: str, country: str, url: str) -> str | None:
 
 
 def _intake(title: str, text: str) -> int | None:
-    match = re.search(r"\b(20\d{2})\b", title)
-    if match:
-        return int(match.group(1))
-    for match in re.finditer(
-        r"(?:studentship|scholarship) applications for the (20\d{2})/\d{2} academic year",
+    """Prefer the explicitly OPEN cycle, never a nearby CLOSED preceding cycle.
+
+    Academic funding pages often show 2026/27 now closed followed by 2027/28
+    now open. A loose lookahead from 2026/27 can cross into 2027/28 and produce
+    a valid-looking, but wrong, deduplication key.
+    """
+    periods = list(re.finditer(
+        r"(?:studentship|scholarship)\s+applications?\s+for\s+the\s+"
+        r"(20\d{2})/\d{2}\s+academic\s+year\b",
         text, re.I,
-    ):
-        # A previous, closed cycle is not an open scholarship.
-        if re.search(r"\bnow\s+open\b", text[match.end():match.end() + 95], re.I):
-            return int(match.group(1))
+    ))
+    open_years: set[int] = set()
+    for index, match in enumerate(periods):
+        boundary = periods[index + 1].start() if index + 1 < len(periods) else len(text)
+        tail = text[match.end():min(boundary, match.end() + 120)]
+        # The availability marker must belong to THIS application cycle.
+        # A closed or conflicting notice cannot be promoted by a later one.
+        if re.search(r"\b(?:now\s+closed|currently\s+closed|applications\s+closed)\b",
+                     tail, re.I):
+            continue
+        if re.search(r"\b(?:now\s+open|currently\s+open|applications\s+are\s+open)\b",
+                     tail, re.I):
+            open_years.add(int(match.group(1)))
+    if len(open_years) > 1:
+        return None  # Ambiguous simultaneous cycles: manual institutional review.
+    title_year = re.search(r"\b(20\d{2})\b", title)
+    if open_years:
+        year = next(iter(open_years))
+        if title_year and int(title_year.group(1)) != year:
+            return None  # Contradictory explicit evidence.
+        return year
+    if title_year:
+        return int(title_year.group(1))
     match = re.search(
         r"(?:starting|start(?:s|ing)?)\s+(?:in\s+)?"
         r"(?:September|October|Autumn)"
         r"(?:\s*(?:/|or)\s*(?:September|October))?\s+(20\d{2})", text, re.I,
     )
+    if not match:
+        match = re.search(
+            r"commence.{0,95}?(?:in\s+)?(?:September|October|Autumn)\s+(20\d{2})",
+            text, re.I,
+        )
     return int(match.group(1)) if match else None
 
+
+
+_FUNDING_CYCLE = re.compile(
+    r"(?:studentship|scholarship)\s+applications?\s+for\s+the\s+"
+    r"(20\d{2})/\d{2}\s+academic\s+year\b",
+    re.I,
+)
+_CLOSED_NOTICE = re.compile(
+    r"\b(?:now|currently)\s+closed\b|\bapplications?\s+(?:are|have)\s+closed\b",
+    re.I,
+)
+_GENERIC_FUNDING_CLOSED = re.compile(
+    r"\b(?:scholarships?|studentships?|fellowships?|bursar(?:y|ies))\b"
+    r".{0,95}?\b(?:now|currently)\s+closed\b",
+    re.I,
+)
+
+
+def _funding_closed(text: str, intake_year: int | None) -> bool:
+    """Reject a closed call without confusing last year's closed cycle.
+
+    University pages often preserve a previous academic year's closure notice.
+    A current open cycle takes precedence over unrelated older closures, but
+    any explicit closure of the identified current cycle fails closed.
+    """
+    periods = list(_FUNDING_CYCLE.finditer(text))
+    unmasked: list[str] = []
+    position = 0
+    for index, period in enumerate(periods):
+        boundary = periods[index + 1].start() if index + 1 < len(periods) else len(text)
+        notice = _CLOSED_NOTICE.search(
+            text, period.end(), min(boundary, period.end() + 120),
+        )
+        if intake_year is not None and int(period.group(1)) == intake_year:
+            if notice:
+                return True  # The current cycle explicitly closed.
+            continue
+        if notice:
+            # Remove only the *old year's* closed notice. Preserve later
+            # generic current-cycle closure text from the same document.
+            end = notice.end()
+            unmasked.append(text[position:period.start()])
+            unmasked.append(" " * (end - period.start()))
+            position = end
+    unmasked.append(text[position:])
+    return _GENERIC_FUNDING_CLOSED.search("".join(unmasked)) is not None
 
 def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date, str, str]]:
     candidates: list[tuple[date, str, str]] = []
@@ -221,17 +297,17 @@ def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date,
                 r"(?:studentship|scholarship)\s+applications?.{0,125}"
                 r"(?:will\s+close\s+on)\s*$", before, re.I,
             ))
-        if not funding and kind == "phd_studentship":
+        if not funding and kind in {"phd_studentship", "phd_bursary"}:
             # On a PhD-studentship-specific official page, a clearly marked
             # funding Deadline section may say "deadline for applications"
             # instead of repeating "studentship". Never generalize this to
             # a university-wide PhD admissions page.
             funding = bool(re.search(
-                r"\bDeadline\s+(?:The\s+)?deadline\s+for\s+applications\s+is\s+"
+                r"\bDeadline\s+(?:(?:The\s+)?deadline\s+for\s+applications\s+is|for\s+applications\s+(?:The\s+)?deadline\s+by\s+which\s+to\s+apply\s+is)\s+"
                 r"(?:(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+)?$",
                 before, re.I,
             ))
-        submission = kind != "phd_studentship" and bool(re.search(
+        submission = kind in {"phd_scholarship", "phd_fellowship"} and bool(re.search(
             r"interested\s+candidates\s+must\s+complete\s+both.{0,100}"
             r"(?:steps\s+)?(?:by|before)\s*$", before, re.I,
         ))
@@ -260,24 +336,32 @@ def extract_call(
     # Long institutional menus can exceed 450 characters; only the primary
     # funding call's article, not navigation/footer, establishes subject fit.
     article = parsed.content_text() or text
+    # University CMS superscripts can render ordinal dates as "30 th April".
+    article = re.sub(r"(\d{1,2})\s+(st|nd|rd|th)\b", r"\1\2", article, flags=re.I)
     title = (parsed.headings[0] if parsed.headings else source.get("title", "")).strip()
     label = f"{title} {source.get('title', '')}"
     invalid = (not title or len(title) > 150
-               or not SUBJECT.search(label + " " + article[:1800])
+               or not (SUBJECT.search(label + " " + article[:1800])
+                       or (source.get("subject_scope") == "multidisciplinary"
+                           and source.get("mode") == "detail"
+                           and "bursar" in label.lower()))
                or EXCLUDE.search(title)
                or not safe_official_url(url, source["url"]))
     # Mentioning scholarship terms somewhere in a generic admissions page
     # does not create an independent current funding call.
     relevant = CALL_TITLE.search(label) is not None
     status = "unrelated" if invalid or not relevant else "no_explicit_deadline"
-    kind = ("phd_studentship" if "studentship" in (label + " " + article[:500]).lower()
+    kind = ("phd_bursary" if re.search(r"\bbursar(?:y|ies)\b", label, re.I)
+            else "phd_studentship" if "studentship" in (label + " " + article[:500]).lower()
             else "phd_fellowship" if "fellowship" in label.lower()
             else "phd_scholarship")
     intake_year = _intake(title, article)
     date_iso = None
     deadline_kind = None
     excerpt = None
-    if status != "unrelated":
+    if status != "unrelated" and _funding_closed(article, intake_year):
+        status = "closed"
+    if status not in {"unrelated", "closed"}:
         values = _date_candidates(article, kind=kind, now=now)
         dates = {item[0] for item in values}
         if any(item[1] == "ambiguous" for item in values) or len(dates) > 1:
@@ -296,17 +380,37 @@ def extract_call(
                 day = _date(match)
                 if day and now.date() <= day <= date(now.year + 2, 12, 31):
                     recommended = day.isoformat()
+    home_eligibility = (
+        re.search(
+            r"\b(?:bursaries?|scholarships?)\s+are\s+open\s+to\s+"
+            r"Home\s+students?\s+only\b", article, re.I,
+        ) if kind == "phd_bursary" else None
+    )
+    home_tuition = (
+        re.search(r"\b(?:PhD\s+)?tuition\s+fees?\s+at\s+the\s+Home\s+rate\b",
+                  article, re.I)
+        if kind == "phd_bursary" else None
+    )
     proof = _location_proof(text, str(source["country_code"]), url)
     # A broad, multi-disciplinary funding scheme is eligible, but must never
     # be advertised as Economics-only merely because one eligible school is
     # Henley. Only an Economics-specific call title earns the Economics label.
     scope = (
-        "economics" if re.search(r"\b(?:economics?|econometrics?)\b", title, re.I)
+        "multidisciplinary" if source.get("subject_scope") == "multidisciplinary"
+        else "economics" if re.search(r"\b(?:economics?|econometrics?)\b", title, re.I)
         else "finance" if re.search(r"\b(?:finance|accounting|accountancy)\b", title, re.I)
         else "multidisciplinary"
     )
     return {
         "source_id": source["id"],
+        "posting_group": source.get("posting_group"),
+        "posting_group_expected": source.get("posting_group_expected"),
+        "eligibility_scope": "home_only" if home_eligibility else None,
+        "eligibility_evidence_excerpt": (
+            home_eligibility.group(0) if home_eligibility else None
+        ),
+        "funding_scope": "home_rate_tuition" if home_tuition else None,
+        "funding_evidence_excerpt": home_tuition.group(0) if home_tuition else None,
         "institution": source["institution"],
         "country_code": source["country_code"],
         "official_url": url,
@@ -327,24 +431,62 @@ def extract_call(
 
 
 def discover_links(html: str, source: dict[str, Any]) -> list[str]:
-    """Find all distinct relevant same-host HTML call pages, within a cap."""
+    """Bounded same-host index discovery; prioritize calls with subject evidence.
+
+    Official indexes sometimes label legitimate awards "PhD Scholarship 2027"
+    without repeating Economics or Finance in the anchor text. Follow those
+    HTML calls after the obviously relevant ones; the independently fetched
+    article must STILL prove subject fit before verification.
+    """
     parser = CallHTML()
     parser.feed(html[:MAX_HTML_BYTES])
     root = source["url"]
-    result: list[str] = []
+    topical: list[str] = []
+    generic: list[str] = []
     seen: set[str] = set()
     for href, label in parser.links[:500]:
-        if not CALL_TITLE.search(label) or not SUBJECT.search(label) or EXCLUDE.search(label):
+        if not CALL_TITLE.search(label) or EXCLUDE.search(label):
             continue
         candidate = safe_official_url(href, root)
-        if (candidate is not None and candidate != root and candidate not in seen
-                and candidate not in result):
-            result.append(candidate)
-            seen.add(candidate)
-            if len(result) >= MAX_INDEX_LINKS:
-                break
-    return result
+        if candidate is None or candidate == root or candidate in seen:
+            continue
+        seen.add(candidate)
+        (topical if SUBJECT.search(label) else generic).append(candidate)
+    return (topical + generic)[:MAX_INDEX_LINKS]
 
+
+def unsupported_document_count(html: str, source: dict[str, Any]) -> int:
+    """Report relevant institutional PDF/DOC calls without fetching documents.
+
+    An official HTML index can expose scholarship PDFs which our current
+    robots-aware HTML verifier does not support. Count permitted-location
+    document links as a COVERAGE GAP, never as a verified scholarship.
+    """
+    parser = CallHTML()
+    parser.feed(html[:MAX_HTML_BYTES])
+    root = urllib.parse.urlsplit(source["url"])
+    host = (root.hostname or "").lower().removeprefix("www.")
+    seen: set[str] = set()
+    for href, label in parser.links[:500]:
+        if not CALL_TITLE.search(label) or EXCLUDE.search(label):
+            continue
+        try:
+            candidate = urllib.parse.urlsplit(
+                urllib.parse.urljoin(source["url"], href),
+            )
+            candidate_host = (candidate.hostname or "").lower().removeprefix("www.")
+            if (candidate.scheme != "https" or candidate_host != host
+                    or candidate.port not in (None, 443)
+                    or candidate.username or candidate.password
+                    or candidate.query or candidate.fragment
+                    or not re.search(r"\.(?:pdf|docx?)$", candidate.path, re.I)):
+                continue
+        except (TypeError, ValueError):
+            continue
+        seen.add(urllib.parse.urlunsplit((
+            candidate.scheme, candidate.netloc, candidate.path, "", "",
+        )))
+    return len(seen)
 
 def validate_sources(config: Any) -> None:
     if (not isinstance(config, dict)
@@ -354,6 +496,8 @@ def validate_sources(config: Any) -> None:
             or not 1 <= len(config["sources"]) <= MAX_SOURCES):
         raise ValueError("Invalid approved official-call source registry")
     ids: set[str] = set()
+    urls: set[str] = set()
+    group_members: dict[str, list[dict[str, Any]]] = {}
     for source in config["sources"]:
         if not isinstance(source, dict):
             raise ValueError("Invalid call source")
@@ -363,13 +507,35 @@ def validate_sources(config: Any) -> None:
                 or name in ids or not isinstance(url, str)
                 or safe_official_url(url, url) != url
                 or source.get("mode") not in {"index", "detail"}
+                or (source.get("posting_group") is not None and (
+                    not isinstance(source["posting_group"], str) or
+                    not re.fullmatch(r"[a-z][a-z0-9-]{2,47}", source["posting_group"])))
+                or (source.get("posting_group_expected") is not None and (
+                    type(source["posting_group_expected"]) is not int
+                    or not 2 <= source["posting_group_expected"] <= 6))
+                or (source.get("posting_group") is None
+                    and source.get("posting_group_expected") is not None)
                 or not isinstance(source.get("institution"), str)
                 or not 5 <= len(source["institution"]) <= 120
                 or source.get("country_code") not in {"ES", "UK", "GB", "DE", "FI",
                                                       "FR", "NL", "IT", "SE", "NO",
                                                       "DK", "CH", "AT", "BE"}):
             raise ValueError("Unapproved or malformed official-call source")
+        if url in urls:
+            raise ValueError("Duplicate official-call URL in source registry")
         ids.add(name)
+        urls.add(url)
+        if source.get("posting_group") is not None:
+            if source.get("mode") != "detail" or not source.get("posting_group_expected"):
+                raise ValueError("Reviewed posting groups require an explicit member count")
+            group_members.setdefault(source["posting_group"], []).append(source)
+    for group, members in group_members.items():
+        expected = members[0]["posting_group_expected"]
+        if (len(members) != expected
+                or len({(item["institution"], item["country_code"])
+                        for item in members}) != 1
+                or any(item["posting_group_expected"] != expected for item in members)):
+            raise ValueError(f"Invalid or incomplete approved posting group {group}")
 
 
 def validate_catalog(catalog: Any) -> None:
@@ -409,9 +575,14 @@ def refresh_sources(
         status = response.get("status") if isinstance(response, dict) else "fetch_failed"
         urls: list[str] = []
         failures = 0
+        discovered_links = 0
+        rechecked_links = 0
+        unsupported_documents = 0
         if status == "ok" and isinstance(response.get("html"), str):
             if source["mode"] == "index":
                 urls = discover_links(response["html"], source)
+                discovered_links = len(urls)
+                unsupported_documents = unsupported_document_count(response["html"], source)
                 # Older but still-open official calls can scroll off a paginated
                 # university index. Recheck at most two within the same source
                 # and deadline window, without trusting cached dates for sending.
@@ -429,6 +600,7 @@ def refresh_sources(
                     ),
                     key=lambda item: (item["deadline_iso"], item["official_url"]),
                 )[:2]
+                rechecked_links = len(historical)
                 urls.extend(row["official_url"] for row in historical)
             else:
                 urls = [source["url"]]
@@ -463,6 +635,12 @@ def refresh_sources(
                 "partial" if failures else status
             ),
             "failed_details": failures, "candidate_count": len(urls),
+            "discovered_links": discovered_links,
+            "rechecked_links": rechecked_links,
+            "mode": source["mode"],
+            "index_empty": bool(source["mode"] == "index"
+                                and status == "ok" and discovered_links == 0),
+            "unsupported_documents": unsupported_documents,
             "checked_at": _stamp(now),
         })
     return {

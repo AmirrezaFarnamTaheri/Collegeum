@@ -6,7 +6,6 @@ provides at-most-once attempts after potentially accepted Telegram requests.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from collections.abc import Callable
@@ -16,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from ..core.official_call_rules import call_key, group_members, group_signature, receipt_key
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
 from .telegram_intents import enforce_production_reservation
@@ -23,21 +23,12 @@ from .telegram_intents import enforce_production_reservation
 log = get_logger(__name__)
 MAX_AGE = timedelta(days=14)
 MAX_AHEAD = timedelta(days=366)
-KINDS = {"phd_scholarship", "phd_studentship", "phd_fellowship"}
+KINDS = {"phd_scholarship", "phd_studentship", "phd_fellowship", "phd_bursary"}
 DELIVERY_STATES = {
     "pending", "confirmed", "uncertain", "permanent_failure", "retry_held",
 }
 TITLE_RE = re.compile(r"\bph\.?\s*d\.?\b|doctoral", re.I)
 DATE_RE = re.compile(r"20\d{2}-\d{2}-\d{2}\Z")
-
-
-def call_key(row: dict[str, Any]) -> str:
-    """Same official call in multiple institutional indexes maps to one post."""
-    url = row["official_url"]
-    parsed = urlsplit(url)
-    host = (parsed.hostname or "").lower().removeprefix("www.")
-    identity = f"{host}|{parsed.path.rstrip('/').lower()}|{row['intake_year']}"
-    return hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
 
 
 def _stamp(value: object) -> datetime | None:
@@ -95,6 +86,7 @@ def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
             or len(catalog["calls"]) > 100):
         return []
     results: dict[str, dict[str, Any]] = {}
+    conflicting: set[str] = set()
     for row in catalog["calls"]:
         if not isinstance(row, dict) or row.get("status") != "verified":
             continue
@@ -102,7 +94,7 @@ def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
             "scholarship", "funding",
         }:
             continue
-        if not isinstance(row.get("intake_year"), int):
+        if type(row.get("intake_year")) is not int:
             continue
         if not now.year <= row["intake_year"] <= now.year + 2:
             continue
@@ -118,6 +110,19 @@ def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
         except ValueError:
             continue
         if not now.date() <= deadline <= (now + MAX_AHEAD).date():
+            continue
+        recommended = row.get("recommended_admission_iso")
+        if recommended is not None:
+            if not isinstance(recommended, str) or not DATE_RE.fullmatch(recommended):
+                continue
+            try:
+                application_day = date.fromisoformat(recommended)
+            except ValueError:
+                continue
+            if application_day > deadline:
+                continue
+        institution = row.get("institution")
+        if not isinstance(institution, str) or not 5 <= len(institution) <= 120:
             continue
         host = _host(row.get("official_url"))
         if host is None or _host(row.get("evidence_url")) != host:
@@ -135,10 +140,15 @@ def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
                                  excerpt, re.I)):
             continue
         ident = call_key(row)
-        # If a source unexpectedly emits the same identity with conflicting
-        # deadlines, suppress both records rather than pick an arbitrary one.
+        # Any inconsistent observation for one canonical identity makes
+        # every duplicate unpublishable, even if a third entry agrees later.
+        if ident in conflicting:
+            continue
         previous = results.get(ident)
-        if previous and previous["deadline_iso"] != row["deadline_iso"]:
+        stable = ("deadline_iso", "deadline_kind", "kind",
+                  "institution", "country_code", "title")
+        if previous and any(previous.get(field) != row.get(field) for field in stable):
+            conflicting.add(ident)
             results.pop(ident, None)
             continue
         results[ident] = row
@@ -181,7 +191,7 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     title = escape(row["title"][:140])
     institution = escape(row["institution"][:125])
     label = {"phd_studentship": "PhD studentship", "phd_fellowship": "PhD fellowship",
-             "phd_scholarship": "PhD scholarship"}[row["kind"]]
+             "phd_scholarship": "PhD scholarship", "phd_bursary": "PhD bursary"}[row["kind"]]
     deadline = date.fromisoformat(row["deadline_iso"]).strftime("%d %b %Y")
     # Broad university-wide schemes must not be tagged Economics-only.
     scope = row.get("subject_scope")
@@ -215,6 +225,23 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             )
     if row["kind"] == "phd_studentship":
         lines.append("ℹ️ A prior PhD admission offer may be required; check the official terms.")
+    elif row["kind"] == "phd_bursary":
+        if (row.get("eligibility_scope") == "home_only"
+                and re.search(
+                    r"\bHome\s+students?\s+only\b",
+                    str(row.get("eligibility_evidence_excerpt") or ""), re.I,
+                )):
+            lines.append("🎓 Eligibility: Home-fee applicants only")
+        if (row.get("funding_scope") == "home_rate_tuition"
+                and re.search(
+                    r"\btuition\s+fees?\s+at\s+the\s+Home\s+rate\b",
+                    str(row.get("funding_evidence_excerpt") or ""), re.I,
+                )):
+            lines.append("💰 Funding: Home-rate PhD tuition; verify duration and terms")
+        else:
+            lines.append(
+                "💰 Bursary coverage varies; verify stipend and tuition conditions"
+            )
     lines.extend([
         "",
         "<i>This is an independent doctoral funding call, not necessarily "
@@ -230,13 +257,55 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return "\n".join(lines), keyboard
 
 
+def _group_message(rows: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
+    """One succinct channel post, but each official position retains its own link."""
+    first = rows[0]
+    deadline = date.fromisoformat(first["deadline_iso"]).strftime("%d %b %Y")
+    place = {"UK": "United Kingdom", "GB": "United Kingdom",
+             "ES": "Spain"}.get(first["country_code"], first["country_code"])
+    lines = [
+        f"🎓 <b>{len(rows)} PhD funding opportunities · "
+        f"{escape(first['institution'][:125])}</b>",
+        f"📍 {escape(place)}",
+        f"📅 <b>{'Funding' if first['deadline_kind'] == 'funding' else 'Call'} "
+        f"deadline: {escape(deadline)}</b>",
+    ]
+    recommended = first.get("recommended_admission_iso")
+    if isinstance(recommended, str) and DATE_RE.fullmatch(recommended):
+        day = date.fromisoformat(recommended)
+        lines.append(
+            "💡 Recommended PhD admission submission (not funding deadline): "
+            + escape(day.strftime("%d %b %Y"))
+        )
+    lines.extend(["", "<b>Available positions</b>"])
+    for row in rows:
+        lines.append("• " + escape(row["title"][:105]))
+    lines.extend([
+        "",
+        "ℹ️ These are separate departmental calls with shared dates. "
+        "Funding, eligibility and admission requirements may vary; "
+        "open each official page before applying.",
+        f"🔎 Official sources checked: {min(row['checked_at'][:10] for row in rows)} UTC",
+        "#PhD #Scholarships",
+    ])
+    keyboard = {"inline_keyboard": [[{
+        "text": row["title"][:58],
+        "url": row["official_url"],
+    }] for row in rows]}
+    return "\n".join(lines), keyboard
+
+
 def publish_official_calls(
     catalog_path: str | Path, receipt_path: str | Path,
     telegram: TelegramClient | None, *, chat_id: str,
     enabled: bool, max_messages: int = 2, now: datetime | None = None,
     reserve_intent: Callable[[str, str, str], None] | None = None,
 ) -> int:
-    """One bounded Telegram message per independent, source-verified call."""
+    """Send bounded attempts, consolidating explicitly reviewed related calls.
+
+    A combined post still reserves and checkpoints EACH per-call identity before
+    sending. Thus a runner crash cannot turn a new grouping into a blind resend.
+    """
     if not enabled or telegram is None or not chat_id:
         return 0
     enforce_production_reservation(reserve_intent)
@@ -250,57 +319,91 @@ def publish_official_calls(
     ledger_path = Path(receipt_path)
     ledger = _load_receipts(ledger_path)
     timestamp = now or datetime.now(UTC)
+    eligible = eligible_calls(catalog, now=timestamp)
+    outstanding = [
+        row for row in eligible
+        if receipt_key(row, ledger["deliveries"]) is None
+    ]
+    handled: set[str] = set()
     sent = 0
-    for row in eligible_calls(catalog, now=timestamp):
-        if sent >= max_messages:
+    attempts = 0
+    for row in outstanding:
+        if attempts >= max_messages:
             break
         key = call_key(row)
-        if key in ledger["deliveries"]:
+        if key in handled:
             continue
-        attempt = {
-            "state": "pending", "title": row["title"],
-            "institution": row["institution"], "deadline_iso": row["deadline_iso"],
-            "official_url": row["official_url"], "intake_year": row["intake_year"],
-            "attempted_at": timestamp.isoformat(timespec="seconds").replace("+00:00", "Z"),
-        }
-        ledger["deliveries"][key] = attempt
-        _checkpoint(ledger_path, ledger)  # Hold before any network send.
+        signature = group_signature(row)
+        group = group_members(row, eligible, ledger["deliveries"])
+        if not group:
+            continue  # Incomplete or partly delivered group; fail closed.
+        if any(call_key(member) in handled for member in group):
+            continue
+        keys = [call_key(member) for member in group]
+        handled.update(keys)
+        for member, member_key in zip(group, keys, strict=True):
+            ledger["deliveries"][member_key] = {
+                "state": "pending", "title": member["title"],
+                "institution": member["institution"],
+                "deadline_iso": member["deadline_iso"],
+                "official_url": member["official_url"],
+                "intake_year": member["intake_year"],
+                "posting_group": signature[0] if signature is not None and len(group) > 1 else None,
+                "group_size": len(group),
+                "attempted_at": timestamp.isoformat(timespec="seconds").replace(
+                    "+00:00", "Z"),
+            }
+        _checkpoint(ledger_path, ledger)  # Every identity held before any network send.
         if reserve_intent is not None:
-            reserve_intent("calls", key, "initial")
-        message, keyboard = _message(row)
+            # A failure halfway through reservations leaves all members held.
+            # It MUST NOT fall back to a smaller group or a retry.
+            for member_key in keys:
+                reserve_intent("calls", member_key, "initial")
+        message, keyboard = (
+            _group_message(group) if len(group) > 1 else _message(group[0])
+        )
         try:
-            receipt = telegram.send_message(chat_id=chat_id, html=message, keyboard=keyboard)
+            # Budget the actual Bot API calls, even when every request fails.
+            attempts += 1
+            receipt = telegram.send_message(
+                chat_id=chat_id, html=message, keyboard=keyboard,
+            )
         except TelegramError as exc:
-            if exc.uncertain:
-                attempt["state"] = "uncertain"
-            elif exc.permanent:
-                attempt["state"] = "permanent_failure"
-            elif reserve_intent is not None:
-                # A remote pre-send reservation cannot safely be reused, even
-                # after Telegram explicitly rejects a rate-limited request.
-                # Hold for operator reconciliation rather than inducing 422 loops.
-                attempt["state"] = "retry_held"
-            else:
-                # Local-only mode retains its original retry semantics.
-                ledger["deliveries"].pop(key, None)
+            for member_key in keys:
+                attempt = ledger["deliveries"][member_key]
+                if exc.uncertain:
+                    attempt["state"] = "uncertain"
+                elif exc.permanent:
+                    attempt["state"] = "permanent_failure"
+                elif reserve_intent is not None:
+                    attempt["state"] = "retry_held"
+                else:
+                    ledger["deliveries"].pop(member_key, None)
             _checkpoint(ledger_path, ledger)
             log.warning("telegram_official_call_not_confirmed",
-                        institution=row["institution"], uncertain=exc.uncertain)
-            if exc.status in (401, 403, 404):
+                        institution=row["institution"], group_size=len(group),
+                        uncertain=exc.uncertain)
+            if exc.status in (401, 403, 404, 429):
+                # Authentication/permission failures and rate limits apply to
+                # the whole channel, not just this particular opportunity.
                 break
             continue
         if type(receipt) is not int or receipt <= 0:
-            attempt["state"] = "uncertain"
+            for member_key in keys:
+                ledger["deliveries"][member_key]["state"] = "uncertain"
             _checkpoint(ledger_path, ledger)
             continue
-        attempt.update(
-            state="confirmed", message_id=receipt,
-            sent_at=timestamp.isoformat(timespec="seconds").replace("+00:00", "Z"),
-        )
+        for member_key in keys:
+            ledger["deliveries"][member_key].update(
+                state="confirmed", message_id=receipt,
+                sent_at=timestamp.isoformat(timespec="seconds").replace(
+                    "+00:00", "Z"),
+            )
         _checkpoint(ledger_path, ledger)
         sent += 1
         log.info("telegram_official_call_published", message_id=receipt,
-                 institution=row["institution"], deadline=row["deadline_iso"])
+                 institution=row["institution"], group_size=len(group),
+                 deadline=row["deadline_iso"])
     return sent
 
 
@@ -312,16 +415,27 @@ def official_calls_health(
     checked = now or datetime.now(UTC)
     try:
         catalog = json.loads(Path(catalog_path).read_text(encoding="utf-8"))
-        if not isinstance(catalog, dict) or not isinstance(catalog.get("sources"), list):
+        if (not isinstance(catalog, dict)
+                or catalog.get("kind") != "official_phd_call_observations"
+                or catalog.get("version") != 1
+                or not isinstance(catalog.get("calls"), list)
+                or len(catalog["calls"]) > 100
+                or not isinstance(catalog.get("sources"), list)):
             raise ValueError("Invalid official call catalogue")
         ledger = _load_receipts(Path(receipt_path))
     except (OSError, json.JSONDecodeError, ValueError):
         return {"status": "unavailable", "eligible": None, "unpublished": None}
     eligible = eligible_calls(catalog, now=checked)
     delivered = ledger["deliveries"]
-    backlog = sum(
-        delivered.get(call_key(row), {}).get("state") != "confirmed"
-        for row in eligible
+    unpublished = [
+        row for row in eligible
+        if ((key := receipt_key(row, delivered)) is None
+            or delivered[key]["state"] != "confirmed")
+    ]
+    backlog = len(unpublished)
+    group_waiting = sum(
+        bool(group_signature(row)) and not group_members(row, eligible, delivered)
+        for row in unpublished
     )
     state_counts: dict[str, int] = {}
     for source in catalog["sources"]:
@@ -337,15 +451,31 @@ def official_calls_health(
     permanent = sum(
         1 for item in delivered.values() if item.get("state") == "permanent_failure"
     )
+    empty_indexes = sum(
+        isinstance(source, dict) and source.get("index_empty") is True
+        for source in catalog["sources"]
+    )
+    unsupported_documents = sum(
+        source.get("unsupported_documents", 0)
+        for source in catalog["sources"]
+        if isinstance(source, dict)
+        and type(source.get("unsupported_documents", 0)) is int
+        and 0 <= source.get("unsupported_documents", 0) <= 500
+    )
     degraded = any(k != "ok" for k in state_counts) or bool(
         uncertain or pending or retry_held or permanent
+        or empty_indexes or unsupported_documents
     )
     return {
         "status": "degraded" if degraded else "ok",
         "sources": state_counts,
+        "empty_indexes": empty_indexes,
+        "unsupported_documents": unsupported_documents,
         "eligible": len(eligible),
         "unpublished": backlog,
+        "group_waiting": group_waiting,
         "confirmed": len(confirmed),
+        "confirmed_messages": len({item["message_id"] for item in confirmed}),
         "pending": pending,
         "retry_held": retry_held,
         "permanent_failure": permanent,
