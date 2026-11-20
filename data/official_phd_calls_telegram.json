@@ -1,5 +1,16 @@
 {
   "deliveries": {
+    "1132ac59c8dd87ce7eec9b1d63e4f3c2": {
+      "attempted_at": "2026-11-20T02:27:48Z",
+      "deadline_iso": "2027-02-21",
+      "institution": "Henley Business School",
+      "intake_year": 2026,
+      "message_id": 138,
+      "official_url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
+      "sent_at": "2026-11-20T02:27:48Z",
+      "state": "confirmed",
+      "title": "Informatics and Operations PhD Opportunities"
+    },
     "6561a47cdaa8b1095624a0020f5b38f5": {
       "attempted_at": "2026-11-19T21:29:43Z",
       "deadline_iso": "2026-12-11",
@@ -43,6 +54,17 @@
       "sent_at": "2026-11-19T23:55:55Z",
       "state": "confirmed",
       "title": "Entrepreneurship and Innovation PhD Opportunities"
+    },
+    "9d4c26f67b16857d9c03efd87da39254": {
+      "attempted_at": "2026-11-20T02:27:48Z",
+      "deadline_iso": "2027-02-21",
+      "institution": "Henley Business School",
+      "intake_year": 2026,
+      "message_id": 139,
+      "official_url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
+      "sent_at": "2026-11-20T02:27:48Z",
+      "state": "confirmed",
+      "title": "International Business and Strategy PhD Opportunities"
     },
     "f431c672e2a83d1dc45b9dc132b18ee2": {
       "attempted_at": "2026-11-19T21:29:43Z",
