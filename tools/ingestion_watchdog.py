@@ -28,7 +28,9 @@ _CORE_SRC = str(Path(__file__).resolve().parents[1] / "src")
 if _CORE_SRC not in sys.path:
     sys.path.insert(0, _CORE_SRC)
 from predoc_pipeline.core.official_call_rules import (  # noqa: E402
-    call_key, group_members, receipt_key,
+    call_key,
+    group_members,
+    receipt_key,
 )
 
 STALE_AFTER = timedelta(hours=8)  # Two nominal four-hour ingestion intervals.
