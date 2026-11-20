@@ -565,10 +565,13 @@ def refresh_sources(
         status = response.get("status") if isinstance(response, dict) else "fetch_failed"
         urls: list[str] = []
         failures = 0
+        discovered_links = 0
+        rechecked_links = 0
         unsupported_documents = 0
         if status == "ok" and isinstance(response.get("html"), str):
             if source["mode"] == "index":
                 urls = discover_links(response["html"], source)
+                discovered_links = len(urls)
                 unsupported_documents = unsupported_document_count(response["html"], source)
                 # Older but still-open official calls can scroll off a paginated
                 # university index. Recheck at most two within the same source
@@ -587,6 +590,7 @@ def refresh_sources(
                     ),
                     key=lambda item: (item["deadline_iso"], item["official_url"]),
                 )[:2]
+                rechecked_links = len(historical)
                 urls.extend(row["official_url"] for row in historical)
             else:
                 urls = [source["url"]]
@@ -621,8 +625,11 @@ def refresh_sources(
                 "partial" if failures else status
             ),
             "failed_details": failures, "candidate_count": len(urls),
+            "discovered_links": discovered_links,
+            "rechecked_links": rechecked_links,
             "mode": source["mode"],
-            "index_empty": bool(source["mode"] == "index" and status == "ok" and not urls),
+            "index_empty": bool(source["mode"] == "index"
+                                and status == "ok" and discovered_links == 0),
             "unsupported_documents": unsupported_documents,
             "checked_at": _stamp(now),
         })
