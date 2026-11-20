@@ -13,7 +13,7 @@ indexes, plus the two currently open Economics and Energy/Climate 2027
 PhD call pages directly (so pagination cannot hide them), and five Henley
 departmental PhD opportunities pages (Finance and Accounting, International
 Business and Strategy, Informatics and Operations, Entrepreneurship, and
-Leadership/Organisations), plus the University of Reading's distinct
+Leadership/Organisations), plus the University of Reading's distinct 2027 **Home-fee PhD bursaries** and
 **International PhD Studentship Competition** for all eligible research
 areas, explicitly including Henley Business School. Additional institutions can be added to this reviewed
 registry without changing the parser or publisher.
@@ -87,6 +87,43 @@ are never blindly resent.
 current source statuses, eligible calls, unsent eligible count, confirmed
 receipts, uncertain receipts and last confirmed delivery timestamp. A healthy
 source refresh is **not** evidence that Telegram delivered anything.
+
+## Compact multi-position channel format
+
+Approved departmental pages sharing a single institutional funding window can now
+opt into an explicit `posting_group` in the official source registry. All
+members must independently pass the same institutional verification, and must
+match institution, country, funding type, funding cutoff, recommended admission
+submission date, and intake. Never infer groups from the institution name or
+the same cutoff alone. Each group contains at most six source pages.
+
+The channel receives a single post with an institutional heading, one shared
+deadline and admission recommendation, a concise list of positions, and one
+official link per position. Each opportunity retains its original `call_key`
+and its own receipt, even when the Telegram `message_id` is shared. All
+participating keys are checkpointed and durably reserved before the single
+Telegram send. Failed or uncertain sends hold all members without blind retry.
+The health report continues to count confirmed *calls*, and also exposes
+`confirmed_messages` for the actual number of Telegram messages delivered.
+
+The five Henley Business School departmental 2027 studentships are explicitly
+approved to group prospectively. Already confirmed messages 136–140 are
+historical receipts, **not** automatically deleted or reissued by this change.
+If an operator confirms deletion, reissue requires a separately authorized,
+durable, group-aware reconciliation; do not erase individual receipts to force
+publication.
+
+## Additional official bursary coverage
+
+The University of Reading's 2027 Home-fee PhD bursaries are monitored from
+their verified direct university URL. This is a distinct funding call for new
+**Home-fee** applicants, across disciplines. Its official 30 April 2027 date
+is a **bursary** application cutoff, not a general PhD-admission deadline,
+and applicants must already have received an offer by that date. The bursary
+covers Home-rate PhD tuition for up to four years, not a living stipend.
+As with other funding calls, refresh must verify the source under robots and
+deadline checks before publishing. Never advertise this bursary as open to
+international-fee applicants.
 
 ## Adding future sources safely
 
