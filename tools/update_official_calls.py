@@ -545,6 +545,43 @@ def validate_sources(config: Any) -> None:
             raise ValueError("Unapproved or malformed official-call source")
         if url in urls:
             raise ValueError("Duplicate official-call URL in source registry")
+        # Opt-in PDF approvals are evidence-review only. No new PDF is
+        # fetched by the stdlib-only daily HTML monitor, and no PDF result
+        # is inserted into the Telegram publishing catalogue.
+        approved = source.get("approved_documents", [])
+        if (not isinstance(approved, list) or len(approved) > 6
+                or (approved and source["mode"] != "index")):
+            raise ValueError("Invalid reviewed document source list")
+        pdf_urls: set[str] = set()
+        for document in approved:
+            if not isinstance(document, dict):
+                raise ValueError("Malformed approved PDF record")
+            target = document.get("url")
+            title = document.get("title")
+            marker = document.get("institution_marker")
+            canonical = document.get("canonical_html_url")
+            try:
+                parsed = urllib.parse.urlsplit(target)
+                parent = urllib.parse.urlsplit(url)
+                same_host = (
+                    (parsed.hostname or "").lower().removeprefix("www.")
+                    == (parent.hostname or "").lower().removeprefix("www.")
+                )
+                port = parsed.port
+            except (TypeError, ValueError):
+                raise ValueError("Invalid approved PDF URL") from None
+            if (not isinstance(target, str) or target in pdf_urls
+                    or not same_host or parsed.scheme != "https"
+                    or port not in (None, 443) or parsed.username or parsed.password
+                    or parsed.query or parsed.fragment or "%" in parsed.path
+                    or not re.search(r"\.pdf\Z", parsed.path, re.I)
+                    or not isinstance(title, str) or not CALL_TITLE.search(title)
+                    or EXCLUDE.search(title) or len(title) > 150
+                    or not isinstance(marker, str) or not 8 <= len(marker) <= 100
+                    or not isinstance(canonical, str)
+                    or safe_official_url(canonical, url) != canonical):
+                raise ValueError("Unreviewed or conflicting institutional PDF")
+            pdf_urls.add(target)
         ids.add(name)
         urls.add(url)
         if source.get("posting_group") is not None:
