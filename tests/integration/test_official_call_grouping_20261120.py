@@ -636,6 +636,7 @@ def test_malformed_group_metadata_never_degrades_to_a_single_post(tmp_path):
 
 def test_duplicate_official_urls_in_registry_are_rejected():
     import pytest
+
     from tools.update_official_calls import validate_sources
 
     sources = [{
