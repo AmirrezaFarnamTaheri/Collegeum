@@ -104,12 +104,12 @@ def group_members(
     # Group identity covers one department bundle per institution and intake.
     # Disagreeing deadlines, funding types or admission dates require review,
     # not automatic splitting into different messages.
-    cohort = signature[:4] + signature[-1:]
     related = []
     for candidate in candidates:
         candidate_signature = group_signature(candidate)
         if (candidate_signature is not None
-                and candidate_signature[:4] + candidate_signature[-1:] == cohort):
+                and candidate_signature[0] == signature[0]
+                and candidate_signature[-1] == signature[-1]):
             related.append(candidate)
     if (len(members) != expected or len(related) != expected
             or any(candidate.get("posting_group_expected") != expected
