@@ -681,3 +681,101 @@ def test_home_only_bursary_eligibility_is_evidenced_and_visible(tmp_path):
     count2, tg2, _, _ = _publish(separate, [no_evidence])
     assert count2 == 1
     assert "Home-fee applicants only" not in tg2.send_message.call_args.kwargs["html"]
+
+
+def test_telegram_error_attempts_are_bounded_even_when_none_succeed(tmp_path):
+    from predoc_pipeline.publish.telegram import TelegramError
+
+    rows = [
+        _henley(f"separate-{n}", f"Department {n} PhD Opportunities",
+                posting_group=None)
+        for n in range(7)
+    ]
+    telegram = Mock()
+    telegram.send_message.side_effect = TelegramError(
+        "retry-after request", status=429, permanent=False, uncertain=False,
+    )
+    count, _, ledger, _ = _publish(
+        tmp_path, rows, telegram=telegram, reserve_intent=Mock(),
+    )
+    assert count == 0
+    # max_messages=2 must limit actual Telegram API requests, not just successes.
+    assert telegram.send_message.call_count == 2
+    assert len(json.loads(ledger.read_text())["deliveries"]) == 2
+
+
+def test_zero_new_index_links_are_visible_despite_prior_call_rechecks():
+    from tools.update_official_calls import refresh_sources
+
+    source = {
+        "id": "henley-index", "institution": "Henley Business School",
+        "country_code": "UK", "mode": "index", "url": HENLEY_ROOT + "all-phds",
+    }
+    previous = _henley(
+        "accounting", "Accounting PhD Opportunities", posting_group=None,
+    )
+    previous["source_id"] = source["id"]
+    article = """<h1>Accounting PhD Opportunities</h1>
+    <p>Accounting PhD studentship funding is available.</p>
+    <p>Studentship applications for the 2027/28 academic year are now open
+    and will close on 21 February 2027.</p>"""
+    pages = {
+        source["url"]: {"status": "ok", "html": "<h1>Latest news</h1>No links"},
+        previous["official_url"]: {"status": "ok", "html": article},
+    }
+    result = refresh_sources(
+        {"kind": "official_phd_call_sources", "version": 1, "sources": [source]},
+        _catalog(previous), now=NOW, fetcher=lambda url: pages[url],
+    )
+    summary = result["sources"][0]
+    assert summary["status"] == "ok"
+    assert summary["index_empty"] is True
+    assert summary["discovered_links"] == 0
+    assert summary["rechecked_links"] == 1
+    assert summary["candidate_count"] == 1
+    assert result["calls"][0]["status"] == "verified"
+
+
+def test_explicitly_closed_current_funding_cycle_cannot_verify():
+    source = {
+        "id": "henley-closed", "institution": "Henley Business School",
+        "country_code": "UK", "mode": "detail", "url": HENLEY_ROOT + "closed",
+    }
+    html = """<h1>Accounting PhD Studentships 2027</h1>
+    <p>PhD funding in Accounting.</p>
+    <p>Studentship applications for the 2027/28 academic year are now closed.
+    Studentship applications closed on 21 February 2027.</p>"""
+    call = extract_call(html, url=source["url"], source=source, now=NOW)
+    assert call["status"] == "closed"
+    assert eligible_calls(_catalog(call), now=NOW) == []
+
+
+def test_explicitly_closed_scholarship_without_academic_year_is_not_published():
+    source = {
+        "id": "ieb-closed", "institution": "Barcelona Institute of Economics (IEB)",
+        "country_code": "ES", "mode": "detail",
+        "url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
+    }
+    html = """<h1>PhD Scholarship in Economics 2027</h1>
+    <p>The scholarship application window is now closed.</p>
+    <p>Interested candidates must complete both steps before 11 December 2026.</p>
+    <footer>C/ John M. Keynes 1-11, 08034 Barcelona; Tel. +34 93 403 46 46.</footer>"""
+    call = extract_call(html, url=source["url"], source=source, now=NOW)
+    assert call["status"] == "closed"
+    assert eligible_calls(_catalog(call), now=NOW) == []
+
+
+def test_previous_closed_cycle_does_not_block_current_open_funding():
+    source = {
+        "id": "henley-accounting", "institution": "Henley Business School",
+        "country_code": "UK", "mode": "detail",
+        "url": HENLEY_ROOT + "accounting-and-financial-management",
+    }
+    html = """<h1>Accounting PhD Opportunities</h1>
+    <p>PhD funding in Accounting.</p>
+    <p>Studentship applications for the 2026/27 academic year are now closed.</p>
+    <p>Studentship applications for the 2027/28 academic year are now open
+    and will close on 21 February 2027.</p>"""
+    call = extract_call(html, url=source["url"], source=source, now=NOW)
+    assert call["status"] == "verified"
+    assert call["intake_year"] == 2027
