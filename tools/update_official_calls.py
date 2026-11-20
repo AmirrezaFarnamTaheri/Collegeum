@@ -199,6 +199,11 @@ def _intake(title: str, text: str) -> int | None:
         r"(?:September|October|Autumn)"
         r"(?:\s*(?:/|or)\s*(?:September|October))?\s+(20\d{2})", text, re.I,
     )
+    if not match:
+        match = re.search(
+            r"commence.{0,95}?(?:in\\s+)?(?:September|October|Autumn)\\s+(20\\d{2})",
+            text, re.I,
+        )
     return int(match.group(1)) if match else None
 
 
@@ -264,7 +269,10 @@ def extract_call(
     title = (parsed.headings[0] if parsed.headings else source.get("title", "")).strip()
     label = f"{title} {source.get('title', '')}"
     invalid = (not title or len(title) > 150
-               or not SUBJECT.search(label + " " + article[:1800])
+               or not (SUBJECT.search(label + " " + article[:1800])
+                       or (source.get("subject_scope") == "multidisciplinary"
+                           and source.get("mode") == "detail"
+                           and "bursar" in label.lower()))
                or EXCLUDE.search(title)
                or not safe_official_url(url, source["url"]))
     # Mentioning scholarship terms somewhere in a generic admissions page
@@ -303,7 +311,8 @@ def extract_call(
     # be advertised as Economics-only merely because one eligible school is
     # Henley. Only an Economics-specific call title earns the Economics label.
     scope = (
-        "economics" if re.search(r"\b(?:economics?|econometrics?)\b", title, re.I)
+        "multidisciplinary" if source.get("subject_scope") == "multidisciplinary"
+        else "economics" if re.search(r"\b(?:economics?|econometrics?)\b", title, re.I)
         else "finance" if re.search(r"\b(?:finance|accounting|accountancy)\b", title, re.I)
         else "multidisciplinary"
     )
