@@ -383,7 +383,9 @@ def evaluate_official_calls_trigger(
                     "phd_bursary",
                 } or row.get("deadline_kind") not in {"funding", "scholarship"}
                 or type(row.get("intake_year")) is not int
-                or not now.year <= row["intake_year"] <= now.year + 2):
+                or not now.year <= row["intake_year"] <= now.year + 2
+                or not isinstance(row.get("institution"), str)
+                or not 5 <= len(row["institution"]) <= 120):
             continue
         raw_deadline = row.get("deadline_iso")
         if (not isinstance(raw_deadline, str)
@@ -398,6 +400,17 @@ def evaluate_official_calls_trigger(
                 or deadline < now.date()
                 or deadline > (now + timedelta(days=366)).date()):
             continue
+        recommended = row.get("recommended_admission_iso")
+        if recommended is not None:
+            if (not isinstance(recommended, str)
+                    or not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", recommended)):
+                continue
+            try:
+                application_day = datetime.fromisoformat(recommended).date()
+            except ValueError:
+                continue
+            if application_day > deadline:
+                continue
         official, evidence = row.get("official_url"), row.get("evidence_url")
         if not isinstance(official, str) or official != evidence:
             continue
