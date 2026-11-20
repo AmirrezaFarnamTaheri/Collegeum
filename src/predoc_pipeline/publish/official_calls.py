@@ -6,7 +6,6 @@ provides at-most-once attempts after potentially accepted Telegram requests.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from collections.abc import Callable
@@ -16,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from ..core.official_call_rules import call_key, group_members, group_signature, receipt_key
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
 from .telegram_intents import enforce_production_reservation
@@ -29,15 +29,6 @@ DELIVERY_STATES = {
 }
 TITLE_RE = re.compile(r"\bph\.?\s*d\.?\b|doctoral", re.I)
 DATE_RE = re.compile(r"20\d{2}-\d{2}-\d{2}\Z")
-
-
-def call_key(row: dict[str, Any]) -> str:
-    """Same official call in multiple institutional indexes maps to one post."""
-    url = row["official_url"]
-    parsed = urlsplit(url)
-    host = (parsed.hostname or "").lower().removeprefix("www.")
-    identity = f"{host}|{parsed.path.rstrip('/').lower()}|{row['intake_year']}"
-    return hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
 
 
 def _stamp(value: object) -> datetime | None:
@@ -95,6 +86,7 @@ def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
             or len(catalog["calls"]) > 100):
         return []
     results: dict[str, dict[str, Any]] = {}
+    conflicting: set[str] = set()
     for row in catalog["calls"]:
         if not isinstance(row, dict) or row.get("status") != "verified":
             continue
@@ -102,7 +94,7 @@ def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
             "scholarship", "funding",
         }:
             continue
-        if not isinstance(row.get("intake_year"), int):
+        if type(row.get("intake_year")) is not int:
             continue
         if not now.year <= row["intake_year"] <= now.year + 2:
             continue
@@ -135,10 +127,15 @@ def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
                                  excerpt, re.I)):
             continue
         ident = call_key(row)
-        # If a source unexpectedly emits the same identity with conflicting
-        # deadlines, suppress both records rather than pick an arbitrary one.
+        # Any inconsistent observation for one canonical identity makes
+        # every duplicate unpublishable, even if a third entry agrees later.
+        if ident in conflicting:
+            continue
         previous = results.get(ident)
-        if previous and previous["deadline_iso"] != row["deadline_iso"]:
+        stable = ("deadline_iso", "deadline_kind", "kind",
+                  "institution", "country_code", "title")
+        if previous and any(previous.get(field) != row.get(field) for field in stable):
+            conflicting.add(ident)
             results.pop(ident, None)
             continue
         results[ident] = row
@@ -235,26 +232,6 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return "\n".join(lines), keyboard
 
 
-_GROUP_RE = re.compile(r"[a-z][a-z0-9-]{2,47}\Z")
-MAX_GROUP_ROWS = 6
-
-
-def _group_signature(row: dict[str, Any]) -> tuple[Any, ...] | None:
-    """Never infer a shared competition just from institution or deadline.
-
-    Source reviewers explicitly opt detail pages into one posting group.
-    Matching every deadline/type/cycle field prevents misleading digests.
-    """
-    name = row.get("posting_group")
-    if not isinstance(name, str) or not _GROUP_RE.fullmatch(name):
-        return None
-    return (
-        name, row["institution"], row["country_code"], row["kind"],
-        row["deadline_kind"], row["deadline_iso"],
-        row.get("recommended_admission_iso"), row["intake_year"],
-    )
-
-
 def _group_message(rows: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
     """One succinct channel post, but each official position retains its own link."""
     first = rows[0]
@@ -317,9 +294,10 @@ def publish_official_calls(
     ledger_path = Path(receipt_path)
     ledger = _load_receipts(ledger_path)
     timestamp = now or datetime.now(UTC)
+    eligible = eligible_calls(catalog, now=timestamp)
     outstanding = [
-        row for row in eligible_calls(catalog, now=timestamp)
-        if call_key(row) not in ledger["deliveries"]
+        row for row in eligible
+        if receipt_key(row, ledger["deliveries"]) is None
     ]
     handled: set[str] = set()
     sent = 0
@@ -329,13 +307,12 @@ def publish_official_calls(
         key = call_key(row)
         if key in handled:
             continue
-        signature = _group_signature(row)
-        group = ([other for other in outstanding
-                  if call_key(other) not in handled
-                  and _group_signature(other) == signature][:MAX_GROUP_ROWS]
-                 if signature else [row])
-        if len(group) < 2:
-            group = [row]
+        signature = group_signature(row)
+        group = group_members(row, eligible, ledger["deliveries"])
+        if not group:
+            continue  # Incomplete or partly delivered group; fail closed.
+        if any(call_key(member) in handled for member in group):
+            continue
         keys = [call_key(member) for member in group]
         handled.update(keys)
         for member, member_key in zip(group, keys, strict=True):
@@ -415,9 +392,15 @@ def official_calls_health(
         return {"status": "unavailable", "eligible": None, "unpublished": None}
     eligible = eligible_calls(catalog, now=checked)
     delivered = ledger["deliveries"]
-    backlog = sum(
-        delivered.get(call_key(row), {}).get("state") != "confirmed"
-        for row in eligible
+    unpublished = [
+        row for row in eligible
+        if ((key := receipt_key(row, delivered)) is None
+            or delivered[key]["state"] != "confirmed")
+    ]
+    backlog = len(unpublished)
+    group_waiting = sum(
+        bool(group_signature(row)) and not group_members(row, eligible, delivered)
+        for row in unpublished
     )
     state_counts: dict[str, int] = {}
     for source in catalog["sources"]:
@@ -441,6 +424,7 @@ def official_calls_health(
         "sources": state_counts,
         "eligible": len(eligible),
         "unpublished": backlog,
+        "group_waiting": group_waiting,
         "confirmed": len(confirmed),
         "confirmed_messages": len({item["message_id"] for item in confirmed}),
         "pending": pending,
