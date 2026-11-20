@@ -1,0 +1,120 @@
+"""Dependency-free funding-call identity and reviewed digest safety rules.
+
+Both the Telegram publisher and the stdlib-only ingestion watchdog must apply
+the SAME no-replay and group-completeness policy. Neither module sends anything.
+"""
+from __future__ import annotations
+
+import hashlib
+import re
+from collections.abc import Mapping, Sequence
+from typing import Any
+from urllib.parse import urlsplit
+
+MAX_GROUP_ROWS = 6
+_GROUP = re.compile(r"[a-z][a-z0-9-]{2,47}\Z")
+
+
+def call_key(row: Mapping[str, Any]) -> str:
+    """Stable historical URL/intake identity; do not change existing keys."""
+    parsed = urlsplit(row["official_url"])
+    host = (parsed.hostname or "").lower().removeprefix("www.")
+    identity = f"{host}|{parsed.path.rstrip('/').lower()}|{row['intake_year']}"
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
+
+
+def receipt_key(
+    row: Mapping[str, Any], deliveries: Mapping[str, Any],
+) -> str | None:
+    """Existing attempts block replays, including a *proven* off-by-one cycle fix.
+
+    One legacy parser picked the closed 2026/27 cycle from a source which
+    explicitly opened 2027/28, so its permanent receipt was keyed to 2026.
+    Suppress only when the old receipt's original hashed key, official URL,
+    institution, funding deadline, and compatible title match. Genuine
+    future cycles with a DIFFERENT funding deadline remain new opportunities.
+    Pending, uncertain, and failed attempts also block automatic retries.
+    """
+    key = call_key(row)
+    if key in deliveries:
+        return key
+    target_year = row.get("intake_year")
+    if type(target_year) is not int:
+        return None
+    for legacy_key, receipt in deliveries.items():
+        if not isinstance(receipt, dict):
+            continue
+        old_year = receipt.get("intake_year")
+        if (type(old_year) is not int or old_year != target_year - 1
+                or receipt.get("official_url") != row.get("official_url")
+                or receipt.get("institution") != row.get("institution")
+                or receipt.get("deadline_iso") != row.get("deadline_iso")):
+            continue
+        if (receipt.get("title") and row.get("title")
+                and receipt["title"] != row["title"]):
+            continue
+        if (receipt.get("kind") and row.get("kind")
+                and receipt["kind"] != row["kind"]):
+            continue
+        if call_key(receipt) == legacy_key:
+            return legacy_key
+    return None
+
+
+def group_signature(row: Mapping[str, Any]) -> tuple[Any, ...] | None:
+    """Only explicitly approved, otherwise-identical funding calls may group."""
+    name = row.get("posting_group")
+    if not isinstance(name, str) or not _GROUP.fullmatch(name):
+        return None
+    return (
+        name, row.get("institution"), row.get("country_code"), row.get("kind"),
+        row.get("deadline_kind"), row.get("deadline_iso"),
+        row.get("recommended_admission_iso"), row.get("intake_year"),
+    )
+
+
+def group_members(
+    row: dict[str, Any],
+    candidates: Sequence[dict[str, Any]],
+    deliveries: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Return the entire safe posting unit; [] means hold without sending.
+
+    Reviewed groups declare how many department pages are required. Partial,
+    conflicting, or previously attempted groups never degrade into a smaller
+    digest or several single posts. Unreviewed legacy groups without a
+    declared size keep the original conservative matching behavior.
+    """
+    signature = group_signature(row)
+    if signature is None:
+        return [row]
+    members = [candidate for candidate in candidates
+               if group_signature(candidate) == signature]
+    expected = row.get("posting_group_expected")
+    if expected is None:
+        if len(members) > MAX_GROUP_ROWS:
+            return []  # A truncated digest would silently omit opportunities.
+        if len(members) < 2:
+            return [row]
+        if any(receipt_key(member, deliveries) is not None for member in members):
+            return []
+        return members
+    if type(expected) is not int or not 2 <= expected <= MAX_GROUP_ROWS:
+        return []
+    # Group identity covers one department bundle per institution and intake.
+    # Disagreeing deadlines, funding types or admission dates require review,
+    # not automatic splitting into different messages.
+    cohort = signature[:4] + signature[-1:]
+    related = [
+        candidate for candidate in candidates
+        if (group_signature(candidate) is not None
+            and (group_signature(candidate) or ())[:4]
+                + (group_signature(candidate) or ())[-1:] == cohort)
+    ]
+    if (len(members) != expected or len(related) != expected
+            or any(candidate.get("posting_group_expected") != expected
+                   for candidate in members)
+            or len({call_key(candidate) for candidate in members}) != expected
+            or any(receipt_key(member, deliveries) is not None for member in members)):
+        return []
+    return members
