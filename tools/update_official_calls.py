@@ -44,7 +44,8 @@ DATE_RE = re.compile(
     re.I,
 )
 CALL_TITLE = re.compile(r"\bph\.?\s*d\.?\b.*\b(?:scholarships?|fellowships?|studentships?)\b|"
-                        r"\b(?:scholarships?|fellowships?|studentships?)\b.*\bph\.?\s*d\.?\b", re.I)
+                        r"\b(?:scholarships?|fellowships?|studentships?|bursar(?:y|ies))\b.*\bph\.?\s*d\.?\b|"
+                        r"\bph\.?\s*d\.?\b.*\bbursar(?:y|ies)\b", re.I)
 EXCLUDE = re.compile(r"\b(?:post[-\s]?doc(?:toral)?|assistant professor|"
                      r"visiting professor|workshop|seminar|conference)\b", re.I)
 SUBJECT = re.compile(r"\b(?:economics?|finance|account(?:ing|ancy)|"
@@ -221,13 +222,13 @@ def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date,
                 r"(?:studentship|scholarship)\s+applications?.{0,125}"
                 r"(?:will\s+close\s+on)\s*$", before, re.I,
             ))
-        if not funding and kind == "phd_studentship":
+        if not funding and kind in {"phd_studentship", "phd_bursary"}:
             # On a PhD-studentship-specific official page, a clearly marked
             # funding Deadline section may say "deadline for applications"
             # instead of repeating "studentship". Never generalize this to
             # a university-wide PhD admissions page.
             funding = bool(re.search(
-                r"\bDeadline\s+(?:The\s+)?deadline\s+for\s+applications\s+is\s+"
+                r"\bDeadline\s+(?:(?:The\s+)?deadline\s+for\s+applications\s+is|for\s+applications\s+(?:The\s+)?deadline\s+by\s+which\s+to\s+apply\s+is)\s+"
                 r"(?:(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+)?$",
                 before, re.I,
             ))
@@ -270,7 +271,8 @@ def extract_call(
     # does not create an independent current funding call.
     relevant = CALL_TITLE.search(label) is not None
     status = "unrelated" if invalid or not relevant else "no_explicit_deadline"
-    kind = ("phd_studentship" if "studentship" in (label + " " + article[:500]).lower()
+    kind = ("phd_bursary" if re.search(r"\bbursar(?:y|ies)\b", label, re.I)
+            else "phd_studentship" if "studentship" in (label + " " + article[:500]).lower()
             else "phd_fellowship" if "fellowship" in label.lower()
             else "phd_scholarship")
     intake_year = _intake(title, article)
@@ -307,6 +309,7 @@ def extract_call(
     )
     return {
         "source_id": source["id"],
+        "posting_group": source.get("posting_group"),
         "institution": source["institution"],
         "country_code": source["country_code"],
         "official_url": url,
@@ -363,6 +366,9 @@ def validate_sources(config: Any) -> None:
                 or name in ids or not isinstance(url, str)
                 or safe_official_url(url, url) != url
                 or source.get("mode") not in {"index", "detail"}
+                or (source.get("posting_group") is not None and (
+                    not isinstance(source["posting_group"], str) or
+                    not re.fullmatch(r"[a-z][a-z0-9-]{2,47}", source["posting_group"])))
                 or not isinstance(source.get("institution"), str)
                 or not 5 <= len(source["institution"]) <= 120
                 or source.get("country_code") not in {"ES", "UK", "GB", "DE", "FI",
