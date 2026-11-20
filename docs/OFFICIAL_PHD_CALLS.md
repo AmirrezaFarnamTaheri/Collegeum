@@ -109,9 +109,11 @@ The health report continues to count confirmed *calls*, and also exposes
 The five Henley Business School departmental 2027 studentships are explicitly
 approved to group prospectively. Already confirmed messages 136–140 are
 historical receipts, **not** automatically deleted or reissued by this change.
-If an operator confirms deletion, reissue requires a separately authorized,
-durable, group-aware reconciliation; do not erase individual receipts to force
-publication.
+The user reported deleting Telegram messages 136–140 on 20 November 2026
+(issue #171). Their original receipts remain intact; this reported cleanup is
+not independently confirmed by a Bot API receipt. A replacement requires a
+separately authorized, durable, group-aware one-time reconciliation. Never
+remove receipt history to trigger a resend.
 
 ## Additional official bursary coverage
 
