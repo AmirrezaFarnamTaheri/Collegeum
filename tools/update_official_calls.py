@@ -266,6 +266,8 @@ def extract_call(
     # Long institutional menus can exceed 450 characters; only the primary
     # funding call's article, not navigation/footer, establishes subject fit.
     article = parsed.content_text() or text
+    # University CMS superscripts can render ordinal dates as "30 th April".
+    article = re.sub(r"(\\d{1,2})\\s+(st|nd|rd|th)\\b", r"\\1\\2", article, flags=re.I)
     title = (parsed.headings[0] if parsed.headings else source.get("title", "")).strip()
     label = f"{title} {source.get('title', '')}"
     invalid = (not title or len(title) > 150
