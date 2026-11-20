@@ -110,6 +110,63 @@ Invalid or incomplete catalogue schemas cannot report a healthy official-call
 engine: the public health status falls back to `unavailable` when the catalogue
 kind, version, call list or source list fails validation.
 
+## Review-only institutional PDF evidence
+
+The approved source registry also includes IEB's official call-document index
+\`https://ieb.ub.edu/convocatorias/\`. Download buttons sometimes say only
+"Descargar PDF" while the immediately preceding heading identifies the actual
+PhD scholarship. The HTML discovery now counts same-host PDF/DOC links using
+both the anchor label and the surrounding h2/h3/h4 heading. This closes a
+coverage-reporting false negative, **not** an automatic document-publication
+approval. DOC and DOCX files remain unsupported and unexecuted.
+
+A separate, explicitly opt-in \`tools/official_call_pdf_review.py\` reviewer
+only accepts exact, manually approved institutional PDF URLs in
+\`approved_documents\`. To review the approved IEB PDF, use the repository's
+locked environment:
+
+\`\`\`bash
+uv run --locked python tools/official_call_pdf_review.py \
+  --source-id ieb-document-index \
+  --url https://ieb.ub.edu/wp-content/uploads/2026/11/IEB-PhD-Scholarship-2027-28.pdf \
+  --fetch
+\`\`\`
+
+Each fetch performs a new robots permission check, only accepts exact-host
+HTTPS PDF paths, rejects unsafe redirects and non-PDF content types, and
+limits downloads to 1 MiB. Parsing occurs in a separate local process with
+CPU/memory/wall-clock limits, a maximum of eight pages and 24,000 extracted
+text characters. Scanned/unreadable pages, encrypted or scripted PDFs, and
+contradictory/missing cycle, eligibility or deadline evidence fail closed.
+No JavaScript, macros, OCR, or external commands embedded in a PDF are run.
+
+The evidence result deliberately uses \`status=document_review_only\`, not
+\`verified\`. It is printed for operator review and **never automatically
+inserted into** \`docs/data/official_phd_calls.json\`, the publishing journal,
+or any Telegram message. The reviewed IEB PDF maps to its already-delivered
+canonical HTML call and must not create another URL-based delivery identity.
+This is a bounded verification tool, not a claim of full institutional PDF
+coverage; tracking issue #183 retains the controlled promotion requirement.
+
+## Durable post-send outcomes
+
+For independently verified institutional admissions and funding calls, the
+trusted production \`main\` pipeline now requires **two independent remote
+write stages**: a create-only pre-send intent and a create-only post-result
+outcome under \`data/telegram_delivery_outcomes/{admissions,calls}/\`.
+A confirmed outcome stores the Telegram message ID; an uncertain, held or
+permanently rejected outcome is explicit and never reinterpreted as sent.
+
+The local journal checkpoints first; the authenticated GitHub Contents API
+then creates the corresponding outcome record immediately after Telegram
+returns, without waiting for the end-of-run state commit. Existing keys
+cannot be overwritten, and 409/422/5xx/transport errors fail closed. If
+GitHub fails to persist an outcome **after** Telegram accepted a send, the
+local confirmed record is preserved and the existing immutable intent still
+prevents replay; the operator must reconcile the missing remote outcome.
+No system can guarantee a Telegram message ID after a runner crash that
+occurs before receiving/persisting the Bot API response.
+
 ## Compact multi-position channel format
 
 Approved departmental pages sharing a single institutional funding window can now
