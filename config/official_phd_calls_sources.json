@@ -38,7 +38,8 @@
       "mode": "detail",
       "url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
       "title": "Finance and Accounting PhD Studentships",
-      "posting_group": "henley-departmental-2027"
+      "posting_group": "henley-departmental-2027",
+      "posting_group_expected": 5
     },
     {
       "id": "henley-international-business",
@@ -47,7 +48,8 @@
       "mode": "detail",
       "url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
       "title": "International Business and Strategy PhD Studentships",
-      "posting_group": "henley-departmental-2027"
+      "posting_group": "henley-departmental-2027",
+      "posting_group_expected": 5
     },
     {
       "id": "henley-informatics",
@@ -56,7 +58,8 @@
       "mode": "detail",
       "url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
       "title": "Informatics and Operations PhD Studentships",
-      "posting_group": "henley-departmental-2027"
+      "posting_group": "henley-departmental-2027",
+      "posting_group_expected": 5
     },
     {
       "id": "henley-entrepreneurship",
@@ -65,7 +68,8 @@
       "mode": "detail",
       "url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
       "title": "Entrepreneurship and Innovation PhD Studentships",
-      "posting_group": "henley-departmental-2027"
+      "posting_group": "henley-departmental-2027",
+      "posting_group_expected": 5
     },
     {
       "id": "henley-leadership",
@@ -74,7 +78,8 @@
       "mode": "detail",
       "url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
       "title": "Leadership and Organisations PhD Studentships",
-      "posting_group": "henley-departmental-2027"
+      "posting_group": "henley-departmental-2027",
+      "posting_group_expected": 5
     },
     {
       "id": "reading-international-studentships",
