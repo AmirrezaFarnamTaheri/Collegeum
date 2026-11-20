@@ -226,10 +226,22 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     if row["kind"] == "phd_studentship":
         lines.append("ℹ️ A prior PhD admission offer may be required; check the official terms.")
     elif row["kind"] == "phd_bursary":
-        lines.append(
-            "ℹ️ Bursaries may cover tuition fees without a living stipend; "
-            "check the official terms."
-        )
+        if (row.get("eligibility_scope") == "home_only"
+                and re.search(
+                    r"\bHome\s+students?\s+only\b",
+                    str(row.get("eligibility_evidence_excerpt") or ""), re.I,
+                )):
+            lines.append("🎓 Eligibility: Home-fee applicants only")
+        if (row.get("funding_scope") == "home_rate_tuition"
+                and re.search(
+                    r"\btuition\s+fees?\s+at\s+the\s+Home\s+rate\b",
+                    str(row.get("funding_evidence_excerpt") or ""), re.I,
+                )):
+            lines.append("💰 Funding: Home-rate PhD tuition; verify duration and terms")
+        else:
+            lines.append(
+                "💰 Bursary coverage varies; verify stipend and tuition conditions"
+            )
     lines.extend([
         "",
         "<i>This is an independent doctoral funding call, not necessarily "
