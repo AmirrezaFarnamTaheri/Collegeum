@@ -111,7 +111,7 @@ deadline and admission recommendation, a concise list of positions, and one
 official link per position. A source page which lists a closed 2026/27 intake and an open 2027/28 intake
 uses the **open** year. Original 2026-key receipts remain immutable: a new
 2027-key observation is blocked from reissuing only if its same official URL,
-institution, title and funding deadline match the old receipt. A genuinely new
+institution and funding deadline match the old receipt, including when the\nuniversity edits its page title. A genuinely new
 annual funding deadline is not suppressed. The watchdog applies the same
 compatibility and group completeness checks as the publisher.
 
@@ -146,7 +146,9 @@ their verified direct university URL. This is a distinct funding call for new
 **Home-fee** applicants, across disciplines. Its official 30 April 2027 date
 is a **bursary** application cutoff, not a general PhD-admission deadline,
 and applicants must already have received an offer by that date. The bursary
-covers Home-rate PhD tuition for up to four years, not a living stipend.
+covers Home-rate PhD tuition for up to four years. The channel explicitly
+labels the Home-only eligibility and tuition support only when verified
+against the official article; a maintenance stipend is not promised.
 As with other funding calls, refresh must verify the source under robots and
 deadline checks before publishing. Never advertise this bursary as open to
 international-fee applicants.
