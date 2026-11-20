@@ -91,12 +91,14 @@ def test_durable_outcome_rejects_invalid_state_and_noninteger_message_id():
 
 def test_durable_outcome_write_failure_is_not_claimed_as_confirmed():
     store = GitHubIntentReserver(repository="Owner/Repo", token="secret")
-    with patch("urllib.request.urlopen", side_effect=urllib.error.HTTPError(
-        "https://api.github.com", 409, "concurrent commit", None, None,
-    )):
-        with pytest.raises(OSError, match="outcome"):
-            store.record_outcome("admissions", "a" * 32, "initial",
-                                 "confirmed", message_id=716)
+    with (
+        patch("urllib.request.urlopen", side_effect=urllib.error.HTTPError(
+            "https://api.github.com", 409, "concurrent commit", None, None,
+        )),
+        pytest.raises(OSError, match="outcome"),
+    ):
+        store.record_outcome("admissions", "a" * 32, "initial",
+                             "confirmed", message_id=716)
 
 
 def test_official_call_checkpoint_and_remote_outcome_after_confirmed_send(tmp_path):
@@ -142,9 +144,7 @@ def test_failed_durable_outcome_does_not_erase_local_confirmed_receipt(tmp_path)
             catalog, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
             reserve_intent=Mock(), record_outcome=unavailable,
         )
-    assert json.loads(ledger.read_text())["deliveries"][call_key(ROW)] == {
-        **json.loads(ledger.read_text())["deliveries"][call_key(ROW)]
-    }
+    assert json.loads(ledger.read_text())["deliveries"][call_key(ROW)]["state"] == "confirmed"
     assert json.loads(ledger.read_text())["deliveries"][call_key(ROW)]["message_id"] == 778
     assert publish_official_calls(
         catalog, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
@@ -190,13 +190,15 @@ def test_production_main_requires_remote_outcome_callback_for_official_sends(tmp
     ledger = tmp_path / "ledger.json"
     telegram = Mock()
     telegram.send_message.return_value = 790
-    with patch.dict("os.environ", {
-        "GITHUB_ACTIONS": "true", "GITHUB_REF": "refs/heads/main",
-        "GITHUB_WORKFLOW": "predoc-pipeline",
-    }):
-        with pytest.raises(OSError, match="outcome"):
-            publish_official_calls(
-                catalog, ledger, telegram, chat_id="@channel", enabled=True,
-                now=NOW, reserve_intent=Mock(),
-            )
+    with (
+        patch.dict("os.environ", {
+            "GITHUB_ACTIONS": "true", "GITHUB_REF": "refs/heads/main",
+            "GITHUB_WORKFLOW": "predoc-pipeline",
+        }),
+        pytest.raises(OSError, match="outcome"),
+    ):
+        publish_official_calls(
+            catalog, ledger, telegram, chat_id="@channel", enabled=True,
+            now=NOW, reserve_intent=Mock(),
+        )
     telegram.send_message.assert_not_called()
