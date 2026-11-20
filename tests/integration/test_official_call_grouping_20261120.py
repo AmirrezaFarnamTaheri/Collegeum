@@ -350,3 +350,63 @@ def test_validated_henley_registry_explicitly_declares_group_membership():
     henley = [item for item in config["sources"] if item["id"].startswith("henley-")]
     assert len(henley) == 5
     assert {row["posting_group_expected"] for row in henley} == {5}
+
+
+def test_watchdog_does_not_dispatch_for_incomplete_reviewed_group():
+    rows = [_henley(str(i), f"Department {i} PhD Opportunities")
+            for i in range(2)]
+    for row in rows:
+        row["posting_group_expected"] = 5
+    runs = [{
+        "name": "predoc-pipeline", "head_branch": "main",
+        "status": "completed", "created_at": "2026-11-20T06:00:00Z",
+    }]
+    decision = evaluate_official_calls_trigger(
+        _catalog(*rows), {"version": 1, "deliveries": {}}, runs, now=NOW,
+    )
+    assert not decision.dispatch
+    assert decision.reason == "no-new-eligible-official-calls"
+
+
+def test_watchdog_dispatches_completed_reviewed_group():
+    rows = [_henley(str(i), f"Department {i} PhD Opportunities")
+            for i in range(5)]
+    for row in rows:
+        row["posting_group_expected"] = 5
+    runs = [{
+        "name": "predoc-pipeline", "head_branch": "main",
+        "status": "completed", "created_at": "2026-11-20T06:00:00Z",
+    }]
+    decision = evaluate_official_calls_trigger(
+        _catalog(*rows), {"version": 1, "deliveries": {}}, runs, now=NOW,
+    )
+    assert decision.dispatch
+
+
+def test_group_with_existing_member_receipt_does_not_publish_late_duplicates(tmp_path):
+    rows = [_henley(str(i), f"Department {i} PhD Opportunities")
+            for i in range(5)]
+    for row in rows:
+        row["posting_group_expected"] = 5
+    old = rows[0]
+    ledger = tmp_path / "ledger.json"
+    catalog = tmp_path / "catalog.json"
+    ledger.write_text(json.dumps({
+        "version": 1,
+        "deliveries": {call_key(old): {
+            "state": "confirmed", "message_id": 514,
+            "official_url": old["official_url"],
+            "institution": old["institution"],
+            "deadline_iso": old["deadline_iso"],
+            "sent_at": "2026-11-19T23:55:55Z",
+        }},
+    }), encoding="utf-8")
+    catalog.write_text(json.dumps(_catalog(*rows)), encoding="utf-8")
+    telegram = Mock()
+    assert publish_official_calls(
+        catalog, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
+    ) == 0
+    telegram.send_message.assert_not_called()
+    health = official_calls_health(catalog, ledger, now=NOW)
+    assert health["unpublished"] == 4
+    assert health["group_waiting"] == 4
