@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import io
 import json
+
+import pytest
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -11,7 +13,11 @@ from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 from predoc_pipeline.publish.official_calls import eligible_calls
 from tools.official_call_pdf_review import MAX_PDF_BYTES, review_pdf_bytes, safe_pdf_url
-from tools.update_official_calls import discover_document_links, unsupported_document_count
+from tools.update_official_calls import (
+    discover_document_links,
+    unsupported_document_count,
+    validate_sources,
+)
 
 NOW = datetime(2026, 11, 20, 8, tzinfo=UTC)
 INDEX = "https://ieb.ub.edu/convocatorias/"
@@ -192,3 +198,31 @@ def test_document_review_is_not_a_production_catalogue_or_telegram_trigger(tmp_p
     assert row["official_url"] == PDF
     assert row["evidence_url"] == PDF
     assert Path(report).read_text().startswith("{")
+
+
+def test_approved_pdf_registry_rejects_unreviewed_offhost_and_duplicate_entries():
+    good = {
+        "kind": "official_phd_call_sources", "version": 1,
+        "sources": [SOURCE],
+    }
+    validate_sources(good)
+    changes = [
+        {"url": "https://external.example/untrusted.pdf"},
+        {"url": "https://ieb.ub.edu/unsafe.pdf?token=abc"},
+        {"title": "Postdoctoral seminar"},
+        {"institution_marker": ""},
+        {"canonical_html_url": "https://external.example/article"},
+    ]
+    for override in changes:
+        bad_source = dict(SOURCE)
+        bad_source["approved_documents"] = [
+            {**SOURCE["approved_documents"][0], **override}
+        ]
+        with pytest.raises(ValueError):
+            validate_sources({**good, "sources": [bad_source]})
+    duplicate_source = {
+        **SOURCE,
+        "approved_documents": SOURCE["approved_documents"] * 2,
+    }
+    with pytest.raises(ValueError):
+        validate_sources({**good, "sources": [duplicate_source]})
