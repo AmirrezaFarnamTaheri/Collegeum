@@ -1,5 +1,10 @@
 """Official funding calls must be discoverable on Pages, not only Telegram."""
+import re
+import shutil
+import subprocess
 from pathlib import Path
+
+import pytest
 
 
 def test_pages_exports_independent_public_call_catalogue():
@@ -59,3 +64,24 @@ def test_calls_separate_from_admissions_and_employment_lists():
     assert "listings = (payload.listings || []).map(enrichItem)" in html
     assert "Official funding calls are not vacancies or ordinary admissions" in html
     assert 'aria-live="polite"' in html
+
+
+
+def test_public_dashboard_inline_javascript_syntax_when_node_is_available(tmp_path):
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node is not installed in this environment")
+    html = Path("docs/index.html").read_text(encoding="utf-8")
+    scripts = re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>", html, re.I | re.S)
+    assert scripts
+    for index, source in enumerate(scripts):
+        file = tmp_path / f"dashboard-script-{index}.js"
+        file.write_text(source, encoding="utf-8")
+        result = subprocess.run(
+            [node, "--check", str(file)],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+        assert result.returncode == 0, result.stderr
