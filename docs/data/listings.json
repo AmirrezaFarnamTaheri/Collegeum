@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T07:13:33Z",
+ "generated_at": "2026-11-20T07:23:54Z",
  "count": 224,
  "listings": [
   {
@@ -3315,7 +3315,7 @@
    "id": 362,
    "title": "Postdoctoral Research Fellow (Econometrics)",
    "institution": "Macquarie University",
-   "principal_investigator": "Professor Shuping Shi",
+   "principal_investigator": "Shuping Shi",
    "country": "Australia",
    "city": "North Ryde",
    "is_remote": false,
@@ -3323,16 +3323,14 @@
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 16,
    "disciplines": [
-    "Econometrics",
-    "Finance",
-    "Applied Microeconomics"
+    "Econometrics"
    ],
    "visa": "explicit",
-   "summary": "This is a four-year fixed-term postdoctoral research fellowship in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics or a related field, strong programming skills in MATLAB, R, or Python, and involves independent research and postgraduate supervision.",
+   "summary": "The role is a postdoctoral research fellow in econometrics at Macquarie University, focusing on developing econometric methods for policy evaluation and high‑frequency financial‑market analysis. It is suited to candidates with a PhD (completed or near completion) in econometrics, statistics, economics or a related field.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -3352,7 +3350,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "Second half of 2027",
+   "start_term": "Second half 2027",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"

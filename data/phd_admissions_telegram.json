@@ -1,5 +1,15 @@
 {
   "deliveries": {
+    "408122c5119887ace360862fa6549af1": {
+      "attempted_at": "2026-11-20T07:23:50Z",
+      "country_code": "UK",
+      "deadline_iso": "2027-06-30",
+      "evidence_url": "https://www.manchester.ac.uk/study/postgraduate-research/programmes/list/02976/phd-economics/",
+      "institution": "University of Manchester",
+      "message_id": 142,
+      "sent_at": "2026-11-20T07:23:50Z",
+      "state": "confirmed"
+    },
     "54edd99a41f1473f072b8d50f0b302ec": {
       "attempted_at": "2026-11-19T20:07:47Z",
       "country_code": "DE",
@@ -66,6 +76,16 @@
       "institution": "European University Institute",
       "message_id": 132,
       "sent_at": "2026-11-19T21:14:57Z",
+      "state": "confirmed"
+    },
+    "fdc995019ba320fc68b4052f3908b8ba": {
+      "attempted_at": "2026-11-20T07:23:50Z",
+      "country_code": "SE",
+      "deadline_iso": "2027-02-01",
+      "evidence_url": "https://www.gu.se/en/economics/doctoral-studies/application-and-admission",
+      "institution": "University of Gothenburg",
+      "message_id": 141,
+      "sent_at": "2026-11-20T07:23:50Z",
       "state": "confirmed"
     }
   },
