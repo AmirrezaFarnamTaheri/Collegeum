@@ -693,7 +693,7 @@ def test_telegram_error_attempts_are_bounded_even_when_none_succeed(tmp_path):
     ]
     telegram = Mock()
     telegram.send_message.side_effect = TelegramError(
-        "retry-after request", status=429, permanent=False, uncertain=False,
+        "upstream service unavailable", status=503, permanent=False, uncertain=False,
     )
     count, _, ledger, _ = _publish(
         tmp_path, rows, telegram=telegram, reserve_intent=Mock(),
@@ -770,6 +770,7 @@ def test_previous_closed_cycle_does_not_block_current_open_funding():
         "id": "henley-accounting", "institution": "Henley Business School",
         "country_code": "UK", "mode": "detail",
         "url": HENLEY_ROOT + "accounting-and-financial-management",
+        "title": "Finance and Accounting PhD Studentships",
     }
     html = """<h1>Accounting PhD Opportunities</h1>
     <p>PhD funding in Accounting.</p>
@@ -779,3 +780,24 @@ def test_previous_closed_cycle_does_not_block_current_open_funding():
     call = extract_call(html, url=source["url"], source=source, now=NOW)
     assert call["status"] == "verified"
     assert call["intake_year"] == 2027
+
+
+def test_telegram_rate_limited_batch_stops_after_first_rejection(tmp_path):
+    from predoc_pipeline.publish.telegram import TelegramError
+
+    rows = [
+        _henley(f"throttled-{n}", f"Department {n} PhD Opportunities",
+                posting_group=None)
+        for n in range(5)
+    ]
+    telegram = Mock()
+    telegram.send_message.side_effect = TelegramError(
+        "Bot API retry-after", status=429, permanent=False, uncertain=False,
+    )
+    result, _, ledger, _ = _publish(
+        tmp_path, rows, telegram=telegram, reserve_intent=Mock(),
+    )
+    assert result == 0
+    assert telegram.send_message.call_count == 1
+    # The rejected attempt remains reserved, and the other calls stay untouched.
+    assert len(json.loads(ledger.read_text())["deliveries"]) == 1
