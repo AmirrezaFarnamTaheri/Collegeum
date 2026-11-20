@@ -415,7 +415,12 @@ def official_calls_health(
     checked = now or datetime.now(UTC)
     try:
         catalog = json.loads(Path(catalog_path).read_text(encoding="utf-8"))
-        if not isinstance(catalog, dict) or not isinstance(catalog.get("sources"), list):
+        if (not isinstance(catalog, dict)
+                or catalog.get("kind") != "official_phd_call_observations"
+                or catalog.get("version") != 1
+                or not isinstance(catalog.get("calls"), list)
+                or len(catalog["calls"]) > 100
+                or not isinstance(catalog.get("sources"), list)):
             raise ValueError("Invalid official call catalogue")
         ledger = _load_receipts(Path(receipt_path))
     except (OSError, json.JSONDecodeError, ValueError):
