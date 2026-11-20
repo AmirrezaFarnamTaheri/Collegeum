@@ -5,13 +5,19 @@ import io
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 from predoc_pipeline.publish.official_calls import eligible_calls
-from tools.official_call_pdf_review import MAX_PDF_BYTES, review_pdf_bytes, safe_pdf_url
+from tools.official_call_pdf_review import (
+    MAX_PDF_BYTES,
+    fetch_reviewed_pdf,
+    review_pdf_bytes,
+    safe_pdf_url,
+)
 from tools.update_official_calls import (
     discover_document_links,
     unsupported_document_count,
@@ -225,3 +231,50 @@ def test_approved_pdf_registry_rejects_unreviewed_offhost_and_duplicate_entries(
     }
     with pytest.raises(ValueError):
         validate_sources({**good, "sources": [duplicate_source]})
+
+
+
+def _reply(body: bytes, *, content_type="application/pdf", final_url=PDF):
+    response = Mock()
+    response.read.side_effect = lambda limit: body[:limit]
+    response.headers = {"Content-Type": content_type}
+    response.geturl.return_value = final_url
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=None)
+    return response
+
+
+def test_robots_denial_never_fetches_or_reads_approved_pdf():
+    opener = Mock()
+    opener.open.return_value = _reply(b"User-agent: *\nDisallow: /")
+    robots = Mock()
+    robots.can_fetch.return_value = False
+    with (
+        patch("urllib.request.build_opener", return_value=opener),
+        patch("urllib.robotparser.RobotFileParser", return_value=robots),
+    ):
+        result = fetch_reviewed_pdf(PDF, SOURCE)
+    assert result["status"] == "robots_disallowed"
+    assert opener.open.call_count == 1  # Only robots.txt was retrieved.
+
+
+def test_pdf_content_type_and_final_url_must_match_even_after_permitted_fetch():
+    robots = Mock()
+    robots.can_fetch.return_value = True
+    for final_url, content_type, reason in [
+        (PDF, "text/html", "wrong_content_type"),
+        ("https://ieb.ub.edu/other.pdf", "application/pdf", "unsafe_redirect"),
+    ]:
+        opener = Mock()
+        opener.open.side_effect = [
+            _reply(b"User-agent: *\nAllow: /"),
+            _reply(_pdf(_evidence_text()), content_type=content_type,
+                   final_url=final_url),
+        ]
+        with (
+            patch("urllib.request.build_opener", return_value=opener),
+            patch("urllib.robotparser.RobotFileParser", return_value=robots),
+        ):
+            result = fetch_reviewed_pdf(PDF, SOURCE)
+        assert result["reason"] == reason or result["status"] == reason
+        assert opener.open.call_count == 2
