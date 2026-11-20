@@ -429,12 +429,26 @@ def official_calls_health(
     permanent = sum(
         1 for item in delivered.values() if item.get("state") == "permanent_failure"
     )
+    empty_indexes = sum(
+        isinstance(source, dict) and source.get("index_empty") is True
+        for source in catalog["sources"]
+    )
+    unsupported_documents = sum(
+        source.get("unsupported_documents", 0)
+        for source in catalog["sources"]
+        if isinstance(source, dict)
+        and type(source.get("unsupported_documents", 0)) is int
+        and 0 <= source.get("unsupported_documents", 0) <= 500
+    )
     degraded = any(k != "ok" for k in state_counts) or bool(
         uncertain or pending or retry_held or permanent
+        or empty_indexes or unsupported_documents
     )
     return {
         "status": "degraded" if degraded else "ok",
         "sources": state_counts,
+        "empty_indexes": empty_indexes,
+        "unsupported_documents": unsupported_documents,
         "eligible": len(eligible),
         "unpublished": backlog,
         "group_waiting": group_waiting,
