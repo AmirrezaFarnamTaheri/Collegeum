@@ -410,3 +410,162 @@ def test_group_with_existing_member_receipt_does_not_publish_late_duplicates(tmp
     health = official_calls_health(catalog, ledger, now=NOW)
     assert health["unpublished"] == 4
     assert health["group_waiting"] == 4
+
+
+def test_all_conflicting_duplicate_records_remain_suppressed():
+    rows = [
+        _henley("accounting", "Accounting PhD Opportunities", posting_group=None),
+        _henley("accounting", "Accounting PhD Opportunities", posting_group=None),
+        _henley("accounting", "Accounting PhD Opportunities", posting_group=None),
+    ]
+    rows[1]["deadline_iso"] = "2027-03-01"
+    assert eligible_calls(_catalog(*rows), now=NOW) == []
+
+
+def test_bool_intake_and_invalid_recommended_dates_fail_closed():
+    row = _henley("accounting", "Accounting PhD Opportunities")
+    assert eligible_calls(_catalog({**row, "intake_year": True}), now=NOW) == []
+    assert eligible_calls(_catalog({
+        **row, "recommended_admission_iso": "2027-02-32",
+    }), now=NOW) == []
+    assert eligible_calls(_catalog({
+        **row, "recommended_admission_iso": "2027-03-10",
+    }), now=NOW) == []
+
+
+def test_legacy_alias_requires_same_official_funding_deadline_and_institution():
+    from predoc_pipeline.core.official_call_rules import receipt_key
+
+    current = _henley("accounting", "Accounting PhD Opportunities")
+    current["intake_year"] = 2027
+    old = {**current, "intake_year": 2026}
+    receipt = {
+        "state": "confirmed", "message_id": 136,
+        "institution": current["institution"],
+        "official_url": current["official_url"],
+        "deadline_iso": current["deadline_iso"],
+        "intake_year": 2026,
+        "title": current["title"],
+    }
+    assert receipt_key(current, {call_key(old): receipt}) == call_key(old)
+    for modification in (
+        {"institution": "Unrelated University"},
+        {"deadline_iso": "2027-03-01"},
+        {"official_url": HENLEY_ROOT + "different-call"},
+        {"title": "Another funding competition"},
+        {"intake_year": 2024},
+    ):
+        changed = {**receipt, **modification}
+        assert receipt_key(current, {call_key(old): changed}) is None
+
+
+def test_mixed_deadline_group_is_held_when_member_count_is_declared(tmp_path):
+    rows = [
+        _henley(str(i), f"Department {i} PhD Opportunities") for i in range(5)
+    ]
+    for row in rows:
+        row["posting_group_expected"] = 5
+    rows[-1]["deadline_iso"] = "2027-02-22"
+    count, telegram, _, _ = _publish(tmp_path, rows)
+    assert count == 0
+    telegram.send_message.assert_not_called()
+
+
+def test_unexpected_group_more_than_six_never_truncates_and_sends(tmp_path):
+    rows = [
+        _henley(str(i), f"Department {i} PhD Opportunities") for i in range(7)
+    ]
+    count, telegram, ledger, _ = _publish(tmp_path, rows)
+    assert count == 0
+    telegram.send_message.assert_not_called()
+    assert not json.loads(ledger.read_text())["deliveries"]
+
+
+def test_partial_group_reservation_failure_holds_every_member(tmp_path):
+    rows = [
+        _henley(str(i), f"Department {i} PhD Opportunities") for i in range(3)
+    ]
+    telegram = Mock()
+    reservations = []
+
+    def reserve(namespace, key, operation):
+        reservations.append(key)
+        if len(reservations) == 2:
+            raise OSError("simulated Github reservation outage")
+
+    import pytest
+
+    with pytest.raises(OSError):
+        _publish(tmp_path, rows, telegram=telegram, reserve_intent=reserve)
+    telegram.send_message.assert_not_called()
+    ledger = json.loads((tmp_path / "receipts.json").read_text())
+    assert len(ledger["deliveries"]) == 3
+    assert {entry["state"] for entry in ledger["deliveries"].values()} == {"pending"}
+
+
+def test_bursary_is_eligible_for_watchdog_when_verified():
+    from tools.update_official_calls import extract_call
+
+    source = {
+        "id": "reading-home-phd-bursaries", "institution": "University of Reading",
+        "country_code": "UK", "mode": "detail", "url": READING,
+        "subject_scope": "multidisciplinary",
+    }
+    html = """<h1>University of Reading PhD Home fee Bursaries</h1>
+    <p>PhD bursaries for applicants intending to commence
+    full-time PhD study in September 2027.</p>
+    <h2>Deadline for applications</h2>
+    <p>The deadline by which to apply is 30th April 2027.</p>"""
+    row = extract_call(html, url=READING, source=source, now=NOW)
+    assert row["status"] == "verified"
+    runs = [{
+        "name": "predoc-pipeline", "head_branch": "main",
+        "status": "completed", "created_at": "2026-11-20T06:00:00Z",
+    }]
+    decision = evaluate_official_calls_trigger(
+        _catalog(row), {"version": 1, "deliveries": {}}, runs, now=NOW,
+    )
+    assert decision.dispatch
+
+
+def test_non_grouped_different_funding_calls_stay_separate(tmp_path):
+    iebs = [
+        _henley("economics", "Economics PhD Scholarship", posting_group=None),
+        _henley("climate", "Climate Economics PhD Fellowship", posting_group=None),
+    ]
+    iebs[0]["kind"] = "phd_scholarship"
+    iebs[0]["deadline_kind"] = "scholarship"
+    iebs[1]["kind"] = "phd_fellowship"
+    iebs[1]["deadline_kind"] = "scholarship"
+    count, telegram, _, _ = _publish(tmp_path, iebs)
+    assert count == 2
+    assert telegram.send_message.call_count == 2
+
+
+def test_reviewed_group_requires_matching_count_and_same_institution():
+    from tools.update_official_calls import validate_sources
+
+    def source(i, *, group="sample-research-bundle", count=3, institution="School A"):
+        return {
+            "id": f"source-{i}", "institution": institution,
+            "country_code": "UK", "mode": "detail",
+            "url": f"https://school.ac.uk/phds/{i}",
+            "posting_group": group, "posting_group_expected": count,
+        }
+    config = {
+        "kind": "official_phd_call_sources", "version": 1,
+        "sources": [source(i) for i in range(3)],
+    }
+    validate_sources(config)
+    import pytest
+
+    with pytest.raises(ValueError):
+        validate_sources({**config, "sources": config["sources"][:2]})
+    with pytest.raises(ValueError):
+        validate_sources({**config, "sources": [
+            source(0), source(1), source(2, institution="School B"),
+        ]})
+    with pytest.raises(ValueError):
+        validate_sources({**config, "sources": [
+            source(0, count=True), source(1), source(2),
+        ]})
