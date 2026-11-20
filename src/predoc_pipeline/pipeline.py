@@ -1880,36 +1880,44 @@ def run(
             accepted = _verify_before_sending(accepted, prefs, db, stats, board_transport)
             sent_now = {lid for lid, _ in accepted}
             router = Router(prefs)
-            _broadcast(
-                accepted,
-                telegram,
-                settings,
-                db,
-                stats,
-                router=router,
-                x_client=x_client,
-                feedback=feedback,
-                digest_page_size=prefs.telegram.digest_page_size,
-            )
-            _publish_non_us_econ_phds(
-                db, telegram, settings, stats, router, prefs,
-                fresh_ids=sent_now, hidden=hidden, transport=board_transport,
-            )
-            # Fail closed if trusted production GitHub intent persistence
-            # cannot be initialized. Local runs default to not using it.
+            # Use one reviewed-main token for *all* public Telegram sends,
+            # including individual vacancies and historical PhD backfills.
+            # Missing or unavailable credentials must fail closed.
             durable_reserve = None
-            if (
-                telegram is not None
-                and settings.telegram_git_durable_intents_enabled
-                and (settings.telegram_phd_admissions_enabled
-                     or settings.telegram_official_calls_enabled)
-            ):
+            if telegram is not None and settings.telegram_git_durable_intents_enabled:
                 try:
                     durable_reserve = GitHubIntentReserver.from_environment().reserve
                 except OSError as exc:
                     stats.errors += 1
                     log.error("telegram_durable_reservation_unavailable", error=str(exc))
 
+            try:
+                _broadcast(
+                    accepted,
+                    telegram,
+                    settings,
+                    db,
+                    stats,
+                    router=router,
+                    x_client=x_client,
+                    feedback=feedback,
+                    digest_page_size=prefs.telegram.digest_page_size,
+                    reserve_intent=durable_reserve,
+                )
+            except (ValueError, OSError) as exc:
+                stats.errors += 1
+                log.error("telegram_vacancy_reservation_unavailable",
+                          error=type(exc).__name__)
+            try:
+                _publish_non_us_econ_phds(
+                    db, telegram, settings, stats, router, prefs,
+                    fresh_ids=sent_now, hidden=hidden, transport=board_transport,
+                    reserve_intent=durable_reserve,
+                )
+            except (ValueError, OSError) as exc:
+                stats.errors += 1
+                log.error("telegram_historical_phd_reservation_unavailable",
+                          error=type(exc).__name__)
             # General PhD admissions are NOT vacancy rows. They are broadcast
             # from independently corroborated official university observations,
             # with separate delivery receipts, never via listings or X.
