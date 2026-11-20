@@ -69,6 +69,9 @@ class CallHTML(HTMLParser):
         self._content_started = False
         self.headings: list[str] = []
         self.links: list[tuple[str, str]] = []
+        self.document_links: list[tuple[str, str, str]] = []
+        self._latest_section = ""
+        self._section_parts: list[str] | None = None
         self._ignored = 0
         self._heading: list[str] | None = None
         self._link: list[str] | None = None
@@ -83,6 +86,8 @@ class CallHTML(HTMLParser):
         if tag == "h1":
             self._content_started = True
             self._heading = []
+        elif tag in {"h2", "h3", "h4"}:
+            self._section_parts = []
         if tag in {"p", "li", "div", "h1", "h2", "h3", "footer", "br", "tr"}:
             self.chunks.append(" ")
             if self._content_started:
@@ -102,10 +107,14 @@ class CallHTML(HTMLParser):
             if heading:
                 self.headings.append(heading)
             self._heading = None
+        if tag in {"h2", "h3", "h4"} and self._section_parts is not None:
+            self._latest_section = " ".join(" ".join(self._section_parts).split())
+            self._section_parts = None
         if tag == "a":
             label = " ".join(" ".join(self._link or []).split())
             if self._href and label:
                 self.links.append((self._href, label))
+                self.document_links.append((self._href, label, self._latest_section))
             self._link, self._href = None, None
         if tag in {"p", "li", "div", "h1", "h2", "h3", "footer", "tr"}:
             self.chunks.append(" ")
@@ -120,6 +129,8 @@ class CallHTML(HTMLParser):
             self.content_chunks.append(data)
         if self._heading is not None:
             self._heading.append(data)
+        if self._section_parts is not None:
+            self._section_parts.append(data)
         if self._link is not None:
             self._link.append(data)
 
@@ -455,20 +466,22 @@ def discover_links(html: str, source: dict[str, Any]) -> list[str]:
     return (topical + generic)[:MAX_INDEX_LINKS]
 
 
-def unsupported_document_count(html: str, source: dict[str, Any]) -> int:
-    """Report relevant institutional PDF/DOC calls without fetching documents.
+def discover_document_links(html: str, source: dict[str, Any]) -> list[str]:
+    """Bounded, same-host institutional PDF/DOC links with nearby heading context.
 
-    An official HTML index can expose scholarship PDFs which our current
-    robots-aware HTML verifier does not support. Count permitted-location
-    document links as a COVERAGE GAP, never as a verified scholarship.
+    University call indexes often make every PDF anchor say "Download PDF";
+    the adjacent h2/h3/h4 names the PhD scholarship. This only discovers
+    candidates for a separate opt-in reviewer, NEVER verified funding calls.
     """
     parser = CallHTML()
     parser.feed(html[:MAX_HTML_BYTES])
     root = urllib.parse.urlsplit(source["url"])
     host = (root.hostname or "").lower().removeprefix("www.")
     seen: set[str] = set()
-    for href, label in parser.links[:500]:
-        if not CALL_TITLE.search(label) or EXCLUDE.search(label):
+    urls: list[str] = []
+    for href, label, heading in parser.document_links[:500]:
+        context = f"{heading} {label}"
+        if not CALL_TITLE.search(context) or EXCLUDE.search(context):
             continue
         try:
             candidate = urllib.parse.urlsplit(
@@ -483,10 +496,19 @@ def unsupported_document_count(html: str, source: dict[str, Any]) -> int:
                 continue
         except (TypeError, ValueError):
             continue
-        seen.add(urllib.parse.urlunsplit((
+        url = urllib.parse.urlunsplit((
             candidate.scheme, candidate.netloc, candidate.path, "", "",
-        )))
-    return len(seen)
+        ))
+        if url not in seen:
+            seen.add(url)
+            urls.append(url)
+    return urls
+
+
+def unsupported_document_count(html: str, source: dict[str, Any]) -> int:
+    """Unverified, same-host funding-document coverage gaps only."""
+    return len(discover_document_links(html, source))
+
 
 def validate_sources(config: Any) -> None:
     if (not isinstance(config, dict)
@@ -523,6 +545,43 @@ def validate_sources(config: Any) -> None:
             raise ValueError("Unapproved or malformed official-call source")
         if url in urls:
             raise ValueError("Duplicate official-call URL in source registry")
+        # Opt-in PDF approvals are evidence-review only. No new PDF is
+        # fetched by the stdlib-only daily HTML monitor, and no PDF result
+        # is inserted into the Telegram publishing catalogue.
+        approved = source.get("approved_documents", [])
+        if (not isinstance(approved, list) or len(approved) > 6
+                or (approved and source["mode"] != "index")):
+            raise ValueError("Invalid reviewed document source list")
+        pdf_urls: set[str] = set()
+        for document in approved:
+            if not isinstance(document, dict):
+                raise ValueError("Malformed approved PDF record")
+            target = document.get("url")
+            title = document.get("title")
+            marker = document.get("institution_marker")
+            canonical = document.get("canonical_html_url")
+            try:
+                parsed = urllib.parse.urlsplit(target)
+                parent = urllib.parse.urlsplit(url)
+                same_host = (
+                    (parsed.hostname or "").lower().removeprefix("www.")
+                    == (parent.hostname or "").lower().removeprefix("www.")
+                )
+                port = parsed.port
+            except (TypeError, ValueError):
+                raise ValueError("Invalid approved PDF URL") from None
+            if (not isinstance(target, str) or target in pdf_urls
+                    or not same_host or parsed.scheme != "https"
+                    or port not in (None, 443) or parsed.username or parsed.password
+                    or parsed.query or parsed.fragment or "%" in parsed.path
+                    or not re.search(r"\.pdf\Z", parsed.path, re.I)
+                    or not isinstance(title, str) or not CALL_TITLE.search(title)
+                    or EXCLUDE.search(title) or len(title) > 150
+                    or not isinstance(marker, str) or not 8 <= len(marker) <= 100
+                    or not isinstance(canonical, str)
+                    or safe_official_url(canonical, url) != canonical):
+                raise ValueError("Unreviewed or conflicting institutional PDF")
+            pdf_urls.add(target)
         ids.add(name)
         urls.add(url)
         if source.get("posting_group") is not None:

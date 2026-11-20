@@ -18,6 +18,21 @@
       "url": "https://ieb.ub.edu/en/call-for-application/"
     },
     {
+      "id": "ieb-document-index",
+      "institution": "Barcelona Institute of Economics (IEB)",
+      "country_code": "ES",
+      "mode": "index",
+      "url": "https://ieb.ub.edu/convocatorias/",
+      "approved_documents": [
+        {
+          "url": "https://ieb.ub.edu/wp-content/uploads/2026/11/IEB-PhD-Scholarship-2027-28.pdf",
+          "title": "PhD Scholarship in Economics",
+          "institution_marker": "Barcelona Institute of Economics",
+          "canonical_html_url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/"
+        }
+      ]
+    },
+    {
       "id": "ieb-economics-2027",
       "institution": "Barcelona Institute of Economics (IEB)",
       "country_code": "ES",

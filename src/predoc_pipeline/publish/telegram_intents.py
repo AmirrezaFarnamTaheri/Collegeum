@@ -111,6 +111,76 @@ class GitHubIntentReserver:
             raise OSError("Durable Telegram reservation outcome uncertain; no send") from None
 
 
+    def record_outcome(
+        self, namespace: str, key: str, operation: str, state: str,
+        message_id: int | None = None,
+    ) -> None:
+        """Create an immutable, durable Telegram outcome right after a send.
+
+        The intent remains authoritative for no-replay after a runner crash.
+        Successful Bot API replies additionally get a durable message ID,
+        independent of the runner-local journal's later Git push. An ambiguous
+        error becomes a durable hold, never an invented confirmation.
+        """
+        if namespace not in _NAMESPACES:
+            raise ValueError("Unknown Telegram outcome namespace")
+        if not isinstance(key, str) or not _KEY.fullmatch(key):
+            raise ValueError("Invalid Telegram opportunity key")
+        if not isinstance(operation, str) or not 1 <= len(operation) <= 120:
+            raise ValueError("Invalid Telegram reservation operation")
+        if state not in {"confirmed", "uncertain", "permanent_failure", "retry_held"}:
+            raise ValueError("Invalid durable Telegram outcome")
+        if ((state == "confirmed" and
+             (type(message_id) is not int or message_id <= 0))
+                or (state != "confirmed" and message_id is not None)):
+            raise ValueError("Telegram message ID must match confirmation state")
+        digest = hashlib.sha256(operation.encode("utf-8")).hexdigest()[:24]
+        path = f"data/telegram_delivery_outcomes/{namespace}/{key}-{digest}.json"
+        document = {
+            "schema_version": 1,
+            "namespace": namespace,
+            "opportunity_key": key,
+            "operation_hash": digest,
+            "state": state,
+            "message_id": message_id,
+            "observed_at": datetime.now(UTC).isoformat(
+                timespec="seconds"
+            ).replace("+00:00", "Z"),
+        }
+        payload = json.dumps({
+            "message": f"chore: record {namespace} Telegram outcome [skip ci]",
+            "branch": "main",
+            # Create-only: an existing remote outcome can never be overwritten.
+            "content": base64.b64encode(
+                (json.dumps(document, sort_keys=True) + "\n").encode("utf-8")
+            ).decode("ascii"),
+        }).encode("utf-8")
+        request = urllib.request.Request(
+            f"{_API}/repos/{self._repository}/contents/{path}",
+            data=payload,
+            method="PUT",
+            headers={
+                "Authorization": f"Bearer {self._token}",
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "User-Agent": "Collegeum-Durable-Telegram-Outcomes",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                if response.status != 201:
+                    raise OSError("GitHub did not persist durable Telegram outcome")
+        except urllib.error.HTTPError as exc:
+            if exc.code in (409, 422):
+                raise OSError("Existing or conflicting Telegram outcome; needs review") from None
+            raise OSError("GitHub refused durable Telegram outcome") from None
+        except (urllib.error.URLError, TimeoutError, OSError):
+            raise OSError("Durable Telegram outcome write uncertain; needs review") from None
+
+
+
+
 def enforce_production_reservation(reserve_intent: Any) -> None:
     """Main GitHub ingestion must not silently publish with local-only intents."""
     if (
@@ -120,3 +190,14 @@ def enforce_production_reservation(reserve_intent: Any) -> None:
         and reserve_intent is None
     ):
         raise OSError("Missing durable Telegram send reservation on production main")
+
+
+def enforce_production_outcome(record_outcome: Any) -> None:
+    """Require immediate durable results whenever trusted main publishes calls."""
+    if (
+        os.environ.get("GITHUB_ACTIONS") == "true"
+        and os.environ.get("GITHUB_REF") == "refs/heads/main"
+        and os.environ.get("GITHUB_WORKFLOW") == "predoc-pipeline"
+        and record_outcome is None
+    ):
+        raise OSError("Missing durable Telegram outcome writer on production main")

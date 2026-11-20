@@ -1884,9 +1884,12 @@ def run(
             # including individual vacancies and historical PhD backfills.
             # Missing or unavailable credentials must fail closed.
             durable_reserve = None
+            durable_outcome = None
             if telegram is not None and settings.telegram_git_durable_intents_enabled:
                 try:
-                    durable_reserve = GitHubIntentReserver.from_environment().reserve
+                    store = GitHubIntentReserver.from_environment()
+                    durable_reserve = store.reserve
+                    durable_outcome = store.record_outcome
                 except OSError as exc:
                     stats.errors += 1
                     log.error("telegram_durable_reservation_unavailable", error=str(exc))
@@ -1931,6 +1934,7 @@ def run(
                     max_messages=settings.telegram_phd_admissions_max_per_run,
                     now=utcnow(),
                     reserve_intent=durable_reserve,
+                    record_outcome=durable_outcome,
                 )
             except (ValueError, OSError) as exc:
                 # An unreadable receipt ledger is a hard no-send condition,
@@ -1951,6 +1955,7 @@ def run(
                     max_messages=settings.telegram_official_calls_max_per_run,
                     now=utcnow(),
                     reserve_intent=durable_reserve,
+                    record_outcome=durable_outcome,
                 )
             except (ValueError, OSError) as exc:
                 stats.errors += 1

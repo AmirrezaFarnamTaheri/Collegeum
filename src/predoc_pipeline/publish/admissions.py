@@ -19,7 +19,7 @@ from urllib.parse import urlsplit
 
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
-from .telegram_intents import enforce_production_reservation
+from .telegram_intents import enforce_production_outcome, enforce_production_reservation
 
 log = get_logger(__name__)
 
@@ -389,6 +389,7 @@ def publish_official_admissions(
     *, chat_id: str, enabled: bool, max_messages: int = 2,
     now: datetime | None = None,
     reserve_intent: Callable[[str, str, str], None] | None = None,
+    record_outcome: Callable[[str, str, str, str, int | None], None] | None = None,
 ) -> int:
     """Bounded, separate announcements through the EXISTING Telegram channel.
 
@@ -398,6 +399,7 @@ def publish_official_admissions(
     if not enabled or telegram is None or not chat_id:
         return 0
     enforce_production_reservation(reserve_intent)
+    enforce_production_outcome(record_outcome)
     if not 1 <= max_messages <= 10:
         raise ValueError("Maximum 1..10 admissions per run")
     stamp = now or datetime.now(UTC)
@@ -470,6 +472,10 @@ def publish_official_admissions(
                 else:
                     ledger["deliveries"].pop(key, None)
             _checkpoint(ledger_path, ledger)
+            if record_outcome is not None and attempt["state"] in {
+                "uncertain", "permanent_failure", "retry_held",
+            }:
+                record_outcome("admissions", key, marker, attempt["state"], None)
             log.warning("telegram_phd_admission_not_confirmed",
                         institution=row["institution"], uncertain=exc.uncertain,
                         error=str(exc))
@@ -479,6 +485,8 @@ def publish_official_admissions(
         if type(message_id) is not int or message_id <= 0:
             attempt["state"] = "uncertain"
             _checkpoint(ledger_path, ledger)
+            if record_outcome is not None:
+                record_outcome("admissions", key, marker, "uncertain", None)
             log.warning("telegram_phd_admission_invalid_receipt",
                         institution=row["institution"])
             continue
@@ -487,6 +495,8 @@ def publish_official_admissions(
             sent_at=stamp.isoformat(timespec="seconds").replace("+00:00", "Z"),
         )
         _checkpoint(ledger_path, ledger)
+        if record_outcome is not None:
+            record_outcome("admissions", key, marker, "confirmed", message_id)
         sent += 1
         log.info("telegram_phd_admission_published",
                  institution=row["institution"], deadline=row["deadline_iso"],
