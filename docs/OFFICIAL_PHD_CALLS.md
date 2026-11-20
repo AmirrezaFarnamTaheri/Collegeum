@@ -28,9 +28,11 @@ Unavailable or disallowed robots.txt is a failed check, never an implicit grant.
 
 Same-host scholarship PDF/DOC links discovered in official indexes are counted
 as **unsupported documents**; they are never scraped, fetched, inferred or
-published from filenames. An accessible index with zero HTML candidates is
-reported as an **empty index** coverage limitation, not proof that the
-institution has no opportunities. These limitations degrade public source
+published from filenames. An accessible index with zero **newly discovered** HTML call links
+is reported as an **empty index** coverage limitation, even if older
+already-known calls are successfully rechecked. Source diagnostics show
+`discovered_links`, `rechecked_links` and total `candidate_count`;
+none of these imply that the institution has no opportunities. These limitations degrade public source
 health until a separately reviewed and robots-permitted document workflow
 is implemented.
 
@@ -40,6 +42,9 @@ Institution-specific pages can contain several unrelated dates. The parser
 accepts an explicit **scholarship/fellowship/studentship** closing date in its
 own application context, not a general PhD deadline, intake date, examination,
 recommendation, prior closed academic-year cycle or recruitment result.
+An explicitly closed *current* scholarship window is blocked even when
+an old deadline remains visible on the institutional page. Prior-year
+closure notices do not suppress a separately verified open funding cycle.
 
 Examples from the November 2026 verified primary-source investigation:
 
@@ -77,13 +82,16 @@ institutional-source-only public catalogue
 
 On refresh completion, the existing ingestion freshness watchdog can request
 one ordinary main publishing workflow when a verified, eligible call is newer
-than the latest pipeline run and has no receipt. The watcher refuses dispatch
-for active/newer ingestion, blocked evidence, unknown states and untrusted
-source provenance.
+than the latest pipeline run and has no receipt. The watcher applies the
+publisher's institute-name and recommended-admission-date validation, refusing
+dispatch for cases the publisher would reject. It also refuses active/newer
+ingestion, blocked evidence, unknown states and untrusted provenance.
 
-The ordinary production pipeline alone can send at most two independently
-rendered official call messages per run (override
-`TELEGRAM_OFFICIAL_CALLS_MAX_PER_RUN`; live workflow defaults to two).
+The ordinary production pipeline alone can attempt at most two official-call
+Telegram sends per run (override `TELEGRAM_OFFICIAL_CALLS_MAX_PER_RUN`;
+live workflow defaults to two). **Failed requests consume the same budget**
+as successful messages, and a Telegram 429 rate-limit response immediately
+stops that batch; every attempted call remains checkpointed and reserved.
 `TELEGRAM_OFFICIAL_CALLS_ENABLED` is off by default for local runs and
 explicitly enabled in the reviewed production workflow. Every independent
 call/cycle has a separate key (official URL + intake year) and separate
@@ -96,6 +104,11 @@ current source statuses, empty indexes, unsupported document links, held
 publication groups, eligible calls, unsent eligible count, confirmed
 receipts, uncertain receipts and last confirmed delivery timestamp. A healthy
 source refresh is **not** evidence that Telegram delivered anything.
+
+
+Invalid or incomplete catalogue schemas cannot report a healthy official-call
+engine: the public health status falls back to `unavailable` when the catalogue
+kind, version, call list or source list fails validation.
 
 ## Compact multi-position channel format
 
@@ -111,7 +124,8 @@ deadline and admission recommendation, a concise list of positions, and one
 official link per position. A source page which lists a closed 2026/27 intake and an open 2027/28 intake
 uses the **open** year. Original 2026-key receipts remain immutable: a new
 2027-key observation is blocked from reissuing only if its same official URL,
-institution and funding deadline match the old receipt, including when the\nuniversity edits its page title. A genuinely new
+institution and funding deadline match the old receipt, including when the
+university edits its page title. A genuinely new
 annual funding deadline is not suppressed. The watchdog applies the same
 compatibility and group completeness checks as the publisher.
 
@@ -135,9 +149,10 @@ existing bounded grouping rules. Already confirmed messages 136–140 are
 historical receipts, **not** automatically deleted or reissued by this change.
 The user reported deleting Telegram messages 136–140 on 20 November 2026
 (issue #171). Their original receipts remain intact; this reported cleanup is
-not independently confirmed by a Bot API receipt. A replacement requires a
-separately authorized, durable, group-aware one-time reconciliation. Never
-remove receipt history to trigger a resend.
+not independently confirmed by a Bot API receipt. The user will publish
+the replacement manually. There is **no automated one-time reissue
+authorization or workflow** in this change. Never clear historical
+receipts to force a resend.
 
 ## Additional official bursary coverage
 
