@@ -184,16 +184,39 @@ def _location_proof(text: str, country: str, url: str) -> str | None:
 
 
 def _intake(title: str, text: str) -> int | None:
-    match = re.search(r"\b(20\d{2})\b", title)
-    if match:
-        return int(match.group(1))
-    for match in re.finditer(
-        r"(?:studentship|scholarship) applications for the (20\d{2})/\d{2} academic year",
+    """Prefer the explicitly OPEN cycle, never a nearby CLOSED preceding cycle.
+
+    Academic funding pages often show 2026/27 now closed followed by 2027/28
+    now open. A loose lookahead from 2026/27 can cross into 2027/28 and produce
+    a valid-looking, but wrong, deduplication key.
+    """
+    periods = list(re.finditer(
+        r"(?:studentship|scholarship)\s+applications?\s+for\s+the\s+"
+        r"(20\d{2})/\d{2}\s+academic\s+year\b",
         text, re.I,
-    ):
-        # A previous, closed cycle is not an open scholarship.
-        if re.search(r"\bnow\s+open\b", text[match.end():match.end() + 95], re.I):
-            return int(match.group(1))
+    ))
+    open_years: set[int] = set()
+    for index, match in enumerate(periods):
+        boundary = periods[index + 1].start() if index + 1 < len(periods) else len(text)
+        tail = text[match.end():min(boundary, match.end() + 120)]
+        # The availability marker must belong to THIS application cycle.
+        # A closed or conflicting notice cannot be promoted by a later one.
+        if re.search(r"\b(?:now\s+closed|currently\s+closed|applications\s+closed)\b",
+                     tail, re.I):
+            continue
+        if re.search(r"\b(?:now\s+open|currently\s+open|applications\s+are\s+open)\b",
+                     tail, re.I):
+            open_years.add(int(match.group(1)))
+    if len(open_years) > 1:
+        return None  # Ambiguous simultaneous cycles: manual institutional review.
+    title_year = re.search(r"\b(20\d{2})\b", title)
+    if open_years:
+        year = next(iter(open_years))
+        if title_year and int(title_year.group(1)) != year:
+            return None  # Contradictory explicit evidence.
+        return year
+    if title_year:
+        return int(title_year.group(1))
     match = re.search(
         r"(?:starting|start(?:s|ing)?)\s+(?:in\s+)?"
         r"(?:September|October|Autumn)"
@@ -205,7 +228,6 @@ def _intake(title: str, text: str) -> int | None:
             text, re.I,
         )
     return int(match.group(1)) if match else None
-
 
 def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date, str, str]]:
     candidates: list[tuple[date, str, str]] = []
@@ -321,6 +343,7 @@ def extract_call(
     return {
         "source_id": source["id"],
         "posting_group": source.get("posting_group"),
+        "posting_group_expected": source.get("posting_group_expected"),
         "institution": source["institution"],
         "country_code": source["country_code"],
         "official_url": url,
@@ -368,6 +391,7 @@ def validate_sources(config: Any) -> None:
             or not 1 <= len(config["sources"]) <= MAX_SOURCES):
         raise ValueError("Invalid approved official-call source registry")
     ids: set[str] = set()
+    group_members: dict[str, list[dict[str, Any]]] = {}
     for source in config["sources"]:
         if not isinstance(source, dict):
             raise ValueError("Invalid call source")
@@ -380,6 +404,11 @@ def validate_sources(config: Any) -> None:
                 or (source.get("posting_group") is not None and (
                     not isinstance(source["posting_group"], str) or
                     not re.fullmatch(r"[a-z][a-z0-9-]{2,47}", source["posting_group"])))
+                or (source.get("posting_group_expected") is not None and (
+                    type(source["posting_group_expected"]) is not int
+                    or not 2 <= source["posting_group_expected"] <= 6))
+                or (source.get("posting_group") is None
+                    and source.get("posting_group_expected") is not None)
                 or not isinstance(source.get("institution"), str)
                 or not 5 <= len(source["institution"]) <= 120
                 or source.get("country_code") not in {"ES", "UK", "GB", "DE", "FI",
@@ -387,6 +416,17 @@ def validate_sources(config: Any) -> None:
                                                       "DK", "CH", "AT", "BE"}):
             raise ValueError("Unapproved or malformed official-call source")
         ids.add(name)
+        if source.get("posting_group") is not None:
+            if source.get("mode") != "detail" or not source.get("posting_group_expected"):
+                raise ValueError("Reviewed posting groups require an explicit member count")
+            group_members.setdefault(source["posting_group"], []).append(source)
+    for group, members in group_members.items():
+        expected = members[0]["posting_group_expected"]
+        if (len(members) != expected
+                or len({(item["institution"], item["country_code"])
+                        for item in members}) != 1
+                or any(item["posting_group_expected"] != expected for item in members)):
+            raise ValueError(f"Invalid or incomplete approved posting group {group}")
 
 
 def validate_catalog(catalog: Any) -> None:
