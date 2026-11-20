@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -65,7 +65,8 @@ jobs:
                    rss.xsl telegram-avatar-512.png telegram-avatar.png; do
             cp "docs/$f" "build/pages/$f"
           done
-          for f in listings.json health.json phd_admissions.json; do
+          for f in listings.json health.json phd_admissions.json \
+                   official_phd_calls.json; do
             cp "docs/data/$f" "build/pages/data/$f"
           done
 
@@ -80,5 +81,17 @@ jobs:
         with:
           path: build/pages
 
+      # GitHub's artifact metadata index can briefly lag a successfully
+      # uploaded Pages artifact. Keep real failures visible if retry also fails.
       - id: deployment
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Allow Pages artifact metadata to propagate
+        if: ${{ steps.deployment.outcome == 'failure' }}
+        shell: bash
+        run: sleep 20
+
+      - id: deployment_retry
+        if: ${{ steps.deployment.outcome == 'failure' }}
         uses: actions/deploy-pages@v5
