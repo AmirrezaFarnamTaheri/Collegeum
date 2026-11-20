@@ -1,7 +1,7 @@
 """Explicitly approved, robots-aware PDF evidence review; never publishes.
 
 Use with the installed pypdf dependency, e.g.
-    uv run --locked python tools/official_call_pdf_review.py --source-id \
+    uv run --locked python -m tools.official_call_pdf_review --source-id \
       ieb-document-index --url https://ieb.ub.edu/...pdf --fetch
 The existing stdlib-only daily HTML monitor never invokes this reviewer.
 Its output is a *separate review artifact*, not a publishable call catalogue.
