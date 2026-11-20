@@ -212,12 +212,21 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
 
     def test_missed_daily_workflows_do_not_skip_never_checked_programmes(self):
         now = datetime(2026, 11, 19, tzinfo=UTC)
+        # This test proves scheduler fairness, not the number of programmes
+        # already checked by live cron. The committed observations evolve
+        # daily and must not make the test fail once enough have been checked.
+        unchecked = json.loads(json.dumps(self.public))
+        for row in unchecked["programmes"]:
+            row.update(status="unverified", checked_at=None, deadline_iso=None,
+                       evidence_url=None, evidence_excerpt=None,
+                       official_details={}, investigated_urls=[])
+        validate_catalogues(self.seeds, unchecked)
         def fetch(_url: str, *, now: datetime) -> dict:
             return {"status": "no_explicit_deadline"}
-        first = refresh(self.seeds, self.public, now=now, batch_size=25,
+        first = refresh(self.seeds, unchecked, now=now, batch_size=25,
                         fetcher=fetch)
         baseline_checked = {
-            i for i, item in enumerate(self.public["programmes"])
+            i for i, item in enumerate(unchecked["programmes"])
             if item["checked_at"] is not None
         }
         first_checked = {
