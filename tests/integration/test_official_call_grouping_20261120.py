@@ -569,3 +569,54 @@ def test_reviewed_group_requires_matching_count_and_same_institution():
         validate_sources({**config, "sources": [
             source(0, count=True), source(1), source(2),
         ]})
+
+
+def test_same_host_general_phd_index_link_is_checked_without_subject_in_label():
+    from tools.update_official_calls import discover_links
+
+    root = {
+        "id": "some-index", "institution": "University of Reading",
+        "country_code": "UK", "mode": "index",
+        "url": "https://www.reading.ac.uk/doctoral-researcher-college/news",
+    }
+    html = """<h1>Funding announcements</h1>
+    <a href="/doctoral-researcher-college/phd-scholarships-2027">
+       PhD Scholarships 2027</a>
+    <a href="https://external.example/phd-scholarships-2027">
+       PhD Scholarships in Economics</a>"""
+    assert discover_links(html, root) == [
+        "https://www.reading.ac.uk/doctoral-researcher-college/phd-scholarships-2027",
+    ]
+
+
+def test_supported_html_and_unreadable_document_calls_have_separate_health_counts(tmp_path):
+    from tools.update_official_calls import refresh_sources
+
+    index = {
+        "id": "university-index", "institution": "University of Reading",
+        "country_code": "UK", "mode": "index",
+        "url": "https://www.reading.ac.uk/doctoral-researcher-college/news",
+    }
+    html = """<h1>University funding calls</h1>
+    <a href="/media/economics-phd-scholarship-2027.pdf">
+       Economics PhD Scholarship 2027 PDF</a>
+    <a href="/media/economics-phd-fellowship-2027.docx">
+       Economics PhD Fellowship 2027 Word document</a>
+    <a href="https://unrelated.example/phd-fellowship.pdf">
+       Economics PhD Fellowship 2027</a>"""
+    catalog = refresh_sources(
+        {"kind": "official_phd_call_sources", "version": 1, "sources": [index]},
+        {"kind": "official_phd_call_observations", "version": 1,
+         "sources": [], "calls": []},
+        now=NOW, fetcher=lambda url: {"status": "ok", "html": html},
+    )
+    assert catalog["calls"] == []
+    assert catalog["sources"][0]["unsupported_documents"] == 2
+    assert catalog["sources"][0]["index_empty"] is True
+    source = tmp_path / "official_calls.json"
+    ledger = tmp_path / "ledger.json"
+    source.write_text(json.dumps(catalog))
+    health = official_calls_health(source, ledger, now=NOW)
+    assert health["empty_indexes"] == 1
+    assert health["unsupported_documents"] == 2
+    assert health["status"] == "degraded"
