@@ -3,8 +3,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-
-import pytest
+from unittest import SkipTest
 
 
 def test_pages_exports_independent_public_call_catalogue():
@@ -70,7 +69,7 @@ def test_calls_separate_from_admissions_and_employment_lists():
 def test_public_dashboard_inline_javascript_syntax_when_node_is_available(tmp_path):
     node = shutil.which("node")
     if node is None:
-        pytest.skip("Node is not installed in this environment")
+        raise SkipTest("Node is not installed in this environment")
     html = Path("docs/index.html").read_text(encoding="utf-8")
     scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, re.I | re.S)
     assert scripts
