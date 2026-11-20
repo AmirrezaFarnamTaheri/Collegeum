@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-20T11:42:58Z",
+  "generated_at": "2026-11-20T16:05:34Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -3433,275 +3433,423 @@
       "country_code": "US",
       "official_programme_url": "https://www.sas.rochester.edu/eco/graduate/apply.html",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.sas.rochester.edu/eco/graduate/apply.html",
+        "https://www.sas.rochester.edu/eco/undergraduate/major.html",
+        "https://www.sas.rochester.edu/eco/undergraduate/minor-clusters.html"
+      ]
     },
     {
       "institution": "University of South Carolina",
       "country_code": "US",
       "official_programme_url": "https://sc.edu/study/colleges_schools/moore/study/phd_programs/admission_requirements/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://sc.edu/study/colleges_schools/moore/study/phd_programs/admission_requirements/",
+        "https://sc.edu/study/colleges_schools/moore/apply/undergraduate_applicants/undergrad_tuition_fees.php",
+        "https://sc.edu/study/colleges_schools/moore/study/economics/degree_programs/master_of_arts_in_economics/admission_events.php",
+        "https://sc.edu/study/colleges_schools/moore/study/economics/degree_programs/master_of_arts_in_economics/admission_requirements/index.php"
+      ]
     },
     {
       "institution": "University of Southampton",
       "country_code": "UK",
       "official_programme_url": "https://www.southampton.ac.uk/economics/postgraduate/research_degrees/courses/integrated-phd-in-economics.page",
       "programme_structure_hint": "MSc + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.southampton.ac.uk/study/postgraduate-research/economics",
+        "https://www.southampton.ac.uk/research/groups/econometrics",
+        "https://www.southampton.ac.uk/study/postgraduate-research/apply"
+      ]
     },
     {
       "institution": "University of Southern California",
       "country_code": "US",
       "official_programme_url": "https://dornsife.usc.edu/econ/doctoral-admissions/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://dornsife.usc.edu/econ/doctoral/admissions/",
+        "https://dornsife.usc.edu/contact-us/",
+        "https://dornsife.usc.edu/econ/doctoral/admissions-faq/",
+        "https://dornsife.usc.edu/econ/doctoral/financial-support/"
+      ]
     },
     {
       "institution": "University of St Andrews",
       "country_code": "UK",
       "official_programme_url": "https://www.st-andrews.ac.uk/economics-finance/prospective/pgr/application/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.st-andrews.ac.uk/business-school/"
+      ]
     },
     {
       "institution": "University of St Gallen",
       "country_code": "CH",
       "official_programme_url": "https://www.unisg.ch/en/studying/admission/admission-phd/economics-and-econometrics/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.unisg.ch/en/studying/admission/admission-phd/economics-and-econometrics/",
+        "https://www.unisg.ch/en/studying/admission/admission-phd/",
+        "https://www.unisg.ch/en/studying/admission/admission-phd/computer-science/"
+      ]
     },
     {
       "institution": "University of Stavanger",
       "country_code": "NO",
       "official_programme_url": "https://www.uis.no/en/research/phd-at-uis",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of Surrey",
       "country_code": "UK",
       "official_programme_url": "https://www.surrey.ac.uk/postgraduate/economics-phd",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {
+        "duration": {
+          "value": "4 years",
+          "evidence_url": "https://www.surrey.ac.uk/postgraduate/economics-phd",
+          "evidence_excerpt": "Duration 4 years",
+          "checked_at": "2026-11-20T16:05:34Z"
+        }
+      },
+      "investigated_urls": [
+        "https://www.surrey.ac.uk/postgraduate/economics-phd",
+        "https://www.surrey.ac.uk/doctoral-college/prospective-postgraduate-researchers/application-guidance",
+        "https://www.surrey.ac.uk/fees-and-funding/student-finance/postgraduate-research-student-finance"
+      ]
     },
     {
       "institution": "University of Sydney",
       "country_code": "AU",
       "official_programme_url": "https://www.sydney.edu.au/courses/courses/pr/doctor-of-philosophy-arts-and-social-sciences0.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.sydney.edu.au/courses/courses/pr/doctor-of-philosophy-arts-and-social-sciences0.html"
+      ]
     },
     {
       "institution": "University of Technology Sydney",
       "country_code": "AU",
       "official_programme_url": "https://www.uts.edu.au/study/business/business-courses/graduate-research/economics-phd-program",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.uts.edu.au/courses/doctor-of-philosophy-phd-thesis-economics",
+        "https://www.uts.edu.au/for-students/admissions-entry/fees-costs/payment-information/student-services-and-amenities-fee-ssaf",
+        "https://www.uts.edu.au/for-students/admissions-entry/how-to-apply/masters-by-research-phd"
+      ]
     },
     {
       "institution": "University of Tennessee, Knoxville",
       "country_code": "US",
       "official_programme_url": "https://haslam.utk.edu/economics/phd/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://haslam.utk.edu/economics/phd/",
+        "https://haslam.utk.edu/admissions-aid/",
+        "https://haslam.utk.edu/admissions/",
+        "https://haslam.utk.edu/apply/"
+      ]
     },
     {
       "institution": "University of Texas at Austin",
       "country_code": "US",
       "official_programme_url": "https://liberalarts.utexas.edu/economics/ph-d-program/admissions/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://liberalarts.utexas.edu/economics/ph-d-program/admissions/"
+      ]
     },
     {
       "institution": "University of Tokyo",
       "country_code": "JP",
       "official_programme_url": "https://www.student.e.u-tokyo.ac.jp/grad/d-nyushi.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.student.e.u-tokyo.ac.jp/grad/d-nyushi.html",
+        "https://www.student.e.u-tokyo.ac.jp/is/ns-scholarship.html",
+        "https://www.student.e.u-tokyo.ac.jp/is/ns-scholarship-e.html"
+      ]
     },
     {
       "institution": "University of Toronto",
       "country_code": "CA",
       "official_programme_url": "https://www.economics.utoronto.ca/index.php/index/graduate/phd",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.economics.utoronto.ca/index.php/index/graduate/phd",
+        "https://www.economics.utoronto.ca/index.php/index/graduate/additionalFunding",
+        "https://www.economics.utoronto.ca/index.php/index/graduate/apply"
+      ]
     },
     {
       "institution": "University of Turin",
       "country_code": "IT",
       "official_programme_url": "https://www.phdpareto.carloalberto.org/how-to-apply/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.phdpareto.carloalberto.org/how-to-apply/",
+        "https://www.phdpareto.carloalberto.org/funding/",
+        "https://www.phdpareto.carloalberto.org/timeline-and-deadlines/"
+      ]
     },
     {
       "institution": "University of Utah",
       "country_code": "US",
       "official_programme_url": "https://econ.utah.edu/phd-program/phd-admissions.php",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://econ.utah.edu/phd-program/phd-admissions.php",
+        "https://econ.utah.edu/economics-scholarships.php"
+      ]
     },
     {
       "institution": "University of Vienna",
       "country_code": "AT",
       "official_programme_url": "https://www.vgse.at/application/dates-deadlines/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.vgse.at/application/dates-deadlines/"
+      ]
     },
     {
       "institution": "University of Virginia",
       "country_code": "US",
       "official_programme_url": "https://economics.virginia.edu/admission",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.virginia.edu/admission",
+        "https://economics.virginia.edu/contact-us",
+        "https://economics.virginia.edu/prerequisites-requirements"
+      ]
     },
     {
       "institution": "University of Warsaw",
       "country_code": "PL",
       "official_programme_url": "https://en.uw.edu.pl/doctoral-schools-admissions/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://en.uw.edu.pl/doctoral-schools-admissions/",
+        "https://en.uw.edu.pl/doctoral-schools-admissions/?print=1",
+        "https://en.uw.edu.pl/tag/admissions/"
+      ]
     },
     {
       "institution": "University of Warwick",
       "country_code": "UK",
       "official_programme_url": "https://warwick.ac.uk/study/postgraduate/courses/mres-phd-economics",
       "programme_structure_hint": "MRes + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {
+        "entry_requirement": {
+          "value": "First Class undergraduate degree (or equivalent) in a related subject and/or Distinction at Master’s level.",
+          "evidence_url": "https://warwick.ac.uk/study/postgraduate/courses/mres-phd-economics/",
+          "evidence_excerpt": "Entry requirements First Class undergraduate degree (or equivalent) in a related subject and/or Distinction at Master’s level.",
+          "checked_at": "2026-11-20T16:05:34Z"
+        }
+      },
+      "investigated_urls": [
+        "https://warwick.ac.uk/study/postgraduate/courses/mres-phd-economics/",
+        "https://warwick.ac.uk/services/finance/studentfinance/fees/nonstandard-2021/",
+        "https://warwick.ac.uk/study/international/admissions/"
+      ]
     },
     {
       "institution": "University of Washington",
       "country_code": "US",
       "official_programme_url": "https://econ.washington.edu/graduate-application-procedure-forms",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://econ.washington.edu/phd-admissions",
+        "https://econ.washington.edu/contact",
+        "https://econ.washington.edu/admissions",
+        "https://econ.washington.edu/scholarships-and-financial-support"
+      ]
     },
     {
       "institution": "University of Western Australia",
       "country_code": "AU",
       "official_programme_url": "https://www.uwa.edu.au/study/courses/doctor-of-philosophy",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of Wisconsin-Madison",
       "country_code": "US",
       "official_programme_url": "https://econ.wisc.edu/doctoral/admissions/#application-process",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://econ.wisc.edu/doctoral/admissions/#application-process",
+        "https://econ.wisc.edu/doctoral/admissions/funding/",
+        "https://econ.wisc.edu/doctoral/admissions/",
+        "https://econ.wisc.edu/doctoral/admissions/faqs/"
+      ]
     },
     {
       "institution": "University of Wyoming",
       "country_code": "US",
       "official_programme_url": "https://www.uwyo.edu/economics/graduate/admissions/index.html",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of York",
       "country_code": "UK",
       "official_programme_url": "https://www.york.ac.uk/economics/study/postgraduate-research/phd-economics/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T16:05:34Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.york.ac.uk/economics/study/postgraduate-research/phd-economics/",
+        "https://www.york.ac.uk/economics/study/funding/",
+        "https://www.york.ac.uk/economics/study/postgraduate-research/funding/"
+      ]
     },
     {
       "institution": "University of Zurich",
