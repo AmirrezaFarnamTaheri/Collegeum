@@ -8,9 +8,11 @@ runner, then commit the journals only at the end of the ingestion job. If a
 runner died after Telegram accepted a message but before the Git push, another
 runner could start with an outdated ledger and send again.
 
-This applies to public official general PhD admissions and separately tracked
-PhD scholarship, fellowship, and studentship calls. It does not mix either with
-vacancies or private subscribers.
+This now covers three *separate* public publishers: reviewed official general
+PhD admissions, individually verified institutional scholarship/fellowship/
+studentship calls, and separately published job vacancies (including the
+historical non-US Economics PhD channel backfill). Private subscriber state
+and ordinary job-board routing remain independent.
 
 ## New send protocol for reviewed main ingestion
 
@@ -37,6 +39,19 @@ existing 180-day lifecycle checks. An explicit replacement after verified
 deletion uses a distinct operation containing the prior ID and authorization
 timestamp. Independent funding calls use the official URL and intake-year
 identity. Old intents never authorize replays.
+
+Vacancy posts reserve the hashes of **all known apply/source URLs** in a
+connected alias group before issuing the single channel post; the same
+vacancies namespace covers both ordinary channel cards and previously
+web-published PhD backfill cards. This prevents a recovered, differently
+chosen URL alias from authorizing a second send. Reservations contain hashes,
+not the original public URLs or Telegram payload. A partial reservation
+followed by a failed later alias reservation is held for review, never sent.
+One authorized fresh generation is allowed after an operator verifies that a
+held vacancy was not delivered, via the existing
+`resolve_telegram_delivery` / `resolve_phd_channel_delivery` procedures.
+An ordinary fresh runner, Telegram timeout, invalid acknowledgement, or known
+rate limit does **not** constitute such authorization.
 
 ## Operational security
 
@@ -67,8 +82,16 @@ admissions lifecycle, explicit reissues, and fail-closed missing configuration.
 
 ## Boundaries
 
-This protects future sends by the general admissions and independent official
-funding-call publishers only. Previously confirmed Telegram messages retain
-their historical IDs; this change does not authorize a resend. It does not
-change LinkedIn access policy, robots requirements, vacancy-ingestion receipts
-or other Telegram delivery systems.
+This protects future sends by the general admissions publisher,
+independent official funding-call publisher, ordinary vacancy channel
+broadcaster and historical non-US Economics PhD backfill publisher.
+Previously confirmed Telegram messages retain their historical IDs; this
+change does not authorize a resend. Published website/X receipts, Save buttons,
+source scanning and private subscriber messages are unaffected.
+
+GitHub Contents API requests are one per unique URL alias. If too many
+aliases or repository write throttling prevent all reservations, sending
+fails closed and requires reconciliation. The upstream Telegram Bot API
+still does not provide actual exactly-once delivery acknowledgements after
+runner failure; unresolved intents remain operator-held rather than
+risking duplicate posts.
