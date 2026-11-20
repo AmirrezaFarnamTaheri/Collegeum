@@ -385,9 +385,13 @@ def evaluate_official_calls_trigger(
                 or type(row.get("intake_year")) is not int
                 or not now.year <= row["intake_year"] <= now.year + 2):
             continue
+        raw_deadline = row.get("deadline_iso")
+        if (not isinstance(raw_deadline, str)
+                or not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", raw_deadline)):
+            continue
         try:
             checked = _timestamp(row.get("checked_at"))
-            deadline = datetime.fromisoformat(row.get("deadline_iso")).date()
+            deadline = datetime.fromisoformat(raw_deadline).date()
         except (ValueError, TypeError, OverflowError):
             continue
         if (checked > now or now - checked > timedelta(days=14)
