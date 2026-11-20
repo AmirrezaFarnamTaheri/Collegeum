@@ -301,7 +301,7 @@ def publish_official_calls(
     enabled: bool, max_messages: int = 2, now: datetime | None = None,
     reserve_intent: Callable[[str, str, str], None] | None = None,
 ) -> int:
-    """Send bounded posts, consolidating explicitly reviewed related calls.
+    """Send bounded attempts, consolidating explicitly reviewed related calls.
 
     A combined post still reserves and checkpoints EACH per-call identity before
     sending. Thus a runner crash cannot turn a new grouping into a blind resend.
@@ -326,8 +326,9 @@ def publish_official_calls(
     ]
     handled: set[str] = set()
     sent = 0
+    attempts = 0
     for row in outstanding:
-        if sent >= max_messages:
+        if attempts >= max_messages:
             break
         key = call_key(row)
         if key in handled:
@@ -362,6 +363,8 @@ def publish_official_calls(
             _group_message(group) if len(group) > 1 else _message(group[0])
         )
         try:
+            # Budget the actual Bot API calls, even when every request fails.
+            attempts += 1
             receipt = telegram.send_message(
                 chat_id=chat_id, html=message, keyboard=keyboard,
             )
@@ -380,7 +383,9 @@ def publish_official_calls(
             log.warning("telegram_official_call_not_confirmed",
                         institution=row["institution"], group_size=len(group),
                         uncertain=exc.uncertain)
-            if exc.status in (401, 403, 404):
+            if exc.status in (401, 403, 404, 429):
+                # Authentication/permission failures and rate limits apply to
+                # the whole channel, not just this particular opportunity.
                 break
             continue
         if type(receipt) is not int or receipt <= 0:
