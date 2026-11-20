@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-20T16:05:34Z",
+  "generated_at": "2026-11-20T17:49:23Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -3856,165 +3856,244 @@
       "country_code": "CH",
       "official_programme_url": "https://www.econ.uzh.ch/en/study/phd/zurichgse/faq.html",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.econ.uzh.ch/en/study/phd/zurichgse/faq.html"
+      ]
     },
     {
       "institution": "UNSW Sydney",
       "country_code": "AU",
       "official_programme_url": "https://www.unsw.edu.au/business/study-with-us/postgraduate-research/phd-degrees/doctor-philosophy-phd-economics",
       "programme_structure_hint": "MPDBS + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.unsw.edu.au/business/study-with-us/postgraduate-research/phd-degrees/doctor-philosophy-phd-economics",
+        "https://www.unsw.edu.au/business/study-with-us/international-pathways",
+        "https://www.unsw.edu.au/business/our-schools/agsm/agsm-scholarships"
+      ]
     },
     {
       "institution": "Uppsala University",
       "country_code": "SE",
       "official_programme_url": "https://www.uu.se/en/department/economics/education/phd-programme-in-economics/applications-and-admissions",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {
+        "tuition": {
+          "value": "No tuition fees",
+          "evidence_url": "https://www.uu.se/en/department/economics/education/phd-programme-in-economics/applications-and-admissions",
+          "evidence_excerpt": "There are no tuition fees for the education.",
+          "checked_at": "2026-11-20T17:49:23Z"
+        },
+        "institution_country": {
+          "value": "Sweden",
+          "evidence_url": "https://www.uu.se/en/department/economics/education/phd-programme-in-economics/applications-and-admissions",
+          "evidence_excerpt": "© Uppsala University Tel: +46 18 471 00 00 P.O. Box 256, SE-751 05 Uppsala, SWEDEN",
+          "checked_at": "2026-11-20T17:49:23Z"
+        }
+      },
+      "investigated_urls": [
+        "https://www.uu.se/en/department/economics/education/phd-programme-in-economics/applications-and-admissions"
+      ]
     },
     {
       "institution": "UT Dallas",
       "country_code": "US",
       "official_programme_url": "https://graduate-admissions.utdallas.edu/apply-to-ut-dallas/deadlines-and-fees/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://graduate-admissions.utdallas.edu/apply-to-ut-dallas/deadlines-and-fees/",
+        "https://graduate-admissions.utdallas.edu/contact-us/",
+        "https://graduate-admissions.utdallas.edu/apply-to-ut-dallas/funding-and-financial-aid/",
+        "https://graduate-admissions.utdallas.edu/"
+      ]
     },
     {
       "institution": "Vanderbilt University",
       "country_code": "US",
       "official_programme_url": "https://as.vanderbilt.edu/economics/phd-admissions/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://as.vanderbilt.edu/economics/phd-admissions/",
+        "https://as.vanderbilt.edu/economics/ma-admissions/",
+        "https://as.vanderbilt.edu/economics/ma-degree-requirements/",
+        "https://as.vanderbilt.edu/economics/phd-degree-requirements/"
+      ]
     },
     {
       "institution": "Victoria University of Wellington",
       "country_code": "NZ",
       "official_programme_url": "https://www.wgtn.ac.nz/fgr/apply/how/entry-requirements",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Vienna University of Economics and Business",
       "country_code": "AT",
       "official_programme_url": "https://www.wu.ac.at/en/economics/study/phd-economics/admission",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Vrije Universiteit Amsterdam",
       "country_code": "NL",
       "official_programme_url": "https://vu.nl/en/about-vu/faculties/school-of-business-and-economics/more-about/phd-at-sbe",
       "programme_structure_hint": "MRes + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://vu.nl/en/about-vu/faculties/school-of-business-and-economics/more-about/phd-at-sbe",
+        "https://vu.nl/en/education/professionals/courses-programmes/part-time-phd-programme-in-business-studies/admissions",
+        "https://vu.nl/en/research/more-about/funding-opportunities"
+      ]
     },
     {
       "institution": "Waseda University",
       "country_code": "JP",
       "official_programme_url": "https://www.waseda.jp/fpse/gse/en/applicants/process/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Washington State University",
       "country_code": "US",
       "official_programme_url": "https://gradschool.wsu.edu/degrees/doctor-of-philosophy-economics/",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://gradschool.wsu.edu/degrees/doctor-of-philosophy-economics/",
+        "https://gradschool.wsu.edu/admissions-offer-letter/",
+        "https://gradschool.wsu.edu/apply/",
+        "https://gradschool.wsu.edu/deadlines/"
+      ]
     },
     {
       "institution": "Washington University in St. Louis",
       "country_code": "US",
       "official_programme_url": "https://economics.wustl.edu/phd-admissions",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "West Virginia University",
       "country_code": "US",
       "official_programme_url": "https://graduateadmissions.wvu.edu/academics/graduate-programs/economics-d",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Western University",
       "country_code": "CA",
       "official_programme_url": "https://economics.uwo.ca/graduate/future-student/admission-requirements.html",
       "programme_structure_hint": "MA + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Yale University",
       "country_code": "US",
       "official_programme_url": "https://gsas.yale.edu/admissions/phdmasters-application-process/dates-deadlines",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://gsas.yale.edu/admissions/phdmasters-application-process/dates-deadlines",
+        "https://gsas.yale.edu/admissions/phdmasters-application-process/application-fees-fee-waivers",
+        "https://gsas.yale.edu/admissions/phdmasters-application-process",
+        "https://gsas.yale.edu/resources?type_support=10&category=51&sort_bef_combine=featured_DESC&sort_by=featured&sort_order=DESC"
+      ]
     },
     {
       "institution": "York University",
       "country_code": "CA",
       "official_programme_url": "https://futurestudents.yorku.ca/graduate/programs/economics",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T17:49:23Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://futurestudents.yorku.ca/graduate/programs/economics",
+        "https://futurestudents.yorku.ca/graduate-student",
+        "https://futurestudents.yorku.ca/graduate/apply-now/admissionsprocess"
+      ]
     }
   ]
 }
