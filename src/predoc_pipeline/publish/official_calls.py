@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 from ..core.official_call_rules import call_key, group_members, group_signature, receipt_key
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
-from .telegram_intents import enforce_production_reservation
+from .telegram_intents import enforce_production_outcome, enforce_production_reservation
 
 log = get_logger(__name__)
 MAX_AGE = timedelta(days=14)
@@ -300,6 +300,7 @@ def publish_official_calls(
     telegram: TelegramClient | None, *, chat_id: str,
     enabled: bool, max_messages: int = 2, now: datetime | None = None,
     reserve_intent: Callable[[str, str, str], None] | None = None,
+    record_outcome: Callable[[str, str, str, str, int | None], None] | None = None,
 ) -> int:
     """Send bounded attempts, consolidating explicitly reviewed related calls.
 
@@ -309,6 +310,7 @@ def publish_official_calls(
     if not enabled or telegram is None or not chat_id:
         return 0
     enforce_production_reservation(reserve_intent)
+    enforce_production_outcome(record_outcome)
     if not 1 <= max_messages <= 10:
         raise ValueError("Official call publication must be limited to 1..10 messages")
     try:
@@ -380,6 +382,11 @@ def publish_official_calls(
                 else:
                     ledger["deliveries"].pop(member_key, None)
             _checkpoint(ledger_path, ledger)
+            if record_outcome is not None:
+                for member_key in keys:
+                    held = ledger["deliveries"].get(member_key)
+                    if held is not None:
+                        record_outcome("calls", member_key, "initial", held["state"], None)
             log.warning("telegram_official_call_not_confirmed",
                         institution=row["institution"], group_size=len(group),
                         uncertain=exc.uncertain)
@@ -392,6 +399,9 @@ def publish_official_calls(
             for member_key in keys:
                 ledger["deliveries"][member_key]["state"] = "uncertain"
             _checkpoint(ledger_path, ledger)
+            if record_outcome is not None:
+                for member_key in keys:
+                    record_outcome("calls", member_key, "initial", "uncertain", None)
             continue
         for member_key in keys:
             ledger["deliveries"][member_key].update(
@@ -400,6 +410,9 @@ def publish_official_calls(
                     "+00:00", "Z"),
             )
         _checkpoint(ledger_path, ledger)
+        if record_outcome is not None:
+            for member_key in keys:
+                record_outcome("calls", member_key, "initial", "confirmed", receipt)
         sent += 1
         log.info("telegram_official_call_published", message_id=receipt,
                  institution=row["institution"], group_size=len(group),
