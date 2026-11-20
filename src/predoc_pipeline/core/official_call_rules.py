@@ -105,12 +105,12 @@ def group_members(
     # Disagreeing deadlines, funding types or admission dates require review,
     # not automatic splitting into different messages.
     cohort = signature[:4] + signature[-1:]
-    related = [
-        candidate for candidate in candidates
-        if (group_signature(candidate) is not None
-            and (group_signature(candidate) or ())[:4]
-                + (group_signature(candidate) or ())[-1:] == cohort)
-    ]
+    related = []
+    for candidate in candidates:
+        candidate_signature = group_signature(candidate)
+        if (candidate_signature is not None
+                and candidate_signature[:4] + candidate_signature[-1:] == cohort):
+            related.append(candidate)
     if (len(members) != expected or len(related) != expected
             or any(candidate.get("posting_group_expected") != expected
                    for candidate in members)
