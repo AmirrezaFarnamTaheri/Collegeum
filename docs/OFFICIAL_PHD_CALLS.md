@@ -18,13 +18,21 @@ Leadership/Organisations), plus the University of Reading's distinct 2027 **Home
 areas, explicitly including Henley Business School. Additional institutions can be added to this reviewed
 registry without changing the parser or publisher.
 
-The monitor follows **at most six new** relevant IEB same-host HTML call links per
+The monitor follows **at most six new** prioritized same-host HTML PhD call links per
 index run and rechecks **at most two** still-open previous calls after they
 scroll off an index, never arbitrary third-party search links or PDFs. It uses one bounded
 read for each approved Henley page. The resolver rejects external links, insecure
 schemes, credentials, unexpected redirects, oversized responses and restricted
 paths. Every fetched URL must be permitted by its own host's robots.txt.
 Unavailable or disallowed robots.txt is a failed check, never an implicit grant.
+
+Same-host scholarship PDF/DOC links discovered in official indexes are counted
+as **unsupported documents**; they are never scraped, fetched, inferred or
+published from filenames. An accessible index with zero HTML candidates is
+reported as an **empty index** coverage limitation, not proof that the
+institution has no opportunities. These limitations degrade public source
+health until a separately reviewed and robots-permitted document workflow
+is implemented.
 
 ## Admission versus funding deadline
 
@@ -84,7 +92,8 @@ before attempting a send; confirmed, uncertain and permanent-failure states
 are never blindly resent.
 
 `docs/data/health.json` contains a separate `official_calls` section for
-current source statuses, eligible calls, unsent eligible count, confirmed
+current source statuses, empty indexes, unsupported document links, held
+publication groups, eligible calls, unsent eligible count, confirmed
 receipts, uncertain receipts and last confirmed delivery timestamp. A healthy
 source refresh is **not** evidence that Telegram delivered anything.
 
@@ -99,15 +108,30 @@ the same cutoff alone. Each group contains at most six source pages.
 
 The channel receives a single post with an institutional heading, one shared
 deadline and admission recommendation, a concise list of positions, and one
-official link per position. Each opportunity retains its original `call_key`
+official link per position. A source page which lists a closed 2026/27 intake and an open 2027/28 intake
+uses the **open** year. Original 2026-key receipts remain immutable: a new
+2027-key observation is blocked from reissuing only if its same official URL,
+institution, title and funding deadline match the old receipt. A genuinely new
+annual funding deadline is not suppressed. The watchdog applies the same
+compatibility and group completeness checks as the publisher.
+
+Each opportunity retains its original `call_key`
 and its own receipt, even when the Telegram `message_id` is shared. All
 participating keys are checkpointed and durably reserved before the single
 Telegram send. Failed or uncertain sends hold all members without blind retry.
 The health report continues to count confirmed *calls*, and also exposes
-`confirmed_messages` for the actual number of Telegram messages delivered.
+`confirmed_messages` for the number of message IDs acknowledged by Telegram.
+This is historical delivery accounting, **not** a live channel audit: a
+user-deleted or manually posted message does not retroactively change a
+confirmed send receipt.
 
 The five Henley Business School departmental 2027 studentships are explicitly
-approved to group prospectively. Already confirmed messages 136–140 are
+approved to group prospectively. The source registry declares
+`posting_group_expected: 5` for each department; if any source is blocked,
+incomplete, changes its deadline or has already been attempted, the engine
+holds the entire group and reports `group_waiting` rather than sending a
+partial announcement. Legacy groups without a declared size continue to use
+existing bounded grouping rules. Already confirmed messages 136–140 are
 historical receipts, **not** automatically deleted or reissued by this change.
 The user reported deleting Telegram messages 136–140 on 20 November 2026
 (issue #171). Their original receipts remain intact; this reported cleanup is
