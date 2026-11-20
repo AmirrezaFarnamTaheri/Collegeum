@@ -96,6 +96,21 @@ def test_five_related_henley_positions_make_one_message_with_five_official_links
     assert health["confirmed_messages"] == 1
 
 
+def test_legacy_henley_2026_identity_is_not_misrepresented_as_2026_intake(tmp_path):
+    # The 2027/28 funding pages historically hashed as intake_year=2026 due
+    # to an earlier 2026/27 *closed* date. Avoid publishing that bad label
+    # or automatically changing keys and triggering duplicates.
+    rows = [
+        _henley("accounting", "Accounting PhD Opportunities"),
+        _henley("strategy", "International Business and Strategy PhD Opportunities"),
+    ]
+    for row in rows:
+        row["intake_year"] = 2026
+    count, telegram, _, _ = _publish(tmp_path, rows)
+    assert count == 1
+    assert "Intake: 2026" not in telegram.send_message.call_args.kwargs["html"]
+
+
 def test_group_is_never_inferred_from_same_university_or_deadline_alone(tmp_path):
     rows = [
         _henley("one", "Accounting PhD Opportunities", posting_group=None),
