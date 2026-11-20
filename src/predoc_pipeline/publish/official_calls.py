@@ -264,7 +264,7 @@ def _group_message(rows: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
     lines = [
         f"🎓 <b>{len(rows)} PhD funding opportunities · "
         f"{escape(first['institution'][:125])}</b>",
-        f"📍 {escape(place)}  |  🎓 Intake: {first['intake_year']}",
+        f"📍 {escape(place)}",
         f"📅 <b>{'Funding' if first['deadline_kind'] == 'funding' else 'Call'} "
         f"deadline: {escape(deadline)}</b>",
     ]
