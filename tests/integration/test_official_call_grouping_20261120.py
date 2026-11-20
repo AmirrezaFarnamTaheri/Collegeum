@@ -675,6 +675,8 @@ def test_home_only_bursary_eligibility_is_evidenced_and_visible(tmp_path):
     assert "stipend guaranteed" not in message
 
     no_evidence = {**row, "eligibility_scope": None, "funding_scope": None}
-    count2, tg2, _, _ = _publish(tmp_path / "no_evidence", [no_evidence])
+    separate = tmp_path / "no_evidence"
+    separate.mkdir()
+    count2, tg2, _, _ = _publish(separate, [no_evidence])
     assert count2 == 1
     assert "Home-fee applicants only" not in tg2.send_message.call_args.kwargs["html"]
