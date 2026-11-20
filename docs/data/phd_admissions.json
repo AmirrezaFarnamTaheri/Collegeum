@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-19T23:47:35Z",
+  "generated_at": "2026-11-20T02:19:13Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -2212,275 +2212,414 @@
       "country_code": "AU",
       "official_programme_url": "https://www.adelaide.edu.au/graduate-research/future-students/how-to-apply#step-1-check-your-eligibility",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://adelaide.edu.au/study/how-to-apply/research/",
+        "https://adelaide.edu.au/research/research-degrees/research-scholarships/",
+        "https://adelaide.edu.au/study/how-to-apply/"
+      ]
     },
     {
       "institution": "University of Alberta",
       "country_code": "CA",
       "official_programme_url": "https://www.ualberta.ca/en/economics/graduate-programs/phd-in-economics.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of Alicante",
       "country_code": "ES",
       "official_programme_url": "https://sa.ua.es/en/preinscripcion-doctorado/applications-phd.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://sa.ua.es/en/preinscripcion-doctorado/applications-phd.html",
+        "https://sa.ua.es/en/preinscripcion-doctorado/applications-phd_noticias.html"
+      ]
     },
     {
       "institution": "University of Amsterdam",
       "country_code": "NL",
       "official_programme_url": "https://ase.uva.nl/research/phd-research/phd-research.html",
       "programme_structure_hint": "MRes + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of Arizona",
       "country_code": "US",
       "official_programme_url": "https://eller.arizona.edu/programs/doctoral/economics/admissions",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://eller.arizona.edu/programs/doctoral/economics/admissions",
+        "https://eller.arizona.edu/contact",
+        "https://eller.arizona.edu/admissions",
+        "https://eller.arizona.edu/admissions/apply"
+      ]
     },
     {
       "institution": "University of Arkansas",
       "country_code": "US",
       "official_programme_url": "https://walton.uark.edu/graduate-programs/phd-programs/economics.php",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://walton.uark.edu/graduate-programs/phd-programs/economics.php",
+        "https://walton.uark.edu/graduate-programs/admissions/tuition-cost.php",
+        "https://walton.uark.edu/graduate-programs/admissions/admitted-student-information.php"
+      ]
     },
     {
       "institution": "University of Auckland",
       "country_code": "NZ",
       "official_programme_url": "https://www.auckland.ac.nz/en/study/applications-and-admissions/how-to-apply/postgraduate-application-closing-dates.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.auckland.ac.nz/en/study/applications-and-admissions/how-to-apply/postgraduate-application-closing-dates.html"
+      ]
     },
     {
       "institution": "University of Barcelona",
       "country_code": "ES",
       "official_programme_url": "https://www.ub.edu/school-economics/phd-in-economics/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.ub.edu/school-economics/phd-in-economics/",
+        "https://www.ub.edu/school-economics/apply-now-phd/",
+        "https://www.ub.edu/school-economics/contact-form/"
+      ]
     },
     {
       "institution": "University of Bath",
       "country_code": "UK",
       "official_programme_url": "https://www.bath.ac.uk/courses/postgraduate-research/phd-economics-full-time/",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.bath.ac.uk/courses/postgraduate-research/phd-economics-full-time/",
+        "https://www.bath.ac.uk/guides/applying-for-swdtp-funding/",
+        "https://www.bath.ac.uk/campaigns/find-funding-for-doctoral-research/"
+      ]
     },
     {
       "institution": "University of Belgarde",
       "country_code": "RS",
       "official_programme_url": "https://www.ekof.bg.ac.rs/studies/phd/study-programmes/economics-business-management-and-statistics/?lang=en",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of Bern",
       "country_code": "CH",
       "official_programme_url": "https://www.unibe.ch/studies/dates/phd_candidates/index_eng.html",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.unibe.ch/studies/dates/phd_candidates/index_eng.html",
+        "https://www.unibe.ch/studies/dates/semesterdates/index_eng.html",
+        "https://www.unibe.ch/studies/programs/doctorate/application/index_eng.html"
+      ]
     },
     {
       "institution": "University of Birmingham",
       "country_code": "UK",
       "official_programme_url": "https://www.birmingham.ac.uk/postgraduate/courses/research/business/economics#EntryRequirementsTab",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of Bologna",
       "country_code": "IT",
       "official_programme_url": "https://phd.unibo.it/economics/en/admission/timeline-and-deadlines-overview",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://phd.unibo.it/economics/en/admission/timeline-and-deadlines-overview",
+        "https://phd.unibo.it/economics/en/admission",
+        "https://phd.unibo.it/economics/en/admission/selection-procedure"
+      ]
     },
     {
       "institution": "University of Bonn",
       "country_code": "DE",
       "official_programme_url": "https://www.econ.uni-bonn.de/bgse/en/doctoral-program/program-overview",
       "programme_structure_hint": "MSc + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.econ.uni-bonn.de/bgse/en/doctoral-program/program-overview",
+        "https://www.econ.uni-bonn.de/bgse/en/apply-now",
+        "https://www.econ.uni-bonn.de/bgse/en/apply-now/apply-now"
+      ]
     },
     {
       "institution": "University of Bristol",
       "country_code": "UK",
       "official_programme_url": "https://www.bristol.ac.uk/economics/study/postgraduate-research/",
       "programme_structure_hint": "MRes + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {
+        "institution_country": {
+          "value": "United Kingdom",
+          "evidence_url": "https://www.bristol.ac.uk/economics/study/postgraduate-research/",
+          "evidence_excerpt": "University of Bristol, Beacon House, Queens Road, Bristol, BS8 1QU, United Kingdom Tel: +44 (0)117 928 9000",
+          "checked_at": "2026-11-20T02:19:13Z"
+        }
+      },
+      "investigated_urls": [
+        "https://www.bristol.ac.uk/economics/study/postgraduate-research/",
+        "https://www.bristol.ac.uk/students/support/finances/student-loans/masters-loan/",
+        "https://www.bristol.ac.uk/study/postgraduate/fees-and-funding/funding/"
+      ]
     },
     {
       "institution": "University of British Columbia",
       "country_code": "CA",
       "official_programme_url": "https://economics.ubc.ca/graduate/prospective-students/phd-program/faq/",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.ubc.ca/graduate/phd-program/",
+        "https://economics.ubc.ca/graduate/phd-program/phd-funding/",
+        "https://economics.ubc.ca/admissions/"
+      ]
     },
     {
       "institution": "University of California, Berkeley",
       "country_code": "US",
       "official_programme_url": "https://www.econ.berkeley.edu/grad/admissions/instructions",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://econ.berkeley.edu/grad/admissions/instructions",
+        "https://econ.berkeley.edu/graduate/admissions",
+        "https://econ.berkeley.edu/graduate/admissions/checklists",
+        "https://econ.berkeley.edu/graduate/admissions/preparation"
+      ]
     },
     {
       "institution": "University of Cambridge",
       "country_code": "UK",
       "official_programme_url": "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececmpmer",
       "programme_structure_hint": "MPhil + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececmpmer",
+        "https://www.postgraduate.study.cam.ac.uk/apply/application-deadlines",
+        "https://www.postgraduate.study.cam.ac.uk/funding/doctoral-training-programmes"
+      ]
     },
     {
       "institution": "University of Cape Town",
       "country_code": "ZA",
       "official_programme_url": "https://commerce.uct.ac.za/school-economics/programmes-postgraduate/phd-economics-coursework-and-dissertation",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://commerce.uct.ac.za/school-economics/programmes-postgraduate/phd-economics-coursework-and-dissertation"
+      ]
     },
     {
       "institution": "University of Carlos III of Madrid",
       "country_code": "ES",
       "official_programme_url": "https://economics.uc3m.es/home-phd/",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://economics.uc3m.es/home-phd/"
+      ]
     },
     {
       "institution": "University of Chicago",
       "country_code": "US",
       "official_programme_url": "https://socialsciences.uchicago.edu/admissions/deadlines-decisions",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://socialsciences.uchicago.edu/admissions/deadlines-decisions",
+        "https://socialsciences.uchicago.edu/admissions/funding-and-financing",
+        "https://socialsciences.uchicago.edu/admissions/funding-and-financing?ctx=34871523-5068-44ad-b09b-0f8118c76447",
+        "https://socialsciences.uchicago.edu/academic-development/university-and-division-policies/phd-funding"
+      ]
     },
     {
       "institution": "University of Cologne",
       "country_code": "DE",
       "official_programme_url": "https://cgs.uni-koeln.de/en/doctoral-phd-programmes/phd-programme-in-economics/admission",
       "programme_structure_hint": "MSc + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://cgs.uni-koeln.de/en/economics/phd-programme/application"
+      ]
     },
     {
       "institution": "University of Colorado Boulder",
       "country_code": "US",
       "official_programme_url": "https://www.colorado.edu/economics/graduate-program",
       "programme_structure_hint": null,
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [
+        "https://www.colorado.edu/economics/graduate-program",
+        "https://www.colorado.edu/bursar/costs",
+        "https://www.colorado.edu/graduateschool/admissions",
+        "https://www.colorado.edu/graduateschool/admissions/where-begin"
+      ]
     },
     {
       "institution": "University of Copenhagen",
       "country_code": "DK",
       "official_programme_url": "https://www.economics.ku.dk/phd/til-ansoegere/",
       "programme_structure_hint": "Master's + PhD",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "no_explicit_deadline",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {
+        "institution_country": {
+          "value": "Denmark",
+          "evidence_url": "https://www.economics.ku.dk/phd/til-ansoegere/",
+          "evidence_excerpt": "Department of Economics University of Copenhagen Øster Farimagsgade 5, building 26 DK-1353 Copenhagen K Denmark",
+          "checked_at": "2026-11-20T02:19:13Z"
+        }
+      },
+      "investigated_urls": [
+        "https://www.economics.ku.dk/phd/til-ansoegere/",
+        "https://www.economics.ku.dk/phd/enrolment/phd-scholarships-of-the-national-bank/",
+        "https://www.economics.ku.dk/phd/enrolment/scholarships/"
+      ]
     },
     {
       "institution": "University of Edinburgh",
       "country_code": "UK",
       "official_programme_url": "https://www.ed.ac.uk/studying/postgraduate/degrees/index.php?r=site/view&edition=2024&id=278",
       "programme_structure_hint": "PhD only",
-      "status": "unverified",
-      "checked_at": null,
+      "status": "fetch_failed",
+      "checked_at": "2026-11-20T02:19:13Z",
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "University of Essex",
