@@ -100,7 +100,7 @@ def test_invalid_namespace_repository_and_opportunity_key_cannot_send_network():
             GitHubIntentReserver(repository=repo, token="token")
     store = GitHubIntentReserver(repository="Owner/Repo", token="token")
     with patch("urllib.request.urlopen") as transport:
-        for namespace, key in (("vacancies", "a" * 32), ("calls", "../../bad")):
+        for namespace, key in (("unknown_category", "a" * 32), ("calls", "../../bad")):
             with pytest.raises(ValueError):
                 store.reserve(namespace, key, "initial")
         transport.assert_not_called()

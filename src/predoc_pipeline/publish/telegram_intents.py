@@ -21,7 +21,7 @@ from typing import Any
 
 _REPOSITORY = re.compile(r"[A-Za-z0-9-]{1,39}/[A-Za-z0-9][A-Za-z0-9._-]{0,99}\Z")
 _KEY = re.compile(r"[0-9a-f]{32}\Z")
-_NAMESPACES = frozenset({"admissions", "calls"})
+_NAMESPACES = frozenset({"admissions", "calls", "vacancies"})
 _API = "https://api.github.com"
 
 
