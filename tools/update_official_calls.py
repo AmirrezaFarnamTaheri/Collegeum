@@ -201,7 +201,7 @@ def _intake(title: str, text: str) -> int | None:
     )
     if not match:
         match = re.search(
-            r"commence.{0,95}?(?:in\\s+)?(?:September|October|Autumn)\\s+(20\\d{2})",
+            r"commence.{0,95}?(?:in\s+)?(?:September|October|Autumn)\s+(20\d{2})",
             text, re.I,
         )
     return int(match.group(1)) if match else None
@@ -267,7 +267,7 @@ def extract_call(
     # funding call's article, not navigation/footer, establishes subject fit.
     article = parsed.content_text() or text
     # University CMS superscripts can render ordinal dates as "30 th April".
-    article = re.sub(r"(\\d{1,2})\\s+(st|nd|rd|th)\\b", r"\\1\\2", article, flags=re.I)
+    article = re.sub(r"(\d{1,2})\s+(st|nd|rd|th)\b", r"\1\2", article, flags=re.I)
     title = (parsed.headings[0] if parsed.headings else source.get("title", "")).strip()
     label = f"{title} {source.get('title', '')}"
     invalid = (not title or len(title) > 150
