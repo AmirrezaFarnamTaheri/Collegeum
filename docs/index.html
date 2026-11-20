@@ -1472,6 +1472,7 @@
       <nav>
         <a href="#board">Board</a>
         <a href="#phd-admissions">PhD admissions</a>
+        <a href="#official-phd-calls">Funding calls</a>
         <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
         <a href="https://github.com/AmirrezaFarnamTaheri/Collegeum" target="_blank" rel="noopener">GitHub</a>
       </nav>
@@ -1493,6 +1494,7 @@
         <div class="cta">
           <a class="btn" href="#board">Browse positions</a>
           <a class="btn alt" href="#phd-admissions">PhD programmes</a>
+          <a class="btn alt" href="#official-phd-calls">PhD funding</a>
         </div>
         <p style="font-size:13px; color:var(--soft); margin-top:14px;">
           More predoc positions on Telegram: <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener" style="color:var(--acc);">@PredocCollegeum</a>
@@ -1634,6 +1636,41 @@
         Official-source monitoring is conservative: missing, blocked, out-of-date and ambiguous
         pages stay unverified. A successful pipeline or a directory link does not establish that
         admissions are open.
+      </p>
+    </section>
+
+    <!-- Independent institutional PhD funding: NOT jobs and NOT generic admissions. -->
+    <section id="official-phd-calls" aria-labelledby="official-calls-heading">
+      <h2 class="rv" id="official-calls-heading">Independent PhD funding calls</h2>
+      <p class="sub rv">Institutional PhD scholarships, fellowships and studentships,
+        each independently checked against its official announcement.</p>
+      <div class="admissions-note">
+        <strong>No employment vacancy is implied.</strong> These are separate doctoral
+        funding opportunities, not employment postings or general programme admissions.
+        Funding, eligibility, salary or stipend, and any prerequisite programme offer
+        must be checked with the university. Only recent officially corroborated calls
+        with an explicit future funding deadline appear below.
+      </div>
+      <div class="admissions-controls">
+        <div class="search-input-wrap">
+          <input class="search-input" type="search" id="official-calls-search"
+                 placeholder="Search institution or funding call…"
+                 aria-label="Search independent PhD funding calls">
+        </div>
+        <select class="filter-select" id="official-calls-country"
+                aria-label="Country for independent PhD funding calls">
+          <option value="">All countries</option>
+        </select>
+      </div>
+      <p class="note" id="official-calls-summary" aria-live="polite">
+        Loading official funding opportunities…
+      </p>
+      <div class="rows-container admissions-list" id="official-calls-results"
+           aria-live="polite"></div>
+      <p class="note" style="font-size:12px;color:var(--soft);margin-top:14px;">
+        Closed, unverified, stale, robots-blocked or ambiguous calls are excluded.
+        A successful source fetch alone is not verification or publication.
+        Check the official institution link before applying.
       </p>
     </section>
 
@@ -2757,6 +2794,101 @@
       .catch(() => {
         $('#phd-admissions-summary').textContent =
           'Programme catalogue unavailable; no deadlines can be verified here.';
+      });
+
+    // Official funding calls are not vacancies or ordinary admissions.
+    // Never merge this data into listings, phdAdmissions, or publication receipts.
+    let officialCallRows = [];
+
+    function verifiedOfficialCall(row) {
+      if (!row || typeof row !== 'object' || row.status !== 'verified') return false;
+      if (!(row.kind === 'phd_studentship' || row.kind === 'phd_fellowship' ||
+            row.kind === 'phd_scholarship')) return false;
+      if (!(row.deadline_kind === 'funding' || row.deadline_kind === 'scholarship')) return false;
+      const todayUtc = new Date().toISOString().slice(0, 10);
+      if (typeof row.deadline_iso !== 'string' ||
+          !/^20\d{2}-\d{2}-\d{2}$/.test(row.deadline_iso) ||
+          !(row.deadline_iso >= todayUtc) ||
+          !Number.isFinite(Date.parse(row.deadline_iso + 'T00:00:00Z'))) return false;
+      const checked = Date.parse(row.checked_at);
+      if (!Number.isFinite(checked) || checked > Date.now() ||
+          Date.now() - checked > 14 * 86400000) return false;
+      if (row.evidence_url !== row.official_url ||
+          row.location_evidence_url !== row.official_url ||
+          typeof row.evidence_excerpt !== 'string' || !row.evidence_excerpt.trim() ||
+          typeof row.location_evidence !== 'string' || !row.location_evidence.trim()) return false;
+      const officialUrl = admissionsSafeUrl(row.official_url);
+      if (!officialUrl || new URL(officialUrl).protocol !== 'https:') return false;
+      if (!row.institution || !row.title || !row.country_code) return false;
+      return true;
+    }
+
+    function renderOfficialCalls() {
+      const query = $('#official-calls-search').value.trim().toLowerCase();
+      const country = $('#official-calls-country').value;
+      const shown = officialCallRows.filter(row => {
+        const text = (row.title + ' ' + row.institution + ' ' +
+          admissionsCountry(row.country_code)).toLowerCase();
+        return (!query || text.includes(query)) &&
+          (!country || row.country_code === country);
+      });
+      $('#official-calls-summary').textContent =
+        shown.length + ' of ' + officialCallRows.length +
+        ' verified current-cycle institutional funding calls · ' +
+        'Each deadline comes from its own recent official source.';
+      $('#official-calls-results').innerHTML = shown.map(row => {
+        const link = admissionsSafeUrl(row.official_url);
+        const deadline = row.deadline_kind === 'funding' ? 'Funding deadline' :
+          'Scholarship deadline';
+        const kind = row.kind === 'phd_studentship' ? 'Studentship' :
+          row.kind === 'phd_fellowship' ? 'Fellowship' : 'Scholarship';
+        const recommendation = typeof row.recommended_admission_iso === 'string' &&
+          /^20\d{2}-\d{2}-\d{2}$/.test(row.recommended_admission_iso)
+          ? '<p>Recommended programme application date (not funding deadline): ' +
+              esc(row.recommended_admission_iso) + '</p>' : '';
+        return '<article class="admissions-entry"><div>' +
+          '<h3>' + esc(row.title) + '</h3>' +
+          '<p>' + esc(row.institution) + ' · ' +
+            esc(admissionsCountry(row.country_code)) + ' · ' + esc(kind) + '</p>' +
+          '<p class="status verified">' + esc(deadline) + ': ' +
+            esc(formatDate(row.deadline_iso)) + '</p>' +
+          recommendation +
+          '<p>Source checked: ' + esc(row.checked_at.slice(0, 10)) +
+            ' UTC · Always recheck funding and eligibility.</p>' +
+          '</div><div><a href="' + esc(link) +
+            '" target="_blank" rel="noopener noreferrer">Official funding call ↗</a></div>' +
+          '</article>';
+      }).join('') || '<div class="empty-state">No verified funding calls match these filters.</div>';
+    }
+
+    ['official-calls-search', 'official-calls-country'].forEach(id =>
+      $('#' + id).addEventListener('input', renderOfficialCalls)
+    );
+    fetch('data/official_phd_calls.json', { cache: 'no-store' })
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then(payload => {
+        if (payload.kind !== 'official_phd_call_observations' ||
+            payload.version !== 1 || !Array.isArray(payload.calls)) {
+          throw Error('Invalid official funding-call format');
+        }
+        officialCallRows = payload.calls.filter(verifiedOfficialCall)
+          .sort((a, b) => a.deadline_iso.localeCompare(b.deadline_iso) ||
+            a.title.localeCompare(b.title));
+        const country = $('#official-calls-country');
+        [...new Set(officialCallRows.map(row => row.country_code))].sort(
+          (a, b) => admissionsCountry(a).localeCompare(admissionsCountry(b))
+        ).forEach(code => {
+          const option = document.createElement('option');
+          option.value = code;
+          option.textContent = admissionsCountry(code);
+          country.appendChild(option);
+        });
+        renderOfficialCalls();
+      })
+      .catch(() => {
+        $('#official-calls-summary').textContent =
+          'Official funding-call catalogue unavailable; no deadline can be verified here.';
+        $('#official-calls-results').textContent = '';
       });
 
     // Load Listings Data from pipeline

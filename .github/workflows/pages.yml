@@ -65,7 +65,8 @@ jobs:
                    rss.xsl telegram-avatar-512.png telegram-avatar.png; do
             cp "docs/$f" "build/pages/$f"
           done
-          for f in listings.json health.json phd_admissions.json; do
+          for f in listings.json health.json phd_admissions.json \
+                   official_phd_calls.json; do
             cp "docs/data/$f" "build/pages/data/$f"
           done
 
