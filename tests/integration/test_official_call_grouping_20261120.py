@@ -325,7 +325,7 @@ def test_partial_declared_group_is_held_not_emitted_as_single_posts(tmp_path):
     count, telegram, ledger, source = _publish(tmp_path, rows)
     assert count == 0
     telegram.send_message.assert_not_called()
-    assert json.loads(ledger.read_text())["deliveries"] == {}
+    assert not ledger.exists()
     health = official_calls_health(source, ledger, now=NOW)
     assert health["unpublished"] == 2
     assert health["group_waiting"] == 2
@@ -478,7 +478,7 @@ def test_unexpected_group_more_than_six_never_truncates_and_sends(tmp_path):
     count, telegram, ledger, _ = _publish(tmp_path, rows)
     assert count == 0
     telegram.send_message.assert_not_called()
-    assert not json.loads(ledger.read_text())["deliveries"]
+    assert not ledger.exists()
 
 
 def test_partial_group_reservation_failure_holds_every_member(tmp_path):
