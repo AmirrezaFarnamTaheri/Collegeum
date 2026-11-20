@@ -30,6 +30,7 @@ MAX_SOURCES = 20
 MAX_CALLS = 100
 MAX_CHECK_AGE = timedelta(days=14)
 STATUSES = {"verified", "no_explicit_deadline", "ambiguous_deadline", "unrelated",
+            "closed",
             "robots_unavailable", "robots_disallowed", "fetch_failed", "unsafe_redirect",
             "not_seen"}
 DATE_RE = re.compile(
@@ -229,6 +230,43 @@ def _intake(title: str, text: str) -> int | None:
         )
     return int(match.group(1)) if match else None
 
+
+
+_FUNDING_CYCLE = re.compile(
+    r"(?:studentship|scholarship)\s+applications?\s+for\s+the\s+"
+    r"(20\d{2})/\d{2}\s+academic\s+year\b",
+    re.I,
+)
+_CLOSED_NOTICE = re.compile(
+    r"\b(?:now|currently)\s+closed\b|\bapplications?\s+(?:are|have)\s+closed\b",
+    re.I,
+)
+_GENERIC_FUNDING_CLOSED = re.compile(
+    r"\b(?:scholarships?|studentships?|fellowships?|bursar(?:y|ies))\b"
+    r".{0,95}?\b(?:now|currently)\s+closed\b",
+    re.I,
+)
+
+
+def _funding_closed(text: str, intake_year: int | None) -> bool:
+    """Reject a closed call without confusing last year's closed cycle.
+
+    University pages often preserve a previous academic year's closure notice.
+    A current open cycle takes precedence over unrelated older closures, but
+    any explicit closure of the identified current cycle fails closed.
+    """
+    periods = list(_FUNDING_CYCLE.finditer(text))
+    if periods:
+        for index, period in enumerate(periods):
+            if intake_year is None or int(period.group(1)) != intake_year:
+                continue
+            boundary = periods[index + 1].start() if index + 1 < len(periods) else len(text)
+            segment = text[period.end():min(boundary, period.end() + 120)]
+            if _CLOSED_NOTICE.search(segment):
+                return True
+        return False
+    return _GENERIC_FUNDING_CLOSED.search(text) is not None
+
 def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date, str, str]]:
     candidates: list[tuple[date, str, str]] = []
     for match in DATE_RE.finditer(text):
@@ -311,7 +349,9 @@ def extract_call(
     date_iso = None
     deadline_kind = None
     excerpt = None
-    if status != "unrelated":
+    if status != "unrelated" and _funding_closed(article, intake_year):
+        status = "closed"
+    if status not in {"unrelated", "closed"}:
         values = _date_candidates(article, kind=kind, now=now)
         dates = {item[0] for item in values}
         if any(item[1] == "ambiguous" for item in values) or len(dates) > 1:
