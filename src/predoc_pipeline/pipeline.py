@@ -36,6 +36,7 @@ import json
 import os
 import re
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -75,7 +76,7 @@ from .publish.telegram import (
     render_historical_card,
     render_keyboard,
 )
-from .publish.telegram_intents import GitHubIntentReserver
+from .publish.telegram_intents import GitHubIntentReserver, enforce_production_reservation
 from .routing import Channel, Router
 from .settings import Settings
 
@@ -1014,6 +1015,44 @@ def _group_broadcast_candidates(
     return kept, aliases
 
 
+def _vacancy_intent_keys(
+    db: Database, listing: PredocListing, related_ids: tuple[int, ...],
+) -> tuple[str, ...]:
+    """Reserve every known connected URL, not only a mutable representative.
+
+    A stale runner may recover a different URL alias for the same vacancy.
+    Keeping immutable reservations for both source and apply URLs means any
+    overlapping alias still blocks a repeat Telegram post after a crash.
+    """
+    urls = [listing.apply_url, listing.source_url]
+    for lid in related_ids:
+        row = db.listing(lid)
+        if row is not None:
+            urls.extend((row["apply_url"], row["source_url"]))
+    keys = tuple(sorted({url_hash(url)[:32] for url in urls if url}))
+    if not keys:
+        raise OSError("Cannot reserve a Telegram vacancy without stable URLs")
+    return keys
+
+
+def _vacancy_intent_operation(
+    db: Database, lid: int, *, historical: bool = False,
+) -> str:
+    """Only an operator-verified absence creates a new reservation generation."""
+    row = db.listing(lid)
+    if row is None:
+        raise OSError("Cannot reserve an unknown Telegram vacancy")
+    column = (
+        "telegram_delivery_state_revision" if historical else "telegram_delivery_revision"
+    )
+    revision = int(row[column] or 0)
+    reviewed = (
+        db.telegram_state(lid) == "not_attempted"
+        if historical else row["status"] == "pending"
+    )
+    return f"verified_absent:{revision}" if reviewed and revision > 0 else "initial"
+
+
 def _broadcast(
     listings: list[tuple[int, PredocListing]],
     telegram: TelegramClient | None,
@@ -1026,6 +1065,7 @@ def _broadcast(
     feedback: FeedbackStore | None = None,
     digest_page_size: int = 6,
     sleep: Any = None,
+    reserve_intent: Callable[[str, str, str], None] | None = None,
 ) -> None:
     """Deliver accepted listings to the channel the router picks for each.
 
@@ -1089,10 +1129,26 @@ def _broadcast(
             record_delivery(listing_id, "unpublished")
         log.warning("telegram_not_configured", held=len(listings))
         return
+    if settings.telegram_git_durable_intents_enabled and reserve_intent is None:
+        raise OSError("Durable Telegram vacancy reservations are unavailable")
+    enforce_production_reservation(reserve_intent)
 
     hashes = {lid: url_hash(listing.apply_url) for lid, listing in listings}
 
     for listing_id, listing in listings:
+        if reserve_intent is not None:
+            try:
+                operation = _vacancy_intent_operation(db, listing_id)
+                for key in _vacancy_intent_keys(
+                    db, listing, (listing_id, *aliases.get(listing_id, [])),
+                ):
+                    reserve_intent("vacancies", key, operation)
+            except (OSError, ValueError) as exc:
+                stats.errors += 1
+                record_delivery(listing_id, "delivery-uncertain")
+                log.error("telegram_vacancy_durable_reservation_failed",
+                          listing_id=listing_id, reason=type(exc).__name__)
+                continue
         keyboard = render_keyboard(
             listing, url_hash=hashes[listing_id], channel_favorites=True,
             feedback=include_feedback,
@@ -1117,11 +1173,14 @@ def _broadcast(
                 payload=truncate(listing.title, 300),
                 error=str(exc),
             )
-            if getattr(exc, "uncertain", False):
-                # Preserve a durable hold instead of duplicating a possibly
-                # delivered message after a crash or a later scheduled run.
+            if reserve_intent is not None or getattr(exc, "uncertain", False):
+                # Every reserved send, including a known Telegram rejection,
+                # needs reconciliation before another intent is authorized.
                 record_delivery(listing_id, "delivery-uncertain")
                 log.error("telegram_card_needs_reconciliation", listing_id=listing_id)
+                if _chat_level(exc):
+                    _telegram_setup_problem(settings, exc)
+                    return
                 continue
             if _chat_level(exc):
                 # Bad token, bot blocked, "chat not found": no message can get
@@ -1132,6 +1191,11 @@ def _broadcast(
                 record_delivery(listing_id, "undeliverable")
             continue
 
+        if type(message_id) is not int or not 0 < message_id < 2**63:
+            stats.errors += 1
+            record_delivery(listing_id, "delivery-uncertain")
+            log.error("telegram_card_invalid_receipt", listing_id=listing_id)
+            continue
         record_delivery(listing_id, "published", message_id)
         stats.published += 1
         log.info(
@@ -1154,6 +1218,7 @@ def _publish_non_us_econ_phds(
     hidden: set[str] | None = None,
     verify: bool = True,
     transport: Any = None,
+    reserve_intent: Callable[[str, str, str], None] | None = None,
 ) -> None:
     """Backfill previously web-published Economics PhDs without altering web/X receipts.
 
@@ -1172,6 +1237,7 @@ def _publish_non_us_econ_phds(
     policy = Policy(prefs)
     # Reuse existing alias graph so historical mirrors cannot be sent twice.
     candidates: list[tuple[int, PredocListing]] = []
+    members_by_id: dict[int, tuple[int, ...]] = {}
     for group in db.publication_alias_groups():
         # A confirmed or unresolved send by any mirror controls the whole group.
         confirmed = next((row["telegram_message_id"] for row in group
@@ -1208,6 +1274,7 @@ def _publish_non_us_econ_phds(
             if listing.deadline is not None and listing.deadline < utcnow():
                 continue
             candidates.append((int(row["id"]), listing))
+            members_by_id[int(row["id"])] = tuple(int(member["id"]) for member in group)
             break  # send at most one advert per alias component
         if len(candidates) >= settings.telegram_non_us_econ_phd_backfill_limit:
             break
@@ -1220,6 +1287,9 @@ def _publish_non_us_econ_phds(
         candidates = _verify_before_sending(candidates, prefs, db, stats, transport)
     if not candidates:
         return
+    if settings.telegram_git_durable_intents_enabled and reserve_intent is None:
+        raise OSError("Durable historical PhD reservations are unavailable")
+    enforce_production_reservation(reserve_intent)
     # Historical (previously web-published) records must not be presented as new.
     for historical in (True, False):
         selected = [(lid, job) for lid, job in candidates
@@ -1227,7 +1297,20 @@ def _publish_non_us_econ_phds(
         if not selected:
             continue
         for lid, job in selected:
+            operation = _vacancy_intent_operation(db, lid, historical=True)
             db.record_telegram_delivery(lid, "pending")
+            if reserve_intent is not None:
+                try:
+                    for key in _vacancy_intent_keys(
+                        db, job, members_by_id.get(lid, (lid,)),
+                    ):
+                        reserve_intent("vacancies", key, operation)
+                except (OSError, ValueError) as exc:
+                    stats.errors += 1
+                    db.record_telegram_delivery(lid, "uncertain")
+                    log.error("telegram_phd_durable_reservation_failed",
+                              listing_id=lid, reason=type(exc).__name__)
+                    continue
             try:
                 receipt = telegram.send_message(
                     chat_id=settings.telegram_public_channel_id,
@@ -1239,7 +1322,7 @@ def _publish_non_us_econ_phds(
                 )
             except TelegramError as exc:
                 stats.errors += 1
-                if exc.uncertain:
+                if reserve_intent is not None or exc.uncertain:
                     db.record_telegram_delivery(lid, "uncertain")
                 elif exc.permanent and not _chat_level(exc):
                     db.record_telegram_delivery(lid, "permanent_failure")
@@ -1248,6 +1331,11 @@ def _publish_non_us_econ_phds(
                     return
                 log.warning("telegram_phd_backfill_failed", listing_id=lid,
                             uncertain=exc.uncertain, error=str(exc))
+                continue
+            if type(receipt) is not int or not 0 < receipt < 2**63:
+                stats.errors += 1
+                db.record_telegram_delivery(lid, "uncertain")
+                log.error("telegram_phd_invalid_receipt", listing_id=lid)
                 continue
             db.record_telegram_delivery(lid, "confirmed", message_id=receipt)
             stats.published += 1
