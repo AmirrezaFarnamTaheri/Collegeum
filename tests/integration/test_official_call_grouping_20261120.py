@@ -11,6 +11,7 @@ from predoc_pipeline.publish.official_calls import (
     official_calls_health,
     publish_official_calls,
 )
+from tools.ingestion_watchdog import evaluate_official_calls_trigger
 from tools.update_official_calls import extract_call
 
 NOW = datetime(2026, 11, 20, 10, tzinfo=UTC)
@@ -222,3 +223,130 @@ def test_home_bursary_source_is_registered_for_robots_checked_refresh():
         and row["mode"] == "detail"
         for row in sources
     )
+
+
+def _open_henley_2027():
+    url = HENLEY_ROOT + "accounting-and-financial-management"
+    source = {
+        "id": "henley-finance-accounting",
+        "institution": "Henley Business School",
+        "country_code": "UK", "mode": "detail", "url": url,
+        "title": "Finance and Accounting PhD Studentships",
+        "posting_group": GROUP,
+    }
+    html = """<h1>Accounting PhD Opportunities</h1>
+    <p>Our PhD in Accounting is a Finance and Accounting research programme.</p>
+    <p>Studentship applications for the 2026/27 academic year are now closed.</p>
+    <p>Studentship applications for the 2027/28 academic year are now open
+    and will close on 21 February 2027.
+    We strongly advise submitting your application no later than
+    10 January 2027.</p>"""
+    return extract_call(html, url=url, source=source, now=NOW)
+
+
+def test_henley_intake_comes_from_open_cycle_not_previous_closed_cycle():
+    row = _open_henley_2027()
+    assert row["status"] == "verified"
+    assert row["intake_year"] == 2027
+    assert row["deadline_iso"] == "2027-02-21"
+
+
+def test_corrected_intake_does_not_republish_legacy_confirmed_telegram_call(tmp_path):
+    row = _open_henley_2027()
+    assert row["intake_year"] == 2027
+    legacy = {**row, "intake_year": 2026}
+    assert call_key(row) != call_key(legacy)
+    source = tmp_path / "calls.json"
+    ledger = tmp_path / "receipts.json"
+    source.write_text(json.dumps(_catalog(row)), encoding="utf-8")
+    receipt = {
+        "state": "confirmed", "message_id": 136,
+        "official_url": row["official_url"],
+        "institution": row["institution"],
+        "deadline_iso": row["deadline_iso"],
+        "intake_year": 2026,
+        "sent_at": "2026-11-19T23:55:55Z",
+    }
+    ledger.write_text(json.dumps({
+        "version": 1, "deliveries": {call_key(legacy): receipt},
+    }), encoding="utf-8")
+    telegram = Mock()
+    assert publish_official_calls(
+        source, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
+    ) == 0
+    telegram.send_message.assert_not_called()
+    assert official_calls_health(source, ledger, now=NOW)["unpublished"] == 0
+
+    runs = [{
+        "name": "predoc-pipeline", "head_branch": "main",
+        "status": "completed", "created_at": "2026-11-20T06:00:00Z",
+    }]
+    assert not evaluate_official_calls_trigger(
+        _catalog(row), {"version": 1, "deliveries": {call_key(legacy): receipt}},
+        runs, now=NOW,
+    ).dispatch
+
+
+def test_new_future_cycle_still_publishes_on_same_university_url(tmp_path):
+    future = _henley("accounting-and-financial-management", "Accounting PhD Opportunities")
+    prior = {**future, "deadline_iso": "2026-12-21", "intake_year": 2026}
+    # New future funding round on the same official departmental URL.
+    future["intake_year"] = 2027
+    future["posting_group"] = None
+    old_receipt = {
+        "state": "confirmed", "message_id": 136,
+        "official_url": prior["official_url"],
+        "institution": prior["institution"],
+        "deadline_iso": prior["deadline_iso"],
+        "intake_year": prior["intake_year"],
+        "sent_at": "2026-11-19T23:55:55Z",
+    }
+    catalog = tmp_path / "catalog.json"
+    ledger = tmp_path / "ledger.json"
+    catalog.write_text(json.dumps(_catalog(future)), encoding="utf-8")
+    ledger.write_text(json.dumps({
+        "version": 1, "deliveries": {call_key(prior): old_receipt},
+    }), encoding="utf-8")
+    telegram = Mock()
+    telegram.send_message.return_value = 777
+    assert publish_official_calls(
+        catalog, ledger, telegram, chat_id="@channel", enabled=True, now=NOW,
+    ) == 1
+    assert telegram.send_message.call_count == 1
+
+
+def test_partial_declared_group_is_held_not_emitted_as_single_posts(tmp_path):
+    rows = [
+        _henley("accounting", "Accounting PhD Opportunities"),
+        _henley("strategy", "Strategy PhD Opportunities"),
+    ]
+    for row in rows:
+        row["posting_group_expected"] = 5
+    count, telegram, ledger, source = _publish(tmp_path, rows)
+    assert count == 0
+    telegram.send_message.assert_not_called()
+    assert json.loads(ledger.read_text())["deliveries"] == {}
+    health = official_calls_health(source, ledger, now=NOW)
+    assert health["unpublished"] == 2
+    assert health["group_waiting"] == 2
+
+
+def test_completed_declared_group_emits_exactly_one_digest(tmp_path):
+    rows = [
+        _henley(str(i), f"Department {i} PhD Opportunities")
+        for i in range(5)
+    ]
+    for row in rows:
+        row["posting_group_expected"] = 5
+    count, telegram, ledger, _ = _publish(tmp_path, rows)
+    assert count == 1
+    assert telegram.send_message.call_count == 1
+    assert len(json.loads(ledger.read_text())["deliveries"]) == 5
+
+
+def test_validated_henley_registry_explicitly_declares_group_membership():
+    from pathlib import Path
+    config = json.loads(Path("config/official_phd_calls_sources.json").read_text())
+    henley = [item for item in config["sources"] if item["id"].startswith("henley-")]
+    assert len(henley) == 5
+    assert {row["posting_group_expected"] for row in henley} == {5}
