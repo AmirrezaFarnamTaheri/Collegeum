@@ -244,7 +244,10 @@ def test_production_wires_durable_callback_to_both_vacancy_publishers():
     source = Path("src/predoc_pipeline/pipeline.py").read_text(encoding="utf-8")
     assert "reserve_intent=durable_reserve" in source
     assert source.count("reserve_intent=durable_reserve") >= 4
-    assert "GitHubIntentReserver.from_environment().reserve" in source
+    assert "store = GitHubIntentReserver.from_environment()" in source
+    assert "durable_reserve = store.reserve" in source
+    assert "durable_outcome = store.record_outcome" in source
+    assert source.count("record_outcome=durable_outcome") >= 2
 
 
 def test_reserver_accepts_vacancies_namespace_with_create_only_semantics():
