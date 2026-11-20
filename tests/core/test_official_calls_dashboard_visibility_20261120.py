@@ -72,7 +72,7 @@ def test_public_dashboard_inline_javascript_syntax_when_node_is_available(tmp_pa
     if node is None:
         pytest.skip("Node is not installed in this environment")
     html = Path("docs/index.html").read_text(encoding="utf-8")
-    scripts = re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>", html, re.I | re.S)
+    scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", html, re.I | re.S)
     assert scripts
     for index, source in enumerate(scripts):
         file = tmp_path / f"dashboard-script-{index}.js"
