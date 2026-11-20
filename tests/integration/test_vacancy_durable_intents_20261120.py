@@ -174,11 +174,10 @@ def test_trusted_main_without_durable_callback_must_not_send_vacancy(tmp_path):
         with patch.dict("os.environ", {
             "GITHUB_ACTIONS": "true", "GITHUB_REF": "refs/heads/main",
             "GITHUB_WORKFLOW": "predoc-pipeline",
-        }):
-            with pytest.raises(OSError, match="durable"):
-                pipeline._broadcast(
-                    [(lid, item)], telegram, _config(), db, pipeline.RunStats(),
-                )
+        }), pytest.raises(OSError, match="durable"):
+            pipeline._broadcast(
+                [(lid, item)], telegram, _config(), db, pipeline.RunStats(),
+            )
         telegram.send_message.assert_not_called()
 
 
