@@ -364,24 +364,62 @@ def extract_call(
 
 
 def discover_links(html: str, source: dict[str, Any]) -> list[str]:
-    """Find all distinct relevant same-host HTML call pages, within a cap."""
+    """Bounded same-host index discovery; prioritize calls with subject evidence.
+
+    Official indexes sometimes label legitimate awards "PhD Scholarship 2027"
+    without repeating Economics or Finance in the anchor text. Follow those
+    HTML calls after the obviously relevant ones; the independently fetched
+    article must STILL prove subject fit before verification.
+    """
     parser = CallHTML()
     parser.feed(html[:MAX_HTML_BYTES])
     root = source["url"]
-    result: list[str] = []
+    topical: list[str] = []
+    generic: list[str] = []
     seen: set[str] = set()
     for href, label in parser.links[:500]:
-        if not CALL_TITLE.search(label) or not SUBJECT.search(label) or EXCLUDE.search(label):
+        if not CALL_TITLE.search(label) or EXCLUDE.search(label):
             continue
         candidate = safe_official_url(href, root)
-        if (candidate is not None and candidate != root and candidate not in seen
-                and candidate not in result):
-            result.append(candidate)
-            seen.add(candidate)
-            if len(result) >= MAX_INDEX_LINKS:
-                break
-    return result
+        if candidate is None or candidate == root or candidate in seen:
+            continue
+        seen.add(candidate)
+        (topical if SUBJECT.search(label) else generic).append(candidate)
+    return (topical + generic)[:MAX_INDEX_LINKS]
 
+
+def unsupported_document_count(html: str, source: dict[str, Any]) -> int:
+    """Report relevant institutional PDF/DOC calls without fetching documents.
+
+    An official HTML index can expose scholarship PDFs which our current
+    robots-aware HTML verifier does not support. Count permitted-location
+    document links as a COVERAGE GAP, never as a verified scholarship.
+    """
+    parser = CallHTML()
+    parser.feed(html[:MAX_HTML_BYTES])
+    root = urllib.parse.urlsplit(source["url"])
+    host = (root.hostname or "").lower().removeprefix("www.")
+    seen: set[str] = set()
+    for href, label in parser.links[:500]:
+        if not CALL_TITLE.search(label) or EXCLUDE.search(label):
+            continue
+        try:
+            candidate = urllib.parse.urlsplit(
+                urllib.parse.urljoin(source["url"], href),
+            )
+            candidate_host = (candidate.hostname or "").lower().removeprefix("www.")
+            if (candidate.scheme != "https" or candidate_host != host
+                    or candidate.port not in (None, 443)
+                    or candidate.username or candidate.password
+                    or candidate.query or candidate.fragment
+                    or not re.search(r"\.(?:pdf|docx?)$", candidate.path, re.I)):
+                continue
+        except (TypeError, ValueError):
+            continue
+        seen.add(urllib.parse.urlunsplit((
+            candidate.scheme, candidate.netloc, candidate.path, "", "",
+        )))
+    return len(seen)
 
 def validate_sources(config: Any) -> None:
     if (not isinstance(config, dict)
@@ -466,9 +504,11 @@ def refresh_sources(
         status = response.get("status") if isinstance(response, dict) else "fetch_failed"
         urls: list[str] = []
         failures = 0
+        unsupported_documents = 0
         if status == "ok" and isinstance(response.get("html"), str):
             if source["mode"] == "index":
                 urls = discover_links(response["html"], source)
+                unsupported_documents = unsupported_document_count(response["html"], source)
                 # Older but still-open official calls can scroll off a paginated
                 # university index. Recheck at most two within the same source
                 # and deadline window, without trusting cached dates for sending.
@@ -520,6 +560,9 @@ def refresh_sources(
                 "partial" if failures else status
             ),
             "failed_details": failures, "candidate_count": len(urls),
+            "mode": source["mode"],
+            "index_empty": bool(source["mode"] == "index" and status == "ok" and not urls),
+            "unsupported_documents": unsupported_documents,
             "checked_at": _stamp(now),
         })
     return {
