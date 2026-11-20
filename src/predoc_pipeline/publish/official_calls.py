@@ -216,7 +216,10 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     if row["kind"] == "phd_studentship":
         lines.append("ℹ️ A prior PhD admission offer may be required; check the official terms.")
     elif row["kind"] == "phd_bursary":
-        lines.append("ℹ️ Bursaries may cover tuition fees without a living stipend; check the official terms.")
+        lines.append(
+            "ℹ️ Bursaries may cover tuition fees without a living stipend; "
+            "check the official terms."
+        )
     lines.extend([
         "",
         "<i>This is an independent doctoral funding call, not necessarily "
