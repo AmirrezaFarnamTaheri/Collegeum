@@ -452,11 +452,13 @@ def test_legacy_alias_requires_same_official_funding_deadline_and_institution():
         {"institution": "Unrelated University"},
         {"deadline_iso": "2027-03-01"},
         {"official_url": HENLEY_ROOT + "different-call"},
-        {"title": "Another funding competition"},
         {"intake_year": 2024},
     ):
         changed = {**receipt, **modification}
         assert receipt_key(current, {call_key(old): changed}) is None
+    # An editorial title change on the same official URL/deadline is not a new call.
+    renamed = {**receipt, "title": "Renamed Accounting Studentship"}
+    assert receipt_key(current, {call_key(old): renamed}) == call_key(old)
 
 
 def test_mixed_deadline_group_is_held_when_member_count_is_declared(tmp_path):
@@ -620,3 +622,59 @@ def test_supported_html_and_unreadable_document_calls_have_separate_health_count
     assert health["empty_indexes"] == 1
     assert health["unsupported_documents"] == 2
     assert health["status"] == "degraded"
+
+
+def test_malformed_group_metadata_never_degrades_to_a_single_post(tmp_path):
+    row = _henley("accounting", "Accounting PhD Opportunities")
+    row["posting_group"] = "$not-approved group"
+    row["posting_group_expected"] = 5
+    count, telegram, ledger, _ = _publish(tmp_path, [row])
+    assert count == 0
+    telegram.send_message.assert_not_called()
+    assert not ledger.exists()
+
+
+def test_duplicate_official_urls_in_registry_are_rejected():
+    import pytest
+    from tools.update_official_calls import validate_sources
+
+    sources = [{
+        "id": f"source-{number}", "institution": "University of Reading",
+        "country_code": "UK", "mode": "detail",
+        "url": READING,
+    } for number in range(2)]
+    with pytest.raises(ValueError):
+        validate_sources({
+            "kind": "official_phd_call_sources", "version": 1,
+            "sources": sources,
+        })
+
+
+def test_home_only_bursary_eligibility_is_evidenced_and_visible(tmp_path):
+    source = {
+        "id": "reading-home-phd-bursaries",
+        "institution": "University of Reading",
+        "country_code": "UK", "mode": "detail", "url": READING,
+        "subject_scope": "multidisciplinary",
+    }
+    html = """<h1>University of Reading PhD Home fee Bursaries</h1>
+    <p>New applicants intending to commence full-time PhD study in September 2027.
+    PhD tuition fees at the Home rate for up to four years.</p>
+    <p>The bursaries are open to Home students only.</p>
+    <h2>Deadline for applications</h2>
+    <p>The deadline by which to apply is 30th April 2027.</p>"""
+    row = extract_call(html, url=READING, source=source, now=NOW)
+    assert row["status"] == "verified"
+    assert row["eligibility_scope"] == "home_only"
+    assert row["funding_scope"] == "home_rate_tuition"
+    count, telegram, _, _ = _publish(tmp_path, [row])
+    assert count == 1
+    message = telegram.send_message.call_args.kwargs["html"]
+    assert "Home-fee applicants only" in message
+    assert "Home-rate PhD tuition" in message
+    assert "stipend guaranteed" not in message
+
+    no_evidence = {**row, "eligibility_scope": None, "funding_scope": None}
+    count2, tg2, _, _ = _publish(tmp_path / "no_evidence", [no_evidence])
+    assert count2 == 1
+    assert "Home-fee applicants only" not in tg2.send_message.call_args.kwargs["html"]
