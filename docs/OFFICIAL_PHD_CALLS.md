@@ -126,7 +126,7 @@ only accepts exact, manually approved institutional PDF URLs in
 locked environment:
 
 \`\`\`bash
-uv run --locked python tools/official_call_pdf_review.py \
+uv run --locked python -m tools.official_call_pdf_review \
   --source-id ieb-document-index \
   --url https://ieb.ub.edu/wp-content/uploads/2026/11/IEB-PhD-Scholarship-2027-28.pdf \
   --fetch
