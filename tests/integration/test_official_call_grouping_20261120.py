@@ -715,7 +715,7 @@ def test_zero_new_index_links_are_visible_despite_prior_call_rechecks():
         "accounting", "Accounting PhD Opportunities", posting_group=None,
     )
     previous["source_id"] = source["id"]
-    article = """<h1>Accounting PhD Opportunities</h1>
+    article = """<h1>Accounting PhD Studentships</h1>
     <p>Accounting PhD studentship funding is available.</p>
     <p>Studentship applications for the 2027/28 academic year are now open
     and will close on 21 February 2027.</p>"""
@@ -801,3 +801,54 @@ def test_telegram_rate_limited_batch_stops_after_first_rejection(tmp_path):
     assert telegram.send_message.call_count == 1
     # The rejected attempt remains reserved, and the other calls stay untouched.
     assert len(json.loads(ledger.read_text())["deliveries"]) == 1
+
+
+def test_invalid_official_call_catalogue_never_reports_healthy(tmp_path):
+    catalog = tmp_path / "catalog.json"
+    ledger = tmp_path / "ledger.json"
+    catalog.write_text(json.dumps({
+        "kind": "tampered_observation_type", "version": 1,
+        "sources": [{"status": "ok"}], "calls": [],
+    }), encoding="utf-8")
+    health = official_calls_health(catalog, ledger, now=NOW)
+    assert health["status"] == "unavailable"
+    assert health["eligible"] is None
+
+
+def test_watchdog_does_not_dispatch_calls_the_publisher_rejects():
+    examples = [
+        {"recommended_admission_iso": "2027-09-01"},
+        {"recommended_admission_iso": "2027-02-32"},
+        {"institution": "X"},
+        {"intake_year": True},
+    ]
+    runs = [{
+        "name": "predoc-pipeline", "head_branch": "main",
+        "status": "completed", "created_at": "2026-11-20T06:00:00Z",
+    }]
+    for overrides in examples:
+        row = _henley(
+            "accounting", "Accounting PhD Opportunities", posting_group=None,
+        )
+        row.update(overrides)
+        assert eligible_calls(_catalog(row), now=NOW) == []
+        decision = evaluate_official_calls_trigger(
+            _catalog(row), {"version": 1, "deliveries": {}}, runs, now=NOW,
+        )
+        assert not decision.dispatch, overrides
+
+
+def test_generic_current_closure_after_previous_closed_round_is_not_published():
+    source = {
+        "id": "henley-closed-funding", "institution": "Henley Business School",
+        "country_code": "UK", "mode": "detail",
+        "url": HENLEY_ROOT + "closed-funding",
+    }
+    html = """<h1>Accounting PhD Studentships 2027</h1>
+    <p>Accounting PhD funding.</p>
+    <p>Studentship applications for the 2026/27 academic year are now closed.</p>
+    <p>The scholarship application window is now closed.</p>
+    <p>Studentship applications closed on 21 February 2027.</p>"""
+    row = extract_call(html, url=source["url"], source=source, now=NOW)
+    assert row["status"] == "closed"
+    assert eligible_calls(_catalog(row), now=NOW) == []
