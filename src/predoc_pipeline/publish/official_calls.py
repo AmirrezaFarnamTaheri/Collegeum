@@ -111,6 +111,19 @@ def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
             continue
         if not now.date() <= deadline <= (now + MAX_AHEAD).date():
             continue
+        recommended = row.get("recommended_admission_iso")
+        if recommended is not None:
+            if not isinstance(recommended, str) or not DATE_RE.fullmatch(recommended):
+                continue
+            try:
+                application_day = date.fromisoformat(recommended)
+            except ValueError:
+                continue
+            if application_day > deadline:
+                continue
+        institution = row.get("institution")
+        if not isinstance(institution, str) or not 5 <= len(institution) <= 120:
+            continue
         host = _host(row.get("official_url"))
         if host is None or _host(row.get("evidence_url")) != host:
             continue
