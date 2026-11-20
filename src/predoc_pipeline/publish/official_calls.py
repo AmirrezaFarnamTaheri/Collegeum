@@ -345,7 +345,7 @@ def publish_official_calls(
                 "deadline_iso": member["deadline_iso"],
                 "official_url": member["official_url"],
                 "intake_year": member["intake_year"],
-                "posting_group": signature[0] if len(group) > 1 else None,
+                "posting_group": signature[0] if signature is not None and len(group) > 1 else None,
                 "group_size": len(group),
                 "attempted_at": timestamp.isoformat(timespec="seconds").replace(
                     "+00:00", "Z"),
