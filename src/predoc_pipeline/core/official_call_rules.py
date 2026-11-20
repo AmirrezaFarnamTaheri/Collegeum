@@ -31,7 +31,7 @@ def receipt_key(
     One legacy parser picked the closed 2026/27 cycle from a source which
     explicitly opened 2027/28, so its permanent receipt was keyed to 2026.
     Suppress only when the old receipt's original hashed key, official URL,
-    institution, funding deadline, and compatible title match. Genuine
+    institution, and funding deadline match. Genuine
     future cycles with a DIFFERENT funding deadline remain new opportunities.
     Pending, uncertain, and failed attempts also block automatic retries.
     """
@@ -49,9 +49,6 @@ def receipt_key(
                 or receipt.get("official_url") != row.get("official_url")
                 or receipt.get("institution") != row.get("institution")
                 or receipt.get("deadline_iso") != row.get("deadline_iso")):
-            continue
-        if (receipt.get("title") and row.get("title")
-                and receipt["title"] != row["title"]):
             continue
         if (receipt.get("kind") and row.get("kind")
                 and receipt["kind"] != row["kind"]):
@@ -87,6 +84,10 @@ def group_members(
     """
     signature = group_signature(row)
     if signature is None:
+        # Invalid reviewed metadata must not silently become a normal post.
+        if (row.get("posting_group") is not None
+                or row.get("posting_group_expected") is not None):
+            return []
         return [row]
     members = [candidate for candidate in candidates
                if group_signature(candidate) == signature]
