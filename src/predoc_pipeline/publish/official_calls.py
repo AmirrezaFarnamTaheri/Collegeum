@@ -232,7 +232,7 @@ def _message(row: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return "\n".join(lines), keyboard
 
 
-_GROUP_RE = re.compile(r"[a-z][a-z0-9-]{2,47}\\Z")
+_GROUP_RE = re.compile(r"[a-z][a-z0-9-]{2,47}\Z")
 MAX_GROUP_ROWS = 6
 
 
