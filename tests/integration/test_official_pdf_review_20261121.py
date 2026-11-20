@@ -276,5 +276,5 @@ def test_pdf_content_type_and_final_url_must_match_even_after_permitted_fetch():
             patch("urllib.robotparser.RobotFileParser", return_value=robots),
         ):
             result = fetch_reviewed_pdf(PDF, SOURCE)
-        assert result["reason"] == reason or result["status"] == reason
+        assert result.get("reason") == reason or result["status"] == reason
         assert opener.open.call_count == 2
