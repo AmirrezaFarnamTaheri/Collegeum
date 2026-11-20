@@ -256,16 +256,26 @@ def _funding_closed(text: str, intake_year: int | None) -> bool:
     any explicit closure of the identified current cycle fails closed.
     """
     periods = list(_FUNDING_CYCLE.finditer(text))
-    if periods:
-        for index, period in enumerate(periods):
-            if intake_year is None or int(period.group(1)) != intake_year:
-                continue
-            boundary = periods[index + 1].start() if index + 1 < len(periods) else len(text)
-            segment = text[period.end():min(boundary, period.end() + 120)]
-            if _CLOSED_NOTICE.search(segment):
-                return True
-        return False
-    return _GENERIC_FUNDING_CLOSED.search(text) is not None
+    unmasked: list[str] = []
+    position = 0
+    for index, period in enumerate(periods):
+        boundary = periods[index + 1].start() if index + 1 < len(periods) else len(text)
+        notice = _CLOSED_NOTICE.search(
+            text, period.end(), min(boundary, period.end() + 120),
+        )
+        if intake_year is not None and int(period.group(1)) == intake_year:
+            if notice:
+                return True  # The current cycle explicitly closed.
+            continue
+        if notice:
+            # Remove only the *old year's* closed notice. Preserve later
+            # generic current-cycle closure text from the same document.
+            end = notice.end()
+            unmasked.append(text[position:period.start()])
+            unmasked.append(" " * (end - period.start()))
+            position = end
+    unmasked.append(text[position:])
+    return _GENERIC_FUNDING_CLOSED.search("".join(unmasked)) is not None
 
 def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date, str, str]]:
     candidates: list[tuple[date, str, str]] = []
