@@ -27,8 +27,8 @@ def test_dashboard_has_distinct_funding_calls_section_and_loading_error():
 def test_calls_do_not_become_vacancy_entries_or_unverified_deadline_claims():
     html = Path("docs/index.html").read_text(encoding="utf-8")
     assert "row.status === 'verified'" in html
-    assert "row.evidence_url === row.official_url" in html
-    assert "row.location_evidence_url === row.official_url" in html
+    assert "row.evidence_url !== row.official_url" in html
+    assert "row.location_evidence_url !== row.official_url" in html
     assert "Date.parse(row.checked_at)" in html
     assert "row.deadline_kind === 'funding'" in html
     assert "No employment vacancy is implied" in html
