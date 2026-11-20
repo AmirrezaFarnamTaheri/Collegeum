@@ -152,6 +152,8 @@ def test_explicit_telegram_absence_reconciliation_unlocks_distinct_revision(tmp_
         assert db.listing(lid)["status"] == "delivery-uncertain"
         db.resolve_telegram_delivery(lid, confirmed_not_delivered=True)
         assert db.listing(lid)["status"] == "pending"
+        revision = db.listing(lid)["telegram_delivery_revision"]
+        assert revision > 0
         telegram.send_message.side_effect = None
         telegram.send_message.return_value = 902
         pipeline._broadcast(
@@ -159,9 +161,9 @@ def test_explicit_telegram_absence_reconciliation_unlocks_distinct_revision(tmp_
             reserve_intent=reserve,
         )
         assert db.listing(lid)["telegram_message_id"] == 902
-    assert calls[0] == "initial"
-    assert calls[1].startswith("verified_absent:")
-    assert calls[0] != calls[1]
+    # Each attempt reserves *both* source and application URLs. All aliases
+    # within the operator-reviewed retry use the same new generation.
+    assert set(calls) == {"initial", f"verified_absent:{revision}"}
 
 
 def test_trusted_main_without_durable_callback_must_not_send_vacancy(tmp_path):
