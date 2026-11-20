@@ -62,6 +62,7 @@ def _evidence_text():
         "Call for applications: PhD Scholarship in Economics",
         "Full-time scholarship to pursue a PhD in Economics.",
         "Starting in September or October 2027.",
+        "Candidates must have completed a Master degree by summer 2027.",
         "Interested candidates must complete both steps by 11 December 2026.",
     ]
 
