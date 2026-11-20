@@ -259,7 +259,7 @@ def _date_candidates(text: str, *, kind: str, now: datetime) -> list[tuple[date,
                 r"(?:(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+)?$",
                 before, re.I,
             ))
-        submission = kind != "phd_studentship" and bool(re.search(
+        submission = kind in {"phd_scholarship", "phd_fellowship"} and bool(re.search(
             r"interested\s+candidates\s+must\s+complete\s+both.{0,100}"
             r"(?:steps\s+)?(?:by|before)\s*$", before, re.I,
         ))
@@ -330,6 +330,17 @@ def extract_call(
                 day = _date(match)
                 if day and now.date() <= day <= date(now.year + 2, 12, 31):
                     recommended = day.isoformat()
+    home_eligibility = (
+        re.search(
+            r"\b(?:bursaries?|scholarships?)\s+are\s+open\s+to\s+"
+            r"Home\s+students?\s+only\b", article, re.I,
+        ) if kind == "phd_bursary" else None
+    )
+    home_tuition = (
+        re.search(r"\b(?:PhD\s+)?tuition\s+fees?\s+at\s+the\s+Home\s+rate\b",
+                  article, re.I)
+        if kind == "phd_bursary" else None
+    )
     proof = _location_proof(text, str(source["country_code"]), url)
     # A broad, multi-disciplinary funding scheme is eligible, but must never
     # be advertised as Economics-only merely because one eligible school is
@@ -344,6 +355,12 @@ def extract_call(
         "source_id": source["id"],
         "posting_group": source.get("posting_group"),
         "posting_group_expected": source.get("posting_group_expected"),
+        "eligibility_scope": "home_only" if home_eligibility else None,
+        "eligibility_evidence_excerpt": (
+            home_eligibility.group(0) if home_eligibility else None
+        ),
+        "funding_scope": "home_rate_tuition" if home_tuition else None,
+        "funding_evidence_excerpt": home_tuition.group(0) if home_tuition else None,
         "institution": source["institution"],
         "country_code": source["country_code"],
         "official_url": url,
@@ -429,6 +446,7 @@ def validate_sources(config: Any) -> None:
             or not 1 <= len(config["sources"]) <= MAX_SOURCES):
         raise ValueError("Invalid approved official-call source registry")
     ids: set[str] = set()
+    urls: set[str] = set()
     group_members: dict[str, list[dict[str, Any]]] = {}
     for source in config["sources"]:
         if not isinstance(source, dict):
@@ -453,7 +471,10 @@ def validate_sources(config: Any) -> None:
                                                       "FR", "NL", "IT", "SE", "NO",
                                                       "DK", "CH", "AT", "BE"}):
             raise ValueError("Unapproved or malformed official-call source")
+        if url in urls:
+            raise ValueError("Duplicate official-call URL in source registry")
         ids.add(name)
+        urls.add(url)
         if source.get("posting_group") is not None:
             if source.get("mode") != "detail" or not source.get("posting_group_expected"):
                 raise ValueError("Reviewed posting groups require an explicit member count")
