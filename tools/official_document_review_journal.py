@@ -109,6 +109,7 @@ def _normalise(
                 or kind not in {"phd_scholarship", "phd_fellowship"}
                 or deadline_kind not in {"funding", "scholarship"}
                 or not isinstance(excerpt, str) or not 12 <= len(excerpt) <= 230
+                or re.search(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", excerpt, re.I)
                 or not any(_date(m) == day for m in DATE_RE.finditer(excerpt))):
             raise ValueError("Document review missing independent cycle/deadline evidence")
         evidence = {
