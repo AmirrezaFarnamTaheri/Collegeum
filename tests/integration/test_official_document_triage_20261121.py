@@ -224,3 +224,50 @@ def test_distinct_scholarship_same_url_cycle_is_not_marked_delivered():
     pdf = next(x for x in result["documents"] if x["official_url"] == PDF)
     assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
     assert pdf["prior_message_id"] is None
+
+def test_repeated_policy_block_and_review_transition_are_idempotent(tmp_path):
+    target = tmp_path / "review.json"
+    blocked = {
+        "status": "robots_disallowed", "reason": "robots_disallowed",
+        "source_id": "ieb-document-index", "official_url": PDF,
+        "reviewed_at": "2026-11-21T11:02:00Z",
+    }
+    assert record_review(target, blocked, registry=REGISTRY, method="live_fetch")
+    # A blocked request has no extracted title, deadline or evidence excerpt.
+    # Repeating an unchanged policy block must be a no-op, never KeyError.
+    assert record_review(
+        target, {**blocked, "reviewed_at": "2026-11-21T11:03:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    ) is False
+    assert len(load_review_records(target, registry=REGISTRY)) == 1
+    assert record_review(target, reviewed(), registry=REGISTRY, method="live_fetch")
+    # Repeated identical success has no duplicate audit row.
+    assert record_review(
+        target, {**reviewed(), "reviewed_at": "2026-11-21T11:04:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    ) is False
+    assert len(load_review_records(target, registry=REGISTRY)) == 2
+    # A newly blocked retrieval must not destroy the previous proof hash.
+    assert record_review(target, blocked, registry=REGISTRY, method="live_fetch")
+    rows = load_review_records(target, registry=REGISTRY)
+    assert [x["status"] for x in rows] == [
+        "robots_disallowed", "document_review_only", "robots_disallowed",
+    ]
+    assert rows[1]["document_sha256"] == "a" * 64
+
+
+def test_journal_rejects_deadline_lookalikes_and_ambiguous_excerpt(tmp_path):
+    target = tmp_path / "review.json"
+    for excerpt in (
+        "Course commenced on 11 December 2026.",
+        "Funding allocated 11 December 2026 but not an application cutoff.",
+        "Applications are due on 11 December 2026 or 15 January 2027.",
+        "Send forms by 11 December 2026 to phone +34 93 123 4567.",
+    ):
+        with pytest.raises(ValueError):
+            record_review(
+                target, {**reviewed(), "evidence_excerpt": excerpt},
+                registry=REGISTRY, method="live_fetch",
+            )
+        assert not target.exists()
+
