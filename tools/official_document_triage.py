@@ -69,6 +69,31 @@ def _current_receipt(
     return min(ids) if ids else None
 
 
+def _has_prior_attempt(
+    deliveries: dict[str, Any], canonical: str, institution: str,
+    intake: int, deadline: str,
+) -> bool:
+    """An attempted send without a receipt must never look like a new call.
+
+    Prior off-by-one intake parsing is also an operator-reconciliation case
+    until source identity is independently checked; this never authorizes
+    deletion, retry, or change to existing Telegram receipt history.
+    """
+    for value in deliveries.values():
+        if not isinstance(value, dict):
+            continue
+        year = value.get("intake_year")
+        if (
+            value.get("official_url") == canonical
+            and value.get("institution") == institution
+            and value.get("deadline_iso") == deadline
+            and (year is None or (type(year) is int and year in {intake, intake - 1}))
+            and value.get("state") is not None
+        ):
+            return True
+    return False
+
+
 def build_document_triage(
     catalog: dict[str, Any], registry: dict[str, Any],
     deliveries: dict[str, Any], reviews: list[dict[str, Any]],
@@ -170,10 +195,14 @@ def build_document_triage(
                             deliveries, canonical, row["institution"], intake, deadline,
                         )
                         row["prior_message_id"] = receipt
-                        row["next_action"] = (
-                            "already_delivered_same_cycle"
-                            if receipt is not None else "review_complete_no_delivery"
-                        )
+                        if receipt is not None:
+                            row["next_action"] = "already_delivered_same_cycle"
+                        elif _has_prior_attempt(
+                            deliveries, canonical, row["institution"], intake, deadline,
+                        ):
+                            row["next_action"] = "prior_attempt_requires_reconciliation"
+                        else:
+                            row["next_action"] = "review_complete_no_delivery"
                     else:
                         row["next_action"] = "review_failed"
                 elif review["status"] in {"robots_disallowed", "robots_unavailable"}:
