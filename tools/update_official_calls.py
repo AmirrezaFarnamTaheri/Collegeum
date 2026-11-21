@@ -26,6 +26,14 @@ USER_AGENT = "CollegeumOfficialCalls/1.0 (+https://github.com/AmirrezaFarnamTahe
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
 MAX_INDEX_LINKS = 6
+# Generic index anchors are candidates only when context AND path match.
+_GENERIC_DETAIL_LABEL = re.compile(
+    r"^(?:web personal|read more|learn more|view details|more information|"
+    r"ver m[aá]s|veure m[eé]s)$", re.I,
+)
+_PHD_CALL_PATH = re.compile(
+    r"phd|ph-d|doctorat|doctoral|scholarship|fellowship|studentship|bursar", re.I,
+)
 MAX_SOURCES = 20
 MAX_CALLS = 100
 MAX_CHECK_AGE = timedelta(days=14)
@@ -455,14 +463,19 @@ def discover_links(html: str, source: dict[str, Any]) -> list[str]:
     topical: list[str] = []
     generic: list[str] = []
     seen: set[str] = set()
-    for href, label in parser.links[:500]:
-        if not CALL_TITLE.search(label) or EXCLUDE.search(label):
-            continue
+    for href, label, heading in parser.document_links[:500]:
+        label_is_call = bool(CALL_TITLE.search(label) and not EXCLUDE.search(label))
+        heading_is_call = bool(CALL_TITLE.search(heading) and not EXCLUDE.search(heading))
         candidate = safe_official_url(href, root)
         if candidate is None or candidate == root or candidate in seen:
             continue
+        if not label_is_call and not (
+            heading_is_call and _GENERIC_DETAIL_LABEL.fullmatch(label.strip())
+            and _PHD_CALL_PATH.search(urllib.parse.urlsplit(candidate).path)
+        ):
+            continue
         seen.add(candidate)
-        (topical if SUBJECT.search(label) else generic).append(candidate)
+        (topical if SUBJECT.search(f"{heading} {label}") else generic).append(candidate)
     return (topical + generic)[:MAX_INDEX_LINKS]
 
 
@@ -636,12 +649,23 @@ def refresh_sources(
         failures = 0
         discovered_links = 0
         rechecked_links = 0
+        new_html_links = 0
         unsupported_documents = 0
+        document_candidates: list[str] = []
+        document_formats = {"pdf": 0, "doc": 0, "docx": 0}
+        blocked_details = 0
         if status == "ok" and isinstance(response.get("html"), str):
             if source["mode"] == "index":
                 urls = discover_links(response["html"], source)
                 discovered_links = len(urls)
-                unsupported_documents = unsupported_document_count(response["html"], source)
+                previously_seen = {row.get("official_url") for row in prior
+                                   if isinstance(row, dict)}
+                new_html_links = sum(url not in previously_seen for url in urls)
+                document_candidates = discover_document_links(response["html"], source)
+                unsupported_documents = len(document_candidates)
+                for document_url in document_candidates:
+                    kind = document_url.rsplit(".", 1)[-1].lower()
+                    document_formats[kind] += 1
                 # Older but still-open official calls can scroll off a paginated
                 # university index. Recheck at most two within the same source
                 # and deadline window, without trusting cached dates for sending.
@@ -669,6 +693,10 @@ def refresh_sources(
             detail = response if url == source["url"] else fetcher(url)
             if not isinstance(detail, dict) or detail.get("status") != "ok":
                 failures += 1
+                if isinstance(detail, dict) and detail.get("status") in {
+                    "robots_disallowed", "robots_unavailable",
+                }:
+                    blocked_details += 1
                 calls[url] = {
                     "source_id": source["id"], "institution": source["institution"],
                     "country_code": source["country_code"], "official_url": url,
@@ -693,9 +721,11 @@ def refresh_sources(
             "index_url": source["url"], "status": (
                 "partial" if failures else status
             ),
-            "failed_details": failures, "candidate_count": len(urls),
-            "discovered_links": discovered_links,
-            "rechecked_links": rechecked_links,
+            "failed_details": failures, "blocked_details": blocked_details,
+            "candidate_count": len(urls), "discovered_links": discovered_links,
+            "new_html_links": new_html_links, "rechecked_links": rechecked_links,
+            "document_candidates": document_candidates,
+            "document_links_by_format": document_formats,
             "mode": source["mode"],
             "index_empty": bool(source["mode"] == "index"
                                 and status == "ok" and discovered_links == 0),
