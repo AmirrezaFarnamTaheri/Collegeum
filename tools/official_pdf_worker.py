@@ -38,7 +38,7 @@ def inspect(data: bytes) -> dict[str, str]:
             # appearing in /Root. Inspect these before trusting extracted text.
             if "/AA" in page or "/PresSteps" in page:
                 return {"status": "document_unverified", "reason": "active_pdf"}
-            annotations = page.get("/Annots", [])
+            annotations = page.get("/Annots", ArrayObject())
             if hasattr(annotations, "get_object"):
                 annotations = annotations.get_object()
             if not isinstance(annotations, ArrayObject) or len(annotations) > 100:
