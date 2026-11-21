@@ -122,8 +122,11 @@ def test_audit_preserves_independent_deadline_evidence_and_revisions(tmp_path):
     assert rows[0]["deadline_iso"] == "2026-12-11"
     assert rows[0]["intake_year"] == 2027
     assert rows[0]["institution"] == "Barcelona Institute of Economics (IEB)"
-    assert record_review(target, reviewed(digest="b" * 64),
-                         registry=REGISTRY, method="live_fetch")
+    assert record_review(
+        target, {**reviewed(digest="b" * 64),
+                 "reviewed_at": "2026-11-21T11:10:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    )
     assert len(load_review_records(target, registry=REGISTRY)) == 2
 
 
@@ -241,15 +244,21 @@ def test_repeated_policy_block_and_review_transition_are_idempotent(tmp_path):
         registry=REGISTRY, method="live_fetch",
     ) is False
     assert len(load_review_records(target, registry=REGISTRY)) == 1
-    assert record_review(target, reviewed(), registry=REGISTRY, method="live_fetch")
+    assert record_review(
+        target, {**reviewed(), "reviewed_at": "2026-11-21T11:05:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    )
     # Repeated identical success has no duplicate audit row.
     assert record_review(
-        target, {**reviewed(), "reviewed_at": "2026-11-21T11:04:00Z"},
+        target, {**reviewed(), "reviewed_at": "2026-11-21T11:06:00Z"},
         registry=REGISTRY, method="live_fetch",
     ) is False
     assert len(load_review_records(target, registry=REGISTRY)) == 2
     # A newly blocked retrieval must not destroy the previous proof hash.
-    assert record_review(target, blocked, registry=REGISTRY, method="live_fetch")
+    assert record_review(
+        target, {**blocked, "reviewed_at": "2026-11-21T11:07:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    )
     rows = load_review_records(target, registry=REGISTRY)
     assert [x["status"] for x in rows] == [
         "robots_disallowed", "document_review_only", "robots_disallowed",
