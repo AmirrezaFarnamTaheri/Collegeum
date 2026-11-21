@@ -12,13 +12,9 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from urllib.parse import urlsplit
 
-from .official_call_evidence import _checked_utc, explicit_official_dates
+from .official_call_evidence import _checked_utc, explicit_official_deadline
 
 ISO_DAY = re.compile(r"20\d{2}-\d{2}-\d{2}\Z")
-DEADLINE_CONTEXT = re.compile(r"\b(?:deadline|closes?|closing)\b", re.I)
-_OPENING_CONTEXT = re.compile(
-    r"\b(?:opens?|opening|starts?|starting|begins?)\s+(?:on|from)?\s*$", re.I,
-)
 COUNTRY_NAMES = {
     "AT": "Austria", "AU": "Australia", "BE": "Belgium",
     "CA": "Canada", "CH": "Switzerland", "CL": "Chile", "CN": "China",
@@ -77,21 +73,8 @@ def _independently_non_us(row: dict[str, Any], host: str) -> bool:
 
 
 def _admission_deadline_supported(excerpt: Any, deadline: date) -> bool:
-    """Distinguish exact closing date from opening dates or alternative cutoffs."""
-    if (not isinstance(excerpt, str) or not DEADLINE_CONTEXT.search(excerpt)):
-        return False
-    dates = explicit_official_dates(excerpt)
-    if not dates or deadline not in {day for day, _, _ in dates}:
-        return False
-    for day, start, _ in dates:
-        if day == deadline:
-            continue
-        # Opening date + a separate closing date is a normal admissions
-        # schedule; two unrelated or alternative deadlines are ambiguous.
-        prefix = excerpt[max(0, start - 60):start]
-        if not _OPENING_CONTEXT.search(prefix):
-            return False
-    return True
+    """Use the same date-role proof as independent scholarship submissions."""
+    return explicit_official_deadline(excerpt, deadline)
 
 
 def admission_delivery_key(row: dict[str, Any]) -> str:
