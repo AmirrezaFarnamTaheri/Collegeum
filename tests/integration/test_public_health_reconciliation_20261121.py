@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -147,6 +148,18 @@ def test_postcheckpoint_check_only_reads_valid_latest_snapshot(tmp_path):
     safe = reconcile_health(
         health(), report, observed, expected_run_id="44915539651", now=NOW,
     )
+    # A hand-built reconciled report must carry the same file-bound hashes
+    # that the production checkpoint attaches atomically.
+    paths = {
+        "official_calls": "docs/data/official_phd_calls.json",
+        "phd_admissions": "docs/data/phd_admissions.json",
+        "life_sciences": "data/life_sources_health.json",
+        "career": "data/career_health.json",
+        "listings": "docs/data/listings.json",
+    }
+    for name, filename in paths.items():
+        digest = hashlib.sha256((root / filename).read_bytes()).hexdigest()
+        safe["component_snapshots"][name]["content_sha256"] = digest
     target = root / "docs/data/health.json"
     target.write_text(json.dumps(safe))
     before = target.read_bytes()
@@ -234,3 +247,66 @@ def test_bad_run_id_cannot_overwrite_prior_health(tmp_path):
     with pytest.raises(ValueError, match="run"):
         checkpoint(tmp_path, expected_run_id="forged", now=NOW, write=True)
     assert target.read_bytes() == old
+
+
+def test_postcheckpoint_detects_same_timestamp_content_tampering(
+    tmp_path, monkeypatch,
+):
+    from predoc_pipeline.publish import official_calls
+
+    root = tmp_path
+    (root / "docs/data").mkdir(parents=True)
+    (root / "data").mkdir()
+    (root / "docs/data/health.json").write_text(json.dumps(health()))
+    files = {
+        "docs/data/official_phd_calls.json": {
+            "generated_at": "2026-11-21T14:49:00Z", "calls": [],
+        },
+        "docs/data/phd_admissions.json": {
+            "generated_at": "2026-11-21T14:47:00Z", "programmes": [],
+        },
+        "data/life_sources_health.json": {
+            "checked_at": "2026-11-21T14:50:00Z", "sources": [],
+        },
+        "data/career_health.json": {
+            "checked_at": "2026-11-21T14:52:00Z", "sources": [],
+        },
+        "docs/data/listings.json": {
+            "generated_at": "2026-11-21T14:55:00Z", "listings": [],
+        },
+    }
+    for path, payload in files.items():
+        (root / path).write_text(json.dumps(payload))
+
+    monkeypatch.setattr(
+        official_calls, "official_calls_health",
+        lambda catalog, receipts, *, now: {
+            "status": "ok", "eligible": 0, "unpublished": 0,
+            "generated_at": files["docs/data/official_phd_calls.json"]["generated_at"],
+        },
+    )
+    assert checkpoint(
+        root, expected_run_id="44915539651", now=NOW, write=True,
+    )["status"] == "reconciled"
+    saved = json.loads((root / "docs/data/health.json").read_text())
+    assert set(saved["component_snapshots"]) == {
+        "official_calls", "phd_admissions", "life_sciences", "career", "listings",
+    }
+    for source, record in saved["component_snapshots"].items():
+        assert isinstance(record["content_sha256"], str)
+        assert len(record["content_sha256"]) == 64, source
+
+    for path, payload in files.items():
+        target = root / path
+        assert checkpoint(
+            root, expected_run_id="44915539651", now=NOW, write=False,
+        )["status"] == "checked"
+        original = target.read_bytes()
+        # External source writer changes content without advancing generated_at.
+        target.write_text(json.dumps({**payload, "extra": "changed but same timestamp"}))
+        with pytest.raises(ValueError, match="fingerprint"):
+            checkpoint(root, expected_run_id="44915539651", now=NOW, write=False)
+        target.write_bytes(original)
+    assert checkpoint(
+        root, expected_run_id="44915539651", now=NOW, write=False,
+    )["status"] == "checked"

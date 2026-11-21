@@ -18,7 +18,25 @@ def test_web_health_never_marks_fatal_incomplete_or_unknown_data_green():
 const assert = require('node:assert/strict');
 const now = Date.parse('2026-10-05T12:00:00Z');
 const fresh = { generated_at: '2026-10-05T11:00:00Z' };
+const components = Object.fromEntries(
+  ['official_calls', 'phd_admissions', 'life_sciences', 'career', 'listings']
+    .map(name => [name, {
+      state: 'current', generated_at: '2026-10-05T11:00:00Z',
+      content_sha256: 'a'.repeat(64)
+    }])
+);
 const cases = [
+  [{...fresh, status: 'ok', component_snapshots: components}, '', 'Pipeline active'],
+  [{...fresh, status: 'ok', component_snapshots: {
+    ...components, phd_admissions: {
+      ...components.phd_admissions, generated_at: '2026-10-04T10:00:00Z'
+    }
+  }}, 'stale', 'component'],
+  [{...fresh, status: 'ok', component_snapshots: {
+    ...components, career: {
+      ...components.career, content_sha256: null
+    }
+  }}, 'stale', 'component'],
   [{...fresh, status: 'fatal'}, 'dead', 'Pipeline failed'],
   [{...fresh, status: 'quota-stopped'}, 'stale', 'request limit'],
   [{...fresh, status: 'degraded', source_summary: {failed: 2}}, 'stale', '2 source checks failed'],
@@ -26,6 +44,13 @@ const cases = [
   [{...fresh, last_run: {outcome: 'ok', errors: 1}}, 'stale', 'incomplete'],
   [{...fresh, runs: [{outcome: 'ok', source_stats: {a: {ok: false}}}]},
     'stale', '1 source checks failed'],
+  [{...fresh, status: 'ok', component_snapshots: {
+      official_calls: {state: 'stale', generated_at: '2026-10-04T11:00:00Z'}
+    }}, 'stale', 'component'],
+  [{...fresh, status: 'ok', component_snapshots: {
+      official_calls: {state: 'current', generated_at: '2026-10-05T11:00:00Z'},
+      phd_admissions: {state: 'missing', generated_at: null}
+    }}, 'stale', 'component'],
   [{...fresh, status: 'ok'}, '', 'Pipeline active'],
   [{generated_at: '2026-10-05T04:01:00Z', status: 'ok'}, '', 'Pipeline active'],
   [{generated_at: '2026-10-05T04:00:00Z', status: 'ok'}, 'stale', 'Pipeline delayed'],

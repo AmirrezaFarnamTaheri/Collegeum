@@ -28,6 +28,23 @@ After the durable checkpoint, `--check` validates this run's identity,
 application/source consistency, and component timestamps; a mismatch fails
 the **workflow audit**, not the earlier receipt checkpoint.
 
+Each of the five component observations also records a SHA-256 checksum
+of the exact bounded JSON bytes read alongside its source timestamp.
+A data refresh which changes catalogue content but accidentally reuses its
+old `generated_at` can no longer evade the post-push consistency audit.
+Missing components explicitly have a null checksum and a missing freshness
+state; a source with an invalid JSON payload fails the audit rather than
+being silently treated as healthy.
+
+The public dashboard reevaluates each component's effective age against the
+current viewer clock (8 hours for official calls, PhD admissions and listings;
+24 hours for Life Sciences and career) and requires a valid recorded digest.
+If any component is missing, stale, future-dated or otherwise unverifiable,
+the status displays an incomplete pipeline rather than an unwarranted green
+`Pipeline active` label. Previously published health without component
+metadata still uses its preexisting application-level fallback until the
+next checkpoint publishes the new provenance format.
+
 The check does **not** claim a stale provider has recovered: older snapshots
 remain visibly stale, and genuine `partial` ingestion remains degraded even
 when GitHub Actions itself finishes successfully.

@@ -2964,6 +2964,29 @@
           (source.ok === false || source.errors > 0)).length;
       const outcome = data.status || data.last_run?.outcome || latest.outcome || 'unknown';
       const age = diffH >= 48 ? `${Math.floor(diffH / 24)}d ago` : `${Math.max(0, Math.floor(diffH))}h ago`;
+      // An up-to-date ingestion run cannot make independently stale source
+      // catalogues healthy. Recalculate from the client's clock: a component
+      // may cross its freshness limit after the last published health update.
+      const componentAgeHours = {
+        official_calls: 8, phd_admissions: 8, life_sciences: 24,
+        career: 24, listings: 8
+      };
+      let componentIssues = 0;
+      if (data.component_snapshots != null) {
+        const snapshots = data.component_snapshots;
+        for (const [name, limit] of Object.entries(componentAgeHours)) {
+          const snapshot = snapshots && typeof snapshots === 'object' &&
+            !Array.isArray(snapshots) ? snapshots[name] : null;
+          const generatedMs = Date.parse(snapshot?.generated_at || '');
+          if (snapshot?.state !== 'current' ||
+              !Number.isFinite(generatedMs) ||
+              generatedMs > now + 5 * 60 * 1000 ||
+              now - generatedMs > limit * 36e5 ||
+              !/^[0-9a-f]{64}$/.test(snapshot?.content_sha256 || '')) {
+            componentIssues += 1;
+          }
+        }
+      }
       if (outcome === 'fatal') return { cls: 'dead', label: `Pipeline failed · ${age}` };
       if (outcome === 'quota-stopped') return { cls: 'stale', label: `Pipeline stopped at request limit · ${age}` };
       // After two nominal four-hour ingestion intervals, freshness takes
@@ -2971,7 +2994,7 @@
       // snapshot is a delayed pipeline, not merely a failed source check.
       if (diffH >= 8) {
         const incomplete = failed || outcome === 'partial' || outcome === 'degraded' ||
-          data.last_run?.errors > 0;
+          data.last_run?.errors > 0 || componentIssues > 0;
         const detail = failed ? ` · ${failed} source checks failed` :
           incomplete ? ' · previous run incomplete' :
           outcome !== 'ok' ? ' · last outcome unknown' : '';
@@ -2980,8 +3003,13 @@
           label: `Pipeline delayed · ${age}${detail}`
         };
       }
-      if (failed || outcome === 'partial' || outcome === 'degraded' || data.last_run?.errors > 0) {
-        return { cls: 'stale', label: `Pipeline incomplete${failed ? ` · ${failed} source checks failed` : ''} · ${age}` };
+      if (failed || outcome === 'partial' || outcome === 'degraded' ||
+          data.last_run?.errors > 0 || componentIssues > 0) {
+        const sourceDetail = failed ? ` · ${failed} source checks failed` : '';
+        const componentDetail = componentIssues ?
+          ` · ${componentIssues} component snapshots need attention` : '';
+        return { cls: 'stale',
+          label: `Pipeline incomplete${sourceDetail}${componentDetail} · ${age}` };
       }
       if (outcome !== 'ok') return { cls: 'stale', label: `Pipeline status unavailable · ${age}` };
       return { cls: '', label: `Pipeline active · updated ${age}` };
