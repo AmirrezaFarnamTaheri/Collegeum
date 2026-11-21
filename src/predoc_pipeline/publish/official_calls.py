@@ -69,11 +69,17 @@ def _location_verified(row: dict[str, Any], host: str) -> bool:
     national = "uk" if country in {"UK", "GB"} else country.lower()
     if host.endswith("." + national):
         return location == f"{country}: official national institutional domain {host}"
-    # Exact same-source institutional address proof for IEB's generic .edu.
+    # The exact IEB host can provide either complete postal+phone evidence
+    # or paired institution names extracted from the checked official body.
+    # The extractor is responsible for proving those names occur in the
+    # document itself. Generic/third-party hosts do not inherit this rule.
     return (
         country == "ES"
         and host == "ieb.ub.edu"
-        and location == "ES: official postal address 08034 Barcelona and telephone +34"
+        and location in {
+            "ES: official postal address 08034 Barcelona and telephone +34",
+            "ES: official IEB and University of Barcelona institutional identifiers",
+        }
     )
 
 
