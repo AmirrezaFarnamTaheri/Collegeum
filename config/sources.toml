@@ -745,6 +745,8 @@ url = "https://www.bde.es/wbe/es/sobre-banco/trabajar-banco/convocatorias-plazo-
 may_be_empty = true
 verified_empty_marker = "0 resultados encontrados para los filtros seleccionados."
 verified_empty_reject_job_links = true
+# This provider has a numerical zero count, not an evergreen jobs footer.
+verified_empty_reject_conflicting_posts = true
 link_pattern = 'bde\.es/wbe/(?:es|en)/sobre-banco/trabajar-banco/(?:becas-investigacion-ayudas-bde|trabajar-bde/convocatorias)/[^/]+\.html'
 institution = "Banco de España"
 country = "Spain"
