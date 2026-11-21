@@ -14,6 +14,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Any
 
+from predoc_pipeline.core.official_call_rules import call_key
 from tools.official_document_review_journal import load_review_records
 from tools.update_official_calls import validate_catalog, validate_sources
 
@@ -46,13 +47,20 @@ def _trusted_document_url(url: Any, root: str) -> bool:
     )
 
 
+def _normalised_call_title(value: Any) -> str:
+    if not isinstance(value, str):
+        return ""
+    text = " ".join(value.casefold().split())
+    return re.sub(r"\s+20\d{2}(?:/\d{2})?\Z", "", text)
+
+
 def _current_receipt(
     deliveries: dict[str, Any], canonical: str, institution: str,
-    intake: int, deadline: str,
+    intake: int, deadline: str, title: str,
 ) -> int | None:
     """Exact same funding cycle only; prior years never suppress new rounds."""
     ids = []
-    for value in deliveries.values():
+    for key, value in deliveries.items():
         if not isinstance(value, dict):
             continue
         message_id = value.get("message_id")
@@ -63,6 +71,8 @@ def _current_receipt(
             and type(value.get("intake_year")) is int
             and value["intake_year"] == intake
             and value.get("deadline_iso") == deadline
+            and _normalised_call_title(value.get("title")) == _normalised_call_title(title)
+            and call_key(value) == key
             and type(message_id) is int and message_id > 0
         ):
             ids.append(message_id)
@@ -143,6 +153,7 @@ def build_document_triage(
         conflict = len(institutions) > 1 or len(signatures) > 1
         approved = bool(approvals) and not conflict and suffix != "doc"
         canonical = next(iter(signatures))[1] if approved else None
+        canonical_title = next(iter(signatures))[2] if approved else None
         row: dict[str, Any] = {
             "official_url": url,
             "document_format": suffix,
@@ -193,6 +204,7 @@ def build_document_triage(
                         row["evidence_excerpt"] = review.get("evidence_excerpt")
                         receipt = _current_receipt(
                             deliveries, canonical, row["institution"], intake, deadline,
+                            canonical_title,
                         )
                         row["prior_message_id"] = receipt
                         if receipt is not None:
