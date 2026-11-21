@@ -108,8 +108,11 @@ def test_legacy_henley_2026_identity_is_not_misrepresented_as_2026_intake(tmp_pa
     for row in rows:
         row["intake_year"] = 2026
     count, telegram, _, _ = _publish(tmp_path, rows)
-    assert count == 1
-    assert "Intake: 2026" not in telegram.send_message.call_args.kwargs["html"]
+    # The funding cutoff belongs to 2027/28, not the stale 2026 intake.
+    # New official-source evidence policy holds such mismatches rather than
+    # posting under a misleading year or rewriting the durable receipt.
+    assert count == 0
+    telegram.send_message.assert_not_called()
 
 
 def test_group_is_never_inferred_from_same_university_or_deadline_alone(tmp_path):

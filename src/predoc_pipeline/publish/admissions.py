@@ -7,7 +7,6 @@ never silently send the same programme again.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from collections.abc import Callable
@@ -15,21 +14,20 @@ from datetime import UTC, date, datetime, timedelta
 from html import escape
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
+from ..core.official_admissions_evidence import (
+    COUNTRY_NAMES,
+    admission_delivery_key,
+    eligible_official_admissions_rows,
+)
+from ..core.official_admissions_evidence import admissions_host as _official_host
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
 from .telegram_intents import enforce_production_outcome, enforce_production_reservation
 
 log = get_logger(__name__)
 
-MAX_EVIDENCE_AGE = timedelta(days=14)
-MAX_DEADLINE_AHEAD = timedelta(days=366)
 NEW_CYCLE_GAP = timedelta(days=180)
-YEAR_IN_TEXT = re.compile(r"\b20\d{2}\b")
-DEADLINE_CONTEXT = re.compile(r"\b(?:deadline|closes?|closing)\b", re.I)
-ISO_DAY = re.compile(r"20\d{2}-\d{2}-\d{2}\Z")
-COUNTRY_TLD_EXCEPTIONS = {"GB": "uk", "UK": "uk"}
 SCHEMA_VERSION = 1
 
 
@@ -43,122 +41,15 @@ def _utc_timestamp(value: object) -> datetime | None:
     return stamp.astimezone(UTC) if stamp.tzinfo is not None else None
 
 
-def _official_host(value: object) -> str | None:
-    if not isinstance(value, str):
-        return None
-    try:
-        url = urlsplit(value)
-        port = url.port
-    except ValueError:
-        return None
-    if (
-        url.scheme != "https" or not url.hostname or
-        url.username is not None or url.password is not None or
-        port not in (None, 443)
-    ):
-        return None
-    return url.hostname.lower().removeprefix("www.")
-
-
-def _independently_non_us(row: dict[str, Any], official_host: str) -> bool:
-    """Do not trust country from a third-party discovery list by itself.
-
-    Country has to be non-US in the catalogue AND corroborated by a matching
-    university-country domain. International .org/.com/.edu pages are held
-    until another official-source country proof can be captured.
-    """
-    country = row.get("country_code")
-    if not isinstance(country, str) or not re.fullmatch(r"[A-Z]{2}", country):
-        return False
-    if country == "US":
-        return False
-    suffix = COUNTRY_TLD_EXCEPTIONS.get(country, country.lower())
-    if official_host.endswith("." + suffix):
-        return True
-    # A generic .eu/.org/.com host must never prove a country on its own.
-    # Only the institution's *own inspected contact/mailing address* can
-    # corroborate a non-US programme location outside national TLDs.
-    expected = COUNTRY_NAMES.get(country)
-    if not expected:
-        return False
-    details = row.get("official_details")
-    if not isinstance(details, dict):
-        return False
-    fact = details.get("institution_country")
-    if not isinstance(fact, dict) or fact.get("value") != expected:
-        return False
-    if fact.get("checked_at") != row.get("checked_at"):
-        return False
-    if _official_host(fact.get("evidence_url")) != official_host:
-        return False
-    investigated = row.get("investigated_urls")
-    if (
-        not isinstance(investigated, list)
-        or fact["evidence_url"] not in investigated
-    ):
-        return False
-    excerpt = fact.get("evidence_excerpt")
-    return (
-        isinstance(excerpt, str)
-        and bool(re.search(r"\b" + re.escape(expected) + r"\b", excerpt, re.I))
-    )
-
-
 def eligible_official_admissions(
     catalog: dict[str, Any], *, now: datetime,
 ) -> list[dict[str, Any]]:
-    """Current verified university admissions only, never upstream assumptions."""
-    if (
-        catalog.get("kind") != "economics_phd_admissions_observations" or
-        catalog.get("scope") != "official_programme_sources_only" or
-        not isinstance(catalog.get("source"), dict) or
-        catalog["source"].get("deadline_values_reused") is not False
-    ):
-        return []
-    rows = catalog.get("programmes")
-    if not isinstance(rows, list):
-        return []
-    qualified: list[dict[str, Any]] = []
-    for row in rows:
-        if not isinstance(row, dict) or row.get("status") != "verified":
-            continue
-        deadline_value = row.get("deadline_iso")
-        if not isinstance(deadline_value, str) or ISO_DAY.fullmatch(deadline_value) is None:
-            continue
-        try:
-            deadline = date.fromisoformat(deadline_value)
-        except ValueError:
-            continue
-        if deadline < now.date() or deadline > (now + MAX_DEADLINE_AHEAD).date():
-            continue
-        verified_at = _utc_timestamp(row.get("checked_at"))
-        if verified_at is None or verified_at > now or now - verified_at > MAX_EVIDENCE_AGE:
-            continue
-        programme_host = _official_host(row.get("official_programme_url"))
-        evidence_host = _official_host(row.get("evidence_url"))
-        if (
-            programme_host is None or evidence_host != programme_host or
-            not _independently_non_us(row, programme_host)
-        ):
-            continue
-        excerpt = row.get("evidence_excerpt")
-        institution = row.get("institution")
-        if (
-            not isinstance(excerpt, str) or
-            not YEAR_IN_TEXT.search(excerpt) or
-            deadline_value[:4] not in excerpt or
-            not DEADLINE_CONTEXT.search(excerpt) or
-            not isinstance(institution, str) or not institution.strip()
-        ):
-            continue
-        qualified.append(row)
-    return sorted(qualified, key=lambda r: (r["deadline_iso"], r["institution"].casefold()))
+    """Use the same institution, deadline and collision rules as the watchdog."""
+    return eligible_official_admissions_rows(catalog, now=now)
 
 
 def _delivery_key(row: dict[str, Any]) -> str:
-    # Stable programme identity across URL changes and minor deadline edits.
-    identity = f"{row['country_code']}|{row['institution'].strip().casefold()}"
-    return hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
+    return admission_delivery_key(row)
 
 
 def _read_receipts(path: Path) -> dict[str, Any]:
@@ -229,21 +120,6 @@ def _has_prior_send(
         deadline - old_date < NEW_CYCLE_GAP or
         now - sent_at < NEW_CYCLE_GAP
     )
-
-
-COUNTRY_NAMES = {
-    "AT": "Austria", "AU": "Australia", "BE": "Belgium",
-    "CA": "Canada", "CH": "Switzerland", "CL": "Chile", "CN": "China",
-    "CZ": "Czechia", "DE": "Germany", "DK": "Denmark", "ES": "Spain",
-    "FI": "Finland", "FR": "France", "GR": "Greece", "HK": "Hong Kong",
-    "IE": "Ireland", "IT": "Italy", "JP": "Japan",
-    "KR": "South Korea", "MY": "Malaysia", "NL": "Netherlands",
-    "NO": "Norway", "NZ": "New Zealand", "PH": "Philippines",
-    "PL": "Poland", "PT": "Portugal", "RS": "Serbia",
-    "SE": "Sweden", "SG": "Singapore", "TH": "Thailand",
-    "TW": "Taiwan", "UK": "United Kingdom", "US": "United States",
-    "ZA": "South Africa",
-}
 
 
 def _verified_detail(row: dict[str, Any], field: str) -> str | None:
