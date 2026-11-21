@@ -887,6 +887,7 @@ def check_official_url(url: str, *, now: datetime) -> dict:
     try:
         status, data, final_robots_url = _read_url(
             robots_url, host=host, limit=MAX_ROBOTS_BYTES,
+            allowed_redirect=lambda _destination: False,
         )
         if status != 200 or final_robots_url != robots_url:
             raise ValueError("unsafe_robots_response")
