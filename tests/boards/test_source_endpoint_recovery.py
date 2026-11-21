@@ -272,3 +272,45 @@ def test_ubc_workday_pagination_budget_covers_more_than_two_pages():
     cfg = source("ubc")
     assert cfg.type == "workday"
     assert cfg.opt("max_pages") >= 5
+
+
+def test_bde_spain_zero_open_calls_is_verified_empty_not_a_source_failure():
+    """The official Spanish open-calls index explicitly reports zero results."""
+    from predoc_pipeline.core.health import source_status
+
+    cfg = source("bde_spain")
+    html = """
+    <h1>Convocatorias con plazo abierto</h1>
+    <p>0 resultados encontrados para los filtros seleccionados.</p>
+    """
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert result.ok, result.as_stats()
+    assert result.posts == []
+    assert source_status(result.as_stats()) == "empty"
+
+
+def test_bde_spain_changed_page_must_not_mask_a_missing_eligible_call():
+    """No arbitrary HTTP 200 page may be called a verified no-hiring interval."""
+    cfg = source("bde_spain")
+    html = "<h1>Noticias del Banco de España</h1><p>Page moved</p>"
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert not result.ok
+    assert result.as_stats()["failure_counts"]["parse"] >= 1
+
+
+def test_bde_spain_official_research_call_remains_discoverable():
+    """An actual research call must take precedence over any empty-period flag."""
+    cfg = source("bde_spain")
+    role = ("https://www.bde.es/wbe/es/sobre-banco/trabajar-banco/"
+            "becas-investigacion-ayudas-bde/"
+            "personal-investigador-en-temas-de-economia-y-finanzas2026.html")
+    html = f'<a href="{role}">Personal investigador en temas de Economía y Finanzas</a>'
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(cfg.opt("url"), html))
+    ], 1, 5))[0]
+    assert result.ok, result.as_stats()
+    assert [post.url for post in result.posts] == [role]
