@@ -209,6 +209,15 @@ def eligible_official_calls(catalog: Any, *, now: datetime) -> list[dict[str, An
             or len(catalog["calls"]) > 100):
         return []
     now = now.astimezone(UTC)
+    generated = (
+        _checked_utc(catalog.get("generated_at"))
+        if "generated_at" in catalog else None
+    )
+    if ("generated_at" in catalog and (
+        generated is None or generated > now
+        or now - generated > timedelta(days=14)
+    )):
+        return []
     sources = _official_source_provenance(catalog)
     if "generated_at" in catalog and not sources:
         return []
@@ -246,7 +255,8 @@ def eligible_official_calls(catalog: Any, *, now: datetime) -> list[dict[str, An
                 or type(year) is not int or not now.year <= year <= now.year + 2):
             continue
         checked = _checked_utc(row.get("checked_at"))
-        if checked is None or checked > now or now - checked > timedelta(days=14):
+        if (checked is None or checked > now or now - checked > timedelta(days=14)
+                or (generated is not None and checked > generated)):
             continue
         raw_deadline = row.get("deadline_iso")
         if not isinstance(raw_deadline, str) or not _OFFICIAL_DATE.fullmatch(raw_deadline):
@@ -283,7 +293,15 @@ def eligible_official_calls(catalog: Any, *, now: datetime) -> list[dict[str, An
             if (source is None or not isinstance(source.get("status"), str)
                     or source.get("status") not in {"ok", "partial"}
                     or source.get("institution") != institution
-                    or _official_host(source.get("index_url")) != host):
+                    or _official_host(source.get("index_url")) != host
+                    or (source["mode"] == "detail"
+                        and source.get("index_url") != row.get("official_url"))):
+                continue
+            source_checked = _checked_utc(source.get("checked_at"))
+            if (generated is not None and (
+                source_checked is None or source_checked > generated
+                or generated - source_checked > timedelta(days=14)
+            )):
                 continue
         title = row.get("title")
         if (not isinstance(title, str) or not _OFFICIAL_TITLE.search(title)
