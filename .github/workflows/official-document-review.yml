@@ -1,0 +1,84 @@
+name: official-document-review
+
+# A deliberate operator action only. This is not discovery, publishing, or
+# evidence promotion, and must never be chained to production workflow_run.
+on:
+  workflow_dispatch:
+    inputs:
+      source_id:
+        description: Exact approved institutional source ID
+        type: string
+        required: true
+      approved_url:
+        description: Exact approved HTTPS PDF or DOCX URL (already in registry)
+        type: string
+        required: true
+      format:
+        description: Document type
+        type: choice
+        required: true
+        options:
+          - pdf
+          - docx
+
+permissions:
+  contents: read
+
+concurrency:
+  group: official-document-review-${{ github.event.inputs.source_id }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: >-
+      github.repository == 'AmirrezaFarnamTaheri/Collegeum' &&
+      github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          activate-environment: true
+      - name: Install exact reproducible document-review dependencies
+        run: |
+          uv lock --check
+          uv sync --locked --python 3.12 --extra dev --extra portals
+      - name: Review one preapproved official document under fresh robots policy
+        shell: bash
+        env:
+          DOC_FORMAT: ${{ inputs.format }}
+          SOURCE_ID: ${{ inputs.source_id }}
+          APPROVED_URL: ${{ inputs.approved_url }}
+        run: |
+          set -euo pipefail
+          case "$DOC_FORMAT" in
+            pdf|docx) ;;
+            *) echo "Unsupported document format"; exit 2 ;;
+          esac
+          # The reviewer checks the exact registry approval, robots, redirects,
+          # download limits, content type, independent text evidence and date.
+          # --record writes a local, review-only audit. No commit or send.
+          set +e
+          uv run --locked python -m "tools.official_call_${DOC_FORMAT}_review" \
+            --source-id "$SOURCE_ID" --url "$APPROVED_URL" --fetch --record \
+            > review.json
+          result=$?
+          set -e
+          echo "Review-only exit status: $result"
+          exit "$result"
+      - name: Preserve operator review outcome, never publish
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-document-review-${{ github.run_id }}
+          path: |
+            review.json
+            docs/data/official_document_reviews.json
+          if-no-files-found: ignore
+          retention-days: 7
