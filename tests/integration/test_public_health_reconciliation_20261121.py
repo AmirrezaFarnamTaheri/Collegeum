@@ -160,6 +160,9 @@ def test_postcheckpoint_check_only_reads_valid_latest_snapshot(tmp_path):
     for name, filename in paths.items():
         digest = hashlib.sha256((root / filename).read_bytes()).hexdigest()
         safe["component_snapshots"][name]["content_sha256"] = digest
+    safe["delivery_journal_sha256"] = {
+        "official_calls": None, "phd_admissions": None,
+    }
     target = root / "docs/data/health.json"
     target.write_text(json.dumps(safe))
     before = target.read_bytes()
