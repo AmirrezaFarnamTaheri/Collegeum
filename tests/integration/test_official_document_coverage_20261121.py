@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from predoc_pipeline.core.official_call_rules import call_key, receipt_key
 from predoc_pipeline.publish.official_calls import eligible_calls, official_calls_health
 from tools.official_call_pdf_review import fetch_reviewed_pdf
 from tools.official_document_review_journal import load_review_records, record_review
@@ -201,3 +202,34 @@ def test_pdf_fetch_refuses_redirect_even_if_target_same_host_and_robots_allow():
     assert result["status"] == "unsafe_redirect"
     assert len(redirects) == 1
     assert isinstance(redirects[0], NoDocumentRedirect)
+
+
+def test_same_host_html_language_alias_cannot_rebroadcast_recorded_official_call():
+    from urllib.parse import urlsplit
+
+    canonical = {
+        "official_url": HTML,
+        "institution": SOURCE["institution"],
+        "title": "PhD Scholarship in Economics 2027",
+        "deadline_iso": "2026-12-11", "intake_year": 2027,
+        "kind": "phd_scholarship",
+    }
+    delivered = {call_key(canonical): {
+        **canonical, "state": "confirmed", "message_id": 133,
+    }}
+    alias = {
+        **canonical, "official_url": "https://ieb.ub.edu/phd-scholarship-in-economics-2027/",
+    }
+    assert urlsplit(alias["official_url"]).path != urlsplit(HTML).path
+    assert call_key(alias) != call_key(canonical)
+    assert receipt_key(alias, delivered) == call_key(canonical)
+
+    # Same cutoff does not imply identical scholarships or identical cycles.
+    distinct = {**alias, "title": "PhD Fellowship in Energy and Climate Economics"}
+    assert receipt_key(distinct, delivered) is None
+    new_cycle = {**alias, "deadline_iso": "2027-12-11", "intake_year": 2028}
+    assert receipt_key(new_cycle, delivered) is None
+    other_host = {
+        **alias, "official_url": "https://other-institute.example/phd-scholarship-2027",
+    }
+    assert receipt_key(other_host, delivered) is None
