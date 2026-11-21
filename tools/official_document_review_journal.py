@@ -10,11 +10,11 @@ import json
 import os
 import re
 import tempfile
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from tools.update_official_calls import validate_sources
+from tools.update_official_calls import DATE_RE, _date, validate_sources
 
 KIND = "official_phd_document_reviews"
 VERSION = 1
@@ -78,11 +78,57 @@ def _normalise(
     reviewed_at = _utc(candidate.get("reviewed_at"))
     reason = candidate.get("reason")
     digest = candidate.get("document_sha256")
+    evidence: dict[str, Any] = {}
     if status == "document_review_only":
         if not isinstance(digest, str) or not DIGEST.fullmatch(digest):
             raise ValueError("Accepted review needs real content digest")
-        if reason is not None:
-            raise ValueError("Successful review must not report a failure")
+        if reason is not None or candidate.get("automatic_publication") is not False:
+            raise ValueError("Accepted review is never publication approval")
+        institution = next(
+            source["institution"] for source in registry["sources"]
+            if source["id"] == source_id
+        )
+        country = next(
+            source["country_code"] for source in registry["sources"]
+            if source["id"] == source_id
+        )
+        title = candidate.get("title")
+        intake = candidate.get("intake_year")
+        cutoff = candidate.get("deadline_iso")
+        excerpt = candidate.get("evidence_excerpt")
+        kind = candidate.get("kind")
+        deadline_kind = candidate.get("deadline_kind")
+        try:
+            day = date.fromisoformat(cutoff)
+        except (ValueError, TypeError):
+            raise ValueError("Accepted review needs a valid funding cutoff") from None
+        if (title != approved["title"] or candidate.get("institution") != institution
+                or candidate.get("country_code") != country
+                or type(intake) is not int or not 2025 <= intake <= 2100
+                or not day.year <= intake <= day.year + 2
+                or kind not in {"phd_scholarship", "phd_fellowship"}
+                or deadline_kind not in {"funding", "scholarship"}
+                or not isinstance(excerpt, str) or not 12 <= len(excerpt) <= 230
+                or re.search(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", excerpt, re.I)
+                or re.search(r"\+\s*\d{1,3}(?:[\s().-]*\d){5,}", excerpt)
+                or not re.search(
+                    r"\b(?:applications?|applicants?|candidates?|scholarships?|"
+                    r"fellowships?|studentships?|funding|submissions?|apply)\b",
+                    excerpt, re.I,
+                )
+                or not re.search(
+                    r"\b(?:by|before|deadline|clos(?:e|es|ed|ing)|due|until)\b",
+                    excerpt, re.I,
+                )
+                or {parsed for m in DATE_RE.finditer(excerpt)
+                    if (parsed := _date(m)) is not None} != {day}):
+            raise ValueError("Document review missing independent cycle/deadline evidence")
+        evidence = {
+            "title": title, "institution": institution, "country_code": country,
+            "kind": kind, "intake_year": intake,
+            "deadline_iso": day.isoformat(), "deadline_kind": deadline_kind,
+            "evidence_excerpt": excerpt,
+        }
     elif not isinstance(reason, str) or not 1 <= len(reason) <= 100:
         raise ValueError("Failed review must describe its nonpublishable reason")
     if digest is not None and (not isinstance(digest, str) or not DIGEST.fullmatch(digest)):
@@ -98,7 +144,20 @@ def _normalise(
         "reviewed_at": reviewed_at,
         "document_sha256": digest,
         "automatic_publication": False,
+        **evidence,
     }
+
+
+def validate_review_records(
+    rows: list[dict[str, Any]], *, registry: dict[str, Any],
+) -> None:
+    """Reject forged approvals and malformed operator review artifacts."""
+    validate_sources(registry)
+    if not isinstance(rows, list) or len(rows) > MAX_REVIEWS:
+        raise ValueError("Unbounded document review records")
+    for row in rows:
+        if _normalise(row, registry=registry, method=None) != row:
+            raise ValueError("Noncanonical document review evidence")
 
 
 def load_review_records(
@@ -122,9 +181,7 @@ def load_review_records(
             or len(parsed["reviews"]) > MAX_REVIEWS):
         raise ValueError("Invalid document review journal schema")
     rows = parsed["reviews"]
-    for row in rows:
-        if _normalise(row, registry=registry, method=None) != row:
-            raise ValueError("Noncanonical document review journal entry")
+    validate_review_records(rows, registry=registry)
     return rows
 
 
@@ -146,8 +203,12 @@ def record_review(
                      and item["official_url"] == row["official_url"]
                      and item["method"] == row["method"]), None)
     if previous is not None and all(
-        previous[field] == row[field]
-        for field in ("status", "reason", "document_sha256", "canonical_html_url")
+        previous.get(field) == row.get(field)
+        for field in (
+            "status", "reason", "document_sha256", "canonical_html_url",
+            "title", "institution", "country_code", "kind", "intake_year",
+            "deadline_iso", "deadline_kind", "evidence_excerpt",
+        )
     ):
         return False
     if len(rows) >= MAX_REVIEWS:

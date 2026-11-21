@@ -193,7 +193,11 @@ robots permission) plus `--record` appends to
 by scheduled discovery, CI or Telegram publication. It contains only
 approved exact URLs, canonical HTML aliases, source IDs, method (local file
 versus live fetch), results, reasons, UTC timestamps and document SHA-256
-fingerprints; it excludes full text and personal information.
+fingerprints. Successful audits additionally preserve the exact approved
+institution/title, intake year, funding deadline type and ISO date, and a
+bounded official-source deadline excerpt. The excerpt must contain the
+matching dated cutoff and cannot contain an email address; full document
+text and email contact addresses are not stored.
 
 The journal is bounded, schema-validated and atomically saved. Duplicate
 unchanged results do not grow it, while a revised document with a different
@@ -226,6 +230,47 @@ Both reviewed-document fetchers now reject *all* HTTP redirects before
 following them, even a same-host redirect that appears harmless. This
 prevents fetching changed or unapproved document URLs under a stale exact
 registry approval.
+
+## Read-only institutional document triage
+
+Every successful official HTML-index refresh retains bounded, same-host
+PDF/DOC/DOCX candidate URLs in the public official-call catalogue. To
+reconcile these unverified leads without fetching files or touching Telegram,
+run from the repository root:
+
+```bash
+python3 -S -m tools.official_document_triage > document-review-queue.json
+```
+
+The stdlib-only command checks the approved registry, current index
+observations, historical confirmed funding-call ledger, and the separate
+document review audit. It deduplicates identical URLs across multiple
+indexes, refuses untrusted hosts or conflicting approvals, and fails closed
+at 300 distinct documents. The output is a **human-review queue** and cannot
+trigger any scholarship publication or bot send.
+
+The following `next_action` values make status explicit:
+
+- `approval_required`: discovered URL without exact per-document approval
+- `review_required`: approved URL without independently reviewed evidence
+- `review_complete_no_delivery`: actual reviewed PDF/DOCX evidence exists,
+  but there is no matching confirmed or previously attempted channel receipt;
+  release still needs separate operator approval
+- `already_delivered_same_cycle`: approved canonical HTML call, intake year
+  and funding deadline **all** match an existing confirmed Telegram receipt
+- `prior_attempt_requires_reconciliation`: a prior pending, uncertain, held,
+  or legacy-year attempt shares the canonical source and funding cutoff;
+  never infer an unsent scholarship from an absent confirmation
+- `permission_blocked`, `review_failed`, or `conflicting_approvals`: held
+  because evidence is inaccessible, inadequate, or conflicting
+- `unsupported_legacy_doc`: legacy binary Word files have no approved safe
+  parser and must remain unverified and unexecuted
+
+An older receipt for the same institutional URL but a **different**
+funding cycle never suppresses a genuine new opportunity. A successful
+document review cannot acquire status `verified` through this command;
+any new document-backed posting requires separately authorized
+evidence promotion under existing no-replay safeguards.
 
 ## Durable post-send outcomes
 
