@@ -119,3 +119,14 @@ def test_invalid_official_country_details_cannot_crash_recovery(invalid):
     )
     assert eligible_official_admissions(catalog(bad), now=NOW) == []
     assert not dispatch(bad)
+
+
+def test_invalid_verified_duplicate_cannot_hide_conflicting_admission_cutoffs():
+    genuine = row()
+    contradictory = {
+        **genuine,
+        "deadline_iso": "2027-02-01",
+        "evidence_excerpt": "Application closing deadline is not published yet.",
+    }
+    assert eligible_official_admissions(catalog(genuine, contradictory), now=NOW) == []
+    assert not dispatch(genuine, contradictory)
