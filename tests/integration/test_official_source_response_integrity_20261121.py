@@ -131,3 +131,47 @@ def test_source_failure_does_not_keep_a_previous_verified_call_publishable():
     assert catalog["sources"][0]["status"] == "fetch_failed"
     assert not eligible_calls(catalog, now=NOW)
     assert catalog["calls"][0]["status"] == "not_seen"
+
+
+@pytest.mark.parametrize("bad_html", [
+    CHALLENGES[0],
+    CHALLENGES[1],
+    CHALLENGES[2],
+    "",
+    "plain text but HTTP 200",
+])
+def test_index_link_detail_malformed_200_cannot_verify_a_funding_call(bad_html):
+    responses = {
+        INDEX: {"status": "ok", "html": (
+            f'<h2>PhD Scholarship in Economics 2027</h2>'
+            f'<a href="{DETAIL}">PhD Scholarship in Economics 2027</a>'
+        )},
+        DETAIL: {"status": "ok", "html": bad_html},
+    }
+    result = refresh_sources(CONFIG, BEFORE, now=NOW,
+                             fetcher=lambda url: responses[url])
+    assert result["sources"][0]["status"] == "partial"
+    assert result["sources"][0]["failed_details"] == 1
+    assert result["sources"][0]["discovered_links"] == 1
+    assert not eligible_calls(result, now=NOW)
+    assert result["calls"][0]["status"] == "fetch_failed"
+
+
+def test_valid_detail_page_remains_independent_of_login_link_in_navigation():
+    html = (
+        "<html><nav><a href='/login'>Student login</a></nav>"
+        "<h1>PhD Scholarship in Economics 2027</h1>"
+        "<p>We offer funding and full-time PhD scholarship for September 2027."
+        " Candidates must complete applications by 11 December 2026.</p>"
+        "<p>C/ John M. Keynes, 1-11, 08034 Barcelona Tel. +34 93 403 46 46</p>"
+        "</html>"
+    )
+    index = f'<a href="{DETAIL}">PhD Scholarship in Economics 2027</a>'
+    response = {
+        INDEX: {"status": "ok", "html": index},
+        DETAIL: {"status": "ok", "html": html},
+    }
+    result = refresh_sources(CONFIG, BEFORE, now=NOW,
+                             fetcher=lambda url: response[url])
+    assert result["sources"][0]["status"] == "ok"
+    assert result["sources"][0]["failed_details"] == 0
