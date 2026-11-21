@@ -394,3 +394,77 @@ def test_out_of_order_revised_review_does_not_override_newer_audit(tmp_path):
         path, registry=REGISTRY,
     )] == ["b" * 64]
 
+
+
+def test_all_registry_approvals_contribute_to_document_conflict_detection():
+    one_index = {**CATALOG, "sources": [CATALOG["sources"][0]]}
+    approved = REGISTRY["sources"][0]["approved_documents"][0]
+    for shadow in (
+        {**approved, "canonical_html_url":
+         "https://ieb.ub.edu/en/different-funding-round/"},
+        dict(approved),
+    ):
+        other = {**REGISTRY["sources"][1], "approved_documents": [shadow]}
+        if shadow["canonical_html_url"] == HTML:
+            # Even identical URLs, titles and institution names cannot have
+            # contradictory independent country approvals.
+            other["country_code"] = "FR"
+        registry = {**REGISTRY, "sources": [REGISTRY["sources"][0], other]}
+        pdf = next(x for x in build_document_triage(
+            one_index, registry, {}, [],
+        )["documents"] if x["official_url"] == PDF)
+        assert pdf["next_action"] == "conflicting_approvals"
+        assert pdf["approved"] is False
+
+
+def test_registry_approval_from_another_index_is_not_transferred_implicitly():
+    only_other = {
+        **REGISTRY, "sources": [
+            {**REGISTRY["sources"][0], "approved_documents": []},
+            {**REGISTRY["sources"][1], "approved_documents":
+             REGISTRY["sources"][0]["approved_documents"]},
+        ],
+    }
+    only_first_index = {**CATALOG, "sources": [CATALOG["sources"][0]]}
+    pdf = next(x for x in build_document_triage(
+        only_first_index, only_other, {}, [],
+    )["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "approval_required"
+    assert pdf["approved"] is False
+
+
+def test_document_observation_provenance_and_current_access_must_match_registry():
+    original = CATALOG["sources"][0]
+    for change in (
+        {"index_url": "https://ieb.ub.edu/another-announcement-index/"},
+        {"institution": "Unknown Institution"},
+        {"mode": "detail"},
+        {"status": "robots_disallowed"},
+        {"status": "robots_unavailable"},
+        {"status": "fetch_failed"},
+        {"status": "unrecognized"},
+    ):
+        tampered = {
+            **CATALOG, "sources": [{
+                **original, **change, "document_candidates": [PDF],
+            }],
+        }
+        with pytest.raises(ValueError):
+            build_document_triage(tampered, REGISTRY, {}, [])
+
+
+def test_archived_expired_cutoff_cannot_be_a_successful_current_review(tmp_path):
+    expired = {
+        **reviewed(),
+        "deadline_iso": "2026-10-11",
+        "evidence_excerpt": (
+            "Interested candidates must complete both steps by 11 October 2026."
+        ),
+    }
+    with pytest.raises(ValueError):
+        record_review(
+            tmp_path / "reviews.json", expired, registry=REGISTRY,
+            method="live_fetch",
+        )
+    assert not (tmp_path / "reviews.json").exists()
+
