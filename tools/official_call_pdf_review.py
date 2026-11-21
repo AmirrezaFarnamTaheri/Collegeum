@@ -25,6 +25,7 @@ from typing import Any
 
 from tools.official_document_review_journal import record_review
 from tools.official_document_safety import NoDocumentRedirect
+from tools.official_robots import parse_official_robots
 from tools.official_pdf_worker import MAX_PDF_BYTES
 from tools.update_official_calls import (
     CALL_TITLE,
@@ -113,11 +114,13 @@ def fetch_reviewed_pdf(url: str, source: dict[str, Any]) -> dict[str, Any]:
                 robots = reply.read(MAX_ROBOTS_BYTES + 1)
                 if len(robots) > MAX_ROBOTS_BYTES:
                     return {"status": "robots_unavailable"}
-                robot.parse(robots.decode("utf-8", errors="replace").splitlines())
+                parse_official_robots(robots, robot)
         except urllib.error.HTTPError as exc:
             if exc.code != 404:
                 return {"status": "robots_unavailable"}
             robot.allow_all = True
+        except (ValueError, UnicodeError):
+            return {"status": "robots_unavailable"}
         if not robot.can_fetch(USER_AGENT, url):
             return {"status": "robots_disallowed"}
         request = urllib.request.Request(url, headers={
