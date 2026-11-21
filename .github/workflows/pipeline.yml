@@ -204,8 +204,25 @@ jobs:
           fi
           if ! git diff --cached --quiet; then
             git commit -m "chore: update listings [skip ci]"
-            if ! (git pull --rebase --autostash && git push); then
+            if ! git pull --rebase --autostash; then
               git rebase --abort 2>/dev/null || true
+              echo "::error::Cannot rebase pipeline journals without conflicts"
+              exit 1
+            fi
+            # Independent admissions/call refreshes may have committed a newer
+            # catalogue while this ingestion ran. Recompute only public health
+            # from the FINAL rebased state before committing its receipt state.
+            # Failure must never discard already-reserved Telegram intents.
+            if PYTHONPATH=src python3 -m tools.reconcile_public_health \
+                 --expected-run-id "$GITHUB_RUN_ID" --write; then
+              git add docs/data/health.json
+              if ! git diff --cached --quiet; then
+                git commit --amend --no-edit
+              fi
+            else
+              echo "::warning title=Health reconciliation incomplete::The next audit will flag the health checkpoint, but durable receipts will still be pushed."
+            fi
+            if ! git push; then
               echo "::error::Cannot persist pipeline journals without conflicts"
               exit 1
             fi
@@ -224,6 +241,10 @@ jobs:
           set -euo pipefail
           PYTHONPATH=src python3 tools/audit_pipeline_outputs.py \
             --output build/output-audit.json
+          # After durable checkpointing, fail the CI job if the exported health
+          # belongs to an earlier production run or holds unreconciled catalogues.
+          PYTHONPATH=src python3 -m tools.reconcile_public_health \
+            --expected-run-id "$GITHUB_RUN_ID" --check
           python3 - <<'PY'
           import json
           import os
