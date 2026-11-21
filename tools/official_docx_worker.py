@@ -69,8 +69,10 @@ def _inspect(data: bytes) -> dict[str, str]:
                     or (entry.file_size > 100 * max(1, entry.compress_size)
                         and entry.file_size > 10_000)):
                 return {"status": "document_unverified", "reason": "zip_expansion"}
-            if re.search(r"(?:^|/)(?:vba(?:project|data)|activex|embeddings|oleobject|customxml|afchunk)",
-                         canonical, re.I):
+            if re.search(
+                r"(?:^|/)(?:vba(?:project|data)|activex|embeddings|oleobject|customxml|afchunk)",
+                canonical, re.I,
+            ):
                 return {"status": "document_unverified", "reason": "active_content"}
         if not {"[content_types].xml", "_rels/.rels", "word/document.xml"} <= seen:
             return {"status": "document_unverified", "reason": "missing_package_parts"}
