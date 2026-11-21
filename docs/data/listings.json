@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-21T11:15:54Z",
+ "generated_at": "2026-11-21T12:42:28Z",
  "count": 221,
  "listings": [
   {
@@ -3328,15 +3328,14 @@
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 15,
    "disciplines": [
-    "Econometrics",
-    "Finance"
+    "Econometrics"
    ],
    "visa": "explicit",
-   "summary": "Macquarie University seeks a postdoctoral researcher to join a project led by Professor Shuping Shi on econometric methods for counterfactual policy evaluation and high-frequency financial-market dynamics. The role requires a completed or near-completed PhD in econometrics, statistics, economics or a related field and offers a fixed-term four-year contract in North Ryde, Australia.",
+   "summary": "Macquarie University seeks a postdoctoral researcher in econometrics for a four-year fixed-term position at its North Ryde campus in Sydney, working on counterfactual policy evaluation and high-frequency financial-market methods under Professor Shuping Shi. The role requires a PhD completed or near completion and offers a salary from $104,481 to $127,138 plus 17% employer superannuation.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.985,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -3414,17 +3413,17 @@
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T23:59:59Z",
+   "deadline": "2026-12-05T00:00:00Z",
    "days_left": 14,
    "disciplines": [
     "Behavioral/Experimental Economics"
    ],
    "visa": "unknown",
-   "summary": "The Postdoctoral Associate in Behavioral and Experimental Social Science is a fixed-term postdoctoral research appointment at NYU Abu Dhabi. The role will split time between independent research and collaborative research with Professors Berkay Özcan and Ernesto Reuben, and it is for candidates who have received or expect to receive a PhD in a relevant social science or data science field within five years.",
+   "summary": "The position is a postdoctoral associate in Behavioral and Experimental Social Science at NYU Abu Dhabi, conducting independent and collaborative research. It is suited for candidates with a recent PhD in economics, management, organizational behavior, sociology, public policy, data science, or related fields.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3440,7 +3439,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "September 1, 2027",
+   "start_term": "September 2027",
    "start_date": "2027-09-01",
    "kind": "postdoc",
    "sector": "academic"
