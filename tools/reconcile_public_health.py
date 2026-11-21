@@ -10,6 +10,7 @@ journals or outgoing messages. The check mode runs after durable checkpointing.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import tempfile
@@ -154,12 +155,33 @@ def _read_json(path: Path) -> dict[str, Any] | None:
     return data
 
 
-def _observed_stamps(root: Path) -> dict[str, Any]:
-    observed = {}
+def _observed_components(
+    root: Path,
+) -> tuple[dict[str, Any], dict[str, str | None]]:
+    """Read each bounded component once, binding its timestamp to exact bytes.
+
+    A catalogue may be rewritten without changing its generated_at. Verify
+    fingerprints after the push, not only optimistic timestamps.
+    """
+    stamps: dict[str, Any] = {}
+    digests: dict[str, str | None] = {}
     for name, (filename, field) in SNAPSHOT_FILES.items():
-        data = _read_json(root / filename)
-        observed[name] = data.get(field) if data is not None else None
-    return observed
+        path = root / filename
+        if not path.exists():
+            stamps[name] = None
+            digests[name] = None
+            continue
+        if path.is_symlink() or path.stat().st_size > MAX_INPUT_BYTES:
+            raise ValueError(f"Untrusted or unbounded {name} snapshot")
+        raw = path.read_bytes()
+        if len(raw) > MAX_INPUT_BYTES:
+            raise ValueError(f"Unbounded {name} snapshot content")
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise ValueError(f"Invalid {name} snapshot format")
+        stamps[name] = data.get(field)
+        digests[name] = hashlib.sha256(raw).hexdigest()
+    return stamps, digests
 
 
 def checkpoint(
@@ -170,7 +192,7 @@ def checkpoint(
     health = _read_json(path)
     _validate_run(health, expected_run_id, now)
     assert health is not None
-    observed = _observed_stamps(root)
+    observed, digests = _observed_components(root)
     if not write:
         current = health.get("official_calls")
         recorded = health.get("component_snapshots")
@@ -182,6 +204,8 @@ def checkpoint(
             item = recorded.get(name)
             if not isinstance(item, dict) or item.get("generated_at") != stamp:
                 raise ValueError(f"Unreconciled {name} snapshot")
+            if item.get("content_sha256") != digests[name]:
+                raise ValueError(f"Unreconciled {name} fingerprint")
         return {"status": "checked", "run_id": expected_run_id}
 
     # Pure read-only health report: no publish/dispatch method is invoked.
@@ -195,6 +219,8 @@ def checkpoint(
     data = reconcile_health(
         health, summary, observed, expected_run_id=expected_run_id, now=now,
     )
+    for name, digest in digests.items():
+        data["component_snapshots"][name]["content_sha256"] = digest
     payload = (json.dumps(data, ensure_ascii=False, indent=1) + "\n").encode()
     if len(payload) > MAX_INPUT_BYTES:
         raise ValueError("Reconciled health too large")
