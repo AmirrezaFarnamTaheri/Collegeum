@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from tools.official_document_review_journal import record_review, load_review_records
+from tools.official_document_review_journal import load_review_records, record_review
 from tools.official_document_triage import build_document_triage
 
 PDF = "https://ieb.ub.edu/wp-content/uploads/2026/11/IEB-PhD-Scholarship-2027-28.pdf"
