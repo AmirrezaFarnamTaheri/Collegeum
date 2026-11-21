@@ -113,6 +113,23 @@ def test_uzh_department_jobs_page_exposes_current_predoc():
     assert "Pre-Doctoral" in result.posts[0].title
 
 
+
+def test_uzh_discovers_current_official_german_route_without_generic_links():
+    """The department links to /offene-stellen/ vacancy URLs (2026-11-21)."""
+    cfg = source("uzh")
+    url = "https://www.econ.uzh.ch/en/about/jobs.html"
+    vacancy = ("https://jobs.uzh.ch/offene-stellen/"
+               "tutor-innen-gesucht-fuer-das-hs26-mikrooekonomik-i/"
+               "d81003af-e31a-4591-b0b0-f23a44cb85a8")
+    html = (f'<a href="{vacancy}">Tutor*innen gesucht fuer Mikrooekonomik</a>'
+            '<a href="https://www.uzh.ch/de/explore/work.html">Further Positions</a>')
+    result = asyncio.run(_scrape_all([
+        SCRAPERS[cfg.type](cfg, FixtureHttp(url, html))
+    ], 1, 5))[0]
+    assert result.ok
+    assert [post.url for post in result.posts] == [vacancy]
+
+
 def test_niesr_uses_actual_careers_page_and_treats_advertised_empty_period_as_normal():
     """The old /about/vacancies route now opens an unrelated economics news article."""
     cfg = source("niesr")
