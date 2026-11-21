@@ -24,8 +24,10 @@ from pathlib import Path
 
 # CLI scripts also run with "python -S tools/script.py": keep that mode safe.
 if __package__:
+    from .official_html_validation import official_html_response_problem
     from .official_robots import parse_official_robots
 else:
+    from official_html_validation import official_html_response_problem
     from official_robots import parse_official_robots
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -625,7 +627,10 @@ def investigate_official_pages(
         if _institutional_url(final_url, official_url) is None:
             first_error = first_error or "unsafe_redirect"
             continue
-        if not isinstance(html, str) or not html.lstrip().startswith("<"):
+        # A nominal HTTP 200 can be a university login/CAPTCHA page
+        # containing plausible dates. It is not successful source evidence,
+        # including for injected offline fetchers and linked admissions pages.
+        if official_html_response_problem(html, max_bytes=MAX_HTML_BYTES) is not None:
             first_error = first_error or "fetch_failed"
             continue
         investigated.append(final_url)
