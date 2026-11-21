@@ -174,6 +174,14 @@ def _official_source_provenance(catalog: dict[str, Any]) -> dict[str, Any] | Non
     bypass the institutional-provenance check.
     """
     if "generated_at" not in catalog:
+        # A synthetic lightweight fixture may omit both provenance fields,
+        # but a catalogue claiming identified institutional sources without
+        # a generation timestamp is not trusted as publication evidence.
+        supplied = catalog.get("sources")
+        if isinstance(supplied, list) and any(
+            isinstance(item, dict) and "id" in item for item in supplied
+        ):
+            return {}
         return None
     if _checked_utc(catalog["generated_at"]) is None:
         return {}
@@ -219,7 +227,7 @@ def eligible_official_calls(catalog: Any, *, now: datetime) -> list[dict[str, An
     )):
         return []
     sources = _official_source_provenance(catalog)
-    if "generated_at" in catalog and not sources:
+    if sources is not None and not sources:
         return []
     matches: dict[str, dict[str, Any]] = {}
     conflicts: set[str] = set()
