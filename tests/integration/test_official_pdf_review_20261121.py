@@ -185,13 +185,31 @@ def test_document_review_rejects_outdated_ambiguous_or_fabricated_official_evide
 
 
 def test_pdf_review_requires_independent_geography_not_just_institution_name():
-    lines = [line for line in _evidence_text() if "08034 Barcelona" not in line]
+    lines = [
+        line.replace("University of Barcelona", "University of Elsewhere")
+        for line in _evidence_text() if "08034 Barcelona" not in line
+    ]
     row = review_pdf_bytes(
         _pdf(lines), url=PDF, source=SOURCE, now=NOW,
         content_type="application/pdf",
     )
     assert row["status"] == "document_unverified"
     assert row["reason"] == "missing_geography"
+
+
+def test_actual_ieb_scholarship_pdf_without_postal_contact_is_reviewable():
+    # The 2026-10-30 institutional PDF names IEB and University of Barcelona,
+    # but has no postal address or phone. The location still has independent
+    # institutional evidence within the document body.
+    lines = [line for line in _evidence_text() if "08034 Barcelona" not in line]
+    lines.append("October 30, 2026")
+    row = review_pdf_bytes(
+        _pdf(lines), url=PDF, source=SOURCE, now=NOW,
+        content_type="application/pdf",
+    )
+    assert row["status"] == "document_review_only", row
+    assert row["deadline_iso"] == "2026-12-11"
+    assert row["automatic_publication"] is False
 
 
 def test_document_review_enforces_strict_byte_limit():
