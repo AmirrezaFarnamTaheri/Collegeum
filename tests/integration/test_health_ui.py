@@ -26,6 +26,13 @@ const cases = [
   [{...fresh, last_run: {outcome: 'ok', errors: 1}}, 'stale', 'incomplete'],
   [{...fresh, runs: [{outcome: 'ok', source_stats: {a: {ok: false}}}]},
     'stale', '1 source checks failed'],
+  [{...fresh, status: 'ok', component_snapshots: {
+      official_calls: {state: 'stale', generated_at: '2026-10-04T11:00:00Z'}
+    }}, 'stale', 'component'],
+  [{...fresh, status: 'ok', component_snapshots: {
+      official_calls: {state: 'current', generated_at: '2026-10-05T11:00:00Z'},
+      phd_admissions: {state: 'missing', generated_at: null}
+    }}, 'stale', 'component'],
   [{...fresh, status: 'ok'}, '', 'Pipeline active'],
   [{generated_at: '2026-10-05T04:01:00Z', status: 'ok'}, '', 'Pipeline active'],
   [{generated_at: '2026-10-05T04:00:00Z', status: 'ok'}, 'stale', 'Pipeline delayed'],
