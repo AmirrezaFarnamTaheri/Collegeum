@@ -11,6 +11,7 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 
 from ..core.network_safety import UnsafeDestination, validate_public_url
+from ..ingest.http import _access_interstitial
 
 log = logging.getLogger(__name__)
 
@@ -179,6 +180,11 @@ class HttpClient:
                 if resp.status_code not in RETRY_STATUS:
                     if resp.status_code >= 400:
                         raise FetchError(f"HTTP {resp.status_code} for {url}", status=resp.status_code)
+                    if resp.status_code == 200 and _access_interstitial(resp.text):
+                        # HTTP 200 browser-checks/CAPTCHAs are access failures,
+                        # not job adverts or a successful empty source. Do not
+                        # retry with another UA or cache the attacker's page.
+                        raise FetchError("access_interstitial", status=200)
                     return resp
                 last_exc = FetchError(f"HTTP {resp.status_code} for {url}", status=resp.status_code)
                 retry_after = resp.headers.get("Retry-After", "")
