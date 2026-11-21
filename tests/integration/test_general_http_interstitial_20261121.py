@@ -102,8 +102,8 @@ def test_legitimate_university_login_link_and_304_cache_remain_allowed():
     for cached in (None, legitimate.encode()):
         cache = FakeCache(cached)
 
-        def handler(_request):
-            if cached is None:
+        def handler(_request, *, _cached=cached):
+            if _cached is None:
                 return httpx.Response(
                     200, text=legitimate, headers={"content-type": "text/html"},
                 )
