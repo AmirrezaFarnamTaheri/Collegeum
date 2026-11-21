@@ -22,6 +22,12 @@ from datetime import UTC, date, datetime, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
 
+# CLI scripts also run with "python -S tools/script.py": keep that mode safe.
+if __package__:
+    from .official_robots import parse_official_robots
+else:
+    from official_robots import parse_official_robots
+
 ROOT = Path(__file__).resolve().parents[1]
 SEEDS = ROOT / "config/phd_admissions_seeds.json"
 PUBLIC = ROOT / "docs/data/phd_admissions.json"
@@ -879,8 +885,12 @@ def check_official_url(url: str, *, now: datetime) -> dict:
     robot = urllib.robotparser.RobotFileParser()
     robot.set_url(robots_url)
     try:
-        _, data, _ = _read_url(robots_url, host=host, limit=MAX_ROBOTS_BYTES)
-        robot.parse(data.decode("utf-8", errors="replace").splitlines())
+        status, data, final_robots_url = _read_url(
+            robots_url, host=host, limit=MAX_ROBOTS_BYTES,
+        )
+        if status != 200 or final_robots_url != robots_url:
+            raise ValueError("unsafe_robots_response")
+        parse_official_robots(data, robot)
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
             robot.allow_all = True
