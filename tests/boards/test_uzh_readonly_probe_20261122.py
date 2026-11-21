@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from predoc_pipeline.boards.config import load_board_sources
+from tools import verify_uzh_live as probe
 from tools.verify_uzh_live import inspect_html
 
 INDEX = "https://www.econ.uzh.ch/en/about/jobs.html"
@@ -75,3 +78,65 @@ def test_uzh_administrative_role_is_discovery_not_a_predoc() -> None:
     assert result["parsed_vacancies"] == 1
     assert result["doctoral_title_signals"] == 0
     assert result["source_state"] == "vacancy-links-observed"
+
+
+def test_live_probe_refuses_robots_policy_without_reporting_a_fake_empty(
+    monkeypatch, capsys,
+) -> None:
+    calls: list[str] = []
+
+    class FakePolicy:
+        def __init__(self, **kwargs):
+            assert kwargs["respect_robots"] is True
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            pass
+
+        def get(self, url: str, *, use_cache: bool):
+            assert not use_cache
+            calls.append(url)
+            return SimpleNamespace(ok=False, status=999)
+
+    monkeypatch.setattr(probe, "PoliteClient", FakePolicy)
+    assert probe.main() == 2
+    assert calls == [INDEX]
+    assert json.loads(capsys.readouterr().out) == {
+        "source_state": "robots-denied-or-fetch-unverified",
+        "http_status": 999,
+    }
+
+
+def test_live_probe_uses_one_policy_checked_get_without_state_writes(
+    monkeypatch, capsys,
+) -> None:
+    calls: list[str] = []
+    html = (
+        "<h1>Open Positions</h1>"
+        f'<a href="{STAFF}">Administrative/r Assistent/in 40 %</a>'
+    )
+
+    class FakePolicy:
+        def __init__(self, **kwargs):
+            assert kwargs["respect_robots"] is True
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            pass
+
+        def get(self, url: str, *, use_cache: bool):
+            assert not use_cache
+            calls.append(url)
+            return SimpleNamespace(ok=True, status=200, text=html)
+
+    monkeypatch.setattr(probe, "PoliteClient", FakePolicy)
+    assert probe.main() == 0
+    assert calls == [INDEX]
+    result = json.loads(capsys.readouterr().out)
+    assert result["source_state"] == "vacancy-links-observed"
+    assert result["doctoral_title_signals"] == 0
+    assert result["verified_empty"] is False
