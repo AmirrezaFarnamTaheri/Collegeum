@@ -24,6 +24,7 @@ a firewall rule.
 
 from __future__ import annotations
 
+import re
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -43,6 +44,34 @@ MAX_CACHED_BODY_BYTES = 1_000_000
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 __all__ = ["FetchResult", "PoliteClient"]
+
+_POLICY_AGENT = re.compile(
+    r"(?mi)^[ \t]*user-agent[ \t]*:[ \t]*[^\s#]+(?:[ \t]*\#[^\r\n]*)?[ \t\r]*$",
+)
+_POLICY_CONTROLS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+
+def _safe_robots_lines(body: bytes) -> list[str]:
+    """Reject HTML/JSON challenge pages masquerading as HTTP 200 robots.txt.
+
+    The standalone admissions and document tools enforce the same policy
+    through tools.official_robots; runtime cannot import tools because the
+    published single-file pipeline contains only the src package.
+    """
+    if not body or len(body) > 256 * 1024:
+        raise ValueError("robots_unavailable")
+    try:
+        text = body.decode("utf-8-sig", errors="strict")
+    except UnicodeError as exc:
+        raise ValueError("robots_unavailable") from exc
+    if (not text.strip() or _POLICY_CONTROLS.search(text)
+            or text.lstrip().startswith(("<", "{", "["))
+            or not _POLICY_AGENT.search(text)):
+        raise ValueError("robots_unavailable")
+    lines = text.splitlines()
+    if any(len(line) > 8192 for line in lines):
+        raise ValueError("robots_unavailable")
+    return lines
 
 
 @dataclass(slots=True)
@@ -159,7 +188,7 @@ class PoliteClient:
                             raise UnsafeDestination("robots.txt response too large")
                         body.extend(chunk)
                     parser = RobotFileParser()
-                    parser.parse(body.decode("utf-8", errors="replace").splitlines())
+                    parser.parse(_safe_robots_lines(bytes(body)))
                 elif response.status_code not in (404, 410):
                     # 403/429, redirects and 5xx are not permission to crawl.
                     parser = RobotFileParser()
