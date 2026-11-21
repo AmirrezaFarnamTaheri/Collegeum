@@ -50,6 +50,27 @@ _POLICY_AGENT = re.compile(
 )
 _POLICY_CONTROLS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
+# The production single-file build only includes src/, so the standalone
+# official monitors' equivalent tool-level validator cannot be imported.
+_HTML_ACCESS_GATE = re.compile(
+    r"<(?:title|h1)\b[^>]*>\s*(?:just a moment|access denied|"
+    r"403(?: forbidden)?|login required|sign in required|"
+    r"service unavailable|bot verification|captcha verification)\b",
+    re.I,
+)
+_HTML_CHALLENGE_CONTROL = re.compile(
+    r"\b(?:cf_chl|cf-chl|challenge-form|g-recaptcha|h-captcha)\b",
+    re.I,
+)
+
+
+def _access_interstitial(text: str) -> bool:
+    """Reject clear HTML access-gate bodies, including plausible fake jobs."""
+    if not text.lstrip().startswith("<"):
+        return False
+    return bool(_HTML_ACCESS_GATE.search(text) or _HTML_CHALLENGE_CONTROL.search(text))
+
+
 
 def _safe_robots_lines(body: bytes) -> list[str]:
     """Reject HTML/JSON challenge pages masquerading as HTTP 200 robots.txt.
@@ -309,9 +330,16 @@ class PoliteClient:
                 # collection; the original content might never be processed.
                 return FetchResult(url=url, status=0, error="304 without cached body")
             body = bytes(cached["body"])
+            cached_text = body.decode("utf-8", errors="replace")
+            if _access_interstitial(cached_text):
+                # Historical poisoned cache entries cannot become successful
+                # ingestion after a conditional 304. Never refresh this cache.
+                return FetchResult(
+                    url=url, status=0, error="access_interstitial_cached",
+                )
             self._remember(key, url, response, body_hash=None)
             return FetchResult(
-                url=url, status=200, text=body.decode("utf-8", errors="replace"),
+                url=url, status=200, text=cached_text,
                 content=body, from_cache=True,
             )
 
@@ -322,6 +350,10 @@ class PoliteClient:
             )
 
         text = response.text
+        if _access_interstitial(text):
+            # 200 interstitials must neither succeed nor poison advisory
+            # response caches for subsequent scheduled ingestion.
+            return FetchResult(url=url, status=0, error="access_interstitial")
         digest = content_hash(text)
         # Identical bytes do not imply that all previously discovered jobs
         # reached gating/extraction. Replay every readable response.
