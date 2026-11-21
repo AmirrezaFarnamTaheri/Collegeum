@@ -67,3 +67,6 @@ def test_official_zero_result_notice_with_conflicting_job_link_fails_closed() ->
     )
     _, result = _collect(html)
     assert not result.ok, result.as_stats()
+    # Keep the raw role for review while marking the contradictory page
+    # partial; do not silently suppress job identities or label zero verified.
+    assert result.posts
