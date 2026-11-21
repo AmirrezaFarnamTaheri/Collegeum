@@ -739,6 +739,12 @@ name = "bde_spain"
 type = "link_scan"
 group = "central_bank"
 url = "https://www.bde.es/wbe/es/sobre-banco/trabajar-banco/convocatorias-plazo-abierto/"
+# Official open-calls index sometimes explicitly reports zero results. Treat
+# only that exact notice as verified quiet time; other zero-link HTML still
+# fails so markup drift and missing official calls remain visible.
+may_be_empty = true
+verified_empty_marker = "0 resultados encontrados para los filtros seleccionados."
+verified_empty_reject_job_links = true
 link_pattern = 'bde\.es/wbe/(?:es|en)/sobre-banco/trabajar-banco/(?:becas-investigacion-ayudas-bde|trabajar-bde/convocatorias)/[^/]+\.html'
 institution = "Banco de España"
 country = "Spain"
