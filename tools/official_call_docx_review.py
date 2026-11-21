@@ -23,9 +23,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from tools.official_docx_worker import MAX_DOCX_BYTES
 from tools.official_document_review_journal import record_review
 from tools.official_document_safety import NoDocumentRedirect
+from tools.official_docx_worker import MAX_DOCX_BYTES
 from tools.update_official_calls import (
     CALL_TITLE,
     EXCLUDE,
