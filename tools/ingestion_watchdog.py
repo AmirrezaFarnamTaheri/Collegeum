@@ -27,6 +27,7 @@ from urllib.parse import urlsplit
 _CORE_SRC = str(Path(__file__).resolve().parents[1] / "src")
 if _CORE_SRC not in sys.path:
     sys.path.insert(0, _CORE_SRC)
+from predoc_pipeline.core.official_call_evidence import eligible_official_calls  # noqa: E402
 from predoc_pipeline.core.official_call_rules import (  # noqa: E402
     call_key,
     group_members,
@@ -373,95 +374,14 @@ def evaluate_official_calls_trigger(
     if not observed:
         return Decision(False, "untrusted-run-history")
     newest = max(observed)
-    verified: dict[str, dict[str, Any]] = {}
-    conflicts: set[str] = set()
-    checked_times: dict[str, datetime] = {}
-    for row in catalog["calls"]:
-        if (not isinstance(row, dict) or row.get("status") != "verified"
-                or row.get("kind") not in {
-                    "phd_scholarship", "phd_studentship", "phd_fellowship",
-                    "phd_bursary",
-                } or row.get("deadline_kind") not in {"funding", "scholarship"}
-                or type(row.get("intake_year")) is not int
-                or not now.year <= row["intake_year"] <= now.year + 2
-                or not isinstance(row.get("institution"), str)
-                or not 5 <= len(row["institution"]) <= 120):
-            continue
-        raw_deadline = row.get("deadline_iso")
-        if (not isinstance(raw_deadline, str)
-                or not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", raw_deadline)):
-            continue
-        try:
-            checked = _timestamp(row.get("checked_at"))
-            deadline = datetime.fromisoformat(raw_deadline).date()
-        except (ValueError, TypeError, OverflowError):
-            continue
-        if (checked > now or now - checked > timedelta(days=14)
-                or deadline < now.date()
-                or deadline > (now + timedelta(days=366)).date()):
-            continue
-        recommended = row.get("recommended_admission_iso")
-        if recommended is not None:
-            if (not isinstance(recommended, str)
-                    or not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", recommended)):
-                continue
-            try:
-                application_day = datetime.fromisoformat(recommended).date()
-            except ValueError:
-                continue
-            if application_day > deadline:
-                continue
-        official, evidence = row.get("official_url"), row.get("evidence_url")
-        if not isinstance(official, str) or official != evidence:
-            continue
-        try:
-            source = urlsplit(official)
-            host = source.hostname.lower() if source.hostname else ""
-            if (source.scheme != "https" or not host or source.port not in (None, 443)
-                    or source.username or source.password or source.query or source.fragment):
-                continue
-        except ValueError:
-            continue
-        country, proof = row.get("country_code"), row.get("location_evidence")
-        national = "uk" if country in {"UK", "GB"} else str(country).lower()
-        valid_country = (
-            (country in {"UK", "GB", "ES", "DE", "FI", "FR", "NL", "IT",
-                         "SE", "NO", "DK", "CH", "AT", "BE"}
-             and host.removeprefix("www.").endswith("." + national)
-             and proof == f"{country}: official national institutional domain "
-                          f"{host.removeprefix('www.')}")
-            or (country == "ES" and host == "ieb.ub.edu"
-                and proof == "ES: official postal address 08034 Barcelona and telephone +34")
-        )
-        if not valid_country or row.get("location_evidence_url") != official:
-            continue
-        excerpt, title = row.get("evidence_excerpt"), row.get("title")
-        if (not isinstance(excerpt, str) or not isinstance(title, str)
-                or not re.search(r"\b(?:ph\.?\s*d\.?|doctoral)\b", title, re.I)
-                or row["deadline_iso"][:4] not in excerpt
-                or not re.search(r"\b(?:by|before|deadline|close|closing|due)\b",
-                                 excerpt, re.I)):
-            continue
-        key = call_key(row)
-        if key in conflicts:
-            continue
-        prior = verified.get(key)
-        if prior and any(
-            prior.get(field) != row.get(field)
-            for field in ("deadline_iso", "deadline_kind", "kind",
-                          "institution", "country_code", "title")
-        ):
-            conflicts.add(key)
-            verified.pop(key, None)
-            checked_times.pop(key, None)
-            continue
-        verified[key] = row
-        checked_times[key] = checked
-
-    candidates = list(verified.values())
+    candidates = eligible_official_calls(catalog, now=now)
     for row in candidates:
         key = call_key(row)
-        if checked_times[key] <= newest:
+        try:
+            checked = _timestamp(row.get("checked_at"))
+        except (ValueError, TypeError, OverflowError):
+            continue
+        if checked <= newest:
             continue
         if receipt_key(row, ledger["deliveries"]) is not None:
             continue
