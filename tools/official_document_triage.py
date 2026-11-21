@@ -41,7 +41,7 @@ def _trusted_document_url(url: Any, root: str) -> bool:
         and not candidate.username and not candidate.password
         and not base.username and not base.password
         and not candidate.query and not candidate.fragment
-        and not "%" in candidate.path and candidate.path.startswith("/")
+        and "%" not in candidate.path and candidate.path.startswith("/")
         and len(candidate.path) <= 350 and _FORMAT.search(candidate.path)
     )
 
