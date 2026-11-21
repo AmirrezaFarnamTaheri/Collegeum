@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -162,7 +163,7 @@ def test_postcheckpoint_check_only_reads_valid_latest_snapshot(tmp_path):
 
 
 def test_workflow_reconciles_after_pull_but_before_push_and_audits_afterward():
-    flow = open(".github/workflows/pipeline.yml", encoding="utf-8").read()
+    flow = Path(".github/workflows/pipeline.yml").read_text(encoding="utf-8")
     assert flow.index("git pull --rebase") < flow.index(
         "tools.reconcile_public_health"
     ) < flow.index("git push")
@@ -172,7 +173,7 @@ def test_workflow_reconciles_after_pull_but_before_push_and_audits_afterward():
 
 
 def test_reconciler_does_not_write_telegram_or_initiate_source_fetch():
-    code = open("tools/reconcile_public_health.py", encoding="utf-8").read()
+    code = Path("tools/reconcile_public_health.py").read_text(encoding="utf-8")
     for forbidden in ("send_message(", "telegram.send(", "urllib.request",
                       "requests.get(", "git push", "workflow_dispatch"):
         assert forbidden not in code
