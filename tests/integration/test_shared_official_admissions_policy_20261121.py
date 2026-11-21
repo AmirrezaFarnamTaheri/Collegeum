@@ -66,6 +66,13 @@ def test_legitimate_query_url_and_separate_admissions_evidence_path_still_work()
         "official_programme_url": "https://www.eui.eu/apply?id=doctoral-programme-in-economics",
         "evidence_url": "https://www.eui.eu/apply?id=doctoral-programme-in-economics",
         "evidence_excerpt": "The deadline to apply for 2027-28 is 15 January 2027.",
+        "investigated_urls": ["https://www.eui.eu/apply?id=doctoral-programme-in-economics"],
+        "official_details": {"institution_country": {
+            "value": "Italy",
+            "evidence_url": "https://www.eui.eu/apply?id=doctoral-programme-in-economics",
+            "checked_at": "2026-11-21T14:00:00Z",
+            "evidence_excerpt": "European University Institute, San Domenico di Fiesole, Italy",
+        }},
     }
     assert eligible_official_admissions(catalog(eui), now=NOW) == [eui]
     assert dispatch(eui)
