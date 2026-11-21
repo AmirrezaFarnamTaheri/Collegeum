@@ -31,7 +31,6 @@ from predoc_pipeline.core.official_admissions_evidence import (  # noqa: E402
 )
 from predoc_pipeline.core.official_call_evidence import eligible_official_calls  # noqa: E402
 from predoc_pipeline.core.official_call_rules import (  # noqa: E402
-    call_key,
     group_members,
     receipt_key,
 )
