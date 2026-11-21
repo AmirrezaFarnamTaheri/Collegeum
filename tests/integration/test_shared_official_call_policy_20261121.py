@@ -159,3 +159,32 @@ def test_invalid_verified_duplicate_cannot_hide_conflicting_funding_terms():
     }
     assert eligible_calls(catalog(genuine, stale_conflict), now=NOW) == []
     assert not dispatch([genuine, stale_conflict])
+
+
+@pytest.mark.parametrize("source_checked", [
+    "2025-11-21T14:00:00Z", "2026-11-22T14:00:00Z", "invalid-timestamp",
+])
+def test_generated_source_freshness_is_independent_of_row_claim(source_checked):
+    data = catalog(call(), summary=True)
+    data["sources"][0]["checked_at"] = source_checked
+    assert eligible_calls(data, now=NOW) == []
+    assert not evaluate_official_calls_trigger(data, LEDGER, RUNS, now=NOW).dispatch
+
+
+def test_call_checked_after_generation_is_untrusted():
+    row = {**call(), "checked_at": "2026-11-21T14:30:00Z"}
+    data = catalog(row, summary=True)
+    assert eligible_calls(data, now=NOW) == []
+    assert not evaluate_official_calls_trigger(data, LEDGER, RUNS, now=NOW).dispatch
+
+
+def test_explicit_detail_source_does_not_authorize_unrelated_same_host_url():
+    row = call()
+    alternate = "https://www.henley.ac.uk/study/phds/some-unapproved-page"
+    row.update(
+        official_url=alternate, evidence_url=alternate,
+        location_evidence_url=alternate,
+    )
+    data = catalog(row, summary=True)
+    assert eligible_calls(data, now=NOW) == []
+    assert not evaluate_official_calls_trigger(data, LEDGER, RUNS, now=NOW).dispatch
