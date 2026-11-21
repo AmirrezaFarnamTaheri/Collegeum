@@ -193,8 +193,20 @@ def _location_proof(text: str, country: str, url: str) -> str | None:
     suffix = "uk" if country in {"UK", "GB"} else country.lower()
     if host.endswith("." + suffix):
         return f"{country}: official national institutional domain {host}"
-    # The generic .edu domain needs independent contact evidence, not the
-    # institution name or an upstream discovery-list country assumption.
+    # On IEB's *exact* official host, two independently named institutions
+    # in the document itself establish Barcelona. Real 2027 IEB PDFs contain
+    # these names but no street address or telephone. Do not treat the source
+    # registry or index label alone as evidence for a document review.
+    if country == "ES" and host == "ieb.ub.edu" and re.search(
+        r"\\b(?:Barcelona Institute of Economics|Institut d.Economia de Barcelona)\\b",
+        text, re.I,
+    ) and re.search(
+        r"\\b(?:University of Barcelona|Universitat de Barcelona)\\b",
+        text, re.I,
+    ):
+        return "ES: official IEB and University of Barcelona institutional identifiers"
+    # Otherwise, generic .edu institutions still require document-borne
+    # verifiable postal and telephone evidence, not a claimed country label.
     if country == "ES" and re.search(
         r"(?:C/\s*John\s+M\.\s*Keynes.{0,55}08034\s+Barcelona|"
         r"08034\s+Barcelona.{0,80}(?:Tel\.?\s*)?\+\s*34)", text, re.I,
@@ -727,8 +739,14 @@ def refresh_sources(
             "document_candidates": document_candidates,
             "document_links_by_format": document_formats,
             "mode": source["mode"],
+            "html_index_empty": bool(source["mode"] == "index"
+                                     and status == "ok" and discovered_links == 0),
+            "document_only_index": bool(source["mode"] == "index"
+                                        and status == "ok" and discovered_links == 0
+                                        and unsupported_documents > 0),
             "index_empty": bool(source["mode"] == "index"
-                                and status == "ok" and discovered_links == 0),
+                                and status == "ok" and discovered_links == 0
+                                and unsupported_documents == 0),
             "unsupported_documents": unsupported_documents,
             "checked_at": _stamp(now),
         })
