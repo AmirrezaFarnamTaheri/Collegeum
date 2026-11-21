@@ -23,11 +23,11 @@ from pypdf.generic import (
 from tools.official_pdf_worker import inspect
 
 
-def _action(kind: str = "JavaScript") -> DictionaryObject:
+def _action(kind: str = "JavaScript", uri: str = "https://ieb.ub.edu/") -> DictionaryObject:
     if kind == "URI":
         return DictionaryObject({
             NameObject("/S"): NameObject("/URI"),
-            NameObject("/URI"): TextStringObject("https://ieb.ub.edu/"),
+            NameObject("/URI"): TextStringObject(uri),
         })
     return DictionaryObject({
         NameObject("/S"): NameObject("/JavaScript"),
@@ -35,7 +35,7 @@ def _action(kind: str = "JavaScript") -> DictionaryObject:
     })
 
 
-def _text_pdf(*, scenario: str) -> bytes:
+def _text_pdf(*, scenario: str, uri: str = "https://ieb.ub.edu/") -> bytes:
     writer = PdfWriter()
     page = writer.add_blank_page(width=612, height=792)
     font = writer._add_object(DictionaryObject({
@@ -65,7 +65,7 @@ def _text_pdf(*, scenario: str) -> bytes:
             NameObject("/Rect"): ArrayObject(
                 [NumberObject(0), NumberObject(0), NumberObject(20), NumberObject(20)]
             ),
-            NameObject("/A"): _action("URI" if scenario == "annotation_uri" else "JavaScript"),
+            NameObject("/A"): _action("URI" if scenario == "annotation_uri" else "JavaScript", uri),
         })
         page[NameObject("/Annots")] = ArrayObject([writer._add_object(ann)])
     elif scenario == "form_container":
@@ -94,3 +94,31 @@ def test_plain_text_and_nonexecuting_website_links_remain_readable(scenario: str
     result = inspect(_text_pdf(scenario=scenario))
     assert result["status"] == "ok", result
     assert "PhD Scholarship in Economics" in result["text"]
+
+
+@pytest.mark.parametrize(
+    "uri",
+    [
+        "javascript:alert(1)",
+        "vbscript:msgbox('x')",
+        "file:///etc/passwd",
+        "data:text/html,<script>alert(1)</script>",
+        "ftp://files.example.edu/archive",
+        "//evil.example.edu/relative",
+        "https://student:password@ieb.ub.edu/private",
+        "https://ieb.ub.edu\\@evil.example.org/redirect",
+    ],
+)
+def test_pdf_action_uri_must_be_a_clean_http_or_https_web_link(uri: str) -> None:
+    result = inspect(_text_pdf(scenario="annotation_uri", uri=uri))
+    assert result == {"status": "document_unverified", "reason": "active_pdf"}
+
+
+@pytest.mark.parametrize("uri", [
+    "https://ieb.ub.edu/convocatorias/",
+    "https://www.ub.edu/school-economics/phd-in-economics/",
+    "http://www.ieb.ub.edu/",
+])
+def test_safe_web_link_does_not_invalidate_pdf_text(uri: str) -> None:
+    result = inspect(_text_pdf(scenario="annotation_uri", uri=uri))
+    assert result["status"] == "ok", result

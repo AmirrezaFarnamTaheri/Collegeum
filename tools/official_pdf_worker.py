@@ -5,10 +5,33 @@ import io
 import json
 import re
 import sys
+from urllib.parse import urlsplit
 
 MAX_PDF_BYTES = 1024 * 1024
 MAX_PDF_PAGES = 8
 MAX_PDF_TEXT = 24000
+
+
+def _safe_web_link(value: object) -> bool:
+    """Check PDF URI actions without opening, normalizing or following links."""
+    if not isinstance(value, str) or not value:
+        return False
+    # urlsplit discards some embedded controls before parsing: reject them
+    # and ambiguous backslashes explicitly before interpreting authority.
+    if any(ch.isspace() or ord(ch) < 32 or ch == "\\" for ch in value):
+        return False
+    try:
+        target = urlsplit(value)
+        return bool(
+            target.scheme in {"http", "https"}
+            and target.hostname
+            and target.username is None
+            and target.password is None
+            and target.port in {None, 80, 443}
+            and "%" not in target.netloc
+        )
+    except ValueError:
+        return False
 
 
 def inspect(data: bytes) -> dict[str, str]:
@@ -71,7 +94,7 @@ def inspect(data: bytes) -> dict[str, str]:
                         else set()
                     )
                     if (not allowed or not set(action).issubset(allowed)
-                            or (kind == "/URI" and not isinstance(action.get("/URI"), str))
+                            or (kind == "/URI" and not _safe_web_link(action.get("/URI")))
                             or (kind == "/GoTo" and "/D" not in action)):
                         return {"status": "document_unverified", "reason": "active_pdf"}
             txt = page.extract_text() or ""
