@@ -100,6 +100,37 @@ def eligible_official_admissions_rows(
     now = now.astimezone(UTC)
     qualified: dict[str, dict[str, Any]] = {}
     conflicts: set[str] = set()
+    # The delivery key represents an institution, not an individual page.
+    # Conflicting, currently applicable verified deadlines/URLs must block
+    # the entire identity even if one row has a malformed evidence excerpt.
+    # Retired prior-year rounds are not competing present-cycle assertions.
+    asserted: dict[str, dict[str, Any]] = {}
+    stable = ("institution", "country_code", "official_programme_url",
+              "evidence_url", "deadline_iso")
+    for claimed in rows:
+        if not isinstance(claimed, dict) or claimed.get("status") != "verified":
+            continue
+        inst = claimed.get("institution")
+        country = claimed.get("country_code")
+        raw = claimed.get("deadline_iso")
+        if (not isinstance(inst, str) or not inst.strip()
+                or not isinstance(country, str) or not isinstance(raw, str)
+                or ISO_DAY.fullmatch(raw) is None):
+            continue
+        try:
+            day = date.fromisoformat(raw)
+        except ValueError:
+            continue
+        if day < now.date() or day > (now + timedelta(days=366)).date():
+            continue
+        key = admission_delivery_key(claimed)
+        previous = asserted.get(key)
+        if previous is not None and any(
+            previous.get(field) != claimed.get(field) for field in stable
+        ):
+            conflicts.add(key)
+        else:
+            asserted.setdefault(key, claimed)
     for row in rows:
         if not isinstance(row, dict) or row.get("status") != "verified":
             continue
