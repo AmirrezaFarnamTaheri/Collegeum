@@ -1,11 +1,10 @@
 """Freshness is not proof of healthy ingestion or successful publication (#52)."""
-from contextlib import redirect_stdout
-from datetime import UTC, datetime
-from io import StringIO
-from pathlib import Path
-from tempfile import TemporaryDirectory
-from unittest import TestCase
-from unittest.mock import patch
+import contextlib
+import datetime
+import io
+import pathlib
+import tempfile
+import unittest.mock
 
 from tools import ingestion_watchdog as watchdog
 
@@ -22,9 +21,9 @@ HEALTH = {
 }
 
 
-class HealthOutcomeSeparationTests(TestCase):
+class HealthOutcomeSeparationTests(unittest.TestCase):
     def test_fresh_partial_ingestion_is_never_printed_as_healthy(self) -> None:
-        now = datetime(2026, 11, 21, 16, 0, tzinfo=UTC)
+        now = datetime.datetime(2026, 11, 21, 16, 0, tzinfo=datetime.UTC)
         recent = watchdog.Decision(False, "fresh", age_seconds=594)
         data = watchdog.health_evidence(HEALTH)
         self.assertTrue(data.counts_verified)
@@ -36,12 +35,12 @@ class HealthOutcomeSeparationTests(TestCase):
         self.assertEqual(
             watchdog.evaluate(HEALTH, [], now=now).reason, "fresh",
         )
-        buffer = StringIO()
-        with TemporaryDirectory() as directory:
-            summary = Path(directory) / "summary.md"
+        buffer = io.StringIO()
+        with tempfile.TemporaryDirectory() as directory:
+            summary = pathlib.Path(directory) / "summary.md"
             with (
-                patch.dict("os.environ", {"GITHUB_STEP_SUMMARY": str(summary)}),
-                redirect_stdout(buffer),
+                unittest.mock.patch.dict("os.environ", {"GITHUB_STEP_SUMMARY": str(summary)}),
+                contextlib.redirect_stdout(buffer),
             ):
                 watchdog._summary(recent, "none", health=HEALTH)
             text = summary.read_text(encoding="utf-8")
@@ -72,8 +71,8 @@ class HealthOutcomeSeparationTests(TestCase):
         self.assertEqual(data.outcome, "unverified")
         self.assertEqual(data.run_id, "unverified")
         self.assertIsNone(data.published)
-        buffer = StringIO()
-        with redirect_stdout(buffer):
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
             watchdog._summary(
                 watchdog.Decision(False, "fresh", age_seconds=5),
                 "none", health=forged,
