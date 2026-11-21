@@ -54,7 +54,7 @@ def _source(name):
 
 
 @pytest.mark.parametrize(("name", "term", "total"), [
-    ("ubc", "research assistant finance", 36),
+    ("ubc", "research assistant finance", 61),
     ("mcgill", "research assistant finance", 42),
     ("uchicago_bfi", "research professional", 220),
 ])
@@ -71,7 +71,7 @@ def test_live_observed_search_results_are_not_truncated(name, term, total):
     assert offsets == [page * 20 for page in range(ceil(total / 20))]
 
 @pytest.mark.parametrize(("name", "term", "total"), [
-    ("ubc", "research assistant finance", 36),
+    ("ubc", "research assistant finance", 61),
     ("mcgill", "research assistant finance", 42),
     ("uchicago_bfi", "research professional", 220),
 ])
