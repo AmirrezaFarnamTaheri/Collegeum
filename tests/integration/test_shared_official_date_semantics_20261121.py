@@ -127,11 +127,20 @@ def test_unrelated_date_cannot_be_used_as_funding_cutoff(text):
     assert not funding_dispatch(row)
 
 
-def test_production_source_summary_cannot_be_removed_without_failing_closed():
+@pytest.mark.parametrize("generated", [
+    "2025-11-21T14:00:00Z", "2026-11-22T14:00:00Z", "invalid-date",
+])
+def test_generated_catalogue_cannot_fake_freshness(generated):
     row = funding(excerpt="Studentship applications close on 21 February 2027.")
     data = {
         "kind": "official_phd_call_observations", "version": 1,
-        "sources": [{"id": "henley-accounting"}], "calls": [row],
+        "generated_at": generated,
+        "sources": [{
+            "id": "henley-accounting", "institution": "Henley Business School",
+            "mode": "detail", "status": "ok", "index_url": FUNDING_URL,
+            "checked_at": "2026-11-21T14:00:00Z",
+        }],
+        "calls": [row],
     }
     assert eligible_calls(data, now=NOW) == []
     assert not evaluate_official_calls_trigger(data, LEDGER, RUNS, now=NOW).dispatch
