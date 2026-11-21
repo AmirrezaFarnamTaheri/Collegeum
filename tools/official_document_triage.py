@@ -15,7 +15,10 @@ from pathlib import Path
 from typing import Any
 
 from predoc_pipeline.core.official_call_rules import call_key
-from tools.official_document_review_journal import load_review_records
+from tools.official_document_review_journal import (
+    load_review_records,
+    validate_review_records,
+)
 from tools.update_official_calls import validate_catalog, validate_sources
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,6 +116,7 @@ def build_document_triage(
     validate_catalog(catalog)
     if not isinstance(deliveries, dict) or not isinstance(reviews, list):
         raise ValueError("Invalid document triage input")
+    validate_review_records(reviews, registry=registry)
     source_map = {row["id"]: row for row in registry["sources"]}
     if len(catalog["sources"]) > len(source_map):
         raise ValueError("Unbounded document source observations")
