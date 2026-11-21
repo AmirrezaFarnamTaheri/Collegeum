@@ -12,6 +12,7 @@ import pytest
 from predoc_pipeline.core.official_call_rules import call_key, receipt_key
 from predoc_pipeline.publish.official_calls import eligible_calls, official_calls_health
 from tools.official_call_pdf_review import fetch_reviewed_pdf
+from tools.official_call_docx_review import fetch_reviewed_docx
 from tools.official_document_review_journal import load_review_records, record_review
 from tools.official_document_safety import NoDocumentRedirect
 from tools.update_official_calls import discover_links, refresh_sources
@@ -233,3 +234,77 @@ def test_same_host_html_language_alias_cannot_rebroadcast_recorded_official_call
         **alias, "official_url": "https://other-institute.example/phd-scholarship-2027",
     }
     assert receipt_key(other_host, delivered) is None
+
+
+def test_index_recheck_metrics_do_not_reclassify_existing_html_as_new():
+    previously = {
+        **OLD, "calls": [{"source_id": SOURCE["id"], "official_url": HTML,
+                          "status": "unrelated", "deadline_iso": None}],
+    }
+    responses = {
+        INDEX: {"status": "ok", "html": indexed_html()},
+        HTML: {"status": "ok", "html": "<h1>Not enough evidence</h1>"},
+        ENERGY: {"status": "ok", "html": "<h1>Not enough evidence</h1>"},
+    }
+    summary = refresh_sources(REGISTRY, previously, now=NOW,
+                              fetcher=lambda url: responses[url])["sources"][0]
+    assert summary["discovered_links"] == 2
+    assert summary["new_html_links"] == 1
+    assert summary["rechecked_links"] == 0
+
+
+def test_robots_blocked_detail_is_not_treated_as_a_verified_html_call():
+    responses = {
+        INDEX: {"status": "ok", "html": indexed_html()},
+        HTML: {"status": "robots_disallowed"},
+        ENERGY: {"status": "ok", "html": "<h1>No funding evidence</h1>"},
+    }
+    catalog = refresh_sources(REGISTRY, OLD, now=NOW,
+                              fetcher=lambda url: responses[url])
+    assert catalog["sources"][0]["status"] == "partial"
+    assert catalog["sources"][0]["blocked_details"] == 1
+    assert not eligible_calls(catalog, now=NOW)
+
+
+def test_invalid_review_ledger_degrades_health_without_promoting_any_call(tmp_path: Path):
+    catalog = tmp_path / "official_phd_calls.json"
+    catalog.write_text(json.dumps({
+        "kind": "official_phd_call_observations", "version": 1,
+        "sources": [{"status": "ok"}], "calls": [],
+    }))
+    (tmp_path / "official_document_reviews.json").write_text('{"state":"verified"}')
+    health = official_calls_health(catalog, tmp_path / "receipts.json", now=NOW)
+    assert health["document_review_status"] == "unavailable"
+    assert health["status"] == "degraded"
+    assert health["eligible"] == 0
+
+
+def test_docx_fetch_cannot_follow_an_approved_host_redirect_either():
+    docx = "https://ieb.ub.edu/announcements/approved-2027.docx"
+    docx_source = {**SOURCE, "approved_documents": [{
+        **SOURCE["approved_documents"][0], "url": docx,
+    }]}
+    response = Mock()
+    response.read.return_value = b"User-agent: *\nAllow: /"
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=None)
+    robot = Mock()
+    robot.can_fetch.return_value = True
+
+    def make_opener(handler):
+        opener = Mock()
+
+        def open_request(request, timeout=8):
+            if request.full_url.endswith("/robots.txt"):
+                return response
+            return handler.redirect_request(
+                request, None, 302, "Found", {},
+                "https://ieb.ub.edu/announcements/changed-2027.docx")
+
+        opener.open.side_effect = open_request
+        return opener
+
+    with (patch("urllib.robotparser.RobotFileParser", return_value=robot),
+          patch("urllib.request.build_opener", side_effect=make_opener)):
+        result = fetch_reviewed_docx(docx, docx_source)
+    assert result["status"] == "unsafe_redirect"
