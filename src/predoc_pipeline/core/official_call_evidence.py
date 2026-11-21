@@ -33,7 +33,6 @@ _DATE_IN_TEXT = re.compile(
     r"(?:st|nd|rd|th)?\s*,?\s*(?P<y2>20\d{2})\b",
     re.I,
 )
-_DEADLINE_CONTEXT = re.compile(r"\b(?:by|before|deadline|close|closing|due)\b", re.I)
 _STABLE_OFFICIAL_FIELDS = (
     "deadline_iso", "deadline_kind", "kind", "institution", "country_code",
     "title", "recommended_admission_iso", "posting_group",
@@ -95,12 +94,57 @@ def explicit_official_dates(excerpt: Any) -> list[tuple[date, int, int]] | None:
     return matches
 
 
-def _excerpt_date_matches(excerpt: Any, expected: date) -> bool:
-    """Require the full funding deadline, not only a year or a second date."""
-    if not isinstance(excerpt, str) or not _DEADLINE_CONTEXT.search(excerpt):
+_DATE_OPENING_CUE = re.compile(
+    r"\b(?:open|opens|opened|opening|start|starts|started|starting|"
+    r"begin|begins|beginning|commence|commences|commenced)\b", re.I,
+)
+_DATE_CLOSING_CUE = re.compile(
+    r"\b(?:close|closes|closed|closing|deadline|due|"
+    r"end|ends|ended|ending)\b", re.I,
+)
+_DATE_SUBMISSION_CUE = re.compile(r"\b(?:by|before|until)\b", re.I)
+
+
+def explicit_official_deadline(excerpt: Any, expected: date) -> bool:
+    """Only a dated *closing* obligation proves a deadline.
+
+    Source excerpts may contain an explicitly dated opening as well as a
+    closing. They must not promote the opening, an orientation/decision date,
+    or multiple different closing dates as the funding/admissions deadline.
+    """
+    if not isinstance(excerpt, str):
         return False
     matches = explicit_official_dates(excerpt)
-    return bool(matches) and {day for day, _, _ in matches} == {expected}
+    if not matches:
+        return False
+    closings: set[date] = set()
+    openings: set[date] = set()
+    for day, start, _ in matches:
+        # Text immediately preceding each full date, not a "deadline" word
+        # anywhere in an unrelated sentence, determines its legal meaning.
+        prefix = excerpt[max(0, start - 90):start]
+        prefix = re.split(r"[.;\n]", prefix)[-1]
+        opening = list(_DATE_OPENING_CUE.finditer(prefix))
+        closing = list(_DATE_CLOSING_CUE.finditer(prefix))
+        open_at = opening[-1].start() if opening else -1
+        close_at = closing[-1].start() if closing else -1
+        if open_at >= 0 and open_at > close_at:
+            openings.add(day)
+        elif close_at >= 0:
+            closings.add(day)
+        elif _DATE_SUBMISSION_CUE.search(prefix):
+            # "Candidates must apply by [date]" is a genuine dated cutoff.
+            closings.add(day)
+        else:
+            # The evidence may instead describe orientation, a decision,
+            # academic year, interview or an unlabelled date; hold it.
+            return False
+    return closings == {expected} and expected not in openings
+
+
+def _excerpt_date_matches(excerpt: Any, expected: date) -> bool:
+    """Compatibility entrypoint for shared funding deadline evidence."""
+    return explicit_official_deadline(excerpt, expected)
 
 
 def _location_verified(row: dict[str, Any], host: str) -> bool:
