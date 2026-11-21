@@ -34,6 +34,7 @@ from tools.update_official_calls import (
     _date_candidates,
     _funding_closed,
     _intake,
+    _location_proof,
     _stamp,
     safe_official_url,
 )
@@ -216,6 +217,10 @@ def review_pdf_bytes(
     if not re.search(r"\b(?:candidates?|applicants?)\s+must\b|\beligib(?:le|ility)\b",
                      text, re.I):
         result["reason"] = "missing_eligibility"
+        return result
+    country = source.get("country_code")
+    if not isinstance(country, str) or not _location_proof(text, country, url):
+        result["reason"] = "missing_geography"
         return result
     intake = _intake(approval["title"], text)
     if intake is None or not now.year <= intake <= now.year + 2:
