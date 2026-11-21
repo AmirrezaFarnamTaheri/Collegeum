@@ -26,9 +26,9 @@ schemes, credentials, unexpected redirects, oversized responses and restricted
 paths. Every fetched URL must be permitted by its own host's robots.txt.
 Unavailable or disallowed robots.txt is a failed check, never an implicit grant.
 
-Same-host scholarship PDF/DOC links discovered in official indexes are counted
-as **unsupported documents**; they are never scraped, fetched, inferred or
-published from filenames. An accessible index with zero **newly discovered** HTML call links
+Same-host scholarship PDF/DOC/DOCX links discovered in official indexes
+are counted as **unverified document-coverage gaps**; discovery alone never
+fetches a file or creates publication evidence. An accessible index with zero **newly discovered** HTML call links
 is reported as an **empty index** coverage limitation, even if older
 already-known calls are successfully rechecked. Source diagnostics show
 `discovered_links`, `rechecked_links` and total `candidate_count`;
@@ -115,10 +115,14 @@ kind, version, call list or source list fails validation.
 The approved source registry also includes IEB's official call-document index
 \`https://ieb.ub.edu/convocatorias/\`. Download buttons sometimes say only
 "Descargar PDF" while the immediately preceding heading identifies the actual
-PhD scholarship. The HTML discovery now counts same-host PDF/DOC links using
-both the anchor label and the surrounding h2/h3/h4 heading. This closes a
-coverage-reporting false negative, **not** an automatic document-publication
-approval. DOC and DOCX files remain unsupported and unexecuted.
+PhD scholarship. The index parser recognizes generic action labels such as "Web personal"
+only when an adjacent H2–H4 heading establishes a PhD funding call and the
+same-host HTML destination path also identifies a relevant programme/call.
+The **HTML detail page is independently fetched and validated** before
+the observation can be verified; index words alone do not suffice.
+The document-link parser similarly uses adjacent headings for PDF/DOC/DOCX,
+but never treats a document link as a verified scholarship. Binary .doc
+remains unsupported. DOCX can be manually reviewed, not published.
 
 A separate, explicitly opt-in \`tools/official_call_pdf_review.py\` reviewer
 only accepts exact, manually approved institutional PDF URLs in
@@ -179,6 +183,49 @@ HTML identity; it cannot become a published observation, create a Telegram
 receipt, or trigger the watchdog. The unattended discovery monitor continues
 counting found documents as coverage gaps; this extension does not authorize
 unattended downloads or claim full DOCX/DOC/PDF recall.
+
+## Independent document review journal and source health
+
+Both review CLIs accept an optional `--record` flag. Only an explicit
+operator invocation of `--file` or an approved `--fetch` (subject to fresh
+robots permission) plus `--record` appends to
+`docs/data/official_document_reviews.json`. The journal is **not** written
+by scheduled discovery, CI or Telegram publication. It contains only
+approved exact URLs, canonical HTML aliases, source IDs, method (local file
+versus live fetch), results, reasons, UTC timestamps and document SHA-256
+fingerprints; it excludes full text and personal information.
+
+The journal is bounded, schema-validated and atomically saved. Duplicate
+unchanged results do not grow it, while a revised document with a different
+content fingerprint becomes a separate review event. A corrupted journal
+fails closed instead of being silently overwritten. No journal entry can
+have the publication status `verified`; successful parsing is *always*
+`document_review_only`. Revisions and changed URLs require fresh
+operator evidence. Coordinate concurrent operator sessions before committing.
+
+The published health collector can read a **committed** journal (if one
+exists) and report review-only success, held/failed reviews, robots blocks,
+live-fetch failures and distinct content revisions. Missing journal means
+`not_recorded`; invalid journal is `unavailable` and degrades health.
+HTML source coverage is independently counted as `discovered_html_links`,
+`new_html_links`, `historical_rechecks`, source/detail robots blocks and
+`document_links_by_format` (PDF, DOC, DOCX). A previous-catalogue snapshot
+without these new per-format fields cannot claim format-complete coverage.
+
+The three IEB indexes had zero eligible HTML links in the 21 November 2026
+snapshot because the earlier HTML parser checked only anchor labels.
+The institutional listing uses a descriptive heading with a generic
+"Web personal" action link; the contextual HTML candidate fix addresses
+this specific recall gap without bypassing detail-page checks or treating
+already delivered IEB awards as new Telegram identities. The index also
+exposes multiple historical/closed document calls: a count of 12 document
+candidates is **not** twelve open scholarships. PDF/DOCX candidates are
+not downloaded automatically, and .doc remains a held format.
+
+Both reviewed-document fetchers now reject *all* HTTP redirects before
+following them, even a same-host redirect that appears harmless. This
+prevents fetching changed or unapproved document URLs under a stale exact
+registry approval.
 
 ## Durable post-send outcomes
 
