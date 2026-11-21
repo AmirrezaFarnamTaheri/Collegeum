@@ -1,4 +1,5 @@
 """Document review must remain manually initiated, read-only and non-publishing."""
+
 from pathlib import Path
 
 
