@@ -110,7 +110,18 @@ def _normalise(
                 or deadline_kind not in {"funding", "scholarship"}
                 or not isinstance(excerpt, str) or not 12 <= len(excerpt) <= 230
                 or re.search(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", excerpt, re.I)
-                or not any(_date(m) == day for m in DATE_RE.finditer(excerpt))):
+                or re.search(r"\+\s*\d{1,3}(?:[\s().-]*\d){5,}", excerpt)
+                or not re.search(
+                    r"\b(?:applications?|applicants?|candidates?|scholarships?|"
+                    r"fellowships?|studentships?|funding|submissions?|apply)\b",
+                    excerpt, re.I,
+                )
+                or not re.search(
+                    r"\b(?:by|before|deadline|clos(?:e|es|ed|ing)|due|until)\b",
+                    excerpt, re.I,
+                )
+                or {parsed for m in DATE_RE.finditer(excerpt)
+                    if (parsed := _date(m)) is not None} != {day}):
             raise ValueError("Document review missing independent cycle/deadline evidence")
         evidence = {
             "title": title, "institution": institution, "country_code": country,
@@ -182,7 +193,7 @@ def record_review(
                      and item["official_url"] == row["official_url"]
                      and item["method"] == row["method"]), None)
     if previous is not None and all(
-        previous[field] == row[field]
+        previous.get(field) == row.get(field)
         for field in (
             "status", "reason", "document_sha256", "canonical_html_url",
             "title", "institution", "country_code", "kind", "intake_year",
