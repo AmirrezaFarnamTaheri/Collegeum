@@ -67,17 +67,18 @@ def _checked_utc(value: Any) -> datetime | None:
     return parsed.astimezone(UTC) if parsed.tzinfo is not None else None
 
 
-def _excerpt_date_matches(excerpt: Any, expected: date) -> bool:
-    """Require the full funding deadline, not only a year or a second date."""
-    if (not isinstance(excerpt, str) or len(excerpt) > 500
-            or not _DEADLINE_CONTEXT.search(excerpt)):
-        return False
-    parsed: set[date] = set()
-    matched = False
+def explicit_official_dates(excerpt: Any) -> list[tuple[date, int, int]] | None:
+    """Parse dates printed in official evidence, with start/end positions.
+
+    Unparseable or oversized text is untrusted, never a licence to reuse a
+    cached or historical deadline from a previous academic cycle.
+    """
+    if not isinstance(excerpt, str) or len(excerpt) > 500:
+        return None
     months = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep",
               "oct", "nov", "dec")
+    matches: list[tuple[date, int, int]] = []
     for found in _DATE_IN_TEXT.finditer(excerpt):
-        matched = True
         try:
             if found.group("iso"):
                 day = date.fromisoformat(found.group("iso"))
@@ -89,9 +90,17 @@ def _excerpt_date_matches(excerpt: Any, expected: date) -> bool:
                     int(found.group("d1") or found.group("d2")),
                 )
         except (ValueError, TypeError):
-            return False
-        parsed.add(day)
-    return matched and parsed == {expected}
+            return None
+        matches.append((day, found.start(), found.end()))
+    return matches
+
+
+def _excerpt_date_matches(excerpt: Any, expected: date) -> bool:
+    """Require the full funding deadline, not only a year or a second date."""
+    if not isinstance(excerpt, str) or not _DEADLINE_CONTEXT.search(excerpt):
+        return False
+    matches = explicit_official_dates(excerpt)
+    return bool(matches) and {day for day, _, _ in matches} == {expected}
 
 
 def _location_verified(row: dict[str, Any], host: str) -> bool:
