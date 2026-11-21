@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from unittest import TestCase
 from unittest.mock import patch
-
-import pytest
 
 from tools.update_phd_admissions import (
     MAX_HTML_BYTES,
@@ -34,47 +33,56 @@ BAD_HTML = [
 ]
 
 
-@pytest.mark.parametrize("html", BAD_HTML)
-def test_official_admissions_production_checker_holds_http200_challenge(html):
-    seen: list[str] = []
+class AdmissionsHTMLResponseIntegrityTests(TestCase):
+    def test_official_admissions_production_checker_holds_http200_challenge(self):
+        for html in BAD_HTML:
+            with self.subTest(html=html[:55]):
+                self._production_case(html)
 
-    def read(url: str, **_kwargs):
-        seen.append(url)
-        if url == ROBOTS:
-            return 200, POLICY, url
-        assert url == PAGE
-        return 200, html.encode(), url
+    def _production_case(self, html):
+        seen: list[str] = []
 
-    with patch("tools.update_phd_admissions._read_url", side_effect=read):
-        observation = check_official_url(PAGE, now=NOW)
-    assert observation["status"] == "fetch_failed"
-    assert observation["deadline_iso"] is None
-    assert observation["investigated_urls"] == []
-    assert seen == [ROBOTS, PAGE]
+        def read(url: str, **_kwargs):
+            seen.append(url)
+            if url == ROBOTS:
+                return 200, POLICY, url
+            self.asserturl == PAGE
+            return 200, html.encode(), url
 
-
-@pytest.mark.parametrize("html", BAD_HTML[:6])
-def test_admissions_injected_official_page_cannot_bypass_response_validator(html):
-    result = investigate_official_pages(
-        PAGE, now=NOW, fetch_html=lambda _: (html, PAGE),
-        robots_allowed=lambda _: True, max_pages=1,
-    )
-    assert result["status"] == "fetch_failed"
-    assert result["investigated_urls"] == []
-    assert result["deadline_iso"] is None
+        with patch("tools.update_phd_admissions._read_url", side_effect=read):
+            observation = check_official_url(PAGE, now=NOW)
+        self.assertobservation["status"] == "fetch_failed"
+        self.assertobservation["deadline_iso"] is None
+        self.assertobservation["investigated_urls"] == []
+        self.assertseen == [ROBOTS, PAGE]
 
 
-def test_ordinary_university_login_navigation_is_not_access_challenge():
-    html = (
-        "<!doctype html><html><head><title>PhD admissions</title></head>"
-        "<body><nav><a href='/login'>Student login</a></nav>"
-        "<h1>Economics PhD admissions</h1>"
-        "<p>Application deadline: 15 January 2027.</p></body></html>"
-    )
-    observed = investigate_official_pages(
-        PAGE, now=NOW, fetch_html=lambda _: (html, PAGE),
-        robots_allowed=lambda _: True, max_pages=1,
-    )
-    assert observed["status"] == "verified"
-    assert observed["deadline_iso"] == "2027-01-15"
-    assert observed["investigated_urls"] == [PAGE]
+    def test_admissions_injected_official_page_cannot_bypass_response_validator(self):
+        for html in BAD_HTML[:6]:
+            with self.subTest(html=html[:55]):
+                self._injected_case(html)
+
+    def _injected_case(self, html):
+        result = investigate_official_pages(
+            PAGE, now=NOW, fetch_html=lambda _: (html, PAGE),
+            robots_allowed=lambda _: True, max_pages=1,
+        )
+        self.assertEqual(result["status"], "fetch_failed")
+        self.assertEqual(result["investigated_urls"], [])
+        self.assertIsNone(result["deadline_iso"])
+
+
+    def test_ordinary_university_login_navigation_is_not_access_challenge(self):
+        html = (
+            "<!doctype html><html><head><title>PhD admissions</title></head>"
+            "<body><nav><a href='/login'>Student login</a></nav>"
+            "<h1>Economics PhD admissions</h1>"
+            "<p>Application deadline: 15 January 2027.</p></body></html>"
+        )
+        observed = investigate_official_pages(
+            PAGE, now=NOW, fetch_html=lambda _: (html, PAGE),
+            robots_allowed=lambda _: True, max_pages=1,
+        )
+        self.assertEqual(observed["status"], "verified")
+        self.assertEqual(observed["deadline_iso"], "2027-01-15")
+        self.assertEqual(observed["investigated_urls"], [PAGE])
