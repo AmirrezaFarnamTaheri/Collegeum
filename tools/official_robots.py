@@ -11,7 +11,9 @@ import re
 import urllib.robotparser
 
 MAX_POLICY_BYTES = 256 * 1024
-_USER_AGENT = re.compile(r"(?mi)^[ \t]*user-agent[ \t]*:[ \t]*\S+[ \t]*$")
+_USER_AGENT = re.compile(
+    r"(?mi)^[ \t]*user-agent[ \t]*:[ \t]*[^\s#]+(?:[ \t]*\#[^\r\n]*)?[ \t\r]*$",
+)
 _BAD_CONTROLS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
