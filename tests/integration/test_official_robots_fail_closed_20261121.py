@@ -4,8 +4,10 @@ from __future__ import annotations
 import urllib.robotparser
 from unittest.mock import Mock, patch
 
+import httpx
 import pytest
 
+from predoc_pipeline.ingest.http import PoliteClient
 from tools.official_call_docx_review import fetch_reviewed_docx
 from tools.official_call_pdf_review import fetch_reviewed_pdf
 from tools.official_robots import parse_official_robots
@@ -124,3 +126,55 @@ def test_official_programme_admissions_reject_invalid_robots(
         got = check_official_url(HTML, now=datetime(2026, 11, 21, tzinfo=UTC))
     assert got["status"] == "robots_unavailable"
     reader.assert_called_once()
+
+
+@pytest.mark.parametrize("policy", [
+    b"<html>Please sign in</html>",
+    b'{"status":"challenge"}',
+    b"User-agent: *\nAllow: /\x00",
+    b"User-agent: \nDisallow: /",
+    b"",
+])
+def test_general_ingestion_polite_client_never_treats_challenge_as_robots_allow(policy):
+    visited = []
+
+    def handler(request):
+        visited.append(str(request.url))
+        if request.url.path == "/robots.txt":
+            return httpx.Response(200, content=policy)
+        return httpx.Response(200, text="Unverified vacancy listing")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as http:
+        crawler = PoliteClient(
+            user_agent="CollegeumOfficialCalls/1.0", client=http,
+            respect_robots=True, per_host_delay=0,
+        )
+        outcome = crawler.get("https://example.org/phd-scholarship",
+                              sleep=lambda _: None)
+    assert outcome.robots_blocked
+    assert visited == ["https://example.org/robots.txt"]
+
+
+def test_general_ingestion_polite_client_accepts_genuine_crlf_robots():
+    visited = []
+
+    def handler(request):
+        visited.append(str(request.url))
+        if request.url.path == "/robots.txt":
+            return httpx.Response(
+                200, content=b"User-agent: *\r\nDisallow: /private\r\n",
+            )
+        return httpx.Response(200, text="Public institutional listing")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as http:
+        crawler = PoliteClient(
+            user_agent="CollegeumOfficialCalls/1.0", client=http,
+            respect_robots=True, per_host_delay=0,
+        )
+        allowed = crawler.get("https://example.org/public/phd",
+                              sleep=lambda _: None)
+        blocked = crawler.get("https://example.org/private/phd",
+                              sleep=lambda _: None)
+    assert allowed.ok
+    assert blocked.robots_blocked
+    assert visited == ["https://example.org/robots.txt", "https://example.org/public/phd"]
