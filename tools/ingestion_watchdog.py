@@ -327,7 +327,6 @@ def evaluate_official_calls_trigger(
     newest = max(observed)
     candidates = eligible_official_calls(catalog, now=now)
     for row in candidates:
-        key = call_key(row)
         try:
             checked = _timestamp(row.get("checked_at"))
         except (ValueError, TypeError, OverflowError):
