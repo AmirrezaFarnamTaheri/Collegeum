@@ -212,6 +212,33 @@ def test_actual_ieb_scholarship_pdf_without_postal_contact_is_reviewable():
     assert row["automatic_publication"] is False
 
 
+def test_ieb_html_candidate_keeps_publishability_with_new_document_body_proof():
+    # The publisher has an independently maintained geography allowlist.
+    # Changing extraction evidence must not silently suppress fresh HTML calls.
+    official_html = SOURCE["approved_documents"][0]["canonical_html_url"]
+    call = {
+        "source_id": "ieb-economics-2027",
+        "institution": SOURCE["institution"],
+        "country_code": "ES", "official_url": official_html,
+        "location_evidence_url": official_html,
+        "location_evidence": (
+            "ES: official IEB and University of Barcelona institutional identifiers"
+        ),
+        "status": "verified", "kind": "phd_scholarship",
+        "title": "PhD Scholarship in Economics 2027",
+        "deadline_iso": "2026-12-11", "deadline_kind": "scholarship",
+        "intake_year": 2027, "checked_at": NOW.isoformat(),
+        "evidence_url": official_html, "evidence_excerpt": (
+            "Interested candidates must complete both steps by 11 December 2026"
+        ),
+    }
+    catalog = {
+        "kind": "official_phd_call_observations", "version": 1,
+        "calls": [call],
+    }
+    assert eligible_calls(catalog, now=NOW) == [call]
+
+
 def test_document_review_enforces_strict_byte_limit():
     row = review_pdf_bytes(
         b"%PDF-1.7\n" + b"0" * MAX_PDF_BYTES,
