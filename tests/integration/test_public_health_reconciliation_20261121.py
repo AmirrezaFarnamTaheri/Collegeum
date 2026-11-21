@@ -164,10 +164,10 @@ def test_postcheckpoint_check_only_reads_valid_latest_snapshot(tmp_path):
 def test_workflow_reconciles_after_pull_but_before_push_and_audits_afterward():
     flow = open(".github/workflows/pipeline.yml", encoding="utf-8").read()
     assert flow.index("git pull --rebase") < flow.index(
-        "reconcile_public_health --expected-run-id"
+        "tools.reconcile_public_health"
     ) < flow.index("git push")
     assert "git commit --amend --no-edit" in flow
-    assert "reconcile_public_health --expected-run-id" in flow[
+    assert "tools.reconcile_public_health" in flow[
         flow.index("Audit checkpointed outputs"):]
 
 
