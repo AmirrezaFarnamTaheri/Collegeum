@@ -8,7 +8,6 @@ confined to the small CLI adapter at the bottom.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import re
@@ -19,7 +18,6 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
 # This watchdog runs as `python3 -S tools/ingestion_watchdog.py` with no site
 # packages. Reuse the pure standard-library core rules instead of duplicating
@@ -27,6 +25,10 @@ from urllib.parse import urlsplit
 _CORE_SRC = str(Path(__file__).resolve().parents[1] / "src")
 if _CORE_SRC not in sys.path:
     sys.path.insert(0, _CORE_SRC)
+from predoc_pipeline.core.official_admissions_evidence import (  # noqa: E402
+    admission_delivery_key,
+    eligible_official_admissions_rows,
+)
 from predoc_pipeline.core.official_call_evidence import eligible_official_calls  # noqa: E402
 from predoc_pipeline.core.official_call_rules import (  # noqa: E402
     call_key,
@@ -264,63 +266,12 @@ def evaluate_admissions_trigger(
     if any(status in ACTIVE_STATUSES for _, status in main_runs):
         return Decision(False, "pipeline-already-running")
     latest = max(created for created, _ in main_runs)
-    for row in catalog["programmes"]:
-        if not isinstance(row, dict) or row.get("status") != "verified":
-            continue
-        name, country = row.get("institution"), row.get("country_code")
-        if (
-            not isinstance(name, str) or not name.strip()
-            or not isinstance(country, str) or not re.fullmatch(r"[A-Z]{2}", country)
-            or country == "US"
-        ):
-            continue
+    for row in eligible_official_admissions_rows(catalog, now=now):
         try:
             checked = _timestamp(row.get("checked_at"))
-            deadline = datetime.fromisoformat(str(row.get("deadline_iso"))).date()
         except (ValueError, TypeError, OverflowError):
             continue
-        if (checked > now or now - checked > timedelta(days=14)
-                or deadline < now.date() or deadline > (now + timedelta(days=366)).date()):
-            continue
-        official, evidence = row.get("official_programme_url"), row.get("evidence_url")
-        if not isinstance(official, str) or not isinstance(evidence, str):
-            continue
-        source, fact_url = urlsplit(official), urlsplit(evidence)
-        if (
-            source.scheme != "https" or fact_url.scheme != "https"
-            or not source.hostname or not fact_url.hostname
-            or source.hostname.lower().removeprefix("www.")
-                != fact_url.hostname.lower().removeprefix("www.")
-            or source.username or fact_url.username or source.password or fact_url.password
-            or source.port not in (None, 443) or fact_url.port not in (None, 443)
-        ):
-            continue
-        excerpt = row.get("evidence_excerpt")
-        if (
-            not isinstance(excerpt, str)
-            or str(deadline.year) not in excerpt
-            or not re.search(r"\b(?:deadline|closes?|closing)\b", excerpt, re.I)
-        ):
-            continue
-        suffix = "uk" if country in {"UK", "GB"} else country.lower()
-        host = source.hostname.lower().removeprefix("www.")
-        corroborated = host.endswith("." + suffix)
-        if not corroborated:
-            fact = (row.get("official_details") or {}).get("institution_country")
-            corroborated = bool(
-                isinstance(fact, dict)
-                and isinstance(fact.get("value"), str)
-                and fact.get("checked_at") == row.get("checked_at")
-                and isinstance(fact.get("evidence_url"), str)
-                and fact["evidence_url"] in row.get("investigated_urls", [])
-                and urlsplit(fact["evidence_url"]).hostname
-                and urlsplit(fact["evidence_url"]).hostname.lower().removeprefix("www.") == host
-                and isinstance(fact.get("evidence_excerpt"), str)
-                and fact["value"].casefold() in fact["evidence_excerpt"].casefold()
-            )
-        if not corroborated:
-            continue
-        key = hashlib.sha256(f"{country}|{name.strip().casefold()}".encode()).hexdigest()[:32]
+        key = admission_delivery_key(row)
         receipt = ledger["deliveries"].get(key)
         if receipt is None and checked > latest:
             return Decision(True, "new-verified-admissions-awaiting-publisher")
