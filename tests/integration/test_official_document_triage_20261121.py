@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from predoc_pipeline.core.official_call_rules import call_key
 from tools.official_document_review_journal import load_review_records, record_review
 from tools.official_document_triage import build_document_triage
 
@@ -94,8 +95,9 @@ def test_verified_document_review_never_claims_delivery_without_same_cycle_recei
         "state": "confirmed", "message_id": 133, "official_url": HTML,
         "institution": "Barcelona Institute of Economics (IEB)",
         "intake_year": 2027, "deadline_iso": "2026-12-11",
+        "title": "PhD Scholarship in Economics 2027",
     }
-    queue = build_document_triage(CATALOG, REGISTRY, {"a" * 32: old}, [review])
+    queue = build_document_triage(CATALOG, REGISTRY, {call_key(old): old}, [review])
     pdf = next(item for item in queue["documents"] if item["official_url"] == PDF)
     assert pdf["next_action"] == "already_delivered_same_cycle"
     assert pdf["prior_message_id"] == 133
@@ -192,5 +194,33 @@ def test_old_year_receipt_with_identical_cutoff_requires_reconciliation():
     queue = build_document_triage(CATALOG, REGISTRY, {"b" * 32: prior},
                                   [reviewed()])
     pdf = next(x for x in queue["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
+    assert pdf["prior_message_id"] is None
+
+
+def test_forged_receipt_key_cannot_prove_document_was_delivered():
+    old = {
+        "state": "confirmed", "message_id": 133, "official_url": HTML,
+        "institution": "Barcelona Institute of Economics (IEB)",
+        "intake_year": 2027, "deadline_iso": "2026-12-11",
+        "title": "PhD Scholarship in Economics 2027",
+    }
+    assert call_key(old) != "a" * 32
+    result = build_document_triage(CATALOG, REGISTRY, {"a" * 32: old}, [reviewed()])
+    pdf = next(x for x in result["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
+    assert pdf["prior_message_id"] is None
+
+
+def test_distinct_scholarship_same_url_cycle_is_not_marked_delivered():
+    other = {
+        "state": "confirmed", "message_id": 134, "official_url": HTML,
+        "institution": "Barcelona Institute of Economics (IEB)",
+        "intake_year": 2027, "deadline_iso": "2026-12-11",
+        "title": "PhD Fellowship in Energy Economics 2027",
+    }
+    result = build_document_triage(CATALOG, REGISTRY, {call_key(other): other},
+                                   [reviewed()])
+    pdf = next(x for x in result["documents"] if x["official_url"] == PDF)
     assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
     assert pdf["prior_message_id"] is None
