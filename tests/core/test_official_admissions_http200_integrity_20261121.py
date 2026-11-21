@@ -34,55 +34,47 @@ BAD_HTML = [
 
 
 class AdmissionsHTMLResponseIntegrityTests(TestCase):
-    def test_official_admissions_production_checker_holds_http200_challenge(self):
+    def test_official_checker_holds_http200_challenge(self):
         for html in BAD_HTML:
             with self.subTest(html=html[:55]):
-                self._production_case(html)
+                seen: list[str] = []
 
-    def _production_case(self, html):
-        seen: list[str] = []
+                def read(url: str, **_kwargs):
+                    seen.append(url)
+                    if url == ROBOTS:
+                        return 200, POLICY, url
+                    self.assertEqual(url, PAGE)
+                    return 200, html.encode(), url
 
-        def read(url: str, **_kwargs):
-            seen.append(url)
-            if url == ROBOTS:
-                return 200, POLICY, url
-            self.asserturl == PAGE
-            return 200, html.encode(), url
+                with patch("tools.update_phd_admissions._read_url", side_effect=read):
+                    observation = check_official_url(PAGE, now=NOW)
+                self.assertEqual(observation["status"], "fetch_failed")
+                self.assertIsNone(observation["deadline_iso"])
+                self.assertEqual(observation["investigated_urls"], [])
+                self.assertEqual(seen, [ROBOTS, PAGE])
 
-        with patch("tools.update_phd_admissions._read_url", side_effect=read):
-            observation = check_official_url(PAGE, now=NOW)
-        self.assertobservation["status"] == "fetch_failed"
-        self.assertobservation["deadline_iso"] is None
-        self.assertobservation["investigated_urls"] == []
-        self.assertseen == [ROBOTS, PAGE]
-
-
-    def test_admissions_injected_official_page_cannot_bypass_response_validator(self):
+    def test_injected_official_page_cannot_bypass_validator(self):
         for html in BAD_HTML[:6]:
             with self.subTest(html=html[:55]):
-                self._injected_case(html)
+                observation = investigate_official_pages(
+                    PAGE, now=NOW, fetch_html=lambda _: (html, PAGE),
+                    robots_allowed=lambda _: True, max_pages=1,
+                )
+                self.assertEqual(observation["status"], "fetch_failed")
+                self.assertEqual(observation["investigated_urls"], [])
+                self.assertIsNone(observation["deadline_iso"])
 
-    def _injected_case(self, html):
-        result = investigate_official_pages(
-            PAGE, now=NOW, fetch_html=lambda _: (html, PAGE),
-            robots_allowed=lambda _: True, max_pages=1,
-        )
-        self.assertEqual(result["status"], "fetch_failed")
-        self.assertEqual(result["investigated_urls"], [])
-        self.assertIsNone(result["deadline_iso"])
-
-
-    def test_ordinary_university_login_navigation_is_not_access_challenge(self):
+    def test_normal_login_navigation_is_not_access_challenge(self):
         html = (
             "<!doctype html><html><head><title>PhD admissions</title></head>"
             "<body><nav><a href='/login'>Student login</a></nav>"
             "<h1>Economics PhD admissions</h1>"
             "<p>Application deadline: 15 January 2027.</p></body></html>"
         )
-        observed = investigate_official_pages(
+        observation = investigate_official_pages(
             PAGE, now=NOW, fetch_html=lambda _: (html, PAGE),
             robots_allowed=lambda _: True, max_pages=1,
         )
-        self.assertEqual(observed["status"], "verified")
-        self.assertEqual(observed["deadline_iso"], "2027-01-15")
-        self.assertEqual(observed["investigated_urls"], [PAGE])
+        self.assertEqual(observation["status"], "verified")
+        self.assertEqual(observation["deadline_iso"], "2027-01-15")
+        self.assertEqual(observation["investigated_urls"], [PAGE])
