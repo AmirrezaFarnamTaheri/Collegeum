@@ -51,7 +51,7 @@ def test_crlf_and_inline_comments_remain_valid_robots_permissions():
     # closed only on malformed responses, not on normal syntax variants.
     robot = urllib.robotparser.RobotFileParser()
     parse_official_robots(
-        b"User-Agent: * # all bots\\r\\nDisallow: /private\\r\\nAllow: /\\r\\n",
+        b"User-Agent: * # all bots\r\nDisallow: /private\r\nAllow: /\r\n",
         robot,
     )
     assert not robot.can_fetch("CollegeumOfficialCalls/1.0", "https://ieb.ub.edu/private/x")
