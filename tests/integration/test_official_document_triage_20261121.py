@@ -302,3 +302,86 @@ def test_direct_triage_rejects_unvalidated_policy_failure_rows():
         build_document_triage(
             CATALOG, REGISTRY, {}, [{**blocked, "method": "unknown"}],
         )
+
+
+def test_revised_same_cycle_deadline_never_appears_unsent_to_operator():
+    # Institutions correct deadlines after publication. A changed funding
+    # cutoff is not proof the earlier Telegram attempt never happened.
+    for state in ("confirmed", "pending", "uncertain", "retry_held"):
+        previous = {
+            "state": state, "message_id": 133, "official_url": HTML,
+            "institution": "Barcelona Institute of Economics (IEB)",
+            "intake_year": 2027, "deadline_iso": "2026-12-09",
+            "title": "PhD Scholarship in Economics 2027",
+        }
+        key = call_key(previous)
+        pdf = next(x for x in build_document_triage(
+            CATALOG, REGISTRY, {key: previous}, [reviewed()],
+        )["documents"] if x["official_url"] == PDF)
+        assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
+        assert pdf["prior_message_id"] is None
+
+
+def test_uncertain_receipt_without_deadline_cannot_look_unsent():
+    previous = {
+        "state": "uncertain", "official_url": HTML,
+        "institution": "Barcelona Institute of Economics (IEB)",
+        "intake_year": 2027, "deadline_iso": None,
+        "title": "PhD Scholarship in Economics 2027",
+    }
+    pdf = next(x for x in build_document_triage(
+        CATALOG, REGISTRY, {"legacy-unknown": previous}, [reviewed()],
+    )["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
+    assert pdf["prior_message_id"] is None
+
+
+def test_historical_different_cycle_deadline_remains_new_reviewer_lead():
+    previous = {
+        "state": "confirmed", "message_id": 95, "official_url": HTML,
+        "institution": "Barcelona Institute of Economics (IEB)",
+        "intake_year": 2026, "deadline_iso": "2025-12-11",
+        "title": "PhD Scholarship in Economics 2026",
+    }
+    pdf = next(x for x in build_document_triage(
+        CATALOG, REGISTRY, {call_key(previous): previous}, [reviewed()],
+    )["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "review_complete_no_delivery"
+
+
+def test_future_dated_review_is_rejected_at_all_validation_entrypoints(tmp_path):
+    future = {**reviewed(), "reviewed_at": "2099-01-01T00:00:00Z"}
+    with pytest.raises(ValueError):
+        build_document_triage(CATALOG, REGISTRY, {}, [future])
+    with pytest.raises(ValueError):
+        record_review(
+            tmp_path / "reviews.json", future, registry=REGISTRY,
+            method="live_fetch",
+        )
+    assert not (tmp_path / "reviews.json").exists()
+
+
+def test_conflicting_same_time_document_revisions_fail_closed(tmp_path):
+    first = reviewed(digest="a" * 64)
+    conflicting = reviewed(digest="b" * 64)
+    target = tmp_path / "reviews.json"
+    assert record_review(target, first, registry=REGISTRY, method="live_fetch")
+    # A different body at the same second has no defensible event order.
+    with pytest.raises(ValueError):
+        record_review(target, conflicting, registry=REGISTRY, method="live_fetch")
+    assert len(load_review_records(target, registry=REGISTRY)) == 1
+    with pytest.raises(ValueError):
+        build_document_triage(CATALOG, REGISTRY, {}, [first, conflicting])
+
+
+def test_out_of_order_revised_review_does_not_override_newer_audit(tmp_path):
+    newer = {**reviewed(digest="b" * 64), "reviewed_at": "2026-11-21T11:10:00Z"}
+    older = {**reviewed(digest="a" * 64), "reviewed_at": "2026-11-21T11:00:00Z"}
+    path = tmp_path / "reviews.json"
+    assert record_review(path, newer, registry=REGISTRY, method="live_fetch")
+    with pytest.raises(ValueError):
+        record_review(path, older, registry=REGISTRY, method="live_fetch")
+    assert [x["document_sha256"] for x in load_review_records(
+        path, registry=REGISTRY,
+    )] == ["b" * 64]
+
