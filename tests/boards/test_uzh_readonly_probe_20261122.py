@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tools.verify_uzh_live import inspect_html
-
 from predoc_pipeline.boards.config import load_board_sources
+from tools.verify_uzh_live import inspect_html
 
 INDEX = "https://www.econ.uzh.ch/en/about/jobs.html"
 PREDOC = (
