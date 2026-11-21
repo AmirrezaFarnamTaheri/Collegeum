@@ -212,6 +212,19 @@ def test_actual_ieb_scholarship_pdf_without_postal_contact_is_reviewable():
     assert row["automatic_publication"] is False
 
 
+def test_ieb_pdf_conflicting_contact_overrides_institution_name_proof():
+    lines = [
+        line.replace("08034 Barcelona", "Madrid").replace("+34", "+44")
+        for line in _evidence_text()
+    ]
+    row = review_pdf_bytes(
+        _pdf(lines), url=PDF, source=SOURCE, now=NOW,
+        content_type="application/pdf",
+    )
+    assert row["status"] == "document_unverified"
+    assert row["reason"] == "missing_geography"
+
+
 def test_ieb_html_candidate_keeps_publishability_with_new_document_body_proof():
     # The publisher has an independently maintained geography allowlist.
     # Changing extraction evidence must not silently suppress fresh HTML calls.
