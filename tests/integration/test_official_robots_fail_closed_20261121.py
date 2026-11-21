@@ -118,7 +118,6 @@ def test_official_html_discovery_rejects_challenge_robots_as_unknown_policy():
 def test_official_programme_admissions_reject_invalid_robots(
     status, body, final,
 ):
-    root = "https://ieb.ub.edu/robots.txt"
     with patch("tools.update_phd_admissions._read_url",
                return_value=(status, body, final)) as reader:
         from datetime import UTC, datetime
