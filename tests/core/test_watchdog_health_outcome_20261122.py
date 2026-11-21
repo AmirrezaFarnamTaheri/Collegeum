@@ -1,6 +1,4 @@
 """Freshness is not proof of healthy ingestion or successful publication (#52)."""
-from __future__ import annotations
-
 from contextlib import redirect_stdout
 from datetime import UTC, datetime
 from io import StringIO
@@ -41,9 +39,11 @@ class HealthOutcomeSeparationTests(TestCase):
         buffer = StringIO()
         with TemporaryDirectory() as directory:
             summary = Path(directory) / "summary.md"
-            with patch.dict("os.environ", {"GITHUB_STEP_SUMMARY": str(summary)}):
-                with redirect_stdout(buffer):
-                    watchdog._summary(recent, "none", health=HEALTH)
+            with (
+                patch.dict("os.environ", {"GITHUB_STEP_SUMMARY": str(summary)}),
+                redirect_stdout(buffer),
+            ):
+                watchdog._summary(recent, "none", health=HEALTH)
             text = summary.read_text(encoding="utf-8")
         result = buffer.getvalue()
         self.assertIn("Ingestion watchdog: fresh", result)
@@ -52,7 +52,7 @@ class HealthOutcomeSeparationTests(TestCase):
         self.assertIn("published in run: 0", result)
         self.assertIn("::warning title=Degraded ingestion snapshot::", result)
         self.assertIn("Application outcome: **partial**", text)
-        self.assertIn("Publication attempts in snapshot run: **0**", text)
+        self.assertIn("Reported published listings in snapshot run: **0**", text)
         self.assertIn("Source health: **59 successful", text)
 
     def test_untrusted_source_counts_are_unverified_not_coerced(self) -> None:
@@ -94,3 +94,11 @@ class HealthOutcomeSeparationTests(TestCase):
         self.assertFalse(watchdog.health_evidence(invalid).counts_verified)
         self.assertEqual(watchdog.health_evidence({}).outcome, "unverified")
         self.assertFalse(watchdog.health_evidence({}).counts_verified)
+        for malformed in (["success"], {"unexpected": "success"}):
+            with self.subTest(outcome=malformed):
+                self.assertEqual(
+                    watchdog.health_evidence({
+                        "last_run": {"outcome": malformed},
+                    }).outcome,
+                    "unverified",
+                )
