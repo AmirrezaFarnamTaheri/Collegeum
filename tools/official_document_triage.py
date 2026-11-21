@@ -95,14 +95,21 @@ def _has_prior_attempt(
     for value in deliveries.values():
         if not isinstance(value, dict):
             continue
+        if (value.get("official_url") != canonical
+                or value.get("institution") != institution
+                or not isinstance(value.get("state"), str)
+                or not value["state"]):
+            continue
         year = value.get("intake_year")
-        if (
-            value.get("official_url") == canonical
-            and value.get("institution") == institution
-            and value.get("deadline_iso") == deadline
-            and (year is None or (type(year) is int and year in {intake, intake - 1}))
-            and value.get("state") is not None
-        ):
+        # Deadline corrections, title edits and incomplete/ambiguous receipts
+        # cannot prove an earlier same-year send never occurred. Hold rather
+        # than letting an operator infer "no delivery" from the new cutoff.
+        if type(year) is not int or year == intake:
+            return True
+        # The known historical one-year parser error is a duplicate only
+        # when the exact cutoff survives; an actual future annual round with
+        # a different deadline must remain reviewable.
+        if year == intake - 1 and value.get("deadline_iso") == deadline:
             return True
     return False
 
