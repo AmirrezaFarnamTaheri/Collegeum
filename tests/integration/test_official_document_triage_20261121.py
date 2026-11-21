@@ -129,6 +129,7 @@ def test_successful_review_audit_rejects_missing_or_contradictory_evidence(tmp_p
     for changes in (
         {"evidence_excerpt": ""},
         {"evidence_excerpt": "An unrelated academic year only."},
+        {"evidence_excerpt": "Email someone@example.org by 11 December 2026."},
         {"deadline_iso": "2026-02-30"},
         {"deadline_iso": "2027-01-15"},
         {"intake_year": True},
