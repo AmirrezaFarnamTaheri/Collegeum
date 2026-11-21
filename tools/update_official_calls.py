@@ -31,6 +31,16 @@ CATALOG = ROOT / "docs/data/official_phd_calls.json"
 USER_AGENT = "CollegeumOfficialCalls/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)"
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
+_ACCESS_GATE = re.compile(
+    r"<(?:title|h1)\b[^>]*>\s*(?:just a moment|access denied|"
+    r"403(?: forbidden)?|login required|sign in required|"
+    r"service unavailable|bot verification|captcha verification)\b",
+    re.I,
+)
+_CHALLENGE_CONTROL = re.compile(
+    r"\b(?:cf_chl|cf-chl|challenge-form|g-recaptcha|h-captcha)\b",
+    re.I,
+)
 MAX_INDEX_LINKS = 6
 # Generic index anchors are candidates only when context AND path match.
 _GENERIC_DETAIL_LABEL = re.compile(
@@ -651,6 +661,21 @@ def validate_catalog(catalog: Any) -> None:
         raise ValueError("Invalid official-call catalogue")
 
 
+def _html_response_problem(body: Any) -> str | None:
+    """Reason a successful HTTP response cannot establish checked source HTML.
+
+    A 200 login/challenge must never become an empty official opportunity
+    index or fresh evidence for a funding deadline. A normal site navigation
+    *link* to /login is not a challenge and remains permitted.
+    """
+    if (not isinstance(body, str) or not body.strip().startswith("<")
+            or len(body.encode("utf-8")) > MAX_HTML_BYTES):
+        return "invalid_html"
+    if _ACCESS_GATE.search(body) or _CHALLENGE_CONTROL.search(body):
+        return "access_interstitial"
+    return None
+
+
 def refresh_sources(
     config: dict[str, Any], previous: dict[str, Any], *,
     now: datetime, fetcher: Callable[[str], dict[str, Any]],
@@ -676,6 +701,11 @@ def refresh_sources(
     for source in config["sources"]:
         response = fetcher(source["url"])
         status = response.get("status") if isinstance(response, dict) else "fetch_failed"
+        content_problem = None
+        if status == "ok":
+            content_problem = _html_response_problem(response.get("html"))
+            if content_problem is not None:
+                status = "fetch_failed"
         urls: list[str] = []
         failures = 0
         discovered_links = 0
@@ -722,6 +752,12 @@ def refresh_sources(
             status = "fetch_failed"
         for url in urls:
             detail = response if url == source["url"] else fetcher(url)
+            # A linked detail can return an HTTP 200 login/interstitial even
+            # when the index was genuine. Do not treat it as checked evidence.
+            if isinstance(detail, dict) and detail.get("status") == "ok":
+                detail_problem = _html_response_problem(detail.get("html"))
+                if detail_problem is not None:
+                    detail = {"status": "fetch_failed", "reason": detail_problem}
             if not isinstance(detail, dict) or detail.get("status") != "ok":
                 failures += 1
                 if isinstance(detail, dict) and detail.get("status") in {
@@ -753,6 +789,7 @@ def refresh_sources(
                 "partial" if failures else status
             ),
             "failed_details": failures, "blocked_details": blocked_details,
+            "content_problem": content_problem,
             "candidate_count": len(urls), "discovered_links": discovered_links,
             "new_html_links": new_html_links, "rechecked_links": rechecked_links,
             "document_candidates": document_candidates,
@@ -834,8 +871,11 @@ def fetch_official(url: str) -> dict[str, Any]:
             return {"status": "unsafe_redirect"}
         if not body.lstrip().lower().startswith((b"<", b"<!doctype")):
             return {"status": "fetch_failed"}
-        return {"status": "ok", "html": body.decode("utf-8", errors="replace"),
-                "final_url": final}
+        html = body.decode("utf-8", errors="replace")
+        problem = _html_response_problem(html)
+        if problem is not None:
+            return {"status": "fetch_failed", "reason": problem}
+        return {"status": "ok", "html": html, "final_url": final}
     except (OSError, TimeoutError, UnicodeError, ValueError, urllib.error.HTTPError):
         return {"status": "fetch_failed"}
 
