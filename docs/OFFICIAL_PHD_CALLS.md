@@ -148,6 +148,38 @@ canonical HTML call and must not create another URL-based delivery identity.
 This is a bounded verification tool, not a claim of full institutional PDF
 coverage; tracking issue #183 retains the controlled promotion requirement.
 
+## Review-only institutional DOCX evidence
+
+Institutional Word `.docx` calls now have a **separate opt-in** reviewer:
+`uv run --locked python -m tools.official_call_docx_review --source-id SOURCE --url EXACT_APPROVED_DOCX_URL --file LOCAL.docx`
+or, only after confirming official-source permission and robots policy, replace
+`--file LOCAL.docx` with `--fetch`. The exact HTTPS URL and canonical
+institutional HTML identity must first be included in the source registry's
+`approved_documents`; no DOCX URLs are pre-approved in the registry.
+Older binary `.doc` files remain unsupported and are never executed.
+
+The DOCX review fetches at most 1 MiB, requires the standard OOXML DOCX MIME,
+and performs a fresh robots check before each network access. Unexpected
+redirects, credentials, off-host targets, alternative ports, query strings,
+wrong MIME, or changes in document URL are held. The OOXML ZIP is parsed in
+an isolated worker with 5 seconds CPU, 512 MiB address space and 8 seconds
+wall time. It permits at most 100 entries, 3 MiB aggregate expanded data,
+1 MiB per entry, 150 paragraphs and 24,000 characters of extracted body
+text. XML DTDs/entities, external relationships, macros, OLE objects,
+embedded content, active controls, revisions, fields, inaccessible/absent
+body text, and unsafe ZIP members are rejected. No OCR, Word/LibreOffice
+execution, document rendering or macro execution is used.
+
+The extracted body must independently corroborate the institution and
+call title, explicit PhD scholarship, eligibility, current intake, funding
+deadline, and geographical evidence. Missing or contradictory evidence
+produces `document_unverified`. Even accepted evidence is only
+`document_review_only`, with the content hash and an existing canonical
+HTML identity; it cannot become a published observation, create a Telegram
+receipt, or trigger the watchdog. The unattended discovery monitor continues
+counting found documents as coverage gaps; this extension does not authorize
+unattended downloads or claim full DOCX/DOC/PDF recall.
+
 ## Durable post-send outcomes
 
 For independently verified institutional admissions and funding calls, the
