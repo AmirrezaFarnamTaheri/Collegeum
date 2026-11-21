@@ -87,3 +87,25 @@ def test_workday_later_pages_report_zero_total_but_still_have_valid_jobs(name, t
     assert result.as_stats()["failure_counts"] == {"fetch": 0, "parse": 0, "limit": 0}
     offsets = [offset for search, offset in http.offsets if search == term]
     assert offsets == [page * 20 for page in range(ceil(total / 20))]
+
+
+@pytest.mark.parametrize("later_pages_zero_total", [False, True])
+def test_ubc_fetches_all_61_results_beyond_old_40_row_limit(later_pages_zero_total):
+    """A live two-page cap caused a partial UBC outcome on 2026-11-21.
+
+    The adapter must fetch the third and fourth pages while preserving the
+    API's observed later-page total=0 anomaly without inventing completion.
+    """
+    source = _source("ubc")
+    http = WorkdayFixtureHttp(
+        "research assistant finance", 61,
+        later_pages_zero_total=later_pages_zero_total,
+    )
+    result = asyncio.run(_scrape_all([WorkdayScraper(source, http)], 1, 30))[0]
+    assert result.ok, result.as_stats()
+    assert result.as_stats()["failure_counts"] == {"fetch": 0, "parse": 0, "limit": 0}
+    assert len(result.posts) == 61
+    assert len({post.url for post in result.posts}) == 61
+    offsets = [offset for term, offset in http.offsets
+               if term == "research assistant finance"]
+    assert offsets == [0, 20, 40, 60]
