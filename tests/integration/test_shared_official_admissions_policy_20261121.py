@@ -77,7 +77,10 @@ def test_opening_and_closing_dates_can_coexist_when_funding_deadline_is_exact():
         "official_programme_url": "https://www.aalto.fi/en/study-options/doctoral-programme",
         "evidence_url": "https://www.aalto.fi/en/study-options/doctoral-programme",
         "deadline_iso": "2027-01-05",
-        "evidence_excerpt": "Admission schedule 2027: Application period opens on 8 December 2026 and closes on 5 January 2027.",
+        "evidence_excerpt": (
+            "Admission schedule 2027: Application period opens on 8 December 2026 "
+            "and closes on 5 January 2027."
+        ),
     }
     assert eligible_official_admissions(catalog(aalto), now=NOW) == [aalto]
     assert dispatch(aalto)
