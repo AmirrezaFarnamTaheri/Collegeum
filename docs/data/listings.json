@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-21T15:32:47Z",
+ "generated_at": "2026-11-21T15:50:06Z",
  "count": 221,
  "listings": [
   {
@@ -3074,7 +3074,7 @@
   {
    "id": 370,
    "title": "Postdoctoral Researcher in Spatial Data Science",
-   "institution": "MOHAMMED VI POLYTECHNIC UNIVERSITY",
+   "institution": "Mohammed VI Polytechnic University",
    "principal_investigator": null,
    "country": "Morocco",
    "city": "Benguerir",
@@ -3083,16 +3083,14 @@
    "deadline": "2026-12-04T00:00:00Z",
    "days_left": 13,
    "disciplines": [
-    "Econometrics",
-    "Quantitative Social Sciences",
-    "Other"
+    "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral researcher role in spatial data science at Mohammed VI Polytechnic University, focusing on urban modeling and cost analysis. It is suited for candidates holding a Ph.D. with experience in urban, environmental or socio-economic research and proficiency in urban modeling tools.",
+   "summary": "The position is a postdoctoral researcher role at Mohammed VI Polytechnic University in Benguerir, Morocco, focusing on urban modeling and cost analysis of urbanization. Applicants should hold a Ph.D. in Data Science, Urban Planning, Urban Economics or a related field and have experience with urban modeling tools and interdisciplinary research.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.931,
+   "confidence": 0.953,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
