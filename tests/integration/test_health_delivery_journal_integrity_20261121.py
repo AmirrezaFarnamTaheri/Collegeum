@@ -109,7 +109,7 @@ def test_same_source_timestamp_cannot_hide_a_mutated_delivery_journal(
 def test_missing_or_replaced_delivery_history_is_not_silent(checkpoint_files):
     root = checkpoint_files
     checkpoint(root, expected_run_id=RUN_ID, now=NOW, write=True)
-    name, path = JOURNALS[0]
+    _, path = JOURNALS[0]
     journal = root / path
     original = journal.read_bytes()
     journal.unlink()
