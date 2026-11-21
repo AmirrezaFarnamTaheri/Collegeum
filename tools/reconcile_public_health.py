@@ -34,6 +34,10 @@ SNAPSHOT_FILES = {
     "career": ("data/career_health.json", "checked_at"),
     "listings": ("docs/data/listings.json", "generated_at"),
 }
+DELIVERY_JOURNALS = {
+    "official_calls": "data/official_phd_calls_telegram.json",
+    "phd_admissions": "data/phd_admissions_telegram.json",
+}
 COUNTS = ("successful", "empty", "failed", "partial", "skipped")
 
 
@@ -155,33 +159,55 @@ def _read_json(path: Path) -> dict[str, Any] | None:
     return data
 
 
+def _bounded_json_with_hash(
+    path: Path, *, label: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Read and hash a bounded, non-symlink JSON document exactly once."""
+    if not path.exists():
+        return None, None
+    if path.is_symlink() or path.stat().st_size > MAX_INPUT_BYTES:
+        raise ValueError(f"Untrusted or unbounded {label}")
+    raw = path.read_bytes()
+    if len(raw) > MAX_INPUT_BYTES:
+        raise ValueError(f"Unbounded {label} content")
+    try:
+        data = json.loads(raw)
+    except (UnicodeError, ValueError) as exc:
+        raise ValueError(f"Invalid {label} JSON") from exc
+    if not isinstance(data, dict):
+        raise ValueError(f"Invalid {label} format")
+    return data, hashlib.sha256(raw).hexdigest()
+
+
 def _observed_components(
     root: Path,
 ) -> tuple[dict[str, Any], dict[str, str | None]]:
-    """Read each bounded component once, binding its timestamp to exact bytes.
-
-    A catalogue may be rewritten without changing its generated_at. Verify
-    fingerprints after the push, not only optimistic timestamps.
-    """
+    """Bind every catalogue timestamp to its exact bounded JSON bytes."""
     stamps: dict[str, Any] = {}
     digests: dict[str, str | None] = {}
     for name, (filename, field) in SNAPSHOT_FILES.items():
-        path = root / filename
-        if not path.exists():
-            stamps[name] = None
-            digests[name] = None
-            continue
-        if path.is_symlink() or path.stat().st_size > MAX_INPUT_BYTES:
-            raise ValueError(f"Untrusted or unbounded {name} snapshot")
-        raw = path.read_bytes()
-        if len(raw) > MAX_INPUT_BYTES:
-            raise ValueError(f"Unbounded {name} snapshot content")
-        data = json.loads(raw)
-        if not isinstance(data, dict):
-            raise ValueError(f"Invalid {name} snapshot format")
-        stamps[name] = data.get(field)
-        digests[name] = hashlib.sha256(raw).hexdigest()
+        data, digest = _bounded_json_with_hash(
+            root / filename, label=f"{name} snapshot",
+        )
+        stamps[name] = data.get(field) if data is not None else None
+        digests[name] = digest
     return stamps, digests
+
+
+def _observed_delivery_journals(root: Path) -> dict[str, str | None]:
+    """Fingerprint durable receipt dependencies without changing their state."""
+    digests: dict[str, str | None] = {}
+    for name, filename in DELIVERY_JOURNALS.items():
+        data, digest = _bounded_json_with_hash(
+            root / filename, label=f"delivery journal {name}",
+        )
+        if data is not None and (
+            data.get("version") != 1
+            or not isinstance(data.get("deliveries"), dict)
+        ):
+            raise ValueError(f"Invalid delivery journal {name} schema")
+        digests[name] = digest
+    return digests
 
 
 def checkpoint(
@@ -193,6 +219,7 @@ def checkpoint(
     _validate_run(health, expected_run_id, now)
     assert health is not None
     observed, digests = _observed_components(root)
+    journal_hashes = _observed_delivery_journals(root)
     if not write:
         current = health.get("official_calls")
         recorded = health.get("component_snapshots")
@@ -206,6 +233,8 @@ def checkpoint(
                 raise ValueError(f"Unreconciled {name} snapshot")
             if item.get("content_sha256") != digests[name]:
                 raise ValueError(f"Unreconciled {name} fingerprint")
+        if health.get("delivery_journal_sha256") != journal_hashes:
+            raise ValueError("Unreconciled delivery journal fingerprint")
         return {"status": "checked", "run_id": expected_run_id}
 
     # Pure read-only health report: no publish/dispatch method is invoked.
@@ -221,6 +250,7 @@ def checkpoint(
     )
     for name, digest in digests.items():
         data["component_snapshots"][name]["content_sha256"] = digest
+    data["delivery_journal_sha256"] = journal_hashes
     payload = (json.dumps(data, ensure_ascii=False, indent=1) + "\n").encode()
     if len(payload) > MAX_INPUT_BYTES:
         raise ValueError("Reconciled health too large")
