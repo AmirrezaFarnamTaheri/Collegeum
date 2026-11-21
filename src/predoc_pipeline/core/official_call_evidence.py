@@ -214,6 +214,26 @@ def eligible_official_calls(catalog: Any, *, now: datetime) -> list[dict[str, An
         return []
     matches: dict[str, dict[str, Any]] = {}
     conflicts: set[str] = set()
+    # Find contradictions across *all* verified assertions before applying
+    # evidence filters. Otherwise one malformed/stale assertion for the same
+    # canonical identity is silently ignored and a conflicting sibling is
+    # published, falsely implying institutional consensus.
+    asserted: dict[str, dict[str, Any]] = {}
+    for claimed in catalog["calls"]:
+        if not isinstance(claimed, dict) or claimed.get("status") != "verified":
+            continue
+        year = claimed.get("intake_year")
+        if type(year) is not int or _official_host(claimed.get("official_url")) is None:
+            continue
+        key = call_key(claimed)
+        previous = asserted.get(key)
+        if previous is not None and any(
+            previous.get(field) != claimed.get(field)
+            for field in _STABLE_OFFICIAL_FIELDS
+        ):
+            conflicts.add(key)
+        else:
+            asserted.setdefault(key, claimed)
     for row in catalog["calls"]:
         if not isinstance(row, dict) or row.get("status") != "verified":
             continue
