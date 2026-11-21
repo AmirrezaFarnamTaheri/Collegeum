@@ -78,6 +78,14 @@ class CadenceAudit:
     missing_ticks: tuple[str, ...] = ()
     late_pending: int = 0
     late_pending_ticks: tuple[str, ...] = ()
+    # Run metadata is not proof of checkout/runner queuing or publication.
+    scheduled_completed_success: int = 0
+    scheduled_completed_failure: int = 0
+    scheduled_cancelled: int = 0
+    scheduled_active: int = 0
+    scheduled_reruns: int = 0
+    max_workflow_start_lag_seconds: int | None = None
+    workflow_start_lag_unverified: int = 0
 
 
 def _timestamp(value: Any) -> datetime:
@@ -343,12 +351,11 @@ def evaluate_official_calls_trigger(
 def audit_cadence(
     runs: Any, *, now: datetime, lookback: timedelta = timedelta(hours=24),
 ) -> CadenceAudit:
-    """Compare actual schedule-triggered runs with four-hour UTC cron ticks.
+    """Reconcile four-hour cron creation and visible run lifecycle separately.
 
-    Each scheduled run maps to its preceding four-hour tick. The latest tick
-    remains unsettled for one complete interval; an absent mature run is not
-    proof of an Actions scheduler failure. Require run history older than the
-    first expected tick so an API-limited response cannot invent gaps.
+    A scheduled run maps to the preceding four-hour tick, heuristically.
+    Workflow run_started_at does NOT measure checkout, job-queue or runner
+    availability. No invented zero-duration metric for missing timestamps.
     """
     if now.tzinfo is None or lookback <= timedelta(0):
         raise ValueError("An aware clock and positive cadence lookback are required")
@@ -356,7 +363,7 @@ def audit_cadence(
     if not isinstance(runs, list) or not runs:
         return CadenceAudit(False, "untrusted-run-history")
 
-    scheduled: list[datetime] = []
+    scheduled: list[tuple[datetime, dict[str, Any]]] = []
     all_created: list[datetime] = []
     for item in runs:
         if not isinstance(item, dict):
@@ -370,9 +377,8 @@ def audit_cadence(
         if created > now + FUTURE_SKEW:
             return CadenceAudit(False, "untrusted-run-history")
         all_created.append(created)
-        if (item.get("event") == "schedule"
-                and item.get("name") == "predoc-pipeline"):
-            scheduled.append(created)
+        if item.get("event") == "schedule" and item.get("name") == "predoc-pipeline":
+            scheduled.append((created, item))
 
     start = now - lookback
     tick = start.replace(
@@ -384,19 +390,49 @@ def audit_cadence(
         return CadenceAudit(False, "insufficient-run-history")
 
     expected = observed = delayed = missing = unsettled = 0
+    completed_success = completed_failure = cancelled = active = reruns = 0
+    unverified_start_lag = 0
     max_delay: int | None = None
+    max_start_lag: int | None = None
     missing_ticks: list[str] = []
     late_pending_ticks: list[str] = []
     while tick <= now:
         expected += 1
         next_tick = tick + timedelta(hours=4)
-        matches = [created for created in scheduled if tick <= created < next_tick]
+        matches = [(created, row) for created, row in scheduled
+                   if tick <= created < next_tick]
         if matches:
             observed += 1
-            delay = max(0, int((min(matches) - tick).total_seconds()))
+            created, row = min(matches, key=lambda pair: pair[0])
+            delay = max(0, int((created - tick).total_seconds()))
             max_delay = delay if max_delay is None else max(max_delay, delay)
             if delay > 30 * 60:
                 delayed += 1
+
+            status, conclusion = row.get("status"), row.get("conclusion")
+            if status == "completed":
+                if conclusion == "success":
+                    completed_success += 1
+                elif conclusion == "cancelled":
+                    cancelled += 1
+                elif conclusion in {"failure", "timed_out", "action_required"}:
+                    completed_failure += 1
+            elif status in ACTIVE_STATUSES:
+                active += 1
+            attempts = row.get("run_attempt")
+            if type(attempts) is int and attempts > 1:
+                reruns += 1
+
+            try:
+                started = _timestamp(row.get("run_started_at"))
+            except (ValueError, TypeError, OverflowError):
+                unverified_start_lag += 1
+            else:
+                if created <= started <= now + FUTURE_SKEW:
+                    lag = int((started - created).total_seconds())
+                    max_start_lag = lag if max_start_lag is None else max(max_start_lag, lag)
+                else:
+                    unverified_start_lag += 1
         elif now >= next_tick:
             missing += 1
             missing_ticks.append(tick.isoformat().replace("+00:00", "Z"))
@@ -409,6 +445,13 @@ def audit_cadence(
         True, "unobserved-schedule-slots" if missing else "schedule-slots-observed",
         expected, observed, delayed, missing, unsettled, max_delay,
         tuple(missing_ticks), len(late_pending_ticks), tuple(late_pending_ticks),
+        scheduled_completed_success=completed_success,
+        scheduled_completed_failure=completed_failure,
+        scheduled_cancelled=cancelled,
+        scheduled_active=active,
+        scheduled_reruns=reruns,
+        max_workflow_start_lag_seconds=max_start_lag,
+        workflow_start_lag_unverified=unverified_start_lag,
     )
 
 
@@ -470,7 +513,20 @@ def _summary(
                 f"unobserved mature slots: {cadence.missing}; "
                 f"unsettled slots: {cadence.unsettled}; "
                 f"unobserved >30m (not mature): {cadence.late_pending}; "
-                f"max run-creation lag: {lag}"
+                f"max run-creation lag: {lag}; "
+                f"completed success: {cadence.scheduled_completed_success}; "
+                f"completed failed: {cadence.scheduled_completed_failure}; "
+                f"cancelled: {cadence.scheduled_cancelled}; "
+                f"active: {cadence.scheduled_active}; "
+                f"rerun attempts: {cadence.scheduled_reruns}; "
+                "workflow start lag: "
+                + (
+                    f"{cadence.max_workflow_start_lag_seconds // 60}m"
+                    if cadence.max_workflow_start_lag_seconds is not None
+                    else "unverified"
+                )
+                + f" ({cadence.workflow_start_lag_unverified} unavailable; "
+                  "not runner checkout latency)"
             )
             print(f"Ingestion cadence: {cadence_text}", flush=True)
             if cadence.missing or cadence.late_pending:
