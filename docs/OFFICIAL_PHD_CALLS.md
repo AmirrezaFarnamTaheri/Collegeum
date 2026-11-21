@@ -197,7 +197,7 @@ fingerprints. Successful audits additionally preserve the exact approved
 institution/title, intake year, funding deadline type and ISO date, and a
 bounded official-source deadline excerpt. The excerpt must contain the
 matching dated cutoff and cannot contain an email address; full document
-text and personal contact details are not stored.
+text and email contact addresses are not stored.
 
 The journal is bounded, schema-validated and atomically saved. Duplicate
 unchanged results do not grow it, while a revised document with a different
@@ -254,10 +254,13 @@ The following `next_action` values make status explicit:
 - `approval_required`: discovered URL without exact per-document approval
 - `review_required`: approved URL without independently reviewed evidence
 - `review_complete_no_delivery`: actual reviewed PDF/DOCX evidence exists,
-  but there is no matching confirmed channel receipt; release still needs
-  separate operator approval
+  but there is no matching confirmed or previously attempted channel receipt;
+  release still needs separate operator approval
 - `already_delivered_same_cycle`: approved canonical HTML call, intake year
   and funding deadline **all** match an existing confirmed Telegram receipt
+- `prior_attempt_requires_reconciliation`: a prior pending, uncertain, held,
+  or legacy-year attempt shares the canonical source and funding cutoff;
+  never infer an unsent scholarship from an absent confirmation
 - `permission_blocked`, `review_failed`, or `conflicting_approvals`: held
   because evidence is inaccessible, inadequate, or conflicting
 - `unsupported_legacy_doc`: legacy binary Word files have no approved safe
