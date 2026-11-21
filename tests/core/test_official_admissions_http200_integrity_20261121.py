@@ -39,12 +39,12 @@ class AdmissionsHTMLResponseIntegrityTests(TestCase):
             with self.subTest(html=html[:55]):
                 seen: list[str] = []
 
-                def read(url: str, **_kwargs):
-                    seen.append(url)
+                def read(url: str, *, _html=html, _seen=seen, **_kwargs):
+                    _seen.append(url)
                     if url == ROBOTS:
                         return 200, POLICY, url
                     self.assertEqual(url, PAGE)
-                    return 200, html.encode(), url
+                    return 200, _html.encode(), url
 
                 with patch("tools.update_phd_admissions._read_url", side_effect=read):
                     observation = check_official_url(PAGE, now=NOW)
@@ -57,7 +57,8 @@ class AdmissionsHTMLResponseIntegrityTests(TestCase):
         for html in BAD_HTML[:6]:
             with self.subTest(html=html[:55]):
                 observation = investigate_official_pages(
-                    PAGE, now=NOW, fetch_html=lambda _: (html, PAGE),
+                    PAGE, now=NOW,
+                    fetch_html=lambda _, current=html: (current, PAGE),
                     robots_allowed=lambda _: True, max_pages=1,
                 )
                 self.assertEqual(observation["status"], "fetch_failed")
