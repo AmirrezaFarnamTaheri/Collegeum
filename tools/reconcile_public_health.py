@@ -149,9 +149,11 @@ def reconcile_health(
 
 
 def _read_json(path: Path) -> dict[str, Any] | None:
+    if path.is_symlink():
+        raise ValueError("Untrusted symlinked health component")
     if not path.exists():
         return None
-    if path.is_symlink() or path.stat().st_size > MAX_INPUT_BYTES:
+    if path.stat().st_size > MAX_INPUT_BYTES:
         raise ValueError("Untrusted or unbounded health component")
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
@@ -163,9 +165,11 @@ def _bounded_json_with_hash(
     path: Path, *, label: str,
 ) -> tuple[dict[str, Any] | None, str | None]:
     """Read and hash a bounded, non-symlink JSON document exactly once."""
+    if path.is_symlink():
+        raise ValueError(f"Untrusted symlinked {label}")
     if not path.exists():
         return None, None
-    if path.is_symlink() or path.stat().st_size > MAX_INPUT_BYTES:
+    if path.stat().st_size > MAX_INPUT_BYTES:
         raise ValueError(f"Untrusted or unbounded {label}")
     raw = path.read_bytes()
     if len(raw) > MAX_INPUT_BYTES:
