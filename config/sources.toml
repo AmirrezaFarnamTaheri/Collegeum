@@ -749,6 +749,7 @@ field_implied = true
 may_be_empty = true
 verified_empty_marker = "0 resultados encontrados para los filtros seleccionados"
 verified_empty_reject_job_links = true
+verified_empty_reject_conflicting_posts = true
 note = "Banco de España research grants, predoctoral fellowships, and assistantships."
 
 [[board]]
