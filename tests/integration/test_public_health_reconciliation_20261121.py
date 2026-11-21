@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -147,6 +148,18 @@ def test_postcheckpoint_check_only_reads_valid_latest_snapshot(tmp_path):
     safe = reconcile_health(
         health(), report, observed, expected_run_id="44915539651", now=NOW,
     )
+    # A hand-built reconciled report must carry the same file-bound hashes
+    # that the production checkpoint attaches atomically.
+    paths = {
+        "official_calls": "docs/data/official_phd_calls.json",
+        "phd_admissions": "docs/data/phd_admissions.json",
+        "life_sciences": "data/life_sources_health.json",
+        "career": "data/career_health.json",
+        "listings": "docs/data/listings.json",
+    }
+    for name, filename in paths.items():
+        digest = hashlib.sha256((root / filename).read_bytes()).hexdigest()
+        safe["component_snapshots"][name]["content_sha256"] = digest
     target = root / "docs/data/health.json"
     target.write_text(json.dumps(safe))
     before = target.read_bytes()
