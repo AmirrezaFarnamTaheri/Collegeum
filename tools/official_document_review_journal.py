@@ -148,6 +148,18 @@ def _normalise(
     }
 
 
+def validate_review_records(
+    rows: list[dict[str, Any]], *, registry: dict[str, Any],
+) -> None:
+    """Reject forged approvals and malformed operator review artifacts."""
+    validate_sources(registry)
+    if not isinstance(rows, list) or len(rows) > MAX_REVIEWS:
+        raise ValueError("Unbounded document review records")
+    for row in rows:
+        if _normalise(row, registry=registry, method=None) != row:
+            raise ValueError("Noncanonical document review evidence")
+
+
 def load_review_records(
     path: str | Path, *, registry: dict[str, Any],
 ) -> list[dict[str, Any]]:
@@ -169,9 +181,7 @@ def load_review_records(
             or len(parsed["reviews"]) > MAX_REVIEWS):
         raise ValueError("Invalid document review journal schema")
     rows = parsed["reviews"]
-    for row in rows:
-        if _normalise(row, registry=registry, method=None) != row:
-            raise ValueError("Noncanonical document review journal entry")
+    validate_review_records(rows, registry=registry)
     return rows
 
 
