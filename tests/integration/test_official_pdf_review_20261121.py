@@ -75,6 +75,7 @@ def _evidence_text():
         "Starting in September or October 2027.",
         "Candidates must have completed a Master degree by summer 2027.",
         "Interested candidates must complete both steps by 11 December 2026.",
+        "C/ John M. Keynes, 1-11, 08034 Barcelona. Tel. +34 93 403 40 00.",
     ]
 
 
@@ -181,6 +182,16 @@ def test_document_review_rejects_outdated_ambiguous_or_fabricated_official_evide
             content_type="application/pdf",
         )
         assert row["status"] == "document_unverified", row
+
+
+def test_pdf_review_requires_independent_geography_not_just_institution_name():
+    lines = [line for line in _evidence_text() if "08034 Barcelona" not in line]
+    row = review_pdf_bytes(
+        _pdf(lines), url=PDF, source=SOURCE, now=NOW,
+        content_type="application/pdf",
+    )
+    assert row["status"] == "document_unverified"
+    assert row["reason"] == "missing_geography"
 
 
 def test_document_review_enforces_strict_byte_limit():

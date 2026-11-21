@@ -420,6 +420,92 @@ def publish_official_calls(
     return sent
 
 
+def _document_review_health(catalog_path: Path) -> dict[str, Any]:
+    """Counts manually recorded reviews, never promoting them to calls."""
+    empty: dict[str, Any] = {
+        "document_review_status": "not_recorded",
+        "document_review_successes": 0,
+        "document_review_failures": 0,
+        "document_review_live_failures": 0,
+        "document_review_robots_blocks": 0,
+        "document_review_revisions": 0,
+        "last_document_review_at": None,
+    }
+    path = catalog_path.with_name("official_document_reviews.json")
+    if not path.exists():
+        return empty
+    try:
+        with path.open("rb") as handle:
+            raw = handle.read(128 * 1024 + 1)
+        if len(raw) > 128 * 1024:
+            raise ValueError("Review journal too large")
+        data = json.loads(raw)
+        if (not isinstance(data, dict)
+                or data.get("kind") != "official_phd_document_reviews"
+                or data.get("version") != 1
+                or not isinstance(data.get("reviews"), list)
+                or len(data["reviews"]) > 200):
+            raise ValueError("Malformed document review journal")
+        latest: dict[tuple[str, str], dict[str, Any]] = {}
+        seen_revisions: set[tuple[str, str, str]] = set()
+        last: str | None = None
+        for row in data["reviews"]:
+            if not isinstance(row, dict):
+                raise ValueError("Invalid document review entry")
+            status = row.get("status")
+            source_id = row.get("source_id")
+            url = row.get("official_url")
+            method = row.get("method")
+            digest = row.get("document_sha256")
+            reviewed_at = row.get("reviewed_at")
+            if (status not in {"document_review_only", "document_unverified",
+                               "robots_unavailable", "robots_disallowed",
+                               "unsafe_redirect", "fetch_failed"}
+                    or not isinstance(source_id, str) or len(source_id) > 50
+                    or not isinstance(url, str) or len(url) > 400
+                    or _host(url) is None or not url.lower().endswith((".pdf", ".docx"))
+                    or method not in {"live_fetch", "local_file"}
+                    or not isinstance(reviewed_at, str)
+                    or _stamp(reviewed_at) is None
+                    or row.get("automatic_publication") is not False):
+                raise ValueError("Invalid document review safety contract")
+            if status == "document_review_only":
+                if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+                    raise ValueError("Review-only result lacks content fingerprint")
+            elif not isinstance(row.get("reason"), str):
+                raise ValueError("Failed review must explain its reason")
+            latest[(source_id, url)] = row
+            if digest is not None:
+                seen_revisions.add((source_id, url, digest))
+            if last is None or reviewed_at > last:
+                last = reviewed_at
+        recent = list(latest.values())
+        return {
+            "document_review_status": "recorded",
+            "document_review_successes": sum(
+                item["status"] == "document_review_only" for item in recent
+            ),
+            "document_review_failures": sum(
+                item["status"] != "document_review_only" for item in recent
+            ),
+            "document_review_live_failures": sum(
+                item["status"] != "document_review_only"
+                and item["method"] == "live_fetch" for item in recent
+            ),
+            "document_review_robots_blocks": sum(
+                item["status"] in {"robots_unavailable", "robots_disallowed"}
+                for item in recent
+            ),
+            "document_review_revisions": max(0, len(seen_revisions) - len({
+                (item["source_id"], item["official_url"])
+                for item in data["reviews"] if item.get("document_sha256")
+            })),
+            "last_document_review_at": last,
+        }
+    except (OSError, ValueError, UnicodeError, TypeError, json.JSONDecodeError):
+        return {**empty, "document_review_status": "unavailable"}
+
+
 def official_calls_health(
     catalog_path: str | Path, receipt_path: str | Path, *,
     now: datetime | None = None,
@@ -475,15 +561,43 @@ def official_calls_health(
         and type(source.get("unsupported_documents", 0)) is int
         and 0 <= source.get("unsupported_documents", 0) <= 500
     )
+    def count_source_metric(name: str) -> int:
+        return sum(
+            value for source in catalog["sources"] if isinstance(source, dict)
+            if type(value := source.get(name, 0)) is int and 0 <= value <= 500
+        )
+
+    formats = {"pdf": 0, "doc": 0, "docx": 0}
+    for source in catalog["sources"]:
+        raw = source.get("document_links_by_format") if isinstance(source, dict) else None
+        if isinstance(raw, dict):
+            for key in formats:
+                value = raw.get(key, 0)
+                if type(value) is int and 0 <= value <= 500:
+                    formats[key] += value
+    review = _document_review_health(Path(catalog_path))
+    robots_sources = sum(
+        isinstance(source, dict)
+        and source.get("status") in {"robots_unavailable", "robots_disallowed"}
+        for source in catalog["sources"]
+    )
     degraded = any(k != "ok" for k in state_counts) or bool(
         uncertain or pending or retry_held or permanent
         or empty_indexes or unsupported_documents
+        or review["document_review_status"] == "unavailable"
     )
     return {
         "status": "degraded" if degraded else "ok",
         "sources": state_counts,
         "empty_indexes": empty_indexes,
         "unsupported_documents": unsupported_documents,
+        "discovered_html_links": count_source_metric("discovered_links"),
+        "new_html_links": count_source_metric("new_html_links"),
+        "historical_rechecks": count_source_metric("rechecked_links"),
+        "document_links_by_format": formats,
+        "robots_blocked_sources": robots_sources,
+        "robots_blocked_details": count_source_metric("blocked_details"),
+        **review,
         "eligible": len(eligible),
         "unpublished": backlog,
         "group_waiting": group_waiting,

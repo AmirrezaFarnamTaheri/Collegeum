@@ -41,6 +41,34 @@ def receipt_key(
     target_year = row.get("intake_year")
     if type(target_year) is not int:
         return None
+    # One institution may expose the same call from /en/, /ca/ and its
+    # language-neutral URL. Do not replay a durable Telegram attempt merely
+    # because an index discovered a second HTML alias. This is deliberately
+    # narrow: same exact title, institution, deadline, intake, kind and host.
+    target_title = row.get("title")
+    target_url = row.get("official_url")
+    target_institution = row.get("institution")
+    target_deadline = row.get("deadline_iso")
+    if (isinstance(target_title, str) and isinstance(target_url, str)
+            and isinstance(target_institution, str)
+            and isinstance(target_deadline, str)):
+        target_host = (urlsplit(target_url).hostname or "").lower().removeprefix("www.")
+        for existing_key, receipt in deliveries.items():
+            if not isinstance(receipt, dict):
+                continue
+            previous_url = receipt.get("official_url")
+            if (not isinstance(previous_url, str) or previous_url == target_url
+                    or (urlsplit(previous_url).hostname or "").lower()
+                        .removeprefix("www.") != target_host
+                    or receipt.get("title") != target_title
+                    or receipt.get("institution") != target_institution
+                    or receipt.get("deadline_iso") != target_deadline
+                    or receipt.get("intake_year") != target_year
+                    or (receipt.get("kind") is not None and row.get("kind") is not None
+                        and receipt["kind"] != row["kind"])):
+                continue
+            if call_key(receipt) == existing_key:
+                return existing_key
     for legacy_key, receipt in deliveries.items():
         if not isinstance(receipt, dict):
             continue

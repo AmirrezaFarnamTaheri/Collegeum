@@ -23,13 +23,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from tools.official_document_review_journal import record_review
+from tools.official_document_safety import NoDocumentRedirect
 from tools.official_docx_worker import MAX_DOCX_BYTES
 from tools.update_official_calls import (
     CALL_TITLE,
     EXCLUDE,
     SUBJECT,
     USER_AGENT,
-    SafeRedirect,
     _date_candidates,
     _funding_closed,
     _intake,
@@ -103,12 +104,7 @@ def fetch_reviewed_docx(url: str, source: dict[str, Any]) -> dict[str, Any]:
     host = parsed.hostname or ""
     robot = urllib.robotparser.RobotFileParser()
     robot.set_url(f"https://{host}/robots.txt")
-    opener = urllib.request.build_opener(SafeRedirect(
-        host, lambda candidate: (
-            safe_docx_url(candidate, source["url"]) == candidate
-            and robot.can_fetch(USER_AGENT, candidate)
-        ),
-    ))
+    opener = urllib.request.build_opener(NoDocumentRedirect())
     try:
         req = urllib.request.Request(
             f"https://{host}/robots.txt", headers={"User-Agent": USER_AGENT},
@@ -140,8 +136,12 @@ def fetch_reviewed_docx(url: str, source: dict[str, Any]) -> dict[str, Any]:
             if not data.startswith(b"PK\x03\x04"):
                 return {"status": "document_unverified", "reason": "not_docx"}
             return {"status": "ok", "content": data, "content_type": kind}
-    except (OSError, TimeoutError, UnicodeError, ValueError, urllib.error.URLError):
-        return {"status": "fetch_failed"}
+    except ValueError as exc:
+        if str(exc) == "unsafe_redirect":
+            return {"status": "unsafe_redirect", "reason": "unsafe_redirect"}
+        return {"status": "fetch_failed", "reason": "fetch_failed"}
+    except (OSError, TimeoutError, UnicodeError, urllib.error.URLError):
+        return {"status": "fetch_failed", "reason": "fetch_failed"}
 
 
 def _limits() -> None:
@@ -254,6 +254,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-id", required=True)
     parser.add_argument("--url", required=True)
+    parser.add_argument("--record", action="store_true",
+                        help="Explicitly persist a review-only audit outcome")
     selection = parser.add_mutually_exclusive_group(required=True)
     selection.add_argument("--file", type=Path, help="Review a locally supplied DOCX")
     selection.add_argument("--fetch", action="store_true",
@@ -271,13 +273,28 @@ def main(argv: list[str] | None = None) -> int:
         fetched = {"status": "ok", "content": content, "content_type": DOCX_MIME}
     else:
         fetched = fetch_reviewed_docx(args.url, source)
-    if fetched["status"] != "ok":
-        print(json.dumps(fetched, ensure_ascii=True))
-        return 2
-    row = review_docx_bytes(
-        fetched["content"], url=args.url, source=source,
-        now=datetime.now(UTC), content_type=fetched["content_type"],
-    )
+    if fetched["status"] == "ok":
+        row = review_docx_bytes(
+            fetched["content"], url=args.url, source=source,
+            now=datetime.now(UTC), content_type=fetched["content_type"],
+        )
+    else:
+        row = {
+            "status": fetched["status"],
+            "reason": fetched.get("reason") or fetched["status"],
+            "source_id": source["id"], "official_url": args.url,
+            "reviewed_at": _stamp(datetime.now(UTC)),
+        }
+    if args.record:
+        try:
+            record_review(
+                ROOT / "docs/data/official_document_reviews.json", row,
+                registry=registry, method="live_fetch" if args.fetch else "local_file",
+            )
+        except (OSError, ValueError) as exc:
+            print(json.dumps({"status": "document_unverified",
+                              "reason": "audit_record_failed", "detail": str(exc)}))
+            return 2
     print(json.dumps(row, indent=2, ensure_ascii=True))
     return 0 if row["status"] == "document_review_only" else 2
 
