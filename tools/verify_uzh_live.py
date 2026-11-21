@@ -46,22 +46,25 @@ def inspect_html(cfg: SourceConfig, html: str) -> dict[str, object]:
     soup = BeautifulSoup(html, "lxml")
     pattern = re.compile(str(cfg.opt("link_pattern")), re.I)
     official: set[str] = set()
-    for anchor in soup.select("a[href]"):
+    host_links: set[str] = set()
+    anchors = soup.select("a[href]")
+    for anchor in anchors:
         absolute = urljoin(INDEX, str(anchor.get("href") or ""))
         try:
             parts = urlsplit(absolute)
-            valid = (
+            valid_host = (
                 parts.scheme == "https"
                 and parts.hostname == "jobs.uzh.ch"
                 and parts.username is None and parts.password is None
                 and parts.port in (None, 443)
                 and not any(c.isspace() or c == "\\" for c in absolute)
-                and pattern.search(absolute) is not None
             )
         except ValueError:
-            valid = False
-        if valid:
-            official.add(absolute)
+            valid_host = False
+        if valid_host:
+            host_links.add(absolute)
+            if pattern.search(absolute):
+                official.add(absolute)
     parser = LinkScanScraper(cfg, _NoNetwork())
     parsed = parser.parse_postings([(INDEX, html)])
     error_count = len(parser.discovery_parse_errors)
@@ -72,6 +75,13 @@ def inspect_html(cfg: SourceConfig, html: str) -> dict[str, object]:
     )
     return {
         "source_state": state,
+        "html_characters": len(html),
+        "total_href_anchors": len(anchors),
+        "jobs_host_anchors": len(host_links),
+        "has_open_positions_heading": any(
+            "open positions" in heading.get_text(" ", strip=True).casefold()
+            for heading in soup.select("h1,h2,h3,h4")
+        ),
         "official_employer_links": len(official),
         "parsed_vacancies": len(parsed),
         "doctoral_title_signals": sum(
