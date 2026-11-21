@@ -37,6 +37,10 @@ def test_official_uzh_employer_links_are_counted_separately_from_predocs() -> No
         'Open faculty positions</a>'
     )
     result = inspect_html(cfg(), html)
+    assert result["html_characters"] == len(html)
+    assert result["total_href_anchors"] == 4
+    assert result["jobs_host_anchors"] == 2
+    assert result["has_open_positions_heading"]
     assert result["official_employer_links"] == 2
     assert result["parsed_vacancies"] == 2
     assert result["doctoral_title_signals"] == 1
@@ -56,6 +60,9 @@ def test_changed_uzh_index_is_unverified_not_healthy_empty() -> None:
     assert result["official_employer_links"] == 0
     assert result["parsed_vacancies"] == 0
     assert result["source_state"] == "unverified-empty"
+    assert result["jobs_host_anchors"] == 0
+    assert result["has_open_positions_heading"]
+    assert result["total_href_anchors"] == 1
     assert not result["verified_empty"]
 
 
