@@ -198,10 +198,10 @@ def _location_proof(text: str, country: str, url: str) -> str | None:
     # these names but no street address or telephone. Do not treat the source
     # registry or index label alone as evidence for a document review.
     if country == "ES" and host == "ieb.ub.edu" and re.search(
-        r"\\b(?:Barcelona Institute of Economics|Institut d.Economia de Barcelona)\\b",
+        r"\b(?:Barcelona Institute of Economics|Institut d.Economia de Barcelona)\b",
         text, re.I,
     ) and re.search(
-        r"\\b(?:University of Barcelona|Universitat de Barcelona)\\b",
+        r"\\b(?:University of Barcelona|Universitat de Barcelona)\b",
         text, re.I,
     ):
         return "ES: official IEB and University of Barcelona institutional identifiers"
