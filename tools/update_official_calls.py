@@ -20,8 +20,14 @@ from pathlib import Path
 
 # CLI scripts also run with "python -S tools/script.py": keep that mode safe.
 if __package__:
+    from .official_html_validation import (
+        official_html_response_problem as _html_response_problem,
+    )
     from .official_robots import parse_official_robots
 else:
+    from official_html_validation import (
+        official_html_response_problem as _html_response_problem,
+    )
     from official_robots import parse_official_robots
 from typing import Any
 
@@ -31,16 +37,6 @@ CATALOG = ROOT / "docs/data/official_phd_calls.json"
 USER_AGENT = "CollegeumOfficialCalls/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)"
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
-_ACCESS_GATE = re.compile(
-    r"<(?:title|h1)\b[^>]*>\s*(?:just a moment|access denied|"
-    r"403(?: forbidden)?|login required|sign in required|"
-    r"service unavailable|bot verification|captcha verification)\b",
-    re.I,
-)
-_CHALLENGE_CONTROL = re.compile(
-    r"\b(?:cf_chl|cf-chl|challenge-form|g-recaptcha|h-captcha)\b",
-    re.I,
-)
 MAX_INDEX_LINKS = 6
 # Generic index anchors are candidates only when context AND path match.
 _GENERIC_DETAIL_LABEL = re.compile(
@@ -659,21 +655,6 @@ def validate_catalog(catalog: Any) -> None:
             or not isinstance(catalog.get("sources"), list)
             or len(catalog["calls"]) > MAX_CALLS):
         raise ValueError("Invalid official-call catalogue")
-
-
-def _html_response_problem(body: Any) -> str | None:
-    """Reason a successful HTTP response cannot establish checked source HTML.
-
-    A 200 login/challenge must never become an empty official opportunity
-    index or fresh evidence for a funding deadline. A normal site navigation
-    *link* to /login is not a challenge and remains permitted.
-    """
-    if (not isinstance(body, str) or not body.strip().startswith("<")
-            or len(body.encode("utf-8")) > MAX_HTML_BYTES):
-        return "invalid_html"
-    if _ACCESS_GATE.search(body) or _CHALLENGE_CONTROL.search(body):
-        return "access_interstitial"
-    return None
 
 
 def refresh_sources(
