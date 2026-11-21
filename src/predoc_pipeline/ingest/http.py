@@ -66,7 +66,7 @@ _HTML_CHALLENGE_CONTROL = re.compile(
 
 def _access_interstitial(text: str) -> bool:
     """Reject clear HTML access-gate bodies, including plausible fake jobs."""
-    if not text.lstrip().startswith("<"):
+    if not text.lstrip("\ufeff \t\r\n").startswith("<"):
         return False
     return bool(_HTML_ACCESS_GATE.search(text) or _HTML_CHALLENGE_CONTROL.search(text))
 
