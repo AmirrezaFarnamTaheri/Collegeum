@@ -60,6 +60,12 @@ def _result(*, digest: str = "a" * 64, status: str = "document_review_only"):
         "reviewed_at": "2026-11-21T11:00:00Z",
         "document_sha256": digest,
         "canonical_html_url": HTML,
+        "title": "PhD Scholarship in Economics",
+        "institution": "Barcelona Institute of Economics (IEB)",
+        "country_code": "ES", "kind": "phd_scholarship",
+        "intake_year": 2027, "deadline_iso": "2026-12-11",
+        "deadline_kind": "scholarship",
+        "evidence_excerpt": "Interested candidates must complete both steps by 11 December 2026.",
         "automatic_publication": False,
     }
 
@@ -117,7 +123,9 @@ def test_recorded_review_requires_approved_source_and_is_review_only(tmp_path: P
     assert len(rows) == 1
     assert rows[0]["status"] == "document_review_only"
     assert rows[0]["document_sha256"] == "a" * 64
-    assert "evidence_excerpt" not in rows[0]
+    assert rows[0]["evidence_excerpt"] == _result()["evidence_excerpt"]
+    assert rows[0]["intake_year"] == 2027
+    assert rows[0]["deadline_iso"] == "2026-12-11"
     assert rows[0]["method"] == "live_fetch"
     assert record_review(journal, _result(digest="b" * 64),
                          registry=REGISTRY, method="live_fetch") is True
