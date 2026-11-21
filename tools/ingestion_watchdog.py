@@ -88,6 +88,62 @@ class CadenceAudit:
     workflow_start_lag_unverified: int = 0
 
 
+@dataclass(frozen=True)
+class HealthEvidence:
+    """Only validated, nonsensitive fields from a persisted public snapshot."""
+
+    outcome: str = "unverified"
+    run_id: str = "unverified"
+    published: int | None = None
+    counts_verified: bool = False
+    sources_total: int | None = None
+    sources_successful: int | None = None
+    sources_empty: int | None = None
+    sources_failed: int | None = None
+    sources_partial: int | None = None
+    sources_skipped: int | None = None
+
+
+def health_evidence(health: Any) -> HealthEvidence:
+    """Fail closed on untrusted source totals and never print raw provider data."""
+    if not isinstance(health, dict):
+        return HealthEvidence()
+    last = health.get("last_run")
+    last = last if isinstance(last, dict) else {}
+    raw_outcome = last.get("outcome")
+    outcome = (
+        raw_outcome if isinstance(raw_outcome, str)
+        and raw_outcome in {"success", "partial", "failed"}
+        else "unverified"
+    )
+    raw_id = last.get("run_id")
+    run_id = (
+        raw_id if isinstance(raw_id, str) and
+        re.fullmatch(r"[1-9][0-9]{0,17}", raw_id) else "unverified"
+    )
+    raw_published = last.get("published")
+    published = (
+        raw_published if type(raw_published) is int and
+        0 <= raw_published <= 1_000_000 else None
+    )
+    sources = health.get("source_summary")
+    fields = ("successful", "empty", "failed", "partial", "skipped")
+    if isinstance(sources, dict):
+        counts = [sources.get(field) for field in fields]
+        total = sources.get("total")
+        if (type(total) is int and 0 <= total <= 1_000_000
+                and all(type(x) is int and 0 <= x <= 1_000_000 for x in counts)
+                and sum(counts) == total):
+            return HealthEvidence(
+                outcome=outcome, run_id=run_id, published=published,
+                counts_verified=True, sources_total=total,
+                sources_successful=counts[0], sources_empty=counts[1],
+                sources_failed=counts[2], sources_partial=counts[3],
+                sources_skipped=counts[4],
+            )
+    return HealthEvidence(outcome=outcome, run_id=run_id, published=published)
+
+
 def _timestamp(value: Any) -> datetime:
     if not isinstance(value, str) or "T" not in value:
         raise ValueError("Expected timezone-aware ISO 8601 timestamp")
@@ -495,6 +551,7 @@ def _request(
 
 def _summary(
     decision: Decision, action: str, *, cadence: CadenceAudit | None = None,
+    health: Any | None = None,
 ) -> None:
     age = "unknown" if decision.age_seconds is None else f"{decision.age_seconds / 3600:.2f}h"
     text = f"Ingestion watchdog: {decision.reason}; published data age {age}; action: {action}"
@@ -502,6 +559,32 @@ def _summary(
     if decision.reason not in {"fresh", "pipeline-already-running"}:
         # An operator diagnostic, never proof that a publisher has succeeded.
         print(f"::warning title=Ingestion freshness::{text}", flush=True)
+    app = health_evidence(health) if health is not None else None
+    source_text = "source counts unverified"
+    published_text = "unverified"
+    if app is not None:
+        if app.counts_verified:
+            source_text = (
+                f"{app.sources_successful} successful, {app.sources_empty} empty, "
+                f"{app.sources_failed} failed, {app.sources_partial} partial, "
+                f"{app.sources_skipped} skipped / {app.sources_total}"
+            )
+        if app.published is not None:
+            published_text = str(app.published)
+        print(
+            f"Application snapshot: {app.outcome}; sources: {source_text}; "
+            f"published in run: {published_text}",
+            flush=True,
+        )
+        if app.outcome in {"partial", "failed"} or (
+            app.counts_verified and bool(app.sources_failed or app.sources_partial)
+        ):
+            print(
+                "::warning title=Degraded ingestion snapshot::"
+                "Snapshot application outcome/source failures are distinct "
+                "from fresh data age and successful CI",
+                flush=True,
+            )
     cadence_text = ""
     if cadence is not None:
         if cadence.verified:
@@ -542,6 +625,14 @@ def _summary(
             fh.write(f"- Health state: **{decision.reason}**\n")
             fh.write(f"- Age: **{age}** (threshold: 8h)\n")
             fh.write(f"- Dispatch: **{action}**\n")
+            if app is not None:
+                fh.write(f"- Application outcome: **{app.outcome}**\n")
+                fh.write(f"- Source health: **{source_text}**\n")
+                fh.write(f"- Reported published listings in snapshot run: **{published_text}**\n")
+                fh.write(
+                    "- The reported run count is not a new delivery receipt "
+                    "or proof of currently-open vacancies.\n"
+                )
             fh.write(
                 "- This is not a publication success signal; "
                 "check the ensuing pipeline run.\n"
@@ -650,7 +741,7 @@ def main(argv: list[str] | None = None) -> int:
                 action = "requested-new-main-ingestion"
             else:
                 action = "would-request-new-main-ingestion"
-        _summary(decision, action, cadence=cadence)
+        _summary(decision, action, cadence=cadence, health=health)
         if args.strict_cadence and cadence.verified and cadence.missing:
             # A healthy published snapshot must not hide missing cron coverage.
             # This only changes the observer check conclusion; the normal
