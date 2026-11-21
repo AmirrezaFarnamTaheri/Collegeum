@@ -166,3 +166,31 @@ def test_document_triage_refuses_untrusted_source_urls_and_inconsistent_approval
     pdf = next(x for x in result["documents"] if x["official_url"] == PDF)
     assert pdf["approved"] is False
     assert pdf["next_action"] == "conflicting_approvals"
+
+
+def test_pending_or_uncertain_prior_attempt_never_looks_unsent_to_operator():
+    for state in ("pending", "uncertain", "retry_held", "permanent_failure"):
+        old = {
+            "state": state, "official_url": HTML,
+            "institution": "Barcelona Institute of Economics (IEB)",
+            "intake_year": 2027, "deadline_iso": "2026-12-11",
+        }
+        queue = build_document_triage(CATALOG, REGISTRY, {"a" * 32: old},
+                                      [reviewed()])
+        pdf = next(x for x in queue["documents"] if x["official_url"] == PDF)
+        assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
+        assert pdf["prior_message_id"] is None
+
+
+def test_old_year_receipt_with_identical_cutoff_requires_reconciliation():
+    # Earlier source-year parsing could store the same 2027 round as 2026.
+    prior = {
+        "state": "confirmed", "message_id": 133, "official_url": HTML,
+        "institution": "Barcelona Institute of Economics (IEB)",
+        "intake_year": 2026, "deadline_iso": "2026-12-11",
+    }
+    queue = build_document_triage(CATALOG, REGISTRY, {"b" * 32: prior},
+                                  [reviewed()])
+    pdf = next(x for x in queue["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
+    assert pdf["prior_message_id"] is None
