@@ -17,6 +17,12 @@ from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
+
+# CLI scripts also run with "python -S tools/script.py": keep that mode safe.
+if __package__:
+    from .official_robots import parse_official_robots
+else:
+    from official_robots import parse_official_robots
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -809,8 +815,11 @@ def fetch_official(url: str) -> dict[str, Any]:
                     raise ValueError("response_too_large")
                 return data, reply.geturl()
         try:
-            robots, _ = read(f"https://{host}/robots.txt", MAX_ROBOTS_BYTES)
-            robot.parse(robots.decode("utf-8", errors="replace").splitlines())
+            robots_url = f"https://{host}/robots.txt"
+            robots, final_robots_url = read(robots_url, MAX_ROBOTS_BYTES)
+            if final_robots_url != robots_url:
+                raise ValueError("unsafe_robots_redirect")
+            parse_official_robots(robots, robot)
         except urllib.error.HTTPError as exc:
             if exc.code == 404:
                 robot.allow_all = True
