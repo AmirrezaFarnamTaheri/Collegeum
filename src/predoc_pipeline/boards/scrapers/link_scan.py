@@ -329,6 +329,17 @@ class LinkScanScraper(BaseScraper):
         # current vacancies. A redirected article or layout regression must
         # not silently masquerade as a healthy empty listing page.
         marker = self.opt("verified_empty_marker")
+        if marker and posts and self.opt("verified_empty_reject_job_links"):
+            expected = clean_ws(str(marker)).casefold()
+            if any(
+                expected in clean_ws(BeautifulSoup(html, "lxml").get_text(" ", strip=True)).casefold()
+                for _, html in raw_data
+            ):
+                # Retain every real candidate for review, but never call a
+                # conflicting official zero-result page healthy.
+                self.discovery_parse_errors.append(
+                    "Verified no-vacancies notice conflicts with discovered job links"
+                )
         if marker and not posts:
             expected = clean_ws(str(marker)).casefold()
             found = any(
