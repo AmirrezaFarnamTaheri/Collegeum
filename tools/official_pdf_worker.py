@@ -18,6 +18,7 @@ def inspect(data: bytes) -> dict[str, str]:
         return {"status": "document_unverified", "reason": "not_pdf"}
     try:
         from pypdf import PdfReader
+        from pypdf.generic import ArrayObject, DictionaryObject
 
         reader = PdfReader(io.BytesIO(data), strict=True)
         if reader.is_encrypted:
@@ -25,12 +26,54 @@ def inspect(data: bytes) -> dict[str, str]:
         if (len(reader.pages) == 0 or len(reader.pages) > MAX_PDF_PAGES):
             return {"status": "document_unverified", "reason": "page_count"}
         catalog = reader.trailer["/Root"]
-        if any(name in catalog for name in ("/OpenAction", "/AA", "/Names")):
+        if any(name in catalog for name in (
+            "/OpenAction", "/AA", "/Names", "/AcroForm", "/Collection",
+        )):
             # This reviewer does not inspect or execute embedded actions,
-            # attachments, or document scripting.
+            # attachments, interactive forms or document scripting.
             return {"status": "document_unverified", "reason": "active_pdf"}
         parts = []
         for page in reader.pages:
+            # PDF actions may be attached to the PAGE or ANNOTATIONS without
+            # appearing in /Root. Inspect these before trusting extracted text.
+            if "/AA" in page or "/PresSteps" in page:
+                return {"status": "document_unverified", "reason": "active_pdf"}
+            annotations = page.get("/Annots", ArrayObject())
+            if hasattr(annotations, "get_object"):
+                annotations = annotations.get_object()
+            if not isinstance(annotations, ArrayObject) or len(annotations) > 100:
+                return {"status": "document_unverified", "reason": "active_pdf"}
+            for reference in annotations:
+                annotation = reference.get_object() if hasattr(
+                    reference, "get_object"
+                ) else reference
+                if not isinstance(annotation, DictionaryObject):
+                    return {"status": "document_unverified", "reason": "active_pdf"}
+                if any(key in annotation for key in (
+                    "/AA", "/JS", "/FS", "/RichMediaContent", "/RichMediaSettings",
+                )) or annotation.get("/Subtype") in {
+                    "/Widget", "/FileAttachment", "/RichMedia",
+                    "/Screen", "/Movie", "/Sound",
+                }:
+                    return {"status": "document_unverified", "reason": "active_pdf"}
+                if "/A" in annotation:
+                    action = annotation["/A"]
+                    if hasattr(action, "get_object"):
+                        action = action.get_object()
+                    if not isinstance(action, DictionaryObject):
+                        return {"status": "document_unverified", "reason": "active_pdf"}
+                    # Only non-executing navigation is permitted. In particular,
+                    # /Next chains and launch/remote/script actions are rejected.
+                    kind = action.get("/S")
+                    allowed = (
+                        {"/S", "/URI", "/Type"} if kind == "/URI"
+                        else {"/S", "/D", "/Type"} if kind == "/GoTo"
+                        else set()
+                    )
+                    if (not allowed or not set(action).issubset(allowed)
+                            or (kind == "/URI" and not isinstance(action.get("/URI"), str))
+                            or (kind == "/GoTo" and "/D" not in action)):
+                        return {"status": "document_unverified", "reason": "active_pdf"}
             txt = page.extract_text() or ""
             if not txt.strip():
                 return {"status": "document_unverified", "reason": "unreadable_page"}
