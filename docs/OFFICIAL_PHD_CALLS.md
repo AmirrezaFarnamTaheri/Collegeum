@@ -333,3 +333,23 @@ institutional names as location proof for **review only**. A generic host,
 missing University of Barcelona identity, outdated deadline, unsafe PDF or
 nonapproved URL continues to fail closed. This does not authorize a new
 Telegram receipt; the canonical HTML scholarship was already published.
+
+## Operator-gated official document review workflow
+
+`.github/workflows/official-document-review.yml` provides an explicit
+**workflow_dispatch-only** review when an operator has separately approved
+the source and its *exact* PDF/DOCX URL in the registry. In GitHub Actions,
+select **official-document-review → Run workflow on main**, then enter the
+approved source ID, exact URL and document format (`pdf` or `docx`).
+No periodic, push, or watchdog event can initiate this workflow.
+
+The workflow uses read-only GitHub permissions and the locked Python
+dependencies. A fresh robots.txt check precedes its one bounded document
+fetch, with no redirects, format substitution, provider-policy retry, or
+off-host mirror. `--record` creates a review-only journal **inside the
+temporary runner**, uploaded with `review.json` as a seven-day GitHub
+Actions artifact. It does **not** commit the audit to `main`, publish a
+Telegram message, or promote a candidate to `verified`. A rejected or
+inconclusive review deliberately fails the review step and still retains
+whatever audit artifact was safely generated. Existing receipts are
+unchanged. No workflow is dispatched automatically by its creation.
