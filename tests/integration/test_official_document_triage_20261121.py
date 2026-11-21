@@ -66,6 +66,7 @@ def reviewed(*, digest: str = "a" * 64, deadline: str = "2026-12-11"):
         "intake_year": 2027, "deadline_iso": deadline,
         "deadline_kind": "scholarship",
         "evidence_excerpt": "Interested candidates must complete both steps by 11 December 2026.",
+        "method": "live_fetch", "document_format": "pdf", "reason": None,
         "automatic_publication": False,
     }
 
@@ -271,3 +272,33 @@ def test_journal_rejects_deadline_lookalikes_and_ambiguous_excerpt(tmp_path):
             )
         assert not target.exists()
 
+
+def test_direct_triage_rejects_forged_or_incomplete_document_reviews():
+    for bad in (
+        {"document_sha256": None},
+        {"method": "background_auto_fetch"},
+        {"automatic_publication": True},
+        {"canonical_html_url": "https://ieb.ub.edu/en/unrelated-scholarship/"},
+        {"deadline_iso": "2027-01-15"},
+        {"official_url": "https://untrusted.example/phd.pdf"},
+        {"evidence_excerpt": "The degree begins on 11 December 2026."},
+    ):
+        with pytest.raises(ValueError):
+            build_document_triage(
+                CATALOG, REGISTRY, {}, [{**reviewed(), **bad}],
+            )
+
+
+def test_direct_triage_rejects_unvalidated_policy_failure_rows():
+    blocked = {
+        "status": "robots_disallowed", "source_id": "ieb-document-index",
+        "official_url": PDF, "reviewed_at": "2026-11-21T11:00:00Z",
+        "reason": "robots_disallowed", "method": "live_fetch",
+        "document_sha256": None, "document_format": "pdf",
+        "canonical_html_url": HTML, "automatic_publication": False,
+    }
+    assert build_document_triage(CATALOG, REGISTRY, {}, [blocked])["documents"]
+    with pytest.raises(ValueError):
+        build_document_triage(
+            CATALOG, REGISTRY, {}, [{**blocked, "method": "unknown"}],
+        )
