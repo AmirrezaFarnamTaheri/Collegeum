@@ -111,7 +111,11 @@ def health_evidence(health: Any) -> HealthEvidence:
     last = health.get("last_run")
     last = last if isinstance(last, dict) else {}
     raw_outcome = last.get("outcome")
-    outcome = raw_outcome if raw_outcome in {"success", "partial", "failed"} else "unverified"
+    outcome = (
+        raw_outcome if isinstance(raw_outcome, str)
+        and raw_outcome in {"success", "partial", "failed"}
+        else "unverified"
+    )
     raw_id = last.get("run_id")
     run_id = (
         raw_id if isinstance(raw_id, str) and
