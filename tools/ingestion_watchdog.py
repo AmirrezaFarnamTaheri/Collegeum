@@ -628,7 +628,7 @@ def _summary(
             if app is not None:
                 fh.write(f"- Application outcome: **{app.outcome}**\n")
                 fh.write(f"- Source health: **{source_text}**\n")
-                fh.write(f"- Publication attempts in snapshot run: **{published_text}**\n")
+                fh.write(f"- Reported published listings in snapshot run: **{published_text}**\n")
                 fh.write(
                     "- The reported run count is not a new delivery receipt "
                     "or proof of currently-open vacancies.\n"
