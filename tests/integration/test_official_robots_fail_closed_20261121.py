@@ -178,3 +178,46 @@ def test_general_ingestion_polite_client_accepts_genuine_crlf_robots():
     assert allowed.ok
     assert blocked.robots_blocked
     assert visited == ["https://example.org/robots.txt", "https://example.org/public/phd"]
+
+
+def test_admissions_rejects_robots_redirect_before_any_login_fetch():
+    visited = []
+
+    class Reply:
+        status = 200
+
+        def __init__(self, url):
+            self.url = url
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self, limit):
+            return b"<html>Login challenge</html>"
+
+        def geturl(self):
+            return self.url
+
+    class Opener:
+        def __init__(self, handler):
+            self.handler = handler
+
+        def open(self, req, timeout=9):
+            visited.append(req.full_url)
+            if req.full_url.endswith("/robots.txt"):
+                forwarded = self.handler.redirect_request(
+                    req, None, 302, "Found", {},
+                    "https://ieb.ub.edu/login",
+                )
+                return self.open(forwarded, timeout=timeout)
+            return Reply(req.full_url)
+
+    with patch("urllib.request.build_opener", side_effect=lambda h: Opener(h)):
+        from datetime import UTC, datetime
+
+        outcome = check_official_url(HTML, now=datetime(2026, 11, 21, tzinfo=UTC))
+    assert outcome["status"] == "robots_unavailable"
+    assert visited == ["https://ieb.ub.edu/robots.txt"]
