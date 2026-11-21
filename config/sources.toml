@@ -743,6 +743,12 @@ link_pattern = 'bde\.es/wbe/(?:es|en)/sobre-banco/trabajar-banco/(?:becas-invest
 institution = "Banco de España"
 country = "Spain"
 field_implied = true
+# The official unfiltered open-vacancies index explicitly reports zero
+# matched rows during quiet hiring periods. Treat it as verified empty only
+# while that exact page-owned notice is present; 403/markup drift stays failed.
+may_be_empty = true
+verified_empty_marker = "0 resultados encontrados para los filtros seleccionados"
+verified_empty_reject_job_links = true
 note = "Banco de España research grants, predoctoral fellowships, and assistantships."
 
 [[board]]
