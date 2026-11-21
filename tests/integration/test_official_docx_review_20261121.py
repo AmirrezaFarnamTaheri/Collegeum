@@ -33,15 +33,15 @@ SOURCE = {
 }
 NOW = datetime(2026, 11, 20, 8, tzinfo=UTC)
 TYPES = b'''<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/document.xml"\nContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
 </Types>'''
 RELS = b'''<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+<Relationship Id="rId1"\nType="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"\nTarget="word/document.xml"/>
 </Relationships>'''
 
 
 def document(lines: list[str], *, extra: dict[str, bytes] | None = None) -> bytes:
-    body = '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'
+    body = ('<w:document xmlns:w="http://schemas.openxmlformats.org/'\n            'wordprocessingml/2006/main"><w:body>')
     body += "".join(f"<w:p><w:r><w:t>{escape(line)}</w:t></w:r></w:p>" for line in lines)
     body += "</w:body></w:document>"
     parts = {"[Content_Types].xml": TYPES, "_rels/.rels": RELS,
@@ -102,7 +102,7 @@ def test_review_registry_accepts_explicit_docx_but_rejects_bad_host_and_duplicat
 
 def test_docx_requires_independent_eligibility_geography_and_current_deadline():
     modified = [
-        [part.replace("Candidates must", "Participants may").replace("candidates must", "participants may") for part in evidence()],
+        [part.replace("Candidates must", "Participants may")\n         .replace("candidates must", "participants may") for part in evidence()],
         [part.replace("08034 Barcelona", "Madrid").replace("+34", "+44")
          for part in evidence()],
         [part.replace("11 December 2026", "11 December 2025") for part in evidence()],
@@ -121,10 +121,10 @@ def test_docx_rejects_macro_external_relations_and_malformed_zip():
     active = [
         {"word/vbaProject.bin": b"macro"},
         {"word/embeddings/object.bin": b"ole"},
-        {"word/_rels/document.xml.rels": b'''<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="r9" Type="x" TargetMode="External" Target="https://evil.example"/></Relationships>'''},
+        {"word/_rels/document.xml.rels": (\n            b'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'\n            b'<Relationship Id="r9" Type="x" TargetMode="External" '\n            b'Target="https://evil.example"/></Relationships>')},
         {"../escape.txt": b"traversal"},
         {"word/huge.xml": b"x" * (4 * 1024 * 1024)},
-        {"word/document.xml": b'<!DOCTYPE root [<!ENTITY exp SYSTEM "file:///etc/passwd">]><root/>'},
+        {"word/document.xml": (\n            b'<!DOCTYPE root [<!ENTITY exp SYSTEM "file:///etc/passwd">]>'\n            b'<root/>')},
     ]
     for extra in active:
         assert inspect(document(evidence(), extra=extra))["status"] == "document_unverified"
