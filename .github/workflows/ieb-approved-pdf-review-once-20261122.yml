@@ -1,0 +1,53 @@
+name: ieb-approved-pdf-review-once
+
+# Temporary, nonpublishing document acceptance probe. No repo write, no
+# Telegram, no app credentials and no persistent review journal mutation.
+on:
+  push:
+    branches:
+      - investigate/ieb-approved-pdf-review-20261122
+
+permissions:
+  contents: read
+
+jobs:
+  approved-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          activate-environment: true
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Review only exact approved IEB PDF after robots, isolate parser
+        shell: bash
+        run: |
+          set +e
+          python -m tools.official_call_pdf_review \
+            --source-id ieb-document-index \
+            --url https://ieb.ub.edu/wp-content/uploads/2026/11/IEB-PhD-Scholarship-2027-28.pdf \
+            --fetch > /tmp/ieb-pdf-review.json
+          rc=$?
+          set -e
+          python -c '
+          import json
+          from pathlib import Path
+          raw = Path("/tmp/ieb-pdf-review.json").read_text(encoding="utf-8")
+          try:
+              result = json.loads(raw)
+          except (json.JSONDecodeError, ValueError):
+              result = {"status": "unverified-runner-output"}
+          fields = ("status", "reason", "source_id", "document_sha256",
+                    "intake_year", "deadline_iso", "deadline_kind",
+                    "automatic_publication")
+          print(json.dumps({key: result.get(key) for key in fields if key in result},
+                           sort_keys=True))
+          '
+          exit "$rc"
