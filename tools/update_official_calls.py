@@ -32,13 +32,13 @@ USER_AGENT = "CollegeumOfficialCalls/1.0 (+https://github.com/AmirrezaFarnamTahe
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
 _ACCESS_GATE = re.compile(
-    r"<(?:title|h1)\\b[^>]*>\\s*(?:just a moment|access denied|"
+    r"<(?:title|h1)\b[^>]*>\s*(?:just a moment|access denied|"
     r"403(?: forbidden)?|login required|sign in required|"
-    r"service unavailable|bot verification|captcha verification)\\b",
+    r"service unavailable|bot verification|captcha verification)\b",
     re.I,
 )
 _CHALLENGE_CONTROL = re.compile(
-    r"\\b(?:cf_chl|cf-chl|challenge-form|g-recaptcha|h-captcha)\\b",
+    r"\b(?:cf_chl|cf-chl|challenge-form|g-recaptcha|h-captcha)\b",
     re.I,
 )
 MAX_INDEX_LINKS = 6
@@ -752,6 +752,12 @@ def refresh_sources(
             status = "fetch_failed"
         for url in urls:
             detail = response if url == source["url"] else fetcher(url)
+            # A linked detail can return an HTTP 200 login/interstitial even
+            # when the index was genuine. Do not treat it as checked evidence.
+            if isinstance(detail, dict) and detail.get("status") == "ok":
+                detail_problem = _html_response_problem(detail.get("html"))
+                if detail_problem is not None:
+                    detail = {"status": "fetch_failed", "reason": detail_problem}
             if not isinstance(detail, dict) or detail.get("status") != "ok":
                 failures += 1
                 if isinstance(detail, dict) and detail.get("status") in {
