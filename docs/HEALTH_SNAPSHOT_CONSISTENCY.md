@@ -36,6 +36,16 @@ Missing components explicitly have a null checksum and a missing freshness
 state; a source with an invalid JSON payload fails the audit rather than
 being silently treated as healthy.
 
+Official funded-call and PhD-admission delivery reports also depend on
+durable Telegram receipt journals. The reconciler records only opaque
+SHA-256 fingerprints of the two bounded receipt JSON files, never their
+contents, message text or user data. The post-push audit compares those
+fingerprints as well as the component hashes. A changed, deleted, malformed
+or replaced receipt journal can therefore no longer leave an otherwise
+up-to-date official-call report undetected. Both journals are read-only to
+this audit, and absent ledgers remain explicitly represented by null
+fingerprints until independently initialized.
+
 The public dashboard reevaluates each component's effective age against the
 current viewer clock (8 hours for official calls, PhD admissions and listings;
 24 hours for Life Sciences and career) and requires a valid recorded digest.
