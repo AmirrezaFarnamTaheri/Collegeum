@@ -10,7 +10,7 @@ import json
 import os
 import re
 import tempfile
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +26,7 @@ STATES = frozenset({
 })
 METHODS = frozenset({"local_file", "live_fetch"})
 DIGEST = re.compile(r"[0-9a-f]{64}\Z")
+MAX_CLOCK_SKEW = timedelta(minutes=5)  # UTC runner synchronization tolerance
 
 
 def _utc(value: str) -> str:
@@ -37,6 +38,8 @@ def _utc(value: str) -> str:
         raise ValueError("Invalid document review timestamp") from exc
     if day.tzinfo is None or day.utcoffset().total_seconds() != 0:
         raise ValueError("Document review timestamp needs UTC offset")
+    if day > datetime.now(UTC) + MAX_CLOCK_SKEW:
+        raise ValueError("Future-dated document review has no trusted ordering")
     return day.isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
@@ -102,6 +105,10 @@ def _normalise(
             day = date.fromisoformat(cutoff)
         except (ValueError, TypeError):
             raise ValueError("Accepted review needs a valid funding cutoff") from None
+        # An archival document may be reviewed, but it cannot be labelled
+        # an eligible current-cycle scholarship once its deadline has passed.
+        if day < datetime.fromisoformat(reviewed_at.replace("Z", "+00:00")).date():
+            raise ValueError("Document review funding deadline already passed")
         if (title != approved["title"] or candidate.get("institution") != institution
                 or candidate.get("country_code") != country
                 or type(intake) is not int or not 2025 <= intake <= 2100
@@ -155,9 +162,17 @@ def validate_review_records(
     validate_sources(registry)
     if not isinstance(rows, list) or len(rows) > MAX_REVIEWS:
         raise ValueError("Unbounded document review records")
+    latest: dict[tuple[str, str, str], str] = {}
     for row in rows:
         if _normalise(row, registry=registry, method=None) != row:
             raise ValueError("Noncanonical document review evidence")
+        key = (row["source_id"], row["official_url"], row["method"])
+        timestamp = row["reviewed_at"]
+        if key in latest and timestamp <= latest[key]:
+            # Conflicting same-second revisions and stale records have no
+            # defensible content ordering. Never silently choose a winner.
+            raise ValueError("Ambiguous or out-of-order document audit revision")
+        latest[key] = timestamp
 
 
 def load_review_records(
@@ -211,6 +226,8 @@ def record_review(
         )
     ):
         return False
+    if previous is not None and row["reviewed_at"] <= previous["reviewed_at"]:
+        raise ValueError("Document audit revision must have a later review time")
     if len(rows) >= MAX_REVIEWS:
         raise ValueError("Document review journal is full; archival review required")
     payload = {
