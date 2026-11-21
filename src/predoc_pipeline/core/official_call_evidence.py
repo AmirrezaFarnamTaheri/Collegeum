@@ -96,7 +96,7 @@ def _excerpt_date_matches(excerpt: Any, expected: date) -> bool:
 
 def _location_verified(row: dict[str, Any], host: str) -> bool:
     country = row.get("country_code")
-    if country not in _OFFICIAL_COUNTRIES:
+    if not isinstance(country, str) or country not in _OFFICIAL_COUNTRIES:
         return False
     if row.get("location_evidence_url") != row.get("official_url"):
         return False
@@ -135,6 +135,7 @@ def _official_source_provenance(catalog: dict[str, Any]) -> dict[str, Any] | Non
         if (not isinstance(name, str) or name in indexed
                 or _official_host(item.get("index_url")) is None
                 or not isinstance(item.get("institution"), str)
+                or not isinstance(item.get("mode"), str)
                 or item.get("mode") not in {"index", "detail"}):
             return {}
         indexed[name] = item
@@ -149,7 +150,8 @@ def eligible_official_calls(catalog: Any, *, now: datetime) -> list[dict[str, An
     """
     if (now.tzinfo is None or not isinstance(catalog, dict)
             or catalog.get("kind") != "official_phd_call_observations"
-            or catalog.get("version") != 1
+            or type(catalog.get("version")) is not int
+            or catalog["version"] != 1
             or not isinstance(catalog.get("calls"), list)
             or len(catalog["calls"]) > 100):
         return []
@@ -164,8 +166,10 @@ def eligible_official_calls(catalog: Any, *, now: datetime) -> list[dict[str, An
             continue
         kind = row.get("kind")
         year = row.get("intake_year")
-        if (kind not in _OFFICIAL_KINDS
-                or row.get("deadline_kind") not in {"scholarship", "funding"}
+        deadline_kind = row.get("deadline_kind")
+        if (not isinstance(kind, str) or kind not in _OFFICIAL_KINDS
+                or not isinstance(deadline_kind, str)
+                or deadline_kind not in {"scholarship", "funding"}
                 or type(year) is not int or not now.year <= year <= now.year + 2):
             continue
         checked = _checked_utc(row.get("checked_at"))
@@ -199,8 +203,12 @@ def eligible_official_calls(catalog: Any, *, now: datetime) -> list[dict[str, An
                 or not _location_verified(row, host)):
             continue
         if sources is not None:
-            source = sources.get(row.get("source_id"))
-            if (source is None or source.get("status") not in {"ok", "partial"}
+            source_id = row.get("source_id")
+            if not isinstance(source_id, str):
+                continue
+            source = sources.get(source_id)
+            if (source is None or not isinstance(source.get("status"), str)
+                    or source.get("status") not in {"ok", "partial"}
                     or source.get("institution") != institution
                     or _official_host(source.get("index_url")) != host):
                 continue
