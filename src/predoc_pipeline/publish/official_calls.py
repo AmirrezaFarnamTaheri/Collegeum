@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from ..core.official_call_evidence import eligible_official_calls
 from ..core.official_call_rules import call_key, group_members, group_signature, receipt_key
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
@@ -56,111 +57,9 @@ def _host(value: object) -> str | None:
     return parsed.hostname.lower().removeprefix("www.")
 
 
-def _location_verified(row: dict[str, Any], host: str) -> bool:
-    country = row.get("country_code")
-    if country not in {"UK", "GB", "ES", "DE", "FI", "FR", "NL", "IT",
-                       "SE", "NO", "DK", "CH", "AT", "BE"}:
-        return False
-    location = row.get("location_evidence")
-    if row.get("location_evidence_url") != row.get("official_url"):
-        return False
-    if not isinstance(location, str):
-        return False
-    national = "uk" if country in {"UK", "GB"} else country.lower()
-    if host.endswith("." + national):
-        return location == f"{country}: official national institutional domain {host}"
-    # The exact IEB host can provide either complete postal+phone evidence
-    # or paired institution names extracted from the checked official body.
-    # The extractor is responsible for proving those names occur in the
-    # document itself. Generic/third-party hosts do not inherit this rule.
-    return (
-        country == "ES"
-        and host == "ieb.ub.edu"
-        and location in {
-            "ES: official postal address 08034 Barcelona and telephone +34",
-            "ES: official IEB and University of Barcelona institutional identifiers",
-        }
-    )
-
-
 def eligible_calls(catalog: Any, *, now: datetime) -> list[dict[str, Any]]:
-    """Only checked, official, open PhD scholarship/fellowship calls are eligible."""
-    if (now.tzinfo is None or not isinstance(catalog, dict)
-            or catalog.get("version") != 1
-            or catalog.get("kind") != "official_phd_call_observations"
-            or not isinstance(catalog.get("calls"), list)
-            or len(catalog["calls"]) > 100):
-        return []
-    results: dict[str, dict[str, Any]] = {}
-    conflicting: set[str] = set()
-    for row in catalog["calls"]:
-        if not isinstance(row, dict) or row.get("status") != "verified":
-            continue
-        if row.get("kind") not in KINDS or row.get("deadline_kind") not in {
-            "scholarship", "funding",
-        }:
-            continue
-        if type(row.get("intake_year")) is not int:
-            continue
-        if not now.year <= row["intake_year"] <= now.year + 2:
-            continue
-        verified = _stamp(row.get("checked_at"))
-        if verified is None or verified > now or now - verified > MAX_AGE:
-            continue
-        if not isinstance(row.get("deadline_iso"), str) or not DATE_RE.fullmatch(
-            row["deadline_iso"]
-        ):
-            continue
-        try:
-            deadline = date.fromisoformat(row["deadline_iso"])
-        except ValueError:
-            continue
-        if not now.date() <= deadline <= (now + MAX_AHEAD).date():
-            continue
-        recommended = row.get("recommended_admission_iso")
-        if recommended is not None:
-            if not isinstance(recommended, str) or not DATE_RE.fullmatch(recommended):
-                continue
-            try:
-                application_day = date.fromisoformat(recommended)
-            except ValueError:
-                continue
-            if application_day > deadline:
-                continue
-        institution = row.get("institution")
-        if not isinstance(institution, str) or not 5 <= len(institution) <= 120:
-            continue
-        host = _host(row.get("official_url"))
-        if host is None or _host(row.get("evidence_url")) != host:
-            continue
-        if row["official_url"] != row["evidence_url"]:
-            continue
-        if not _location_verified(row, host):
-            continue
-        excerpt = row.get("evidence_excerpt")
-        title = row.get("title")
-        if (not isinstance(title, str) or not TITLE_RE.search(title)
-                or not isinstance(excerpt, str)
-                or row["deadline_iso"][:4] not in excerpt
-                or not re.search(r"\b(?:by|before|deadline|close|closing|due)\b",
-                                 excerpt, re.I)):
-            continue
-        ident = call_key(row)
-        # Any inconsistent observation for one canonical identity makes
-        # every duplicate unpublishable, even if a third entry agrees later.
-        if ident in conflicting:
-            continue
-        previous = results.get(ident)
-        stable = ("deadline_iso", "deadline_kind", "kind",
-                  "institution", "country_code", "title")
-        if previous and any(previous.get(field) != row.get(field) for field in stable):
-            conflicting.add(ident)
-            results.pop(ident, None)
-            continue
-        results[ident] = row
-    return sorted(results.values(), key=lambda row: (
-        row["deadline_iso"], row["institution"], row["official_url"],
-    ))
+    """Apply the shared, stdlib-only funding evidence and source-identity gate."""
+    return eligible_official_calls(catalog, now=now)
 
 
 def _load_receipts(path: Path) -> dict[str, Any]:
