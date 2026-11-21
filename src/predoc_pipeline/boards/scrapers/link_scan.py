@@ -329,6 +329,18 @@ class LinkScanScraper(BaseScraper):
         # current vacancies. A redirected article or layout regression must
         # not silently masquerade as a healthy empty listing page.
         marker = self.opt("verified_empty_marker")
+        if marker and posts and self.opt("verified_empty_reject_conflicting_posts"):
+            # Only providers with authoritative numeric zero-result notices
+            # opt in. Evergreen footer text is not an emptiness claim.
+            expected = clean_ws(str(marker)).casefold()
+            if any(
+                expected in clean_ws(BeautifulSoup(html, "lxml").get_text(" ", strip=True)).casefold()
+                for _, html in raw_data
+            ):
+                # Keep parsed vacancies, but mark the provider inconsistent.
+                self.discovery_parse_errors.append(
+                    "Official zero-result notice conflicts with discovered vacancy links"
+                )
         if marker and not posts:
             expected = clean_ws(str(marker)).casefold()
             found = any(
