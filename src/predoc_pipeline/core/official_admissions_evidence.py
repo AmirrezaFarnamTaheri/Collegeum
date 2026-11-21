@@ -98,7 +98,7 @@ def admission_delivery_key(row: dict[str, Any]) -> str:
     """Original country/institution receipt hash, stable across URL revisions."""
     country = row["country_code"]
     institution = row["institution"].strip().casefold()
-    return hashlib.sha256(f"{country}|{institution}".encode("utf-8")).hexdigest()[:32]
+    return hashlib.sha256(f"{country}|{institution}".encode()).hexdigest()[:32]
 
 
 def eligible_official_admissions_rows(
