@@ -102,7 +102,7 @@ def test_review_registry_accepts_explicit_docx_but_rejects_bad_host_and_duplicat
 
 def test_docx_requires_independent_eligibility_geography_and_current_deadline():
     modified = [
-        [part.replace("Candidates must", "Participants may") for part in evidence()],
+        [part.replace("Candidates must", "Participants may").replace("candidates must", "participants may") for part in evidence()],
         [part.replace("08034 Barcelona", "Madrid").replace("+34", "+44")
          for part in evidence()],
         [part.replace("11 December 2026", "11 December 2025") for part in evidence()],
