@@ -395,7 +395,9 @@ type = "workday"
 group = "university"
 url = "https://ubc.wd10.myworkdayjobs.com/ubcstaffjobs"
 search_terms = ["predoctoral", "research assistant economics", "research assistant finance", "economics"]
-max_pages = 2
+# Production 2026-11-21 hit the two-page Workday cap, truncating discovery.
+# Allow up to 100 results per term, stopping earlier when Workday reports the end.
+max_pages = 5
 institution = "University of British Columbia"
 country = "Canada"
 

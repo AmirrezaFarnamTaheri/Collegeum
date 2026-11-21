@@ -261,3 +261,14 @@ def test_iies_url_pattern_rejects_non_vacancy_or_lookalike_varbi_urls():
     ):
         assert not rx.search(url), url
 
+
+
+def test_ubc_workday_pagination_budget_covers_more_than_two_pages():
+    """A two-page cap truncated live UBC discovery on 2026-11-21.
+
+    Workday still stops early when a shorter result set is reported; this
+    budget prevents the known 40-result ceiling from recurring.
+    """
+    cfg = source("ubc")
+    assert cfg.type == "workday"
+    assert cfg.opt("max_pages") >= 5
