@@ -8,7 +8,6 @@ import unittest.mock
 
 from tools import ingestion_watchdog as watchdog
 
-
 HEALTH = {
     "generated_at": "2026-11-21T15:50:06Z",
     "last_run": {
