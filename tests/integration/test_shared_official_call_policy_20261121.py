@@ -122,3 +122,30 @@ def test_incomplete_generated_provenance_cannot_bypass_source_review():
     bad["sources"].clear()
     assert eligible_calls(bad, now=NOW) == []
     assert not evaluate_official_calls_trigger(bad, LEDGER, RUNS, now=NOW).dispatch
+
+
+
+@pytest.mark.parametrize("field,invalid", [
+    ("kind", []), ("kind", {}),
+    ("deadline_kind", []), ("country_code", []), ("country_code", {}),
+    ("source_id", []), ("source_id", {}),
+])
+def test_malformed_json_types_never_crash_or_qualify_either_consumer(field, invalid):
+    bad = catalog({**call(), field: invalid}, summary=True)
+    assert eligible_calls(bad, now=NOW) == []
+    assert not evaluate_official_calls_trigger(bad, LEDGER, RUNS, now=NOW).dispatch
+
+
+def test_malformed_source_status_and_boolean_version_are_untrusted():
+    invalid_status = catalog(call(), summary=True)
+    invalid_status["sources"][0]["status"] = []
+    assert eligible_calls(invalid_status, now=NOW) == []
+    assert not evaluate_official_calls_trigger(
+        invalid_status, LEDGER, RUNS, now=NOW,
+    ).dispatch
+    invalid_version = catalog(call())
+    invalid_version["version"] = True
+    assert eligible_calls(invalid_version, now=NOW) == []
+    assert not evaluate_official_calls_trigger(
+        invalid_version, LEDGER, RUNS, now=NOW,
+    ).dispatch
