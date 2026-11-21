@@ -127,8 +127,11 @@ def test_recorded_review_requires_approved_source_and_is_review_only(tmp_path: P
     assert rows[0]["intake_year"] == 2027
     assert rows[0]["deadline_iso"] == "2026-12-11"
     assert rows[0]["method"] == "live_fetch"
-    assert record_review(journal, _result(digest="b" * 64),
-                         registry=REGISTRY, method="live_fetch") is True
+    assert record_review(
+        journal, {**_result(digest="b" * 64),
+                  "reviewed_at": "2026-11-21T11:10:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    ) is True
     rows = load_review_records(journal, registry=REGISTRY)
     assert len(rows) == 2
     assert rows[0]["document_sha256"] != rows[1]["document_sha256"]

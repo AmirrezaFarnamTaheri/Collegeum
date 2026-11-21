@@ -95,14 +95,21 @@ def _has_prior_attempt(
     for value in deliveries.values():
         if not isinstance(value, dict):
             continue
+        if (value.get("official_url") != canonical
+                or value.get("institution") != institution
+                or not isinstance(value.get("state"), str)
+                or not value["state"]):
+            continue
         year = value.get("intake_year")
-        if (
-            value.get("official_url") == canonical
-            and value.get("institution") == institution
-            and value.get("deadline_iso") == deadline
-            and (year is None or (type(year) is int and year in {intake, intake - 1}))
-            and value.get("state") is not None
-        ):
+        # Deadline corrections, title edits and incomplete/ambiguous receipts
+        # cannot prove an earlier same-year send never occurred. Hold rather
+        # than letting an operator infer "no delivery" from the new cutoff.
+        if type(year) is not int or year == intake:
+            return True
+        # The known historical one-year parser error is a duplicate only
+        # when the exact cutoff survives; an actual future annual round with
+        # a different deadline must remain reviewable.
+        if year == intake - 1 and value.get("deadline_iso") == deadline:
             return True
     return False
 
@@ -129,9 +136,22 @@ def build_document_triage(
         if not isinstance(sid, str) or sid not in source_map or sid in seen_source_ids:
             raise ValueError("Unknown or duplicate document-source observation")
         seen_source_ids.add(sid)
+        registered = source_map[sid]
+        for field, expected in (
+            ("index_url", registered["url"]),
+            ("institution", registered["institution"]),
+            ("mode", registered["mode"]),
+            ("country_code", registered["country_code"]),
+        ):
+            if field in observation and observation[field] != expected:
+                raise ValueError("Document observation has conflicting provenance")
         listed = observation.get("document_candidates", [])
         if not isinstance(listed, list) or len(listed) > 500:
             raise ValueError("Unbounded document candidates")
+        # An inaccessible or failed index cannot substantiate a current
+        # document candidate, even if an old snapshot carried the same URL.
+        if listed and observation.get("status") not in {"ok", "partial"}:
+            raise ValueError("Document candidate from unreadable source index")
         for url in listed:
             if not _trusted_document_url(url, source_map[sid]["url"]):
                 raise ValueError("Untrusted institutional document link")
@@ -144,20 +164,33 @@ def build_document_triage(
         suffix = url.rsplit(".", 1)[-1].lower()
         sources = [source_map[sid] for sid in sorted(source_ids)]
         institutions = {item["institution"] for item in sources}
-        approvals = [
+        local_approvals = [
             (source, approval)
             for source in sources
             for approval in source.get("approved_documents", [])
             if approval["url"] == url
         ]
+        # A second approved registry source may still conflict even if its
+        # index has not yet been observed. Check the entire trusted registry
+        # before giving a document an "approved" operator label.
+        all_approvals = [
+            (source, approval)
+            for source in registry["sources"]
+            for approval in source.get("approved_documents", [])
+            if approval["url"] == url
+        ]
         signatures = {
-            (source["institution"], approval["canonical_html_url"], approval["title"])
-            for source, approval in approvals
+            (source["institution"], source["country_code"],
+             approval["canonical_html_url"], approval["title"],
+             approval["institution_marker"])
+            for source, approval in all_approvals
         }
         conflict = len(institutions) > 1 or len(signatures) > 1
-        approved = bool(approvals) and not conflict and suffix != "doc"
-        canonical = next(iter(signatures))[1] if approved else None
-        canonical_title = next(iter(signatures))[2] if approved else None
+        # Approval is source-specific. A document approved only on an unseen
+        # parallel index must not implicitly authorize the observed index.
+        approved = bool(local_approvals) and not conflict and suffix != "doc"
+        canonical = next(iter(signatures))[2] if approved else None
+        canonical_title = next(iter(signatures))[3] if approved else None
         row: dict[str, Any] = {
             "official_url": url,
             "document_format": suffix,

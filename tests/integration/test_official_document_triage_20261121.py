@@ -122,8 +122,11 @@ def test_audit_preserves_independent_deadline_evidence_and_revisions(tmp_path):
     assert rows[0]["deadline_iso"] == "2026-12-11"
     assert rows[0]["intake_year"] == 2027
     assert rows[0]["institution"] == "Barcelona Institute of Economics (IEB)"
-    assert record_review(target, reviewed(digest="b" * 64),
-                         registry=REGISTRY, method="live_fetch")
+    assert record_review(
+        target, {**reviewed(digest="b" * 64),
+                 "reviewed_at": "2026-11-21T11:10:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    )
     assert len(load_review_records(target, registry=REGISTRY)) == 2
 
 
@@ -241,15 +244,21 @@ def test_repeated_policy_block_and_review_transition_are_idempotent(tmp_path):
         registry=REGISTRY, method="live_fetch",
     ) is False
     assert len(load_review_records(target, registry=REGISTRY)) == 1
-    assert record_review(target, reviewed(), registry=REGISTRY, method="live_fetch")
+    assert record_review(
+        target, {**reviewed(), "reviewed_at": "2026-11-21T11:05:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    )
     # Repeated identical success has no duplicate audit row.
     assert record_review(
-        target, {**reviewed(), "reviewed_at": "2026-11-21T11:04:00Z"},
+        target, {**reviewed(), "reviewed_at": "2026-11-21T11:06:00Z"},
         registry=REGISTRY, method="live_fetch",
     ) is False
     assert len(load_review_records(target, registry=REGISTRY)) == 2
     # A newly blocked retrieval must not destroy the previous proof hash.
-    assert record_review(target, blocked, registry=REGISTRY, method="live_fetch")
+    assert record_review(
+        target, {**blocked, "reviewed_at": "2026-11-21T11:07:00Z"},
+        registry=REGISTRY, method="live_fetch",
+    )
     rows = load_review_records(target, registry=REGISTRY)
     assert [x["status"] for x in rows] == [
         "robots_disallowed", "document_review_only", "robots_disallowed",
@@ -302,3 +311,160 @@ def test_direct_triage_rejects_unvalidated_policy_failure_rows():
         build_document_triage(
             CATALOG, REGISTRY, {}, [{**blocked, "method": "unknown"}],
         )
+
+
+def test_revised_same_cycle_deadline_never_appears_unsent_to_operator():
+    # Institutions correct deadlines after publication. A changed funding
+    # cutoff is not proof the earlier Telegram attempt never happened.
+    for state in ("confirmed", "pending", "uncertain", "retry_held"):
+        previous = {
+            "state": state, "message_id": 133, "official_url": HTML,
+            "institution": "Barcelona Institute of Economics (IEB)",
+            "intake_year": 2027, "deadline_iso": "2026-12-09",
+            "title": "PhD Scholarship in Economics 2027",
+        }
+        key = call_key(previous)
+        pdf = next(x for x in build_document_triage(
+            CATALOG, REGISTRY, {key: previous}, [reviewed()],
+        )["documents"] if x["official_url"] == PDF)
+        assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
+        assert pdf["prior_message_id"] is None
+
+
+def test_uncertain_receipt_without_deadline_cannot_look_unsent():
+    previous = {
+        "state": "uncertain", "official_url": HTML,
+        "institution": "Barcelona Institute of Economics (IEB)",
+        "intake_year": 2027, "deadline_iso": None,
+        "title": "PhD Scholarship in Economics 2027",
+    }
+    pdf = next(x for x in build_document_triage(
+        CATALOG, REGISTRY, {"legacy-unknown": previous}, [reviewed()],
+    )["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "prior_attempt_requires_reconciliation"
+    assert pdf["prior_message_id"] is None
+
+
+def test_historical_different_cycle_deadline_remains_new_reviewer_lead():
+    previous = {
+        "state": "confirmed", "message_id": 95, "official_url": HTML,
+        "institution": "Barcelona Institute of Economics (IEB)",
+        "intake_year": 2026, "deadline_iso": "2025-12-11",
+        "title": "PhD Scholarship in Economics 2026",
+    }
+    pdf = next(x for x in build_document_triage(
+        CATALOG, REGISTRY, {call_key(previous): previous}, [reviewed()],
+    )["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "review_complete_no_delivery"
+
+
+def test_future_dated_review_is_rejected_at_all_validation_entrypoints(tmp_path):
+    future = {**reviewed(), "reviewed_at": "2099-01-01T00:00:00Z"}
+    with pytest.raises(ValueError):
+        build_document_triage(CATALOG, REGISTRY, {}, [future])
+    with pytest.raises(ValueError):
+        record_review(
+            tmp_path / "reviews.json", future, registry=REGISTRY,
+            method="live_fetch",
+        )
+    assert not (tmp_path / "reviews.json").exists()
+
+
+def test_conflicting_same_time_document_revisions_fail_closed(tmp_path):
+    first = reviewed(digest="a" * 64)
+    conflicting = reviewed(digest="b" * 64)
+    target = tmp_path / "reviews.json"
+    assert record_review(target, first, registry=REGISTRY, method="live_fetch")
+    # A different body at the same second has no defensible event order.
+    with pytest.raises(ValueError):
+        record_review(target, conflicting, registry=REGISTRY, method="live_fetch")
+    assert len(load_review_records(target, registry=REGISTRY)) == 1
+    with pytest.raises(ValueError):
+        build_document_triage(CATALOG, REGISTRY, {}, [first, conflicting])
+
+
+def test_out_of_order_revised_review_does_not_override_newer_audit(tmp_path):
+    newer = {**reviewed(digest="b" * 64), "reviewed_at": "2026-11-21T11:10:00Z"}
+    older = {**reviewed(digest="a" * 64), "reviewed_at": "2026-11-21T11:00:00Z"}
+    path = tmp_path / "reviews.json"
+    assert record_review(path, newer, registry=REGISTRY, method="live_fetch")
+    with pytest.raises(ValueError):
+        record_review(path, older, registry=REGISTRY, method="live_fetch")
+    assert [x["document_sha256"] for x in load_review_records(
+        path, registry=REGISTRY,
+    )] == ["b" * 64]
+
+
+
+def test_all_registry_approvals_contribute_to_document_conflict_detection():
+    one_index = {**CATALOG, "sources": [CATALOG["sources"][0]]}
+    approved = REGISTRY["sources"][0]["approved_documents"][0]
+    for shadow in (
+        {**approved, "canonical_html_url":
+         "https://ieb.ub.edu/en/different-funding-round/"},
+        dict(approved),
+    ):
+        other = {**REGISTRY["sources"][1], "approved_documents": [shadow]}
+        if shadow["canonical_html_url"] == HTML:
+            # Even identical URLs, titles and institution names cannot have
+            # contradictory independent country approvals.
+            other["country_code"] = "FR"
+        registry = {**REGISTRY, "sources": [REGISTRY["sources"][0], other]}
+        pdf = next(x for x in build_document_triage(
+            one_index, registry, {}, [],
+        )["documents"] if x["official_url"] == PDF)
+        assert pdf["next_action"] == "conflicting_approvals"
+        assert pdf["approved"] is False
+
+
+def test_registry_approval_from_another_index_is_not_transferred_implicitly():
+    only_other = {
+        **REGISTRY, "sources": [
+            {**REGISTRY["sources"][0], "approved_documents": []},
+            {**REGISTRY["sources"][1], "approved_documents":
+             REGISTRY["sources"][0]["approved_documents"]},
+        ],
+    }
+    only_first_index = {**CATALOG, "sources": [CATALOG["sources"][0]]}
+    pdf = next(x for x in build_document_triage(
+        only_first_index, only_other, {}, [],
+    )["documents"] if x["official_url"] == PDF)
+    assert pdf["next_action"] == "approval_required"
+    assert pdf["approved"] is False
+
+
+def test_document_observation_provenance_and_current_access_must_match_registry():
+    original = CATALOG["sources"][0]
+    for change in (
+        {"index_url": "https://ieb.ub.edu/another-announcement-index/"},
+        {"institution": "Unknown Institution"},
+        {"mode": "detail"},
+        {"status": "robots_disallowed"},
+        {"status": "robots_unavailable"},
+        {"status": "fetch_failed"},
+        {"status": "unrecognized"},
+    ):
+        tampered = {
+            **CATALOG, "sources": [{
+                **original, **change, "document_candidates": [PDF],
+            }],
+        }
+        with pytest.raises(ValueError):
+            build_document_triage(tampered, REGISTRY, {}, [])
+
+
+def test_archived_expired_cutoff_cannot_be_a_successful_current_review(tmp_path):
+    expired = {
+        **reviewed(),
+        "deadline_iso": "2026-10-11",
+        "evidence_excerpt": (
+            "Interested candidates must complete both steps by 11 October 2026."
+        ),
+    }
+    with pytest.raises(ValueError):
+        record_review(
+            tmp_path / "reviews.json", expired, registry=REGISTRY,
+            method="live_fetch",
+        )
+    assert not (tmp_path / "reviews.json").exists()
+
