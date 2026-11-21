@@ -465,6 +465,7 @@ def _document_review_health(catalog_path: Path) -> dict[str, Any]:
                     or not isinstance(url, str) or len(url) > 400
                     or _host(url) is None or not url.lower().endswith((".pdf", ".docx"))
                     or method not in {"live_fetch", "local_file"}
+                    or not isinstance(reviewed_at, str)
                     or _stamp(reviewed_at) is None
                     or row.get("automatic_publication") is not False):
                 raise ValueError("Invalid document review safety contract")
