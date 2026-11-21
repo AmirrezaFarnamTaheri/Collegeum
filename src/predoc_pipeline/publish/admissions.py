@@ -18,9 +18,9 @@ from typing import Any
 from ..core.official_admissions_evidence import (
     COUNTRY_NAMES,
     admission_delivery_key,
-    admissions_host as _official_host,
     eligible_official_admissions_rows,
 )
+from ..core.official_admissions_evidence import admissions_host as _official_host
 from ..logging_setup import get_logger
 from .telegram import TelegramClient, TelegramError
 from .telegram_intents import enforce_production_outcome, enforce_production_reservation
