@@ -7,7 +7,6 @@ The CLI logs only aggregate counts and sanitized transport status.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import re
 from pathlib import Path
@@ -15,8 +14,7 @@ from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
-from predoc_pipeline.boards.collector import build_http
-from predoc_pipeline.boards.config import HttpConfig, SourceConfig, load_board_sources
+from predoc_pipeline.boards.config import SourceConfig, load_board_sources
 from predoc_pipeline.boards.scrapers.link_scan import LinkScanScraper
 from predoc_pipeline.ingest.http import PoliteClient
 
@@ -92,14 +90,15 @@ def inspect_html(cfg: SourceConfig, html: str) -> dict[str, object]:
     }
 
 
-async def run() -> int:
+def main() -> int:
     cfg = next(
         item for item in load_board_sources(Path("config/sources.toml"))
         if item.name == "uzh"
     )
-    # The production async adapter does not independently consult robots.
-    # Verify the exact official target with the fail-closed policy client
-    # before ONE read-only fetch using production's async HTTP implementation.
+    # Use the policy client's SINGLE GET. It verifies robots.txt for the
+    # original URL and every redirect hop, rejects 200 interstitials, and
+    # never forwards headers to a different origin. The production async
+    # client cannot serve as a policy-only check for off-origin redirects.
     with PoliteClient(
         user_agent=(
             "Collegeum-UZH-SourceProbe/1.0 "
@@ -107,33 +106,16 @@ async def run() -> int:
         ),
         timeout=12, per_host_delay=3, respect_robots=True,
     ) as policy:
-        if not policy.allowed(INDEX):
-            print(json.dumps({"source_state": "robots-denied-or-unverified"}))
-            return 2
-    http_cfg = HttpConfig(
-        timeout=18, max_retries=0, backoff_base=1,
-        default_min_interval=3, max_concurrent_sources=1,
-        source_timeout=30,
-    )
-    async with build_http(http_cfg) as client:
-        try:
-            html = await client.get_text(INDEX, stop_on_429=True)
-        except Exception as exc:  # noqa: BLE001 - sanitize provider errors
-            status = getattr(exc, "status", None)
-            print(json.dumps({
-                "source_state": "fetch-unverified",
-                "http_status": status if type(status) is int else None,
-                "error_type": type(exc).__name__,
-            }))
-            return 2
-    result = inspect_html(cfg, html)
+        response = policy.get(INDEX, use_cache=False)
+    if not response.ok:
+        print(json.dumps({
+            "source_state": "robots-denied-or-fetch-unverified",
+            "http_status": response.status,
+        }))
+        return 2
+    result = inspect_html(cfg, response.text)
     print(json.dumps(result, sort_keys=True))
     return 0 if result["source_state"] == "vacancy-links-observed" else 2
-
-
-def main() -> int:
-    return asyncio.run(run())
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
