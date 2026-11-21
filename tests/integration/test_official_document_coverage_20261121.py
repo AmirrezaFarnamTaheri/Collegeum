@@ -308,3 +308,49 @@ def test_docx_fetch_cannot_follow_an_approved_host_redirect_either():
           patch("urllib.request.build_opener", side_effect=make_opener)):
         result = fetch_reviewed_docx(docx, docx_source)
     assert result["status"] == "unsafe_redirect"
+
+def test_official_pdf_only_index_has_no_html_but_is_not_empty():
+    html = (
+        "<h3>PhD Scholarship in Economics 2027</h3>"
+        f'<a href="{PDF}">Descargar PDF</a>'
+    )
+    catalog = refresh_sources(
+        REGISTRY, OLD, now=NOW,
+        fetcher=lambda url: {"status": "ok", "html": html},
+    )
+    source = catalog["sources"][0]
+    assert source["discovered_links"] == 0
+    assert source["html_index_empty"] is True
+    assert source["document_only_index"] is True
+    assert source["index_empty"] is False
+    assert source["unsupported_documents"] == 1
+    assert source["document_candidates"] == [PDF]
+    assert not eligible_calls(catalog, now=NOW)
+
+
+def test_health_distinguishes_repeated_document_links_from_unique_held_documents(
+    tmp_path: Path,
+):
+    catalog_path = tmp_path / "official_phd_calls.json"
+    catalog_path.write_text(json.dumps({
+        "kind": "official_phd_call_observations", "version": 1,
+        "calls": [],
+        "sources": [
+            {"status": "ok", "index_empty": False, "html_index_empty": True,
+             "document_only_index": True, "unsupported_documents": 1,
+             "document_candidates": [PDF]},
+            {"status": "ok", "index_empty": False, "html_index_empty": True,
+             "document_only_index": True, "unsupported_documents": 1,
+             "document_candidates": [PDF]},
+        ],
+    }))
+    health = official_calls_health(
+        catalog_path, tmp_path / "receipts.json", now=NOW,
+    )
+    assert health["empty_indexes"] == 0
+    assert health["html_index_empty"] == 2
+    assert health["document_only_indexes"] == 2
+    assert health["document_link_occurrences"] == 2
+    assert health["unique_document_candidates"] == 1
+    assert health["unsupported_documents"] == 2
+    assert health["status"] == "degraded"
