@@ -272,9 +272,10 @@ name = "uzh"
 type = "link_scan"
 group = "university"
 # jobs.uzh.ch redirects to an iframe-backed university-wide JS job board.
-# The Economics department has actionable canonical job links in plain HTML.
+# The Economics department has official vacancy links in both language routes.
+# Discovery alone does not establish an eligible predoc position.
 url = "https://www.econ.uzh.ch/en/about/jobs.html"
-link_pattern = 'jobs\.uzh\.ch/job-vacancies/'
+link_pattern = '^https://jobs\.uzh\.ch/(?:job-vacancies|offene-stellen)/'
 institution = "University of Zurich"
 country = "Switzerland"
 note = "University of Zurich (large economics pre-doc programme)."
