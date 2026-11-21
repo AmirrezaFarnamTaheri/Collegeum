@@ -193,6 +193,22 @@ def _location_proof(text: str, country: str, url: str) -> str | None:
     suffix = "uk" if country in {"UK", "GB"} else country.lower()
     if host.endswith("." + suffix):
         return f"{country}: official national institutional domain {host}"
+    # Explicit contradictory official contact evidence overrides weaker
+    # institutional-name inference. If a document claims IEB's named street
+    # address, the current Barcelona postcode and +34 phone must also agree.
+    # This applies to PDF, DOCX, and HTML without trusting upstream metadata.
+    postal_verified = bool(
+        re.search(
+            r"(?:C/\s*John\s+M\.\s*Keynes.{0,55}08034\s+Barcelona|"
+            r"08034\s+Barcelona.{0,80}(?:Tel\.?\s*)?\+\s*34)",
+            text, re.I,
+        )
+        and re.search(r"(?:Tel\.?\s*)?\+\s*34\s*\d{2}", text, re.I)
+    )
+    if country == "ES" and re.search(
+        r"C/\s*John\s+M\.\s*Keynes", text, re.I,
+    ) and not postal_verified:
+        return None
     # On IEB's *exact* official host, two independently named institutions
     # in the document itself establish Barcelona. Real 2027 IEB PDFs contain
     # these names but no street address or telephone. Do not treat the source
@@ -207,10 +223,7 @@ def _location_proof(text: str, country: str, url: str) -> str | None:
         return "ES: official IEB and University of Barcelona institutional identifiers"
     # Otherwise, generic .edu institutions still require document-borne
     # verifiable postal and telephone evidence, not a claimed country label.
-    if country == "ES" and re.search(
-        r"(?:C/\s*John\s+M\.\s*Keynes.{0,55}08034\s+Barcelona|"
-        r"08034\s+Barcelona.{0,80}(?:Tel\.?\s*)?\+\s*34)", text, re.I,
-    ) and re.search(r"(?:Tel\.?\s*)?\+\s*34\s*\d{2}", text, re.I):
+    if country == "ES" and postal_verified:
         return "ES: official postal address 08034 Barcelona and telephone +34"
     return None
 
