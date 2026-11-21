@@ -139,3 +139,24 @@ def test_delivery_journal_hashes_are_observations_not_mutations(checkpoint_files
     prior = {name: (root / path).read_bytes() for name, path in JOURNALS}
     checkpoint(root, expected_run_id=RUN_ID, now=NOW, write=True)
     assert all((root / path).read_bytes() == prior[name] for name, path in JOURNALS)
+
+
+
+@pytest.mark.parametrize("file_path", [
+    "data/official_phd_calls_telegram.json",
+    "data/phd_admissions_telegram.json",
+    "docs/data/official_phd_calls.json",
+    "docs/data/phd_admissions.json",
+])
+def test_dangling_symlink_cannot_masquerade_as_missing_health_input(
+    checkpoint_files, file_path,
+):
+    root = checkpoint_files
+    target = root / file_path
+    target.unlink()
+    target.symlink_to(root / "absent-institutional-file.json")
+    health = root / "docs/data/health.json"
+    before = health.read_bytes()
+    with pytest.raises(ValueError, match="Untrusted|symlink"):
+        checkpoint(root, expected_run_id=RUN_ID, now=NOW, write=True)
+    assert health.read_bytes() == before
