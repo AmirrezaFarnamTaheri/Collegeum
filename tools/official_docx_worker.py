@@ -43,7 +43,7 @@ def _part(archive: zipfile.ZipFile, name: str) -> bytes:
 def _inspect(data: bytes) -> dict[str, str]:
     if not isinstance(data, bytes) or len(data) > MAX_DOCX_BYTES:
         return {"status": "document_unverified", "reason": "oversize"}
-    if not data.startswith(b"PK\\x03\\x04"):
+    if not data.startswith(b"PK\x03\x04"):
         return {"status": "document_unverified", "reason": "not_docx"}
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         entries = archive.infolist()
@@ -55,8 +55,8 @@ def _inspect(data: bytes) -> dict[str, str]:
             name = entry.filename
             canonical = name.casefold()
             parts = PurePosixPath(name).parts
-            if (not name or name.startswith("/") or "\\\\" in name or ":" in name
-                    or "\\x00" in name or any(x in {"..", "."} for x in parts)
+            if (not name or name.startswith("/") or "\\" in name or ":" in name
+                    or "\x00" in name or any(x in {"..", "."} for x in parts)
                     or name.endswith("/") or canonical in seen
                     or entry.flag_bits & 1
                     or entry.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
@@ -111,7 +111,7 @@ def _inspect(data: bytes) -> dict[str, str]:
                 length += len(line) + 1
             if length > MAX_DOCX_TEXT:
                 return {"status": "document_unverified", "reason": "text_oversize"}
-        text = re.sub(r"\\s+", " ", " ".join(chunks)).strip()
+        text = re.sub(r"\s+", " ", " ".join(chunks)).strip()
         if len(text) < 100:
             return {"status": "document_unverified", "reason": "no_usable_text"}
         return {"status": "ok", "text": text}
@@ -126,7 +126,7 @@ def inspect(data: bytes) -> dict[str, str]:
 
 def main() -> int:
     data = sys.stdin.buffer.read(MAX_DOCX_BYTES + 1)
-    sys.stdout.write(json.dumps(inspect(data), ensure_ascii=True) + "\\n")
+    sys.stdout.write(json.dumps(inspect(data), ensure_ascii=True) + "\n")
     return 0
 
 
