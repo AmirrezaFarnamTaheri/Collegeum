@@ -177,3 +177,60 @@ def test_reconciler_does_not_write_telegram_or_initiate_source_fetch():
     for forbidden in ("send_message(", "telegram.send(", "urllib.request",
                       "requests.get(", "git push", "workflow_dispatch"):
         assert forbidden not in code
+
+
+
+def test_full_checkpoint_rewrites_only_health_not_delivery_journals(
+    tmp_path, monkeypatch,
+):
+    from predoc_pipeline.publish import official_calls
+
+    root = tmp_path
+    (root / "docs/data").mkdir(parents=True)
+    (root / "data").mkdir()
+    (root / "docs/data/health.json").write_text(json.dumps(health()))
+    source_path = root / "docs/data/official_phd_calls.json"
+    source_path.write_text(json.dumps({
+        "kind": "official_phd_call_observations",
+        "generated_at": "2026-11-21T14:49:00Z",
+        "calls": [], "sources": [],
+    }))
+    journal = root / "data/official_phd_calls_telegram.json"
+    journal.write_text('{"version":1,"deliveries":{"old":{"state":"uncertain"}}}')
+    journal_before = journal.read_bytes()
+    catalogue_before = source_path.read_bytes()
+
+    def fake_health(catalog_path, receipt_path, *, now):
+        assert catalog_path == source_path
+        assert receipt_path == journal
+        return {
+            "generated_at": "2026-11-21T14:49:00Z",
+            "status": "degraded", "empty_indexes": 1,
+            "document_only_indexes": 2, "eligible": 9,
+        }
+
+    monkeypatch.setattr(official_calls, "official_calls_health", fake_health)
+    updated = checkpoint(
+        root, expected_run_id="44915539651", now=NOW, write=True,
+    )
+    assert updated["status"] == "reconciled"
+    assert journal.read_bytes() == journal_before
+    assert source_path.read_bytes() == catalogue_before
+    saved = json.loads((root / "docs/data/health.json").read_text())
+    assert saved["status"] == "degraded"
+    assert saved["last_run"]["run_id"] == "44915539651"
+    assert saved["official_calls"]["document_only_indexes"] == 2
+    assert saved["component_snapshots"]["official_calls"]["reconciled"]
+    assert checkpoint(
+        root, expected_run_id="44915539651", now=NOW, write=False,
+    )["status"] == "checked"
+
+
+def test_bad_run_id_cannot_overwrite_prior_health(tmp_path):
+    (tmp_path / "docs/data").mkdir(parents=True)
+    target = tmp_path / "docs/data/health.json"
+    target.write_text(json.dumps(health()))
+    old = target.read_bytes()
+    with pytest.raises(ValueError, match="run"):
+        checkpoint(tmp_path, expected_run_id="forged", now=NOW, write=True)
+    assert target.read_bytes() == old
