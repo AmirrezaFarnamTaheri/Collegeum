@@ -614,12 +614,16 @@ def test_supported_html_and_unreadable_document_calls_have_separate_health_count
     )
     assert catalog["calls"] == []
     assert catalog["sources"][0]["unsupported_documents"] == 2
-    assert catalog["sources"][0]["index_empty"] is True
+    assert catalog["sources"][0]["index_empty"] is False
+    assert catalog["sources"][0]["html_index_empty"] is True
+    assert catalog["sources"][0]["document_only_index"] is True
     source = tmp_path / "official_calls.json"
     ledger = tmp_path / "ledger.json"
     source.write_text(json.dumps(catalog))
     health = official_calls_health(source, ledger, now=NOW)
-    assert health["empty_indexes"] == 1
+    assert health["empty_indexes"] == 0
+    assert health["document_only_indexes"] == 1
+    assert health["unique_document_candidates"] == 2
     assert health["unsupported_documents"] == 2
     assert health["status"] == "degraded"
 

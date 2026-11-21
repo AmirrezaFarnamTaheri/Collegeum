@@ -185,13 +185,71 @@ def test_document_review_rejects_outdated_ambiguous_or_fabricated_official_evide
 
 
 def test_pdf_review_requires_independent_geography_not_just_institution_name():
-    lines = [line for line in _evidence_text() if "08034 Barcelona" not in line]
+    lines = [
+        line.replace("University of Barcelona", "University of Elsewhere")
+        for line in _evidence_text() if "08034 Barcelona" not in line
+    ]
     row = review_pdf_bytes(
         _pdf(lines), url=PDF, source=SOURCE, now=NOW,
         content_type="application/pdf",
     )
     assert row["status"] == "document_unverified"
     assert row["reason"] == "missing_geography"
+
+
+def test_actual_ieb_scholarship_pdf_without_postal_contact_is_reviewable():
+    # The 2026-10-30 institutional PDF names IEB and University of Barcelona,
+    # but has no postal address or phone. The location still has independent
+    # institutional evidence within the document body.
+    lines = [line for line in _evidence_text() if "08034 Barcelona" not in line]
+    lines.append("October 30, 2026")
+    row = review_pdf_bytes(
+        _pdf(lines), url=PDF, source=SOURCE, now=NOW,
+        content_type="application/pdf",
+    )
+    assert row["status"] == "document_review_only", row
+    assert row["deadline_iso"] == "2026-12-11"
+    assert row["automatic_publication"] is False
+
+
+def test_ieb_pdf_conflicting_contact_overrides_institution_name_proof():
+    lines = [
+        line.replace("08034 Barcelona", "Madrid").replace("+34", "+44")
+        for line in _evidence_text()
+    ]
+    row = review_pdf_bytes(
+        _pdf(lines), url=PDF, source=SOURCE, now=NOW,
+        content_type="application/pdf",
+    )
+    assert row["status"] == "document_unverified"
+    assert row["reason"] == "missing_geography"
+
+
+def test_ieb_html_candidate_keeps_publishability_with_new_document_body_proof():
+    # The publisher has an independently maintained geography allowlist.
+    # Changing extraction evidence must not silently suppress fresh HTML calls.
+    official_html = SOURCE["approved_documents"][0]["canonical_html_url"]
+    call = {
+        "source_id": "ieb-economics-2027",
+        "institution": SOURCE["institution"],
+        "country_code": "ES", "official_url": official_html,
+        "location_evidence_url": official_html,
+        "location_evidence": (
+            "ES: official IEB and University of Barcelona institutional identifiers"
+        ),
+        "status": "verified", "kind": "phd_scholarship",
+        "title": "PhD Scholarship in Economics 2027",
+        "deadline_iso": "2026-12-11", "deadline_kind": "scholarship",
+        "intake_year": 2027, "checked_at": NOW.isoformat(),
+        "evidence_url": official_html, "evidence_excerpt": (
+            "Interested candidates must complete both steps by 11 December 2026"
+        ),
+    }
+    catalog = {
+        "kind": "official_phd_call_observations", "version": 1,
+        "calls": [call],
+    }
+    assert eligible_calls(catalog, now=NOW) == [call]
 
 
 def test_document_review_enforces_strict_byte_limit():

@@ -28,9 +28,11 @@ Unavailable or disallowed robots.txt is a failed check, never an implicit grant.
 
 Same-host scholarship PDF/DOC/DOCX links discovered in official indexes
 are counted as **unverified document-coverage gaps**; discovery alone never
-fetches a file or creates publication evidence. An accessible index with zero **newly discovered** HTML call links
-is reported as an **empty index** coverage limitation, even if older
-already-known calls are successfully rechecked. Source diagnostics show
+fetches a file or creates publication evidence. An accessible index with no
+HTML candidates but at least one document link is a **document-only index**,
+not an empty index. An index with neither HTML nor document candidates
+remains `index_empty`; neither state means the institution has no calls.
+Source diagnostics show
 `discovered_links`, `rechecked_links` and total `candidate_count`;
 none of these imply that the institution has no opportunities. These limitations degrade public source
 health until a separately reviewed and robots-permitted document workflow
@@ -68,9 +70,12 @@ Examples from the November 2026 verified primary-source investigation:
 Every posted call must be freshly checked (14 days maximum), link to the same
 official HTTPS evidence page, have an explicit current-cycle deadline, and
 provide independently corroborated non-US location evidence. A national
-university domain supplies such evidence for Henley; IEB's generic .edu host
-requires its current **08034 Barcelona / +34** institutional postal and telephone
-address. Absence or contradiction suppresses publication.
+university domain supplies such evidence for Henley. On the **exact**
+`ieb.ub.edu` host, independent body text naming **both** Barcelona Institute
+of Economics and University of Barcelona also corroborates location; otherwise
+the existing institutional **08034 Barcelona / +34** postal and telephone
+proof remains necessary. The source registry, filename, article title, or
+upstream country label alone never proves geography.
 
 ## Operations and receipt safety
 
@@ -216,15 +221,20 @@ HTML source coverage is independently counted as `discovered_html_links`,
 `document_links_by_format` (PDF, DOC, DOCX). A previous-catalogue snapshot
 without these new per-format fields cannot claim format-complete coverage.
 
-The three IEB indexes had zero eligible HTML links in the 21 November 2026
-snapshot because the earlier HTML parser checked only anchor labels.
-The institutional listing uses a descriptive heading with a generic
-"Web personal" action link; the contextual HTML candidate fix addresses
-this specific recall gap without bypassing detail-page checks or treating
-already delivered IEB awards as new Telegram identities. The index also
-exposes multiple historical/closed document calls: a count of 12 document
-candidates is **not** twelve open scholarships. PDF/DOCX candidates are
-not downloaded automatically, and .doc remains a held format.
+The 21 November 2026 **post-merge live refresh** found zero same-host
+qualifying HTML anchors across the three IEB indexes, even after contextual
+link handling was added. The application and document indexes instead
+exposed **5 and 7 PDF link occurrences**, with seven distinct URLs;
+the news index still had no qualifying HTML link. This is not evidence
+that all calls were recalled: IEB uses separate PDF-first announcement
+cards, and an index headline or generic "Web personal" label is not itself
+a verified HTML detail link. Health now reports `html_index_empty`,
+`document_only_indexes`, `document_link_occurrences` and
+`unique_document_candidates` separately, preserving a degraded coverage
+signal while avoiding false `index_empty` attribution to PDF-only pages.
+These document links include older closed rounds; **12 occurrences are not
+12 open scholarships**. No automatic PDF/DOC/DOCX download is authorized,
+and binary .doc remains a held format.
 
 Both reviewed-document fetchers now reject *all* HTTP redirects before
 following them, even a same-host redirect that appears harmless. This
@@ -357,3 +367,34 @@ count below 20. Changes trigger offline registry validation and a bounded
 `main` source check. A successful HTML response is not automatic eligibility;
 unsupported documents and uncertain deadlines remain unverified. Do not add
 social-post URLs, scraped job-board mirrors or default country guesses.
+
+## Real-PDF provenance regression (2026-11-21)
+
+The approved IEB 2027 scholarship PDF confirms the full legal institution
+name, University of Barcelona, funding cycle and 11 December 2026 deadline
+**inside the PDF itself**, but does not provide a postal-address/telephone
+line. The revised exact-host IEB evidence rule accepts independent paired
+institutional names as location proof for **review only**. A generic host,
+missing University of Barcelona identity, outdated deadline, unsafe PDF or
+nonapproved URL continues to fail closed. This does not authorize a new
+Telegram receipt; the canonical HTML scholarship was already published.
+
+## Operator-gated official document review workflow
+
+`.github/workflows/official-document-review.yml` provides an explicit
+**workflow_dispatch-only** review when an operator has separately approved
+the source and its *exact* PDF/DOCX URL in the registry. In GitHub Actions,
+select **official-document-review → Run workflow on main**, then enter the
+approved source ID, exact URL and document format (`pdf` or `docx`).
+No periodic, push, or watchdog event can initiate this workflow.
+
+The workflow uses read-only GitHub permissions and the locked Python
+dependencies. A fresh robots.txt check precedes its one bounded document
+fetch, with no redirects, format substitution, provider-policy retry, or
+off-host mirror. `--record` creates a review-only journal **inside the
+temporary runner**, uploaded with `review.json` as a seven-day GitHub
+Actions artifact. It does **not** commit the audit to `main`, publish a
+Telegram message, or promote a candidate to `verified`. A rejected or
+inconclusive review deliberately fails the review step and still retains
+whatever audit artifact was safely generated. Existing receipts are
+unchanged. No workflow is dispatched automatically by its creation.

@@ -69,11 +69,17 @@ def _location_verified(row: dict[str, Any], host: str) -> bool:
     national = "uk" if country in {"UK", "GB"} else country.lower()
     if host.endswith("." + national):
         return location == f"{country}: official national institutional domain {host}"
-    # Exact same-source institutional address proof for IEB's generic .edu.
+    # The exact IEB host can provide either complete postal+phone evidence
+    # or paired institution names extracted from the checked official body.
+    # The extractor is responsible for proving those names occur in the
+    # document itself. Generic/third-party hosts do not inherit this rule.
     return (
         country == "ES"
         and host == "ieb.ub.edu"
-        and location == "ES: official postal address 08034 Barcelona and telephone +34"
+        and location in {
+            "ES: official postal address 08034 Barcelona and telephone +34",
+            "ES: official IEB and University of Barcelona institutional identifiers",
+        }
     )
 
 
@@ -561,6 +567,26 @@ def official_calls_health(
         and type(source.get("unsupported_documents", 0)) is int
         and 0 <= source.get("unsupported_documents", 0) <= 500
     )
+    document_only_indexes = sum(
+        isinstance(source, dict) and source.get("document_only_index") is True
+        for source in catalog["sources"]
+    )
+    html_index_empty = sum(
+        isinstance(source, dict) and source.get("html_index_empty") is True
+        for source in catalog["sources"]
+    )
+    # Count distinct institutional document URLs across multiple translated
+    # or parallel indexes without reclassifying them as verified scholarships.
+    candidate_urls: set[str] = set()
+    for source in catalog["sources"]:
+        urls = source.get("document_candidates") if isinstance(source, dict) else None
+        if not isinstance(urls, list) or len(urls) > 100:
+            continue
+        for url in urls:
+            if (isinstance(url, str) and len(url) <= 400
+                    and _host(url) is not None
+                    and url.lower().endswith((".pdf", ".doc", ".docx"))):
+                candidate_urls.add(url)
     def count_source_metric(name: str) -> int:
         return sum(
             value for source in catalog["sources"] if isinstance(source, dict)
@@ -591,6 +617,10 @@ def official_calls_health(
         "sources": state_counts,
         "empty_indexes": empty_indexes,
         "unsupported_documents": unsupported_documents,
+        "document_link_occurrences": unsupported_documents,
+        "unique_document_candidates": len(candidate_urls),
+        "document_only_indexes": document_only_indexes,
+        "html_index_empty": html_index_empty,
         "discovered_html_links": count_source_metric("discovered_links"),
         "new_html_links": count_source_metric("new_html_links"),
         "historical_rechecks": count_source_metric("rechecked_links"),
