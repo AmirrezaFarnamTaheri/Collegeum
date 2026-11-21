@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-21T14:48:00Z",
+  "generated_at": "2026-11-21T15:35:19Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -17,7 +17,7 @@
       "official_programme_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-21T14:48:00Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": "2027-01-05",
       "evidence_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
       "evidence_excerpt": "in September. Admission schedule 2027: Application period opens on 8 December 2026 at 09:00 (UTC+2) and closes on 5 January 2027 at 23:59 (UTC +2).",
@@ -26,31 +26,31 @@
           "value": "No tuition fees",
           "evidence_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
           "evidence_excerpt": "Aalto Doctoral Programme in Business, Economics and Finance is free of tuition fees. Aalto University does not charge fees for enrollment to the University. Doctoral candidates are welcome to join the Aalto University St",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "application_open_iso": {
           "value": "2026-12-08",
           "evidence_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
           "evidence_excerpt": "Admission schedule 2027: Application period opens on 8 December 2026 at 09:00 (UTC+2) and closes on 5 January 2027 at 23:59 (UTC +2).",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "funding_note": {
           "value": "If you are admitted as a full-time doctoral student, you will receive funding for the first two years of your studies from the School of Business.",
           "evidence_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
           "evidence_excerpt": "If you are admitted as a full-time doctoral student, you will receive funding for the first two years of your studies from the School of Business.",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "language": {
           "value": "English",
           "evidence_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
           "evidence_excerpt": "Language of instruction: English",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "duration": {
           "value": "4 years, full-time",
           "evidence_url": "https://www.aalto.fi/en/study-options/aalto-doctoral-programme-in-business-economics-and-finance",
           "evidence_excerpt": "Duration: 4 years, full-time",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         }
       },
       "investigated_urls": [
@@ -246,7 +246,7 @@
       "official_programme_url": "https://berlinschoolofeconomics.de/phd-programm/application",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-21T14:48:00Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": "2027-01-15",
       "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
       "evidence_excerpt": "plication deadline to the Berlin School of Economics PhD Program for an intake into the program in October 2027 is January 15, 2027. Application Portal",
@@ -255,43 +255,43 @@
           "value": "Applicants should have a Master’s degree in economics or business studies and have performed exceptionally well in their studies. Applicants from related fields (such as indus",
           "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
           "evidence_excerpt": "Applicants should have a Master’s degree in economics or business studies and have performed exceptionally well in their studies. Applicants from related fields (such as industrial engineering, statistics, or quantitativ",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "tests": {
           "value": "GRE: recommended, not mandatory",
           "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
           "evidence_excerpt": "All applicants are asked to provide GRE General Test scores with their application. The GRE General Test at Home scores are also accepted. Providing GRE General Test scores is highly recommended but not mandatory. In add",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "references": {
           "value": "Two academic reference letters",
           "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
           "evidence_excerpt": "Two academic reference letters that the referees will send directly to us through the Application Portal.",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "tuition": {
           "value": "No tuition fees",
           "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
           "evidence_excerpt": "There are no tuition fees. Berlin School of Economics students will receive funding for the expected length of the program. For the Qualification Phase, a monthly stipend of 1,650 Euros and a family allowance for your ch",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "stipend": {
           "value": "€1,650/month (qualification phase)",
           "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
           "evidence_excerpt": "There are no tuition fees. Berlin School of Economics students will receive funding for the expected length of the program. For the Qualification Phase, a monthly stipend of 1,650 Euros and a family allowance for your ch",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "semester_fee": {
           "value": "€300–350/semester (approx.)",
           "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
           "evidence_excerpt": "Since the Berlin School of Economics itself cannot award doctoral degrees, you also have to be admitted as a doctoral student at one of the Berlin School of Economics institutions with the right to award doctoral degrees",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         },
         "funding_note": {
           "value": "Funding for the Dissertation Phase is conditional on having fulfilled the program’s performance criteria.",
           "evidence_url": "https://berlinschoolofeconomics.de/phd-program/application",
           "evidence_excerpt": "Funding for the Dissertation Phase is conditional on having fulfilled the program’s performance criteria.",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         }
       },
       "investigated_urls": [
@@ -738,7 +738,7 @@
       "official_programme_url": "https://www.eui.eu/apply?id=doctoral-programme-in-economics",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-21T14:48:00Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": "2027-01-15",
       "evidence_url": "https://www.eui.eu/apply?id=doctoral-programme-in-economics",
       "evidence_excerpt": "cedure and criteria FAQs and Contacts Programme Description The deadline to apply for the 2027-28 academic year is 15 January 2027 at 14:00 CET (Time",
@@ -747,7 +747,7 @@
           "value": "Italy",
           "evidence_url": "https://www.eui.eu/apply?id=doctoral-programme-in-economics",
           "evidence_excerpt": "© European University Institute 2026, Badia Fiesolana - Via dei Roccettini 9, I-50014 San Domenico di Fiesole (FI) - Italy Go back to top of the page",
-          "checked_at": "2026-11-21T14:48:00Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         }
       },
       "investigated_urls": [
@@ -2671,15 +2671,13 @@
       "country_code": "CH",
       "official_programme_url": "https://www.unige.ch/gsem/en/programs/phd/economics/",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://www.unige.ch/gsem/en/programs/phd/economics/"
-      ]
+      "investigated_urls": []
     },
     {
       "institution": "University of Georgia",
@@ -2700,7 +2698,7 @@
       "official_programme_url": "https://www.gla.ac.uk/postgraduate/research/economics/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2709,7 +2707,7 @@
           "value": "Our regular standard of admission is usually a Master's degree at Merit, with a significant component in Economics or Finance. Candidates with backgrounds in Statistics or oth",
           "evidence_url": "https://www.gla.ac.uk/postgraduate/research/economics/",
           "evidence_excerpt": "Entry requirements Our regular standard of admission is usually a Master's degree at Merit, with a significant component in Economics or Finance. Candidates with backgrounds in Statistics or other related Social Sciences",
-          "checked_at": "2026-11-20T07:14:23Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         }
       },
       "investigated_urls": [
@@ -2724,7 +2722,7 @@
       "official_programme_url": "https://www.gu.se/en/school-business-economics-law/economics/doctoral-studies/admission-and-general-information",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-21T14:48:00Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": "2027-02-01",
       "evidence_url": "https://www.gu.se/en/economics/doctoral-studies/application-and-admission",
       "evidence_excerpt": "conomics are made through the University of Gothenburg’s online recruitment system and is now open and deadline is February 1st 2027. The Department of",
@@ -2741,7 +2739,7 @@
       "official_programme_url": "https://www.rug.nl/research/gradschool-economics-and-business/phd-programme/prospective-phd/admissions-vacancies/admissions",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2757,7 +2755,7 @@
       "official_programme_url": "https://www.economics.hawaii.edu/grad/prospective.html",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2785,7 +2783,7 @@
       "official_programme_url": "https://fbeo.fbe.hku.hk/phd/admissions/admission-application-and-tuition-fee",
       "programme_structure_hint": "MPhil + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2802,7 +2800,7 @@
       "official_programme_url": "https://www.uh.edu/class/economics/graduate/admissions/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2818,7 +2816,7 @@
       "official_programme_url": "https://economics.illinois.edu/academics/phd-program",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2836,7 +2834,7 @@
       "official_programme_url": "https://econ.uic.edu/graduate/admissions/application-deadlines/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2854,7 +2852,7 @@
       "official_programme_url": "https://economics.ku.edu/phd-program",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2884,7 +2882,7 @@
       "official_programme_url": "https://www.lancaster.ac.uk/study/postgraduate/postgraduate-courses/economics-phd-integrated/2025/",
       "programme_structure_hint": "MSc + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2913,16 +2911,13 @@
       "country_code": "UK",
       "official_programme_url": "https://business.leeds.ac.uk/research-degrees-apply/doc/apply-4",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://business.leeds.ac.uk/research-degrees-apply/doc/apply-4",
-        "https://business.leeds.ac.uk/research-degrees-phd/doc/fees-scholarships-4"
-      ]
+      "investigated_urls": []
     },
     {
       "institution": "University of Lisbon",
@@ -2930,7 +2925,7 @@
       "official_programme_url": "https://www.iseg.ulisboa.pt/secretaria/en/applications/doctoral-applications/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2960,7 +2955,7 @@
       "official_programme_url": "https://fpe.um.edu.my/doctor-of-philosophy-by-research",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2976,7 +2971,7 @@
       "official_programme_url": "https://www.manchester.ac.uk/study/postgraduate-research/programmes/list/02976/phd-economics/",
       "programme_structure_hint": "MSc + PhD",
       "status": "verified",
-      "checked_at": "2026-11-21T14:48:00Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": "2027-06-30",
       "evidence_url": "https://www.manchester.ac.uk/study/postgraduate-research/programmes/list/02976/phd-economics/",
       "evidence_excerpt": "ne below to be considered. You will not be able to apply after this deadline has passed. For September 2027 entry: 30 June 2027 It should be noted",
@@ -2993,7 +2988,7 @@
       "official_programme_url": "https://www.uni-mannheim.de/gess/apply/admission-requirements/for-cdse/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3010,7 +3005,7 @@
       "official_programme_url": "https://www.econ.umd.edu/graduate/applications-and-admissions-faq",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T07:14:23Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3051,7 +3046,7 @@
       "official_programme_url": "https://phdeconomics.unimi.it/application/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T11:42:58Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3066,7 +3061,7 @@
       "official_programme_url": "https://cla.umn.edu/economics/graduate/how-apply-phd-program",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-21T14:48:00Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": "2026-12-12",
       "evidence_url": "https://cla.umn.edu/economics/graduate/how-apply-phd-program",
       "evidence_excerpt": "ram The next cycle for admissions to the Economics PhD is for Fall 2027, with an application deadline of Saturday, December 12, 2026 . The application p",
@@ -3083,7 +3078,7 @@
       "official_programme_url": "https://olemiss.edu/programs/libarts/phd-in-economics/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T11:42:58Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3092,7 +3087,7 @@
           "value": "4 years",
           "evidence_url": "https://olemiss.edu/programs/libarts/phd-in-economics/",
           "evidence_excerpt": "Duration 4 years",
-          "checked_at": "2026-11-20T11:42:58Z"
+          "checked_at": "2026-11-21T15:35:19Z"
         }
       },
       "investigated_urls": [
@@ -3108,7 +3103,7 @@
       "official_programme_url": "https://economics.missouri.edu/grad/apply#phd",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-20T11:42:58Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3249,7 +3244,7 @@
       "official_programme_url": "https://socialsciences.uoregon.edu/economics/apply/graduate-admissions",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-21T14:48:00Z",
+      "checked_at": "2026-11-21T15:35:19Z",
       "deadline_iso": "2027-05-01",
       "evidence_url": "https://socialsciences.uoregon.edu/economics/apply/graduate-admissions",
       "evidence_excerpt": "ly Asked Questions Doctoral Program Frequently Asked Questions Master of Economics Fall 2027 application deadline: May 1, 2027. Priority applicati",
