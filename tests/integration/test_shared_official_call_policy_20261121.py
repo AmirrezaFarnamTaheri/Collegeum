@@ -149,3 +149,13 @@ def test_malformed_source_status_and_boolean_version_are_untrusted():
     assert not evaluate_official_calls_trigger(
         invalid_version, LEDGER, RUNS, now=NOW,
     ).dispatch
+
+
+def test_invalid_verified_duplicate_cannot_hide_conflicting_funding_terms():
+    genuine = call()
+    stale_conflict = {
+        **genuine, "funding_scope": "tuition_only",
+        "checked_at": "not-a-verified-time",
+    }
+    assert eligible_calls(catalog(genuine, stale_conflict), now=NOW) == []
+    assert not dispatch([genuine, stale_conflict])
