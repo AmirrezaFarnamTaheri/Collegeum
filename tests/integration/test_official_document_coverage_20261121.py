@@ -11,8 +11,8 @@ import pytest
 
 from predoc_pipeline.core.official_call_rules import call_key, receipt_key
 from predoc_pipeline.publish.official_calls import eligible_calls, official_calls_health
-from tools.official_call_pdf_review import fetch_reviewed_pdf
 from tools.official_call_docx_review import fetch_reviewed_docx
+from tools.official_call_pdf_review import fetch_reviewed_pdf
 from tools.official_document_review_journal import load_review_records, record_review
 from tools.official_document_safety import NoDocumentRedirect
 from tools.update_official_calls import discover_links, refresh_sources
