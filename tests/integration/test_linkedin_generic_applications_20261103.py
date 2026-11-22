@@ -18,6 +18,9 @@ from predoc_pipeline.core.output_quality import application_url_issue
     "https://www.fnuniv.ca/",
     "https://rb.wd5.myworkdayjobs.com/FRS",
     "https://rb.wd5.myworkdayjobs.com/FRS/",
+    # Current public LinkedIn-origin records 441 and 353 (2026-11-22).
+    "https://jobs.illinois.edu/",
+    "https://careers.fiu.edu/",
 ])
 def test_reviewed_generic_employer_career_pages_are_not_individual_apply_links(url):
     assert application_url_issue(url) == "generic-employer-careers-page"
@@ -27,6 +30,8 @@ def test_reviewed_generic_employer_career_pages_are_not_individual_apply_links(u
     "https://rb.wd5.myworkdayjobs.com/FRS/job/Dallas-TX/Research-Analyst_R-0000032835-1",
     "https://www.jobs.lse.ac.uk/Vacancies/W/1234/0/43211/Research-Fellow",
     "https://www.fnuniv.ca/careers/jobs/real-specific-vacancy",
+    "https://jobs.illinois.edu/jobs/postdoctoral-researcher-12345",
+    "https://careers.fiu.edu/jobs/research-fellow-67890",
     "https://www.lse.ac.uk/LSEJobs/Current-vacancies/role-123",
     "https://www.jobbnorge.no/ledige-stillinger/stilling/309437/postdoktor-i-klima-og-miljoestyring",
 ])
@@ -57,3 +62,31 @@ def test_generic_application_is_hidden_without_erasing_receipt_or_identity():
     assert state._web_rows(Database(), set(), None) == [direct]
     assert generic["telegram_message_id"] == 402
     assert generic["source_url"].endswith("4455348498")
+
+
+@pytest.mark.parametrize(("linked_in_url", "generic_url"), [
+    ("https://www.linkedin.com/jobs/view/4487018503",
+     "https://jobs.illinois.edu/"),
+    ("https://www.linkedin.com/jobs/view/4486025019",
+     "https://careers.fiu.edu/"),
+])
+def test_current_linkedin_origin_homepage_links_do_not_publish_as_specific_vacancies(
+    linked_in_url, generic_url,
+):
+    """Keep historical identities, while withholding non-actionable web rows."""
+    generic = {
+        "url_hash": "f" * 64,
+        "apply_url": generic_url,
+        "source_url": linked_in_url,
+        "status": "published",
+        "telegram_message_id": 501,
+        "summary": "LinkedIn discovery points to an employer careers index",
+    }
+
+    class Database:
+        def active_listings(self):
+            return [generic]
+
+    assert state._web_rows(Database(), set(), None) == []
+    assert generic["telegram_message_id"] == 501
+    assert generic["source_url"] == linked_in_url
