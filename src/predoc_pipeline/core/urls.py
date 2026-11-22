@@ -33,6 +33,7 @@ __all__ = [
     "content_hash",
     "composite_key",
     "registrable_host",
+    "is_linkedin_provider_url",
 ]
 
 TRACKING_PARAMS: frozenset[str] = frozenset(
@@ -181,6 +182,25 @@ def content_hash(text: str) -> str:
 
     normalised = squish(text).lower()
     return hashlib.sha256(normalised.encode("utf-8")).hexdigest()
+
+
+def is_linkedin_provider_url(url: str | None) -> bool:
+    """Classify provider-owned URLs without network access or lookalike hosts.
+
+    Every generic job-page check must avoid LinkedIn's HTTP(S) hostnames,
+    including mobile, legacy HTTP and employer-themed URL paths. Only the
+    LinkedIn adapter has a provider-access and cooldown policy.
+    """
+    if not isinstance(url, str):
+        return False
+    try:
+        parsed = urlsplit(url)
+        hostname = (parsed.hostname or "").lower()
+        return parsed.scheme.lower() in {"http", "https"} and (
+            hostname == "linkedin.com" or hostname.endswith(".linkedin.com")
+        )
+    except ValueError:
+        return False
 
 
 def registrable_host(url: str) -> str:

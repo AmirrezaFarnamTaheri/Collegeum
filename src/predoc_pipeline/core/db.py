@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from .timeparse import format_ts
-from .urls import canonicalize_url
+from .urls import canonicalize_url, is_linkedin_provider_url
 
 _log = logging.getLogger(__name__)
 
@@ -932,15 +932,31 @@ class Database:
             )
 
     def due_for_recheck(self, every_days: float, limit: int) -> list[sqlite3.Row]:
-        """Open, published listings not checked for ``every_days`` (oldest first)."""
+        """Select real HTTP rechecks, without letting blocked URLs starve others.
+
+        LinkedIn access is governed by its dedicated provider adapter. Skipped
+        URLs must not be stamped as checked, but must also not consume each
+        run's bounded recheck capacity. Stream in oldest-first order to find
+        the next eligible non-provider URL without changing stored evidence.
+        """
+        if limit <= 0:
+            return []
         offset = f"-{int(every_days * 24 * 60)} minutes"
-        return self.conn.execute(
+        cursor = self.conn.execute(
             "SELECT * FROM listings WHERE status='published' AND closed_at IS NULL "
             "AND expired_at IS NULL AND COALESCE(last_checked_at, first_seen_at) < "
             "strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?) "
-            "ORDER BY COALESCE(last_checked_at, first_seen_at) LIMIT ?",
-            (offset, limit),
-        ).fetchall()
+            "ORDER BY COALESCE(last_checked_at, first_seen_at)",
+            (offset,),
+        )
+        eligible: list[sqlite3.Row] = []
+        for row in cursor:
+            if is_linkedin_provider_url(row["apply_url"]):
+                continue
+            eligible.append(row)
+            if len(eligible) >= limit:
+                break
+        return eligible
 
     def expire_past_deadline(self, grace_days: int = 1) -> int:
         """Mark listings whose deadline has passed. Returns rows affected."""

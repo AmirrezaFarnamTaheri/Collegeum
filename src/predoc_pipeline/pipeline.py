@@ -1438,6 +1438,11 @@ def _verify_before_sending(
         )
     kept = []
     for lid, listing in candidates:
+        if lid in skipped_provider:
+            # Never authorize a new send from an intentionally unverified
+            # access-restricted provider URL. Preserve pending/receipt state.
+            log.warning("delivery_deferred_provider_access", listing_id=lid)
+            continue
         reason = verdicts.get(lid)
         if reason and "HTTP 404" in reason:
             if db.observe_http_404(lid):
