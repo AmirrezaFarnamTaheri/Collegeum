@@ -30,7 +30,8 @@ _DATE_IN_TEXT = re.compile(
     r"\b(?P<m2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|"
     r"Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|"
     r"Nov(?:ember)?|Dec(?:ember)?)\s+(?P<d2>\d{1,2})"
-    r"(?:st|nd|rd|th)?\s*,?\s*(?P<y2>20\d{2})\b",
+    r"(?:st|nd|rd|th)?\s*,?\s*(?P<y2>20\d{2})\b|"
+    r"(?<!\d)(?P<n1>\d{1,2})[./](?P<n2>\d{1,2})[./](?P<ny>20\d{2})\b",
     re.I,
 )
 _STABLE_OFFICIAL_FIELDS = (
@@ -81,6 +82,17 @@ def explicit_official_dates(excerpt: Any) -> list[tuple[date, int, int]] | None:
         try:
             if found.group("iso"):
                 day = date.fromisoformat(found.group("iso"))
+            elif found.group("ny"):
+                first, second = int(found.group("n1")), int(found.group("n2"))
+                if first <= 12 and second <= 12:
+                    # Never silently choose US or European numeric order.
+                    return None
+                if second <= 12:
+                    day = date(int(found.group("ny")), second, first)
+                elif first <= 12:
+                    day = date(int(found.group("ny")), first, second)
+                else:
+                    return None
             else:
                 month = (found.group("m1") or found.group("m2")).lower()[:3]
                 day = date(
