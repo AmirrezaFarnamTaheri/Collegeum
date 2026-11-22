@@ -13,6 +13,15 @@ Its copyright and permission notice is at
 - `config/phd_admissions_seeds.json` keeps 251 programme names, country codes,
   official programme links and **unverified** structure hints. No upstream
   deadline data is imported or used by a publisher.
+- An obsolete or inaccessible discovery link can be replaced only after
+  independently locating an explicit, public, official HTTPS page belonging to
+  the same university. Such a change invalidates the old observation and
+  resets the affected programme to `unverified`; it does **not** import a
+  search result or manually designate a deadline as confirmed. The refreshed
+  university URL still receives its own robots-aware source check, and failures
+  stay non-actionable. The 2026 review substituted university-owned
+  Graduate School/Economics deadline pages for three blocked original leads
+  (Harvard, Berkeley and UC Davis), without changing programme identities.
 - `tools/update_phd_admissions.py` investigates the university's primary
   programme URL and **at most two relevant linked admissions/funding pages**
   on the same HTTPS institutional host. For generic domains (`.eu`, `.org`,
