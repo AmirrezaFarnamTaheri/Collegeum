@@ -24,7 +24,9 @@ from predoc_pipeline.core.output_quality import application_url_issue
     # Additional public LinkedIn-origin listing IDs 340, 341 and 353.
     "https://careers.fiu.edu/",
     "https://careers.wvu.edu/career-opportunities",
+    "https://careers.wvu.edu/career-opportunities/",
     "https://hrs.missouri.edu/find-a-job/academic",
+    "https://hrs.missouri.edu/find-a-job/academic/",
 ])
 def test_reviewed_generic_employer_career_pages_are_not_individual_apply_links(url):
     assert application_url_issue(url) == "generic-employer-careers-page"
