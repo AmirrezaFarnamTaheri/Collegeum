@@ -135,6 +135,21 @@ context. A university may publish only a yearless or rolling deadline; these
 cannot be marked confirmed. An attempted recheck is **not** a promise that
 all 251 programmes have a public official deadline.
 
+Some university-owned doctoral admissions pages publish a single
+**schoolwide application cutoff** applicable to multiple explicitly named
+doctoral programmes. The Purdue Business PhD admissions page is supported only
+when its own HTML names Economics among its doctoral routes, states that
+Economics PhD applicants need a GRE score, and ties the dated Fall intake to
+the shared `Application Deadlines` section with the official
+`all supplemental materials must be received by this date` condition.
+Likewise, Wharton's Applied Economics PhD is supported only when its
+own Doctoral Application Requirements page names Applied Economics and says
+the doctoral requirements apply to **all** applicants, with a dated
+submission deadline. A generic graduate, MBA, supporting-test or
+financial-support cutoff cannot qualify, and multiple distinct full-year
+application dates remain ambiguous. Dates are still confirmed only after
+a fresh robots-aware institutional fetch.
+
 The checker also recognises a university's **PhD-only Economics**
 admissions FAQ when its exact application-deadline answer and the department's
 statement that only Economics doctoral students are admitted both appear on
