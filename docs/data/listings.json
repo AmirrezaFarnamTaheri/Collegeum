@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-11-22T06:39:13Z",
- "count": 216,
+ "generated_at": "2026-11-22T11:21:31Z",
+ "count": 215,
  "listings": [
   {
    "id": 473,
@@ -3031,7 +3031,7 @@
   {
    "id": 370,
    "title": "Postdoctoral Researcher in Spatial Data Science",
-   "institution": "Mohammed VI Polytechnic University",
+   "institution": "MOHAMMED VI POLYTECHNIC UNIVERSITY",
    "principal_investigator": null,
    "country": "Morocco",
    "city": "Benguerir",
@@ -3040,14 +3040,16 @@
    "deadline": "2026-12-04T00:00:00Z",
    "days_left": 12,
    "disciplines": [
-    "Econometrics"
+    "Applied Microeconomics",
+    "Environmental and Energy Economics",
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral researcher role at Mohammed VI Polytechnic University in Benguerir, Morocco, focusing on urban modeling and cost analysis of urbanization. Applicants should hold a Ph.D. in Data Science, Urban Planning, Urban Economics or a related field and have experience with urban modeling tools and interdisciplinary research.",
+   "summary": "A postdoctoral research role focused on developing a predictive model of direct and indirect urbanization costs based on urban morphology, with case-study calibration and scenario simulation. It requires a PhD in Data Science, Urban Planning, Urban Economics or a related field and proficiency in MATLAB, Python and R.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.953,
+   "confidence": 0.946,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3280,17 +3282,19 @@
    "city": "North Ryde",
    "is_remote": false,
    "duration_years": 4.0,
-   "deadline": "2026-12-06T11:59:00Z",
+   "deadline": "2026-12-06T12:59:00Z",
    "days_left": 14,
    "disciplines": [
-    "Econometrics"
+    "Econometrics",
+    "Finance",
+    "Applied Microeconomics"
    ],
    "visa": "inferred",
-   "summary": "The position is a postdoctoral research fellow in econometrics at Macquarie University, Sydney, Australia, focusing on counterfactual policy evaluation and high-frequency econometric methods for financial-market dynamics. The role requires a PhD in econometrics, statistics, economics or a related field and seeks candidates with strong research experience and programming skills.",
+   "summary": "A full-time, fixed-term postdoctoral research fellow position in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics, statistics, economics or a related field, strong programming skills in MATLAB, R, or Python, and offers a salary of AUD 104,481–127,138 plus 17% superannuation; visa sponsorship and relocation assistance may be considered for the preferred candidate.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 1.0,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -3310,7 +3314,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "Second half of 2027",
+   "start_term": "Second half of 2027 (negotiable)",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -3372,10 +3376,10 @@
    "days_left": 13,
    "disciplines": [
     "Behavioral/Experimental Economics",
-    "Labor Economics"
+    "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "The role is a full-time postdoctoral associate position in the Division of Social Science at NYU Abu Dhabi, starting September 1, 2027, for up to three years. The associate will split time between independent research and collaborative projects with Professors Özcan and Reuben, focusing on behavioral and experimental economics topics such as decision-making, social norms, inequality, and labor-market outcomes.",
+   "summary": "The Postdoctoral Associate in Behavioral and Experimental Social Science is a fixed-term post at NYU Abu Dhabi, with half of the time spent on independent research and half on collaborative research with Professors Berkay Özcan and Ernesto Reuben. The role invites applications from candidates who have or expect to receive a PhD in economics, management or organizational behavior, sociology, public policy, data science, or a related discipline, and who have experience in experimental or behavioral research methods and quantitative analysis.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
@@ -6946,46 +6950,6 @@
    "start_term": null,
    "start_date": null,
    "kind": "predoc",
-   "sector": "academic"
-  },
-  {
-   "id": 118,
-   "title": "Postdoctoral Researcher in Innovation Economics",
-   "institution": "Leibniz Universität Hannover",
-   "principal_investigator": "Prof. Dr. Marina Schröder",
-   "country": "Germany",
-   "city": "Hannover",
-   "is_remote": false,
-   "duration_years": 3.0,
-   "deadline": "2026-11-22T11:00:00Z",
-   "days_left": 0,
-   "disciplines": [
-    "Other",
-    "Behavioral/Experimental Economics",
-    "Applied Microeconomics"
-   ],
-   "visa": "unknown",
-   "summary": "The position is a three-year fixed-term postdoctoral researcher role at Leibniz Universität Hannover's Institute of Innovation Economics, requiring a completed PhD in Economics or a related field. The role involves quantitative research in innovation and behavioral economics, with a teaching load of four course hours per week and the possibility of remote work arrangements.",
-   "language": "de",
-   "apply_url": "https://www.uni-hannover.de/en/jobs/8794/",
-   "source_url": "https://www.europeanjobmarketofeconomists.org/job-listing/postdoctoral-researcher-innovation-economics/%5Bnid%5D",
-   "confidence": 0.95,
-   "first_seen_at": "2026-10-11T10:03:14Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": "salary scale 13 TV-L, 100%",
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "phd",
-   "degree_note": null,
-   "start_term": "earliest possible date",
-   "start_date": null,
-   "kind": "postdoc",
    "sector": "academic"
   },
   {
