@@ -67,6 +67,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: main
+          fetch-depth: 0
           persist-credentials: true
       - uses: actions/setup-python@v7
         with:
@@ -110,4 +111,14 @@ jobs:
             exit 0
           fi
           git commit -m "data: refresh official Economics PhD admissions observations [skip ci]"
-          git push origin HEAD:main
+          # The deep-review job may take longer than an ordinary pipeline
+          # cycle. Preserve unrelated trusted commits arriving meanwhile.
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+          done
+          echo "Main advanced during admissions review; push not applied" >&2
+          exit 1
