@@ -41,14 +41,16 @@ MAX_ROBOTS_BYTES = 256 * 1024
 DATE_PATTERN = re.compile(
     r"\b(?P<iso>20\d{2}-\d{2}-\d{2})\b|"
     r"\b(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s*,?\s*(?P<year>20\d{2})\b|"
-    r"\b(?P<month2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(?P<day2>\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(?P<year2>20\d{2})\b",
+    r"\b(?P<month2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(?P<day2>\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(?P<year2>20\d{2})\b|"
+    r"(?<!\d)(?P<n1>\d{1,2})[./](?P<n2>\d{1,2})[./](?P<ny>20\d{2})\b",
     re.I,
 )
 PROGRAMME = re.compile(
     r"(?:economics?\s+(?:mres\s*/\s*)?(?:ph\.?d\.?|doctor(?:al|ate))|"
     r"(?:ph\.?d\.?|doctor(?:al|ate))\s+(?:in\s+)?economics?|"
     r"(?:ph\.?d\.?|doctoral)\s+programmes?\s+in\s+[^.?!\n]{0,80}?\beconomics?|"
-    r"doctor(?:al|ate)\s+program(?:me)?\s+in\s+economics?)", 
+    r"doctor(?:al|ate)\s+program(?:me)?\s+in\s+economics?|"
+    r"doctor(?:al|ate)\s+program(?:me)?\s+\([^)]{0,80}\beconomics?\b[^)]*\))", 
     re.I,
 )
 DEADLINE = re.compile(
@@ -86,11 +88,16 @@ class PageText(HTMLParser):
         self._anchor_href: str | None = None
         self._anchor_parts: list[str] = []
         self.blocks: list[str] = []
+        self.tagged_blocks: list[tuple[str, str]] = []
+        self.table_rows: list[list[str]] = []
+        self._row_cells: list[str] | None = None
         self.address_blocks: list[str] = []
         self._block_tag: str | None = None
         self._block_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "tr":
+            self._row_cells = []
         if tag == "h1":
             self._in_h1 = True
             self._heading_parts = []
@@ -124,10 +131,17 @@ class PageText(HTMLParser):
             block = " ".join(" ".join(self._block_parts).split())
             if block:
                 self.blocks.append(block)
+                self.tagged_blocks.append((tag, block))
+                if tag in {"td", "th"} and self._row_cells is not None:
+                    self._row_cells.append(block)
                 if tag == "address":
                     self.address_blocks.append(block)
             self._block_tag = None
             self._block_parts = []
+        if tag == "tr":
+            if self._row_cells:
+                self.table_rows.append(self._row_cells)
+            self._row_cells = None
         if tag in {"script", "style", "svg", "noscript", "template"}:
             self.ignored = max(0, self.ignored - 1)
         elif tag in {"p", "div", "h1", "h2", "h3", "li", "tr"}:
@@ -151,6 +165,20 @@ def _parse_date(match: re.Match[str]) -> date | None:
     try:
         if match.group("iso"):
             return date.fromisoformat(match.group("iso"))
+        if match.group("ny"):
+            first, second, year = (
+                int(match.group("n1")), int(match.group("n2")),
+                int(match.group("ny")),
+            )
+            # A country-agnostic parser must not guess whether 03/04
+            # means March 4 or April 3. Only unambiguous dates qualify.
+            if first <= 12 and second <= 12:
+                return None
+            if second <= 12:
+                return date(year, second, first)
+            if first <= 12:
+                return date(year, first, second)
+            return None
         day = int(match.group("day") or match.group("day2"))
         month_name = (match.group("month") or match.group("month2")).lower()[:3]
         months = (
@@ -163,7 +191,81 @@ def _parse_date(match: re.Match[str]) -> date | None:
         return None
 
 
-def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | None, str | None]:
+def _structured_deadline_candidates(
+    parser: PageText, *, now: datetime, programme_page: bool,
+) -> list[tuple[str, str]]:
+    """Corroborate dates and their explicit roles in the same table column or list group.
+
+    A date preceding its label is not a normal adjacent text deadline. Never
+    match an unrelated programme, neighboring date column or next date group.
+    """
+    candidates: list[tuple[str, str]] = []
+    if programme_page:
+        for date_row, label_row in zip(parser.table_rows, parser.table_rows[1:]):
+            if len(date_row) < 2 or len(date_row) != len(label_row):
+                continue
+            for cell, label in zip(date_row, label_row):
+                if (
+                    re.search(
+                        r"\b(?:application deadline|deadline for submission of "
+                        r"(?:your |the )?application)\b", label, re.I,
+                    ) is None
+                    or ANCILLARY.search(label)
+                ):
+                    continue
+                dates = [
+                    (day, match.group())
+                    for match in DATE_PATTERN.finditer(cell)
+                    if (day := _parse_date(match)) is not None
+                    and now.date() <= day <= date(now.year + 2, 12, 31)
+                ]
+                if len({day for day, _ in dates}) != 1:
+                    continue
+                day, printed = dates[0]
+                # The original date and its role occur in the same
+                # official table column, not necessarily adjacent in HTML.
+                excerpt = f"{label.rstrip('.:')} (table): {printed}"
+                candidates.append((day.isoformat(), excerpt[:180]))
+    if any(re.search(r"\b(?:ph\.?d\.?|doctoral)\b", h, re.I)
+           for h in parser.headings):
+        blocks = parser.tagged_blocks
+        for index, (tag, heading) in enumerate(blocks):
+            if tag not in {"h2", "h3"}:
+                continue
+            dates = [
+                (day, match.group())
+                for match in DATE_PATTERN.finditer(heading)
+                if (day := _parse_date(match)) is not None
+                and now.date() <= day <= date(now.year + 2, 12, 31)
+            ]
+            if len({day for day, _ in dates}) != 1:
+                continue
+            group: list[tuple[str, str]] = []
+            for later_tag, later_block in blocks[index + 1:index + 35]:
+                if later_tag in {"h1", "h2", "h3"}:
+                    break
+                group.append((later_tag, later_block))
+            if not (
+                any(re.search(r"\bapplication deadline for\b", b, re.I)
+                    for _, b in group)
+                and any(
+                    tag == "li" and re.fullmatch(r"Economics(?:\s+PhD)?", b, re.I)
+                    for tag, b in group
+                )
+            ):
+                continue
+            day, printed = dates[0]
+            # Label, subject and date are explicitly in the same
+            # institutional list group.
+            candidates.append((
+                day.isoformat(), f"Application deadline for Economics (list): {printed}",
+            ))
+    return candidates
+
+
+def collect_official_deadline(
+    html: str, *, now: datetime, source_url: str | None = None,
+) -> tuple[str, str | None, str | None]:
     """Extract only an explicit, unambiguous date near PhD economics context.
 
     No inference from month/day without a year, academic intake, an expired date,
@@ -172,10 +274,34 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
     parser = PageText()
     parser.feed(html[:MAX_HTML_BYTES])
     text = parser.text()[:MAX_HTML_BYTES]
-    candidates: list[tuple[str, str]] = []
-    # A specific programme H1 makes its admission schedule authoritative for
-    # the page, while generic multi-programme pages still need nearby context.
+    # A specific programme H1 makes its admission schedule authoritative.
     programme_page = any(PROGRAMME.search(heading) for heading in parser.headings)
+    if not programme_page:
+        # A linked doctoral department on its own official economics host
+        # can identify the subject even when the page H1 says only "Apply".
+        host = (urllib.parse.urlsplit(source_url or "").hostname or "").lower()
+        economics_host = host.split(".")[0] in {"economics", "econ"}
+        programme_page = bool(
+            economics_host and (
+                any(re.search(r"\b(?:ph\.?d\.?|doctoral)\b", h, re.I)
+                    for h in parser.headings)
+                or PROGRAMME.search(text[:2000])
+            )
+        )
+    if not programme_page:
+        # A Master's-stage entry requires the university to spell out the
+        # first-year economics doctorate linkage, not just "PhD Track".
+        programme_page = bool(
+            any(re.search(r"\bphd[\s-]+track\s+program(?:me)?\b", h, re.I)
+                for h in parser.headings)
+            and re.search(
+                r"\bfirst year of (?:the )?PhD in Economics\b",
+                text[:3000], re.I,
+            )
+        )
+    candidates = _structured_deadline_candidates(
+        parser, now=now, programme_page=programme_page,
+    )
     for match in DATE_PATTERN.finditer(text):
         day = _parse_date(match)
         if day is None or not (now.date() <= day <= date(now.year + 2, 12, 31)):
@@ -661,7 +787,9 @@ def investigate_official_pages(
             first_error = first_error or "fetch_failed"
             continue
         investigated.append(final_url)
-        status, day, excerpt = collect_official_deadline(html, now=now)
+        status, day, excerpt = collect_official_deadline(
+            html, now=now, source_url=final_url,
+        )
         page_parser = PageText()
         page_parser.feed(html[:MAX_HTML_BYTES])
         masters_admissions = any(
@@ -954,7 +1082,8 @@ def check_official_url(url: str, *, now: datetime) -> dict:
     )
 
 def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
-            recheck_no_explicit: bool = False, fetcher=check_official_url) -> dict:
+            recheck_no_explicit: bool = False, fetcher=check_official_url,
+            selected_indices: list[int] | None = None) -> dict:
     if batch_size < 1 or batch_size > 40:
         raise ValueError("batch_size must be 1..40")
     validate_catalogues(seeds, public)
@@ -994,6 +1123,15 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         key=priority,
     )
     selected = set((needs_details + readable_negatives + due)[:batch_size])
+    if selected_indices is not None:
+        if (
+            len(selected_indices) > batch_size
+            or len(selected_indices) != len(set(selected_indices))
+            or any(not isinstance(i, int) or not 0 <= i < len(programmes)
+                   for i in selected_indices)
+        ):
+            raise ValueError("Invalid bounded source selection")
+        selected = set(selected_indices)
     stamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
     for index, entry in enumerate(programmes):
         old = _timestamp(entry.get("checked_at"))
@@ -1030,10 +1168,40 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
     return result
 
 
+def refresh_inconclusive(
+    seeds: dict, public: dict, *, now: datetime, batch_size: int = 40,
+    fetcher=check_official_url,
+) -> dict:
+    """Recheck all readable misses exactly once; never retry provider-blocked sources.
+
+    Snapshot the cohort first: a successful recheck may promote one record.
+    The bounded refresh function validates every successive batch. Regular
+    scheduled runs retain their independent 25-source budget.
+    """
+    if not 1 <= batch_size <= 40:
+        raise ValueError("batch_size must be 1..40")
+    validate_catalogues(seeds, public)
+    indices = [
+        i for i, row in enumerate(public["programmes"])
+        if row.get("status") == "no_explicit_deadline"
+    ]
+    updated = public
+    for start in range(0, len(indices), batch_size):
+        updated = refresh(
+            seeds, updated, now=now, batch_size=batch_size, fetcher=fetcher,
+            selected_indices=indices[start:start + batch_size],
+        )
+    return updated
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Validate offline; never fetch")
     parser.add_argument("--batch-size", type=int, default=25)
+    parser.add_argument(
+        "--recheck-all-readable", action="store_true",
+        help="One-off review of every currently readable no-explicit-date source",
+    )
     parser.add_argument(
         "--recheck-no-explicit", action="store_true",
         help="On trusted parser updates, retry accessible uncorroborated pages",
@@ -1046,10 +1214,15 @@ def main(argv: list[str] | None = None) -> int:
         print("PhD admissions: catalogue and provenance valid; network not used")
         return 0
     now = datetime.now(UTC)
-    updated = refresh(
-        seeds, public, now=now, batch_size=args.batch_size,
-        recheck_no_explicit=args.recheck_no_explicit,
-    )
+    if args.recheck_all_readable:
+        updated = refresh_inconclusive(
+            seeds, public, now=now, batch_size=min(args.batch_size, 40),
+        )
+    else:
+        updated = refresh(
+            seeds, public, now=now, batch_size=args.batch_size,
+            recheck_no_explicit=args.recheck_no_explicit,
+        )
     PUBLIC.write_text(json.dumps(updated, ensure_ascii=False, indent=2) + "\n",
                       encoding="utf-8")
     statuses: dict[str, int] = {}
