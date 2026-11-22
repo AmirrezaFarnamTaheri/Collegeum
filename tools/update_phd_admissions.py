@@ -1406,18 +1406,19 @@ def refresh_inconclusive(
     seeds: dict, public: dict, *, now: datetime, batch_size: int = 40,
     fetcher=check_official_url,
 ) -> dict:
-    """Recheck all readable misses exactly once; never retry provider-blocked sources.
+    """Review readable misses, ambiguous evidence and new links exactly once.
 
-    Snapshot the cohort first: a successful recheck may promote one record.
-    The bounded refresh function validates every successive batch. Regular
-    scheduled runs retain their independent 25-source budget.
+    Never retry provider-blocked or failed sources early. Snapshot the cohort
+    before refreshing: a confirmed date must not cause a row to be skipped.
+    Scheduled runs retain their independent 25-source budget.
     """
     if not 1 <= batch_size <= 40:
         raise ValueError("batch_size must be 1..40")
     validate_catalogues(seeds, public)
     indices = [
         i for i, row in enumerate(public["programmes"])
-        if row.get("status") == "no_explicit_deadline"
+        if row.get("status")
+        in {"no_explicit_deadline", "ambiguous_deadline", "unverified"}
     ]
     updated = public
     for start in range(0, len(indices), batch_size):
@@ -1434,7 +1435,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--batch-size", type=int, default=25)
     parser.add_argument(
         "--recheck-all-readable", action="store_true",
-        help="One-off review of every currently readable no-explicit-date source",
+        help="One-off review of readable misses, ambiguous dates and new links",
     )
     parser.add_argument(
         "--recheck-no-explicit", action="store_true",
