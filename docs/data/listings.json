@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-22T16:18:07Z",
+ "generated_at": "2026-11-22T20:22:45Z",
  "count": 215,
  "listings": [
   {
@@ -3042,15 +3042,14 @@
    "days_left": 12,
    "disciplines": [
     "Econometrics",
-    "Quantitative Social Sciences",
     "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "We are seeking a postdoctoral researcher to develop a predictive model estimating the direct and indirect costs of urbanization using spatial data. Ideal candidates hold a Ph.D. in data science, urban planning, or a related field and possess proficiency in Python, R, and MATLAB.",
+   "summary": "The role is a postdoctoral researcher position in spatial data science at Mohammed VI Polytechnic University in Benguerir, Morocco, focusing on urban modeling and cost analysis of urbanization. It requires a Ph.D. and expertise in quantitative methods and modeling tools.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.924,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3290,11 +3289,11 @@
     "Finance"
    ],
    "visa": "explicit",
-   "summary": "This is a four-year fixed-term postdoctoral research fellowship in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics or a related field, strong programming skills in MATLAB, R, or Python, and involves independent research and postgraduate supervision.",
+   "summary": "Macquarie University is advertising a Postdoctoral Research Fellow position in Econometrics. The role involves research on econometric methods for counterfactual policy evaluation and high-frequency analysis of financial-market dynamics.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -3366,7 +3365,7 @@
   {
    "id": 360,
    "title": "Postdoctoral Associate in Behavioral and Experimental Social Science",
-   "institution": "New York University Abu Dhabi",
+   "institution": "NEW YORK UNIVERSITY ABU DHABI",
    "principal_investigator": "Berkay Özcan and Ernesto Reuben",
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
@@ -3376,15 +3375,15 @@
    "days_left": 13,
    "disciplines": [
     "Behavioral/Experimental Economics",
-    "Labor Economics",
-    "Quantitative Social Sciences"
+    "Quantitative Social Sciences",
+    "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "A fixed-term postdoctoral associate position in NYU Abu Dhabi's Division of Social Science, with half-time independent research and half-time collaborative behavioral and experimental social science research. The role involves designing and implementing laboratory, online, survey, or field studies, managing data and causal analysis, and preparing manuscripts and presentations.",
+   "summary": "The position is a postdoctoral associate in behavioral and experimental social science at NYU Abu Dhabi, involving independent and collaborative research with faculty. Candidates should hold a PhD in economics, management, organizational behavior, sociology, public policy, data science or a closely related discipline received within the past five years.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.985,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
