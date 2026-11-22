@@ -105,6 +105,16 @@ class MoreOfficialPhDDeadlineEvidenceTests(unittest.TestCase):
             ("verified", "2026-12-15"),
         )
 
+    def test_masters_only_grouped_list_not_treated_as_economics_phd(self):
+        html = (
+            "<h1>Master's application deadlines</h1>"
+            "<h2>December 1, 2026</h2>"
+            "<p>Application deadline for:</p><li>Economics</li>"
+        )
+        self.assertNotEqual(
+            collect_official_deadline(html, now=NOW)[0], "verified",
+        )
+
     def test_bse_first_year_of_economics_phd_track_with_explicit_date(self):
         html = (
             "<h1>PhD Track Program</h1>"
