@@ -29,7 +29,7 @@ on:
   workflow_dispatch:
     inputs:
       full_recheck:
-        description: "Recheck every previously readable inconclusive programme"
+        description: "Recheck readable misses, ambiguous evidence and new official links"
         type: boolean
         required: false
         default: false
