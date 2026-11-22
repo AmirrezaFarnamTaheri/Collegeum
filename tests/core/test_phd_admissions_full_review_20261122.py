@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import json
 import unittest
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
+from predoc_pipeline.core.official_call_evidence import explicit_official_deadline
 from tools.update_phd_admissions import (
     collect_official_deadline,
     refresh_inconclusive,
@@ -114,6 +115,16 @@ class MoreOfficialPhDDeadlineEvidenceTests(unittest.TestCase):
             collect_official_deadline(html, now=NOW)[:2],
             ("verified", "2026-12-15"),
         )
+
+    def test_shared_publisher_gate_accepts_only_unambiguous_numeric_dates(self):
+        self.assertTrue(explicit_official_deadline(
+            "Application deadline: 15.12.2026",
+            date(2026, 12, 15),
+        ))
+        self.assertFalse(explicit_official_deadline(
+            "Application deadline: 03/04/2027",
+            date(2027, 4, 3),
+        ))
 
     def test_ambiguous_numeric_month_day_remains_unverified(self):
         html = (
