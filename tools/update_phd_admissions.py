@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v6"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v7"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -338,6 +338,74 @@ def _exclusive_economics_phd_faq_deadlines(
     return candidates
 
 
+def _purdue_economics_phd_section_deadlines(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Apply Purdue's schoolwide PhD deadline only to its named Economics route.
+
+    The official source puts "Fall YYYY" and its full cutoff on separate
+    elements, after prose saying graduate applications must arrive by the
+    date. No deadline can be borrowed from an MBA or a different programme.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    if (
+        (source.hostname or "").lower().removeprefix("www.")
+        != "business.purdue.edu"
+        or source.path.lower().rstrip("/") != "/phd/admissions.php"
+    ):
+        return []
+    text = parser.text()
+    if not (
+        any(re.fullmatch(r"\s*Admissions\s*", h, re.I)
+            for h in parser.headings)
+        and any(
+            re.fullmatch(r"\s*Economics\s*", label, re.I)
+            and "/phd/" in href.lower()
+            for href, label in parser.links
+        )
+        and re.search(
+            r"\bAdmission to Daniels School of Business doctoral programs\b",
+            text, re.I,
+        )
+        and re.search(
+            r"\bEconomics applicants must submit a GRE score\b", text, re.I,
+        )
+        and any(
+            tag == "h2" and re.fullmatch(r"Application Deadlines", h, re.I)
+            for tag, h in parser.tagged_blocks
+        )
+    ):
+        return []
+    section = re.search(
+        r"\bApplication Deadlines\b(?P<content>.{0,2500}?)"
+        r"\bApplication Requirements\b", text, re.I | re.S,
+    )
+    if section is None:
+        return []
+    content = section.group("content")
+    if not re.search(
+        r"\ball supplemental materials must be received by this date\b",
+        content, re.I,
+    ):
+        return []
+    candidates: list[tuple[str, str]] = []
+    for match in DATE_PATTERN.finditer(content):
+        day = _parse_date(match)
+        if day is None or not (
+            now.date() <= day <= date(now.year + 2, 12, 31)
+        ):
+            continue
+        prefix = content[max(0, match.start() - 70):match.start()]
+        intake = re.search(r"\bFall\s+(20\d{2})\s*$", prefix, re.I)
+        if not intake or int(intake.group(1)) != day.year:
+            continue
+        candidates.append((
+            day.isoformat(),
+            f"Application Deadlines (Fall {intake.group(1)}): {match.group()}",
+        ))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -354,6 +422,31 @@ def collect_official_deadline(
     source = urllib.parse.urlsplit(source_url or "")
     official_host = (source.hostname or "").lower().removeprefix("www.")
     official_path = source.path.lower().rstrip("/")
+    if not programme_page:
+        # Wharton's doctoral programme list names Applied Economics and its
+        # requirements page explicitly applies to ALL Wharton PhD applicants.
+        # Navigation links to MBAs or a general university deadline do not
+        # establish that this is the Economics doctoral application window.
+        programme_page = bool(
+            official_host == "doctoral.wharton.upenn.edu"
+            and official_path == "/application-requirements"
+            and any(
+                re.fullmatch(r"\s*Application Requirements\s*", h, re.I)
+                for h in parser.headings
+            )
+            and any(
+                re.fullmatch(r"\s*Applied Economics\s*", label, re.I)
+                for _href, label in parser.links
+            )
+            and re.search(
+                r"\bWharton Doctoral Programs requires ALL applicants\b",
+                text, re.I,
+            )
+            and re.search(
+                r"\bApplied Economics\s*:\s*GRE only\b", text, re.I,
+            )
+            and re.search(r"\bApplication Deadline\b", text, re.I)
+        )
     if not programme_page:
         # Brown's Economics PhD directory places its subject in H1 and the
         # doctorate in the programme description; its date is below a
@@ -518,6 +611,13 @@ def collect_official_deadline(
     candidates = _structured_deadline_candidates(
         parser, now=now, programme_page=programme_page,
     )
+    # Some schoolwide PhD calendars print the Fall intake and its date on
+    # separate HTML elements, but explicitly include Economics among PhDs.
+    candidates.extend(
+        _purdue_economics_phd_section_deadlines(
+            parser, now=now, source_url=source_url,
+        )
+    )
     # A doctoral-only official departmental FAQ needs the exact question/
     # answer pairing, rather than blanket programme-page classification.
     if admissions_faq:
@@ -529,6 +629,19 @@ def collect_official_deadline(
     for match in DATE_PATTERN.finditer(text):
         day = _parse_date(match)
         if day is None or not (now.date() <= day <= date(now.year + 2, 12, 31)):
+            continue
+        # A test-only deadline in a block following a heading called
+        # "Application Deadline" is still a test deadline, not a submission
+        # cutoff. The same rule protects programme-wide doctoral pages.
+        if any(
+            match.group() in block
+            and re.match(
+                r"^\s*(?:All\s+)?(?:tests?|test scores|"
+                r"GRE|GMAT|TOEFL|IELTS)\s+must\s+be\s+taken\b",
+                block, re.I,
+            )
+            for block in parser.blocks
+        ):
             continue
         # A university may put a dated financial-support priority next to
         # the final application date under "PhD Application Deadlines".
