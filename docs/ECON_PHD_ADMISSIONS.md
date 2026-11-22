@@ -91,6 +91,33 @@ result and its MIT notice. No vacancy ingestion, subscriber delivery, or
 provider-restricted retries are involved. Failed/blocked checks remain visible
 as unverified; no assumption of a live programme is made.
 
+### Full review of previously readable inconclusive sources
+
+For an authorised, one-time sweep, the `phd-admissions-refresh` workflow has a
+`workflow_dispatch` input `full_recheck=true`. On a trusted `main` push,
+the commit-message marker `[full-admissions-recheck]` opts into the same
+one-off check. This does not change the normal 25-programme rotation.
+The CLI equivalent is:
+
+```bash
+python3 -S tools/update_phd_admissions.py --recheck-all-readable --batch-size 40
+```
+
+It snapshots every currently `no_explicit_deadline` programme, divides that
+cohort into independently validated batches of no more than 40 and checks
+each source **once**. The run has a longer CI timeout for the larger source
+budget. It will not retry robots-disallowed, challenge-restricted or failed
+providers ahead of their normal refresh cycle. A true current-cycle date must
+still appear in the institution's own HTML with the matching PhD admissions
+context. A university may publish only a yearless or rolling deadline; these
+cannot be marked confirmed. An attempted recheck is **not** a promise that
+all 251 programmes have a public official deadline.
+
+The checker recognises explicit dates in official same-column admissions
+tables and grouped PhD deadline lists without borrowing another programme's
+date. These cross-element excerpts are labelled as structured table/list
+evidence, with their institutional source URL and check time retained.
+
 For offline verification:
 
 ```bash
