@@ -41,8 +41,11 @@ def test_shared_board_http_rejects_429_once_by_default() -> None:
     assert len(requests) == 1
 
 
-def test_workday_does_not_probe_more_search_terms_after_access_denial() -> None:
-    """Preserve earlier results but never try a third term after a 429."""
+@pytest.mark.parametrize("denial_status", [403, 429])
+def test_workday_does_not_probe_more_search_terms_after_access_denial(
+    denial_status: int,
+) -> None:
+    """Preserve earlier results but never try a third term after a 403/429."""
     class DeniedWorkday:
         def __init__(self) -> None:
             self.terms: list[str] = []
@@ -51,7 +54,7 @@ def test_workday_does_not_probe_more_search_terms_after_access_denial() -> None:
             term = payload["searchText"]
             self.terms.append(term)
             if term == "research assistant finance":
-                raise FetchError("HTTP 429 provider rate limit", status=429)
+                raise FetchError("HTTP provider access denied", status=denial_status)
             return {
                 "jobPostings": [{
                     "title": "Predoctoral Research Assistant",
@@ -78,3 +81,28 @@ def test_workday_does_not_probe_more_search_terms_after_access_denial() -> None:
     assert report.ok is False
     assert source_status(report.as_stats()) == "partial"
     assert report.as_stats()["failure_counts"]["fetch"] == 1
+
+
+def test_shared_board_http_still_retries_transient_503() -> None:
+    """The fail-closed 429 policy must not disable ordinary transient 503 recovery."""
+    requests: list[int] = []
+
+    def responder(_req: httpx.Request) -> httpx.Response:
+        requests.append(1)
+        if len(requests) == 1:
+            return httpx.Response(503)
+        return httpx.Response(200, json={"jobPostings": []})
+
+    async def run() -> None:
+        async with HttpClient(
+            max_retries=2, backoff_base=0, default_min_interval=0,
+            transport=httpx.MockTransport(responder),
+        ) as client:
+            payload = await client.post_json(
+                "https://mcgill.wd3.myworkdayjobs.com/wday/cxs/mcgill/McGill_Careers/jobs",
+                {"searchText": "research assistant"},
+            )
+            assert payload == {"jobPostings": []}
+
+    asyncio.run(run())
+    assert len(requests) == 2
