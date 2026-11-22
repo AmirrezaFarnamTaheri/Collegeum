@@ -361,6 +361,20 @@ def collect_official_deadline(
         day = _parse_date(match)
         if day is None or not (now.date() <= day <= date(now.year + 2, 12, 31)):
             continue
+        # A university may put a dated financial-support priority next to
+        # the final application date under "PhD Application Deadlines".
+        # Do not treat the support-only priority as a competing application
+        # cutoff, even when the heading contains the word "deadline".
+        if any(
+            match.group() in block
+            and re.search(
+                r"^\s*(?:priority\s+)?(?:financial\s+(?:support|aid)|"
+                r"funding|scholarships?|fellowships?)(?:\s+deadline)?\s*:",
+                block, re.I,
+            )
+            for block in parser.blocks
+        ):
+            continue
         # A PhD navigation link cannot turn a separate Master's, MBA or
         # undergraduate application paragraph into a doctoral deadline.
         if departmental_route and any(
