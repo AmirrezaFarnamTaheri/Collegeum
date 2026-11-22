@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-22-admissions-v2"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v3"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -296,17 +296,69 @@ def collect_official_deadline(
     # A specific programme H1 makes its admission schedule authoritative.
     programme_page = any(PROGRAMME.search(heading) for heading in parser.headings)
     if not programme_page:
-        # A linked doctoral department on its own official economics host
-        # can identify the subject even when the page H1 says only "Apply".
-        host = (urllib.parse.urlsplit(source_url or "").hostname or "").lower()
+        # Primary university graduate directories sometimes render a concise
+        # per-programme card: H1 "Economics", followed by "Degrees Offered:
+        # Doctor of Philosophy (PhD)" and a dated "Application Deadline".
+        # Requiring the exact doctoral degree entry prevents a Master's card
+        # or a general programme list from becoming PhD proof.
+        programme_page = bool(
+            any(re.fullmatch(r"\s*Economics\s*", heading, re.I)
+                for heading in parser.headings)
+            and re.search(
+                r"\bDegrees Offered\s+Doctor of Philosophy"
+                r"\s*\(\s*Ph\.?D\.?\s*\)\s+Deadline\b",
+                text, re.I,
+            )
+            and re.search(r"\bApplication Deadline\b", text, re.I)
+        )
+    # An official departmental host can supply subject identity even if the
+    # page's H1 is generic and its specific PhD heading is H2/H3/H4.
+    host = (
+        (urllib.parse.urlsplit(source_url or "").hostname or "")
+        .lower().removeprefix("www.")
+    )
+    if not programme_page:
         economics_host = host.split(".")[0] in {"economics", "econ"}
         programme_page = bool(
             economics_host and (
-                any(re.search(r"\b(?:ph\.?d\.?|doctoral)\b", h, re.I)
-                    for h in parser.headings)
+                any(
+                    re.search(r"\b(?:ph\.?d\.?|doctoral)\b", heading, re.I)
+                    for tag, heading in parser.tagged_blocks
+                    if tag in {"h1", "h2", "h3", "h4"}
+                )
                 or PROGRAMME.search(text[:2000])
             )
         )
+    # Some departments use a generic "Graduate Program" H1 but have an
+    # institution-authored Economics department marker, a doctoral-programme
+    # link, and an explicit "How to Apply" section. Allow that only on the
+    # department's own /econ/graduate/apply or /admissions path.
+    departmental_route = False
+    if not programme_page and source_url:
+        path = urllib.parse.urlsplit(source_url).path.lower()
+        departmental_route = bool(
+            re.search(
+                r"/(?:eco|econ|economics)/graduate/"
+                r"(?:[^/]+/)*(?:apply|applying|admissions?)(?:[./]|$)",
+                path,
+            )
+            and re.search(r"\bdepartment of economics\b", text, re.I)
+            and any(
+                re.fullmatch(r"\s*Ph\.?D\.?\s+Program(?:me)?\s*", label, re.I)
+                for _url, label in parser.links
+            )
+            and any(
+                tag in {"h2", "h3", "h4"}
+                and re.search(r"\b(?:apply|applying|how and when to apply)\b", heading, re.I)
+                for tag, heading in parser.tagged_blocks
+            )
+            and not any(
+                re.search(r"\b(?:master(?:'?s)?|mba|undergraduate)\b", heading, re.I)
+                for tag, heading in parser.tagged_blocks
+                if tag in {"h1", "h2", "h3", "h4"}
+            )
+        )
+        programme_page = departmental_route
     if not programme_page:
         # A Master's-stage entry requires the university to spell out the
         # first-year economics doctorate linkage, not just "PhD Track".
@@ -324,6 +376,28 @@ def collect_official_deadline(
     for match in DATE_PATTERN.finditer(text):
         day = _parse_date(match)
         if day is None or not (now.date() <= day <= date(now.year + 2, 12, 31)):
+            continue
+        # A university may put a dated financial-support priority next to
+        # the final application date under "PhD Application Deadlines".
+        # Do not treat the support-only priority as a competing application
+        # cutoff, even when the heading contains the word "deadline".
+        if any(
+            match.group() in block
+            and re.search(
+                r"^\s*(?:priority\s+)?(?:financial\s+(?:support|aid)|"
+                r"funding|scholarships?|fellowships?)(?:\s+deadline)?\s*:",
+                block, re.I,
+            )
+            for block in parser.blocks
+        ):
+            continue
+        # A PhD navigation link cannot turn a separate Master's, MBA or
+        # undergraduate application paragraph into a doctoral deadline.
+        if departmental_route and any(
+            match.group() in block
+            and re.search(r"\b(?:master(?:'?s)?|mba|undergraduate)\b", block, re.I)
+            for block in parser.blocks
+        ):
             continue
         before = text[max(0, match.start() - 310):match.start()]
         deadlines = list(DEADLINE.finditer(before))
@@ -1156,13 +1230,23 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         key=priority,
     )
     rechecking.update(revision_misses)
+    # Newly adopted/remediated official programme leads must not wait behind
+    # a large backlog of readable negatives awaiting an extractor upgrade.
+    unvisited = sorted(
+        (i for i, item in enumerate(programmes)
+         if i not in rechecking and item.get("status") == "unverified"
+         and _timestamp(item.get("checked_at")) is None),
+        key=priority,
+    )
     due = sorted(
         (i for i, item in enumerate(programmes)
-         if i not in rechecking and eligible_for_check(item, now=now)),
+         if i not in rechecking and i not in unvisited
+         and eligible_for_check(item, now=now)),
         key=priority,
     )
     selected = set(
-        (needs_details + readable_negatives + revision_misses + due)[:batch_size]
+        (needs_details + readable_negatives + unvisited + revision_misses + due)
+        [:batch_size]
     )
     if selected_indices is not None:
         if (
