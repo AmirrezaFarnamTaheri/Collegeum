@@ -35,6 +35,9 @@ SEEDS = ROOT / "config/phd_admissions_seeds.json"
 PUBLIC = ROOT / "docs/data/phd_admissions.json"
 USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)"
 CHECK_INTERVAL = timedelta(days=11)
+# Bump only when official HTML interpretation changes. Readable negatives
+# checked with an older revision receive one safe early recheck.
+EXTRACTOR_REVISION = "2026-11-22-admissions-v2"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -50,7 +53,9 @@ PROGRAMME = re.compile(
     r"(?:ph\.?d\.?|doctor(?:al|ate))\s+(?:in\s+)?economics?|"
     r"(?:ph\.?d\.?|doctoral)\s+programmes?\s+in\s+[^.?!\n]{0,80}?\beconomics?|"
     r"doctor(?:al|ate)\s+program(?:me)?\s+in\s+economics?|"
-    r"doctor(?:al|ate)\s+program(?:me)?\s+\([^)]{0,80}\beconomics?\b[^)]*\))", 
+    r"doctor(?:al|ate)\s+program(?:me)?\s+\([^)]{0,80}\beconomics?\b[^)]*\)|"
+    r"department\s+of\s+economics\b[^.?!]{0,150}\b"
+    r"(?:ph\.?d\.?|doctoral)\s+program(?:me)?)", 
     re.I,
 )
 DEADLINE = re.compile(
@@ -65,7 +70,8 @@ DEADLINE = re.compile(
 # Their dates can sit immediately beside the programme application deadline.
 ANCILLARY = re.compile(
     r"\b(?:document|supporting|transcript|reference|recommendation|"
-    r"language|test|gmat|gre|scholarship|appeal|decision|interview)\b",
+    r"language|test|gmat|gre|scholarship|appeal|decision|interview|"
+    r"mentoring|mentorship|mba|undergraduate|workshop|orientation)\b",
     re.I,
 )
 
@@ -363,10 +369,19 @@ def collect_official_deadline(
         ):
             continue
         if not programme_page and not long_form:
+            # Adjacent departmental introductions sometimes precede an
+            # explicitly identified application window by one paragraph.
+            # Only applications with their own closing language may use
+            # this longer distance, not arbitrary dates.
+            is_application_cutoff = bool(
+                label == "through"
+                or re.search(r"\bthe application deadline\b", before[-125:], re.I)
+            )
+            max_scope_gap = 300 if is_application_cutoff else 165
             programmes_before = [
                 p for p in PROGRAMME.finditer(before)
                 if p.end() <= deadline.start()
-                and deadline.start() - p.end() <= 165
+                and deadline.start() - p.end() <= max_scope_gap
             ]
             # Official pages also state "application deadline for the
             # Economics PhD is DATE" under a generic application heading.
@@ -1132,12 +1147,23 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         key=priority,
     )
     rechecking = set(readable_negatives + needs_details)
+    revision_misses = sorted(
+        (i for i, item in enumerate(programmes)
+         if i not in rechecking
+         and item.get("status") in {"no_explicit_deadline", "ambiguous_deadline"}
+         and item.get("extractor_revision") != EXTRACTOR_REVISION
+         and _timestamp(item.get("checked_at")) is not None),
+        key=priority,
+    )
+    rechecking.update(revision_misses)
     due = sorted(
         (i for i, item in enumerate(programmes)
          if i not in rechecking and eligible_for_check(item, now=now)),
         key=priority,
     )
-    selected = set((needs_details + readable_negatives + due)[:batch_size])
+    selected = set(
+        (needs_details + readable_negatives + revision_misses + due)[:batch_size]
+    )
     if selected_indices is not None:
         if (
             len(selected_indices) > batch_size
@@ -1168,6 +1194,7 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
             raise ValueError("Untrusted verifier status")
         entry.update(
             status=status, checked_at=stamp, deadline_iso=None,
+            extractor_revision=EXTRACTOR_REVISION,
             evidence_url=None, evidence_excerpt=None,
             official_details=result.get("official_details") or {},
             investigated_urls=result.get("investigated_urls") or [],
