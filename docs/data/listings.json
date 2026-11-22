@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-22T11:21:31Z",
+ "generated_at": "2026-11-22T16:18:07Z",
  "count": 215,
  "listings": [
   {
@@ -1896,17 +1896,18 @@
    "city": "Gothenburg",
    "is_remote": false,
    "duration_years": 2.0,
-   "deadline": "2027-01-04T00:00:00Z",
+   "deadline": "2027-01-04T23:59:59Z",
    "days_left": 43,
    "disciplines": [
-    "Political Economy"
+    "Political Economy",
+    "Behavioral/Experimental Economics"
    ],
    "visa": "unknown",
-   "summary": "The University of Gothenburg is offering a fixed-term postdoctor position in Political Science with an application deadline of 2027-01-04. The role is a postdoctoral research position for researchers who have completed a doctorate.",
+   "summary": "The Department of Political Science at the University of Gothenburg invites applications for a 2-year postdoctoral fellow position (extendable to 3 years by agreement with the PI), funded by an ERC Starting Grant. The role centers on collaborative research on the behavioral consequences of national economic improvement within the ECONENGAGE project led by Associate Professor Florence So, with teaching limited to at most one-fifth of working time, and suits candidates with a completed doctorate in political science or a related field.",
    "language": "en",
    "apply_url": "https://web103.reachmee.com/ext/I005/1035/main?lang=UK&rmjob=41928&rmpage=job&site=7&validator=9b89bead79bb7258ad55c8d75228e5b7",
    "source_url": "https://web103.reachmee.com/ext/I005/1035/main?lang=UK&rmjob=41928&rmpage=job&site=7&validator=9b89bead79bb7258ad55c8d75228e5b7",
-   "confidence": 0.91,
+   "confidence": 0.924,
    "first_seen_at": "2026-11-10T12:35:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3040,16 +3041,16 @@
    "deadline": "2026-12-04T00:00:00Z",
    "days_left": 12,
    "disciplines": [
-    "Applied Microeconomics",
-    "Environmental and Energy Economics",
-    "Quantitative Social Sciences"
+    "Econometrics",
+    "Quantitative Social Sciences",
+    "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "A postdoctoral research role focused on developing a predictive model of direct and indirect urbanization costs based on urban morphology, with case-study calibration and scenario simulation. It requires a PhD in Data Science, Urban Planning, Urban Economics or a related field and proficiency in MATLAB, Python and R.",
+   "summary": "We are seeking a postdoctoral researcher to develop a predictive model estimating the direct and indirect costs of urbanization using spatial data. Ideal candidates hold a Ph.D. in data science, urban planning, or a related field and possess proficiency in Python, R, and MATLAB.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.946,
+   "confidence": 0.924,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3286,11 +3287,10 @@
    "days_left": 14,
    "disciplines": [
     "Econometrics",
-    "Finance",
-    "Applied Microeconomics"
+    "Finance"
    ],
-   "visa": "inferred",
-   "summary": "A full-time, fixed-term postdoctoral research fellow position in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics, statistics, economics or a related field, strong programming skills in MATLAB, R, or Python, and offers a salary of AUD 104,481–127,138 plus 17% superannuation; visa sponsorship and relocation assistance may be considered for the preferred candidate.",
+   "visa": "explicit",
+   "summary": "This is a four-year fixed-term postdoctoral research fellowship in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics or a related field, strong programming skills in MATLAB, R, or Python, and involves independent research and postgraduate supervision.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
@@ -3314,7 +3314,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "Second half of 2027 (negotiable)",
+   "start_term": "Second half of 2027",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -3372,18 +3372,19 @@
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T23:59:59Z",
+   "deadline": "2026-12-05T00:00:00Z",
    "days_left": 13,
    "disciplines": [
     "Behavioral/Experimental Economics",
-    "Econometrics"
+    "Labor Economics",
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The Postdoctoral Associate in Behavioral and Experimental Social Science is a fixed-term post at NYU Abu Dhabi, with half of the time spent on independent research and half on collaborative research with Professors Berkay Özcan and Ernesto Reuben. The role invites applications from candidates who have or expect to receive a PhD in economics, management or organizational behavior, sociology, public policy, data science, or a related discipline, and who have experience in experimental or behavioral research methods and quantitative analysis.",
+   "summary": "A fixed-term postdoctoral associate position in NYU Abu Dhabi's Division of Social Science, with half-time independent research and half-time collaborative behavioral and experimental social science research. The role involves designing and implementing laboratory, online, survey, or field studies, managing data and causal analysis, and preparing manuscripts and presentations.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.985,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
