@@ -48,7 +48,9 @@ def test_generic_checker_still_verifies_official_employer_pages():
 
     def handler(request: httpx.Request) -> httpx.Response:
         requested.append(str(request.url))
-        return httpx.Response(200, text="<html><body><h1>Research assistant in economics</h1></body></html>")
+        return httpx.Response(200, text=(
+            "<html><body><h1>Research assistant in economics</h1></body></html>"
+        ))
 
     verified = set()
     deferred = set()
