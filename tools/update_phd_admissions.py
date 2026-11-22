@@ -59,6 +59,24 @@ DEADLINE = re.compile(
     r"closes?\s+on|closing\s+date|no\s+later\s+than|through\b", 
     re.I,
 )
+# Some official Economics departments describe their doctoral programme in
+# a paragraph immediately before a dated application instruction, while their
+# <h1> is simply "Admissions". That adjacent institution-authored statement
+# can establish programme identity, but must not be borrowed for a different
+# degree or a student-mentoring deadline.
+ADJACENT_ECON_PHD_SCOPE = re.compile(
+    r"\b(?:doctoral|doctorate|ph\.?d\.?)\s+program(?:me)?\b"
+    r"[^.!?\n]{0,110}\beconomics?\b|"
+    r"\bdepartment\s+of\s+economics\b"
+    r"[^.!?\n]{0,175}\b(?:ph\.?d\.?|doctoral|doctorate)\s+program(?:me)?\b",
+    re.I,
+)
+OTHER_PROGRAMME_APPLICATION = re.compile(
+    r"\b(?:mentoring|mentees?|mba|master(?:'?s|’s)?|"
+    r"undergraduate|bachelor(?:'?s|’s)?|internships?)\b",
+    re.I,
+)
+
 # Explicitly exclude ancillary document, exam, funding and decision deadlines.
 # Their dates can sit immediately beside the programme application deadline.
 ANCILLARY = re.compile(
@@ -233,7 +251,24 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
             # Economics PhD is DATE" under a generic application heading.
             programmes_after = list(PROGRAMME.finditer(gap))
             if not programmes_before and not programmes_after:
-                continue
+                # Explicit degree scope in an immediately preceding *official*
+                # content block is sufficient; a generic site-wide match is not.
+                # This covers MIT/Northwestern-style admissions prose without
+                # allowing unrelated Master's or mentoring application dates.
+                adjacent_scope = False
+                for block_index, block in enumerate(parser.blocks):
+                    if match.group(0) not in block:
+                        continue
+                    if OTHER_PROGRAMME_APPLICATION.search(block):
+                        continue
+                    scoped_blocks = [block]
+                    if block_index:
+                        scoped_blocks.append(parser.blocks[block_index - 1])
+                    if any(ADJACENT_ECON_PHD_SCOPE.search(part) for part in scoped_blocks):
+                        adjacent_scope = True
+                        break
+                if not adjacent_scope:
+                    continue
         excerpt = text[max(0, match.start() - 115):min(len(text), match.end() + 20)]
         candidates.append((day.isoformat(), excerpt.strip()))
     distinct = {day for day, _ in candidates}
