@@ -1425,12 +1425,24 @@ def _verify_before_sending(
         )
     }
     verified_open: set[int] = set()
+    skipped_provider: set[int] = set()
     verdicts = check_links(
         todo, prefs.http, concurrency=prefs.enrich.detail_concurrency,
         transport=transport, verified_open=verified_open,
+        skipped_provider=skipped_provider,
     )
+    if todo:
+        log.info(
+            "pre_send_link_checks", selected=len(todo),
+            provider_deferred=len(skipped_provider), details_reached=len(verified_open),
+        )
     kept = []
     for lid, listing in candidates:
+        if lid in skipped_provider:
+            # Never authorize a new send from an intentionally unverified
+            # access-restricted provider URL. Preserve pending/receipt state.
+            log.warning("delivery_deferred_provider_access", listing_id=lid)
+            continue
         reason = verdicts.get(lid)
         if reason and "HTTP 404" in reason:
             if db.observe_http_404(lid):
@@ -1454,7 +1466,10 @@ def _verify_before_sending(
                 log.warning("delivery_deferred_unverified_availability", listing_id=lid)
                 continue
         if lid in todo:
-            db.mark_checked(lid)
+            if lid in verified_open:
+                db.mark_verified_open(lid)
+            elif lid not in skipped_provider:
+                db.mark_checked(lid)
         kept.append((lid, listing))
     return kept
 
@@ -1474,9 +1489,11 @@ def _recheck_published(
         when = parse_datetime(r["deadline"])
         todo[int(r["id"])] = (r["title"], r["apply_url"], when.date() if when else None)
     verified_open: set[int] = set()
+    skipped_provider: set[int] = set()
     verdicts = check_links(
         todo, prefs.http, concurrency=cfg.detail_concurrency,
         transport=transport, verified_open=verified_open,
+        skipped_provider=skipped_provider,
     )
     for lid, reason in verdicts.items():
         if reason and "HTTP 404" in reason:
@@ -1493,7 +1510,16 @@ def _recheck_published(
         else:
             if lid in verified_open:
                 db.clear_http_404(lid)
-            db.mark_checked(lid)
+                db.mark_verified_open(lid)
+            elif lid not in skipped_provider:
+                # A failed fetch remains an *attempt* for bounded retry cadence.
+                db.mark_checked(lid)
+    if todo:
+        log.info(
+            "published_recheck_summary", selected=len(todo),
+            provider_deferred=len(skipped_provider), details_reached=len(verified_open),
+            closed=sum(bool(reason) for reason in verdicts.values()),
+        )
 
 
 def _refilter_published(

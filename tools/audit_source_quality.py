@@ -93,6 +93,119 @@ def _possible_crossposts(public: list[dict[str, Any]]) -> list[list[int]]:
     return sorted(candidates, key=lambda ids: (-len(ids), ids))
 
 
+
+def _linkedin_job_url(value: Any) -> bool:
+    """Recognize an actual LinkedIn advert, not a URL mentioning LinkedIn."""
+    if not isinstance(value, str):
+        return False
+    try:
+        link = urlsplit(value)
+        return (
+            link.scheme == "https"
+            and (link.hostname or "").lower() in {"linkedin.com", "www.linkedin.com"}
+            and re.fullmatch(r"/jobs/view/[0-9]+/?", link.path) is not None
+        )
+    except ValueError:
+        return False
+
+
+def _linkedin_public_evidence(
+    root: Path, public: list[dict[str, Any]], clock: datetime,
+) -> dict[str, Any]:
+    """Reconcile *views* of an immutable journal; flag conflicts, never suppress.
+
+    An old decision can change after reclassification. Reject/public conflict
+    means "requires evidence review", NOT that a sent vacancy should be deleted.
+    """
+    postings = [r for r in public if _linkedin_job_url(r.get("source_url"))]
+    journal_path, seen_path = root / "data/listings.ndjson", root / "data/seen.ndjson"
+    if not journal_path.exists() or not seen_path.exists():
+        return {"available": False, "public_linkedin_origin": len(postings)}
+    journal = _records(root, "data/listings.ndjson")
+    decisions = _records(root, "data/seen.ndjson")
+    by_id = {r.get("id"): r for r in journal}
+    seen_by_listing: dict[str, list[dict[str, Any]]] = {}
+    for record in decisions:
+        reference = record.get("listing_url_hash")
+        if isinstance(reference, str) and record.get("source") == "linkedin":
+            seen_by_listing.setdefault(reference, []).append(record)
+    rejected_public: list[dict[str, Any]] = []
+    missing_journal_ids = []
+    older_than_seven = missing_deadline = original_link = unreachable = 0
+    for row in postings:
+        identifier = row["id"]
+        historical = by_id.get(identifier)
+        if historical is None or historical.get("source_url") != row["source_url"]:
+            missing_journal_ids.append(identifier)
+            continue
+        observed = _instant(historical.get("last_seen_at"))
+        older_than_seven += int(
+            observed is not None and clock - observed > timedelta(days=7)
+        )
+        unreachable += int(not historical.get("last_verified_at"))
+        missing_deadline += int(not row.get("deadline"))
+        original_link += int(_linkedin_job_url(row.get("apply_url")))
+        rejected = sorted({
+            str(candidate.get("reason") or "unknown")[:100]
+            for candidate in seen_by_listing.get(historical.get("url_hash"), [])
+            if candidate.get("decision") == "rejected"
+        })
+        if rejected:
+            rejected_public.append({"id": identifier, "reasons": rejected})
+    groups = [
+        ids for ids in _possible_crossposts(postings)
+        if len(ids) > 1
+    ]
+    checkpoints: dict[str, Any] = {}
+    for name, filename in (
+        ("economics", "data/linkedin_econ_search_state.json"),
+        ("life_sciences", "data/linkedin_life_search_state.json"),
+    ):
+        if not (root / filename).exists():
+            continue
+        saved = _object(root, filename)
+        queries = saved.get("queries", {})
+        spool = saved.get("spool", {})
+        if not isinstance(queries, dict) or not isinstance(spool, dict):
+            raise ValueError("Malformed LinkedIn checkpoint")
+        status = Counter(
+            str(item.get("status") or "unknown") for item in queries.values()
+            if isinstance(item, dict)
+        )
+        old_cards = sum(
+            (observed := _instant(item.get("observed_at"))) is not None
+            and clock - observed > timedelta(days=7)
+            for item in spool.values() if isinstance(item, dict)
+        )
+        checkpoints[name] = {
+            "checkpointed_queries": len(queries),
+            "query_statuses": dict(sorted(status.items())),
+            "replay_candidates": len(spool),
+            "replay_last_observed_older_than_seven_days": old_cards,
+            "provider_block_until": saved.get("access_blocked_until"),
+        }
+    return {
+        "available": True,
+        "public_linkedin_origin": len(postings),
+        "public_apply_on_linkedin": original_link,
+        "public_missing_deadline": missing_deadline,
+        "public_last_seen_older_than_seven_days": older_than_seven,
+        "public_without_successfully_fetched_detail": unreachable,
+        "public_missing_or_mismatched_journal_ids": sorted(missing_journal_ids),
+        "public_with_rejected_latest_decision_review_only": sorted(
+            rejected_public, key=lambda item: item["id"]
+        ),
+        "same_title_employer_review_groups_not_proven_duplicates": groups,
+        "checkpoints": checkpoints,
+        "limitations": [
+            "no LinkedIn HTTP requests or private delivery actions performed",
+            "last_verified_at only means a readable page was reached",
+            "a rejected latest decision may follow a previously accepted posting",
+            "same-title records require official requisition evidence before merging",
+        ],
+    }
+
+
 def _counts(items: Any) -> dict[str, int]:
     if not isinstance(items, dict):
         raise ValueError("Source health status counts must be a map")
@@ -260,6 +373,16 @@ def audit(root: Path, *, now: datetime | None = None,
     crossposts = _possible_crossposts(public)
     if crossposts:
         observations.add("public:crosspost-review-candidates-not-proven-duplicates")
+    linkedin = _linkedin_public_evidence(root, public, clock)
+    if linkedin.get("available"):
+        if linkedin["public_missing_or_mismatched_journal_ids"]:
+            findings.add("linkedin:public-orphan-journal-identity")
+        if linkedin["public_with_rejected_latest_decision_review_only"]:
+            observations.add("linkedin:rejected-public-needs-evidence-review")
+        if linkedin["same_title_employer_review_groups_not_proven_duplicates"]:
+            observations.add("linkedin:same-title-mirrors-require-requisition-check")
+        if linkedin["public_last_seen_older_than_seven_days"]:
+            observations.add("linkedin:stale-last-observation")
 
     return {
         "schema_version": 1,
@@ -290,6 +413,7 @@ def audit(root: Path, *, now: datetime | None = None,
             "blocked_without_fetch": blocked_without_fetch,
             "next_policy_rechecks_known": rechecks,
         },
+        "linkedin": linkedin,
         "life_sciences": {
             "checked_at": life_health.get("checked_at"),
             "catalogue": {k: catalogue.get(k) for k in ("total", "enabled", "disabled")},

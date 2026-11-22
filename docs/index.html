@@ -1939,6 +1939,11 @@
       return code || 'Unstated';
     }
 
+    function linkedInDiscovery(item) {
+      return /^https:\/\/(?:www\.)?linkedin\.com\/jobs\/view\/\d+(?:[/?#]|$)/i
+        .test(String(item?.source_url || ''));
+    }
+
     function applicationLinkLabel(item) {
       const url = String(item?.apply_url || '');
       if (/linkedin\.com\/jobs\/view\//i.test(url)) return 'View on LinkedIn ↗';
@@ -2200,6 +2205,7 @@
               <span class="tag">${esc(kindLabel)}</span>
               ${r.is_remote ? '<span class="tag-remote">Remote</span>' : ''}
               ${salBadge}
+              ${linkedInDiscovery(r) ? '<span class="tag">LinkedIn source · Availability unverified</span>' : ''}
             </div>
             ${(r.tools_required && r.tools_required.length) ? `
               <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;">
@@ -2436,6 +2442,7 @@
         <span class="tag">${esc(sectorLabel)}</span>
         ${item.is_remote ? '<span class="tag-remote">Remote</span>' : ''}
         ${sal ? `<span class="tag-salary">💰 ${esc(sal)}</span>` : ''}
+        ${linkedInDiscovery(item) ? '<span class="tag">LinkedIn source · Availability unverified</span>' : ''}
       `;
 
       const timelineEl = $('#modal-timeline');

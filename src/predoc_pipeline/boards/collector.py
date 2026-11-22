@@ -27,6 +27,7 @@ from typing import Any
 
 import httpx
 
+from ..core.urls import is_linkedin_provider_url
 from ..models import RawItem
 from .config import HttpConfig, Preferences, SourceConfig, load_board_sources
 from .filter import RelevanceFilter, Verdict
@@ -465,6 +466,7 @@ def check_links(
     concurrency: int = 6,
     transport: httpx.AsyncBaseTransport | None = None,
     verified_open: set[Any] | None = None,
+    skipped_provider: set[Any] | None = None,
 ) -> dict[Any, str | None]:
     """``{key: (title, url[, deadline])}`` -> ``{key: reason it is filled/closed, or None}``.
 
@@ -489,6 +491,13 @@ def check_links(
 
             async def one(key: Any, title: str, url: str, deadline: Any = None) -> None:
                 async with sem:
+                    if is_linkedin_provider_url(url):
+                        # No generic request can evade the LinkedIn adapter's
+                        # provider restriction or inflate reachability evidence.
+                        out[key] = None
+                        if skipped_provider is not None:
+                            skipped_provider.add(key)
+                        return
                     post = JobPostSchema(title=title or "position", url=url, source="recheck",
                                          deadline=deadline)
                     try:
