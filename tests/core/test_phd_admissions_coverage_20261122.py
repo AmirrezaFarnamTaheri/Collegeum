@@ -45,7 +45,10 @@ class PhDAdmissionsCoverageTests(unittest.TestCase):
 
     def test_ordinal_and_abbreviated_month_forms(self):
         for html, iso in (
-            ("<h1>Economics PhD</h1><p>Application deadline: 15th December 2026.</p>", "2026-12-15"),
+            (
+                "<h1>Economics PhD</h1><p>Application deadline: "
+                "15th December 2026.</p>", "2026-12-15",
+            ),
             ("<h1>Economics PhD</h1><p>Application deadline: Dec. 15, 2026.</p>", "2026-12-15"),
         ):
             with self.subTest(html=html):
