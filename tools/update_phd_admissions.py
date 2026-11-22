@@ -36,6 +36,10 @@ PUBLIC = ROOT / "docs/data/phd_admissions.json"
 USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)"
 CHECK_INTERVAL = timedelta(days=11)
 EXPIRY = timedelta(days=14)
+# Bump this integer only when conservative extraction rules change. Previously
+# readable, inconclusive institutional pages are retried in bounded scheduled
+# batches until all 251 programme leads have seen the upgraded checker.
+EXTRACTOR_REVISION = 2
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
 DATE_PATTERN = re.compile(
@@ -853,6 +857,11 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
             raise ValueError("Source URLs must not be overwritten")
         if observation.get("status") not in STATUSES:
             raise ValueError("Unknown verification state")
+        revision = observation.get("extractor_revision")
+        if revision is not None and (
+            type(revision) is not int or not 1 <= revision <= EXTRACTOR_REVISION
+        ):
+            raise ValueError("Unrecognised admissions extractor revision")
         if "deadline_guidance" in observation or "published" in observation:
             raise ValueError("Upstream/reference values leaked")
         urls = observation.get("investigated_urls", [])
@@ -1006,7 +1015,10 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
     # or failed/restricted providers.
     readable_negatives = sorted(
         (i for i, item in enumerate(programmes)
-         if recheck_no_explicit
+         if (
+             recheck_no_explicit
+             or item.get("extractor_revision") != EXTRACTOR_REVISION
+         )
          and item.get("status") in {"no_explicit_deadline", "ambiguous_deadline"}
          and _timestamp(item.get("checked_at")) is not None),
         key=priority,
@@ -1049,7 +1061,8 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         if status not in STATUSES - {"unverified", "stale"}:
             raise ValueError("Untrusted verifier status")
         entry.update(
-            status=status, checked_at=stamp, deadline_iso=None,
+            status=status, checked_at=stamp,
+            extractor_revision=EXTRACTOR_REVISION, deadline_iso=None,
             evidence_url=None, evidence_excerpt=None,
             official_details=result.get("official_details") or {},
             investigated_urls=result.get("investigated_urls") or [],
