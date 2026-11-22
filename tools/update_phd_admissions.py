@@ -1397,8 +1397,12 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
          and eligible_for_check(item, now=now)),
         key=priority,
     )
+    # A genuinely new official-source lead must be examined before
+    # revalidating older observations, including on parser-change pushes.
+    # Otherwise the first 25 places are consumed by old readable/verified
+    # checks and a repaired institution is stranded despite the push trigger.
     selected = set(
-        (needs_details + readable_negatives + unvisited + revision_misses + due)
+        (unvisited + needs_details + readable_negatives + revision_misses + due)
         [:batch_size]
     )
     if selected_indices is not None:
