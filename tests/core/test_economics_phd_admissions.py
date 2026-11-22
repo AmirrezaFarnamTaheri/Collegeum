@@ -319,13 +319,16 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
     def test_parser_change_rechecks_readable_negative_without_retrying_blocked(self):
         now = datetime(2026, 11, 19, tzinfo=UTC)
         sample = json.loads(json.dumps(self.public))
+        recent = (now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+        # This case isolates parser rechecks when there are no newly
+        # adopted leads. A separate regression tests the higher-priority
+        # never-checked programmes on a trusted source update.
         for row in sample["programmes"]:
             row.update(
-                status="unverified", checked_at=None,
+                status="no_explicit_deadline", checked_at=recent,
                 deadline_iso=None, evidence_url=None, evidence_excerpt=None,
                 official_details={}, investigated_urls=[],
             )
-        recent = (now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
         readable = sample["programmes"][0]
         blocked = sample["programmes"][1]
         readable.update(status="no_explicit_deadline", checked_at=recent)

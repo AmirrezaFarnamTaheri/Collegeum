@@ -22,6 +22,16 @@ Its copyright and permission notice is at
   stay non-actionable. The 2026 review substituted university-owned
   Graduate School/Economics deadline pages for three blocked original leads
   (Harvard, Berkeley and UC Davis), without changing programme identities.
+- A subsequent official-source review replaced three more outdated discovery
+  leads: Brown University's Economics PhD directory, the University of
+  Chicago's Economics PhD-specific `Apply` page, and Columbia University's
+  GSAS Economics PhD programme listing. As with every source repair, affected
+  observations return to `unverified` until the robots-aware checker
+  successfully reads the new URL. The extractor recognises their tightly
+  scoped doctoral programme identity rather than interpreting deadlines on
+  unrelated Master's applications. Columbia's currently published numeric
+  `12/3/2026` remains **unconfirmed** under the country-agnostic numeric-date
+  policy; the full year alone does not disambiguate the month and day.
 - `tools/update_phd_admissions.py` investigates the university's primary
   programme URL and **at most two relevant linked admissions/funding pages**
   on the same HTTPS institutional host. For generic domains (`.eu`, `.org`,

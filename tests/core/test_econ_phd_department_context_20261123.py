@@ -172,6 +172,43 @@ class DepartmentContextTests(unittest.TestCase):
         self.assertEqual(seen, [target["official_programme_url"]])
         self.assertEqual(result["programmes"][80]["status"], "no_explicit_deadline")
 
+    def test_trusted_push_checks_new_official_link_before_old_rechecks(self):
+        root = Path(__file__).resolve().parents[2]
+        seeds = json.loads(
+            (root / "config/phd_admissions_seeds.json").read_text(encoding="utf-8")
+        )
+        catalogue = json.loads(
+            (root / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
+        )
+        # The verified and readable rows from the real catalogue are
+        # deliberately present: a trusted upgrade would otherwise use
+        # its entire first batch revisiting them rather than a new lead.
+        target = next(
+            row for row in catalogue["programmes"]
+            if row["status"] == "no_explicit_deadline"
+        )
+        target.update(
+            status="unverified", checked_at=None, deadline_iso=None,
+            evidence_url=None, evidence_excerpt=None,
+            official_details={}, investigated_urls=[],
+        )
+        seen = []
+
+        def fetch(url, *, now):
+            seen.append(url)
+            return {"status": "no_explicit_deadline"}
+
+        updated = refresh(
+            seeds, catalogue, now=NOW, batch_size=1,
+            recheck_no_explicit=True, fetcher=fetch,
+        )
+        self.assertEqual(seen, [target["official_programme_url"]])
+        matching = next(
+            row for row in updated["programmes"]
+            if row["official_programme_url"] == target["official_programme_url"]
+        )
+        self.assertEqual(matching["status"], "no_explicit_deadline")
+
     def test_generic_graduate_site_with_phd_navigation_is_not_enough(self):
         html = """
         <h1>Graduate Program</h1>

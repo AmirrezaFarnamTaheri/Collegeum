@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v5"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v6"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -351,6 +351,51 @@ def collect_official_deadline(
     text = parser.text()[:MAX_HTML_BYTES]
     # A specific programme H1 makes its admission schedule authoritative.
     programme_page = any(PROGRAMME.search(heading) for heading in parser.headings)
+    source = urllib.parse.urlsplit(source_url or "")
+    official_host = (source.hostname or "").lower().removeprefix("www.")
+    official_path = source.path.lower().rstrip("/")
+    if not programme_page:
+        # Brown's Economics PhD directory places its subject in H1 and the
+        # doctorate in the programme description; its date is below a
+        # separate "Application Deadline" heading. This narrowly scoped
+        # university route cannot lend an MA programme its doctoral date.
+        programme_page = bool(
+            official_host == "graduateprograms.brown.edu"
+            and official_path == "/graduate-program/economics-phd"
+            and any(re.fullmatch(r"\s*Economics\s*", h, re.I)
+                    for h in parser.headings)
+            and re.search(
+                r"\bPh\.?D\.?\s+program(?:me)?\s+in\s+Economics\b",
+                text[:12000], re.I,
+            )
+            and re.search(r"\bApplication Deadline\b", text[:12000], re.I)
+        )
+    if not programme_page:
+        # Chicago's official Economics doctoral application route uses H1
+        # "Apply"; a PhD-specific path and named department/navigation make
+        # its dated timeline distinct from the site's Master's applications.
+        programme_page = bool(
+            official_host == "economics.uchicago.edu"
+            and official_path == "/phd-program/apply"
+            and any(re.fullmatch(r"\s*Apply\s*", h, re.I)
+                    for h in parser.headings)
+            and re.search(r"\bKenneth C\.\s+Griffin Department of Economics\b",
+                          text, re.I)
+            and any(re.fullmatch(r"\s*PhD Program\s*", label, re.I)
+                    for _url, label in parser.links)
+            and re.search(r"\bTimeline\b", text[:12000], re.I)
+        )
+    if not programme_page:
+        # Columbia GSAS has a dedicated Economics, PhD entry. An MA entry
+        # cannot inherit its application date. Ambiguous numeric dates such
+        # as 12/3/2026 remain unconfirmed without a spelled-out month.
+        programme_page = bool(
+            official_host == "gsas.columbia.edu"
+            and official_path == "/content/economics-phd"
+            and any(re.fullmatch(r"\s*Economics\s*,\s*Ph\.?D\.?\s*", h, re.I)
+                    for h in parser.headings)
+            and re.search(r"\bPhD in Economics\b", text[:12000], re.I)
+        )
     # A generic question-and-answer page can mention a PhD in its navigation
     # without making a separately listed Master's cutoff the PhD deadline.
     admissions_faq = any(
@@ -1352,8 +1397,12 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
          and eligible_for_check(item, now=now)),
         key=priority,
     )
+    # A genuinely new official-source lead must be examined before
+    # revalidating older observations, including on parser-change pushes.
+    # Otherwise the first 25 places are consumed by old readable/verified
+    # checks and a repaired institution is stranded despite the push trigger.
     selected = set(
-        (needs_details + readable_negatives + unvisited + revision_misses + due)
+        (unvisited + needs_details + readable_negatives + revision_misses + due)
         [:batch_size]
     )
     if selected_indices is not None:
