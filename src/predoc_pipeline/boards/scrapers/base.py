@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
 from ..config import SourceConfig
-from ..http import HttpClient
+from ..http import FetchError, HttpClient
 from ..models import JobPostSchema
 from ..utils.text import html_to_text
 
@@ -61,7 +61,7 @@ class BaseScraper(ABC):
         return [u for u in urls if u]
 
     async def fetch_each(self, fn: Any) -> list[Any]:
-        """Call `await fn(url)` for every configured URL; one dead URL doesn't sink the source."""
+        """Fetch each configured URL, but stop this source after provider-wide access denial."""
         out, errors = [], []
         for u in self.urls():
             try:
@@ -70,6 +70,14 @@ class BaseScraper(ABC):
                 errors.append(f"{u}: {exc}")
                 self.discovery_fetch_errors.append(type(exc).__name__)
                 log.warning("%s: %s failed: %s", self.name, u, exc)
+                # Respect explicit access denials: changing a query is not
+                # permission to retry a blocked provider. Keep any earlier
+                # result and the recorded source failure for honest health.
+                if isinstance(exc, FetchError) and (
+                    exc.status in (403, 429)
+                    or (exc.status == 200 and str(exc) == "access_interstitial")
+                ):
+                    break
         if errors and not out:
             raise RuntimeError("; ".join(errors)[:500])
         return out
