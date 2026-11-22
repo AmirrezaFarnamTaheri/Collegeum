@@ -50,7 +50,7 @@ __all__ = [
     "Database",
 ]
 
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 11
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS listings (
   closed_reason             TEXT,
   closed_at                 TEXT,
   last_checked_at           TEXT,
+  last_verified_at          TEXT,
   missing_404_at            TEXT,
   missing_404_observations  INTEGER NOT NULL DEFAULT 0,
   department                TEXT,
@@ -247,6 +248,7 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("listings", "closed_reason", "TEXT"),
     ("listings", "closed_at", "TEXT"),
     ("listings", "last_checked_at", "TEXT"),
+    ("listings", "last_verified_at", "TEXT"),
     ("listings", "department", "TEXT"),
     ("listings", "fields", "TEXT"),
     ("listings", "x_post_id", "TEXT"),
@@ -916,6 +918,19 @@ class Database:
                 "UPDATE listings SET last_checked_at=? WHERE id=?", (now(), listing_id)
             )
 
+    def mark_verified_open(self, listing_id: int) -> None:
+        """Record a fetched, non-closed detail separately from attempted checks.
+
+        This is evidence of page reachability, NOT a promise applications remain
+        open. Recheck scheduling continues to use last_checked_at even on failure.
+        """
+        with self.transaction():
+            timestamp = now()
+            self.conn.execute(
+                "UPDATE listings SET last_checked_at=?, last_verified_at=? WHERE id=?",
+                (timestamp, timestamp, listing_id),
+            )
+
     def due_for_recheck(self, every_days: float, limit: int) -> list[sqlite3.Row]:
         """Open, published listings not checked for ``every_days`` (oldest first)."""
         offset = f"-{int(every_days * 24 * 60)} minutes"
@@ -1257,7 +1272,7 @@ class Database:
             updates["status"] = local_status
 
         for field in ("published_at", "expired_at", "closed_at", "last_checked_at",
-                      "last_seen_at"):
+                      "last_verified_at", "last_seen_at"):
             updates[field] = latest(field)
         updates["first_seen_at"] = earliest("first_seen_at")
         if (incoming.get("last_seen_at") or "") > (existing["last_seen_at"] or ""):
@@ -1271,7 +1286,8 @@ class Database:
                 "telegram_delivery_state_revision",
                 "x_post_id", "published_at", "expired_at", "closed_at",
                 "closed_reason", "first_seen_at", "last_seen_at",
-                "last_checked_at", "missing_404_at", "missing_404_observations",
+                "last_checked_at", "last_verified_at",
+                "missing_404_at", "missing_404_observations",
             }
             for field, value in incoming.items():
                 if field not in protected:

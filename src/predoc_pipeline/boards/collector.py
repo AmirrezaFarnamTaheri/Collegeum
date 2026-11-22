@@ -20,10 +20,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -458,6 +460,23 @@ class _Opener:
         return await generic_fetch_detail(self.http, post)
 
 
+def _is_linkedin_job_page(url: str) -> bool:
+    """Guest LinkedIn pages must not be probed by the generic recheck client.
+
+    The discovery adapter alone owns access policy, shared throttling and
+    durable block handling. A 999 on a direct page proves neither open nor closed.
+    """
+    try:
+        parsed = urlsplit(url)
+        return (
+            parsed.scheme == "https"
+            and (parsed.hostname or "").lower() in {"linkedin.com", "www.linkedin.com"}
+            and re.fullmatch(r"/jobs/view/[0-9]+/?", parsed.path) is not None
+        )
+    except ValueError:
+        return False
+
+
 def check_links(
     links: dict[Any, tuple[Any, ...]],
     http_cfg: HttpConfig,
@@ -465,6 +484,7 @@ def check_links(
     concurrency: int = 6,
     transport: httpx.AsyncBaseTransport | None = None,
     verified_open: set[Any] | None = None,
+    skipped_provider: set[Any] | None = None,
 ) -> dict[Any, str | None]:
     """``{key: (title, url[, deadline])}`` -> ``{key: reason it is filled/closed, or None}``.
 
@@ -489,6 +509,13 @@ def check_links(
 
             async def one(key: Any, title: str, url: str, deadline: Any = None) -> None:
                 async with sem:
+                    if _is_linkedin_job_page(url):
+                        # No generic request can evade the LinkedIn adapter's
+                        # provider restriction or inflate reachability evidence.
+                        out[key] = None
+                        if skipped_provider is not None:
+                            skipped_provider.add(key)
+                        return
                     post = JobPostSchema(title=title or "position", url=url, source="recheck",
                                          deadline=deadline)
                     try:

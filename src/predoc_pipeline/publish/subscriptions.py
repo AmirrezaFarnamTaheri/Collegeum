@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import re
 import sqlite3
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from html import escape
 from typing import Any
 
@@ -310,6 +311,27 @@ def selected(member: dict[str, Any], category: str, scope: str,
 LOOKBACK_DAYS = (7, 14, 30, 60, 90)
 
 
+def _career_deadline_not_passed(value: Any, now: datetime) -> bool:
+    """Match Worker UTC rules: today remains eligible, elapsed dates do not.
+
+    Invalid explicit deadlines fail closed; absence means unknown, not closed.
+    Caller must first apply any approved historical deadline correction overlay.
+    """
+    if value in (None, ""):
+        return True
+    if not isinstance(value, str):
+        return False
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        try:
+            return date.fromisoformat(value) >= now.date()
+        except ValueError:
+            return False
+    if "T" not in value:
+        return False
+    parsed = parse_datetime(value)
+    return parsed is not None and parsed >= now
+
+
 def matching(member: dict[str, Any], academic: list[sqlite3.Row],
              careers: list[dict[str, str]], *, preview: bool = False,
              lookback_days: int = 14,
@@ -318,7 +340,8 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
     if lookback_days not in LOOKBACK_DAYS:
         raise ValueError("Unsupported match-history window")
     # Notification eligibility remains on its existing 14-day policy.
-    cutoff = datetime.now(UTC) - timedelta(days=lookback_days if preview else 14)
+    current = datetime.now(UTC)
+    cutoff = current - timedelta(days=lookback_days if preview else 14)
     jobs: list[dict[str, str]] = []
     for row in academic:
         if row["status"] != "published" or row["closed_at"] or row["expired_at"]:
@@ -361,6 +384,11 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
             continue
         if job.get("availability") == "closed":
             continue
+        # Correct reviewed false API-index deadlines before deciding expiry.
+        # This only changes the private view, never its durable receipt/journal.
+        safe_job = sanitize_bern_historical_deadline(job)
+        if not _career_deadline_not_passed(safe_job.get("deadline"), current):
+            continue
         when = job["first_seen_at"]
         parsed = _instant(when)
         if (parsed and parsed >= cutoff and
@@ -368,7 +396,7 @@ def matching(member: dict[str, Any], academic: list[sqlite3.Row],
                 (preview or eligible(member, job["category"], job["scope"], when))):
             # Existing rows can retain old API index deadlines. Never mutate
             # the journal or receipts; sanitize the private result view only.
-            jobs.append(sanitize_bern_historical_deadline(job))
+            jobs.append(safe_job)
     jobs.sort(key=lambda item: (
         _instant(item["first_seen_at"]) or datetime.min.replace(tzinfo=UTC),
         item.get("research_priority") == "focus",

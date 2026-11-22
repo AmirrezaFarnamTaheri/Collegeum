@@ -287,6 +287,9 @@ async def check_still_open(scraper: Any, post: JobPostSchema) -> str | None:
         return f"link no longer works (HTTP {exc.status})" if exc.status in DEAD_STATUS else None
     except Exception:  # noqa: BLE001 - unreachable != closed
         return None
+    # A missing/empty detail is unverified, never an open-vacancy signal.
+    if not text:
+        return None
     # Only a successfully fetched document can reset a prior 404 suspicion.
     post.extra["recheck_reached"] = True
     if post.extra.get("closed"):  # e.g. Workday: canApply=false / posting end date passed
