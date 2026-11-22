@@ -1,7 +1,7 @@
 {
   "kind": "official_phd_call_observations",
   "version": 1,
-  "generated_at": "2026-11-22T20:14:46Z",
+  "generated_at": "2026-11-22T20:27:53Z",
   "sources": [
     {
       "id": "ieb-news",
@@ -26,7 +26,7 @@
       "document_only_index": false,
       "index_empty": true,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "ieb-application-calls",
@@ -57,7 +57,7 @@
       "document_only_index": true,
       "index_empty": false,
       "unsupported_documents": 5,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "ieb-document-index",
@@ -90,7 +90,7 @@
       "document_only_index": true,
       "index_empty": false,
       "unsupported_documents": 7,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "ieb-economics-2027",
@@ -115,7 +115,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "ieb-energy-climate",
@@ -140,7 +140,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "henley-finance-accounting",
@@ -165,7 +165,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "henley-international-business",
@@ -190,7 +190,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "henley-informatics",
@@ -215,7 +215,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "henley-entrepreneurship",
@@ -240,7 +240,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "henley-leadership",
@@ -265,7 +265,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "reading-international-studentships",
@@ -290,7 +290,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "id": "reading-home-phd-bursaries",
@@ -315,7 +315,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     }
   ],
   "calls": [
@@ -342,7 +342,7 @@
       "evidence_excerpt": "rk of the PhD programme. Submission instructions Interested candidates must complete both of the following steps before 11 December 2026 at 23:59 CET: 1. Letter of interest to",
       "location_evidence": "ES: official IEB and University of Barcelona institutional identifiers",
       "location_evidence_url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "source_id": "ieb-economics-2027",
@@ -367,7 +367,7 @@
       "evidence_excerpt": "nding for conference travel. Submission instructions Interested candidates must complete both of the following steps by 11 December 2026 Complete the IEB application form and u",
       "location_evidence": "ES: official IEB and University of Barcelona institutional identifiers",
       "location_evidence_url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "source_id": "henley-finance-accounting",
@@ -392,7 +392,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "source_id": "henley-entrepreneurship",
@@ -417,7 +417,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "source_id": "henley-informatics",
@@ -442,7 +442,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "source_id": "henley-international-business",
@@ -467,7 +467,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "source_id": "henley-leadership",
@@ -492,7 +492,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "source_id": "reading-international-studentships",
@@ -517,7 +517,7 @@
       "evidence_excerpt": "awards to off campus/by-distance applicants do not include a stipend. Deadline The deadline for applications is Friday 15th January 2027. The competition process is in two stag",
       "location_evidence": "UK: official national institutional domain reading.ac.uk",
       "location_evidence_url": "https://www.reading.ac.uk/doctoral-researcher-college/funding/phd-studentships/international-phd-studentships",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     },
     {
       "source_id": "reading-home-phd-bursaries",
@@ -542,7 +542,7 @@
       "evidence_excerpt": "requires applicants to submit a 300-word case for support. Deadline for applications The deadline by which to apply is 30th April 2027 . Applicants for the bursary need to ha",
       "location_evidence": "UK: official national institutional domain reading.ac.uk",
       "location_evidence_url": "https://www.reading.ac.uk/doctoral-researcher-college/funding/phd-studentships/uor-phd-bursaries",
-      "checked_at": "2026-11-22T20:14:46Z"
+      "checked_at": "2026-11-22T20:27:53Z"
     }
   ]
 }
