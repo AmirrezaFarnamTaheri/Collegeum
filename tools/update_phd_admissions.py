@@ -217,13 +217,12 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
                 and re.search(r"\b(?:submit|submitted|received|due)\b", context, re.I)
             ):
                 continue
-        elif label == "through":
-            if not (
-                re.search(r"\bapplication\b", context, re.I)
-                and re.search(r"\bavailable\b", context, re.I)
-                and not re.search(r"\bopen\s+through\b", before[-45:], re.I)
-            ):
-                continue
+        elif label == "through" and not (
+            re.search(r"\bapplication\b", context, re.I)
+            and re.search(r"\bavailable\b", context, re.I)
+            and not re.search(r"\bopen\s+through\b", before[-45:], re.I)
+        ):
+            continue
         if not programme_page and not long_form:
             programmes_before = [
                 p for p in PROGRAMME.finditer(before)
