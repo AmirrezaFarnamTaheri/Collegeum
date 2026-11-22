@@ -21,6 +21,10 @@ from predoc_pipeline.core.output_quality import application_url_issue
     # Live LinkedIn-origin Collegeum listing 441: only a careers homepage.
     "https://jobs.illinois.edu/",
     "https://jobs.illinois.edu",
+    # Additional public LinkedIn-origin listing IDs 340, 341 and 353.
+    "https://careers.fiu.edu/",
+    "https://careers.wvu.edu/career-opportunities",
+    "https://hrs.missouri.edu/find-a-job/academic",
 ])
 def test_reviewed_generic_employer_career_pages_are_not_individual_apply_links(url):
     assert application_url_issue(url) == "generic-employer-careers-page"
@@ -34,6 +38,9 @@ def test_reviewed_generic_employer_career_pages_are_not_individual_apply_links(u
     "https://www.jobbnorge.no/ledige-stillinger/stilling/309437/postdoktor-i-klima-og-miljoestyring",
     # Distinct position path on the same host must not be blanket-rejected.
     "https://jobs.illinois.edu/job/example-requisition-id",
+    "https://careers.fiu.edu/job/example-requisition-id",
+    "https://careers.wvu.edu/career-opportunities/example-requisition-id",
+    "https://hrs.missouri.edu/find-a-job/academic/example-requisition-id",
 ])
 def test_position_specific_paths_are_not_rejected_as_generic(url):
     assert application_url_issue(url) is None
