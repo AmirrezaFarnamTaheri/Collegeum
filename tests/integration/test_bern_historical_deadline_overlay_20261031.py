@@ -60,7 +60,7 @@ def test_historical_bern_false_deadlines_are_redacted_in_csv_without_journal_cha
 def test_private_selection_masks_same_stale_dates_without_mutating_receipts() -> None:
     """A generated CSV must not be safer than the private/preview data view."""
     from copy import deepcopy
-    from datetime import UTC, datetime
+    from datetime import UTC, date, datetime
 
     from predoc_pipeline.publish.subscriptions import matching
 
@@ -87,13 +87,22 @@ def test_private_selection_masks_same_stale_dates_without_mutating_receipts() ->
         "scopes": {},
     }
     chosen = {row["url"]: row for row in matching(member, [], history, preview=True)}
-    assert len(chosen) == 4
+    # Official-verified past deadlines must no longer enter private results.
+    # Reviewed false Bern API cutoffs remain redacted and eligible to review.
+    expected = {CANCER, GENESIS_WET}
+    if date.today() <= date(2026, 11, 20):
+        expected.add(BIOENERGY)
+    if date.today() <= date(2026, 11, 15):
+        expected.add(TRANSLATIONAL)
+    assert set(chosen) == expected
     assert chosen[CANCER]["deadline"] == ""
     assert "unverified" in chosen[CANCER]["deadline_note"].lower()
     assert chosen[GENESIS_WET]["deadline"] == ""
     assert "rolling" in chosen[GENESIS_WET]["deadline_note"].lower()
-    assert chosen[BIOENERGY]["deadline"] == "2026-11-20"
-    assert chosen[TRANSLATIONAL]["deadline"] == "2026-11-15"
+    if BIOENERGY in chosen:
+        assert chosen[BIOENERGY]["deadline"] == "2026-11-20"
+    if TRANSLATIONAL in chosen:
+        assert chosen[TRANSLATIONAL]["deadline"] == "2026-11-15"
     assert history == originals
     assert chosen[CANCER]["key"] == originals[0]["key"]
     assert chosen[CANCER]["first_seen_at"] == originals[0]["first_seen_at"]

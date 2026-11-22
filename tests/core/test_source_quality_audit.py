@@ -222,5 +222,60 @@ class SourceQualityTests(unittest.TestCase):
         self.assertNotIn("git push", workflow)
 
 
+    def test_linkedin_reconciliation_is_read_only_and_flags_rejected_public(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            url1 = "https://www.linkedin.com/jobs/view/4489844974"
+            url2 = "https://www.linkedin.com/jobs/view/4484763054"
+            fixture(root, dashboard={"listings": [
+                {"id": 42, "source_url": url1, "apply_url": url1,
+                 "institution": "Example University",
+                 "title": "Research Associate", "kind": "research"},
+                {"id": 43, "source_url": url2, "apply_url": url2,
+                 "institution": "Example-University",
+                 "title": "Research Associate", "kind": "research"},
+            ]})
+            records = [
+                {"id": 42, "url_hash": "a" * 64, "source_url": url1,
+                 "last_seen_at": "2026-10-15T00:00:00Z", "last_checked_at":
+                 "2026-11-03T00:00:00Z"},
+                {"id": 43, "url_hash": "b" * 64, "source_url": url2,
+                 "last_seen_at": "2026-11-02T00:00:00Z"},
+            ]
+            seen = [
+                {"source": "linkedin", "listing_url_hash": "a" * 64,
+                 "decision": "rejected", "reason": "board:wrong-field-detail"},
+                {"source": "linkedin", "listing_url_hash": "b" * 64,
+                 "decision": "accepted", "reason": ""},
+            ]
+            listing_file = root / "data/listings.ndjson"
+            seen_file = root / "data/seen.ndjson"
+            listing_file.write_text(
+                "".join(json.dumps(r) + "\\n" for r in records), encoding="utf-8")
+            seen_file.write_text(
+                "".join(json.dumps(r) + "\\n" for r in seen), encoding="utf-8")
+            before = (listing_file.read_bytes(), seen_file.read_bytes())
+            report = audit(root, now=NOW)
+            linkedin = report["linkedin"]
+            self.assertEqual(linkedin["public_linkedin_origin"], 2)
+            self.assertEqual(linkedin["public_apply_on_linkedin"], 2)
+            self.assertEqual(linkedin["public_last_seen_older_than_seven_days"], 1)
+            self.assertEqual(linkedin["public_without_successfully_fetched_detail"], 2)
+            self.assertEqual(
+                linkedin["public_with_rejected_latest_decision_review_only"],
+                [{"id": 42, "reasons": ["board:wrong-field-detail"]}],
+            )
+            self.assertEqual(
+                linkedin["same_title_employer_review_groups_not_proven_duplicates"],
+                [[42, 43]],
+            )
+            self.assertEqual(
+                before, (listing_file.read_bytes(), seen_file.read_bytes()))
+            self.assertIn("linkedin:rejected-public-needs-evidence-review",
+                          report["operational_observations"])
+
+
+
+
 if __name__ == "__main__":
     unittest.main()
