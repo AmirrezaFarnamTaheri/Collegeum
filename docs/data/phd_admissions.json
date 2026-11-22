@@ -369,13 +369,15 @@
     {
       "institution": "Brown University",
       "country_code": "US",
-      "official_programme_url": "https://www.brown.edu/graduateprograms/economics-phd",
+      "official_programme_url": "https://graduateprograms.brown.edu/graduate-program/economics-phd",
       "programme_structure_hint": null,
-      "status": "unsafe_redirect",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Ca' Foscari University of Venice",
@@ -548,13 +550,15 @@
     {
       "institution": "Columbia University",
       "country_code": "US",
-      "official_programme_url": "https://gsas.columbia.edu/degree-programs/phd-programs/economics",
+      "official_programme_url": "https://www.gsas.columbia.edu/content/economics-phd",
       "programme_structure_hint": null,
-      "status": "fetch_failed",
-      "checked_at": "2026-11-18T21:51:39Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "Complutesnse University of Madrid",
@@ -2603,21 +2607,15 @@
     {
       "institution": "University of Chicago",
       "country_code": "US",
-      "official_programme_url": "https://socialsciences.uchicago.edu/admissions/deadlines-decisions",
+      "official_programme_url": "https://economics.uchicago.edu/phd-program/apply",
       "programme_structure_hint": null,
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-22T21:28:04Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://socialsciences.uchicago.edu/admissions/deadlines-decisions",
-        "https://socialsciences.uchicago.edu/academic-development/university-and-division-policies/phd-funding",
-        "https://socialsciences.uchicago.edu/admissions/funding-and-financing",
-        "https://socialsciences.uchicago.edu/admissions/funding-and-financing?ctx=34871523-5068-44ad-b09b-0f8118c76447"
-      ],
-      "extractor_revision": "2026-11-23-admissions-v5"
+      "investigated_urls": []
     },
     {
       "institution": "University of Cologne",
