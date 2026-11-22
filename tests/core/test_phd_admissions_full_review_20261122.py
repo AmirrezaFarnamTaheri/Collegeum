@@ -179,22 +179,23 @@ class MoreOfficialPhDDeadlineEvidenceTests(unittest.TestCase):
         self.assertIn("git rebase origin/main", workflow)
         self.assertNotIn("git push --force", workflow)
 
-    def test_full_review_checks_each_inconclusive_exactly_once(self):
+    def test_full_review_checks_all_safe_inconclusive_sources_once(self):
         seeds = json.loads(
             (ROOT / "config/phd_admissions_seeds.json").read_text(encoding="utf-8")
         )
         public = json.loads(
             (ROOT / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
         )
+        eligible = {"no_explicit_deadline", "ambiguous_deadline", "unverified"}
         original = {
             row["official_programme_url"]
             for row in public["programmes"]
-            if row["status"] == "no_explicit_deadline"
+            if row["status"] in eligible
         }
-        other = {
+        blocked_or_verified = {
             row["official_programme_url"]
             for row in public["programmes"]
-            if row["status"] != "no_explicit_deadline"
+            if row["status"] not in eligible
         }
         seen = []
 
@@ -207,7 +208,7 @@ class MoreOfficialPhDDeadlineEvidenceTests(unittest.TestCase):
         )
         self.assertEqual(len(seen), len(original))
         self.assertEqual(set(seen), original)
-        self.assertFalse(set(seen) & other)
+        self.assertFalse(set(seen) & blocked_or_verified)
         self.assertEqual(len(result["programmes"]), 251)
         self.assertTrue(all(
             row["deadline_iso"] is None

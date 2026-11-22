@@ -112,16 +112,26 @@ The CLI equivalent is:
 python3 -S tools/update_phd_admissions.py --recheck-all-readable --batch-size 40
 ```
 
-It snapshots every currently `no_explicit_deadline` programme, divides that
-cohort into independently validated batches of no more than 40 and checks
-each source **once**. The run has a longer CI timeout for the larger source
-budget. It will not retry robots-disallowed, challenge-restricted or failed
-providers ahead of their normal refresh cycle. A true current-cycle date must
+It snapshots every previously readable `no_explicit_deadline` or
+`ambiguous_deadline` programme, plus any newly adopted `unverified` official
+links, divides those safely eligible rows into validated batches of no more
+than 40 and checks each source **once**. The run has a longer CI timeout for
+the larger source budget. It will not retry robots-disallowed,
+robots-unavailable, challenge-restricted or failed providers ahead of their
+normal refresh cycle. It also does not recheck already verified entries.
+The complete pass does not override the strict source-evidence requirements. A true current-cycle date must
 still appear in the institution's own HTML with the matching PhD admissions
 context. A university may publish only a yearless or rolling deadline; these
 cannot be marked confirmed. An attempted recheck is **not** a promise that
 all 251 programmes have a public official deadline.
 
+The checker also recognises a university's **PhD-only Economics**
+admissions FAQ when its exact application-deadline answer and the department's
+statement that only Economics doctoral students are admitted both appear on
+the official page. An unrelated Master's cutoff, a date in another question,
+or contradictory application dates cannot pass the check. University
+graduate-major requirements pages can be used when they explicitly identify
+Economics, exclusive doctoral admission and a full-year application cutoff.
 The checker recognises explicit dates in official same-column admissions
 tables and grouped PhD deadline lists without borrowing another programme's
 date. These cross-element excerpts are labelled as structured table/list

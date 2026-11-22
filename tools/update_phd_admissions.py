@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v4"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v5"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -282,6 +282,62 @@ def _structured_deadline_candidates(
     return candidates
 
 
+def _exclusive_economics_phd_faq_deadlines(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Match only an official PhD-only economics FAQ's named deadline answer.
+
+    Generic FAQs may discuss PhD, Master's and non-degree admissions in
+    adjacent answers. A navigation link or PhD-related question does not
+    make all deadlines on that page doctoral deadlines.
+    """
+    host = (
+        (urllib.parse.urlsplit(source_url or "").hostname or "")
+        .lower().removeprefix("www.")
+    )
+    if host.split(".")[0] not in {"econ", "economics"}:
+        return []
+    if not any(
+        re.fullmatch(r"Applications? and Admissions FAQ", heading, re.I)
+        for heading in parser.headings
+    ):
+        return []
+    if not re.search(
+        r"\bour department offers admission only to students interested "
+        r"in earning a Ph\.?D\.? in economics\b",
+        parser.text(), re.I,
+    ):
+        return []
+    candidates: list[tuple[str, str]] = []
+    blocks = parser.tagged_blocks
+    for index, (tag, question) in enumerate(blocks):
+        if tag not in {"h2", "h3", "h4"} or not re.fullmatch(
+            r"What is the application deadline\?", question, re.I,
+        ):
+            continue
+        for answer_tag, answer in blocks[index + 1:index + 4]:
+            if answer_tag in {"h1", "h2", "h3", "h4"}:
+                break
+            if answer_tag != "p" or not re.search(
+                r"\bour application deadline\b", answer, re.I,
+            ):
+                continue
+            if re.search(
+                r"\b(?:master(?:'?s)?|M\.?A\.?)\s+application deadline\b",
+                answer, re.I,
+            ):
+                continue
+            for match in DATE_PATTERN.finditer(answer):
+                day = _parse_date(match)
+                if day is None or not (
+                    now.date() <= day <= date(now.year + 2, 12, 31)
+                ):
+                    continue
+                candidates.append((day.isoformat(), answer[:180]))
+            break
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -295,6 +351,32 @@ def collect_official_deadline(
     text = parser.text()[:MAX_HTML_BYTES]
     # A specific programme H1 makes its admission schedule authoritative.
     programme_page = any(PROGRAMME.search(heading) for heading in parser.headings)
+    # A generic question-and-answer page can mention a PhD in its navigation
+    # without making a separately listed Master's cutoff the PhD deadline.
+    admissions_faq = any(
+        re.fullmatch(r"Applications? and Admissions FAQ", heading, re.I)
+        for heading in parser.headings
+    )
+    if not programme_page:
+        # UCLA's official graduate-major requirements page identifies the
+        # subject and PhD-only admission in separate sections, with a date
+        # immediately under "Deadlines to apply". Neither the subject alone
+        # nor a degree shared with a Master's programme is sufficient.
+        programme_page = bool(
+            any(
+                re.search(
+                    r"\bAdmission Requirements for the Graduate Major "
+                    r"in Economics\b", heading, re.I,
+                )
+                for heading in parser.headings
+            )
+            and re.search(r"\bProgram Name\s+Economics\b", text[:12000], re.I)
+            and re.search(
+                r"\bAdmits only Ph\.?D\.? applicants\b",
+                text[:12000], re.I,
+            )
+            and re.search(r"\bDeadlines to apply\b", text[:12000], re.I)
+        )
     if not programme_page:
         # An official graduate division programme page may use the H1
         # "Economics" with the doctoral degree and exclusive PhD admission
@@ -338,7 +420,7 @@ def collect_official_deadline(
     if not programme_page:
         economics_host = host.split(".")[0] in {"economics", "econ"}
         programme_page = bool(
-            economics_host and (
+            economics_host and not admissions_faq and (
                 any(
                     re.search(r"\b(?:ph\.?d\.?|doctoral)\b", heading, re.I)
                     for tag, heading in parser.tagged_blocks
@@ -391,6 +473,14 @@ def collect_official_deadline(
     candidates = _structured_deadline_candidates(
         parser, now=now, programme_page=programme_page,
     )
+    # A doctoral-only official departmental FAQ needs the exact question/
+    # answer pairing, rather than blanket programme-page classification.
+    if admissions_faq:
+        candidates.extend(
+            _exclusive_economics_phd_faq_deadlines(
+                parser, now=now, source_url=source_url,
+            )
+        )
     for match in DATE_PATTERN.finditer(text):
         day = _parse_date(match)
         if day is None or not (now.date() <= day <= date(now.year + 2, 12, 31)):
@@ -1316,18 +1406,19 @@ def refresh_inconclusive(
     seeds: dict, public: dict, *, now: datetime, batch_size: int = 40,
     fetcher=check_official_url,
 ) -> dict:
-    """Recheck all readable misses exactly once; never retry provider-blocked sources.
+    """Review readable misses, ambiguous evidence and new links exactly once.
 
-    Snapshot the cohort first: a successful recheck may promote one record.
-    The bounded refresh function validates every successive batch. Regular
-    scheduled runs retain their independent 25-source budget.
+    Never retry provider-blocked or failed sources early. Snapshot the cohort
+    before refreshing: a confirmed date must not cause a row to be skipped.
+    Scheduled runs retain their independent 25-source budget.
     """
     if not 1 <= batch_size <= 40:
         raise ValueError("batch_size must be 1..40")
     validate_catalogues(seeds, public)
     indices = [
         i for i, row in enumerate(public["programmes"])
-        if row.get("status") == "no_explicit_deadline"
+        if row.get("status")
+        in {"no_explicit_deadline", "ambiguous_deadline", "unverified"}
     ]
     updated = public
     for start in range(0, len(indices), batch_size):
@@ -1344,7 +1435,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--batch-size", type=int, default=25)
     parser.add_argument(
         "--recheck-all-readable", action="store_true",
-        help="One-off review of every currently readable no-explicit-date source",
+        help="One-off review of readable misses, ambiguous dates and new links",
     )
     parser.add_argument(
         "--recheck-no-explicit", action="store_true",
