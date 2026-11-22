@@ -295,6 +295,22 @@ def collect_official_deadline(
     text = parser.text()[:MAX_HTML_BYTES]
     # A specific programme H1 makes its admission schedule authoritative.
     programme_page = any(PROGRAMME.search(heading) for heading in parser.headings)
+    if not programme_page:
+        # Primary university graduate directories sometimes render a concise
+        # per-programme card: H1 "Economics", followed by "Degrees Offered:
+        # Doctor of Philosophy (PhD)" and a dated "Application Deadline".
+        # Requiring the exact doctoral degree entry prevents a Master's card
+        # or a general programme list from becoming PhD proof.
+        programme_page = bool(
+            any(re.fullmatch(r"\s*Economics\s*", heading, re.I)
+                for heading in parser.headings)
+            and re.search(
+                r"\bDegrees Offered\s+Doctor of Philosophy"
+                r"\s*\(\s*Ph\.?D\.?\s*\)\s+Deadline\b",
+                text, re.I,
+            )
+            and re.search(r"\bApplication Deadline\b", text, re.I)
+        )
     # An official departmental host can supply subject identity even if the
     # page's H1 is generic and its specific PhD heading is H2/H3/H4.
     host = (
