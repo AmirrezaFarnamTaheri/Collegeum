@@ -36,6 +36,10 @@ PUBLIC = ROOT / "docs/data/phd_admissions.json"
 USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnamTaheri/Collegeum)"
 CHECK_INTERVAL = timedelta(days=11)
 EXPIRY = timedelta(days=14)
+# Bump this integer only when conservative extraction rules change. Previously
+# readable, inconclusive institutional pages are retried in bounded scheduled
+# batches until all 251 programme leads have seen the upgraded checker.
+EXTRACTOR_REVISION = 2
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
 DATE_PATTERN = re.compile(
@@ -59,6 +63,24 @@ DEADLINE = re.compile(
     r"closes?\s+on|closing\s+date|no\s+later\s+than|through\b", 
     re.I,
 )
+# Some official Economics departments describe their doctoral programme in
+# a paragraph immediately before a dated application instruction, while their
+# <h1> is simply "Admissions". That adjacent institution-authored statement
+# can establish programme identity, but must not be borrowed for a different
+# degree or a student-mentoring deadline.
+ADJACENT_ECON_PHD_SCOPE = re.compile(
+    r"\b(?:doctoral|doctorate|ph\.?d\.?)\s+program(?:me)?\b"
+    r"[^.!?\n]{0,110}\beconomics?\b|"
+    r"\bdepartment\s+of\s+economics\b"
+    r"[^.!?\n]{0,175}\b(?:ph\.?d\.?|doctoral|doctorate)\s+program(?:me)?\b",
+    re.I,
+)
+OTHER_PROGRAMME_APPLICATION = re.compile(
+    r"\b(?:mentoring|mentees?|mba|master(?:'?s|’s)?|"
+    r"undergraduate|bachelor(?:'?s|’s)?|internships?)\b",
+    re.I,
+)
+
 # Explicitly exclude ancillary document, exam, funding and decision deadlines.
 # Their dates can sit immediately beside the programme application deadline.
 ANCILLARY = re.compile(
@@ -233,7 +255,24 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
             # Economics PhD is DATE" under a generic application heading.
             programmes_after = list(PROGRAMME.finditer(gap))
             if not programmes_before and not programmes_after:
-                continue
+                # Explicit degree scope in an immediately preceding *official*
+                # content block is sufficient; a generic site-wide match is not.
+                # This covers MIT/Northwestern-style admissions prose without
+                # allowing unrelated Master's or mentoring application dates.
+                adjacent_scope = False
+                for block_index, block in enumerate(parser.blocks):
+                    if match.group(0) not in block:
+                        continue
+                    if OTHER_PROGRAMME_APPLICATION.search(block):
+                        continue
+                    scoped_blocks = [block]
+                    if block_index:
+                        scoped_blocks.append(parser.blocks[block_index - 1])
+                    if any(ADJACENT_ECON_PHD_SCOPE.search(part) for part in scoped_blocks):
+                        adjacent_scope = True
+                        break
+                if not adjacent_scope:
+                    continue
         excerpt = text[max(0, match.start() - 115):min(len(text), match.end() + 20)]
         candidates.append((day.isoformat(), excerpt.strip()))
     distinct = {day for day, _ in candidates}
@@ -818,6 +857,11 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
             raise ValueError("Source URLs must not be overwritten")
         if observation.get("status") not in STATUSES:
             raise ValueError("Unknown verification state")
+        revision = observation.get("extractor_revision")
+        if revision is not None and (
+            type(revision) is not int or not 1 <= revision <= EXTRACTOR_REVISION
+        ):
+            raise ValueError("Unrecognised admissions extractor revision")
         if "deadline_guidance" in observation or "published" in observation:
             raise ValueError("Upstream/reference values leaked")
         urls = observation.get("investigated_urls", [])
@@ -971,7 +1015,10 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
     # or failed/restricted providers.
     readable_negatives = sorted(
         (i for i, item in enumerate(programmes)
-         if recheck_no_explicit
+         if (
+             recheck_no_explicit
+             or item.get("extractor_revision") != EXTRACTOR_REVISION
+         )
          and item.get("status") in {"no_explicit_deadline", "ambiguous_deadline"}
          and _timestamp(item.get("checked_at")) is not None),
         key=priority,
@@ -1014,7 +1061,8 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         if status not in STATUSES - {"unverified", "stale"}:
             raise ValueError("Untrusted verifier status")
         entry.update(
-            status=status, checked_at=stamp, deadline_iso=None,
+            status=status, checked_at=stamp,
+            extractor_revision=EXTRACTOR_REVISION, deadline_iso=None,
             evidence_url=None, evidence_excerpt=None,
             official_details=result.get("official_details") or {},
             investigated_urls=result.get("investigated_urls") or [],
