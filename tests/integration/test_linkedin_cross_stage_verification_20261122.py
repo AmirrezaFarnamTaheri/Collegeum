@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import httpx
 import pytest
@@ -147,3 +148,8 @@ def test_today_date_only_career_deadline_remains_eligible():
         "deadline": now.date().isoformat(), "availability": "unknown",
     }
     assert [r["key"] for r in matching(member, [], [row], preview=True)] == [row["key"]]
+
+
+def test_dashboard_labels_linkedin_discovery_as_unverified():
+    page = (Path(__file__).resolve().parents[2] / "docs/index.html").read_text()
+    assert "LinkedIn source · Availability unverified" in page

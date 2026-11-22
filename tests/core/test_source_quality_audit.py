@@ -251,9 +251,9 @@ class SourceQualityTests(unittest.TestCase):
             listing_file = root / "data/listings.ndjson"
             seen_file = root / "data/seen.ndjson"
             listing_file.write_text(
-                "".join(json.dumps(r) + "\\n" for r in records), encoding="utf-8")
+                "".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
             seen_file.write_text(
-                "".join(json.dumps(r) + "\\n" for r in seen), encoding="utf-8")
+                "".join(json.dumps(r) + "\n" for r in seen), encoding="utf-8")
             before = (listing_file.read_bytes(), seen_file.read_bytes())
             report = audit(root, now=NOW)
             linkedin = report["linkedin"]

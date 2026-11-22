@@ -90,9 +90,9 @@ def test_private_selection_masks_same_stale_dates_without_mutating_receipts() ->
     # Official-verified past deadlines must no longer enter private results.
     # Reviewed false Bern API cutoffs remain redacted and eligible to review.
     expected = {CANCER, GENESIS_WET}
-    if date.today() <= date(2026, 11, 20):
+    if datetime.now(UTC).date() <= date(2026, 11, 20):
         expected.add(BIOENERGY)
-    if date.today() <= date(2026, 11, 15):
+    if datetime.now(UTC).date() <= date(2026, 11, 15):
         expected.add(TRANSLATIONAL)
     assert set(chosen) == expected
     assert chosen[CANCER]["deadline"] == ""
