@@ -161,6 +161,14 @@ class MoreOfficialPhDDeadlineEvidenceTests(unittest.TestCase):
         self.assertIn("recheck-all-readable", script)
         self.assertNotIn("TELEGRAM_BOT_TOKEN", workflow)
 
+    def test_long_review_rebases_before_non_force_push(self):
+        workflow = (
+            ROOT / ".github/workflows/phd-admissions-refresh.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("git fetch origin main", workflow)
+        self.assertIn("git rebase origin/main", workflow)
+        self.assertNotIn("git push --force", workflow)
+
     def test_full_review_checks_each_inconclusive_exactly_once(self):
         seeds = json.loads(
             (ROOT / "config/phd_admissions_seeds.json").read_text(encoding="utf-8")
