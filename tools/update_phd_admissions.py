@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v3"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v4"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -295,6 +295,24 @@ def collect_official_deadline(
     text = parser.text()[:MAX_HTML_BYTES]
     # A specific programme H1 makes its admission schedule authoritative.
     programme_page = any(PROGRAMME.search(heading) for heading in parser.headings)
+    if not programme_page:
+        # An official graduate division programme page may use the H1
+        # "Economics" with the doctoral degree and exclusive PhD admission
+        # stated in separate sections before its dated application cutoff.
+        # Both the exact subject and the doctoral-only qualifier are required.
+        programme_page = bool(
+            any(re.fullmatch(r"\s*Economics\s*", heading, re.I)
+                for heading in parser.headings)
+            and re.search(r"\bGraduate Program\s*:\s*Economics\b", text[:12000], re.I)
+            and re.search(
+                r"\bDoctor of Philosophy\s*\(\s*Ph\.?D\.?\s*\)",
+                text[:12000], re.I,
+            )
+            and re.search(
+                r"\bAdmits only Ph\.?D\.? applicants\b", text[:12000], re.I,
+            )
+            and re.search(r"\bDeadlines to apply\b", text[:12000], re.I)
+        )
     if not programme_page:
         # Primary university graduate directories sometimes render a concise
         # per-programme card: H1 "Economics", followed by "Degrees Offered:

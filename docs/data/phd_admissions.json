@@ -2137,21 +2137,15 @@
     {
       "institution": "UC, Los Angeles",
       "country_code": "US",
-      "official_programme_url": "https://economics.ucla.edu/graduate/prospective-students",
+      "official_programme_url": "https://grad.ucla.edu/programs/social-sciences/economics-department/economics/",
       "programme_structure_hint": null,
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-22T20:20:32Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://economics.ucla.edu/graduate/prospective-students",
-        "https://economics.ucla.edu/graduate/admissions/faqs/",
-        "https://economics.ucla.edu/graduate/admissions/faqs/?s=",
-        "https://economics.ucla.edu/graduate/current-students/year-2/"
-      ],
-      "extractor_revision": "2026-11-22-admissions-v2"
+      "investigated_urls": []
     },
     {
       "institution": "UC, Merced",
