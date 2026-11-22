@@ -133,6 +133,22 @@ class MoreOfficialPhDDeadlineEvidenceTests(unittest.TestCase):
         )
         self.assertNotEqual(collect_official_deadline(html, now=NOW)[0], "verified")
 
+    def test_full_review_is_opt_in_and_preserves_regular_cadence(self):
+        workflow = (
+            ROOT / ".github/workflows/phd-admissions-refresh.yml"
+        ).read_text(encoding="utf-8")
+        script = (
+            ROOT / "tools/update_phd_admissions.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("full_recheck:", workflow)
+        self.assertIn("--recheck-all-readable", workflow)
+        self.assertIn("--recheck-no-explicit", workflow)
+        self.assertIn("EVENT_NAME", workflow)
+        self.assertIn("FULL_RECHECK", workflow)
+        self.assertIn("timeout-minutes:", workflow)
+        self.assertIn("recheck-all-readable", script)
+        self.assertNotIn("TELEGRAM_BOT_TOKEN", workflow)
+
     def test_full_review_checks_each_inconclusive_exactly_once(self):
         seeds = json.loads(
             (ROOT / "config/phd_admissions_seeds.json").read_text(encoding="utf-8")
