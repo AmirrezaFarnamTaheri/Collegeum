@@ -1230,13 +1230,23 @@ def refresh(seeds: dict, public: dict, *, now: datetime, batch_size: int,
         key=priority,
     )
     rechecking.update(revision_misses)
+    # Newly adopted/remediated official programme leads must not wait behind
+    # a large backlog of readable negatives awaiting an extractor upgrade.
+    unvisited = sorted(
+        (i for i, item in enumerate(programmes)
+         if i not in rechecking and item.get("status") == "unverified"
+         and _timestamp(item.get("checked_at")) is None),
+        key=priority,
+    )
     due = sorted(
         (i for i, item in enumerate(programmes)
-         if i not in rechecking and eligible_for_check(item, now=now)),
+         if i not in rechecking and i not in unvisited
+         and eligible_for_check(item, now=now)),
         key=priority,
     )
     selected = set(
-        (needs_details + readable_negatives + revision_misses + due)[:batch_size]
+        (needs_details + readable_negatives + unvisited + revision_misses + due)
+        [:batch_size]
     )
     if selected_indices is not None:
         if (
