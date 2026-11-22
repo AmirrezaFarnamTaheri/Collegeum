@@ -81,7 +81,13 @@ without waiting for the next cron. On trusted checker updates, the bounded
 batch can recheck previously readable programme pages whose deadlines were
 inconclusive, so improved extraction takes effect without manual overrides.
 This mode does not retry robots-blocked, access-restricted or failed sources
-early. A trusted code upgrade also rechecks previously verified records missing
+early. The checker also records an extraction revision on each successful
+programme attempt: after an extraction-rule upgrade, previously readable
+inconclusive pages continue being rechecked in **25-page scheduled batches**
+until they have been examined with the new revision, rather than only the
+first batch being revisited on the code push. Robots-blocked, inaccessible
+and failed institutions are never force-retried by this mechanism.
+A trusted code upgrade also rechecks previously verified records missing
 the new official detail fields, without promoting third-party assertions.
 A previously verified deadline is
 **withdrawn** if source evidence ages beyond 14 days, or the date passes.
