@@ -27,6 +27,12 @@ on:
       - "config/official_phd_calls_sources.json"
       - ".github/workflows/phd-admissions-refresh.yml"
   workflow_dispatch:
+    inputs:
+      full_recheck:
+        description: "Recheck every previously readable inconclusive programme"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -51,11 +57,17 @@ jobs:
         github.event.workflow_run.conclusion == 'success'
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # A trusted main-branch opt-in can investigate all readable misses.
+    # Scheduled and fallback checks keep the original 25-minute cap.
+    timeout-minutes: ${{ (
+      (github.event_name == 'workflow_dispatch' && inputs.full_recheck == true) ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[full-admissions-recheck]'))
+      ) && 180 || 25 }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: main
+          fetch-depth: 0
           persist-credentials: true
       - uses: actions/setup-python@v7
         with:
@@ -66,12 +78,20 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
+          FULL_RECHECK: ${{
+            (github.event_name == 'workflow_dispatch' && inputs.full_recheck == true) ||
+            (github.event_name == 'push' && contains(github.event.head_commit.message, '[full-admissions-recheck]'))
+            }}
         run: |
           set -euo pipefail
           args=(--batch-size 25)
-          if [[ "$EVENT_NAME" == "push" ]]; then
-            # Checker/seed changes justify a bounded recheck of previously
-            # readable but inconclusive pages, not provider-blocked URLs.
+          if [[ "$FULL_RECHECK" == "true" ]]; then
+            # Full, opt-in review of all *readable* misses. Each institution
+            # receives exactly one robots-aware bounded verification pass.
+            # Restricted/unavailable URLs are never retried early.
+            args=(--batch-size 40 --recheck-all-readable)
+          elif [[ "$EVENT_NAME" == "push" ]]; then
+            # Ordinary checker upgrades keep the original 25-page recheck.
             args+=(--recheck-no-explicit)
           fi
           python3 -S tools/update_phd_admissions.py "${args[@]}"
@@ -91,4 +111,14 @@ jobs:
             exit 0
           fi
           git commit -m "data: refresh official Economics PhD admissions observations [skip ci]"
-          git push origin HEAD:main
+          # The deep-review job may take longer than an ordinary pipeline
+          # cycle. Preserve unrelated trusted commits arriving meanwhile.
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+          done
+          echo "Main advanced during admissions review; push not applied" >&2
+          exit 1
