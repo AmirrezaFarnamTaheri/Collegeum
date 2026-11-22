@@ -1,7 +1,7 @@
 {
   "kind": "official_phd_call_observations",
   "version": 1,
-  "generated_at": "2026-11-22T11:22:16Z",
+  "generated_at": "2026-11-22T11:28:24Z",
   "sources": [
     {
       "id": "ieb-news",
@@ -26,7 +26,7 @@
       "document_only_index": false,
       "index_empty": true,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "ieb-application-calls",
@@ -57,7 +57,7 @@
       "document_only_index": true,
       "index_empty": false,
       "unsupported_documents": 5,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "ieb-document-index",
@@ -90,7 +90,7 @@
       "document_only_index": true,
       "index_empty": false,
       "unsupported_documents": 7,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "ieb-economics-2027",
@@ -115,7 +115,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "ieb-energy-climate",
@@ -140,17 +140,17 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "henley-finance-accounting",
       "institution": "Henley Business School",
       "index_url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
-      "status": "robots_unavailable",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
-      "candidate_count": 0,
+      "candidate_count": 1,
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
@@ -165,17 +165,17 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "henley-international-business",
       "institution": "Henley Business School",
       "index_url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
-      "status": "robots_unavailable",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
-      "candidate_count": 0,
+      "candidate_count": 1,
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
@@ -190,17 +190,17 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "henley-informatics",
       "institution": "Henley Business School",
       "index_url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
-      "status": "robots_unavailable",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
-      "candidate_count": 0,
+      "candidate_count": 1,
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
@@ -215,17 +215,17 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "henley-entrepreneurship",
       "institution": "Henley Business School",
       "index_url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
-      "status": "robots_unavailable",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
-      "candidate_count": 0,
+      "candidate_count": 1,
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
@@ -240,17 +240,17 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "henley-leadership",
       "institution": "Henley Business School",
       "index_url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
-      "status": "fetch_failed",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
-      "candidate_count": 0,
+      "candidate_count": 1,
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
@@ -265,7 +265,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "reading-international-studentships",
@@ -290,7 +290,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "id": "reading-home-phd-bursaries",
@@ -315,7 +315,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     }
   ],
   "calls": [
@@ -342,7 +342,7 @@
       "evidence_excerpt": "rk of the PhD programme. Submission instructions Interested candidates must complete both of the following steps before 11 December 2026 at 23:59 CET: 1. Letter of interest to",
       "location_evidence": "ES: official IEB and University of Barcelona institutional identifiers",
       "location_evidence_url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/",
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "source_id": "ieb-economics-2027",
@@ -367,7 +367,7 @@
       "evidence_excerpt": "nding for conference travel. Submission instructions Interested candidates must complete both of the following steps by 11 December 2026 Complete the IEB application form and u",
       "location_evidence": "ES: official IEB and University of Barcelona institutional identifiers",
       "location_evidence_url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "source_id": "henley-finance-accounting",
@@ -381,18 +381,18 @@
       "country_code": "UK",
       "official_url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
       "title": "Accounting PhD Opportunities",
-      "status": "not_seen",
+      "status": "verified",
       "kind": "phd_studentship",
       "subject_scope": "finance",
       "intake_year": 2027,
-      "deadline_iso": null,
+      "deadline_iso": "2027-02-21",
       "deadline_kind": "funding",
       "recommended_admission_iso": "2027-01-10",
       "evidence_url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
-      "checked_at": "2026-11-22T03:10:41Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "source_id": "henley-entrepreneurship",
@@ -406,18 +406,18 @@
       "country_code": "UK",
       "official_url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
       "title": "Entrepreneurship and Innovation PhD Opportunities",
-      "status": "not_seen",
+      "status": "verified",
       "kind": "phd_studentship",
       "subject_scope": "multidisciplinary",
       "intake_year": 2027,
-      "deadline_iso": null,
+      "deadline_iso": "2027-02-21",
       "deadline_kind": "funding",
       "recommended_admission_iso": "2027-01-10",
       "evidence_url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
-      "checked_at": "2026-11-22T03:10:41Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "source_id": "henley-informatics",
@@ -431,18 +431,18 @@
       "country_code": "UK",
       "official_url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
       "title": "Informatics and Operations PhD Opportunities",
-      "status": "not_seen",
+      "status": "verified",
       "kind": "phd_studentship",
       "subject_scope": "multidisciplinary",
       "intake_year": 2027,
-      "deadline_iso": null,
+      "deadline_iso": "2027-02-21",
       "deadline_kind": "funding",
       "recommended_admission_iso": "2027-01-10",
       "evidence_url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
-      "checked_at": "2026-11-22T03:10:41Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "source_id": "henley-international-business",
@@ -456,18 +456,18 @@
       "country_code": "UK",
       "official_url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
       "title": "International Business and Strategy PhD Opportunities",
-      "status": "not_seen",
+      "status": "verified",
       "kind": "phd_studentship",
       "subject_scope": "multidisciplinary",
       "intake_year": 2027,
-      "deadline_iso": null,
+      "deadline_iso": "2027-02-21",
       "deadline_kind": "funding",
       "recommended_admission_iso": "2027-01-10",
       "evidence_url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
-      "checked_at": "2026-11-22T03:10:41Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "source_id": "henley-leadership",
@@ -481,18 +481,18 @@
       "country_code": "UK",
       "official_url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
       "title": "PhD in Leadership, Organisations and Behaviour",
-      "status": "not_seen",
+      "status": "verified",
       "kind": "phd_studentship",
       "subject_scope": "multidisciplinary",
       "intake_year": 2027,
-      "deadline_iso": null,
+      "deadline_iso": "2027-02-21",
       "deadline_kind": "funding",
       "recommended_admission_iso": "2027-01-10",
       "evidence_url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
-      "checked_at": "2026-11-22T03:10:41Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "source_id": "reading-international-studentships",
@@ -517,7 +517,7 @@
       "evidence_excerpt": "awards to off campus/by-distance applicants do not include a stipend. Deadline The deadline for applications is Friday 15th January 2027. The competition process is in two stag",
       "location_evidence": "UK: official national institutional domain reading.ac.uk",
       "location_evidence_url": "https://www.reading.ac.uk/doctoral-researcher-college/funding/phd-studentships/international-phd-studentships",
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     },
     {
       "source_id": "reading-home-phd-bursaries",
@@ -542,7 +542,7 @@
       "evidence_excerpt": "requires applicants to submit a 300-word case for support. Deadline for applications The deadline by which to apply is 30th April 2027 . Applicants for the bursary need to ha",
       "location_evidence": "UK: official national institutional domain reading.ac.uk",
       "location_evidence_url": "https://www.reading.ac.uk/doctoral-researcher-college/funding/phd-studentships/uor-phd-bursaries",
-      "checked_at": "2026-11-22T11:22:16Z"
+      "checked_at": "2026-11-22T11:28:24Z"
     }
   ]
 }
