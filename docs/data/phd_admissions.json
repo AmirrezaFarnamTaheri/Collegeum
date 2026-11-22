@@ -955,13 +955,15 @@
     {
       "institution": "Harvard University",
       "country_code": "US",
-      "official_programme_url": "https://economics.harvard.edu/admissions",
+      "official_programme_url": "https://gsas.harvard.edu/program/economics",
       "programme_structure_hint": null,
-      "status": "robots_unavailable",
-      "checked_at": "2026-11-19T11:43:34Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": []
     },
     {
       "institution": "HEC Paris",
@@ -2104,10 +2106,10 @@
     {
       "institution": "UC, Davis",
       "country_code": "US",
-      "official_programme_url": "https://economics.ucdavis.edu/graduate-program/prosp-students/admission-information",
+      "official_programme_url": "https://economics.ucdavis.edu/deadlines-faqs",
       "programme_structure_hint": null,
-      "status": "fetch_failed",
-      "checked_at": "2026-11-19T23:47:35Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2534,10 +2536,10 @@
     {
       "institution": "University of California, Berkeley",
       "country_code": "US",
-      "official_programme_url": "https://www.econ.berkeley.edu/grad/admissions/instructions",
+      "official_programme_url": "https://grad.berkeley.edu/program/economics-phd/",
       "programme_structure_hint": null,
-      "status": "robots_unavailable",
-      "checked_at": "2026-11-21T14:48:00Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
