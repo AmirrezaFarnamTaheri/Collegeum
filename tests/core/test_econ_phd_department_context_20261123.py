@@ -82,6 +82,34 @@ class DepartmentContextTests(unittest.TestCase):
             "verified",
         )
 
+    def test_funding_priority_does_not_make_final_phd_cutoff_ambiguous(self):
+        html = """
+        <h1>Economics PhD</h1>
+        <h2>PhD Application Deadlines</h2>
+        <ul>
+          <li>Priority Financial Support: December 2, 2026</li>
+          <li>Final Deadline: December 16, 2026</li>
+        </ul>
+        """
+        self.assertEqual(
+            collect_official_deadline(
+                html, now=NOW,
+                source_url="https://econ.ucsb.edu/programs/graduate/apply",
+            )[:2],
+            ("verified", "2026-12-16"),
+        )
+
+    def test_funding_priority_alone_is_not_confirmed_application_deadline(self):
+        html = """
+        <h1>Economics PhD</h1>
+        <h2>PhD Application Deadlines</h2>
+        <li>Priority Financial Support: December 2, 2026</li>
+        <li>Final Deadline: December 16 (year not yet announced)</li>
+        """
+        self.assertNotEqual(
+            collect_official_deadline(html, now=NOW)[0], "verified",
+        )
+
     def test_generic_graduate_site_with_phd_navigation_is_not_enough(self):
         html = """
         <h1>Graduate Program</h1>
