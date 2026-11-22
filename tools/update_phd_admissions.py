@@ -201,10 +201,10 @@ def _structured_deadline_candidates(
     """
     candidates: list[tuple[str, str]] = []
     if programme_page:
-        for date_row, label_row in zip(parser.table_rows, parser.table_rows[1:]):
+        for date_row, label_row in zip(parser.table_rows, parser.table_rows[1:], strict=False):
             if len(date_row) < 2 or len(date_row) != len(label_row):
                 continue
-            for cell, label in zip(date_row, label_row):
+            for cell, label in zip(date_row, label_row, strict=True):
                 if (
                     re.search(
                         r"\b(?:application deadline|deadline for submission of "
@@ -226,8 +226,13 @@ def _structured_deadline_candidates(
                 # official table column, not necessarily adjacent in HTML.
                 excerpt = f"{label.rstrip('.:')} (table): {printed}"
                 candidates.append((day.isoformat(), excerpt[:180]))
-    if any(re.search(r"\b(?:ph\.?d\.?|doctoral)\b", h, re.I)
-           for h in parser.headings):
+    if (
+        any(re.search(r"\b(?:ph\.?d\.?|doctoral)\b", h, re.I)
+            for h in parser.headings)
+        or re.search(
+            r"\b(?:ph\.?d\.?|doctoral)\b", parser.text()[:900], re.I,
+        )
+    ):
         blocks = parser.tagged_blocks
         for index, (tag, heading) in enumerate(blocks):
             if tag not in {"h2", "h3"}:
@@ -714,6 +719,8 @@ def select_official_links(
             score -= 9
         if re.search(r"\b(?:phd|doctoral|doctorate)\b", blob, re.I):
             score += 6
+        if score <= 0:
+            continue
         if candidate not in scores or score > scores[candidate]:
             scores[candidate] = score
     return sorted(scores, key=lambda url: (-scores[url], url))[:max_links]
