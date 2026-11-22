@@ -238,7 +238,7 @@ def _structured_deadline_candidates(
         any(re.search(r"\b(?:ph\.?d\.?|doctoral)\b", h, re.I)
             for h in parser.headings)
         or re.search(
-            r"\b(?:ph\.?d\.?|doctoral)\b", parser.text()[:900], re.I,
+            r"\b(?:ph\.?d\.?|doctoral)\b", parser.text()[:4000], re.I,
         )
     ):
         blocks = parser.tagged_blocks
