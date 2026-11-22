@@ -5,12 +5,15 @@ test fixtures. They must not promote Master's or other programmes' deadlines.
 """
 from __future__ import annotations
 
+import json
 import unittest
 from datetime import UTC, datetime
+from pathlib import Path
 
 from tools.update_phd_admissions import (
     collect_official_deadline,
     investigate_official_pages,
+    refresh_inconclusive,
 )
 
 NOW = datetime(2026, 11, 23, tzinfo=UTC)
@@ -122,6 +125,40 @@ class OfficialPhDFaqAndProgrammeRequirementTests(unittest.TestCase):
             collect_official_deadline(html, now=NOW, source_url=UCLA_REQUIREMENTS)[0],
             "verified",
         )
+
+    def test_full_opt_in_review_includes_new_official_leads_and_ambiguous_pages(self):
+        root = Path(__file__).resolve().parents[2]
+        seeds = json.loads(
+            (root / "config/phd_admissions_seeds.json").read_text(encoding="utf-8")
+        )
+        public = json.loads(
+            (root / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
+        )
+        candidate_states = {"no_explicit_deadline", "ambiguous_deadline", "unverified"}
+        target_urls = {
+            row["official_programme_url"] for row in public["programmes"]
+            if row["status"] in candidate_states
+        }
+        self.assertGreaterEqual(len(target_urls), 3)
+        seen = []
+
+        def fetch(url, *, now):
+            seen.append(url)
+            return {"status": "no_explicit_deadline"}
+
+        updated = refresh_inconclusive(
+            seeds, public, now=NOW, batch_size=40, fetcher=fetch,
+        )
+        self.assertEqual(len(seen), len(target_urls))
+        self.assertEqual(set(seen), target_urls)
+        self.assertEqual(len(updated["programmes"]), 251)
+        self.assertFalse(any(
+            url in seen for url in (
+                row["official_programme_url"] for row in public["programmes"]
+                if row["status"] in {"robots_unavailable", "robots_disallowed",
+                                     "fetch_failed", "unsafe_redirect", "verified"}
+            )
+        ))
 
     def test_ucla_first_page_discovers_same_host_economics_requirements(self):
         initial = (
