@@ -40,14 +40,15 @@ MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
 DATE_PATTERN = re.compile(
     r"\b(?P<iso>20\d{2}-\d{2}-\d{2})\b|"
-    r"\b(?P<day>\d{1,2})\s+(?P<month>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s*,?\s*(?P<year>20\d{2})\b|"
-    r"\b(?P<month2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(?P<day2>\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(?P<year2>20\d{2})\b",
+    r"\b(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s*,?\s*(?P<year>20\d{2})\b|"
+    r"\b(?P<month2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(?P<day2>\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(?P<year2>20\d{2})\b",
     re.I,
 )
 PROGRAMME = re.compile(
-    r"(?:economics?\s+(?:ph\.?d\.?|doctor(?:al|ate))|"
+    r"(?:economics?\s+(?:mres\s*/\s*)?(?:ph\.?d\.?|doctor(?:al|ate))|"
     r"(?:ph\.?d\.?|doctor(?:al|ate))\s+(?:in\s+)?economics?|"
-    r"(?:ph\.?d\.?|doctoral)\s+programmes?\s+in\s+[^.?!\n]{0,80}?\beconomics?)",
+    r"(?:ph\.?d\.?|doctoral)\s+programmes?\s+in\s+[^.?!\n]{0,80}?\beconomics?|"
+    r"doctor(?:al|ate)\s+program(?:me)?\s+in\s+economics?)", 
     re.I,
 )
 DEADLINE = re.compile(
@@ -55,7 +56,7 @@ DEADLINE = re.compile(
     r"applications?\s+(?:close|due|must\s+be\s+submitted)|"
     r"apply\s+by|"
     r"submission\s+deadline|"
-    r"closes?\s+on|closing\s+date",
+    r"closes?\s+on|closing\s+date|no\s+later\s+than|through\b", 
     re.I,
 )
 # Explicitly exclude ancillary document, exam, funding and decision deadlines.
@@ -202,18 +203,37 @@ def collect_official_deadline(html: str, *, now: datetime) -> tuple[str, str | N
         qualifier = before[max(0, deadline.start() - 38):deadline.end()]
         if ANCILLARY.search(qualifier):
             continue
-        # "Closes on" may describe many things; accept it only when a nearby
-        # application period or application form is the stated subject.
-        if deadline.group().lower().startswith(("close", "closing")):
-            context = before[max(0, deadline.start() - 135):deadline.start()]
+        # Generic closing/through/no-later-than wording is eligible only
+        # when the surrounding sentence explicitly concerns an application.
+        # In particular "open through the portal on DATE" is not a cutoff.
+        label = deadline.group().lower()
+        context = before[max(0, deadline.start() - 165):deadline.start()]
+        if label.startswith(("close", "closing")):
             if not re.search(r"\bapplications?\b", context, re.I):
                 continue
-        if not programme_page and not long_form:
-            programmes = list(PROGRAMME.finditer(before))
-            if not programmes:
+        elif label == "no later than":
+            if not (
+                re.search(r"\bapplications?\b", context, re.I)
+                and re.search(r"\b(?:submit|submitted|received|due)\b", context, re.I)
+            ):
                 continue
-            programme = programmes[-1]
-            if programme.end() > deadline.start() or deadline.start() - programme.end() > 165:
+        elif label == "through":
+            if not (
+                re.search(r"\bapplication\b", context, re.I)
+                and re.search(r"\bavailable\b", context, re.I)
+                and not re.search(r"\bopen\s+through\b", before[-45:], re.I)
+            ):
+                continue
+        if not programme_page and not long_form:
+            programmes_before = [
+                p for p in PROGRAMME.finditer(before)
+                if p.end() <= deadline.start()
+                and deadline.start() - p.end() <= 165
+            ]
+            # Official pages also state "application deadline for the
+            # Economics PhD is DATE" under a generic application heading.
+            programmes_after = list(PROGRAMME.finditer(gap))
+            if not programmes_before and not programmes_after:
                 continue
         excerpt = text[max(0, match.start() - 115):min(len(text), match.end() + 20)]
         candidates.append((day.isoformat(), excerpt.strip()))
@@ -558,9 +578,17 @@ def select_official_links(
         if re.search(r"admissions?|applications?|deadlines?|apply", blob, re.I):
             score += 3
         if re.search(r"economics?|phd|doctoral", blob, re.I):
-            score += 2
+            score += 4
         if re.search(r"fees|funding", blob, re.I):
-            score += 3
+            score += 2
+        # A generic undergraduate/MBAs admissions link must not consume
+        # one of the two university-page visits ahead of a doctoral route.
+        if re.search(
+            r"\b(?:undergraduate|bachelor|mba|executive|alumni)\b", blob, re.I,
+        ):
+            score -= 9
+        if re.search(r"\b(?:phd|doctoral|doctorate)\b", blob, re.I):
+            score += 6
         if candidate not in scores or score > scores[candidate]:
             scores[candidate] = score
     return sorted(scores, key=lambda url: (-scores[url], url))[:max_links]
