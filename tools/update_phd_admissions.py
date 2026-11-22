@@ -89,13 +89,16 @@ class PageText(HTMLParser):
         self._anchor_parts: list[str] = []
         self.blocks: list[str] = []
         self.tagged_blocks: list[tuple[str, str]] = []
-        self.table_rows: list[list[str]] = []
+        self.tables: list[list[list[str]]] = []
+        self._current_table: list[list[str]] | None = None
         self._row_cells: list[str] | None = None
         self.address_blocks: list[str] = []
         self._block_tag: str | None = None
         self._block_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "table":
+            self._current_table = []
         if tag == "tr":
             self._row_cells = []
         if tag == "h1":
@@ -139,9 +142,13 @@ class PageText(HTMLParser):
             self._block_tag = None
             self._block_parts = []
         if tag == "tr":
-            if self._row_cells:
-                self.table_rows.append(self._row_cells)
+            if self._row_cells and self._current_table is not None:
+                self._current_table.append(self._row_cells)
             self._row_cells = None
+        if tag == "table":
+            if self._current_table:
+                self.tables.append(self._current_table)
+            self._current_table = None
         if tag in {"script", "style", "svg", "noscript", "template"}:
             self.ignored = max(0, self.ignored - 1)
         elif tag in {"p", "div", "h1", "h2", "h3", "li", "tr"}:
@@ -201,31 +208,32 @@ def _structured_deadline_candidates(
     """
     candidates: list[tuple[str, str]] = []
     if programme_page:
-        for date_row, label_row in zip(parser.table_rows, parser.table_rows[1:], strict=False):
-            if len(date_row) < 2 or len(date_row) != len(label_row):
-                continue
-            for cell, label in zip(date_row, label_row, strict=True):
-                if (
-                    re.search(
-                        r"\b(?:application deadline|deadline for submission of "
-                        r"(?:your |the )?application)\b", label, re.I,
-                    ) is None
-                    or ANCILLARY.search(label)
-                ):
+        for rows in parser.tables:
+            for date_row, label_row in zip(rows, rows[1:], strict=False):
+                if len(date_row) < 2 or len(date_row) != len(label_row):
                     continue
-                dates = [
-                    (day, match.group())
-                    for match in DATE_PATTERN.finditer(cell)
-                    if (day := _parse_date(match)) is not None
-                    and now.date() <= day <= date(now.year + 2, 12, 31)
-                ]
-                if len({day for day, _ in dates}) != 1:
-                    continue
-                day, printed = dates[0]
-                # The original date and its role occur in the same
-                # official table column, not necessarily adjacent in HTML.
-                excerpt = f"{label.rstrip('.:')} (table): {printed}"
-                candidates.append((day.isoformat(), excerpt[:180]))
+                for cell, label in zip(date_row, label_row, strict=True):
+                    if (
+                        re.search(
+                            r"\b(?:application deadline|deadline for submission of "
+                            r"(?:your |the )?application)\b", label, re.I,
+                        ) is None
+                        or ANCILLARY.search(label)
+                    ):
+                        continue
+                    dates = [
+                        (day, match.group())
+                        for match in DATE_PATTERN.finditer(cell)
+                        if (day := _parse_date(match)) is not None
+                        and now.date() <= day <= date(now.year + 2, 12, 31)
+                    ]
+                    if len({day for day, _ in dates}) != 1:
+                        continue
+                    day, printed = dates[0]
+                    # The original date and its role occur in the same
+                    # official table column, not necessarily adjacent in HTML.
+                    excerpt = f"{label.rstrip('.:')} (table): {printed}"
+                    candidates.append((day.isoformat(), excerpt[:180]))
     if (
         any(re.search(r"\b(?:ph\.?d\.?|doctoral)\b", h, re.I)
             for h in parser.headings)
