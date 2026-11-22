@@ -65,6 +65,18 @@ class MoreOfficialPhDDeadlineEvidenceTests(unittest.TestCase):
             )[0], "verified",
         )
 
+    def test_deadline_role_from_different_table_cannot_verify_date(self):
+        html = (
+            "<h1>Economics PhD admissions</h1>"
+            "<table><tr><td>Jan 1, 2027</td><td>Apr 3, 2027</td>"
+            "</tr></table>"
+            "<table><tr><td>Deadline for submission of your application"
+            "</td><td>Unrelated instructions</td></tr></table>"
+        )
+        self.assertNotEqual(
+            collect_official_deadline(html, now=NOW)[0], "verified",
+        )
+
     def test_yale_phd_list_requires_economics_in_same_dated_group(self):
         html = (
             "<h1>Dates and Deadlines for PhD or Master's applicants</h1>"
