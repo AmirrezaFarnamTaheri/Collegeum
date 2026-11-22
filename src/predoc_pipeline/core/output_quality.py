@@ -44,6 +44,13 @@ _GENERIC_EMPLOYER_CAREER_PAGES = frozenset({
     ("www.lse.ac.uk", "/lsejobs"),
     ("www.fnuniv.ca", ""),
     ("rb.wd5.myworkdayjobs.com", "/frs"),
+    # Production LinkedIn-origin records 340/341/353/441 have these
+    # employer-wide career index URLs, not position-level applications.
+    # Exact host/path matching leaves independently verified deep links alone.
+    ("jobs.illinois.edu", ""),
+    ("careers.fiu.edu", ""),
+    ("careers.wvu.edu", "/career-opportunities"),
+    ("hrs.missouri.edu", "/find-a-job/academic"),
 })
 
 _AUTH_HOSTS = frozenset({
