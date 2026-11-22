@@ -14,6 +14,7 @@ import re
 from typing import Any
 from urllib.parse import urlsplit
 
+from ..http import FetchError
 from ..models import JobPostSchema
 from ..utils.dates import parse_iso_datetime, parse_posted, today
 from ..utils.text import clean_ws, html_to_text
@@ -59,8 +60,13 @@ class WorkdayScraper(BaseScraper):
                 payload = {"appliedFacets": {}, "limit": self.PAGE, "offset": page * self.PAGE, "searchText": term}
                 try:
                     data = await self.http.post_json(api, payload)
-                except Exception as exc:  # noqa: BLE001 - preserve other pages/search terms
+                except Exception as exc:  # noqa: BLE001 - preserve partial results
                     self.discovery_fetch_errors.append(type(exc).__name__)
+                    if isinstance(exc, FetchError) and exc.status in {403, 429}:
+                        # Explicit access denial is source-wide, not just one
+                        # search term. Keep earlier rows, report partial health,
+                        # and never probe alternate keywords after a denial.
+                        return raw
                     break
                 if not isinstance(data, dict) or not isinstance(data.get("jobPostings"), list):
                     # Workday answers a non-JSON body (an HTML error page or a
