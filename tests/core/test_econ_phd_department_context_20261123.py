@@ -1,10 +1,12 @@
 """Official Economics PhD deadlines on department-specific pages require provenance."""
 from __future__ import annotations
 
+import json
 import unittest
 from datetime import UTC, datetime
+from pathlib import Path
 
-from tools.update_phd_admissions import collect_official_deadline
+from tools.update_phd_admissions import collect_official_deadline, refresh
 
 NOW = datetime(2026, 11, 23, tzinfo=UTC)
 TORONTO = "https://www.economics.utoronto.ca/index.php/index/graduate/phd"
@@ -142,6 +144,33 @@ class DepartmentContextTests(unittest.TestCase):
                 source_url="https://gsas.example.edu/program/economics",
             )[0], "verified",
         )
+
+    def test_newly_remediated_official_source_precedes_old_parser_misses(self):
+        root = Path(__file__).resolve().parents[2]
+        seeds = json.loads(
+            (root / "config/phd_admissions_seeds.json").read_text(encoding="utf-8")
+        )
+        catalogue = json.loads(
+            (root / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
+        )
+        for row in catalogue["programmes"]:
+            row.update(
+                status="no_explicit_deadline", checked_at="2026-11-22T00:00:00Z",
+                deadline_iso=None, evidence_url=None, evidence_excerpt=None,
+                official_details={}, investigated_urls=[], extractor_revision="outdated",
+            )
+        # A new authoritative institutional lead has never been visited.
+        target = catalogue["programmes"][80]
+        target.update(status="unverified", checked_at=None)
+        seen = []
+
+        def fetch(url, *, now):
+            seen.append(url)
+            return {"status": "no_explicit_deadline"}
+
+        result = refresh(seeds, catalogue, now=NOW, batch_size=1, fetcher=fetch)
+        self.assertEqual(seen, [target["official_programme_url"]])
+        self.assertEqual(result["programmes"][80]["status"], "no_explicit_deadline")
 
     def test_generic_graduate_site_with_phd_navigation_is_not_enough(self):
         html = """
