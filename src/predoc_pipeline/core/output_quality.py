@@ -44,6 +44,10 @@ _GENERIC_EMPLOYER_CAREER_PAGES = frozenset({
     ("www.lse.ac.uk", "/lsejobs"),
     ("www.fnuniv.ca", ""),
     ("rb.wd5.myworkdayjobs.com", "/frs"),
+    # Public LinkedIn-origin listings #441/#353 linked only to job indexes,
+    # not individual application requisitions (verified 2026-11-22).
+    ("jobs.illinois.edu", ""),
+    ("careers.fiu.edu", ""),
 })
 
 _AUTH_HOSTS = frozenset({
