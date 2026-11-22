@@ -163,9 +163,10 @@ class HttpClient:
             **DEFAULT_BROWSER_HEADERS,
         }
         headers = {**base_headers, **kw.pop("headers", {})}
-        # Explicit opt-in for third-party search adapters: provider 429
-        # is an access limit, not a signal to rotate user agents and retry.
-        stop_on_429 = kw.pop("stop_on_429", False) is True
+        # A provider 429 is an access limit, not permission to rotate user
+        # agents and retry. Default to stopping immediately for every board
+        # request; keep the legacy explicit parameter for authorized callers.
+        stop_on_429 = kw.pop("stop_on_429", True) is True
         last_exc: Exception | None = None
         for attempt in range(self.max_retries + 1):
             await self._polite_wait(host)
