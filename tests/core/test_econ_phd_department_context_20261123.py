@@ -110,6 +110,39 @@ class DepartmentContextTests(unittest.TestCase):
             collect_official_deadline(html, now=NOW)[0], "verified",
         )
 
+    def test_economics_phd_university_directory_card_with_dated_deadline(self):
+        html = """
+        <h1>Economics</h1>
+        <h2>Application Deadline</h2>
+        <p>Degrees Offered</p>
+        <p>Doctor of Philosophy (PhD)</p>
+        <p>Deadline</p>
+        <p>Dec 01, 2026 | 05:00 pm</p>
+        """
+        self.assertEqual(
+            collect_official_deadline(
+                html, now=NOW,
+                source_url="https://gsas.harvard.edu/program/economics",
+            )[:2],
+            ("verified", "2026-12-01"),
+        )
+
+    def test_economics_masters_only_directory_card_stays_unverified(self):
+        html = """
+        <h1>Economics</h1>
+        <h2>Application Deadline</h2>
+        <p>Degrees Offered</p>
+        <p>Master of Arts</p>
+        <p>Deadline</p>
+        <p>Dec 01, 2026 | 05:00 pm</p>
+        """
+        self.assertNotEqual(
+            collect_official_deadline(
+                html, now=NOW,
+                source_url="https://gsas.example.edu/program/economics",
+            )[0], "verified",
+        )
+
     def test_generic_graduate_site_with_phd_navigation_is_not_enough(self):
         html = """
         <h1>Graduate Program</h1>
