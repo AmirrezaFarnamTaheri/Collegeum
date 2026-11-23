@@ -1034,6 +1034,15 @@ def collect_official_deadline(
     parser.feed(html[:MAX_HTML_BYTES])
     text = parser.text()[:MAX_HTML_BYTES]
     source_path = urllib.parse.urlsplit(source_url or "")
+    # Departmental navigation often mentions the Economics PhD on separate
+    # Master's admission pages. A date there is not an Economics doctorate
+    # cutoff, even on the same university host.
+    if (
+        (source_path.hostname or "").lower().removeprefix("www.")
+        == "econ.utah.edu"
+        and source_path.path.lower().startswith("/masters-program/")
+    ):
+        return "no_explicit_deadline", None, None
     # The Drexel schoolwide doctoral page names Economics in a navigation
     # route and separates the application *date* from its purpose. Bypass
     # generic matching, which could otherwise borrow an unrelated cutoff.
