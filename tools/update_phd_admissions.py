@@ -1454,7 +1454,7 @@ def select_official_links(
         if (
             not masters_stage
             and re.search(
-                r"/(?:masters?-degrees?|masters?-programmes?|"
+                r"/(?:masters?-degrees?|masters?-programmes?|master-s-programs?|master-s-programmes?|"
                 r"summer-school|undergraduate|bachelors?)(?:/|$)",
                 candidate_path,
             )
