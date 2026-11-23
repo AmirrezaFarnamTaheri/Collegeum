@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import json
 import unittest
-from pathlib import Path
 from datetime import UTC, datetime
+from pathlib import Path
 
 from tools.update_phd_admissions import (
     collect_official_deadline,
