@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v10"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v11"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -822,6 +822,49 @@ def _dedicated_official_economics_cutoffs(
     return candidates
 
 
+def _charles_economics_finance_doctoral_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Use the next doctoral intake, never the institute's expired prior-year call.
+
+    The programme's own IES Faculty of Social Sciences page publishes its
+    upcoming PhD admissions window separately from the closed 2026 round.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    text = parser.text()[:MAX_HTML_BYTES]
+    if not (
+        host == "ies.fsv.cuni.cz"
+        and path == "/en/admissions/admissions/doctoral-degree-economics-and-finance"
+        and any(
+            re.fullmatch(r"Doctoral degree Economics and Finance", h, re.I)
+            for h in parser.headings
+        )
+        and re.search(r"\bnext PhD admission intake round\b", text, re.I)
+        and re.search(
+            r"\bPhD program concentrates on economic theory\b", text, re.I,
+        )
+    ):
+        return []
+
+    candidates: list[tuple[str, str]] = []
+    for label in re.finditer(
+        r"\badmission proce(?:ss|s) will open as of this day "
+        r"and will last to\s*",
+        text, re.I,
+    ):
+        match = DATE_PATTERN.search(text, label.end())
+        if match is None or match.start() - label.end() > 14:
+            continue
+        day = _parse_date(match)
+        if day and now.date() <= day <= date(now.year + 2, 12, 31):
+            candidates.append((
+                day.isoformat(), text[label.start():match.end()][:180],
+            ))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -1047,6 +1090,9 @@ def collect_official_deadline(
         parser, now=now, source_url=source_url,
     ))
     candidates.extend(_dedicated_official_economics_cutoffs(
+        parser, now=now, source_url=source_url,
+    ))
+    candidates.extend(_charles_economics_finance_doctoral_candidates(
         parser, now=now, source_url=source_url,
     ))
     candidates.extend(
