@@ -1,5 +1,15 @@
 {
   "deliveries": {
+    "07711a76c20111ed32a2ab2544708c46": {
+      "attempted_at": "2026-11-23T19:19:37Z",
+      "country_code": "CA",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://www.mcgill.ca/economics/graduates/admissions",
+      "institution": "McGill University",
+      "message_id": 151,
+      "sent_at": "2026-11-23T19:19:37Z",
+      "state": "confirmed"
+    },
     "154ff714c6e1e0371769c7275e4789e1": {
       "attempted_at": "2026-11-22T20:22:35Z",
       "country_code": "UK",
