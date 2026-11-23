@@ -41,7 +41,8 @@ def fordham_page(*, econ: bool = True, cutoff: str = "January 8, 2027",
     anchor = (
         '<a href="/academics/departments/economics/graduate-studies/phd-in-economics/">'
         "Economics</a>" if econ
-        else '<a href="/academics/departments/economics/graduate-studies/master-of-arts-in-economics/">Economics (MA)</a>'
+        else ('<a href="/academics/departments/economics/graduate-studies/"'
+              'master-of-arts-in-economics/">Economics (MA)</a>')
     )
     doctoral_rows = (
         '<table><tr><th>Programs</th><th>Deadlines</th></tr>'
