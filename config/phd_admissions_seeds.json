@@ -101,7 +101,7 @@
     {
       "institution": "Bocconi University",
       "country_code": "IT",
-      "official_programme_url": "https://www.unibocconi.it/en/programs/phd/admissions",
+      "official_programme_url": "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/preparing-apply",
       "programme_structure_hint": "PhD only"
     },
     {
@@ -1121,7 +1121,7 @@
     {
       "institution": "University of Mannheim",
       "country_code": "DE",
-      "official_programme_url": "https://www.uni-mannheim.de/gess/apply/admission-requirements/for-cdse/",
+      "official_programme_url": "https://www.uni-mannheim.de/gess/apply/",
       "programme_structure_hint": "PhD only"
     },
     {

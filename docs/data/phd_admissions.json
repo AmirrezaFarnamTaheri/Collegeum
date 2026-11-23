@@ -313,20 +313,15 @@
     {
       "institution": "Bocconi University",
       "country_code": "IT",
-      "official_programme_url": "https://www.unibocconi.it/en/programs/phd/admissions",
+      "official_programme_url": "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/preparing-apply",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-23T09:55:08Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://www.unibocconi.it/en/programs/phd/admissions",
-        "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/admission-results-ay-2027-28",
-        "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/do-international-students"
-      ],
-      "extractor_revision": "2026-11-23-admissions-v8"
+      "investigated_urls": []
     },
     {
       "institution": "Boston College",
@@ -3084,20 +3079,15 @@
     {
       "institution": "University of Mannheim",
       "country_code": "DE",
-      "official_programme_url": "https://www.uni-mannheim.de/gess/apply/admission-requirements/for-cdse/",
+      "official_programme_url": "https://www.uni-mannheim.de/gess/apply/",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-23T09:55:08Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://www.uni-mannheim.de/gess/apply/admission-requirements/for-cdse/",
-        "https://www.uni-mannheim.de/en/academics/before-your-studies/applying/",
-        "https://www.uni-mannheim.de/gess/about/boards-and-committees/admission-and-assessment-committees/"
-      ],
-      "extractor_revision": "2026-11-23-admissions-v8"
+      "investigated_urls": []
     },
     {
       "institution": "University of Maryland",

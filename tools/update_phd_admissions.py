@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v8"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v9"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -546,6 +546,154 @@ def _brown_economics_phd_directory_candidates(
     return candidates
 
 
+def _bocconi_economics_finance_phd_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Apply a PhD school-wide primary-source cutoff only to its named EC-FIN route.
+
+    The university publishes a second February deadline for explicitly named
+    computing/statistics PhD programmes. That date is never the Economics
+    and Finance cutoff, and we must not treat two unrelated programme dates
+    as ambiguous dates for Economics. Only the school's own public admissions
+    call and the precise Economics and Finance programme list qualify.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    if (
+        (source.hostname or "").lower().removeprefix("www.")
+        != "unibocconi.it"
+        or source.path.lower().rstrip("/")
+        != "/en/programs/phd/admission-phd-programs/preparing-apply"
+    ):
+        return []
+    text = parser.text()
+    if not (
+        any(re.fullmatch(r"Preparing to Apply", h, re.I)
+            for h in parser.headings)
+        and re.search(r"\bPublic Call for Applications\b", text, re.I)
+        and re.search(
+            r"\bacademic year\s+20\d{2}\s*/\s*20\d{2}\b",
+            text, re.I,
+        )
+        and re.search(
+            r"\bfollowing PhD programs?\s*:.{0,1500}?"
+            r"\bEconomics and Finance\s*\(\s*EC-FIN\s*\)",
+            text, re.I | re.S,
+        )
+    ):
+        return []
+    candidates: list[tuple[str, str]] = []
+    for block in parser.blocks:
+        label = re.search(
+            r"\bthe deadline for submitting the application is\s*",
+            block, re.I,
+        )
+        if label:
+            dates = list(DATE_PATTERN.finditer(block, label.end()))
+            if not dates or dates[0].start() - label.end() > 18:
+                continue
+            first = dates[0]
+            day = _parse_date(first)
+            if day is None or not (
+                now.date() <= day <= date(now.year + 2, 12, 31)
+            ):
+                continue
+            tail = block[first.end():]
+            extras = list(DATE_PATTERN.finditer(tail))
+            if extras:
+                # A different programme's later deadline is an exception
+                # only when explicitly named within the *same* parenthesis.
+                other = re.search(r"\(([^)]*)\)", tail)
+                if (
+                    other is None
+                    or any(m.start() >= other.end() for m in extras)
+                    or not re.search(
+                        r"\bStatistics and Machine Learning\b",
+                        other.group(1), re.I,
+                    )
+                    or not re.search(
+                        r"\bComputing Sciences and Artificial Intelligence\b",
+                        other.group(1), re.I,
+                    )
+                    or re.search(
+                        r"\b(?:Economics and Finance|EC-FIN)\b",
+                        other.group(1), re.I,
+                    )
+                ):
+                    continue
+            evidence = block[label.start():first.end()]
+            after = tail.split("(", 1)[0].strip()
+            if after:
+                evidence += " " + after[:30]
+            candidates.append((day.isoformat(), evidence.strip()[:180]))
+        direct = re.search(
+            r"\bEconomics and Finance\s+PhD\s+application deadline\s*:\s*",
+            block, re.I,
+        )
+        if direct:
+            exact = DATE_PATTERN.search(block, direct.end())
+            if exact and exact.start() - direct.end() <= 18:
+                day = _parse_date(exact)
+                if day and now.date() <= day <= date(now.year + 2, 12, 31):
+                    candidates.append((
+                        day.isoformat(), block[direct.start():exact.end()][:180],
+                    ))
+    return candidates
+
+
+def _mannheim_economics_doctoral_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Distinguish the GESS final programme deadline from early review dates.
+
+    GESS explicitly lists its doctoral Economics admissions center alongside
+    two other doctoral centers under a common Fall-intake application process.
+    The first-review priority date is not an unconditional closing deadline.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    if (
+        (source.hostname or "").lower().removeprefix("www.")
+        != "uni-mannheim.de"
+        or source.path.lower().rstrip("/") != "/gess/apply"
+    ):
+        return []
+    text = parser.text()
+    if not (
+        any(re.fullmatch(r"How to Apply", h, re.I)
+            for h in parser.headings)
+        and re.search(
+            r"\bAdmission Center for Doctoral Studies in Economics\b",
+            text, re.I,
+        )
+        and re.search(r"\bApplication[s]?\s+for\s+the\s+Fall\s+20\d{2}\s+intake\b",
+                      text, re.I)
+        and re.search(r"\bFinal application deadline\s*:", text, re.I)
+    ):
+        return []
+    candidates: list[tuple[str, str]] = []
+    for label in re.finditer(r"\bFinal application deadline\s*:\s*", text, re.I):
+        date_match = DATE_PATTERN.search(text, label.end())
+        if date_match is None or date_match.start() - label.end() > 18:
+            continue
+        day = _parse_date(date_match)
+        if day is None or not (
+            now.date() <= day <= date(now.year + 2, 12, 31)
+        ):
+            continue
+        intake = re.search(
+            r"\bFall\s+(20\d{2})\s+intake\b", text[:6000], re.I,
+        )
+        if intake is None or day.year not in {
+            int(intake.group(1)), int(intake.group(1)) - 1,
+        }:
+            continue
+        # The original label and date are directly adjacent in the official
+        # source; unrelated early-review dates never enter the evidence.
+        candidates.append((
+            day.isoformat(), text[label.start():date_match.end()][:180],
+        ))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -766,6 +914,16 @@ def collect_official_deadline(
         )
     candidates = _structured_deadline_candidates(
         parser, now=now, programme_page=programme_page,
+    )
+    candidates.extend(
+        _bocconi_economics_finance_phd_candidates(
+            parser, now=now, source_url=source_url,
+        )
+    )
+    candidates.extend(
+        _mannheim_economics_doctoral_candidates(
+            parser, now=now, source_url=source_url,
+        )
     )
     candidates.extend(
         _brown_economics_phd_directory_candidates(

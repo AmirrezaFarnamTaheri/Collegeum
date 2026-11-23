@@ -32,6 +32,17 @@ Its copyright and permission notice is at
   unrelated Master's applications. Columbia's currently published numeric
   `12/3/2026` remains **unconfirmed** under the country-agnostic numeric-date
   policy; the full year alone does not disambiguate the month and day.
+- For the 2027–28 admissions cycle, two outdated but readable discovery
+  pages have direct, current-cycle official alternatives: Bocconi's public
+  **Preparing to Apply** PhD call and Mannheim GESS **How to Apply**. Both
+  replacements reset the respective programme observation to `unverified`
+  until the independent verifier fetches its new official HTTPS source.
+  Bocconi's common 18 January 2027 cutoff explicitly exempts unrelated
+  computing and statistics PhDs with a later date, not Economics and Finance.
+  Mannheim's 31 March 2027 *final* application cutoff is distinct from
+  its 15 January early-review priority. Neither date is imported into the
+  catalogue by a manual source correction; the verifier must independently
+  corroborate the explicit current-cycle deadline and record its provenance.
 - `tools/update_phd_admissions.py` investigates the university's primary
   programme URL and **at most two relevant linked admissions/funding pages**
   on the same HTTPS institutional host. For generic domains (`.eu`, `.org`,
