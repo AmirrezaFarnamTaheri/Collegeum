@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v11"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v12"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -866,6 +866,126 @@ def _charles_economics_finance_doctoral_candidates(
     return candidates
 
 
+def _drexel_lebow_economics_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Tepper-like shared PhD deadlines qualify only when Economics is named.
+
+    Drexel's 2027 doctoral application-requirements page applies to the
+    university-owned Economics PhD, but not to unrelated Master's routes.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    if not (
+        host == "lebow.drexel.edu"
+        and path == "/admissions/doctorate/admission-standards"
+        and any(
+            re.fullmatch(r"PhD Application Requirements and Deadlines", h, re.I)
+            for h in parser.headings
+        )
+        and any(
+            re.fullmatch(r"PhD in Economics", label, re.I)
+            for _url, label in parser.links
+        )
+    ):
+        return []
+
+    candidates: list[tuple[str, str]] = []
+    for block in parser.blocks:
+        for match in DATE_PATTERN.finditer(block):
+            day = _parse_date(match)
+            if day is None or not (
+                now.date() <= day <= date(now.year + 2, 12, 31)
+            ):
+                continue
+            before = block[:match.start()]
+            after = block[match.end():match.end() + 85]
+            # The *same* official application row supplies the intake and
+            # the purpose of the closing date. Never borrow a test deadline.
+            m = re.search(
+                r"\bApplication deadline for Fall\s+(20\d{2})\b", after, re.I,
+            )
+            if not m:
+                continue
+            intake_year = int(m.group(1))
+            if intake_year - day.year not in {0, 1}:
+                continue
+            if re.search(
+                r"\b(?:test|GRE|GMAT|funding|interview|document|"
+                r"scholarship)\b", before[-50:], re.I,
+            ):
+                continue
+            candidates.append((day.isoformat(), block[:180]))
+    return candidates
+
+
+def _fordham_economics_doctoral_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Match a full-year date in Economics' named PhD table row, not its MA row."""
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    text = parser.text()[:MAX_HTML_BYTES]
+    if not (
+        host == "fordham.edu"
+        and path == (
+            "/graduate-school-of-arts-and-sciences/admissions/"
+            "how-to-apply/application-deadlines"
+        )
+        and any(re.fullmatch(r"GSAS Application Deadlines", h, re.I)
+                for h in parser.headings)
+        and re.search(r"\b2027 Admissions\b", text)
+        and re.search(r"\bFall 2027 Entry\b", text, re.I)
+        and any(
+            re.fullmatch(r"Economics", label, re.I)
+            and (
+                (candidate := _institutional_url(href, source_url or ""))
+                is not None
+            )
+            and re.search(r"/graduate-studies/phd-in-economics/?$", candidate, re.I)
+            for href, label in parser.links
+        )
+    ):
+        return []
+
+    candidates: list[tuple[str, str]] = []
+    for table in parser.tables:
+        for row in table:
+            if len(row) != 2:
+                continue
+            names, cutoff = row
+            if (
+                re.search(r"\bEconomics\b", names, re.I) is None
+                or re.search(
+                    r"\bEconomics\s*\((?:MA|MS|MSc|MBA)\)", names, re.I,
+                )
+            ):
+                continue
+            for match in DATE_PATTERN.finditer(cutoff):
+                day = _parse_date(match)
+                if day and now.date() <= day <= date(now.year + 2, 12, 31):
+                    candidates.append((
+                        day.isoformat(),
+                        f"Economics PhD application deadline (table): "
+                        f"{match.group()}"[:180],
+                    ))
+    return candidates
+
+
+def _schoolwide_economics_result(
+    candidates: list[tuple[str, str]],
+) -> tuple[str, str | None, str | None]:
+    distinct = {day for day, _ in candidates}
+    if len(distinct) > 1:
+        return "ambiguous_deadline", None, None
+    if len(distinct) == 1:
+        day, excerpt = candidates[0]
+        return "verified", day, excerpt[:180]
+    return "no_explicit_deadline", None, None
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -878,6 +998,29 @@ def collect_official_deadline(
     parser.feed(html[:MAX_HTML_BYTES])
     text = parser.text()[:MAX_HTML_BYTES]
     source_path = urllib.parse.urlsplit(source_url or "")
+    # The Drexel schoolwide doctoral page names Economics in a navigation
+    # route and separates the application *date* from its purpose. Bypass
+    # generic matching, which could otherwise borrow an unrelated cutoff.
+    if (
+        any(re.fullmatch(r"PhD Application Requirements and Deadlines", h, re.I)
+            for h in parser.headings)
+        and re.search(r"\bDrexel LeBow", text, re.I)
+    ):
+        return _schoolwide_economics_result(
+            _drexel_lebow_economics_candidates(
+                parser, now=now, source_url=source_url,
+            )
+        )
+    if (
+        any(re.fullmatch(r"GSAS Application Deadlines", h, re.I)
+            for h in parser.headings)
+        and re.search(r"\b2027 Admissions\b", text)
+    ):
+        return _schoolwide_economics_result(
+            _fordham_economics_doctoral_candidates(
+                parser, now=now, source_url=source_url,
+            )
+        )
     if (
         (source_path.hostname or "").lower().removeprefix("www.") == "econ.uic.edu"
         and source_path.path.lower().rstrip("/")
