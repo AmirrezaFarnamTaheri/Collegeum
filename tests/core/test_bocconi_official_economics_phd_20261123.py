@@ -5,7 +5,9 @@ The alternate February cutoff belongs to other named PhD programmes.
 """
 from __future__ import annotations
 
+import json
 import unittest
+from pathlib import Path
 from datetime import UTC, datetime
 
 from tools.update_phd_admissions import (
@@ -98,6 +100,21 @@ class BocconiOfficialAdmissionsTests(unittest.TestCase):
             collect_official_deadline(html, now=NOW, source_url=BOCCONI)[0],
             "verified",
         )
+
+    def test_discovery_lead_points_to_the_same_official_programme_call(self):
+        root = Path(__file__).resolve().parents[2]
+        seeds = json.loads(
+            (root / "config/phd_admissions_seeds.json").read_text(encoding="utf-8")
+        )
+        public = json.loads(
+            (root / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
+        )
+        for catalog in (seeds, public):
+            programme = next(
+                row for row in catalog["programmes"]
+                if row["institution"] == "Bocconi University"
+            )
+            self.assertEqual(programme["official_programme_url"], BOCCONI)
 
     def test_disagreeing_economics_specific_cutoffs_are_ambiguous(self):
         html = (
