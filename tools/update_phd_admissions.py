@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v7"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v8"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -406,6 +406,146 @@ def _purdue_economics_phd_section_deadlines(
     return candidates
 
 
+def _uic_economics_phd_table_candidates(
+    parser: PageText, *, now: datetime,
+) -> list[tuple[str, str]]:
+    """Take only the Economics PhD table, not the adjacent MA programme.
+
+    The university prints the Fall admission year in a column heading and
+    separate domestic/international application dates. Require both doctoral
+    rows and a single intake year; any conflicting dates fail closed.
+    """
+    blocks = parser.tagged_blocks
+    start = next(
+        (
+            i for i, (tag, label) in enumerate(blocks)
+            if tag == "h2"
+            and re.fullmatch(r"Ph\.?D\.?\s+in\s+Economics", label, re.I)
+        ),
+        None,
+    )
+    if start is None:
+        return []
+    end = next(
+        (
+            i for i in range(start + 1, len(blocks))
+            if blocks[i][0] in {"h1", "h2"}
+        ),
+        len(blocks),
+    )
+    section = blocks[start + 1:end]
+    years = {
+        int(m.group(1))
+        for tag, label in section if tag in {"th", "td"}
+        if (m := re.fullmatch(r"\s*Fall\s+(20\d{2})\s+Admission\s*", label, re.I))
+    }
+    if len(years) != 1:
+        return []
+    year = years.pop()
+    candidates: dict[str, tuple[str, str]] = {}
+    for i, (tag, label) in enumerate(section[:-1]):
+        if tag not in {"th", "td"}:
+            continue
+        kind = re.fullmatch(r"\s*(Domestic|International)\s+applicants\s*", label, re.I)
+        if not kind or section[i + 1][0] not in {"th", "td"}:
+            continue
+        value = section[i + 1][1]
+        dates = [
+            (day, match.group())
+            for match in DATE_PATTERN.finditer(value)
+            if (day := _parse_date(match)) is not None
+            and now.date() <= day <= date(now.year + 2, 12, 31)
+            and day.year == year
+        ]
+        if len(dates) != 1 or len(list(DATE_PATTERN.finditer(value))) != 1:
+            return []
+        day, printed = dates[0]
+        if kind.group(1).lower() in candidates:
+            return []
+        candidates[kind.group(1).lower()] = (
+            day.isoformat(),
+            f"Economics PhD, Fall {year} admission, "
+            f"{kind.group(1).lower()} applicants: {printed}",
+        )
+    if set(candidates) != {"domestic", "international"}:
+        return []
+    return list(candidates.values())
+
+
+def _brown_economics_phd_directory_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Read the Brown PhD directory's named deadline heading and its value.
+
+    The date can appear in a nested, untagged DIV/SPAN after the H4. Stop at
+    the next institutional heading, so course and alumni dates do not bleed
+    into the application window.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    if (
+        (source.hostname or "").lower().removeprefix("www.")
+        != "graduateprograms.brown.edu"
+        or source.path.lower().rstrip("/") != "/graduate-program/economics-phd"
+    ):
+        return []
+    if not (
+        any(re.fullmatch(r"Economics", h, re.I) for h in parser.headings)
+        and re.search(
+            r"\bPh\.?D\.?\s+program(?:me)?\s+in\s+Economics\b",
+            parser.text()[:12000], re.I,
+        )
+    ):
+        return []
+    blocks = parser.tagged_blocks
+    found = any(
+        tag == "h3" and re.fullmatch(r"Dates\s*/\s*Deadlines", label, re.I)
+        and any(
+            later_tag == "h4"
+            and re.fullmatch(r"Application Deadline", later_label, re.I)
+            for later_tag, later_label in blocks[i + 1:i + 5]
+        )
+        for i, (tag, label) in enumerate(blocks)
+    )
+    if not found:
+        return []
+    text = parser.text()
+    group = re.search(
+        r"\bDates\s*/\s*Deadlines\b.{0,120}?\bApplication Deadline\b",
+        text, re.I | re.S,
+    )
+    if group is None:
+        return []
+    value_start = group.end()
+    following = text[value_start:value_start + 550]
+    # A later course, faculty or unrelated deadline is never evidence.
+    next_heading = [
+        following.find(label)
+        for tag, label in blocks
+        if tag in {"h2", "h3", "h4"} and label != "Application Deadline"
+        and following.find(label) >= 0
+    ]
+    if next_heading:
+        following = following[:min(next_heading)]
+    if re.search(
+        r"\b(?:not announced|not yet available|to be determined|"
+        r"applications?\s+open(?:s|ing)?|GRE|GMAT|TOEFL|IELTS)\b",
+        following, re.I,
+    ):
+        return []
+    candidates = []
+    for match in DATE_PATTERN.finditer(following):
+        day = _parse_date(match)
+        if day is None or not (
+            now.date() <= day <= date(now.year + 2, 12, 31)
+        ):
+            continue
+        candidates.append((
+            day.isoformat(),
+            f"Economics PhD Application Deadline (Brown): {match.group()}",
+        ))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -417,6 +557,22 @@ def collect_official_deadline(
     parser = PageText()
     parser.feed(html[:MAX_HTML_BYTES])
     text = parser.text()[:MAX_HTML_BYTES]
+    source_path = urllib.parse.urlsplit(source_url or "")
+    if (
+        (source_path.hostname or "").lower().removeprefix("www.") == "econ.uic.edu"
+        and source_path.path.lower().rstrip("/")
+        == "/graduate/admissions/application-deadlines"
+    ):
+        # A multiprogramme page: only its *PhD in Economics* table
+        # can corroborate a deadline. Never scan later MA tables globally.
+        dates = _uic_economics_phd_table_candidates(parser, now=now)
+        distinct = {day for day, _excerpt in dates}
+        if len(distinct) > 1:
+            return "ambiguous_deadline", None, None
+        if len(distinct) == 1:
+            day, excerpt = dates[0]
+            return "verified", day, excerpt[:180]
+        return "no_explicit_deadline", None, None
     # A specific programme H1 makes its admission schedule authoritative.
     programme_page = any(PROGRAMME.search(heading) for heading in parser.headings)
     source = urllib.parse.urlsplit(source_url or "")
@@ -610,6 +766,11 @@ def collect_official_deadline(
         )
     candidates = _structured_deadline_candidates(
         parser, now=now, programme_page=programme_page,
+    )
+    candidates.extend(
+        _brown_economics_phd_directory_candidates(
+            parser, now=now, source_url=source_url,
+        )
     )
     # Some schoolwide PhD calendars print the Fall intake and its date on
     # separate HTML elements, but explicitly include Economics among PhDs.

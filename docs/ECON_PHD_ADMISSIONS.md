@@ -135,6 +135,25 @@ context. A university may publish only a yearless or rolling deadline; these
 cannot be marked confirmed. An attempted recheck is **not** a promise that
 all 251 programmes have a public official deadline.
 
+The 2026 source remediation also replaces the previously failing UC Davis
+Economics departmental FAQ with its official university Graduate Studies
+Economics programme page (`https://grad.ucdavis.edu/programs/gecn`).
+The outdated observation is reset to `unverified`; the new source still
+requires an independent robots-aware fetch. Its separately published
+**General** and **Space Available** application dates are not automatically
+interpreted as one unconditional final doctoral cutoff.
+
+UIC's official Economics PhD admission schedule uses a Fall-year table under
+an explicit `Ph.D. in Economics` heading, with domestic and international
+application dates in separate rows. The checker accepts these only if both
+full-year dates are present, tied to the same intake, and exactly equal.
+Conflicting PhD dates fail as ambiguous, and a later Master's section cannot
+contaminate the doctoral evidence. Brown's PhD programme directory sometimes
+places its dated cutoff inside nested content after a standalone
+`Dates/Deadlines` → `Application Deadline` heading: only that named
+Economics doctoral section can supply a candidate, with no date inferred from
+course requirements or programme navigation.
+
 Some university-owned doctoral admissions pages publish a single
 **schoolwide application cutoff** applicable to multiple explicitly named
 doctoral programmes. The Purdue Business PhD admissions page is supported only

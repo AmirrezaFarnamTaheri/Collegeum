@@ -412,13 +412,22 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
                 }
             return {"status": "no_explicit_deadline"}
 
+        # Newly repaired official links take priority over detail refreshes.
+        # Only the remaining slots in the bounded batch may enrich verified
+        # entries; never assume an expanding catalogue fits in one batch.
+        batch_size = 40
+        new_links = sum(
+            row["status"] == "unverified" and row["checked_at"] is None
+            for row in sample["programmes"]
+        )
         result = refresh(
-            self.seeds, sample, now=now, batch_size=25,
+            self.seeds, sample, now=now, batch_size=batch_size,
             fetcher=fetch, recheck_no_explicit=True,
         )
-        self.assertTrue(urls.issubset(set(checked)))
+        enriched = urls.intersection(checked)
+        self.assertEqual(len(enriched), min(len(urls), max(0, batch_size - new_links)))
         for row in result["programmes"]:
-            if row["official_programme_url"] in urls:
+            if row["official_programme_url"] in enriched:
                 self.assertEqual(row["official_details"]["tuition"]["value"],
                                  "No tuition fees")
 

@@ -2115,16 +2115,15 @@
     {
       "institution": "UC, Davis",
       "country_code": "US",
-      "official_programme_url": "https://economics.ucdavis.edu/deadlines-faqs",
+      "official_programme_url": "https://grad.ucdavis.edu/programs/gecn",
       "programme_structure_hint": null,
-      "status": "fetch_failed",
-      "checked_at": "2026-11-22T21:06:08Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [],
-      "extractor_revision": "2026-11-23-admissions-v3"
+      "investigated_urls": []
     },
     {
       "institution": "UC, Irvine",
