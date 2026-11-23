@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v13"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v14"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -1022,6 +1022,59 @@ def _schoolwide_economics_result(
     return "no_explicit_deadline", None, None
 
 
+def _utah_economics_phd_application_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Use only the current-year PhD cutoff, not recommended submission or GRE dates.
+
+    Utah's long department page has a generic admissions heading and a large
+    navigation preamble. Programme identity is established by its exact PhD
+    route, doctoral admission requirements, and the fall-only application.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    text = parser.text()[:MAX_HTML_BYTES]
+    if not (
+        host == "econ.utah.edu"
+        and path == "/phd-program/phd-admissions.php"
+        and any(re.fullmatch(r"Program Admissions", h, re.I)
+                for h in parser.headings)
+        and re.search(
+            r"\brequirements for admission to the PhD program are\b", text, re.I,
+        )
+        and any(tag in {"h2", "h3"}
+                and re.fullmatch(r"Application Deadline", label, re.I)
+                for tag, label in parser.tagged_blocks)
+        and re.search(
+            r"\bApplications for the PhD program are only accepted for Fall\b",
+            text, re.I,
+        )
+        and re.search(r"\baccepting applications for Fall 20\d{2}\b", text, re.I)
+    ):
+        return []
+
+    candidates: list[tuple[str, str]] = []
+    for block in parser.blocks:
+        for label in re.finditer(
+            r"\b(?:the application deadline (?:is|of)|"
+            r"application deadline\s*:\s*)\s*",
+            block, re.I,
+        ):
+            match = DATE_PATTERN.search(block, label.end())
+            if match is None or match.start() - label.end() > 18:
+                continue
+            day = _parse_date(match)
+            if day is None or not (
+                now.date() <= day <= date(now.year + 2, 12, 31)
+            ):
+                continue
+            candidates.append((
+                day.isoformat(), block[label.start():match.end()][:180],
+            ))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -1034,6 +1087,26 @@ def collect_official_deadline(
     parser.feed(html[:MAX_HTML_BYTES])
     text = parser.text()[:MAX_HTML_BYTES]
     source_path = urllib.parse.urlsplit(source_url or "")
+    if (
+        (source_path.hostname or "").lower().removeprefix("www.")
+        == "econ.utah.edu"
+        and source_path.path.lower().rstrip("/")
+        == "/phd-program/phd-admissions.php"
+    ):
+        return _schoolwide_economics_result(
+            _utah_economics_phd_application_candidates(
+                parser, now=now, source_url=source_url,
+            )
+        )
+    # Departmental navigation often mentions the Economics PhD on separate
+    # Master's admission pages. A date there is not an Economics doctorate
+    # cutoff, even on the same university host.
+    if (
+        (source_path.hostname or "").lower().removeprefix("www.")
+        == "econ.utah.edu"
+        and source_path.path.lower().startswith("/masters-program/")
+    ):
+        return "no_explicit_deadline", None, None
     # The Drexel schoolwide doctoral page names Economics in a navigation
     # route and separates the application *date* from its purpose. Bypass
     # generic matching, which could otherwise borrow an unrelated cutoff.
