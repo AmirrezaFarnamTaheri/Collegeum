@@ -1744,21 +1744,13 @@
     {
       "institution": "Rutgers University-New Brunswick",
       "country_code": "US",
-      "official_programme_url": "https://economics.rutgers.edu/academics/graduate/program/prospective-students/graduate-faqs",
+      "official_programme_url": "https://grad.admissions.rutgers.edu/GraduateProgram/Detail.aspx?id=a501U0000004gNmQAI",
       "programme_structure_hint": null,
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-23T19:04:39Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null,
-      "official_details": {},
-      "investigated_urls": [
-        "https://economics.rutgers.edu/academics/graduate/program/prospective-students/graduate-faqs",
-        "https://economics.rutgers.edu/contact",
-        "https://economics.rutgers.edu/academics/graduate/ma-program/admissions-information",
-        "https://economics.rutgers.edu/academics/graduate/ma-program/program-requirements"
-      ],
-      "extractor_revision": "2026-11-23-admissions-v15"
+      "evidence_excerpt": null
     },
     {
       "institution": "Sapienza University of Rome",

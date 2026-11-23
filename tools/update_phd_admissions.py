@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v15"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v16"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -1175,6 +1175,70 @@ def _uci_social_sciences_economics_phd_deadlines(
     return candidates
 
 
+def _rutgers_economics_phd_current_intake_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Rutgers graduate directory publishes two *different* fall intake years.
+
+    Select only the current upcoming cycle. A separate Fall 2028 deadline
+    must not make Fall 2027 ambiguous or stand in for a missing 2027 date.
+    All applicant categories must agree on the complete current-year cutoff.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    params = urllib.parse.parse_qs(source.query, keep_blank_values=True)
+    if not (
+        source.scheme == "https"
+        and host == "grad.admissions.rutgers.edu"
+        and source.path.lower() == "/graduateprogram/detail.aspx"
+        and params == {"id": ["a501U0000004gNmQAI"]}
+        and any(
+            re.fullmatch(r"Economics\s*\(PHD\)\s*New Brunswick", heading, re.I)
+            for heading in parser.headings
+        )
+        and re.search(
+            r"\bThe School of Graduate Studies\s*[-–]\s*New Brunswick\b",
+            parser.text()[:MAX_HTML_BYTES], re.I,
+        )
+    ):
+        return []
+
+    candidates: list[tuple[str, str]] = []
+    for table in parser.tables:
+        for row in table:
+            if len(row) != 3:
+                continue
+            intake = re.fullmatch(r"\s*Fall\s+(20\d{2})\s*", row[0], re.I)
+            if intake is None:
+                continue
+            intake_year = int(intake.group(1))
+            # A later intake printed on this page is not this cycle's call.
+            if intake_year not in {now.year, now.year + 1}:
+                continue
+            applicant_dates: list[date] = []
+            for field in row[1:]:
+                match = DATE_PATTERN.fullmatch(field.strip())
+                if match is None:
+                    break
+                parsed = _parse_date(match)
+                if (
+                    parsed is None
+                    or not (now.date() <= parsed <= date(now.year + 2, 12, 31))
+                    or parsed.year not in {intake_year - 1, intake_year}
+                ):
+                    break
+                applicant_dates.append(parsed)
+            if len(applicant_dates) != 2:
+                continue
+            for deadline in applicant_dates:
+                candidates.append((
+                    deadline.isoformat(),
+                    f"Economics (PHD) New Brunswick — Fall {intake_year} "
+                    f"U.S./Non-U.S. deadline: {deadline.strftime('%b %d, %Y')}"[:180],
+                ))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -1187,6 +1251,16 @@ def collect_official_deadline(
     parser.feed(html[:MAX_HTML_BYTES])
     text = parser.text()[:MAX_HTML_BYTES]
     source_path = urllib.parse.urlsplit(source_url or "")
+    if (
+        (source_path.hostname or "").lower().removeprefix("www.")
+        == "grad.admissions.rutgers.edu"
+        and source_path.path.lower() == "/graduateprogram/detail.aspx"
+    ):
+        return _schoolwide_economics_result(
+            _rutgers_economics_phd_current_intake_candidates(
+                parser, now=now, source_url=source_url,
+            )
+        )
     university_host = (source_path.hostname or "").lower().removeprefix("www.")
     university_path = source_path.path.lower().rstrip("/")
     if (
