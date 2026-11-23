@@ -47,6 +47,29 @@ class UtahCurrentCycleEconomicsPhdTests(unittest.TestCase):
         self.assertEqual((status, deadline), ("verified", "2027-01-15"))
         self.assertIn("January 15, 2027", excerpt)
 
+    def test_long_official_economics_page_keeps_explicit_current_cutoff(self):
+        # Real department pages have extensive admission prerequisites
+        # between their PhD statement and dated application section.
+        html = (
+            "<header><a href='/'>Department of Economics</a></header>"
+            "<h1>Program Admissions</h1>"
+            "<p>The requirements for admission to the PhD program are:</p>"
+            + ("<p>Admission prerequisites and details of transcript policy.</p>" * 28)
+            + "<h2>Application Deadline</h2>"
+            "<h4>Fall Admission: January 15</h4>"
+            "<p>We are now accepting applications for Fall 2027. "
+            "We recommend that applicants submit their applications by "
+            "December 31, 2026 to allow all materials to be processed "
+            "by the application deadline of January 15, 2027.</p>"
+            "<p>Applications for the PhD program are only accepted "
+            "for Fall semester.</p>"
+            "<p>Letters of recommendation are due by February 1st.</p>"
+        )
+        self.assertEqual(
+            collect_official_deadline(html, now=NOW, source_url=UTAH)[:2],
+            ("verified", "2027-01-15"),
+        )
+
     def test_yearless_deadline_must_not_borrow_year_from_fall_intake(self):
         status, date, excerpt = collect_official_deadline(
             utah_layout(cutoff="January 15"), now=NOW, source_url=UTAH,
