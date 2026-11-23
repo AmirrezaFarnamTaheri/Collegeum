@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v14"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v15"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -1075,6 +1075,106 @@ def _utah_economics_phd_application_candidates(
     return candidates
 
 
+def _mcgill_economics_phd_current_deadlines(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Do not promote a departmental cutoff without its official PhD scope."""
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    text = parser.text()[:MAX_HTML_BYTES]
+    if not (
+        host == "mcgill.ca"
+        and path == "/economics/graduates/admissions"
+        and any(re.fullmatch(r"Admissions", h, re.I) for h in parser.headings)
+        and re.search(r"\bAdmission Application to the Department of Economics\b",
+                      text, re.I)
+        and re.search(
+            r"\bDepartment ONLY accepts applications for September registration\b",
+            text, re.I,
+        )
+        and any(
+            re.fullmatch(r"PhD Program", label, re.I)
+            and (
+                (candidate := _institutional_url(href, source_url or ""))
+                is not None
+            )
+            and re.search(r"/economics/graduates/phd-program/?$", candidate, re.I)
+            for href, label in parser.links
+        )
+    ):
+        return []
+
+    candidates: list[tuple[str, str]] = []
+    for block in parser.blocks:
+        primary = re.search(
+            r"\bDeadline for Receipt of Complete Application\b", block, re.I,
+        )
+        supplementary = re.search(
+            r"\bThe final deadline with all supporting documents\b", block, re.I,
+        )
+        label = primary or supplementary
+        if label is None:
+            continue
+        match = DATE_PATTERN.search(block, label.end())
+        if match is None or match.start() - label.end() > 145:
+            continue
+        day = _parse_date(match)
+        if day is not None and now.date() <= day <= date(now.year + 2, 12, 31):
+            candidates.append((
+                day.isoformat(), block[label.start():match.end()][:180],
+            ))
+    return candidates
+
+
+def _uci_social_sciences_economics_phd_deadlines(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Corroborate Economics' full-year doctoral card, not adjacent MA dates."""
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    text = parser.text()[:MAX_HTML_BYTES]
+    intake = re.search(
+        r"\bApplication Deadlines\s*[-–]\s*Fall\s+(20\d{2})\b", text, re.I,
+    )
+    if not (
+        host == "gradstudies.socsci.uci.edu"
+        and path == "/admissions/overview.php"
+        and any(re.fullmatch(r"Admissions", h, re.I) for h in parser.headings)
+        and re.search(r"\bSchool of Social Sciences accepts applications\b",
+                      text, re.I)
+        and re.search(
+            r"\bwe accept applications for and make offers only for "
+            r"Ph\.?D\.? admission\b", text, re.I,
+        )
+        and intake is not None
+    ):
+        return []
+    remainder = text[intake.end():]
+    end = re.search(r"\bBefore You Apply\b", remainder, re.I)
+    if end is None:
+        return []
+    deadline_section = remainder[:end.start()]
+    intake_year = int(intake.group(1))
+    candidates: list[tuple[str, str]] = []
+    for programme in re.finditer(r"\bEconomics\b", deadline_section, re.I):
+        match = DATE_PATTERN.match(deadline_section[programme.end():].lstrip())
+        if match is None:
+            continue
+        day = _parse_date(match)
+        if (
+            day and now.date() <= day <= date(now.year + 2, 12, 31)
+            and day.year in {intake_year - 1, intake_year}
+        ):
+            candidates.append((
+                day.isoformat(),
+                f"Economics PhD deadline (Fall {intake_year}): "
+                f"{match.group()}"[:180],
+            ))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -1087,6 +1187,26 @@ def collect_official_deadline(
     parser.feed(html[:MAX_HTML_BYTES])
     text = parser.text()[:MAX_HTML_BYTES]
     source_path = urllib.parse.urlsplit(source_url or "")
+    university_host = (source_path.hostname or "").lower().removeprefix("www.")
+    university_path = source_path.path.lower().rstrip("/")
+    if (
+        university_host == "mcgill.ca"
+        and university_path == "/economics/graduates/admissions"
+    ):
+        return _schoolwide_economics_result(
+            _mcgill_economics_phd_current_deadlines(
+                parser, now=now, source_url=source_url,
+            )
+        )
+    if (
+        university_host == "gradstudies.socsci.uci.edu"
+        and university_path == "/admissions/overview.php"
+    ):
+        return _schoolwide_economics_result(
+            _uci_social_sciences_economics_phd_deadlines(
+                parser, now=now, source_url=source_url,
+            )
+        )
     if (
         (source_path.hostname or "").lower().removeprefix("www.")
         == "econ.utah.edu"

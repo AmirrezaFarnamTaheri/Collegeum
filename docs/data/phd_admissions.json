@@ -2124,20 +2124,13 @@
     {
       "institution": "UC, Irvine",
       "country_code": "US",
-      "official_programme_url": "https://www.economics.uci.edu/grad/admissions.php",
+      "official_programme_url": "https://www.gradstudies.socsci.uci.edu/admissions/overview.php",
       "programme_structure_hint": null,
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-23T18:55:45Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null,
-      "official_details": {},
-      "investigated_urls": [
-        "https://www.economics.uci.edu/grad/admissions.php",
-        "https://www.economics.uci.edu/grad/faq/admissions.php",
-        "https://www.economics.uci.edu/grad/requirements.php"
-      ],
-      "extractor_revision": "2026-11-23-admissions-v14"
+      "evidence_excerpt": null
     },
     {
       "institution": "UC, Los Angeles",
