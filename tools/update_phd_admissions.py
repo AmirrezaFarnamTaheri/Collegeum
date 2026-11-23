@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v9"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v10"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -709,7 +709,21 @@ def _shared_doctoral_economics_cutoffs(
     stern = (
         host == "stern.nyu.edu"
         and path == "/programs-admissions/phd/admissions/how-to-apply"
-        and any(re.fullmatch(r"How To Apply", h, re.I) for h in parser.headings)
+        and (
+            any(re.fullmatch(r"How To Apply", h, re.I) for h in parser.headings)
+            or (
+                any(
+                    tag in {"h1", "h2", "h3"}
+                    and re.fullmatch(r"PhD\s*\|\s*How To Apply", value, re.I)
+                    for tag, value in parser.tagged_blocks
+                )
+                and any(
+                    tag in {"h1", "h2", "h3"}
+                    and re.fullmatch(r"How To Apply", value, re.I)
+                    for tag, value in parser.tagged_blocks
+                )
+            )
+        )
         and re.search(r"all applicants to the NYU Stern School of Business PhD Program",
                       text, re.I)
         and any(
@@ -751,6 +765,60 @@ def _shared_doctoral_economics_cutoffs(
                     day = _parse_date(closing)
                     if day and now.date() <= day <= date(now.year + 2, 12, 31):
                         candidates.append((day.isoformat(), block[:180]))
+    return candidates
+
+
+def _dedicated_official_economics_cutoffs(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Date only when a specific university-owned Economics PhD page establishes scope.
+
+    Neither page navigation nor an unrelated financial-aid date is evidence.
+    These official programme layouts lack a normal "Economics PhD" H1.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    text = parser.text()[:MAX_HTML_BYTES]
+    target_label: str | None = None
+
+    if (
+        host == "imperial.ac.uk"
+        and path == "/business-school/study/phd/economics"
+        and any(
+            re.fullmatch(r"Economics\s*(?:&|and)\s*Public Policy pathway", h, re.I)
+            for h in parser.headings
+        )
+        and re.search(r"\bPhD\b", text, re.I)
+        and re.search(r"\bStart date\s*:\s*September\s+20\d{2}\b", text, re.I)
+    ):
+        target_label = r"\bNext application deadline\s*:\s*"
+
+    if (
+        host == "umass.edu"
+        and path == "/economics/admissions"
+        and re.search(r"\bDepartment of Economics\b", text, re.I)
+        and re.search(r"\bAll entering Ph\.?D\.? students\b", text, re.I)
+        and re.search(r"\bapply directly to the Ph\.?D\.? program\b", text, re.I)
+    ):
+        target_label = (
+            r"\bApplication deadline for the program starting fall "
+            r"20\d{2}\s*:\s*"
+        )
+
+    candidates: list[tuple[str, str]] = []
+    if target_label is None:
+        return candidates
+    for label in re.finditer(target_label, text, re.I):
+        match = DATE_PATTERN.search(text, label.end())
+        # Evidence must be immediately after its named programme application
+        # label, not a later unrelated supporting-document or funding cutoff.
+        if match is None or match.start() - label.end() > 14:
+            continue
+        day = _parse_date(match)
+        if day and now.date() <= day <= date(now.year + 2, 12, 31):
+            excerpt = text[label.start():match.end()]
+            candidates.append((day.isoformat(), excerpt[:180]))
     return candidates
 
 
@@ -976,6 +1044,9 @@ def collect_official_deadline(
         parser, now=now, programme_page=programme_page,
     )
     candidates.extend(_shared_doctoral_economics_cutoffs(
+        parser, now=now, source_url=source_url,
+    ))
+    candidates.extend(_dedicated_official_economics_cutoffs(
         parser, now=now, source_url=source_url,
     ))
     candidates.extend(
