@@ -479,10 +479,10 @@
     {
       "institution": "Charles University",
       "country_code": "CZ",
-      "official_programme_url": "https://fsv.cuni.cz/en/admissions/phd-programmes/economics-and-finance",
+      "official_programme_url": "https://ies.fsv.cuni.cz/en/admissions/admissions/doctoral-degree-economics-and-finance",
       "programme_structure_hint": "PhD only",
-      "status": "unsafe_redirect",
-      "checked_at": "2026-11-18T21:06:19Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null
