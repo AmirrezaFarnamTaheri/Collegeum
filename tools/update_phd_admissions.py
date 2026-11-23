@@ -640,6 +640,60 @@ def _bocconi_economics_finance_phd_candidates(
     return candidates
 
 
+def _mannheim_economics_doctoral_candidates(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Distinguish the GESS final programme deadline from early review dates.
+
+    GESS explicitly lists its doctoral Economics admissions center alongside
+    two other doctoral centers under a common Fall-intake application process.
+    The first-review priority date is not an unconditional closing deadline.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    if (
+        (source.hostname or "").lower().removeprefix("www.")
+        != "uni-mannheim.de"
+        or source.path.lower().rstrip("/") != "/gess/apply"
+    ):
+        return []
+    text = parser.text()
+    if not (
+        any(re.fullmatch(r"How to Apply", h, re.I)
+            for h in parser.headings)
+        and re.search(
+            r"\bAdmission Center for Doctoral Studies in Economics\b",
+            text, re.I,
+        )
+        and re.search(r"\bApplication[s]?\s+for\s+the\s+Fall\s+20\d{2}\s+intake\b",
+                      text, re.I)
+        and re.search(r"\bFinal application deadline\s*:", text, re.I)
+    ):
+        return []
+    candidates: list[tuple[str, str]] = []
+    for label in re.finditer(r"\bFinal application deadline\s*:\s*", text, re.I):
+        date_match = DATE_PATTERN.search(text, label.end())
+        if date_match is None or date_match.start() - label.end() > 18:
+            continue
+        day = _parse_date(date_match)
+        if day is None or not (
+            now.date() <= day <= date(now.year + 2, 12, 31)
+        ):
+            continue
+        intake = re.search(
+            r"\bFall\s+(20\d{2})\s+intake\b", text[:6000], re.I,
+        )
+        if intake is None or day.year not in {
+            int(intake.group(1)), int(intake.group(1)) - 1,
+        }:
+            continue
+        # The original label and date are directly adjacent in the official
+        # source; unrelated early-review dates never enter the evidence.
+        candidates.append((
+            day.isoformat(), text[label.start():date_match.end()][:180],
+        ))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -863,6 +917,11 @@ def collect_official_deadline(
     )
     candidates.extend(
         _bocconi_economics_finance_phd_candidates(
+            parser, now=now, source_url=source_url,
+        )
+    )
+    candidates.extend(
+        _mannheim_economics_doctoral_candidates(
             parser, now=now, source_url=source_url,
         )
     )
