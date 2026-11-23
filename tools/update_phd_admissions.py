@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v12"
+EXTRACTOR_REVISION = "2026-11-23-admissions-v13"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -971,6 +971,42 @@ def _fordham_economics_doctoral_candidates(
                         f"Economics PhD application deadline (table): "
                         f"{match.group()}"[:180],
                     ))
+    # Some official GSAS templates use an accessible styled grid rather than
+    # <table>/<tr>/<td>. In the published page, this grouped doctoral row is:
+    # Biological Sciences, Computer Science, Economics, English, History,
+    # Philosophy, Theology | January 8, 2027.
+    #
+    # Restrict fallback to the FIRST Fall 2027 doctoral section, bounded by
+    # the following Spring 2027 Master's section. An Economics link elsewhere
+    # on the page cannot convert a Master's priority/final date to a PhD date.
+    fall = re.search(r"\bFall 2027 Entry\b", text, re.I)
+    if fall:
+        rest = text[fall.end():]
+        spring = re.search(r"\bSpring 2027 Entry\b", rest, re.I)
+        if spring:
+            doctoral_section = rest[:spring.start()]
+            grouped = re.compile(
+                r"\bBiological Sciences\b.{0,120}\bComputer Science\b.{0,150}"
+                r"\bEconomics\b(?!\s*\((?:MA|MS|MSc|MBA)\))"
+                r".{0,90}\bEnglish\b.{0,90}\bHistory\b.{0,90}"
+                r"\bPhilosophy\b.{0,90}\bTheology\b",
+                re.I | re.S,
+            )
+            for group in grouped.finditer(doctoral_section):
+                closing_window = doctoral_section[
+                    group.end():min(len(doctoral_section), group.end() + 115)
+                ]
+                for date_match in DATE_PATTERN.finditer(closing_window):
+                    day = _parse_date(date_match)
+                    if day is None or not (
+                        now.date() <= day <= date(now.year + 2, 12, 31)
+                    ):
+                        continue
+                    economics_offset = group.group().lower().find("economics")
+                    excerpt_start = group.start() + economics_offset
+                    excerpt_end = group.end() + date_match.end()
+                    excerpt = doctoral_section[excerpt_start:excerpt_end]
+                    candidates.append((day.isoformat(), excerpt[:180]))
     return candidates
 
 
