@@ -52,7 +52,8 @@ class UtahCurrentCycleEconomicsPhdTests(unittest.TestCase):
         # between their PhD statement and dated application section.
         html = (
             "<header><a href='/'>Department of Economics</a></header>"
-            "<h1>Program Admissions</h1>"
+            + ("<nav>Admissions links and university-wide navigation.</nav>" * 100)
+            + "<h1>Program Admissions</h1>"
             "<p>The requirements for admission to the PhD program are:</p>"
             + ("<p>Admission prerequisites and details of transcript policy.</p>" * 28)
             + "<h2>Application Deadline</h2>"
