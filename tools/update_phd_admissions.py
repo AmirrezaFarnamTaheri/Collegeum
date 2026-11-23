@@ -850,8 +850,9 @@ def _charles_economics_finance_doctoral_candidates(
 
     candidates: list[tuple[str, str]] = []
     for label in re.finditer(
-        r"\badmission proce(?:ss|s) will open as of this day "
-        r"and will last to\s*",
+        r"\badmission proce(?:ss|s) will open as of "
+        r"(?:this day|(?:[A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?|"
+        r"\d{1,2}\s+[A-Za-z]+)\s+20\d{2})\s+and will last to\s*",
         text, re.I,
     ):
         match = DATE_PATTERN.search(text, label.end())
