@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-23T00:54:29Z",
+ "generated_at": "2026-11-23T10:06:50Z",
  "count": 212,
  "listings": [
   {
@@ -301,7 +301,9 @@
    "first_seen_at": "2026-11-18T17:17:54Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://uu.varbi.com/en/what:job/jobID:989146"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -3000,15 +3002,15 @@
    "deadline": "2026-12-04T00:00:00Z",
    "days_left": 11,
    "disciplines": [
-    "Applied Microeconomics",
-    "Quantitative Social Sciences"
+    "Econometrics",
+    "Other"
    ],
    "visa": "unknown",
-   "summary": "The role is a postdoctoral researcher position in spatial data science at Mohammed VI Polytechnic University in Benguerir, Morocco, focused on urban modeling and cost analysis to estimate direct and indirect costs of urbanization. It suits candidates with a Ph.D. in Data Science, Urban Planning, Urban Economics, or a related field, with experience in urban modeling tools such as MATLAB, Python, and R.",
+   "summary": "The position is a postdoctoral researcher role focusing on urban modeling and cost analysis at Mohammed VI Polytechnic University in Morocco. It suits candidates with a Ph.D. and experience in urban, environmental or socio-economic research.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.924,
+   "confidence": 0.931,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3236,7 +3238,7 @@
    "id": 362,
    "title": "Postdoctoral Research Fellow (Econometrics)",
    "institution": "Macquarie University",
-   "principal_investigator": "Shuping Shi",
+   "principal_investigator": "Professor Shuping Shi",
    "country": "Australia",
    "city": "North Ryde",
    "is_remote": false,
@@ -3246,10 +3248,10 @@
    "disciplines": [
     "Econometrics",
     "Finance",
-    "Development Economics"
+    "Public Policy"
    ],
    "visa": "explicit",
-   "summary": "The position is a four‑year fixed‑term postdoctoral research fellowship in econometrics at Macquarie University, Australia. It is suited for candidates with a PhD (completed or near completion) in econometrics, statistics, economics or a related field.",
+   "summary": "Macquarie University invites applications for a full-time, fixed-term postdoctoral research fellow in econometrics for four years to join a research project led by Professor Shuping Shi. The role suits candidates with a PhD or near-completion in econometrics, statistics, economics or a related field, a strong research record, and proficiency in MATLAB, R or Python; visa sponsorship and relocation assistance may be considered for the preferred candidate.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
@@ -3273,7 +3275,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "Second half 2027",
+   "start_term": "Second half of 2027",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -3331,7 +3333,7 @@
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T00:00:00Z",
+   "deadline": "2026-12-05T23:59:59Z",
    "days_left": 12,
    "disciplines": [
     "Behavioral/Experimental Economics",
@@ -3339,11 +3341,11 @@
     "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral associate role in NYU Abu Dhabi's Division of Social Science, with half the time on independent research and half on collaborative projects with Professors Berkay Özcan and Ernesto Reuben. It suits candidates with a recent PhD in economics, management, organizational behavior, sociology, public policy, data science or a related field and experience in experimental or behavioral research methods and quantitative analysis.",
+   "summary": "A fixed-term postdoctoral associate position in NYU Abu Dhabi's Division of Social Science, available for up to three years beginning September 1, 2027, with half time for independent research and half for collaborative behavioral and experimental social science projects. It is suited to candidates with a PhD in economics, management or organizational behavior, sociology, public policy, data science or a closely related field and expertise in experimental or behavioral methods and quantitative analysis.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.985,
+   "confidence": 0.953,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
@@ -7669,13 +7671,13 @@
    "city": "Princeton",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2027-01-15T00:00:00Z",
+   "deadline": "2027-01-15T23:59:59Z",
    "days_left": 53,
    "disciplines": [
     "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "Full-time predoctoral research role at Princeton University, working with Ilyana Kuziemko, Henrik Kleven, Evan Soltas. Research focus: Public economics.",
+   "summary": "Princeton University is offering a full-time predoctoral research role focused on public economics, with Ilyana Kuziemko, Henrik Kleven, and Evan Soltas as supervisors. The application deadline is January 15, 2027.",
    "language": "en",
    "apply_url": "https://bit.ly/4xP280Q",
    "source_url": "https://bit.ly/4xP280Q",
