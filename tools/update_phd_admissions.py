@@ -694,6 +694,66 @@ def _mannheim_economics_doctoral_candidates(
     return candidates
 
 
+def _shared_doctoral_economics_cutoffs(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Only the named university PhD admissions route may share a schoolwide cutoff.
+
+    A school's unrelated MBA or Master's admissions deadline is not evidence.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    text = parser.text()[:MAX_HTML_BYTES]
+    candidates: list[tuple[str, str]] = []
+    stern = (
+        host == "stern.nyu.edu"
+        and path == "/programs-admissions/phd/admissions/how-to-apply"
+        and any(re.fullmatch(r"How To Apply", h, re.I) for h in parser.headings)
+        and re.search(r"all applicants to the NYU Stern School of Business PhD Program",
+                      text, re.I)
+        and any(
+            any(re.fullmatch(r"Economics", cell, re.I) for cell in row)
+            for table in parser.tables for row in table
+        )
+    )
+    if stern:
+        for block in parser.blocks:
+            if not re.search(r"\bapplication deadline\s+is\b", block, re.I):
+                continue
+            for match in DATE_PATTERN.finditer(block):
+                day = _parse_date(match)
+                if day and now.date() <= day <= date(now.year + 2, 12, 31):
+                    candidates.append((day.isoformat(), block[:180]))
+    lbs = (
+        host == "london.edu" and path == "/phd/how-to-apply"
+        and any(re.fullmatch(r"How to apply", h, re.I) for h in parser.headings)
+        and re.search(r"seven PhD Programmes\s*/\s*Subject Areas", text, re.I)
+        and re.search(r"September 2027 entry", text, re.I)
+        and any(re.fullmatch(r"Economics", label, re.I)
+                for _url, label in parser.links)
+        and re.search(r"we do not accept late applications", text, re.I)
+    )
+    if lbs:
+        for block in parser.blocks:
+            # The deadline is the *end*, never the opening, of the named
+            # doctoral programme application interval.
+            if not re.search(r"\bapplications are open from\b", block, re.I):
+                continue
+            for match in re.finditer(
+                r"\bapplications are open from\s+"
+                r"(?:\d{1,2}\s+[A-Za-z]+\s+20\d{2})\s+to\s+"
+                r"(?P<closing>\d{1,2}\s+[A-Za-z]+\s+20\d{2})",
+                block, re.I,
+            ):
+                closing = DATE_PATTERN.fullmatch(match.group("closing"))
+                if closing:
+                    day = _parse_date(closing)
+                    if day and now.date() <= day <= date(now.year + 2, 12, 31):
+                        candidates.append((day.isoformat(), block[:180]))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -915,6 +975,9 @@ def collect_official_deadline(
     candidates = _structured_deadline_candidates(
         parser, now=now, programme_page=programme_page,
     )
+    candidates.extend(_shared_doctoral_economics_cutoffs(
+        parser, now=now, source_url=source_url,
+    ))
     candidates.extend(
         _bocconi_economics_finance_phd_candidates(
             parser, now=now, source_url=source_url,
@@ -1379,14 +1442,30 @@ def select_official_links(
     parser = PageText()
     parser.feed(html[:MAX_HTML_BYTES])
     scores: dict[str, int] = {}
-    for href, label in parser.links[:300]:
+    source_path = urllib.parse.urlsplit(source_url).path.lower()
+    # PhD-track first-year Master's routes are explicitly modelled elsewhere.
+    # Other doctoral routes should never use scarce visits for Master's pages.
+    masters_stage = bool(re.search(r"phd[-_ ]?track", source_path))
+    for href, label in parser.links:
         candidate = _institutional_url(href, source_url)
         if not candidate or candidate == source_url:
             continue
-        blob = f"{label} {urllib.parse.urlsplit(candidate).path.replace('-', ' ')}"
+        candidate_path = urllib.parse.urlsplit(candidate).path.lower()
+        if (
+            not masters_stage
+            and re.search(
+                r"/(?:masters?-degrees?|masters?-programmes?|"
+                r"summer-school|undergraduate|bachelors?)(?:/|$)",
+                candidate_path,
+            )
+        ):
+            continue
+        blob = f"{label} {candidate_path.replace('-', ' ')}"
         if not _LINK_RELEVANCE.search(blob):
             continue
         score = 1
+        if re.search(r"/(?:phd|doctoral|doctorate)(?:/|$)", candidate_path):
+            score += 8
         if re.search(r"admissions?|applications?|deadlines?|apply", blob, re.I):
             score += 3
         if re.search(r"economics?|phd|doctoral", blob, re.I):
