@@ -49,6 +49,16 @@
       "sent_at": "2026-11-19T20:07:47Z",
       "state": "confirmed"
     },
+    "56bc8eef1ecb72bd7487a5946e338549": {
+      "attempted_at": "2026-11-23T12:20:44Z",
+      "country_code": "DE",
+      "deadline_iso": "2027-03-31",
+      "evidence_url": "https://www.uni-mannheim.de/gess/apply/",
+      "institution": "University of Mannheim",
+      "message_id": 149,
+      "sent_at": "2026-11-23T12:20:44Z",
+      "state": "confirmed"
+    },
     "6d312c5c3ca3fce1cf68812bbb63334e": {
       "attempted_at": "2026-11-19T20:07:47Z",
       "country_code": "FI",
@@ -96,6 +106,16 @@
       "institution": "European University Institute",
       "message_id": 132,
       "sent_at": "2026-11-19T21:14:57Z",
+      "state": "confirmed"
+    },
+    "e6fc0a67006971ed8848ae8e25a99cf6": {
+      "attempted_at": "2026-11-23T12:20:44Z",
+      "country_code": "IT",
+      "deadline_iso": "2027-01-18",
+      "evidence_url": "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/preparing-apply",
+      "institution": "Bocconi University",
+      "message_id": 148,
+      "sent_at": "2026-11-23T12:20:44Z",
       "state": "confirmed"
     },
     "fdc995019ba320fc68b4052f3908b8ba": {

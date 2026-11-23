@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-23T10:06:50Z",
+ "generated_at": "2026-11-23T12:20:52Z",
  "count": 212,
  "listings": [
   {
@@ -3003,14 +3003,14 @@
    "days_left": 11,
    "disciplines": [
     "Econometrics",
-    "Other"
+    "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral researcher role focusing on urban modeling and cost analysis at Mohammed VI Polytechnic University in Morocco. It suits candidates with a Ph.D. and experience in urban, environmental or socio-economic research.",
+   "summary": "We are seeking a postdoctoral researcher to develop a predictive model that estimates the direct and indirect costs of urbanization based on urban morphology and related factors. Candidates should have a PhD in data science, urban planning, urban economics, or a related field, experience in urban, environmental, or socio-economic research, proficiency in tools such as MATLAB, Python, R, and GIS, and fluency in French and English.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.931,
+   "confidence": 0.924,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3248,14 +3248,14 @@
    "disciplines": [
     "Econometrics",
     "Finance",
-    "Public Policy"
+    "Quantitative Social Sciences"
    ],
    "visa": "explicit",
-   "summary": "Macquarie University invites applications for a full-time, fixed-term postdoctoral research fellow in econometrics for four years to join a research project led by Professor Shuping Shi. The role suits candidates with a PhD or near-completion in econometrics, statistics, economics or a related field, a strong research record, and proficiency in MATLAB, R or Python; visa sponsorship and relocation assistance may be considered for the preferred candidate.",
+   "summary": "This is a four-year fixed-term postdoctoral research fellowship in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics or related field, strong programming skills in MATLAB, R, or Python, and involves independent research and postgraduate supervision.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -3275,7 +3275,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "Second half of 2027",
+   "start_term": "Second half of 2027 (negotiable)",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -3337,15 +3337,14 @@
    "days_left": 12,
    "disciplines": [
     "Behavioral/Experimental Economics",
-    "Labor Economics",
     "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "A fixed-term postdoctoral associate position in NYU Abu Dhabi's Division of Social Science, available for up to three years beginning September 1, 2027, with half time for independent research and half for collaborative behavioral and experimental social science projects. It is suited to candidates with a PhD in economics, management or organizational behavior, sociology, public policy, data science or a closely related field and expertise in experimental or behavioral methods and quantitative analysis.",
+   "summary": "This is a postdoctoral research position in the Division of Social Science at NYU Abu Dhabi, focusing on behavioral and experimental economics. The fellow will split time between independent research and collaborative projects with faculty, employing experimental and quantitative methods.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.953,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
@@ -7671,13 +7670,13 @@
    "city": "Princeton",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2027-01-15T23:59:59Z",
+   "deadline": "2027-01-15T00:00:00Z",
    "days_left": 53,
    "disciplines": [
     "Public Policy"
    ],
    "visa": "unknown",
-   "summary": "Princeton University is offering a full-time predoctoral research role focused on public economics, with Ilyana Kuziemko, Henrik Kleven, and Evan Soltas as supervisors. The application deadline is January 15, 2027.",
+   "summary": "The role is a full-time predoctoral research position at Princeton University focused on public economics. It involves working with Ilyana Kuziemko, Henrik Kleven, and Evan Soltas to conduct independent research before beginning a PhD.",
    "language": "en",
    "apply_url": "https://bit.ly/4xP280Q",
    "source_url": "https://bit.ly/4xP280Q",
