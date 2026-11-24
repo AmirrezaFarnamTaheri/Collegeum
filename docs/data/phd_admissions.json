@@ -2521,20 +2521,13 @@
     {
       "institution": "University of British Columbia",
       "country_code": "CA",
-      "official_programme_url": "https://economics.ubc.ca/graduate/prospective-students/phd-program/faq/",
+      "official_programme_url": "https://www.grad.ubc.ca/prospective-students/graduate-degree-programs/phd-economics",
       "programme_structure_hint": "Master's + PhD",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-23T19:04:39Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null,
-      "official_details": {},
-      "investigated_urls": [
-        "https://economics.ubc.ca/graduate/phd-program/",
-        "https://economics.ubc.ca/graduate/phd-program/phd-funding/",
-        "https://economics.ubc.ca/admissions/"
-      ],
-      "extractor_revision": "2026-11-23-admissions-v15"
+      "evidence_excerpt": null
     },
     {
       "institution": "University of California, Berkeley",
