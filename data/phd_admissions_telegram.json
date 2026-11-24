@@ -10,6 +10,16 @@
       "sent_at": "2026-11-23T19:19:37Z",
       "state": "confirmed"
     },
+    "08b370fee433c3e93179eae1fb825cdd": {
+      "attempted_at": "2026-11-24T19:54:28Z",
+      "country_code": "AT",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://www.ceu.edu/admissions/doctoral#doctoral-degree-deadlines",
+      "institution": "Central European University",
+      "message_id": 170,
+      "sent_at": "2026-11-24T19:54:28Z",
+      "state": "confirmed"
+    },
     "154ff714c6e1e0371769c7275e4789e1": {
       "attempted_at": "2026-11-22T20:22:35Z",
       "country_code": "UK",
@@ -156,6 +166,16 @@
       "institution": "University of Gothenburg",
       "message_id": 141,
       "sent_at": "2026-11-20T07:23:50Z",
+      "state": "confirmed"
+    },
+    "ffba427edd4b05291782f87079047c69": {
+      "attempted_at": "2026-11-24T19:54:28Z",
+      "country_code": "DE",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://www.diw.de/de/diw_01.c.799242.de/application.html",
+      "institution": "DIW Berlin",
+      "message_id": 171,
+      "sent_at": "2026-11-24T19:54:28Z",
       "state": "confirmed"
     }
   },
