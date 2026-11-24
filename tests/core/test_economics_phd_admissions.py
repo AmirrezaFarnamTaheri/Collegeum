@@ -28,7 +28,7 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         )
 
     def test_expanded_official_programme_leads_preserved(self):
-        self.assertGreaterEqual(len(self.seeds["programmes"]), 252)
+        self.assertGreaterEqual(len(self.seeds["programmes"]), 253)
         self.assertEqual(len(self.public["programmes"]), len(self.seeds["programmes"]))
         validate_catalogues(self.seeds, self.public)
         keys = [(p["institution"].casefold(), p["country_code"])
@@ -61,6 +61,11 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             "/education/masters",
             seeds["Tilburg University"]["official_programme_url"],
         )
+        self.assertEqual(seeds["University of Padua"]["country_code"], "IT")
+        self.assertIn("/phd-calls-and-admissions",
+                      seeds["University of Padua"]["official_programme_url"])
+        self.assertEqual(observations["University of Padua"]["status"], "unverified")
+        self.assertIsNone(observations["University of Padua"]["deadline_iso"])
         self.assertEqual(observations["Tilburg University"]["status"], "unverified")
         self.assertIsNone(observations["Tilburg University"]["deadline_iso"])
 

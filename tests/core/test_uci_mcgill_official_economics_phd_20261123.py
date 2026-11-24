@@ -151,7 +151,7 @@ class EconomicsInstitutionalSourcesTests(unittest.TestCase):
             (ROOT / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
         )
         validate_catalogues(seeds, public)
-        self.assertGreaterEqual(len(seeds["programmes"]), 252)
+        self.assertGreaterEqual(len(seeds["programmes"]), 253)
         self.assertEqual(len(public["programmes"]), len(seeds["programmes"]))
         seed = next(p for p in seeds["programmes"] if p["institution"] == "UC, Irvine")
         row = next(p for p in public["programmes"] if p["institution"] == "UC, Irvine")
