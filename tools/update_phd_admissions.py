@@ -2389,7 +2389,7 @@ def validate_catalogues(seeds: dict, public: dict) -> None:
         raise ValueError("Upstream dates must never be reused")
     rows = seeds.get("programmes")
     observations = public.get("programmes")
-    if not isinstance(rows, list) or len(rows) != 251:
+    if not isinstance(rows, list) or len(rows) < 251:
         raise ValueError("Unexpected seed count")
     if not isinstance(observations, list) or len(observations) != len(rows):
         raise ValueError("Unexpected public count")

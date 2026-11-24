@@ -27,9 +27,9 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             (ROOT / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
         )
 
-    def test_all_251_official_programme_leads_preserved(self):
-        self.assertEqual(len(self.seeds["programmes"]), 251)
-        self.assertEqual(len(self.public["programmes"]), 251)
+    def test_expanded_official_programme_leads_preserved(self):
+        self.assertGreaterEqual(len(self.seeds["programmes"]), 252)
+        self.assertEqual(len(self.public["programmes"]), len(self.seeds["programmes"]))
         validate_catalogues(self.seeds, self.public)
         keys = [(p["institution"].casefold(), p["country_code"])
                 for p in self.seeds["programmes"]]
@@ -41,6 +41,28 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
                 self.assertTrue(url.netloc)
                 self.assertNotIn("deadline", entry)
                 self.assertNotIn("deadline_guidance", entry)
+
+    def test_missing_kuleuven_and_wrong_tilburg_masters_lead_corrected(self):
+        seeds = {row["institution"]: row for row in self.seeds["programmes"]}
+        observations = {row["institution"]: row for row in self.public["programmes"]}
+        self.assertEqual(seeds["KU Leuven"]["country_code"], "BE")
+        self.assertEqual(
+            seeds["KU Leuven"]["official_programme_url"],
+            "https://feb.kuleuven.be/research/economics/PHD/phdcall",
+        )
+        self.assertEqual(observations["KU Leuven"]["status"], "unverified")
+        self.assertIsNone(observations["KU Leuven"]["deadline_iso"])
+        self.assertIsNone(observations["KU Leuven"]["checked_at"])
+        self.assertIn(
+            "/graduate-school/phd-economics/admission",
+            seeds["Tilburg University"]["official_programme_url"],
+        )
+        self.assertNotIn(
+            "/education/masters",
+            seeds["Tilburg University"]["official_programme_url"],
+        )
+        self.assertEqual(observations["Tilburg University"]["status"], "unverified")
+        self.assertIsNone(observations["Tilburg University"]["deadline_iso"])
 
     def test_upstream_is_only_a_lead_not_deadline_authority(self):
         self.assertEqual(self.seeds["source"]["license"], "MIT")

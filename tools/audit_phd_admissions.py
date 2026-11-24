@@ -128,7 +128,7 @@ def audit_catalogues(seeds: dict, public: dict, *, now: datetime) -> dict:
         "deadline_values_reused"
     ) is not False:
         metadata_issues.append("untrusted_upstream_dates")
-    if len(leads) != EXPECTED_PROGRAMMES:
+    if len(leads) < EXPECTED_PROGRAMMES:
         metadata_issues.append("unexpected_programme_count")
     generated = _timestamp(public.get("generated_at"))
     if generated is None or generated > now:
@@ -244,7 +244,7 @@ def audit_catalogues(seeds: dict, public: dict, *, now: datetime) -> dict:
             "current_confirmed_deadlines": confirmed,
             "remaining_programmes": len(programmes) - confirmed,
             "all_programmes_have_current_deadlines": (
-                len(programmes) == EXPECTED_PROGRAMMES and confirmed == EXPECTED_PROGRAMMES
+                len(programmes) == len(leads) and confirmed == len(leads)
             ),
             "programmes_with_reviewed_sources": sum(
                 bool(r["reviewed_source_count"]) for r in programmes
@@ -294,7 +294,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="Emit the complete JSON report")
     parser.add_argument(
         "--require-all-verified", action="store_true",
-        help="Exit 1 unless all 251 programmes have valid current deadline evidence",
+        help="Exit 1 unless all catalogued programmes have valid current deadline evidence",
     )
     args = parser.parse_args(argv)
     now = _timestamp(args.now) if args.now else datetime.now(UTC)
