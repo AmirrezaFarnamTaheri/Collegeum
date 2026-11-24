@@ -72,6 +72,27 @@ class AdmissionsCoverageAuditTests(unittest.TestCase):
         self.assertIn("Respect the restriction", report["programmes"][4]["next_action"])
         self.assertIn("University 250 (US)", text_report(report))
 
+    def test_expanded_programme_inventory_accounts_for_each_new_lead(self):
+        seeds, public = catalogues()
+        new = {
+            "institution": "Additional Doctoral University",
+            "country_code": "BE",
+            "official_programme_url": "https://economics.example.edu/phd/new",
+            "programme_structure_hint": "PhD only",
+        }
+        seeds["programmes"].append(new)
+        report = audit_catalogues(seeds, public, now=NOW)
+        self.assertEqual(report["summary"]["total_programmes"], 252)
+        self.assertEqual(report["programmes"][-1]["reason"], "missing_observation")
+        public["programmes"].append(dict(new, status="unverified", deadline_iso=None))
+        report = audit_catalogues(seeds, public, now=NOW)
+        self.assertEqual(report["summary"]["total_programmes"], 252)
+        self.assertEqual(report["summary"]["reason_counts"]["unverified"], 252)
+        for row in public["programmes"]:
+            verify(row)
+        report = audit_catalogues(seeds, public, now=NOW)
+        self.assertTrue(report["summary"]["all_programmes_have_current_deadlines"])
+
     def test_freshness_boundary_and_deadline_day_are_exact(self):
         seeds, public = catalogues()
         row = public["programmes"][0]
