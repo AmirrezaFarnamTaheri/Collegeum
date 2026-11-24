@@ -10,7 +10,7 @@ Its copyright and permission notice is at
 
 ## One source of truth: each official university programme page
 
-- `config/phd_admissions_seeds.json` keeps 252 programme names, country codes,
+- `config/phd_admissions_seeds.json` keeps 253 programme names, country codes,
   official programme links and **unverified** structure hints. No upstream
   deadline data is imported or used by a publisher.
 - An obsolete or inaccessible discovery link can be replaced only after
@@ -291,3 +291,5 @@ automatically corroborated date should be rechecked before submitting.
 The current seed inventory grows from 251 to **252** with **KU Leuven**, because the Department of Economics publishes a direct [2027–28 doctoral call](https://feb.kuleuven.be/research/economics/PHD/phdcall). Its official page states a 31 January 2027 deadline, but Collegeum's entry remains **`unverified`** until the scheduled robots-aware checker itself corroborates the institutional page. No date was inferred or manually promoted.
 
 The pre-existing **Tilburg University** lead incorrectly used the Research Master's application page. It now points to the University's [PhD in Economics admission requirements](https://www.tilburguniversity.edu/research/economics-and-management/graduate-school/phd-economics/admission), with its previous inconclusive assessment cleared for a new independent check. Research Master's applicant-category dates must not be applied to the PhD vacancy-based route. These programme-count changes do not affect the separate **251 distinct-advert** review; its original fixed cohort remains valid as a dated audit.
+
+The catalogue subsequently added the **University of Padua**, with its official [Economics and Management PhD call](https://www.economia.unipd.it/en/courses/home-courses/phd-programme/phd-calls-and-admissions) as the lead. The university says the 2027/28 call opens in April 2027; because an in-scope closing date is not yet corroborated, this 253rd programme starts `unverified`. It must not inherit the expired 2026 round's deadline.

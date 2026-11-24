@@ -103,3 +103,5 @@ All counts above were computed from the audited JSON on branch `improve/phd-offi
 ## Subsequent programme-source repairs
 
 The live programme seed set was expanded from **251 to 252** with KU Leuven as an **unverified** direct Economics PhD lead, and Tilburg's pre-existing seed URL was corrected from its Research Master's route to its Economics PhD admissions route. No automated deadline confirmation is claimed from either addition. All 251-advert audit counts and the archived 251-programme snapshot elsewhere in this report remain distinct and historical.
+
+The 253rd official programme seed, **University of Padua** (Economics curriculum), was subsequently added as `unverified`. Its own call says applications open in April 2027 without a presently confirmable full closing date. The original 251-programme status counts in this report remain historical and should not be mixed with the active 253-programme catalogue.
