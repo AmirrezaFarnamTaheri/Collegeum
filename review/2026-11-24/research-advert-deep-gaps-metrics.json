@@ -52,5 +52,41 @@
   "same_title_multi_records": 50,
   "page200_hashed": 160,
   "first_eligible_without_deadline": 11,
-  "second_deadline_full": 56
+  "second_deadline_full": 56,
+  "journal_sha": "e331c8128b19c388b85b06c479ad68a19975d37b",
+  "total_journal_rows": 478,
+  "fixed_review_historical_journal_joined": 170,
+  "journal_missing_last_verified": 112,
+  "journal_last_checked_over14d": 55,
+  "journal_missing_last_checked": 3,
+  "journal_deadline_missing": 61,
+  "journal_unshown_reasons": {
+    "expired": 65,
+    "closed_but_not_marked_expired": 13,
+    "other_or_routed": 14
+  },
+  "public_journal_joined": 211,
+  "public_last_verified_missing": 133,
+  "public_last_checked_missing": 3,
+  "public_deadline_missing": 125,
+  "published_outside_review_last_verified_missing": 106,
+  "published_outside_review_by_source": {
+    "linkedin": 66,
+    "predoc_org": 32,
+    "the_unijobs": 12,
+    "jobs_ac_uk": 12,
+    "academics_de": 3,
+    "inomics": 2,
+    "stanford_siepr": 2,
+    "economic_misfit": 2,
+    "academics_com": 1
+  },
+  "published_outside_review_linkedin_count": 66,
+  "published_outside_review_linkedin_missing_deadline": 50,
+  "published_outside_review_linkedin_application_url_linkedin": 66,
+  "explicitly_closed_still_public_ids": [
+    294,
+    318
+  ],
+  "explicitly_closed_public_missing_closed_at": 2
 }

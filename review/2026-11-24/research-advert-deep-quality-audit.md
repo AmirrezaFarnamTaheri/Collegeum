@@ -19,7 +19,7 @@ This is a broader, source-aware examination of the fixed 251-advert cohort. It c
 | Historical reviewed journals no longer in latest public file | **92 of 170** | Could be legitimately filtered, expired, superseded or unpublished; do not resurrect automatically |
 | Current public journal records lacking a full body in this review | **46 of 78** | Verification exposure requiring visibility and provenance reconciliation |
 
-**Why this matters:** A completion metric calculated against a chosen 251-record cohort is not a measure of complete coverage of 211 visible public records, much less of all discoverable research roles. The next comprehensive audit must follow *every public listing ID* as well as discovered employer requisitions, without assuming a fixed target of 251. The [132-row outside-cohort list](public-listings-outside-251.csv) is the immediate missing join inventory.
+**Why this matters:** A completion metric calculated against a chosen 251-record cohort is not a measure of complete coverage of 211 visible public records, much less of all discoverable research roles. The next comprehensive audit must follow *every public listing ID* as well as discovered employer requisitions, without assuming a fixed target of 251. The [132-row outside-cohort list](public-listings-outside-251.csv) is the immediate missing join inventory; journal timestamps and source categories are added in the journal-layer crosswalk below.
 
 The additional 16 separately checked journal identities in the original review file were deliberately excluded from its target. They were checked, but they demonstrate that 251 is a chosen denominator, not the whole candidate pool. The previously identified J-PAL/Zurich mirror and likely Utrecht mirror remain exclusions rather than additional unique positions.
 
@@ -50,6 +50,46 @@ The historical 170 are especially exposed: 169 have `eligibility: not_assessed` 
 The largest unavailable clusters are `predoc_org` **26**, `uchicago_bfi` **13**, `wharton_predoc` **7**, and `jpal_global` **7**. Together these account for **53/69** access-unavailable records. Provider restrictions are neither a technical defect to bypass nor proof that a vacancy has closed.
 
 Among the 11 fetch failures, five Yale Economic Growth Center pages returned `response_too_large` under the historical bounded reader, and four new-university detail pages timed out. Those two failure types need separate repair strategies. The 19 unverified 200 responses similarly need source-specific scrutiny rather than an optimistic "HTTP 200 = valid advert" rule.
+
+## Fourth evidence layer: the full 478-row journal and 211 public-listing records
+
+The original review is only one evidence ledger. A further exact-ID reconciliation with the underlying [research journal](../../data/listings.ndjson) (pinned blob `e331c8128b19c388b85b06c479ad68a19975d37b`) exposes completeness and lifecycle gaps that cannot be measured from the public JSON alone. The journal contains **478 records**, and **all 170** historical advert IDs from the 251-review can be joined without guessing identities.
+
+| Source-of-truth cross-check | Result | Meaning |
+| --- | ---: | --- |
+| Historical review rows found in underlying journal | **170/170** | No orphan journal IDs in the fixed cohort |
+| Journal rows marked `published` within those 170 | **169** | Historical publication state, **not** a claim the row remains visible |
+| Journal rows marked `pending` within those 170 | **1** | Not the same as published |
+| Historical rows absent from the latest public file | **92** | Investigated below, not an automatic restore queue |
+| Last verified timestamp missing within those 170 | **112** | A `last_verified_at` field was not populated; not proof no check ever occurred |
+| Last checked timestamp missing within those 170 | **3** | No journal check receipt in that field |
+| Last checked more than 14 days earlier | **55** | Relative to **24 Nov 2026, 19:00 UTC**; cadence/lifecycle review required |
+| Date-bearing deadline missing in the 170 journal rows | **61** | Can include genuinely rolling/unstated deadlines |
+
+The **92** historical review rows not visible in the public JSON are not all unexplained missing jobs: **65** have a journal expiry marker; another **13** have a closure marker but no expiry marker; the remaining **14** lack both and require examination of routing, publication rules or other reasons. Thus at least **78/92** have an explicit journal lifecycle marker explaining plausible exclusion; none should be automatically republished.
+
+All **211** rows in the public listings snapshot join to the underlying journal and carry journal status `published`. Yet **133/211** have no `last_verified_at` recorded in the journal, **125/211** lack an extracted deadline, and **3/211** have no `last_checked_at`. Those absences are not by themselves proof of false data or an illegitimate rolling application; they mean independently established current validation is insufficient in this field of the journal.
+
+**Two time-sensitive lifecycle mismatches:** public IDs **294** (*Post-doctoral position Mind-the-Nexus Project*) and **318** (*Research Economist*) retain `status=published` and have neither a journal `closed_at` nor `expired_at`, even though the separate matching primary advert review observed explicit closure. Verify current applicant-facing visibility and the publisher's lifecycle rules. The historical check was deliberately read-only; importing closure blindly into the operational journal without an independent current verification would be unsafe.
+
+For inspection, the [170-row journal lifecycle crosswalk](research-advert-journal-lifecycle-170.csv) gives recorded first/last seen, last checked/verified, deadline and closure/expiry fields alongside the original audit verdict. The [211-row publication trust matrix](public-listings-quality-211.csv) covers every public record, including the 132 beyond the 251 cohort. These files do not expose Telegram delivery state.
+
+### LinkedIn: the largest blind spot in the sample
+
+The **132** public records outside the chosen 251 review are sourced as follows:
+
+| Journal collection source | Public rows outside review |
+| --- | ---: |
+| **LinkedIn** | **66** |
+| `predoc_org` | 32 |
+| `the_unijobs` | 12 |
+| `jobs_ac_uk` | 12 |
+| All five smaller source groups combined | 10 |
+| **Total** | **132** |
+
+For the **66** LinkedIn-source rows outside the review, **all 66** have `last_verified_at=null` in the journal and an **application URL pointing to LinkedIn**, while **50** have no finite deadline in the public record. The source may legitimately be the only public application route; this alone does not establish that the vacancy is fabricated or its application is closed. But it means the **five** historical `source=linkedin` adverts inside the fixed 251 cohort (which were assessed mostly at employer or downstream URLs) are **not representative of the 66 currently public LinkedIn entries that were not reviewed**.
+
+The [outside-cohort CSV](public-listings-outside-251.csv) now includes the joined journal source, check/verify timestamps, field gaps and application route for each of the 132. The first LinkedIn engineering priority is matching job IDs to a permitted employer requisition when available, separating verified employer deadlines from LinkedIn summary text, and recording current evidence without bypassing LinkedIn's access policy. Do not use a high model-confidence score as a substitute for official source verification.
 
 ## Published-field coverage (the **78 journal-ID matched** records only)
 
@@ -139,7 +179,7 @@ Recommended execution sequence:
 
 ## Evidence limits and reproducibility
 
-All tabulated counts come from pinned repository data and deterministic joins. The [metrics JSON](research-advert-deep-gaps-metrics.json) contains input blob SHAs and computed totals. [Source-level](research-advert-source-matrix.csv) and [row-level](research-advert-deep-gaps-251.csv) CSVs are inspectable without changing production scraping or front-end copy.
+All tabulated counts come from pinned repository data and deterministic joins. The [metrics JSON](research-advert-deep-gaps-metrics.json) contains input blob SHAs and computed totals. [Source-level](research-advert-source-matrix.csv), [251-row](research-advert-deep-gaps-251.csv), [170-row journal](research-advert-journal-lifecycle-170.csv), [211-row published](public-listings-quality-211.csv), and [132-row outside-cohort](public-listings-outside-251.csv) matrices are inspectable without changing production scraping or front-end copy.
 
 The publication join uses exact **journal ID** first, then a reviewed **exact URL/alias** match. It is deliberately not fuzzy matching by institution and title, which could inflate coverage or merge separate requisitions. A page's current status can change after its dated capture; neither public-listing presence nor a 200 response alone proves applications are open. Official links above are independent desk research and do not replace the first-party bounded collector replay.
 
