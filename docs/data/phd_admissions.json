@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-24T09:59:49Z",
+  "generated_at": "2026-11-24T18:55:26Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -1131,6 +1131,20 @@
       "investigated_urls": []
     },
     {
+      "institution": "KU Leuven",
+      "country_code": "BE",
+      "official_programme_url": "https://feb.kuleuven.be/research/economics/PHD/phdcall",
+      "programme_structure_hint": "PhD; funded doctoral call with optional preparatory MASE route",
+      "status": "unverified",
+      "checked_at": null,
+      "deadline_iso": null,
+      "evidence_url": null,
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
+    },
+    {
       "institution": "Kyoto University",
       "country_code": "JP",
       "official_programme_url": "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
@@ -2008,20 +2022,16 @@
     {
       "institution": "Tilburg University",
       "country_code": "NL",
-      "official_programme_url": "https://www.tilburguniversity.edu/education/masters-programmes/research-master-economics/application",
-      "programme_structure_hint": "Master's + PhD",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "official_programme_url": "https://www.tilburguniversity.edu/research/economics-and-management/graduate-school/phd-economics/admission",
+      "programme_structure_hint": "PhD; vacancy-based admissions",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://www.tilburguniversity.edu/education/masters-programs/research-master-economics-academic-economics/application",
-        "https://www.tilburguniversity.edu/education/masters-programs/research-master-economics-academic-economics/tuition-fees-scholarships",
-        "https://www.tilburguniversity.edu/education/masters-programs/research-master-economics-academic-economics/application"
-      ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Tohoku University",

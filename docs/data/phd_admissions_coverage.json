@@ -1,32 +1,34 @@
 {
   "kind": "economics_phd_admissions_coverage_audit",
-  "audited_at": "2026-11-24T10:00:53Z",
-  "catalogue_generated_at": "2026-11-24T09:59:49Z",
+  "audited_at": "2026-11-24T18:55:26Z",
+  "catalogue_generated_at": "2026-11-24T18:55:26Z",
   "scope": "stored_evidence_only_no_network",
   "metadata_issues": [],
   "unexpected_observations": [],
   "summary": {
-    "total_programmes": 251,
+    "total_programmes": 252,
     "current_confirmed_deadlines": 56,
-    "remaining_programmes": 195,
+    "remaining_programmes": 196,
     "all_programmes_have_current_deadlines": false,
-    "programmes_with_reviewed_sources": 156,
-    "reviewed_source_count": 444,
+    "programmes_with_reviewed_sources": 155,
+    "reviewed_source_count": 442,
     "status_counts": {
       "fetch_failed": 31,
-      "no_explicit_deadline": 100,
+      "no_explicit_deadline": 99,
       "robots_disallowed": 1,
       "robots_unavailable": 62,
       "unsafe_redirect": 1,
+      "unverified": 2,
       "verified": 56
     },
     "reason_counts": {
       "current_deadline": 56,
       "fetch_failed": 31,
-      "no_explicit_deadline": 100,
+      "no_explicit_deadline": 99,
       "robots_disallowed": 1,
       "robots_unavailable": 62,
-      "unsafe_redirect": 1
+      "unsafe_redirect": 1,
+      "unverified": 2
     }
   },
   "programmes": [
@@ -1455,6 +1457,28 @@
       "extractor_revision": null
     },
     {
+      "institution": "KU Leuven",
+      "country_code": "BE",
+      "official_programme_url": "https://feb.kuleuven.be/research/economics/PHD/phdcall",
+      "programme_structure_hint": "PhD; funded doctoral call with optional preparatory MASE route",
+      "status": "unverified",
+      "current_deadline_confirmed": false,
+      "reason": "unverified",
+      "issues": [
+        "unverified",
+        "missing_check"
+      ],
+      "next_action": "Run the bounded official-source check for this programme.",
+      "checked_at": null,
+      "next_scheduled_check_due_at": null,
+      "deadline_iso": null,
+      "evidence_url": null,
+      "evidence_excerpt": null,
+      "reviewed_source_count": 0,
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
+    },
+    {
       "institution": "Kyoto University",
       "country_code": "JP",
       "official_programme_url": "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
@@ -2627,25 +2651,23 @@
     {
       "institution": "Tilburg University",
       "country_code": "NL",
-      "official_programme_url": "https://www.tilburguniversity.edu/education/masters-programmes/research-master-economics/application",
-      "status": "no_explicit_deadline",
+      "official_programme_url": "https://www.tilburguniversity.edu/research/economics-and-management/graduate-school/phd-economics/admission",
+      "status": "unverified",
       "current_deadline_confirmed": false,
-      "reason": "no_explicit_deadline",
+      "reason": "unverified",
       "issues": [
-        "no_explicit_deadline"
+        "unverified",
+        "missing_check"
       ],
-      "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "next_action": "Run the bounded official-source check for this programme.",
+      "checked_at": null,
+      "next_scheduled_check_due_at": null,
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
-      "reviewed_source_count": 2,
-      "investigated_urls": [
-        "https://www.tilburguniversity.edu/education/masters-programs/research-master-economics-academic-economics/application",
-        "https://www.tilburguniversity.edu/education/masters-programs/research-master-economics-academic-economics/tuition-fees-scholarships"
-      ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "reviewed_source_count": 0,
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Tohoku University",
