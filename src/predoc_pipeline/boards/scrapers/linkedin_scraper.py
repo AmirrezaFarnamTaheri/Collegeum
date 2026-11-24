@@ -9,13 +9,13 @@ results do NOT include ordinary LinkedIn posts or admissions announcements.
         ?keywords=predoc&location=European%20Union&f_TPR=r604800&start=0
     GET https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}
 
-Option `backend: jobspy` switches to the python-jobspy library instead (pip install python-jobspy).
+Only the bounded guest adapter is supported. A third-party backend cannot
+replace its shared provider cooldown and checkpoint/request policy.
 """
 from __future__ import annotations
 
 import asyncio
 import logging
-import re
 import time
 from collections import deque
 from collections.abc import Callable
@@ -23,23 +23,25 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode
 
-from bs4 import BeautifulSoup
-
 from ..http import FetchError
 from ..models import JobPostSchema
 from ..utils.dates import parse_iso_datetime, parse_posted
-from ..utils.text import clean_ws, html_to_text
 from .base import BaseScraper, register
+from .linkedin_content import (
+    job_id_from_url,
+    parse_detail_page,
+    parse_search_page,
+    valid_job_id,
+)
 from .linkedin_scheduler import QueryLedger, _read_time
 
 log = logging.getLogger(__name__)
 
 SEARCH = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 DETAIL = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{}"
-_ID = re.compile(r"(?:jobPosting:|/view/(?:[^/?]*-)?)(\d{6,})")
 
 
-_MAX_REQUESTS = 120  # Shared configured budget across economics and Life Sciences.
+_MAX_REQUESTS = 120  # Combined configured search budget; detail enrichment has its own bounds.
 _PAGE_FULL_AT = 10  # Full guest pages may have more matches.
 _SLOT_SECONDS = 4 * 60 * 60
 
@@ -81,28 +83,7 @@ def build_search_plan(
 
 
 def parse_cards(html: str) -> list[dict[str, Any]]:
-    soup = BeautifulSoup(html, "lxml")
-    cards = []
-    for card in soup.select("div.base-card, div.job-search-card, li > div[data-entity-urn]"):
-        title_el = card.select_one(".base-search-card__title, h3")
-        link_el = card.select_one("a.base-card__full-link, a[href*='/jobs/view/']")
-        urn = str(card.get("data-entity-urn") or "")
-        href = str(link_el.get("href") or "") if link_el else ""
-        m = _ID.search(urn) or _ID.search(href)
-        if not title_el or not m:
-            continue
-        company_el = card.select_one(".base-search-card__subtitle, h4")
-        loc_el = card.select_one(".job-search-card__location")
-        time_el = card.select_one("time")
-        cards.append({
-            "id": m.group(1),
-            "title": clean_ws(title_el.get_text(" ")),
-            "company": clean_ws(company_el.get_text(" ")) if company_el else "",
-            "location": clean_ws(loc_el.get_text(" ")) if loc_el else "",
-            "datetime": time_el.get("datetime") if time_el else None,
-            "posted_text": clean_ws(time_el.get_text(" ")) if time_el else None,
-        })
-    return cards
+    return parse_search_page(html).cards
 
 
 @register
@@ -158,11 +139,29 @@ class LinkedInScraper(BaseScraper):
 
     def _access_is_blocked(self, *, now: datetime) -> bool:
         ledger = getattr(self, "_checkpoint_ledger", None)
-        return (
-            isinstance(ledger, QueryLedger)
-            and (block := self._provider_blocked_until(ledger)) is not None
-            and now < block
-        )
+        if ledger is None and self.opt("checkpoint_path"):
+            ledger = QueryLedger.load(
+                self.opt("checkpoint_path"), self.name,
+                max_items=int(self.opt("max_replay_items", 3000)),
+            )
+            self._checkpoint_ledger = ledger
+        block = getattr(self, "_session_access_blocked_until", None)
+        if isinstance(ledger, QueryLedger):
+            persisted = self._provider_blocked_until(ledger)
+            if persisted is not None and (block is None or persisted > block):
+                block = persisted
+        return block is not None and now < block
+
+    def _record_access_denial(self) -> None:
+        """Stop this instance and persist the shared cooldown when configured."""
+        until = self._scheduler_now() + timedelta(hours=48)
+        self._session_access_blocked_until = until
+        ledger = getattr(self, "_checkpoint_ledger", None)
+        if isinstance(ledger, QueryLedger):
+            previous = _read_time(ledger.state.get("access_blocked_until"))
+            if previous is None or previous < until:
+                ledger.state["access_blocked_until"] = until.isoformat()
+            ledger.save(self.opt("checkpoint_path"))
 
     @property
     def intentionally_deferred(self) -> bool:
@@ -175,7 +174,7 @@ class LinkedInScraper(BaseScraper):
         diagnostic = getattr(self, "search_diagnostics", None)
         return (
             isinstance(diagnostic, dict)
-            and diagnostic.get("backend") == "guest_checkpointed"
+            and diagnostic.get("backend") in {"guest_checkpointed", "guest"}
             and diagnostic.get("requests") == 0
             and (
                 diagnostic.get("provider_cooldown_active") is True
@@ -314,20 +313,23 @@ class LinkedInScraper(BaseScraper):
                         break
                     continue
                 failures = 0
-                cards = parse_cards(html)
-                if not cards and re.search(
-                    r"captcha|sign[ -]?in.*(?:required|continue)", html, re.I,
-                ):
+                page = parse_search_page(html)
+                cards = page.cards
+                if page.access_challenge:
                     ledger.fail(pair, now=self._scheduler_now(), status=403)
                     self.discovery_fetch_errors.append("LinkedIn access challenge")
                     self.search_diagnostics["access_limited"] = True
                     break
+                if page.invalid_cards:
+                    self.discovery_parse_errors.append(
+                        "LinkedIn returned invalid or conflicting vacancy-card identities",
+                    )
                 if not cards:
                     # A blank body or interstitial is NOT verified zero results.
                     # Keep it distinct from confirmed malformed card markup.
                     ledger.defer_unverified_empty(pair, now=self._scheduler_now())
                     self.search_diagnostics["unverified_empty"] += 1
-                    if "data-entity-urn" in html:
+                    if "data-entity-urn" in html and not page.invalid_cards:
                         self.discovery_parse_errors.append(
                             "LinkedIn returned unparseable vacancy-card markup",
                         )
@@ -335,7 +337,7 @@ class LinkedInScraper(BaseScraper):
                 try:
                     outcome = ledger.accept_page(
                         pair, cards, now=self._scheduler_now(),
-                        max_pages=max_pages,
+                        max_pages=max_pages, parse_complete=not page.invalid_cards,
                     )
                 except ValueError:
                     ledger.fail(pair, now=self._scheduler_now())
@@ -376,13 +378,23 @@ class LinkedInScraper(BaseScraper):
         return raw
 
     async def fetch_raw_postings(self) -> list[Any]:
-        if self.opt("backend", "guest") == "jobspy":
+        backend = self.opt("backend", "guest")
+        if backend != "guest":
             self.search_diagnostics = {
-                "backend": "jobspy", "coverage": "unverified",
+                "backend": str(backend), "coverage": "unsupported", "requests": 0,
             }
-            return await asyncio.to_thread(self._jobspy)
+            raise ValueError(
+                "Unsupported LinkedIn backend: only the bounded guest adapter implements "
+                "the shared provider cooldown and request policy",
+            )
         if self.opt("checkpoint_path"):
             return await self._fetch_checkpointed()
+        if self._access_is_blocked(now=self._scheduler_now()):
+            self.search_diagnostics = {
+                "backend": "guest", "requests": 0, "plan_size": 0,
+                "provider_cooldown_active": True, "access_limited": False,
+            }
+            return []
 
         keywords = list(self.opt("keywords", ["predoc"]))
         locations = list(self.opt("locations", ["European Union"]))
@@ -439,6 +451,7 @@ class LinkedInScraper(BaseScraper):
                 )
                 if exc.status in (403, 429, 999):
                     # Stop; never rotate UA/proxy/account or bypass access controls.
+                    self._record_access_denial()
                     self.search_diagnostics["access_limited"] = True
                     break
                 failures_in_a_row += 1
@@ -453,43 +466,29 @@ class LinkedInScraper(BaseScraper):
                     break
                 continue
             failures_in_a_row = 0
-            cards = parse_cards(html)
-            if not cards and re.search(
-                r"captcha|sign[ -]?in.*(?:required|continue)", html, re.I,
-            ):
+            page = parse_search_page(html)
+            cards = page.cards
+            if page.access_challenge:
+                self._record_access_denial()
                 self.search_diagnostics["access_limited"] = True
                 self.discovery_fetch_errors.append("LinkedIn guest access challenge")
                 break
-            if not cards and "data-entity-urn" in html:
+            if page.invalid_cards or (not cards and "data-entity-urn" in html):
                 self.discovery_parse_errors.append("Unparseable LinkedIn job cards")
-            if depth == 0:
+            if cards and len(cards) < _PAGE_FULL_AT and not page.invalid_cards:
                 self.search_diagnostics["completed_queries"] += 1
             for card in cards:
                 card["_query"] = f"{kw} @ {loc}"
                 raw.append(card)
-            if len(cards) >= _PAGE_FULL_AT:
+            if len(cards) >= _PAGE_FULL_AT and not page.invalid_cards:
                 self.search_diagnostics["pages_with_more_possible"] += 1
                 if depth + 1 < max_pages:
                     # Breadth-first: first pages of selected searches before
                     # follow-up pages, subject to the same total request limit.
                     queue.append((kw, loc, start + len(cards), depth + 1))
+                else:
+                    self.discovery_limits.append("LinkedIn query reached bounded pagination depth")
         return raw
-
-    def _jobspy(self) -> list[dict[str, Any]]:
-        from jobspy import scrape_jobs  # optional dependency
-
-        out = []
-        for kw in self.opt("keywords", ["predoc"]):
-            for loc in self.opt("locations", ["European Union"]):
-                df = scrape_jobs(site_name=["linkedin"], search_term=kw, location=loc,
-                                 results_wanted=int(self.opt("results_wanted", 50)), hours_old=168)
-                for row in df.to_dict("records"):
-                    m = _ID.search(str(row.get("job_url", "")))
-                    if m:
-                        out.append({"id": m.group(1), "title": row.get("title"), "company": row.get("company"),
-                                    "location": row.get("location"), "datetime": str(row.get("date_posted") or ""),
-                                    "description": row.get("description") or ""})
-        return out
 
     def parse_postings(self, raw_data: list[Any]) -> list[JobPostSchema]:
         posts: list[JobPostSchema] = []
@@ -500,8 +499,7 @@ class LinkedInScraper(BaseScraper):
                 continue
             ident, title = card.get("id"), card.get("title")
             if (
-                not isinstance(ident, str)
-                or not ident.isascii() or not ident.isdigit() or len(ident) < 6
+                not valid_job_id(ident)
                 or not isinstance(title, str) or not title.strip()
             ):
                 self.discovery_parse_errors.append("Invalid LinkedIn job identity")
@@ -541,22 +539,28 @@ class LinkedInScraper(BaseScraper):
         return posts
 
     async def fetch_detail(self, post: JobPostSchema) -> str | None:
-        job_id = post.extra.get("linkedin_id") or (_ID.search(post.url) or [None, None])[1]
-        if not job_id:
+        link_id = job_id_from_url(post.url)
+        job_id = post.extra.get("linkedin_id") or link_id
+        if not valid_job_id(job_id) or link_id != job_id:
+            post.extra["linkedin_detail_status"] = "invalid_job_identity"
             return None
-        if self._access_is_blocked(now=self._scheduler_now()):
-            return None
-        try:
-            html = await self.http.get_text(DETAIL.format(job_id), stop_on_429=True)
-        except FetchError as exc:
-            if exc.status in (403, 429, 999):
-                ledger = getattr(self, "_checkpoint_ledger", None)
-                if isinstance(ledger, QueryLedger):
-                    ledger.state["access_blocked_until"] = (
-                        self._scheduler_now() + timedelta(hours=48)
-                    ).isoformat()
-                    ledger.save(self.opt("checkpoint_path"))
-            raise
-        soup = BeautifulSoup(html, "lxml")
-        body = soup.select_one(".show-more-less-html__markup, .description__text")
-        return clean_ws(body.get_text(" ")) if body else html_to_text(html, 20000)
+        # Detail enrichment can run concurrently across sources. Serialize
+        # this provider so queued requests observe an earlier access denial.
+        if not hasattr(self, "_detail_lock"):
+            self._detail_lock = asyncio.Lock()
+        async with self._detail_lock:
+            if self._access_is_blocked(now=self._scheduler_now()):
+                post.extra["linkedin_detail_status"] = "provider_cooldown"
+                return None
+            try:
+                html = await self.http.get_text(DETAIL.format(job_id), stop_on_429=True)
+            except FetchError as exc:
+                if exc.status in (403, 429, 999):
+                    self._record_access_denial()
+                raise
+            detail = parse_detail_page(html, job_id)
+            post.extra["linkedin_detail_status"] = detail.status
+            if detail.status == "access_challenge":
+                self._record_access_denial()
+                raise FetchError("access_interstitial", status=200)
+            return detail.text

@@ -15,7 +15,8 @@ REF = date(2026, 9, 24)
 
 @pytest.mark.parametrize("text,expected", [
     ("Deadline: 20th April 2027", date(2027, 4, 20)),
-    ("Closing date: 01 Oct", date(2026, 10, 1)),
+    ("Closing date: 01 Oct", None),  # No cutoff year is established by the source.
+    ("Closing date: 01 Oct 2026", date(2026, 10, 1)),
     ("Application deadline: 31.10.2026", date(2026, 10, 31)),
     ("Deadline: First review date October 7, 2026, then rolling", None),
     ("Applications close on 15 November 2026.", date(2026, 11, 15)),

@@ -18,7 +18,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from ..models import JobPostSchema
-from ..utils.dates import extract_deadline, parse_date, parse_iso_datetime
+from ..utils.dates import DEADLINE_LABELS, extract_deadline, parse_iso_datetime
 from ..utils.text import clean_ws, html_to_text
 from .base import BaseScraper, register
 
@@ -66,11 +66,16 @@ _NONFINAL_REVIEW = re.compile(
 
 def _employer_application_cutoff(text: str) -> date | None:
     # Review/start dates and administrative index dates are not hard cutoffs.
-    explicit, _ = extract_deadline(text)
-    if explicit is not None:
+    explicit, evidence = extract_deadline(text)
+    if explicit is not None or evidence is not None or DEADLINE_LABELS.search(text):
+        # A rejected labelled field must not be revived by parsing one date out
+        # of it. This also preserves the shared priority/review-role decision.
         return explicit
-    submission = _SUBMIT_BY_DATE.search(text)
-    return parse_date(submission.group("date")) if submission else None
+    # Recognize the employer's longer submit-instructions form, then run the
+    # same complete-context parser. Keep all original words and every date:
+    # extracting just group('date') discards competing cutoffs and qualifiers.
+    labelled = _SUBMIT_BY_DATE.sub(lambda match: "Application deadline: " + match.group(0), text)
+    return extract_deadline(labelled)[0] if labelled != text else None
 
 
 def _official_url(value: object, viewkey: str) -> bool:

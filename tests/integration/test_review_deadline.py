@@ -10,10 +10,15 @@ from predoc_pipeline.boards.utils.dates import extract_deadline
 @pytest.mark.parametrize('text', [
     'First review date October 7, 2026. Deadline November 1, 2026.',
     'Deadline: rolling. Final application deadline: November 1, 2026.',
-    'Deadline for applications: 01/11/2026. Applications processed on a rolling basis.',
+    'Deadline for applications: 2026-11-01. Applications processed on a rolling basis.',
 ])
 def test_fixed_deadline_wins_over_review_and_rolling(text):
     assert extract_deadline(text, date(2026, 10, 5))[0] == date(2026, 11, 1)
+
+
+def test_rolling_context_cannot_disambiguate_numeric_cutoff():
+    text = 'Deadline for applications: 01/11/2026. Applications processed on a rolling basis.'
+    assert extract_deadline(text, date(2026, 10, 5))[0] is None
 
 
 def test_review_only_preserves_note_without_expiring_job():

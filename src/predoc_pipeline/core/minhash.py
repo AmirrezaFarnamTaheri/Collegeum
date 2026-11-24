@@ -88,16 +88,23 @@ class MinHash:
         report a perfect duplicate and silently suppress every short listing.
         """
         a_vals, b_vals = _perms(num_perm)
-        signature = [_MAX] * num_perm
-        seen = False
-        for token in tokens:
-            seen = True
-            h = _base_hash(token)
-            for i in range(num_perm):
-                value = (a_vals[i] * h + b_vals[i]) % _PRIME
-                if value < signature[i]:
-                    signature[i] = value
-        return cls(tuple(signature)) if seen else None
+        hashes = tuple(_base_hash(token) for token in tokens)
+        if not hashes:
+            return None
+        # Each permutation is independent. Holding its coefficients and
+        # running minimum locally avoids three indexed lookups per shingle.
+        # The arithmetic, coefficients and persisted signature bytes stay
+        # identical; temporary storage is one integer per input token.
+        prime = _PRIME
+        signature = []
+        for a, b in zip(a_vals, b_vals, strict=True):
+            smallest = _MAX
+            for h in hashes:
+                value = (a * h + b) % prime
+                if value < smallest:
+                    smallest = value
+            signature.append(smallest)
+        return cls(tuple(signature))
 
     def jaccard(self, other: MinHash) -> float:
         if len(self.values) != len(other.values):

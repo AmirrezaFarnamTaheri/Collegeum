@@ -6,7 +6,7 @@ The current official-source observation catalogue contains **56 confirmed deadli
 
 Every programme is accounted for in the [complete source review](phd-deadline-source-review.json): 210 previously unconfirmed programmes received source research, and the 41 original confirmations received stored-evidence checks. Research notes and search discoveries are explicitly separate from automated corroboration. No candidate date is copied into the live catalogue by hand.
 
-The [generated coverage audit](../../docs/data/phd_admissions_coverage.json) records the status, reason, official URLs, evidence, check time and next action for every programme. It is refreshed by the admissions workflow and downloadable from the dashboard.
+The [generated coverage audit](../../docs/data/phd_admissions_coverage.json) records the status, reason, official URLs, evidence, check time and next action for every programme. It is refreshed by the admissions workflow and remains in the repository documentation and public data assets; research logs do not occupy the programme browsing interface.
 
 ## Newly corroborated deadlines
 
@@ -59,12 +59,12 @@ These official sources demonstrate a substantive limit in the requested metric. 
 - Added complete French date parsing and supported parenthesized weekday/time formats while retaining the printed year. Yearless closing dates and ambiguous numeric month/day ordering remain unconfirmed.
 - Required domestic/international and full-time/part-time groups to agree before exposing a single deadline. Additional incomplete dates, duplicated conflicting sections, invalid ranges and unknown applicant qualifiers fail closed.
 - Repaired ten official source URLs. Each repair first invalidated the old observation and required a fresh robots-aware check of the new URL. Restricted or failed original sources were not retried ahead of their existing cooldown.
-- Fixed the dashboard's date-format check and centralized the confirmation gate used by the count, filter and cards. It verifies calendar validity, a supported future date, timestamp validity, freshness, matching HTTPS provenance, an investigated source and the actual date in the evidence excerpt. Confirmed cards display the excerpt so applicable groups and mandatory preliminary stages remain visible.
+- Fixed the dashboard's date-format check and centralized the confirmation gate used by the count, filter and cards. It verifies calendar validity, a supported future date, timestamp validity, freshness, matching HTTPS provenance, an investigated source and the actual date in the evidence excerpt. Applicable groups and mandatory preliminary stages remain visible beside the date; supporting evidence and other verified facts sit in expandable admission details.
 - Added an offline audit of all 251 rows, a public JSON export, automatic refresh integration and Pages asset staging. The audit never fetches a source or promotes research notes.
 
 ## Validation
 
-Validation on the final change: 455 standard-library core tests pass; the full suite passes 2,807 tests and 708 subtests, with eight unrelated browser-layout tests skipped because Playwright is unavailable. Ruff passes across `src`, `tests` and `tools`; mypy passes for all 90 source files. Catalogue/provenance validation and cross-checks between all 251 review, audit and observation records pass. The regression tests cover positive official layouts and failures involving programme scope, funding dates, applicant groups, multiple sections, missing years, calendar validity, stale observations and forged provenance. Dashboard behaviour runs against the real extracted JavaScript and the committed catalogue.
+Validation of the initial admissions expansion: 455 standard-library core tests pass; the full suite passes 2,807 tests and 708 subtests, with eight unrelated browser-layout tests skipped because Playwright is unavailable. Ruff passes across `src`, `tests` and `tools`; mypy passes for all 90 source files. Catalogue/provenance validation and cross-checks between all 251 review, audit and observation records pass. The regression tests cover positive official layouts and failures involving programme scope, funding dates, applicant groups, multiple sections, missing years, calendar validity, stale observations and forged provenance. Dashboard behaviour runs against the real extracted JavaScript and the committed catalogue.
 
 The standard publication integrity audit has no errors. Its four historical warnings concern older employment-listing records, outside this admissions change.
 

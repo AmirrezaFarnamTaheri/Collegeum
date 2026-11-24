@@ -275,9 +275,8 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             'href="#phd-admissions"', 'id="phd-admissions"',
             'data/phd_admissions.json', 'id="phd-admissions-search"',
             'id="phd-admissions-country"', 'id="phd-admissions-more"',
-            "Admissions are not employment vacancies",
-            "not verified for the current admission cycle",
-            "paultran47/econ-grad-app-deadlines",
+            "Date unconfirmed", "Admission details",
+            "licenses/econ-grad-app-deadlines-MIT.txt",
         ):
             self.assertIn(text, page)
         self.assertIn("function renderAdmissions()", page)

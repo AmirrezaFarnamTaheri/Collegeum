@@ -25,7 +25,7 @@ def test_dashboard_has_distinct_funding_calls_section_and_loading_error():
     assert "fetch('data/official_phd_calls.json'" in html
     assert "official_phd_call_observations" in html
     assert "Official funding-call catalogue unavailable" in html
-    assert "Independent PhD funding calls" in html
+    assert 'id="official-calls-heading">PhD funding</h2>' in html
     assert 'href="#official-phd-calls"' in html
 
 
@@ -39,7 +39,7 @@ def test_calls_do_not_become_vacancy_entries_or_unverified_deadline_claims():
     assert "row.location_evidence_url !== row.official_url" in html
     assert "Date.parse(row.checked_at)" in html
     assert "row.deadline_kind === 'funding'" in html
-    assert "No employment vacancy is implied" in html
+    assert "Scholarships, fellowships and studentships" in html
     assert "official-calls-results" not in html.split(
         "<!-- Admissions research:", 1
     )[0]

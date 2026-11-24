@@ -71,8 +71,9 @@ core_queries = [
   { keyword = "PhD genomics", location = "Switzerland" },
   { keyword = "doctoral researcher life sciences", location = "Netherlands" },
 ]
-# At most 24 requests when this provider is selected by the Life Sciences
+# At most 24 search requests when this provider is selected by the Life Sciences
 # rotation (20 first pages, up to four additional second pages).
+# Detail enrichment is bounded separately by its existing collector settings.
 query_budget = 20
 request_budget = 24
 max_pages = 12

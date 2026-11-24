@@ -1229,8 +1229,9 @@ core_queries = [
   { keyword = "PhD economics", location = "United States" },
   { keyword = "doctoral researcher economics", location = "Germany" },
 ]
-# Economics / predoc partition: up to 96 LinkedIn requests per run.
-# The opt-in Life Sciences partition uses at most 24 more: combined 120.
+# Economics / predoc partition: up to 96 LinkedIn search requests per run.
+# The opt-in Life Sciences partition uses at most 24 more search requests.
+# Detail enrichment is bounded separately by its existing collector settings.
 # Breadth-first pagination can use 16 calls after the 80 first pages.
 query_budget = 80
 request_budget = 96
@@ -2045,3 +2046,53 @@ may_be_empty = false
 source_timeout_seconds = 45.0
 link_pattern = "^$"
 note = "Unverified candidate; official_research_recruitment; careerq_link_parser_pending; only activate after stable job-identity parser and eligibility checks."
+
+# Reviewed 2026-11-24: permitted official HTML captures, exact job identities,
+# vacancy-scoped details, and current-advert replay. See review/2026-11-24/official-source-expansion.md.
+[[board]]
+name = "esmt_berlin_research"
+type = "official_research"
+site_profile = "esmt"
+enabled = true
+group = "university"
+url = "https://jobs.esmt.berlin/de"
+institution = "ESMT Berlin"
+country = "Germany"
+field_implied = false
+may_be_empty = false
+min_interval = 2.0
+source_timeout_seconds = 45.0
+title_allow_pattern = '^(?:Pre[- ]?doctoral|Post[- ]?doctoral) Researcher(?:$|[ ,(–-])'
+note = "Official HRworks index. Only distinct predoc/postdoc researcher requisitions; matching canonical ID, advert title and subject evidence are required before emission. Missing cards or detail evidence are not healthy emptiness."
+
+[[board]]
+name = "isb_academic_research"
+type = "official_research"
+site_profile = "isb"
+enabled = true
+group = "university"
+url = "https://www.isb.edu/work-at-isb/academic-openings"
+institution = "Indian School of Business"
+country = "India"
+field_implied = false
+may_be_empty = false
+min_interval = 2.0
+source_timeout_seconds = 45.0
+title_allow_pattern = '^Research (?:Assistant|Associate)(?:$|[ ,(–-])'
+note = "Official academic-opening index only; academic-associate teaching roles and the separate non-academic ATS are excluded. Job-specific main text, matching title/slug and the normal field/degree/expiry rules decide eligibility."
+
+[[board]]
+name = "wu_vienna_research"
+type = "official_research"
+site_profile = "wu"
+enabled = true
+group = "university"
+url = "https://jobs.wu.ac.at/"
+institution = "WU Vienna"
+country = "Austria"
+field_implied = false
+may_be_empty = false
+min_interval = 2.0
+source_timeout_seconds = 45.0
+title_allow_pattern = '^(?:Research and Teaching (?:Assistant|Associate)|project staff member pre doc|Universitätsassistent\*?in prae doc|wiss\. Projektmitarbeiter\*?in prae doc)(?:$|[ ,(–-])'
+note = "Official rexx research vacancies. Card ID must match its requisition URL; detail canonical ID and title must match. Institution branding is removed from advert evidence. Faculty/admin/IT job titles do not bypass research or per-advert subject gates."

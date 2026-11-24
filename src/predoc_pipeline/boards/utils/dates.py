@@ -36,13 +36,33 @@ DATE_PATTERNS = [
     re.compile(r"\b(?P<m>\d{1,2})/(?P<d>\d{1,2})/(?P<yy>\d{2})\b"),
 ]
 
+# These are evidence of an incomplete cutoff, never candidate dates. Keep them
+# separate so relative posting-date parsing retains its existing behaviour.
+_INCOMPLETE_DEADLINE_PATTERNS = [
+    re.compile(r"(?<![\w./-])\d{1,4}[./-]\d{1,2}(?:[./-]\d{1,4})?(?!\w|[./-]\d)"),
+    re.compile(r"\b" + _MON + r"\s+20\d{2}\b", re.IGNORECASE),
+]
+_DEADLINE_DATE_PATTERNS = [*DATE_PATTERNS, *_INCOMPLETE_DEADLINE_PATTERNS]
+_REVIEW_CONTEXT = re.compile(
+    r"\b(?:priority|(?:first|initial)\s+review|review\s+date|full\s+consideration)\b",
+    re.IGNORECASE,
+)
+_OTHER_FIELD_LABEL = re.compile(
+    r"\b(?:requirements|qualifications|experience|(?:work(?:ing)?\s+)?schedule|"
+    r"salary|compensation|contact|duties|responsibilities|benefits)\s*:", re.IGNORECASE,
+)
+_NONAPPLICATION_PREFIX = re.compile(
+    r"\b(?:funding|scholarship|references?|recommendations?)\s*$", re.IGNORECASE,
+)
+
 DEADLINE_LABELS = re.compile(
-    r"(application\s+deadline|deadline(?:\s+for\s+applications?)?|closing\s+date|closes?(?:\s+on)?|"
+    r"(priority\s+(?:application\s+)?deadline|priority\s+(?:application|review|consideration)\s+date|"
+    r"application\s+deadline|deadline(?:\s+for\s+applications?)?|closing\s+date|closes?(?:\s+on)?|"
     r"apply\s+(?:by|before|no\s+later\s+than)|applications?\s+(?:must\s+be\s+received|close|are\s+due)\s*(?:by|on)?|"
     r"applications?\s+(?:are\s+|will\s+be\s+)?(?:invited|accepted|welcome|open|received)\s+(?:until|through)|"
     r"submit(?:\s+your)?(?:\s+application)?\s+by|"
     r"last\s+(?:application\s+)?date|review\s+of\s+applications\s+(?:will\s+)?begins?(?:\s+on)?|"
-    r"first\s+review(?:\s+date)?|ansök(?:an)?\s+senast|sista\s+ansökningsdag|søknadsfrist|ansøgningsfrist|"
+    r"first\s+review(?:\s+date)?|review\s+date|ansök(?:an)?\s+senast|sista\s+ansökningsdag|søknadsfrist|ansøgningsfrist|"
     r"bewerbungsfrist|date\s+limite|fecha\s+l[ií]mite|scadenza)\s*[:\-–]?\s*",
     re.IGNORECASE,
 )
@@ -99,34 +119,132 @@ def parse_date(text: str | None, ref: date | None = None) -> date | None:
     return found[0][1] if found else None
 
 
+def parse_deadline_date(text: str | None) -> date | None:
+    """Read a single fully qualified cutoff without guessing its year or order.
+
+    Posting dates keep the permissive ``parse_date`` contract. A deadline needs
+    its own four-digit year, a valid calendar date and unambiguous numeric order.
+    Multiple different dates or an incomplete date in the same field do not
+    establish one cutoff. Repeated representations of the same date are fine.
+    """
+    if not text:
+        return None
+    candidates: list[date | None] = []
+    taken: list[tuple[int, int]] = []
+    for pattern in _DEADLINE_DATE_PATTERNS:
+        for match in pattern.finditer(text):
+            if any(match.start() < end and match.end() > start for start, end in taken):
+                continue
+            # Claim invalid/incomplete spans too: a different pattern must not
+            # salvage a substring of an invalid ISO date or borrow another year.
+            taken.append(match.span())
+            groups = match.groupdict()
+            value = None
+            # A date prefix inside a longer malformed token is not a complete
+            # date (for example 2027-01-15/16 or 2027-01-15-2028).
+            extended_token = (
+                re.search(r"\d[./-]$", text[:match.start()])
+                or re.match(r"[./-]\d", text[match.end():])
+            )
+            if groups.get("y") and not extended_token:
+                year = int(groups["y"])
+                day = int(groups["d"])
+                month = (int(groups["m"]) if groups.get("m") else
+                         MONTHS[(groups.get("mon") or "").lower().rstrip(".")])
+                # ISO year-first order is fixed. Other all-numeric dates can be
+                # day-first or month-first only when both yield the same answer
+                # or exactly one is a valid ordering. Never repair invalid ISO.
+                numeric = not groups.get("mon") and match.start("y") != match.start()
+                ambiguous = numeric and day <= 12 and month <= 12 and day != month
+                mixed_separators = numeric and len(set(re.findall(r"[./-]", match.group()))) != 1
+                if numeric and month > 12 and day <= 12:
+                    month, day = day, month
+                if not ambiguous and not mixed_separators and 2000 < year < 2100:
+                    try:
+                        value = date(year, month, day)
+                    except ValueError:
+                        pass
+            candidates.append(value)
+    unique = set(candidates)
+    return unique.pop() if len(unique) == 1 and None not in unique else None
+
+
 def extract_deadline(text: str | None, ref: date | None = None) -> tuple[date | None, str | None]:
-    """Find a deadline after a deadline-ish label. Returns (date, raw_snippet)."""
+    """Find an explicit, unambiguous cutoff after its label, retaining raw evidence.
+
+    ``ref`` remains accepted for caller compatibility; cutoff years never depend
+    on the current or reference date. Relative posting dates are parsed separately.
+    """
     if not text:
         return None, None
     matches = list(DEADLINE_LABELS.finditer(text))
     review_note = None
     rolling_note = None
+    candidates: list[date | None] = []
+    evidence: list[str] = []
     for index, m in enumerate(matches):
-        end = min(m.end() + 90, matches[index + 1].start() if index + 1 < len(matches)
-                  else len(text))
+        # Inspect the whole field before deciding. A fixed lookahead can cut off
+        # a later alternative or its priority qualifier after an otherwise valid
+        # first date. Independently labelled sections still end this field.
+        next_match = matches[index + 1] if index + 1 < len(matches) else None
+        end = next_match.start() if next_match else len(text)
         window = text[m.end():end]
-        # A different labelled date is not an application cutoff merely because
-        # it falls inside the fixed lookahead window.
+        # A parenthesized role after a date belongs to that date, even when its
+        # words also match a standalone review label.
+        if (next_match and _REVIEW_CONTEXT.search(next_match.group(0))
+                and re.search(r"[\[(][^\])]*$", window)):
+            close = re.search(r"[\])]", text[next_match.end():])
+            end = next_match.end() + close.end() if close else next_match.end()
+            window = text[m.end():end]
+        # A different labelled section/date is not an application cutoff merely
+        # because it follows the cutoff field in the page's text representation.
         other_date = re.search(
             r"\b(?:start(?:ing)?\s+(?:date|on)|expected\s+start|commencement|"
             r"interviews?(?:\s+(?:date|on))?|posted(?:\s+on)?|publication\s+date)\b",
             window, re.I)
         if other_date:
             window = window[:other_date.start()]
-        snippet = (m.group(0) + window).strip()[:120]
-        if re.search(r"review", m.group(0), re.I):
-            review_note = review_note or snippet
+        other_field = _OTHER_FIELD_LABEL.search(window)
+        if other_field:
+            window = window[:other_field.start()]
+        # Include a qualifier in the same preceding clause, while excluding a
+        # previous labelled review field from an independently stated final date.
+        previous_end = matches[index - 1].end() if index else 0
+        prefix = re.split(r"[.;!?\n]", text[previous_end:m.start()])[-1]
+        if (index and _REVIEW_CONTEXT.search(matches[index - 1].group(0))
+                and re.fullmatch(r"[\s,/:()–—-]*", text[previous_end:m.start()])):
+            # "First review, Deadline: DATE" is one qualified field, not an
+            # empty review field followed by an independent final cutoff.
+            prefix = text[matches[index - 1].start():m.start()]
+        if _NONAPPLICATION_PREFIX.search(prefix):
             continue
-        d = parse_date(window, ref)
-        if d:
-            return d, snippet
+        prefix_review = bool(_REVIEW_CONTEXT.search(prefix))
+        snippet = ((prefix if prefix_review else "") + m.group(0) + window).strip()
+        if (re.search(r"review|priority", m.group(0), re.I)
+                or prefix_review or _REVIEW_CONTEXT.search(window)):
+            if (review_note is None
+                    or (not any(pattern.search(review_note) for pattern in _DEADLINE_DATE_PATTERNS)
+                        and any(pattern.search(snippet) for pattern in _DEADLINE_DATE_PATTERNS))):
+                review_note = snippet
+            continue
+        d = parse_deadline_date(window)
+        if any(pattern.search(window) for pattern in _DEADLINE_DATE_PATTERNS):
+            candidates.append(d)
+            evidence.append(snippet)
         if ROLLING.search(window[:40]):
             rolling_note = snippet
+    unique = set(candidates)
+    if len(unique) == 1 and None not in unique:
+        cutoff = unique.pop()
+        # A short excerpt is useful only when it still contains the complete
+        # accepted date. Rejected evidence below keeps its competing dates and
+        # qualifiers, so a second pass cannot resurrect a truncated first date.
+        short = evidence[0][:120]
+        return cutoff, short if parse_deadline_date(short) == cutoff else evidence[0]
+    if evidence:
+        # Keep every competing field, including a partial/invalid field, so a
+        # subsequent caller cannot mistake the first field for the full evidence.
+        return None, "\n".join(dict.fromkeys(evidence))
     if review_note:
         return None, review_note
     if rolling_note:

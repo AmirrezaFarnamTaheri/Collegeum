@@ -27,7 +27,13 @@ from bs4 import BeautifulSoup, Tag
 from ...core.output_quality import application_url_issue
 from ...core.query_result_diversity import identical_nonempty_query_results
 from ..models import JobPostSchema
-from ..utils.dates import extract_deadline, find_dates, parse_posted, today
+from ..utils.dates import (
+    DEADLINE_LABELS,
+    extract_deadline,
+    parse_deadline_date,
+    parse_posted,
+    today,
+)
 from ..utils.geo import detect_location
 from ..utils.text import absolutize, clean_ws, truncate
 from .base import BaseScraper, SourceSkipped, register
@@ -492,10 +498,13 @@ class LinkScanScraper(BaseScraper):
         text = " \n ".join(lines)
         rest = " \n ".join(ln for ln in lines if ln != title)
         deadline, deadline_text = extract_deadline(rest)
-        if not deadline and self.opt("bare_date_is_deadline"):
-            dates = find_dates(rest)
-            if dates:
-                deadline, deadline_text = dates[-1][1], None
+        if (not deadline and not deadline_text and self.opt("bare_date_is_deadline")
+                and not DEADLINE_LABELS.search(rest)):
+            # An explicitly labelled unknown/review cutoff is not a bare date.
+            # Do not undo the shared extractor's evidence/role rejection here.
+            bare_deadline = parse_deadline_date(rest)
+            if bare_deadline:
+                deadline, deadline_text = bare_deadline, None
         institution = self.cfg.institution
         if self.opt("institution_from_context") or not institution:
             institution = guess_institution(lines, title) or institution

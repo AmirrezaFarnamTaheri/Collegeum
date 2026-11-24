@@ -1,0 +1,620 @@
+{
+  "reviewed_at": "2026-11-24T11:32:14.394650+00:00",
+  "mode": "captured_html_replay",
+  "scope": "Discovery plus existing collector role, field, region, degree and expiry checks; no database, model extraction, publication or messaging.",
+  "capture_method": "Existing bounded exact-host HTTPS official-source reader, robots checked before content and redirects, fixed reviewed URLs only.",
+  "pipeline_network_probe": {
+    "outcome": "unavailable_environment_dns_preflight",
+    "requests_sent": 0,
+    "detail": "The pipeline HTTP destination guard could not resolve public DNS in this workspace. It was not disabled. These captures do not claim a successful live run through that separate HTTP stack."
+  },
+  "registry": {
+    "before_boards": 144,
+    "after_boards": 147,
+    "before_enabled": 75,
+    "after_enabled": 78,
+    "disabled_unchanged": 69
+  },
+  "sources": [
+    {
+      "name": "esmt_berlin_research",
+      "institution": "ESMT Berlin",
+      "country": "Germany",
+      "site_profile": "esmt",
+      "enabled": true,
+      "field_implied": false,
+      "listing_capture": {
+        "url": "https://jobs.esmt.berlin/de",
+        "final_url": "https://jobs.esmt.berlin/de",
+        "status": 200,
+        "checked_at": "2026-11-24T11:09:02.777178+00:00",
+        "bytes": 109756,
+        "sha256": "cffa4ee963e794c829d597031fbe701cbc02d74b1812c7b81abad3c28cc695db"
+      },
+      "robots_capture": {
+        "url": "https://jobs.esmt.berlin/robots.txt",
+        "final_url": "https://jobs.esmt.berlin/robots.txt",
+        "status": 200,
+        "checked_at": "2026-11-24T11:08:54.389016+00:00",
+        "bytes": 71,
+        "sha256": "0e100750b5b8e9f1b7a9e0cc6bfc10c220aaf5dc05269f995de864c490154fec"
+      },
+      "statistics": {
+        "kind": "board",
+        "items": 2,
+        "raw": 2,
+        "relevant": 2,
+        "new": 2,
+        "fetched": 1,
+        "errors": 0,
+        "ok": true,
+        "skipped": false,
+        "may_be_empty": false,
+        "seconds": 0.0,
+        "messages": [],
+        "failure_stage": null,
+        "failure_counts": {
+          "fetch": 0,
+          "parse": 0,
+          "limit": 0
+        }
+      },
+      "status": "successful",
+      "jobs": [
+        {
+          "title": "Postdoctoral Researcher (European Expectations Center)",
+          "url": "https://jobs.esmt.berlin/de?id=f47b7c",
+          "deadline": null,
+          "country": "Germany",
+          "region": "Europe",
+          "country_basis": "source_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://jobs.esmt.berlin/de?id=f47b7c",
+            "final_url": "https://jobs.esmt.berlin/de?id=f47b7c",
+            "status": 200,
+            "checked_at": "2026-11-24T11:10:19.265784+00:00",
+            "bytes": 117008,
+            "sha256": "960f9969680463a23b9923e8dc580b3f72dcff33e3a9a9b27327f2f4f7195069"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Predoctoral Researcher (European Expectations Center)",
+          "url": "https://jobs.esmt.berlin/de?id=63a5b3",
+          "deadline": null,
+          "country": "Germany",
+          "region": "Europe",
+          "country_basis": "source_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://jobs.esmt.berlin/de?id=63a5b3",
+            "final_url": "https://jobs.esmt.berlin/de?id=63a5b3",
+            "status": 200,
+            "checked_at": "2026-11-24T11:09:29.352942+00:00",
+            "bytes": 116879,
+            "sha256": "33e03a4c351372c44604a381fcb0ce47f3c3186ef57d3fe2085e164aa982e920"
+          },
+          "detail_evidence_accepted": true
+        }
+      ]
+    },
+    {
+      "name": "isb_academic_research",
+      "institution": "Indian School of Business",
+      "country": "India",
+      "site_profile": "isb",
+      "enabled": true,
+      "field_implied": false,
+      "listing_capture": {
+        "url": "https://www.isb.edu/work-at-isb/academic-openings",
+        "final_url": "https://www.isb.edu/work-at-isb/academic-openings",
+        "status": 200,
+        "checked_at": "2026-11-24T11:09:29.353959+00:00",
+        "bytes": 201234,
+        "sha256": "8719870d1f17291d11d9f72d1563e1a7a82aa5f398c9d2964351fa264bfa489a"
+      },
+      "robots_capture": {
+        "url": "https://www.isb.edu/robots.txt",
+        "final_url": "https://www.isb.edu/robots.txt",
+        "status": 200,
+        "checked_at": "2026-11-24T11:08:54.390022+00:00",
+        "bytes": 929,
+        "sha256": "758554a652c99ba1e2e17dc9652081cb9fd95b65465ebdd55a48050d6d7c5a08"
+      },
+      "statistics": {
+        "kind": "board",
+        "items": 13,
+        "raw": 13,
+        "relevant": 13,
+        "new": 9,
+        "fetched": 0,
+        "errors": 2,
+        "ok": false,
+        "skipped": false,
+        "may_be_empty": false,
+        "seconds": 0.1,
+        "messages": [
+          "Official advert has an elapsed start; candidate deferred"
+        ],
+        "failure_stage": "parse",
+        "failure_counts": {
+          "fetch": 0,
+          "parse": 2,
+          "limit": 0
+        }
+      },
+      "status": "partial",
+      "jobs": [
+        {
+          "title": "Research Associate with Professor Abhinav Uppal",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-abhinav-uppal",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-abhinav-uppal",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-abhinav-uppal",
+            "status": 200,
+            "checked_at": "2026-11-24T11:13:40.154690+00:00",
+            "bytes": 204246,
+            "sha256": "9aada57686b3b0e866fd11d6d8c93adac0d94468a3b3b3e60e29b6a57824a352"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate with Professor Bhavna Rai",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-bhavna-rai",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "reviewed_isb_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-bhavna-rai",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-bhavna-rai",
+            "status": 200,
+            "checked_at": "2026-11-24T11:10:08.963846+00:00",
+            "bytes": 196237,
+            "sha256": "a6eaed6864f52c73593040f292352f5ade1192324113238b853d04f233730ec5"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate with Professor Pallavi Basu",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-pallavi-basu",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-pallavi-basu",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-pallavi-basu",
+            "status": 200,
+            "checked_at": "2026-11-24T11:13:50.667631+00:00",
+            "bytes": 203669,
+            "sha256": "2eed56aefa1e2d8b955d9e8a7bd6d2937a474a7e6cb6a7de625fa2ac7d140b1b"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate or Senior Research Associate",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-or-senior-research-associate",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "reviewed_isb_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-or-senior-research-associate",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-or-senior-research-associate",
+            "status": 200,
+            "checked_at": "2026-11-24T11:13:58.654488+00:00",
+            "bytes": 206668,
+            "sha256": "8e7c6e6d541fbd33452282a44ff8a8450502d762c578ef2438619b76b7a66922"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate with Professor Sumit Kunnumkal",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-sumit-kunnumkal",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-sumit-kunnumkal",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-with-professor-sumit-kunnumkal",
+            "status": 200,
+            "checked_at": "2026-11-24T11:14:06.416289+00:00",
+            "bytes": 206867,
+            "sha256": "f39ebf552881e3bc296160c6174a407c8761c9acf7e7efdad549a93b05121e8b"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Assistant - SRITNE",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-assistant-sritne",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "deferred",
+          "reason": "past_start_unconfirmed",
+          "subject_verdict": "unknown",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-assistant-sritne",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-assistant-sritne",
+            "status": 200,
+            "checked_at": "2026-11-24T11:14:14.265854+00:00",
+            "bytes": 204148,
+            "sha256": "48661c51ff3f565f7c0696f68b5f30b395f0c114f9af8fc183f9b94feab49169"
+          },
+          "detail_evidence_accepted": false
+        },
+        {
+          "title": "Research Associate position under Professor Sumeet Kumar",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-sumeet-kumar",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "rejected",
+          "reason": "no-field-in-detail",
+          "subject_verdict": "unknown",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-sumeet-kumar",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-sumeet-kumar",
+            "status": 200,
+            "checked_at": "2026-11-24T11:14:22.200552+00:00",
+            "bytes": 206703,
+            "sha256": "64cc02239544cf5e995a92a742a89c1979b168b270878afb851262e6edf3c628"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate position under Professor Vasundhara Sharma",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-vasundhara-sharma",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-vasundhara-sharma",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-vasundhara-sharma",
+            "status": 200,
+            "checked_at": "2026-11-24T11:14:32.322337+00:00",
+            "bytes": 205845,
+            "sha256": "fb2491613cca9a88b157b287dca0791cb1a6be4f2f61e60a8d14a41544fd105f"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate position under Professor Vandith Pamuru",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-vandith-pamuru",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "rejected",
+          "reason": "wrong-field-detail",
+          "subject_verdict": "unwanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-vandith-pamuru",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-vandith-pamuru",
+            "status": 200,
+            "checked_at": "2026-11-24T11:14:40.149820+00:00",
+            "bytes": 205270,
+            "sha256": "67e8577f90142ce6f1058be1773b2ea054479e3a334f41aef3cb4adc2c10fb6a"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate position under Professor Deepa Mani",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-deepa-mani",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "deferred",
+          "reason": "past_start_unconfirmed",
+          "subject_verdict": "unknown",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-deepa-mani",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-the-professor-deepa-mani",
+            "status": 200,
+            "checked_at": "2026-11-24T11:14:48.200661+00:00",
+            "bytes": 205456,
+            "sha256": "7ae792682c825b75cd3012b0f71e52c6f745bde30b0f6c17e1b592a879a76fc0"
+          },
+          "detail_evidence_accepted": false
+        },
+        {
+          "title": "Research Associate Position under Professor. Shekhar Tomar",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-shekhar-tomar",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-shekhar-tomar",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-shekhar-tomar",
+            "status": 200,
+            "checked_at": "2026-11-24T11:14:56.161922+00:00",
+            "bytes": 204062,
+            "sha256": "0b8d0f50583f180bcd17755e15cefd2d0217bb5ad62da967a8fef313821b7854"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate Position under Professor. Anindo Sarkar",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-anindo-sarkar",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-anindo-sarkar",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-anindo-sarkar",
+            "status": 200,
+            "checked_at": "2026-11-24T11:15:05.565959+00:00",
+            "bytes": 205051,
+            "sha256": "fea4ea2f82951e3e293d754feb1f0dad830b92a001973ec7748a8b9a4715fa79"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research Associate Position under Professor. Manish Gangwar",
+          "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-manish-gangwar",
+          "deadline": null,
+          "country": "India",
+          "region": "Other",
+          "country_basis": "advert_label",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-manish-gangwar",
+            "final_url": "https://www.isb.edu/work-at-isb/academic-openings/research-associate-position-under-professor-manish-gangwar",
+            "status": 200,
+            "checked_at": "2026-11-24T11:15:13.396089+00:00",
+            "bytes": 205281,
+            "sha256": "0263c0909a8d801753523665ca16d31c09d4e8df93895c219e09e6da7d9e7f67"
+          },
+          "detail_evidence_accepted": true
+        }
+      ]
+    },
+    {
+      "name": "wu_vienna_research",
+      "institution": "WU Vienna",
+      "country": "Austria",
+      "site_profile": "wu",
+      "enabled": true,
+      "field_implied": false,
+      "listing_capture": {
+        "url": "https://jobs.wu.ac.at/",
+        "final_url": "https://jobs.wu.ac.at/",
+        "status": 200,
+        "checked_at": "2026-11-24T11:09:01.141424+00:00",
+        "bytes": 43204,
+        "sha256": "2b7311a2d246a9e3bd97331a75503ec7ca519217a8be95805bcee32f89f4d60f"
+      },
+      "robots_capture": {
+        "url": "https://jobs.wu.ac.at/robots.txt",
+        "final_url": "https://jobs.wu.ac.at/robots.txt",
+        "status": 200,
+        "checked_at": "2026-11-24T11:08:54.390658+00:00",
+        "bytes": 382,
+        "sha256": "17496a553829c818bd78243e164289d8194e1936fae2ef2e33b5bdd0f549b304"
+      },
+      "statistics": {
+        "kind": "board",
+        "items": 6,
+        "raw": 6,
+        "relevant": 6,
+        "new": 6,
+        "fetched": 1,
+        "errors": 0,
+        "ok": true,
+        "skipped": false,
+        "may_be_empty": false,
+        "seconds": 0.0,
+        "messages": [],
+        "failure_stage": null,
+        "failure_counts": {
+          "fetch": 0,
+          "parse": 0,
+          "limit": 0
+        }
+      },
+      "status": "successful",
+      "jobs": [
+        {
+          "title": "project staff member pre doc",
+          "url": "https://jobs.wu.ac.at/project-staff-member-pre-doc-eng-j2960.html",
+          "deadline": "2026-12-02",
+          "country": "Austria",
+          "region": "Europe",
+          "country_basis": "source_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://jobs.wu.ac.at/project-staff-member-pre-doc-eng-j2960.html",
+            "final_url": "https://jobs.wu.ac.at/project-staff-member-pre-doc-eng-j2960.html",
+            "status": 200,
+            "checked_at": "2026-11-24T11:11:03.101074+00:00",
+            "bytes": 48862,
+            "sha256": "8413d360f001afa2305fec2785d278448608eb03509fbf1c6a4156b55821cb1b"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research and Teaching Assistant",
+          "url": "https://jobs.wu.ac.at/Research-and-Teaching-Assistant-eng-j2961.html",
+          "deadline": "2026-12-09",
+          "country": "Austria",
+          "region": "Europe",
+          "country_basis": "source_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://jobs.wu.ac.at/Research-and-Teaching-Assistant-eng-j2961.html",
+            "final_url": "https://jobs.wu.ac.at/Research-and-Teaching-Assistant-eng-j2961.html",
+            "status": 200,
+            "checked_at": "2026-11-24T11:09:29.354278+00:00",
+            "bytes": 46625,
+            "sha256": "5653aedb5721b6e1c90d1dca0b1e1b6798420b507d731d9c9a8ede699e922977"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research and Teaching Associate",
+          "url": "https://jobs.wu.ac.at/Research-and-Teaching-Associate-eng-j2966.html",
+          "deadline": "2026-12-09",
+          "country": "Austria",
+          "region": "Europe",
+          "country_basis": "source_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://jobs.wu.ac.at/Research-and-Teaching-Associate-eng-j2966.html",
+            "final_url": "https://jobs.wu.ac.at/Research-and-Teaching-Associate-eng-j2966.html",
+            "status": 200,
+            "checked_at": "2026-11-24T11:10:15.370287+00:00",
+            "bytes": 50687,
+            "sha256": "b85f525c4e0f2f6eedab61d58468474946e997a3afe9cca19a833ede6a697313"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Research and Teaching Associate",
+          "url": "https://jobs.wu.ac.at/Research-and-Teaching-Associate-eng-j2967.html",
+          "deadline": "2026-12-09",
+          "country": "Austria",
+          "region": "Europe",
+          "country_basis": "source_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://jobs.wu.ac.at/Research-and-Teaching-Associate-eng-j2967.html",
+            "final_url": "https://jobs.wu.ac.at/Research-and-Teaching-Associate-eng-j2967.html",
+            "status": 200,
+            "checked_at": "2026-11-24T11:13:44.666838+00:00",
+            "bytes": 57484,
+            "sha256": "64a2d041178b6204a9050b955b7aae97136987a6bb9605016cd4a020d188f65e"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "Universitätsassistent*in prae doc",
+          "url": "https://jobs.wu.ac.at/Universitaetsassistentin-prae-doc-de-j2950.html",
+          "deadline": "2026-11-25",
+          "country": "Austria",
+          "region": "Europe",
+          "country_basis": "source_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://jobs.wu.ac.at/Universitaetsassistentin-prae-doc-de-j2950.html",
+            "final_url": "https://jobs.wu.ac.at/Universitaetsassistentin-prae-doc-de-j2950.html",
+            "status": 200,
+            "checked_at": "2026-11-24T11:13:54.295810+00:00",
+            "bytes": 46019,
+            "sha256": "ba1532ea267b58efd8539f856d4518986c3f0d6e989fa85c72d029b4f0934b56"
+          },
+          "detail_evidence_accepted": true
+        },
+        {
+          "title": "wiss. Projektmitarbeiter*in prae doc",
+          "url": "https://jobs.wu.ac.at/wiss-Projektmitarbeiterin-prae-doc-de-j2959.html",
+          "deadline": "2026-12-02",
+          "country": "Austria",
+          "region": "Europe",
+          "country_basis": "source_profile",
+          "outcome": "eligible_collector_candidate",
+          "reason": null,
+          "subject_verdict": "wanted",
+          "capture": {
+            "url": "https://jobs.wu.ac.at/wiss-Projektmitarbeiterin-prae-doc-de-j2959.html",
+            "final_url": "https://jobs.wu.ac.at/wiss-Projektmitarbeiterin-prae-doc-de-j2959.html",
+            "status": 200,
+            "checked_at": "2026-11-24T11:14:00.550521+00:00",
+            "bytes": 51260,
+            "sha256": "a6519d577623ba7d5df184183011394c13d918317977935984ef042857ce8742"
+          },
+          "detail_evidence_accepted": true
+        }
+      ]
+    }
+  ],
+  "deferred": 2,
+  "rejected": {
+    "no-field-in-detail": 1,
+    "wrong-field-detail": 1
+  },
+  "not_enabled": [
+    {
+      "institution": "London Business School",
+      "url": "https://www.london.edu/faculty-and-research/economics/pre-doctoral-research-assistant",
+      "status": "expired_advert",
+      "reason": "The official advert explicitly closed 27 March 2026; its 2026/2027 start does not reopen applications."
+    },
+    {
+      "institution": "Erasmus University Rotterdam",
+      "url": "https://www.eur.nl/en/working-at-eur/search?display=results&view=search_page",
+      "status": "content_timeout",
+      "reason": "Robots readable, but the bounded listing fetch timed out. No early retry and no adapter enabled from search text."
+    },
+    {
+      "institution": "University of Oslo",
+      "url": "https://www.sv.uio.no/english/about/vacancies/",
+      "status": "detail_policy_unavailable",
+      "reason": "Official faculty listing readable, including PhD Economics job311287 and postdoc311245. The linked Jobbnorge robots endpoint returned HTTP406; no job detail was requested."
+    },
+    {
+      "institution": "Hertie School",
+      "url": "https://www.hertie-school.org/en/jobs",
+      "status": "published_widget_error",
+      "reason": "Official landing readable; its published d.vinci script redirected to /appo/error/jobWidgetError.js. No usable vacancy payload or current detail identity was established."
+    }
+  ],
+  "totals": {
+    "distinct_listed_research_requisitions": 21,
+    "eligible_collector_candidates": 17,
+    "rejected": 2,
+    "deferred": 2
+  }
+}

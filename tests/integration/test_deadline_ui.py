@@ -27,6 +27,9 @@ def run_dates(script, *, lifecycle=False):
             '// Render Ledger Rows', 1)[0],
         'function healthPresentation' + page.split('function healthPresentation', 1)[1].split(
             '// Health Telemetry', 1)[0],
+        '// Programme admissions are NEVER merged' + page.split(
+            '// Programme admissions are NEVER merged', 1)[1].split(
+                "    fetch('data/phd_admissions.json'", 1)[0],
     ]
     setup = """
 const assert = require('node:assert/strict');
@@ -39,7 +42,8 @@ let pipelineHealth = {status:'ok',generated_at:'2026-10-05T23:00:00Z'};
 const nodes = new Map();
 const $ = id => {
  if (!nodes.has(id)) nodes.set(id, {value: id === '#filter-sort' ? 'd' : '',
-   textContent:'',style:{},classList:{toggle(){}},innerHTML:''});
+   textContent:'',style:{},classList:{toggle(){}},innerHTML:'',
+   querySelectorAll() { return []; }, addEventListener() {}});
  return nodes.get(id);
 };
 let rendered = [];
@@ -118,6 +122,14 @@ listings = [
  {id:3,title:'Yesterday',deadline:'2026-10-04',days_left:999},
  {id:4,title:'Unknown',deadline:null,days_left:0}
 ];
+phdAdmissions = [{institution:'Current University', country_code:'US', status:'verified',
+ deadline_iso:'2026-10-06', checked_at:'2026-10-05T12:00:00Z',
+ official_programme_url:'https://example.edu/economics/phd',
+ evidence_url:'https://example.edu/economics/phd',
+ evidence_excerpt:'Application deadline: October 6, 2026',
+ investigated_urls:['https://example.edu/economics/phd']}];
+renderAdmissions();
+assert.equal($('#phd-admissions-summary').textContent,'1 programme · 1 verified deadline');
 draw();
 assert.deepEqual(rendered,[1]);
 assert.equal($('#count-soon').textContent,1);
@@ -137,6 +149,8 @@ assert.ok($('#src').textContent.includes('Deadline dates use UTC'));
 clock = Date.parse('2026-10-07T12:00:00Z');
 handlers.visibilitychange();
 assert.equal($('#modal-deadline-status').textContent,'Closed');
+assert.equal($('#phd-admissions-summary').textContent,'1 programme · 0 verified deadlines');
+assert.ok(!$('#phd-admissions-results').innerHTML.includes('<time datetime='));
 assert.deepEqual(rendered,[2]);
 assert.equal(timers.at(-1).delay,43200000);
 const scheduled = timers.length;

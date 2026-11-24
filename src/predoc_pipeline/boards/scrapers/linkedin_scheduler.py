@@ -321,11 +321,14 @@ class QueryLedger:
 
     def accept_page(
         self, pair: tuple[str, str], cards: list[dict[str, Any]], *,
-        now: datetime, max_pages: int = 12,
+        now: datetime, max_pages: int = 12, parse_complete: bool = True,
     ) -> str:
         """Advance cursor only after storing all cards in the same ledger."""
         now = _utc(now)
-        if not 1 <= max_pages <= 50 or len(cards) > MAX_PAGE_ITEMS:
+        if (
+            not 1 <= max_pages <= 50 or len(cards) > MAX_PAGE_ITEMS
+            or type(parse_complete) is not bool
+        ):
             raise ValueError("LinkedIn response exceeds bounded page policy")
         key = query_key(self.source, *pair)
         row = self.state["queries"].get(key)
@@ -367,6 +370,12 @@ class QueryLedger:
                 "last_seen_at": _stamp(now),
                 "queries": queries[:100],
             }
+        if not parse_complete:
+            # Retain the readable cards for enrichment, but a missing or
+            # conflicting card cannot shorten the page into false completion
+            # or advance past a provider position we did not safely parse.
+            self.fail(pair, now=now)
+            return "partial"
         progress = row["pending"]
         progress["last_page_at"] = _stamp(now)
         progress["pages"] += 1

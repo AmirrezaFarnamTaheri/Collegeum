@@ -210,10 +210,13 @@ calendar date, exact full date in the excerpt, 14-day freshness, catalogue
 metadata, matching official HTTPS host and recorded investigation provenance.
 It does not fetch university pages or promote an observation. The automatic
 refresh exports this report to `docs/data/phd_admissions_coverage.json`; the
-dashboard offers it as a download. Its count, status filter and cards use the
-same current-evidence gate, including removal of stale dates. Confirmed cards
-also show the source excerpt so applicant restrictions and earlier required
-application stages remain visible beside the date.
+report remains available with the repository documentation and as a public data
+asset. The dashboard's count, status filter and cards use the same
+current-evidence gate, including removal of stale dates. Each programme shows a
+concise date and official link, with applicable applicant restrictions and earlier
+required application stages visible beside the date. Expandable admission details
+retain supporting source evidence and other verified facts. An open page rechecks
+date and evidence expiry on the existing clock and foreground events.
 
 The 24 November 2026 review increased independently corroborated dates from
 41 in the starting repository to 56, while auditing the complete 251-programme
