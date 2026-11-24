@@ -19,7 +19,7 @@
   "recovered_yale_bodies": 5,
   "expanded_any_matching_body": 154,
   "expanded_no_matching_body": 130,
-  "collector_eligible_original": 0,
+  "collector_eligible_original": 27,
   "public_baseline": 216,
   "public_proposed": 214,
   "journal_count": 500,
@@ -49,5 +49,11 @@
   ],
   "closed_count_before": 53,
   "closed_count_proposed": 55,
-  "new_public_sha256": "3fe3b86f954cf0d72ab42935faf0f502c0c24b5778c8a04775ba6442e8c866e5"
+  "new_public_sha256": "3fe3b86f954cf0d72ab42935faf0f502c0c24b5778c8a04775ba6442e8c866e5",
+  "original_251_eligibility_breakdown": {
+    "collector_eligible": 27,
+    "deferred": 7,
+    "subject_rejected": 48,
+    "not_assessed": 169
+  }
 }
