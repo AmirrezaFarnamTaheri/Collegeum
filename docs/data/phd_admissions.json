@@ -1644,21 +1644,13 @@
     {
       "institution": "Princeton University",
       "country_code": "US",
-      "official_programme_url": "https://economics.princeton.edu/graduate-program/phd-admissions/",
+      "official_programme_url": "https://gradschool.princeton.edu/admission-onboarding/prepare/application-deadlines",
       "programme_structure_hint": null,
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-23T19:04:39Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null,
-      "official_details": {},
-      "investigated_urls": [
-        "https://economics.princeton.edu/graduate-program/phd-admissions/",
-        "https://economics.princeton.edu/contact-us/",
-        "https://economics.princeton.edu/graduate-program/phd-admissions/common-admission-questions/",
-        "https://economics.princeton.edu/graduate-program/phd-admissions/visiting-exchange-student/"
-      ],
-      "extractor_revision": "2026-11-23-admissions-v15"
+      "evidence_excerpt": null
     },
     {
       "institution": "Purdue University",
