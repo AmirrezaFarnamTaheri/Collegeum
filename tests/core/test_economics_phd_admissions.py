@@ -50,9 +50,6 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             seeds["KU Leuven"]["official_programme_url"],
             "https://feb.kuleuven.be/research/economics/PHD/phdcall",
         )
-        self.assertEqual(observations["KU Leuven"]["status"], "unverified")
-        self.assertIsNone(observations["KU Leuven"]["deadline_iso"])
-        self.assertIsNone(observations["KU Leuven"]["checked_at"])
         self.assertIn(
             "/graduate-school/phd-economics/admission",
             seeds["Tilburg University"]["official_programme_url"],
@@ -64,10 +61,19 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertEqual(seeds["University of Padua"]["country_code"], "IT")
         self.assertIn("/phd-calls-and-admissions",
                       seeds["University of Padua"]["official_programme_url"])
-        self.assertEqual(observations["University of Padua"]["status"], "unverified")
-        self.assertIsNone(observations["University of Padua"]["deadline_iso"])
-        self.assertEqual(observations["Tilburg University"]["status"], "unverified")
-        self.assertIsNone(observations["Tilburg University"]["deadline_iso"])
+        # Subsequent scheduled checks may legitimately change the initial
+        # unverified status.  Never require a frozen status in regression tests.
+        for institution in ("KU Leuven", "University of Padua", "Tilburg University"):
+            row = observations[institution]
+            self.assertEqual(
+                row["official_programme_url"],
+                seeds[institution]["official_programme_url"],
+            )
+            if row["status"] == "verified":
+                for field in ("deadline_iso", "checked_at", "evidence_url", "evidence_excerpt"):
+                    self.assertTrue(row[field], (institution, field))
+            else:
+                self.assertIsNone(row["deadline_iso"])
 
     def test_upstream_is_only_a_lead_not_deadline_authority(self):
         self.assertEqual(self.seeds["source"]["license"], "MIT")
