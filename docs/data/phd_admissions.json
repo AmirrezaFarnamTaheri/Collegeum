@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-24T18:55:26Z",
+  "generated_at": "2026-11-24T19:00:35Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -3449,6 +3449,20 @@
       "evidence_excerpt": null,
       "official_details": {},
       "investigated_urls": []
+    },
+    {
+      "institution": "University of Padua",
+      "country_code": "IT",
+      "official_programme_url": "https://www.economia.unipd.it/en/courses/home-courses/phd-programme/phd-calls-and-admissions",
+      "programme_structure_hint": "PhD in Economics and Management; Economics curriculum, annual call",
+      "status": "unverified",
+      "checked_at": null,
+      "deadline_iso": null,
+      "evidence_url": null,
+      "evidence_excerpt": null,
+      "official_details": {},
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Pennsylvania",

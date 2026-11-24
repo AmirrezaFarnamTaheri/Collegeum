@@ -1,14 +1,14 @@
 {
   "kind": "economics_phd_admissions_coverage_audit",
-  "audited_at": "2026-11-24T18:55:26Z",
-  "catalogue_generated_at": "2026-11-24T18:55:26Z",
+  "audited_at": "2026-11-24T19:00:35Z",
+  "catalogue_generated_at": "2026-11-24T19:00:35Z",
   "scope": "stored_evidence_only_no_network",
   "metadata_issues": [],
   "unexpected_observations": [],
   "summary": {
-    "total_programmes": 252,
+    "total_programmes": 253,
     "current_confirmed_deadlines": 56,
-    "remaining_programmes": 196,
+    "remaining_programmes": 197,
     "all_programmes_have_current_deadlines": false,
     "programmes_with_reviewed_sources": 155,
     "reviewed_source_count": 442,
@@ -18,7 +18,7 @@
       "robots_disallowed": 1,
       "robots_unavailable": 62,
       "unsafe_redirect": 1,
-      "unverified": 2,
+      "unverified": 3,
       "verified": 56
     },
     "reason_counts": {
@@ -28,7 +28,7 @@
       "robots_disallowed": 1,
       "robots_unavailable": 62,
       "unsafe_redirect": 1,
-      "unverified": 2
+      "unverified": 3
     }
   },
   "programmes": [
@@ -4537,6 +4537,28 @@
       "reviewed_source_count": 0,
       "investigated_urls": [],
       "extractor_revision": null
+    },
+    {
+      "institution": "University of Padua",
+      "country_code": "IT",
+      "official_programme_url": "https://www.economia.unipd.it/en/courses/home-courses/phd-programme/phd-calls-and-admissions",
+      "programme_structure_hint": "PhD in Economics and Management; Economics curriculum, annual call",
+      "status": "unverified",
+      "current_deadline_confirmed": false,
+      "reason": "unverified",
+      "issues": [
+        "unverified",
+        "missing_check"
+      ],
+      "next_action": "Run the bounded official-source check for this programme.",
+      "checked_at": null,
+      "next_scheduled_check_due_at": null,
+      "deadline_iso": null,
+      "evidence_url": null,
+      "evidence_excerpt": null,
+      "reviewed_source_count": 0,
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Pennsylvania",
