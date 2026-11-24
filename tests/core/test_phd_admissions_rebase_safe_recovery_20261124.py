@@ -21,7 +21,10 @@ def test_admissions_rebase_conflict_rechecks_latest_authoritative_sources():
     assert "git rebase --abort" in publish
     assert "git reset --hard origin/main" in publish
     assert "python3 -S tools/update_phd_admissions.py --check" in publish
-    assert "python3 -S tools/update_phd_admissions.py --batch-size 40 --recheck-all-readable" in publish
+    assert (
+        "python3 -S tools/update_phd_admissions.py "
+        "--batch-size 40 --recheck-all-readable"
+    ) in publish
     assert "python3 -S tools/update_official_calls.py --check" in publish
     assert "python3 -S tools/update_official_calls.py" in publish
 
