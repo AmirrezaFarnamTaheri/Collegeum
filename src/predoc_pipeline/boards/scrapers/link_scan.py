@@ -10,6 +10,7 @@ Options:
   link_pattern            regex matched against the absolute link URL (required unless `selectors`)
   selectors               optional structured mode: {item, title, link, institution, location, deadline, posted}
   institution_from_context  guess employer from the card text (for multi-employer aggregators)
+  title_only_discovery    use only the vacancy anchor as discovery context (opt-in)
   bare_date_is_deadline   treat an unlabeled date in the card as the deadline (e.g. KU table)
   render                  render with Playwright first (JS-only boards); requires `playwright install chromium`
   wait_for                CSS selector to wait for when rendering
@@ -153,8 +154,10 @@ def _verified_empty_has_job_links(raw_data: list[Any]) -> bool:
     return False
 
 
-def find_card(a: Tag, max_chars: int = 1800) -> Tag:
-    """Closest ancestor that looks like a listing card; falls back to the parent."""
+def find_card(a: Tag, max_chars: int = 1800, *, title_only: bool = False) -> Tag:
+    """Find a listing card, or isolate the vacancy anchor for title-only discovery."""
+    if title_only:
+        return a
     node: Tag | None = a
     for _ in range(7):
         node = node.parent if node is not None else None
@@ -476,7 +479,8 @@ class LinkScanScraper(BaseScraper):
             ):
                 continue
             seen.add(href)
-            posts.append(self._post_from_card(href, title, find_card(a)))
+            card = find_card(a, title_only=self.opt("title_only_discovery") is True)
+            posts.append(self._post_from_card(href, title, card))
         return posts
 
     def _valid_application_url(self, href: str) -> bool:

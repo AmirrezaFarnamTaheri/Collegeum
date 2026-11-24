@@ -813,7 +813,7 @@
    "city": "New Haven",
    "is_remote": false,
    "duration_years": 1.0,
-   "deadline": "2027-01-31T00:00:00Z",
+   "deadline": "2027-01-31T23:59:59Z",
    "days_left": 68,
    "disciplines": [
     "Other"
@@ -825,7 +825,7 @@
    "source_url": "https://egc.yale.edu/opportunities/postdoctoral-associate-economic-history-program-1",
    "confidence": 0.98,
    "first_seen_at": "2026-11-17T23:33:14Z",
-   "deadline_note": null,
+   "deadline_note": "Employer lists January 31, 2027 (date only; exact time and time zone not stated). Stored as end-of-date UTC under the existing date-only convention, not a confirmed clock time.",
    "visa_note": null,
    "alternate_sources": [
     "https://egc.yale.edu/opportunities/postdoctoral-associate-economic-history-program-1"
@@ -853,7 +853,7 @@
    "city": "New Haven",
    "is_remote": false,
    "duration_years": 1.0,
-   "deadline": "2027-01-31T00:00:00Z",
+   "deadline": "2027-01-31T23:59:59Z",
    "days_left": 68,
    "disciplines": [
     "Industrial Organization",
@@ -867,7 +867,7 @@
    "source_url": "https://egc.yale.edu/opportunities/postdoctoral-associate-kuznets-markets-and-development",
    "confidence": 0.95,
    "first_seen_at": "2026-11-17T23:33:10Z",
-   "deadline_note": null,
+   "deadline_note": "Employer lists January 31, 2027 (date only; exact time and time zone not stated). Stored as end-of-date UTC under the existing date-only convention, not a confirmed clock time.",
    "visa_note": null,
    "alternate_sources": [
     "https://egc.yale.edu/opportunities/postdoctoral-associate-kuznets-markets-and-development"
@@ -881,7 +881,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": null,
+   "start_term": "2027-2028 academic year",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -895,7 +895,7 @@
    "city": null,
    "is_remote": false,
    "duration_years": 1.0,
-   "deadline": "2027-01-31T00:00:00Z",
+   "deadline": "2027-01-31T23:59:59Z",
    "days_left": 68,
    "disciplines": [
     "Macroeconomics",
@@ -908,7 +908,7 @@
    "source_url": "https://egc.yale.edu/opportunities/postdoctoral-associate-macro-development",
    "confidence": 0.98,
    "first_seen_at": "2026-11-17T23:32:54Z",
-   "deadline_note": null,
+   "deadline_note": "Employer lists January 31, 2027 (date only; exact time and time zone not stated). Stored as end-of-date UTC under the existing date-only convention, not a confirmed clock time.",
    "visa_note": null,
    "alternate_sources": [
     "https://egc.yale.edu/opportunities/postdoctoral-associate-macro-development"
@@ -922,7 +922,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": null,
+   "start_term": "2027-2028 academic year",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -4638,13 +4638,13 @@
     "Development Economics"
    ],
    "visa": "unknown",
-   "summary": "The Development Economics Research Fellow will work on policy‑relevant research concerning inclusion and climate in India, Nepal, Kenya, and global carbon markets, contributing to empirical analysis, data management, and paper drafting. The position is intended for strong recent graduates who plan to pursue a Ph.D. in economics and seek hands‑on research experience.",
+   "summary": "Predoctoral research fellowship with Rohini Pande on inclusion, climate and economic opportunity in India, Nepal, Kenya and global carbon markets. Work includes empirical data management, statistical analysis, research writing and field-team collaboration. Applicants need a bachelor's or master's with quantitative training, Stata and/or R experience (Python preferred), and willingness to travel.",
    "language": "en",
    "apply_url": "https://egc.yale.edu/opportunities/development-economics-research-fellow-2",
    "source_url": "https://egc.yale.edu/opportunities/development-economics-research-fellow-2",
    "confidence": 0.953,
    "first_seen_at": "2026-10-29T21:08:56Z",
-   "deadline_note": null,
+   "deadline_note": "Yale EGC states applications are accepted and reviewed on a rolling basis; no fixed cutoff stated.",
    "visa_note": null,
    "alternate_sources": [
     "https://egc.yale.edu/opportunities/development-economics-research-fellow-2"
@@ -4654,14 +4654,12 @@
    "salary_currency": null,
    "salary_period": null,
    "salary_raw": null,
-   "tools_required": [
-    "Stata",
-    "R",
+   "tools_required": [],
+   "tools_preferred": [
     "Python"
    ],
-   "tools_preferred": [],
    "min_degree": "bachelors",
-   "degree_note": null,
+   "degree_note": "Bachelor's or master's in economics, data science, international development or another field with substantial quantitative coursework.",
    "start_term": null,
    "start_date": null,
    "kind": "predoc",
@@ -4712,7 +4710,7 @@
    "id": 296,
    "title": "Development and Experimental Economics Research Fellow",
    "institution": "Yale University Economic Growth Center",
-   "principal_investigator": null,
+   "principal_investigator": "Maria Kogelnik, Rohini Pande",
    "country": "United States",
    "city": null,
    "is_remote": false,
@@ -4724,13 +4722,13 @@
     "Environmental and Energy Economics"
    ],
    "visa": "unknown",
-   "summary": "Current job openings Communications Associate- Economic Growth Center (EGC) The Economic Growth Center (EGC) and Inclusion Economics at Yale University (YIE) seek a Communications Associate to support the work of bringing policy-relevant research to public audiences. The ideal candidate is a communications generalist eager to engage with international development: managing our website; supporting design for social media, policy briefs, newsletters, and presentations; helping deliver events;...",
+   "summary": "Predoctoral research fellowship with Maria Kogelnik and Rohini Pande on development and experimental economics. Work includes empirical data management and analysis, research writing, experimental studies and collaboration with field teams in South Asia and East Africa. Applicants need a bachelor's or master's with quantitative training, Stata and/or R experience (Python preferred), and willingness to travel.",
    "language": "en",
    "apply_url": "https://egc.yale.edu/opportunities/development-and-experimental-economics-research-fellow-1",
    "source_url": "https://egc.yale.edu/opportunities/development-and-experimental-economics-research-fellow-1",
    "confidence": 0.887,
    "first_seen_at": "2026-10-29T21:08:47Z",
-   "deadline_note": null,
+   "deadline_note": "Yale EGC states applications are accepted and reviewed on a rolling basis; no fixed cutoff stated.",
    "visa_note": null,
    "alternate_sources": [
     "https://egc.yale.edu/opportunities/development-and-experimental-economics-research-fellow-1"
@@ -4740,17 +4738,15 @@
    "salary_currency": null,
    "salary_period": null,
    "salary_raw": null,
-   "tools_required": [
-    "Python",
-    "Stata",
-    "R"
+   "tools_required": [],
+   "tools_preferred": [
+    "Python"
    ],
-   "tools_preferred": [],
-   "min_degree": "phd",
-   "degree_note": null,
+   "min_degree": "bachelors",
+   "degree_note": "Bachelor's or master's in economics, data science, international development or another field with substantial quantitative coursework.",
    "start_term": null,
    "start_date": null,
-   "kind": "research",
+   "kind": "predoc",
    "sector": "academic"
   },
   {
