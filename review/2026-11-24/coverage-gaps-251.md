@@ -84,6 +84,12 @@ Only **56/251** programme records have current official-source deadline confirma
 
 These leads do **not** add to the existing 251-advert count or 56 programme confirmations. The present source registry has 151 boards, 82 enabled; disabled boards include deliberate technical, eligibility and provider-access restrictions. Do not bulk-enable them merely to raise coverage.
 
+### Programme-scope checks before enlarging the 251 seeds
+
+- **Tinbergen Institute** is not a separate direct-entry PhD awarder: its [research master admissions](https://tinbergen.nl/admissions) lead towards PhDs at partner schools, and its [PhD vacancy page](https://tinbergen.nl/phd-vacancies) says it does not offer PhD positions directly. Model the research-master admission route or the specific university vacancy, **not** a fictional generic Economics PhD closing date.
+- **Maastricht University** is absent as a distinct seed, but its [MSI PhD programme](https://www.maastrichtuniversity.nl/research/msi/research/phd-programme) allows employed, scholarship and externally funded routes; review programme identity, funding and application eligibility before considering a new seed.
+- **Utrecht University** is absent from the programme seed list although the [School of Economics](https://research-portal.uu.nl/en/organisations/utrecht-university-school-of-economics/) has PhD candidates. Existing Utrecht job-specific adverts are already in the posting source registry. Do not infer a universal doctoral application deadline from staff profiles or vacancies.
+
 ## Quality rules to preserve
 
 - Maintain three separate metrics: **checked**, **identity-matched body**, and **currently eligible/open**.
