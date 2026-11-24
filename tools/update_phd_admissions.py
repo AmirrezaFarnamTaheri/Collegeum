@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-24-admissions-v17"
+EXTRACTOR_REVISION = "2026-11-24-admissions-v18"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -1327,6 +1327,90 @@ def _ubc_economics_phd_open_intake_deadlines(
     return min(cycles, key=lambda item: item[0])[1]
 
 
+def _princeton_economics_2027_graduate_deadline(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Princeton explicitly prints the YEAR for its Fall 2027 deadline table.
+
+    A yearless departmental December 1 is insufficient. The official
+    Graduate School's own 2026-year statement scopes each listed subject
+    cutoff, and Economics must occur in the December 1 programme group.
+    """
+    parsed = urllib.parse.urlsplit(source_url or "")
+    host = (parsed.hostname or "").lower().removeprefix("www.")
+    path = parsed.path.lower().rstrip("/")
+    if not (
+        host == "gradschool.princeton.edu"
+        and path == "/admission-onboarding/prepare/application-deadlines"
+        and any(re.fullmatch(r"Application Deadlines", h, re.I)
+                for h in parser.headings)
+    ):
+        return []
+    text = parser.text()[:MAX_HTML_BYTES]
+    year_statement = re.search(
+        r"\bWhile the application is for Fall (?P<intake>20\d{2})"
+        r" enrollment,\s*all associated deadlines fall within the "
+        r"(?P<year>20\d{2}) calendar year\b",
+        text, re.I,
+    )
+    if year_statement is None:
+        return []
+    year = int(year_statement.group("year"))
+    intake = int(year_statement.group("intake"))
+    if intake != year + 1:
+        return []
+    title = re.search(r"\bDeadline\s*[|]?\s*Fields of Study\b", text, re.I)
+    if title is None:
+        return []
+    # The date headings of the official graduate application table can be
+    # styled DIVs rather than <table>s. Examine each complete date group
+    # independently, stopping at the following group.
+    body = text[title.end():]
+    headings = list(re.finditer(
+        r"\b(?P<month>November|December)\s+(?P<day>\d{1,2})\s*\*?"
+        r"(?:\s*,\s*(?P<dateyear>20\d{2}))?(?!\d)",
+        body, re.I,
+    ))
+    candidates: list[tuple[str, str]] = []
+    for i, heading in enumerate(headings):
+        chunk = body[heading.end():(
+            headings[i + 1].start() if i + 1 < len(headings) else len(body)
+        )]
+        if not re.search(r"\bEconomics\b", chunk, re.I):
+            continue
+        if (
+            heading.group("month").lower() != "december"
+            or int(heading.group("day")) != 1
+        ):
+            continue
+        if heading.group("dateyear") and int(heading.group("dateyear")) != year:
+            continue
+        day = date(year, 12, 1)
+        if now.date() <= day <= date(now.year + 2, 12, 31):
+            candidates.append((
+                day.isoformat(),
+                f"Fall {intake}, {year} calendar year: "
+                f"December 1 — Economics (Graduate School deadlines)"[:180],
+            ))
+    # If Economics is also attributed to a conflicting dated group, refuse.
+    for i, heading in enumerate(headings):
+        if heading.group("month").lower() == "december" and heading.group("day") == "1":
+            continue
+        chunk = body[heading.end():(
+            headings[i + 1].start() if i + 1 < len(headings) else len(body)
+        )]
+        if re.search(r"\bEconomics\b", chunk, re.I):
+            # Distinct dates are intentionally retained, then rejected as
+            # ambiguous by _schoolwide_economics_result.
+            other = date(
+                year, 11 if heading.group("month").lower() == "november" else 12,
+                int(heading.group("day")),
+            )
+            if now.date() <= other <= date(now.year + 2, 12, 31):
+                candidates.append((other.isoformat(), "Conflicting Economics group"))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -1341,6 +1425,15 @@ def collect_official_deadline(
     source_path = urllib.parse.urlsplit(source_url or "")
     university_host = (source_path.hostname or "").lower().removeprefix("www.")
     university_path = source_path.path.lower().rstrip("/")
+    if (
+        university_host == "gradschool.princeton.edu"
+        and university_path == "/admission-onboarding/prepare/application-deadlines"
+    ):
+        return _schoolwide_economics_result(
+            _princeton_economics_2027_graduate_deadline(
+                parser, now=now, source_url=source_url,
+            )
+        )
     # UBC's graduate degree listing supplies exact applicant-group deadlines.
     # Neither its old FAQ nor the same path on another hostname is evidence.
     if (
