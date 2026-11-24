@@ -1,0 +1,247 @@
+{
+  "baseline_commit": "dbe5dfd2a0ac47a7cd22b075e479089598e5f3e0",
+  "baseline_blobs": {
+    "data/listings.ndjson": "32f8fabc85366f51986c8ebd503fb03b6dced2ae",
+    "docs/data/listings.json": "c9cb2bfecf72122ef60b516650b6d8a0ed670e7b",
+    "docs/data/health.json": "064ae4b61465f61b6e9626e91d77465a7ce49f52",
+    "docs/feed.xml": "88d29eded89357471fe5f379f3fcdafc12a584eb",
+    "src/predoc_pipeline/boards/scrapers/link_scan.py": "a0cb5b87e88d3ec3f52908d7d0e3989029a3274e",
+    "config/sources.toml": "7b61b222ee0efe6e4e17c3318347b880e364d931"
+  },
+  "review_date": "2026-11-25",
+  "source_health_snapshot": "2026-11-24T19:54:35Z",
+  "source_health_last_five": [
+    {
+      "run_at": "2026-11-24T19:54:35Z",
+      "stats": {
+        "errors": 0,
+        "fetched": 1,
+        "items": 6,
+        "kind": "board",
+        "may_be_empty": true,
+        "new": 5,
+        "ok": true,
+        "raw": 6,
+        "relevant": 5,
+        "seconds": 0.4,
+        "skipped": false,
+        "failure_counts": {
+          "fetch": 0,
+          "parse": 0,
+          "limit": 0
+        },
+        "messages": [],
+        "status": "successful"
+      }
+    },
+    {
+      "run_at": "2026-11-24T14:54:00Z",
+      "stats": {
+        "errors": 0,
+        "fetched": 1,
+        "items": 6,
+        "kind": "board",
+        "may_be_empty": true,
+        "new": 5,
+        "ok": true,
+        "raw": 6,
+        "relevant": 5,
+        "seconds": 2.7,
+        "skipped": false,
+        "failure_counts": {
+          "fetch": 0,
+          "parse": 0,
+          "limit": 0
+        },
+        "messages": [],
+        "status": "successful"
+      }
+    },
+    {
+      "run_at": "2026-11-24T09:20:33Z",
+      "stats": {
+        "errors": 0,
+        "fetched": 1,
+        "items": 6,
+        "kind": "board",
+        "may_be_empty": true,
+        "new": 5,
+        "ok": true,
+        "raw": 6,
+        "relevant": 5,
+        "seconds": 2.2,
+        "skipped": false,
+        "failure_counts": {
+          "fetch": 0,
+          "parse": 0,
+          "limit": 0
+        },
+        "messages": [],
+        "status": "successful"
+      }
+    },
+    {
+      "run_at": "2026-11-24T03:02:57Z",
+      "stats": {
+        "errors": 0,
+        "fetched": 1,
+        "items": 6,
+        "kind": "board",
+        "may_be_empty": true,
+        "new": 5,
+        "ok": true,
+        "raw": 6,
+        "relevant": 5,
+        "seconds": 3.9,
+        "skipped": false,
+        "failure_counts": {
+          "fetch": 0,
+          "parse": 0,
+          "limit": 0
+        },
+        "messages": [],
+        "status": "successful"
+      }
+    },
+    {
+      "run_at": "2026-11-23T19:19:41Z",
+      "stats": {
+        "errors": 0,
+        "fetched": 1,
+        "items": 6,
+        "kind": "board",
+        "may_be_empty": true,
+        "new": 5,
+        "ok": true,
+        "raw": 6,
+        "relevant": 5,
+        "seconds": 3.4,
+        "skipped": false,
+        "failure_counts": {
+          "fetch": 0,
+          "parse": 0,
+          "limit": 0
+        },
+        "messages": [],
+        "status": "successful"
+      }
+    }
+  ],
+  "independent_audit_error": "response_too_large",
+  "production_source_status": {
+    "status": "successful",
+    "last_attempt_at": "2026-11-24T19:54:35Z",
+    "last_successful_at": "2026-11-24T19:54:35Z",
+    "messages": []
+  },
+  "source_index": "https://egc.yale.edu/opportunities/jobs-research-fellowships",
+  "records": [
+    {
+      "id": 296,
+      "source_url": "https://egc.yale.edu/opportunities/development-and-experimental-economics-research-fellow-1",
+      "last_verified_at": "2026-11-23T16:22:49Z",
+      "journal_before": {
+        "department": "Communications Associate- Economic Growth Center (EGC)",
+        "min_degree": "phd",
+        "degree_note": null,
+        "deadline_note": null,
+        "tools_required": "[\"Python\", \"Stata\", \"R\"]",
+        "tools_preferred": "[]",
+        "principal_investigator": null,
+        "summary": "Current job openings Communications Associate- Economic Growth Center (EGC) The Economic Growth Center (EGC) and Inclusion Economics at Yale University (YIE) seek a Communications Associate to support the work of bringing policy-relevant research to public audiences. The ideal candidate is a communications generalist eager to engage with international development: managing our website; supporting design for social media, policy briefs, newsletters, and presentations; helping deliver events;..."
+      },
+      "journal_after": {
+        "department": null,
+        "min_degree": "bachelors",
+        "degree_note": "Bachelor's or master's in economics, data science, international development or another field with substantial quantitative coursework.",
+        "deadline_note": "Yale EGC states applications are accepted and reviewed on a rolling basis; no fixed cutoff stated.",
+        "tools_required": "[]",
+        "tools_preferred": "[\"Python\"]",
+        "principal_investigator": "Maria Kogelnik, Rohini Pande",
+        "summary": "Predoctoral research fellowship with Maria Kogelnik and Rohini Pande on development and experimental economics. Work includes empirical data management and analysis, research writing, experimental studies and collaboration with field teams in South Asia and East Africa. Applicants need a bachelor's or master's with quantitative training, Stata and/or R experience (Python preferred), and willingness to travel."
+      },
+      "public_kind_before": "research",
+      "public_kind_after": "predoc"
+    },
+    {
+      "id": 298,
+      "source_url": "https://egc.yale.edu/opportunities/development-economics-research-fellow-2",
+      "last_verified_at": "2026-11-23T16:22:49Z",
+      "journal_before": {
+        "department": "Communications Associate- Economic Growth Center (EGC)",
+        "min_degree": "bachelors",
+        "degree_note": null,
+        "deadline_note": null,
+        "tools_required": "[\"Stata\", \"R\", \"Python\"]",
+        "tools_preferred": "[]",
+        "summary": "The Development Economics Research Fellow will work on policy‑relevant research concerning inclusion and climate in India, Nepal, Kenya, and global carbon markets, contributing to empirical analysis, data management, and paper drafting. The position is intended for strong recent graduates who plan to pursue a Ph.D. in economics and seek hands‑on research experience."
+      },
+      "journal_after": {
+        "department": null,
+        "min_degree": "bachelors",
+        "degree_note": "Bachelor's or master's in economics, data science, international development or another field with substantial quantitative coursework.",
+        "deadline_note": "Yale EGC states applications are accepted and reviewed on a rolling basis; no fixed cutoff stated.",
+        "tools_required": "[]",
+        "tools_preferred": "[\"Python\"]",
+        "summary": "Predoctoral research fellowship with Rohini Pande on inclusion, climate and economic opportunity in India, Nepal, Kenya and global carbon markets. Work includes empirical data management, statistical analysis, research writing and field-team collaboration. Applicants need a bachelor's or master's with quantitative training, Stata and/or R experience (Python preferred), and willingness to travel."
+      },
+      "public_kind_before": "predoc",
+      "public_kind_after": "predoc"
+    },
+    {
+      "id": 456,
+      "source_url": "https://egc.yale.edu/opportunities/postdoctoral-associate-macro-development",
+      "last_verified_at": "2026-11-24T03:02:57Z",
+      "journal_before": {
+        "deadline": "2027-01-31T00:00:00Z",
+        "deadline_note": null,
+        "start_term": null
+      },
+      "journal_after": {
+        "deadline": "2027-01-31T23:59:59Z",
+        "deadline_note": "Employer lists January 31, 2027 (date only; exact time and time zone not stated). Stored as end-of-date UTC under the existing date-only convention, not a confirmed clock time.",
+        "start_term": "2027-2028 academic year"
+      },
+      "public_kind_before": "postdoc",
+      "public_kind_after": "postdoc"
+    },
+    {
+      "id": 458,
+      "source_url": "https://egc.yale.edu/opportunities/postdoctoral-associate-kuznets-markets-and-development",
+      "last_verified_at": "2026-11-24T03:02:57Z",
+      "journal_before": {
+        "deadline": "2027-01-31T00:00:00Z",
+        "deadline_note": null,
+        "start_term": null
+      },
+      "journal_after": {
+        "deadline": "2027-01-31T23:59:59Z",
+        "deadline_note": "Employer lists January 31, 2027 (date only; exact time and time zone not stated). Stored as end-of-date UTC under the existing date-only convention, not a confirmed clock time.",
+        "start_term": "2027-2028 academic year"
+      },
+      "public_kind_before": "postdoc",
+      "public_kind_after": "postdoc"
+    },
+    {
+      "id": 460,
+      "source_url": "https://egc.yale.edu/opportunities/postdoctoral-associate-economic-history-program-1",
+      "last_verified_at": "2026-11-24T03:02:57Z",
+      "journal_before": {
+        "deadline": "2027-01-31T00:00:00Z",
+        "deadline_note": null
+      },
+      "journal_after": {
+        "deadline": "2027-01-31T23:59:59Z",
+        "deadline_note": "Employer lists January 31, 2027 (date only; exact time and time zone not stated). Stored as end-of-date UTC under the existing date-only convention, not a confirmed clock time."
+      },
+      "public_kind_before": "postdoc",
+      "public_kind_after": "postdoc"
+    }
+  ],
+  "public_count": 214,
+  "journal_count": 500,
+  "rss_count": 100,
+  "rss_changed": 3,
+  "new_public_sha256": "2026dcdef2b441b16f476cddcb1fabadbcdee2aa667599faf9cae2083607dd1f",
+  "provenance": "Independent employer descriptions, existing production receipts and synthetic card-context reproduction; no live collector replay or new source verification timestamps."
+}
