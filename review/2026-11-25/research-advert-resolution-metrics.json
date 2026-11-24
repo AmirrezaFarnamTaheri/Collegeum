@@ -1,0 +1,53 @@
+{
+  "baseline_commit": "e549c1cb0d8546d17f2bdca13870dbebcd0c49ee",
+  "baseline_blobs": {
+    "review/2026-11-24/research-adverts-251.json": "e20fa237035c6b0e548018242bc69df7dd02711e",
+    "data/listings.ndjson": "65f9c2403c7d31786a777a993529d9aa5b040059",
+    "docs/data/listings.json": "b3e342125559c1d3b77d5a01af21eca93ed4a86e",
+    "docs/data/health.json": "5ef91b3d5cb40fc2eb3edc74910eade16dd31058",
+    "config/sources.toml": "57b54ef6706885d39f192dc2561f4200024dd82e",
+    "config/preferences.toml": "4f65817869d3cdbdf587c0f462b4c511dc678e2a",
+    "docs/feed.xml": "1f5cc31247ba9a7cccd1410db7b9ed86865d4c25"
+  },
+  "baseline_public_generated_at": "2026-11-24T19:54:34Z",
+  "original_cohort": 251,
+  "previous_additional": 16,
+  "new_independent_review_attempts": 17,
+  "expanded_count": 284,
+  "original_matching_bodies": 137,
+  "new_matching_bodies": 12,
+  "recovered_yale_bodies": 5,
+  "expanded_any_matching_body": 154,
+  "expanded_no_matching_body": 130,
+  "collector_eligible_original": 0,
+  "public_baseline": 216,
+  "public_proposed": 214,
+  "journal_count": 500,
+  "public_exact_or_alias_matches": 106,
+  "public_unmatched": 110,
+  "public_missing_verified": 138,
+  "public_missing_deadline": 126,
+  "public_linkedin_unverified": 68,
+  "public_missing_fields": {
+    "deadline_missing": 126,
+    "visa_unknown": 197,
+    "salary_range_missing": 154,
+    "city_missing": 52,
+    "contract_missing": 113,
+    "start_missing": 164,
+    "pi_missing": 95
+  },
+  "historical_unpublished_unresolved": 16,
+  "closed_reconciled": [
+    294,
+    318
+  ],
+  "suspected_epfl_alias_ids": [
+    423,
+    424,
+    462
+  ],
+  "closed_count_before": 53,
+  "closed_count_proposed": 55,
+  "new_public_sha256": "3fe3b86f954cf0d72ab42935faf0f502c0c24b5778c8a04775ba6442e8c866e5"
+}

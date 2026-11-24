@@ -1,0 +1,333 @@
+{
+  "baseline_commit": "e549c1cb0d8546d17f2bdca13870dbebcd0c49ee",
+  "review_date": "2026-11-25",
+  "method": "Independent public web reader; not production collector replay. Failed reader requests are not direct HTTP measurements unless reported; no bypass.",
+  "new_assessments": [
+    {
+      "journal_id": 468,
+      "evidence_url": "https://www.aalto.fi/en/open-positions/postdoctoral-researcher-in-urban-economics",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2027-02-15",
+      "note": "Two-year urban/housing economics project; employer permits early review and possible early filling.",
+      "city": "Espoo",
+      "contract_years": 2,
+      "min_degree": "PhD or near completion",
+      "local_cutoff": "23:59 EET",
+      "scope": "economics",
+      "pi": "Tuukka Saarimaa"
+    },
+    {
+      "journal_id": 467,
+      "evidence_url": "https://www.aalto.fi/en/open-positions/postdoctoral-researcher-in-biodiversity-economics",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2027-01-31",
+      "note": "Employer describes environmental economics and biodiversity work.",
+      "city": "Espoo",
+      "contract_years": 3,
+      "min_degree": "PhD or near completion",
+      "salary_amount": 4600,
+      "salary_currency": "EUR",
+      "salary_period": "month",
+      "salary_approximate": true,
+      "local_cutoff": "23:59 EET",
+      "scope": "economics",
+      "pi": "Lassi Ahlvik"
+    },
+    {
+      "journal_id": 461,
+      "evidence_url": "https://www.kcl.ac.uk/jobs/163365-postdoctoral-research-associate-in-computational-social-science",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2026-12-06",
+      "note": "Employer job 163365; British Election Study data tools and independent computational social science.",
+      "employer_requisition": "163365",
+      "city": "London",
+      "contract_years": 2,
+      "start_date": "2027-04-01",
+      "salary_min": 45829,
+      "salary_max": 53462,
+      "salary_currency": "GBP",
+      "salary_period": "year",
+      "scope": "quantitative political/social science",
+      "pi": "Max Falkenberg"
+    },
+    {
+      "journal_id": 452,
+      "evidence_url": "https://jobs.lse.ac.uk/Vacancies/W/2920/0/477204/15539/research-officer-health-and-conflict-in-the-middle-east-and-north-africa",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2027-01-08",
+      "note": "Employer job 477204; quantitative population health, policy and conflict research.",
+      "employer_requisition": "477204",
+      "city": "London",
+      "contract_years": 1.5,
+      "min_degree": "PhD",
+      "salary_min": 44143,
+      "salary_max": 52749,
+      "salary_currency": "GBP",
+      "salary_period": "year",
+      "local_cutoff": "23:59 GMT",
+      "visa": "sponsorship may be considered",
+      "scope": "quantitative social science / public policy",
+      "pi": "Tiziana Leone"
+    },
+    {
+      "journal_id": 451,
+      "evidence_url": "https://buffett.northwestern.edu/programs/lal-initiative-in-global-entrepreneurship/hiring-postdoctoral-fellow-in-global-entrepreneurship.html",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2026-12-01",
+      "note": "Official Buffett Institute fellowship in international entrepreneurship, research and teaching; letter cutoff is separately December 7.",
+      "city": "Evanston",
+      "contract_years": 1,
+      "start_date": "2027-09-01",
+      "salary_amount": 64000,
+      "salary_currency": "USD",
+      "salary_period": "year",
+      "salary_evidence_url": "https://postdocs.northwestern.edu/announcements/positions-at-northwestern/2026/postdoctoral-research-opportunity-global-entrepreneurship.html",
+      "scope": "business / international research"
+    },
+    {
+      "journal_id": 462,
+      "evidence_url": "https://careers.epfl.ch/job/Lausanne-Postdoctoral-Position-International-Macroeconomics-and-Finance-at-EPFL/1165774355",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_apply_route",
+      "deadline_type": "unconfirmed",
+      "deadline_date": null,
+      "note": "Employer reference 2590, one-year renewable international macro/finance vacancy. LinkedIn IDs 423, 424, 462 have highly similar descriptions; one employer requisition counted, precise individual alias binding not proven.",
+      "employer_requisition": "2590",
+      "city": "Lausanne",
+      "contract_years": 1,
+      "start_date": "2027-06 (month)",
+      "min_degree": "PhD economics/finance",
+      "scope": "economics",
+      "pi": "Luisa Lambertini",
+      "journal_identity_basis": "provisional representative only",
+      "possible_alias_ids": [
+        423,
+        424
+      ]
+    },
+    {
+      "journal_id": 443,
+      "evidence_url": "https://jobs.hhs.se/en/job/stockholm/post_doc_position_at_the_center_for_wellbeing_welfare_and_happiness_at_the_stockholm_school_of_economics_sse__-990722.html",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2026-12-15",
+      "note": "Employer Varbi requisition 990722. Computational wellbeing measurement; business administration/psychology, needs existing field gate review.",
+      "employer_requisition": "990722",
+      "city": "Stockholm",
+      "contract_years": 2,
+      "start_date": "2027-04 (preferred)",
+      "min_degree": "PhD within three years, exceptions possible",
+      "scope": "business / behavioural science"
+    },
+    {
+      "journal_id": 395,
+      "evidence_url": "https://www.mpg.de/27057371/phd-researcher-m-f-d-economic-impacts-from-complex-climate-risks",
+      "body_evidence": true,
+      "application_lifecycle": "rolling_or_until_filled",
+      "deadline_type": "rolling_or_index_cutoff",
+      "deadline_date": "2026-12-15",
+      "note": "Detail says until filled; employer index lists 15 December. Preserve both signals; master's prerequisites emphasize climate science and related quantitative fields, so subject fit requires review.",
+      "city": "Jena",
+      "start_date": "2027-01-01",
+      "min_degree": "Master's or equivalent",
+      "index_evidence_url": "https://www.gea.mpg.de/12033/job-offers",
+      "scope": "interdisciplinary climate/economic impacts"
+    },
+    {
+      "journal_id": 428,
+      "evidence_url": "https://nyuad.nyu.edu/en/about/careers/postdoctoral-and-research.html?skipnav-select=footer",
+      "body_evidence": false,
+      "application_lifecycle": "index_only",
+      "deadline_type": "unconfirmed",
+      "deadline_date": null,
+      "note": "Employer index identifies SSEL role with Andrzej Baranski; aggregator detail was inaccessible. No independent detailed body or cutoff confirmation.",
+      "secondary_attempt": "https://www.timeshighereducation.com/unijobs/listing/417644/post-doctoral-associate-in-the-division-of-social-science-ssel-dr-andrzej-baranski?LinkSource=PremiumListing",
+      "pi": "Andrzej Baranski"
+    },
+    {
+      "journal_id": 477,
+      "evidence_url": "https://nyuad.nyu.edu/en/about/careers/postdoctoral-and-research.html?skipnav-select=footer",
+      "body_evidence": false,
+      "application_lifecycle": "index_only",
+      "deadline_type": "unconfirmed",
+      "deadline_date": null,
+      "note": "Employer index lists the Max Mihm/Herve Cres role matching journal description; aggregator detail inaccessible. Do not assume current journal deadline or earlier audit deadline is employer-confirmed.",
+      "secondary_attempt": "https://www.timeshighereducation.com/unijobs/listing/417981/post-doctoral-associate-in-the-division-of-social-science-economics-?LinkSource=PremiumListing",
+      "pi": "Max Mihm and Herve Cres"
+    },
+    {
+      "journal_id": 473,
+      "evidence_url": "https://inomics.com/job/post-doctoral-research-associate-1555887",
+      "body_evidence": false,
+      "application_lifecycle": "unconfirmed",
+      "deadline_type": "unconfirmed",
+      "deadline_date": null,
+      "note": "Reader reported endpoint inaccessible; no employer-specific matching detail established."
+    },
+    {
+      "journal_id": 463,
+      "evidence_url": "https://www.jobs.ac.uk/job/DTR706/phd-studentship-environmental-planning-esrc-welsh-graduate-school-for-the-social-sciences-wgsss",
+      "body_evidence": false,
+      "application_lifecycle": "unconfirmed",
+      "deadline_type": "unconfirmed",
+      "deadline_date": null,
+      "note": "Reader reported HTTP 500; named studentship not established as current or in scope."
+    },
+    {
+      "journal_id": 416,
+      "evidence_url": "https://www.kcl.ac.uk/jobs/163185-postdoctoral-research-associate-research-software-engineer-for-the-british-election-study",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2026-12-02",
+      "note": "Employer job 163185 is distinct from 163365; research/software hybrid, existing subject/role filters still need replay.",
+      "employer_requisition": "163185",
+      "city": "London",
+      "salary_amount": 50766,
+      "salary_currency": "GBP",
+      "salary_period": "year pro-rata",
+      "scope": "quantitative political/social science and software research",
+      "pi": "Max Falkenberg"
+    },
+    {
+      "journal_id": 382,
+      "evidence_url": "https://jobs.lse.ac.uk/Vacancies/W/6200/0/476733/15539/research-officer-in-income-and-or-wealth-inequalities",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2026-11-27",
+      "note": "Employer job 476733; quantitative inequality research and PhD required.",
+      "employer_requisition": "476733",
+      "city": "London",
+      "contract_years": 2,
+      "salary_min": 44143,
+      "salary_max": 52749,
+      "salary_currency": "GBP",
+      "salary_period": "year",
+      "local_cutoff": "23:59 GMT",
+      "scope": "economics / social science"
+    },
+    {
+      "journal_id": 398,
+      "evidence_url": "https://www.academics.de/jobs/doktorandin-oder-doktorand-in-social-entrepreneurship-berner-fachhochschule-1112466",
+      "body_evidence": false,
+      "application_lifecycle": "secondary_metadata_only",
+      "deadline_type": "fixed",
+      "deadline_date": "2026-11-30",
+      "note": "Aggregator provides title, Bern, full-time fixed-term and cutoff; application route redirected to inaccessible login. No first-party substantive body confirmed.",
+      "city": "Bern"
+    },
+    {
+      "journal_id": null,
+      "evidence_url": "https://www.economia.unipd.it/en/en/en/postdoctoral-researcher-economics",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2026-11-30",
+      "note": "Official Padua RESTATE advert identifies economic research duties and EJM application 12812; distinct requisition absent from pinned journal.",
+      "advert_id": "official:ejm:12812",
+      "institution": "University of Padua",
+      "title": "Postdoctoral Researcher in Economics (RESTATE)",
+      "source": "official_padua",
+      "employer_requisition": "12812",
+      "application_url": "https://econjobmarket.org/positions/12812",
+      "city": "Padua",
+      "contract_years_max": 4,
+      "start_date": "2027-09 (preferred)",
+      "min_degree": "PhD in Economics or related field",
+      "scope": "economics",
+      "pi": "Alessia Russo"
+    },
+    {
+      "journal_id": null,
+      "evidence_url": "https://www.eur.nl/en/working-at-eur/vacancies/postdoctoral-researcher-quantitative-empirical-legal-studies",
+      "body_evidence": true,
+      "application_lifecycle": "advertised_open",
+      "deadline_type": "fixed",
+      "deadline_date": "2027-01-31",
+      "note": "Official JUSTFINES research advert; economics and quantitative social science among accepted degrees; law department, filter replay required.",
+      "advert_id": "official:eur:justfines-postdoc",
+      "institution": "Erasmus University Rotterdam",
+      "title": "Postdoctoral Researcher in Quantitative Empirical Legal Studies",
+      "source": "official_erasmus",
+      "city": "Rotterdam",
+      "contract_years": 3,
+      "start_date": "2027-06-01",
+      "min_degree": "PhD in listed disciplines",
+      "salary_min": 4925,
+      "salary_max": 6682,
+      "salary_currency": "EUR",
+      "salary_period": "month",
+      "scope": "law / quantitative social science / public policy"
+    }
+  ],
+  "yale_recoveries": [
+    {
+      "url": "https://egc.yale.edu/opportunities/postdoctoral-associate-economic-history-program-1",
+      "lifecycle": "advertised_open",
+      "deadline": "2027-01-31",
+      "note": "One-year economic history postdoc, PhD Economics, official application link."
+    },
+    {
+      "url": "https://egc.yale.edu/opportunities/postdoctoral-associate-macro-development",
+      "lifecycle": "advertised_open",
+      "deadline": "2027-01-31",
+      "note": "One-year macro-development postdoc, PhD Economics, official application link."
+    },
+    {
+      "url": "https://egc.yale.edu/opportunities/postdoctoral-associate-kuznets-markets-and-development",
+      "lifecycle": "advertised_open",
+      "deadline": "2027-01-31",
+      "note": "One-year markets/trade/development postdoc, PhD Economics, official application link."
+    },
+    {
+      "url": "https://egc.yale.edu/opportunities/development-economics-research-fellow-2",
+      "lifecycle": "rolling",
+      "deadline": null,
+      "note": "Pre-doctoral fellow; quantitative bachelor's/master's, Stata/R, field travel."
+    },
+    {
+      "url": "https://egc.yale.edu/opportunities/development-and-experimental-economics-research-fellow-1",
+      "lifecycle": "rolling",
+      "deadline": null,
+      "note": "Pre-doctoral experimental/development fellow; quantitative bachelor's/master's, Stata/R."
+    }
+  ],
+  "lifecycle_corrections": {
+    "294": {
+      "stamp": "2026-11-24T12:21:33Z",
+      "reason": "deadline passed (20 Sep 2026); detail advert cutoff confirmed; employer index conflicts",
+      "note": "Employer detail states 20 September 2026; cutoff time not specified. See review/2026-11-25/research-advert-resolution.md."
+    },
+    "318": {
+      "stamp": "2026-11-24T12:23:10Z",
+      "reason": "page says no longer accepting applications; EconJobMarket requisition 12920",
+      "note": "EconJobMarket lists 23 November 2026 midnight UTC and applications under review. See review/2026-11-25/research-advert-resolution.md."
+    }
+  },
+  "excluded_from_expansion": [
+    {
+      "journal_id": 450,
+      "reason": "Potential mirror of reviewed Warwick position; source failed."
+    },
+    {
+      "journal_id": 423,
+      "reason": "Potential EPFL 2590 mirror; no proof of separate role."
+    },
+    {
+      "journal_id": 424,
+      "reason": "Potential EPFL 2590 mirror; no proof of separate role."
+    }
+  ]
+}

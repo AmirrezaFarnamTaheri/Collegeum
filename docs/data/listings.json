@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-11-24T19:54:34Z",
- "count": 216,
+ "count": 214,
  "listings": [
   {
    "id": 500,
@@ -4288,45 +4288,6 @@
    "sector": "academic"
   },
   {
-   "id": 318,
-   "title": "Research Economist",
-   "institution": "Norges Bank",
-   "principal_investigator": null,
-   "country": "Norway",
-   "city": "Oslo",
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": null,
-   "days_left": null,
-   "disciplines": [
-    "Macroeconomics",
-    "Finance"
-   ],
-   "visa": "unknown",
-   "summary": "The Research Economist will conduct original research for publication and provide research-based analyses to policy departments, focusing on monetary policy, financial stability, and related topics. The position suits candidates with a PhD (or near completion) in macroeconomics, monetary economics, household finance, or banking, and a documented potential for publication.",
-   "language": "en",
-   "apply_url": "https://econjobmarket.org/positions/12920",
-   "source_url": "https://www.linkedin.com/jobs/view/4485346105",
-   "confidence": 0.939,
-   "first_seen_at": "2026-10-30T15:08:25Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [],
-   "tools_preferred": [],
-   "min_degree": "phd",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "research",
-   "sector": "institutional"
-  },
-  {
    "id": 317,
    "title": "Project Manager and Research Analyst",
    "institution": "Brookings Institution",
@@ -4790,49 +4751,6 @@
    "start_term": null,
    "start_date": null,
    "kind": "research",
-   "sector": "academic"
-  },
-  {
-   "id": 294,
-   "title": "Post-doctoral position Mind-the-Nexus Project",
-   "institution": "Collegio Carlo Alberto",
-   "principal_investigator": "Tiziana Caponio",
-   "country": "Italy",
-   "city": null,
-   "is_remote": false,
-   "duration_years": null,
-   "deadline": null,
-   "days_left": null,
-   "disciplines": [
-    "Political Economy",
-    "Business and Management",
-    "Quantitative Social Sciences"
-   ],
-   "visa": "unknown",
-   "summary": "The Fondazione Collegio Carlo Alberto (CCA) in Turin, Italy, is offering one post-doctoral positions to work in the ERC AdV Project Mind-the-NEXUS – Theorizing the Drivers of the Asylum-Far Right Nexus in Rural Europe, PI Prof. Tiziana Caponio. The postdoctoral researcher will contribute to to the construction, maintenance and documentation of the database ‘ Rural Politics and Asylum’ , with responsibility on the acquisition, pre-processing, analysis and coding of textual and digital data produced by institutional and media actors in the rural municipalities analysed in the five countries...",
-   "language": "en",
-   "apply_url": "https://www.carloalberto.org/about/jobs-fellowships/post-doctoral-position-mind-the-nexus-project",
-   "source_url": "https://www.carloalberto.org/about/jobs-fellowships/post-doctoral-position-mind-the-nexus-project",
-   "confidence": 0.887,
-   "first_seen_at": "2026-10-29T15:03:22Z",
-   "deadline_note": null,
-   "visa_note": null,
-   "alternate_sources": [],
-   "salary_min": null,
-   "salary_max": null,
-   "salary_currency": null,
-   "salary_period": null,
-   "salary_raw": null,
-   "tools_required": [
-    "Python",
-    "R"
-   ],
-   "tools_preferred": [],
-   "min_degree": "unstated",
-   "degree_note": null,
-   "start_term": null,
-   "start_date": null,
-   "kind": "postdoc",
    "sector": "academic"
   },
   {

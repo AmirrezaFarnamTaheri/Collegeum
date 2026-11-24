@@ -14,9 +14,9 @@
 #
 # Run `predoc-pipeline sources verify` after editing this file.
 #
-# J-PAL and IPA were removed on purpose: they are US-based organisations and the
-# owner of this bot does not want their positions (see config/preferences.toml,
-# `excluded_employers`, which blocks J-PAL whatever source it arrives from).
+# Employer inclusion/exclusion is controlled by config/preferences.toml.
+# J-PAL's global board is enabled and excluded_employers is currently empty.
+# The IPA board below is disabled for provider access reasons, not employer policy.
 
 # ===========================================================================
 # Job boards (ON)
@@ -905,7 +905,7 @@ link_pattern = 'poverty-action\.org/|job-boards\.greenhouse\.io/innovationsforpo
 institution = "Innovations for Poverty Action (IPA)"
 country = "United States"
 field_implied = true
-note = "OFF: poverty-action.org returns HTTP 403 to GitHub runner IPs. J-PAL positions are excluded by preferences.toml (excluded_employers) regardless of source."
+note = "OFF: poverty-action.org returns HTTP 403 to GitHub runner IPs. Employer exclusion is controlled by preferences.toml; do not infer it from this board's access state."
 
 
 # --- official source expansion (validated 10 October 2026) -----------------
