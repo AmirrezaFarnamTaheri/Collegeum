@@ -16,7 +16,7 @@ cost.
 
 **Economics PhD admissions:** The dashboard also has a separately labelled
 [official-university programme directory](https://amirrezafarnamtaheri.github.io/Collegeum/#phd-admissions).
-It maintains 251 programme discovery leads adapted from an MIT-licensed
+It maintains 252 programme discovery leads adapted from an MIT-licensed
 reference, but *never* trusts its undated third-party deadlines. An isolated
 scheduled monitor checks primary institution pages four times daily in safe batches and surfaces
 only explicit, full-year official-source dates. A

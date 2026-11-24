@@ -10,7 +10,7 @@ Its copyright and permission notice is at
 
 ## One source of truth: each official university programme page
 
-- `config/phd_admissions_seeds.json` keeps 251 programme names, country codes,
+- `config/phd_admissions_seeds.json` keeps 252 programme names, country codes,
   official programme links and **unverified** structure hints. No upstream
   deadline data is imported or used by a publisher.
 - An obsolete or inaccessible discovery link can be replaced only after
@@ -103,7 +103,7 @@ never dispatches production ingestion. Its existing concurrency lock
 serializes overlapping checks. Each run checks at most 25 oldest-due
 official programme URLs. Never-checked programmes
 take priority so missed GitHub schedules cannot strand calendar shards. At a
-reliable four-runs-per-day cadence all 251 receive an initial attempted check
+reliable four-runs-per-day cadence all catalogued programmes receive an initial attempted check
 within 11 successful runs (under three days). A recorded check is eligible
 for renewal after 11 days; the monitor makes no network requests if none are
 due. Trusted source-code or seed changes also bootstrap a check on `main`
@@ -146,7 +146,7 @@ The complete pass does not override the strict source-evidence requirements. A t
 still appear in the institution's own HTML with the matching PhD admissions
 context. A university may publish only a yearless or rolling deadline; these
 cannot be marked confirmed. An attempted recheck is **not** a promise that
-all 251 programmes have a public official deadline.
+all catalogued programmes have a public official deadline.
 
 The 2026 source remediation also replaces the previously failing UC Davis
 Economics departmental FAQ with its official university Graduate Studies
@@ -194,14 +194,14 @@ tables and grouped PhD deadline lists without borrowing another programme's
 date. These cross-element excerpts are labelled as structured table/list
 evidence, with their institutional source URL and check time retained.
 
-## Coverage of all 251 programmes
+## Coverage of the expanded programme directory
 
 The monitor attempts every programme, but a current dated confirmation depends
 on what each university publishes and permits the checker to read. Rolling
 admission, an unpublished next intake, a yearless recurring date, multiple
 applicant-group cutoffs and an inaccessible source are distinct unresolved
 cases. None becomes a dated confirmation merely because the catalogue contains
-251 rows or a refresh completed successfully.
+the current catalogue rows or a refresh completed successfully.
 
 `tools/audit_phd_admissions.py` produces one record per programme, including its
 current verification status, source URLs, date evidence, last check, next
@@ -256,7 +256,7 @@ PYTHONPATH=src python3 -m unittest tests.core.test_economics_phd_admissions -v
 ```
 
 For a reproducible coverage check, pass an explicit timezone-aware `--now`.
-`--require-all-verified` exits with status 1 unless all 251 observations actually
+`--require-all-verified` exits with status 1 unless all catalogued observations actually
 have supported current deadlines. Normal refreshes publish the honest coverage
 report without requiring an unattainable all-dates condition.
 
@@ -284,3 +284,10 @@ the system does not promise unconditional exactly-once delivery.
 A university's official programme website remains the
 decision authority for eligibility, funding and deadlines. Even an
 automatically corroborated date should be rechecked before submitting.
+
+
+### Catalogue expansion and corrected programme identity (24 November 2026)
+
+The current seed inventory grows from 251 to **252** with **KU Leuven**, because the Department of Economics publishes a direct [2027–28 doctoral call](https://feb.kuleuven.be/research/economics/PHD/phdcall). Its official page states a 31 January 2027 deadline, but Collegeum's entry remains **`unverified`** until the scheduled robots-aware checker itself corroborates the institutional page. No date was inferred or manually promoted.
+
+The pre-existing **Tilburg University** lead incorrectly used the Research Master's application page. It now points to the University's [PhD in Economics admission requirements](https://www.tilburguniversity.edu/research/economics-and-management/graduate-school/phd-economics/admission), with its previous inconclusive assessment cleared for a new independent check. Research Master's applicant-category dates must not be applied to the PhD vacancy-based route. These programme-count changes do not affect the separate **251 distinct-advert** review; its original fixed cohort remains valid as a dated audit.

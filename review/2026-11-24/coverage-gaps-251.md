@@ -99,3 +99,7 @@ These leads do **not** add to the existing 251-advert count or 56 programme conf
 - Publish audit reports in `review/` only; keep the frontend focused on applicants and concise listing details.
 
 All counts above were computed from the audited JSON on branch `improve/phd-official-coverage`, evaluated against the catalogue snapshot dated 24 November 2026.
+
+## Subsequent programme-source repairs
+
+The live programme seed set was expanded from **251 to 252** with KU Leuven as an **unverified** direct Economics PhD lead, and Tilburg's pre-existing seed URL was corrected from its Research Master's route to its Economics PhD admissions route. No automated deadline confirmation is claimed from either addition. All 251-advert audit counts and the archived 251-programme snapshot elsewhere in this report remain distinct and historical.
