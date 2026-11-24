@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-24-admissions-v16"
+EXTRACTOR_REVISION = "2026-11-24-admissions-v17"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -1228,6 +1228,105 @@ def _cambridge_economics_phd_current_deadlines(
     return candidates
 
 
+def _ubc_economics_phd_open_intake_deadlines(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Accept only matching Canadian/international application cutoffs.
+
+    UBC publishes multiple intake years, each with distinct application,
+    transcript and referee dates. Only an *opened*, unexpired doctoral intake
+    is current evidence. The department FAQ cannot borrow graduate-school
+    deadline values from a different institutional host.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    if not (
+        host == "grad.ubc.ca"
+        and path == (
+            "/prospective-students/graduate-degree-programs/phd-economics"
+        )
+        and any(
+            re.fullmatch(r"Doctor of Philosophy in Economics\s*\(PhD\)", h, re.I)
+            for h in parser.headings
+        )
+    ):
+        return []
+    text = parser.text()[:MAX_HTML_BYTES]
+    if not (
+        re.search(r"\bVancouver School of Economics\b", text, re.I)
+        and re.search(r"\b2\)\s*Meet Deadlines\b", text, re.I)
+    ):
+        return []
+    calendar = re.search(
+        r"\b2\)\s*Meet Deadlines\b(?P<body>.*?)\bDeadline Explanations\b",
+        text, re.I | re.S,
+    )
+    if calendar is None:
+        return []
+
+    cycles: list[tuple[date, list[tuple[str, str]]]] = []
+    for intake in re.finditer(
+        r"\bSeptember\s+(?P<year>20\d{2})\s+Intake\b(?P<section>.*?)"
+        r"(?=\bSeptember\s+20\d{2}\s+Intake\b|$)",
+        calendar.group("body"), re.I | re.S,
+    ):
+        intake_year = int(intake.group("year"))
+        section = intake.group("section")
+        open_label = re.search(r"\bApplication Open Date\b", section, re.I)
+        if open_label is None:
+            continue
+        opening_match = DATE_PATTERN.search(section, open_label.end())
+        if (
+            opening_match is None
+            or opening_match.start() - open_label.end() > 15
+            or (opening := _parse_date(opening_match)) is None
+            or opening > now.date()
+        ):
+            continue
+
+        group_dates: list[tuple[str, str]] = []
+        for group_name, until in (
+            ("Canadian Applicants", "International Applicants"),
+            ("International Applicants", None),
+        ):
+            group = re.search(r"\b" + group_name + r"\b", section, re.I)
+            if group is None:
+                break
+            stop = re.search(
+                r"\b" + until + r"\b", section[group.end():], re.I,
+            ) if until else None
+            region = section[group.end():(
+                group.end() + stop.start() if stop else len(section)
+            )]
+            label = re.search(r"\bApplication Deadline\b", region, re.I)
+            if label is None:
+                break
+            cutoff_match = DATE_PATTERN.search(region, label.end())
+            if (
+                cutoff_match is None
+                or cutoff_match.start() - label.end() > 15
+                or (closing := _parse_date(cutoff_match)) is None
+                or closing < now.date()
+                or closing.year not in {intake_year - 1, intake_year}
+            ):
+                break
+            group_dates.append((
+                closing.isoformat(),
+                f"{group_name} Application Deadline "
+                f"{cutoff_match.group()}"[:180],
+            ))
+        if len(group_dates) == 2:
+            # Preserve both dates: mismatched applicant classes cause an
+            # ambiguous result rather than selecting one cutoff arbitrarily.
+            earliest = min(date.fromisoformat(x[0]) for x in group_dates)
+            cycles.append((earliest, group_dates))
+
+    if not cycles:
+        return []
+    return min(cycles, key=lambda item: item[0])[1]
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -1242,6 +1341,22 @@ def collect_official_deadline(
     source_path = urllib.parse.urlsplit(source_url or "")
     university_host = (source_path.hostname or "").lower().removeprefix("www.")
     university_path = source_path.path.lower().rstrip("/")
+    # UBC's graduate degree listing supplies exact applicant-group deadlines.
+    # Neither its old FAQ nor the same path on another hostname is evidence.
+    if (
+        university_path.startswith(
+            "/prospective-students/graduate-degree-programs/phd-economics"
+        )
+        or (
+            university_host == "economics.ubc.ca"
+            and "phd-program" in university_path
+        )
+    ):
+        return _schoolwide_economics_result(
+            _ubc_economics_phd_open_intake_deadlines(
+                parser, now=now, source_url=source_url,
+            )
+        )
     # Only the university-owned Economics PhD directory route can supply the
     # deadline. An MPhil course with an identical calendar is a different degree.
     if (
