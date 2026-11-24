@@ -1206,7 +1206,7 @@ def _cambridge_economics_phd_current_deadlines(
     candidates: list[tuple[str, str]] = []
     sections = re.finditer(
         r"\bDates and deadlines\s*:\s*(?P<period>.*?)"
-        r"\bFunding Deadlines\b", text, re.I | re.S,
+        r"(?:\bFunding Deadlines\b|$)", text, re.I | re.S,
     )
     for section in sections:
         period = section.group("period")
