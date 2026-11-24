@@ -434,11 +434,37 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
     def test_trusted_extractor_upgrade_rechecks_verified_with_existing_old_details(self):
         now = datetime(2026, 11, 19, 13, 0, tzinfo=UTC)
         original = json.loads(json.dumps(self.public))
-        earlier = [
-            row for row in original["programmes"]
-            if row["status"] == "verified" and row.get("official_details")
-        ]
-        self.assertGreaterEqual(len(earlier), 2)
+        old_check = (now - timedelta(days=1)).isoformat().replace("+00:00", "Z")
+        # Keep the complete seed inventory, but control every observation's
+        # state so a growing live verified count cannot consume this batch.
+        for row in original["programmes"]:
+            row.update(
+                status="no_explicit_deadline", checked_at=old_check,
+                deadline_iso=None, evidence_url=None, evidence_excerpt=None,
+                official_details={}, investigated_urls=[],
+                extractor_revision="old-fixture-extractor",
+            )
+        # Put the two verified records at the end of the inventory. They must
+        # still receive priority over the 249 readable negative observations.
+        earlier = original["programmes"][-2:]
+        for row in earlier:
+            evidence_url = row["official_programme_url"]
+            row.update(
+                status="verified", deadline_iso="2027-01-15",
+                evidence_url=evidence_url,
+                evidence_excerpt="Economics PhD application deadline: January 15, 2027.",
+                investigated_urls=[evidence_url],
+                official_details={
+                    "tuition": {
+                        "value": "No tuition fees",
+                        "evidence_url": evidence_url,
+                        "evidence_excerpt": "Official university: no tuition fees",
+                        "checked_at": old_check,
+                    },
+                },
+            )
+            self.assertFalse(eligible_for_check(row, now=now))
+        validate_catalogues(self.seeds, original)
         expected = {row["official_programme_url"] for row in earlier}
         checked = []
 
@@ -459,11 +485,19 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             self.seeds, original, now=now, batch_size=25,
             fetcher=fetch, recheck_no_explicit=True,
         )
-        self.assertTrue(expected.issubset(set(checked)))
+        self.assertEqual(len(checked), 25)
+        self.assertEqual(set(checked), expected | {
+            row["official_programme_url"] for row in original["programmes"][:23]
+        })
+        self.assertEqual(len(refreshed["programmes"]), 251)
+        stamp = now.isoformat().replace("+00:00", "Z")
+        self.assertEqual(sum(row["checked_at"] == stamp
+                             for row in refreshed["programmes"]), 25)
         for row in refreshed["programmes"]:
             if row["official_programme_url"] in expected:
                 self.assertFalse(row["official_details"])
                 self.assertEqual(row["status"], "verified")
+                self.assertEqual(row["checked_at"], stamp)
 
     def test_initial_source_changes_bootstrap_without_refresh_commit_loop(self):
         workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(

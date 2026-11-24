@@ -12,6 +12,7 @@ def test_pages_exports_independent_public_call_catalogue():
         "- name: Stage upstream MIT attribution", 1
     )[0]
     assert "official_phd_calls.json" in stage
+    assert "phd_admissions_coverage.json" in stage
     assert "build/pages/data" in stage
 
 
@@ -30,7 +31,10 @@ def test_dashboard_has_distinct_funding_calls_section_and_loading_error():
 
 def test_calls_do_not_become_vacancy_entries_or_unverified_deadline_claims():
     html = Path("docs/index.html").read_text(encoding="utf-8")
-    assert "row.status === 'verified'" in html
+    validator = html.split("function verifiedOfficialCall(row)", 1)[1].split(
+        "function renderOfficialCalls()", 1
+    )[0]
+    assert "row.status !== 'verified'" in validator
     assert "row.evidence_url !== row.official_url" in html
     assert "row.location_evidence_url !== row.official_url" in html
     assert "Date.parse(row.checked_at)" in html

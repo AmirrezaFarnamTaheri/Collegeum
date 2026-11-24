@@ -371,7 +371,7 @@
     {
       "institution": "HKUST",
       "country_code": "HK",
-      "official_programme_url": "https://econ.hkust.edu.hk/programs-n-courses/mphd/mphd-introduction",
+      "official_programme_url": "https://prog-crs.hkust.edu.hk/pgprog/2027-28/mphil-phd-econ",
       "programme_structure_hint": "MPhil + PhD"
     },
     {
@@ -401,7 +401,7 @@
     {
       "institution": "Keio University",
       "country_code": "JP",
-      "official_programme_url": "https://www.keio.ac.jp/en/grad-admissions/doctoral/gsecon/",
+      "official_programme_url": "https://www.keio.ac.jp/en/admissions/grad/doctoral/gsecon/",
       "programme_structure_hint": "PhD only"
     },
     {
@@ -485,7 +485,7 @@
     {
       "institution": "McMaster University",
       "country_code": "CA",
-      "official_programme_url": "https://economics.mcmaster.ca/graduate-programs/phd-economics/",
+      "official_programme_url": "https://applygrad.mcmaster.ca/portal/start_your_app?cmd=get_results&selectedterm=sept",
       "programme_structure_hint": "PhD only"
     },
     {
@@ -695,7 +695,7 @@
     {
       "institution": "Stockholm University",
       "country_code": "SE",
-      "official_programme_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/phd-programme-in-economics/applying-to-the-phd-programme-in-economics",
+      "official_programme_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/applying-to-the-phd-programme-in-economics",
       "programme_structure_hint": "PhD only"
     },
     {
@@ -755,7 +755,7 @@
     {
       "institution": "Trinity College Dublin",
       "country_code": "IE",
-      "official_programme_url": "https://www.tcd.ie/economics/news-and-events/department-news/phd-in-economics-applications-now-open/",
+      "official_programme_url": "https://www.tcd.ie/economics/programmes/postgraduate/phd-in-economics-/admission-requirements/",
       "programme_structure_hint": "PhD only"
     },
     {
@@ -959,7 +959,7 @@
     {
       "institution": "University of Cologne",
       "country_code": "DE",
-      "official_programme_url": "https://cgs.uni-koeln.de/en/doctoral-phd-programmes/phd-programme-in-economics/admission",
+      "official_programme_url": "https://cgs.uni-koeln.de/en/economics/phd-programme/application",
       "programme_structure_hint": "MSc + PhD"
     },
     {
@@ -977,7 +977,7 @@
     {
       "institution": "University of Edinburgh",
       "country_code": "UK",
-      "official_programme_url": "https://www.ed.ac.uk/studying/postgraduate/degrees/index.php?r=site/view&edition=2024&id=278",
+      "official_programme_url": "https://study.ed.ac.uk/programmes/postgraduate-research/278-economics",
       "programme_structure_hint": "PhD only"
     },
     {
@@ -1199,7 +1199,7 @@
     {
       "institution": "University of Notre Dame",
       "country_code": "US",
-      "official_programme_url": "https://graduateschool.nd.edu/degree-programs/economics-phd---doctoral/",
+      "official_programme_url": "https://economics.nd.edu/graduate/admissions-and-funding/",
       "programme_structure_hint": null
     },
     {
@@ -1247,7 +1247,7 @@
     {
       "institution": "University of Pennsylvania",
       "country_code": "US",
-      "official_programme_url": "https://economics.sas.upenn.edu/graduate/prospective-students/admissions-information-phd-program-economics",
+      "official_programme_url": "https://economics.sas.upenn.edu/graduate/prospective-students/application-guidelines",
       "programme_structure_hint": null
     },
     {
@@ -1493,7 +1493,7 @@
     {
       "institution": "Washington University in St. Louis",
       "country_code": "US",
-      "official_programme_url": "https://economics.wustl.edu/phd-admissions",
+      "official_programme_url": "https://gradstudies.artsci.washu.edu/browse/economics",
       "programme_structure_hint": null
     },
     {

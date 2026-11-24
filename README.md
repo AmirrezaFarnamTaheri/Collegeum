@@ -19,7 +19,11 @@ cost.
 It maintains 251 programme discovery leads adapted from an MIT-licensed
 reference, but *never* trusts its undated third-party deadlines. An isolated
 scheduled monitor checks primary institution pages four times daily in safe batches and surfaces
-only explicit, current-year official-source dates. Fresh, verified non-US
+only explicit, full-year official-source dates. A
+[verification report for every programme](docs/data/phd_admissions_coverage.json)
+records current confirmations, source-access failures, unresolved dates and the
+next action; a successful check does not imply that every university publishes
+a deadline. Fresh, verified non-US
 programme admissions also receive **separately labelled Telegram announcements**
 in the existing channel; they are not funded research vacancies and never enter
 vacancy/X feeds or subscription alerts. See

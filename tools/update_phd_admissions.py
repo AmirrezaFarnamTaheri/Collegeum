@@ -26,9 +26,19 @@ from pathlib import Path
 if __package__:
     from .official_html_validation import official_html_response_problem
     from .official_robots import parse_official_robots
+    from .phd_admissions_asia import collect_deadline as asia_deadline
+    from .phd_admissions_europe import collect_deadline as europe_deadline
+    from .phd_admissions_international import collect_deadline as international_deadline
+    from .phd_admissions_tohoku import collect_deadline as tohoku_deadline
+    from .phd_admissions_us import collect_deadline as us_deadline
 else:
     from official_html_validation import official_html_response_problem
     from official_robots import parse_official_robots
+    from phd_admissions_asia import collect_deadline as asia_deadline
+    from phd_admissions_europe import collect_deadline as europe_deadline
+    from phd_admissions_international import collect_deadline as international_deadline
+    from phd_admissions_tohoku import collect_deadline as tohoku_deadline
+    from phd_admissions_us import collect_deadline as us_deadline
 
 ROOT = Path(__file__).resolve().parents[1]
 SEEDS = ROOT / "config/phd_admissions_seeds.json"
@@ -37,14 +47,15 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-24-admissions-v17"
+EXTRACTOR_REVISION = "2026-11-24-admissions-v18"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
 DATE_PATTERN = re.compile(
     r"\b(?P<iso>20\d{2}-\d{2}-\d{2})\b|"
     r"\b(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s*,?\s*(?P<year>20\d{2})\b|"
-    r"\b(?P<month2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(?P<day2>\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(?P<year2>20\d{2})\b|"
+    r"\b(?P<month2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(?P<day2>\d{1,2})(?:st|nd|rd|th)?(?:\s*\((?:\d{1,2}(?::\d{2})?\s*(?:am|pm)/)?(?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rs(?:day)?)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)\))?\s*,?\s*(?P<year2>20\d{2})\b|"
+    r"\b(?P<fday>\d{1,2})(?:\s*er)?\s+(?P<fmonth>janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)\s+(?P<fyear>20\d{2})\b|"
     r"(?<!\d)(?P<n1>\d{1,2})[./](?P<n2>\d{1,2})[./](?P<ny>20\d{2})\b",
     re.I,
 )
@@ -178,6 +189,16 @@ def _parse_date(match: re.Match[str]) -> date | None:
     try:
         if match.group("iso"):
             return date.fromisoformat(match.group("iso"))
+        if match.group("fyear"):
+            months_fr = (
+                "janvier", "février", "mars", "avril", "mai", "juin",
+                "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+            )
+            return date(
+                int(match.group("fyear")),
+                months_fr.index(match.group("fmonth").lower()) + 1,
+                int(match.group("fday")),
+            )
         if match.group("ny"):
             first, second, year = (
                 int(match.group("n1")), int(match.group("n2")),
@@ -1341,6 +1362,15 @@ def collect_official_deadline(
     source_path = urllib.parse.urlsplit(source_url or "")
     university_host = (source_path.hostname or "").lower().removeprefix("www.")
     university_path = source_path.path.lower().rstrip("/")
+    for adapter in (
+        asia_deadline, europe_deadline, international_deadline, tohoku_deadline, us_deadline,
+    ):
+        regional = adapter(
+            parser, now=now, source_url=source_url,
+            date_pattern=DATE_PATTERN, parse_date=_parse_date,
+        )
+        if regional is not None:
+            return regional
     # UBC's graduate degree listing supplies exact applicant-group deadlines.
     # Neither its old FAQ nor the same path on another hostname is evidence.
     if (

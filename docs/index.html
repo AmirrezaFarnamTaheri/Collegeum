@@ -1636,6 +1636,7 @@
         Official-source monitoring is conservative: missing, blocked, out-of-date and ambiguous
         pages stay unverified. A successful pipeline or a directory link does not establish that
         admissions are open.
+        <a href="data/phd_admissions_coverage.json" download="phd_admissions_coverage.json">Download the verification report for all 251 programmes</a>.
       </p>
     </section>
 
@@ -2687,6 +2688,62 @@
         return u.href;
       } catch (_) { return null; }
     };
+    const admissionsOfficialUrl = raw => {
+      const safe = admissionsSafeUrl(raw);
+      if (!safe) return null;
+      const parsed = new URL(safe);
+      return parsed.protocol === 'https:' && (!parsed.port || parsed.port === '443')
+        ? parsed : null;
+    };
+    const admissionsHost = url => url.hostname.toLowerCase().replace(/^www\./, '');
+    function admissionsEvidenceHasDate(excerpt, deadline) {
+      if (typeof excerpt !== 'string' || !excerpt.trim() || excerpt.length > 500) return false;
+      const [year, month, day] = deadline.split('-').map(Number);
+      const months = ['Jan(?:uary)?', 'Feb(?:ruary)?', 'Mar(?:ch)?', 'Apr(?:il)?',
+        'May', 'Jun(?:e)?', 'Jul(?:y)?', 'Aug(?:ust)?', 'Sep(?:t(?:ember)?)?',
+        'Oct(?:ober)?', 'Nov(?:ember)?', 'Dec(?:ember)?'];
+      const french = ['janvier', 'f[ée]vrier', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'ao[uû]t', 'septembre', 'octobre', 'novembre', 'd[ée]cembre'];
+      const m = `(?:${months[month - 1]}|${french[month - 1]})`;
+      const d = day < 10 ? `0?${day}` : String(day);
+      const n = month < 10 ? `0?${month}` : String(month);
+      const weekday = String.raw`(?:\s*\((?:\d{1,2}(?::\d{2})?\s*(?:am|pm)/)?(?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rs(?:day)?)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)\))?`;
+      const ordinal = String.raw`(?:st|nd|rd|th|\s*er)?`;
+      const forms = [deadline,
+        String.raw`${d}${ordinal}\s+${m}${weekday}\s*,?\s*${year}`,
+        String.raw`${m}\.?\s+${d}${ordinal}${weekday}\s*,?\s*${year}`];
+      // Numeric day/month ordering is safe only when the day exceeds 12.
+      if (day > 12) forms.push(
+        String.raw`${d}[./]${n}[./]${year}`,
+        String.raw`${n}[./]${d}[./]${year}`);
+      return new RegExp(String.raw`\b(?:${forms.join('|')})\b`, 'i').test(excerpt);
+    }
+    function admissionsDeadlineConfirmed(row, now = Date.now()) {
+      if (!row || row.status !== 'verified' || !Number.isFinite(now)) return false;
+      const raw = row.deadline_iso;
+      if (typeof raw !== 'string' || !/^20\d{2}-\d{2}-\d{2}$/.test(raw)) return false;
+      const deadline = Date.parse(raw + 'T00:00:00Z');
+      if (!Number.isFinite(deadline) || new Date(deadline).toISOString().slice(0, 10) !== raw ||
+          raw < new Date(now).toISOString().slice(0, 10) ||
+          Number(raw.slice(0, 4)) > new Date(now).getUTCFullYear() + 2) return false;
+      if (typeof row.checked_at !== 'string' ||
+          !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/i.test(row.checked_at)) return false;
+      const checkedDay = row.checked_at.slice(0, 10);
+      const calendarDay = Date.parse(checkedDay + 'T00:00:00Z');
+      if (!Number.isFinite(calendarDay) ||
+          new Date(calendarDay).toISOString().slice(0, 10) !== checkedDay ||
+          Number(row.checked_at.slice(11, 13)) > 23) return false;
+      const checked = Date.parse(row.checked_at);
+      if (!Number.isFinite(checked) || checked > now || now - checked > 14 * 86400000) return false;
+      const lead = admissionsOfficialUrl(row.official_programme_url);
+      const evidence = admissionsOfficialUrl(row.evidence_url);
+      if (!lead || !evidence || admissionsHost(lead) !== admissionsHost(evidence) ||
+          !Array.isArray(row.investigated_urls) ||
+          !row.investigated_urls.includes(row.evidence_url)) return false;
+      // Programme/date-role interpretation belongs to the official collector.
+      // Its stored proof must retain the actual full date before we count it.
+      return admissionsEvidenceHasDate(row.evidence_excerpt, raw);
+    }
     // Display only fresh official facts; ignore untrusted or stale URLs.
     function admissionsFact(row, key) {
       const fact = row.official_details && row.official_details[key];
@@ -2695,32 +2752,26 @@
       const checked = Date.parse(fact.checked_at);
       if (!Number.isFinite(checked) || checked > Date.now() ||
           Date.now() - checked > 14 * 86400000) return null;
-      const source = admissionsSafeUrl(fact.evidence_url);
-      const lead = admissionsSafeUrl(row.official_programme_url);
+      const source = admissionsOfficialUrl(fact.evidence_url);
+      const lead = admissionsOfficialUrl(row.official_programme_url);
       if (!source || !lead) return null;
-      try {
-        const host = url => new URL(url).hostname.toLowerCase().replace(/^www\./, '');
-        if (host(source) !== host(lead)) return null;
-      } catch (_) { return null; }
-      return { value: fact.value.slice(0, 175), source };
+      if (admissionsHost(source) !== admissionsHost(lead)) return null;
+      return { value: fact.value.slice(0, 175), source: source.href };
     }
 
     function renderAdmissions() {
       const query = $('#phd-admissions-search').value.trim().toLowerCase();
       const country = $('#phd-admissions-country').value;
       const statusFilter = $('#phd-admissions-status').value;
+      const now = Date.now();
       const shown = phdAdmissions.filter(row => {
         const matches = !query || (row.institution || '').toLowerCase().includes(query) ||
           admissionsCountry(row.country_code || '').toLowerCase().includes(query);
         return matches && (!country || row.country_code === country) &&
           (!statusFilter || (statusFilter === 'verified' ?
-            row.status === 'verified' : row.status !== 'verified'));
+            admissionsDeadlineConfirmed(row, now) : !admissionsDeadlineConfirmed(row, now)));
       });
-      const todayUtc = new Date().toISOString().slice(0, 10);
-      const verified = phdAdmissions.filter(r =>
-        r.status === 'verified' && typeof r.deadline_iso === 'string' &&
-        r.deadline_iso >= todayUtc
-      ).length;
+      const verified = phdAdmissions.filter(row => admissionsDeadlineConfirmed(row, now)).length;
       $('#phd-admissions-summary').textContent =
         `${shown.length} of ${phdAdmissions.length} programmes · ${verified} with an automatically
         corroborated official-source deadline. Yearless, stale or ambiguous dates are not presented as confirmed.`;
@@ -2729,9 +2780,7 @@
         const structure = row.programme_structure_hint
           ? `Reported structure: ${esc(row.programme_structure_hint)} (recheck at source)`
           : 'Programme structure: confirm with university';
-        const confirmed = row.status === 'verified' &&
-          /^20\\d{2}-\\d{2}-\\d{2}$/.test(row.deadline_iso || '') &&
-          row.deadline_iso >= todayUtc;
+        const confirmed = admissionsDeadlineConfirmed(row, now);
         const verdict = confirmed
           ? `Official-source date: ${esc(row.deadline_iso)} (confirm before applying)`
           : 'Deadline not officially corroborated';
@@ -2757,6 +2806,7 @@
               <h3>${esc(row.institution)}</h3>
               <p>${esc(countryName)} · ${structure}</p>
               <p class="status ${confirmed ? 'verified' : ''}">${verdict}</p>
+              ${confirmed ? `<p class="note">Deadline details: ${esc(row.evidence_excerpt)}</p>` : ''}
               ${officialFacts}
             </div>
             <div>

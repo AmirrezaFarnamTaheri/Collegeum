@@ -115,8 +115,10 @@ early. A trusted code upgrade also rechecks previously verified records missing
 the new official detail fields, without promoting third-party assertions.
 A previously verified deadline is
 **withdrawn** if source evidence ages beyond 14 days, or the date passes.
-After every check it commits only the derived
-`docs/data/phd_admissions.json`. The existing Pages deployment publishes the
+After every check it commits the derived
+`docs/data/phd_admissions.json` and the complete stored-evidence coverage audit,
+`docs/data/phd_admissions_coverage.json`, alongside the independent official-call
+observations maintained by the same workflow. The existing Pages deployment publishes the
 result and its MIT notice. No vacancy ingestion, subscriber delivery, or
 provider-restricted retries are involved. Failed/blocked checks remain visible
 as unverified; no assumption of a live programme is made.
@@ -192,12 +194,68 @@ tables and grouped PhD deadline lists without borrowing another programme's
 date. These cross-element excerpts are labelled as structured table/list
 evidence, with their institutional source URL and check time retained.
 
+## Coverage of all 251 programmes
+
+The monitor attempts every programme, but a current dated confirmation depends
+on what each university publishes and permits the checker to read. Rolling
+admission, an unpublished next intake, a yearless recurring date, multiple
+applicant-group cutoffs and an inaccessible source are distinct unresolved
+cases. None becomes a dated confirmation merely because the catalogue contains
+251 rows or a refresh completed successfully.
+
+`tools/audit_phd_admissions.py` produces one record per programme, including its
+current verification status, source URLs, date evidence, last check, next
+scheduled check and required next action. It checks the stored observation's
+calendar date, exact full date in the excerpt, 14-day freshness, catalogue
+metadata, matching official HTTPS host and recorded investigation provenance.
+It does not fetch university pages or promote an observation. The automatic
+refresh exports this report to `docs/data/phd_admissions_coverage.json`; the
+dashboard offers it as a download. Its count, status filter and cards use the
+same current-evidence gate, including removal of stale dates. Confirmed cards
+also show the source excerpt so applicant restrictions and earlier required
+application stages remain visible beside the date.
+
+The 24 November 2026 review increased independently corroborated dates from
+41 in the starting repository to 56, while auditing the complete 251-programme
+inventory. The review records are at
+[`review/2026-11-24/phd-deadline-coverage.md`](../review/2026-11-24/phd-deadline-coverage.md)
+and
+[`review/2026-11-24/phd-deadline-source-review.json`](../review/2026-11-24/phd-deadline-source-review.json).
+These are dated research records, not an alternative source of live deadline
+values. The public observation catalogue remains authoritative for display.
+
+Reviewed institutional layouts are implemented in small, standard-library
+modules under `tools/phd_admissions_*.py`, called by the main collector:
+
+- Explicit Economics doctoral application sections, including shared doctoral
+  deadlines only where the same page establishes Economics applicability.
+- Doctoral application columns and registration ranges, keeping supporting
+  documents, funding, preliminary screening, interviews and enrolment separate.
+- Domestic/international and full-time/part-time groups, accepted as a single
+  deadline only when all required complete dates agree.
+- French full-year date ranges and English dates containing parenthesized
+  weekdays or times. The original printed date is retained; a year is never
+  supplied from an intake heading or inferred for a yearless closing endpoint.
+
+The adapters have no network access or stored deadline overrides. All source
+changes first invalidate the previous observation; the existing robots-aware
+collector must fetch and corroborate each new official URL. Missing competing
+dates, ambiguous group scopes and malformed fields fail closed. The source
+review includes successful checks that produced no date and failed checks that
+remained unverified; a tested parser alone does not confirm a programme.
+
 For offline verification:
 
 ```bash
 python3 -S tools/update_phd_admissions.py --check
+python3 -S tools/audit_phd_admissions.py --json
 PYTHONPATH=src python3 -m unittest tests.core.test_economics_phd_admissions -v
 ```
+
+For a reproducible coverage check, pass an explicit timezone-aware `--now`.
+`--require-all-verified` exits with status 1 unless all 251 observations actually
+have supported current deadlines. Normal refreshes publish the honest coverage
+report without requiring an unattainable all-dates condition.
 
 For a bounded live execution **in the authorised Actions environment**:
 

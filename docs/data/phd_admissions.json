@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-24T09:04:23Z",
+  "generated_at": "2026-11-24T09:59:49Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -410,11 +410,11 @@
       "country_code": "US",
       "official_programme_url": "https://www.cmu.edu/tepper/programs/phd/admissions/index.html",
       "programme_structure_hint": null,
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2026-12-15",
+      "evidence_url": "https://www.cmu.edu/tepper/programs/phd/admissions",
+      "evidence_excerpt": "Tepper Economics Ph.D. application: The application site will remain open until December 15, 2026.",
       "official_details": {},
       "investigated_urls": [
         "https://www.cmu.edu/tepper/programs/phd/admissions",
@@ -422,7 +422,7 @@
         "https://www.cmu.edu/graduate/prospective/",
         "https://www.cmu.edu/sfs/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Catholic University of Louvain",
@@ -451,17 +451,17 @@
       "country_code": "AT",
       "official_programme_url": "https://www.ceu.edu/admissions/doctoral#doctoral-degree-deadlines",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://www.ceu.edu/admissions/doctoral#doctoral-degree-deadlines",
+      "evidence_excerpt": "CEU doctoral applications (Economics included): Deadline: January 15, 2027",
       "official_details": {
         "institution_country": {
           "value": "Austria",
           "evidence_url": "https://www.ceu.edu/contact",
           "evidence_excerpt": "Central European University Quellenstraße 51 1100 Wien Austria",
-          "checked_at": "2026-11-24T09:04:23Z"
+          "checked_at": "2026-11-24T09:46:04Z"
         }
       },
       "investigated_urls": [
@@ -470,7 +470,7 @@
         "https://www.ceu.edu/admissions/doctoral",
         "https://www.ceu.edu/admissions/financial-aid"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Charles University",
@@ -631,17 +631,17 @@
       "country_code": "DE",
       "official_programme_url": "https://www.diw.de/de/diw_01.c.799242.de/application.html",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://www.diw.de/de/diw_01.c.799242.de/application.html",
+      "evidence_excerpt": "DIW economics doctoral programme: Deadline for applications: 15 January 2027",
       "official_details": {},
       "investigated_urls": [
         "https://www.diw.de/de/diw_01.c.799242.de/application.html",
         "https://www.diw.de/en/diw_01.c.799242.en/application.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Drexel University",
@@ -1019,13 +1019,18 @@
     {
       "institution": "HKUST",
       "country_code": "HK",
-      "official_programme_url": "https://econ.hkust.edu.hk/programs-n-courses/mphd/mphd-introduction",
+      "official_programme_url": "https://prog-crs.hkust.edu.hk/pgprog/2027-28/mphil-phd-econ",
       "programme_structure_hint": "MPhil + PhD",
-      "status": "robots_unavailable",
-      "checked_at": "2026-11-19T11:43:34Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2026-12-01",
+      "evidence_url": "https://prog-crs.hkust.edu.hk/pgprog/2027-28/mphil-phd-econ",
+      "evidence_excerpt": "Economics PhD — Fall Term Intake Application Deadlines: Non-local / Local Applicants, Full-time / Part-time: 1 Dec 2026",
+      "official_details": {},
+      "investigated_urls": [
+        "https://prog-crs.hkust.edu.hk/pgprog/2027-28/mphil-phd-econ"
+      ],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Imperial College London",
@@ -1097,20 +1102,20 @@
     {
       "institution": "Keio University",
       "country_code": "JP",
-      "official_programme_url": "https://www.keio.ac.jp/en/grad-admissions/doctoral/gsecon/",
+      "official_programme_url": "https://www.keio.ac.jp/en/admissions/grad/doctoral/gsecon/",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2026-12-24",
+      "evidence_url": "https://www.keio.ac.jp/en/admissions/grad/doctoral/gsecon/",
+      "evidence_excerpt": "Economics Doctoral Program — Online Registration: 10:00 a.m. on December 14 (Mon) - 3:00 p.m. on December 24 (Thu), 2026 [application period]",
       "official_details": {},
       "investigated_urls": [
         "https://www.keio.ac.jp/en/admissions/grad/doctoral/gsecon/",
         "https://www.keio.ac.jp/en/admissions/grad/doctoral/",
         "https://www.keio.ac.jp/ja/admissions/grad/doctoral/gsecon/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "King's College London",
@@ -1130,18 +1135,18 @@
       "country_code": "JP",
       "official_programme_url": "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-03-11",
+      "evidence_url": "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
+      "evidence_excerpt": "March 1 (9am/Mon) ～March 11 (1pm/Thurs) 2027 “Strict Deadline” — Submission of Application Documents and Examination Fee Payment (via Online Application System)",
       "official_details": {},
       "investigated_urls": [
         "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
         "https://www.econ.kyoto-u.ac.jp/kueac/programme/doctoral-degree-requirements/",
         "https://www.econ.kyoto-u.ac.jp/kueac/application/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Kyushu University",
@@ -1326,18 +1331,18 @@
     {
       "institution": "McMaster University",
       "country_code": "CA",
-      "official_programme_url": "https://economics.mcmaster.ca/graduate-programs/phd-economics/",
+      "official_programme_url": "https://applygrad.mcmaster.ca/portal/start_your_app?cmd=get_results&selectedterm=sept",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-01-31",
+      "evidence_url": "https://applygrad.mcmaster.ca/portal/start_your_app?cmd=get_results&selectedterm=sept",
+      "evidence_excerpt": "Economics PhD — Domestic Close Date: 01/31/2027; International Close Date: 01/31/2027 [official application table]",
       "official_details": {},
       "investigated_urls": [
-        "https://economics.mcmaster.ca/graduate-programs/phd-economics/"
+        "https://applygrad.mcmaster.ca/portal/start_your_app?cmd=get_results&selectedterm=sept"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Michigan State University",
@@ -1467,18 +1472,18 @@
       "country_code": "NO",
       "official_programme_url": "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/vacant-phd-positions/",
+      "evidence_excerpt": "NHH Economics PhD application: our next deadline is 15 January 2027",
       "official_details": {},
       "investigated_urls": [
         "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/",
         "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/admission/",
         "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/vacant-phd-positions/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "North Carolina State University",
@@ -1902,15 +1907,25 @@
     {
       "institution": "Stockholm University",
       "country_code": "SE",
-      "official_programme_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/phd-programme-in-economics/applying-to-the-phd-programme-in-economics",
+      "official_programme_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/applying-to-the-phd-programme-in-economics",
       "programme_structure_hint": "PhD only",
-      "status": "fetch_failed",
-      "checked_at": "2026-11-19T23:47:35Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
-      "official_details": {},
-      "investigated_urls": []
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-01-31",
+      "evidence_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/applying-to-the-phd-programme-in-economics",
+      "evidence_excerpt": "as a step towards the PhD degree. Apply here Application for entry in 2027 opens on 1 December 2026 and closes on 31 January 2027. You apply on this",
+      "official_details": {
+        "tuition": {
+          "value": "No tuition fees",
+          "evidence_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/applying-to-the-phd-programme-in-economics",
+          "evidence_excerpt": "The department provides four years of full-time financing and there are no tuition fees.",
+          "checked_at": "2026-11-24T09:46:04Z"
+        }
+      },
+      "investigated_urls": [
+        "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/applying-to-the-phd-programme-in-economics"
+      ],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Swansea University",
@@ -2013,16 +2028,14 @@
       "country_code": "JP",
       "official_programme_url": "https://www.econ.tohoku.ac.jp/en/gpem/gpem-admission",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "status": "robots_unavailable",
+      "checked_at": "2026-11-24T09:59:49Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://www.econ.tohoku.ac.jp/en/gpem/gpem-admission"
-      ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Tokai University",
@@ -2063,15 +2076,27 @@
     {
       "institution": "Trinity College Dublin",
       "country_code": "IE",
-      "official_programme_url": "https://www.tcd.ie/economics/news-and-events/department-news/phd-in-economics-applications-now-open/",
+      "official_programme_url": "https://www.tcd.ie/economics/programmes/postgraduate/phd-in-economics-/admission-requirements/",
       "programme_structure_hint": "PhD only",
-      "status": "fetch_failed",
-      "checked_at": "2026-11-19T23:47:35Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
-      "official_details": {},
-      "investigated_urls": []
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-03-31",
+      "evidence_url": "https://www.tcd.ie/economics/programmes/postgraduate/phd-in-economics-/admission-requirements/",
+      "evidence_excerpt": "Economics: Deadline for PhD applications : 31 March 2027",
+      "official_details": {
+        "institution_country": {
+          "value": "Ireland",
+          "evidence_url": "https://www.tcd.ie/economics/programmes/postgraduate/phd-in-economics-/admission-requirements/",
+          "evidence_excerpt": "Trinity College Dublin, The University of Dublin. College Green, Dublin 2, Ireland T: +353 1 896 1000",
+          "checked_at": "2026-11-24T09:46:04Z"
+        }
+      },
+      "investigated_urls": [
+        "https://www.tcd.ie/economics/programmes/postgraduate/phd-in-economics-/admission-requirements/",
+        "https://www.tcd.ie/economics/programmes/postgraduate/phd-in-economics-/funding-opportunities/",
+        "https://www.tcd.ie/economics/programmes/postgraduate/msc-in-economic-policy/admission-requirements/"
+      ],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Tsinghua University",
@@ -2622,18 +2647,18 @@
     {
       "institution": "University of Cologne",
       "country_code": "DE",
-      "official_programme_url": "https://cgs.uni-koeln.de/en/doctoral-phd-programmes/phd-programme-in-economics/admission",
+      "official_programme_url": "https://cgs.uni-koeln.de/en/economics/phd-programme/application",
       "programme_structure_hint": "MSc + PhD",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-03-15",
+      "evidence_url": "https://cgs.uni-koeln.de/en/economics/phd-programme/application",
+      "evidence_excerpt": "Economics PhD-stage application cutoff: until March 15th, 2027",
       "official_details": {},
       "investigated_urls": [
         "https://cgs.uni-koeln.de/en/economics/phd-programme/application"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Colorado Boulder",
@@ -2682,15 +2707,20 @@
     {
       "institution": "University of Edinburgh",
       "country_code": "UK",
-      "official_programme_url": "https://www.ed.ac.uk/studying/postgraduate/degrees/index.php?r=site/view&edition=2024&id=278",
+      "official_programme_url": "https://study.ed.ac.uk/programmes/postgraduate-research/278-economics",
       "programme_structure_hint": "PhD only",
-      "status": "fetch_failed",
-      "checked_at": "2026-11-20T02:19:13Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-08-01",
+      "evidence_url": "https://study.ed.ac.uk/programmes/postgraduate-research/278-economics",
+      "evidence_excerpt": "Economics PhD application deadline (table): 1 August 2027",
       "official_details": {},
-      "investigated_urls": []
+      "investigated_urls": [
+        "https://study.ed.ac.uk/programmes/postgraduate-research/278-economics",
+        "https://study.ed.ac.uk/programmes/postgraduate-research-fees?programme_code=PRPHDECNMC2F&year=2027",
+        "https://study.ed.ac.uk/postgraduate/applying/after/checking-application-status"
+      ],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Essex",
@@ -3213,18 +3243,18 @@
       "country_code": "CA",
       "official_programme_url": "https://admission.umontreal.ca/programmes/doctorat-en-sciences-economiques/",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-02-01",
+      "evidence_url": "https://admission.umontreal.ca/programmes/doctorat-en-sciences-economiques/",
+      "evidence_excerpt": "Dates limites Déposer la demande d'admission Du 1 er août 2026 au 1 er février 2027",
       "official_details": {},
       "investigated_urls": [
         "https://admission.umontreal.ca/programmes/doctorat-en-sciences-economiques/",
         "https://admission.umontreal.ca/",
         "https://admission.umontreal.ca/admission/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Naples Federico II",
@@ -3291,21 +3321,18 @@
     {
       "institution": "University of Notre Dame",
       "country_code": "US",
-      "official_programme_url": "https://graduateschool.nd.edu/degree-programs/economics-phd---doctoral/",
+      "official_programme_url": "https://economics.nd.edu/graduate/admissions-and-funding/",
       "programme_structure_hint": null,
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:46:04Z",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://economics.nd.edu/graduate/admissions-and-funding/",
+      "evidence_excerpt": "Economics Ph.D. application: Deadline: January 15th, 2027",
       "official_details": {},
       "investigated_urls": [
-        "https://graduateschool.nd.edu/degree-programs/economics-phd---doctoral/",
-        "https://graduateschool.nd.edu/admissions/",
-        "https://graduateschool.nd.edu/funding/",
-        "https://graduateschool.nd.edu/admissions/application-requirements/"
+        "https://economics.nd.edu/graduate/admissions-and-funding/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Nottingham",
@@ -3416,21 +3443,21 @@
     {
       "institution": "University of Pennsylvania",
       "country_code": "US",
-      "official_programme_url": "https://economics.sas.upenn.edu/graduate/prospective-students/admissions-information-phd-program-economics",
+      "official_programme_url": "https://economics.sas.upenn.edu/graduate/prospective-students/application-guidelines",
       "programme_structure_hint": null,
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "deadline_iso": null,
-      "evidence_url": null,
-      "evidence_excerpt": null,
+      "status": "verified",
+      "checked_at": "2026-11-24T09:50:33Z",
+      "deadline_iso": "2026-12-08",
+      "evidence_url": "https://economics.sas.upenn.edu/graduate/prospective-students/application-guidelines",
+      "evidence_excerpt": "Economics Ph.D.: The deadline to submit your application is December 8, 2026.",
       "official_details": {},
       "investigated_urls": [
+        "https://economics.sas.upenn.edu/graduate/prospective-students/application-guidelines",
         "https://economics.sas.upenn.edu/graduate/prospective-students/admissions-information-phd-program-economics",
         "https://economics.sas.upenn.edu/graduate/phd-requirements",
-        "https://economics.sas.upenn.edu/graduate/prospective-students/application-guidelines",
         "https://economics.sas.upenn.edu/graduate/course-information/courses-fulfill-empirical-economics-requirement"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Pennsylvania Wharton",
@@ -4109,15 +4136,16 @@
     {
       "institution": "Washington University in St. Louis",
       "country_code": "US",
-      "official_programme_url": "https://economics.wustl.edu/phd-admissions",
+      "official_programme_url": "https://gradstudies.artsci.washu.edu/browse/economics",
       "programme_structure_hint": null,
-      "status": "robots_unavailable",
-      "checked_at": "2026-11-20T17:49:23Z",
+      "status": "fetch_failed",
+      "checked_at": "2026-11-24T09:46:04Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": []
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "West Virginia University",
@@ -4169,18 +4197,14 @@
       "country_code": "CA",
       "official_programme_url": "https://futurestudents.yorku.ca/graduate/programs/economics",
       "programme_structure_hint": "PhD only",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "status": "fetch_failed",
+      "checked_at": "2026-11-24T09:46:04Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
-      "investigated_urls": [
-        "https://futurestudents.yorku.ca/graduate/programs/economics",
-        "https://futurestudents.yorku.ca/graduate-student",
-        "https://futurestudents.yorku.ca/graduate/apply-now/admissionsprocess"
-      ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "investigated_urls": [],
+      "extractor_revision": "2026-11-24-admissions-v18"
     }
   ]
 }
