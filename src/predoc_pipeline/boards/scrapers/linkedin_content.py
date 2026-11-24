@@ -27,6 +27,32 @@ _CLOSED = re.compile(
     r"(?:no longer accepting applications|this job is no longer available|"
     r"applications are closed)[.!]?\Z", re.I,
 )
+MAX_ADVERT_TEXT_CHARS = 20000
+
+
+def _unrendered(node: Tag) -> bool:
+    """Recognize explicit hidden/template markup without inferring CSS layout."""
+    return bool(
+        node.name in {"script", "style", "noscript", "template"}
+        or node.has_attr("hidden")
+        or str(node.get("aria-hidden", "")).casefold() == "true"
+        or re.search(
+            r"(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:!important\s*)?(?:;|$)",
+            str(node.get("style", "")), re.I,
+        )
+    )
+
+
+def _hidden(node: Tag) -> bool:
+    return any(_unrendered(parent) for parent in [node, *node.parents] if isinstance(parent, Tag))
+
+
+def _discard_unrendered(soup: BeautifulSoup) -> None:
+    # Removing a hidden parent also removes its nested challenge headings and
+    # descriptions. A child of a decomposed parent must not be inspected again.
+    for node in soup.find_all(True):
+        if not node.decomposed and _unrendered(node):
+            node.decompose()
 
 
 def valid_job_id(value: object) -> TypeGuard[str]:
@@ -55,24 +81,25 @@ def job_id_from_url(value: object) -> str | None:
     return match.group(1) if match else None
 
 
+def _unrelated_container(node: Tag) -> bool:
+    if node.name in {"aside", "nav", "footer"}:
+        return True
+    raw_classes = node.get("class")
+    classes = raw_classes.split() if isinstance(raw_classes, str) else (raw_classes or [])
+    # A CSS class token can continue with BEM underscores, which are word
+    # characters to regex \b. Require a token end or naming delimiter,
+    # without treating names such as "base-cardinality" as a job card.
+    return any(re.match(
+        r"(?:similar-jobs|related-jobs|recommended-jobs|base-card)(?=$|[-_])", str(c),
+    ) for c in classes)
+
+
 def _outside_advert(node: Tag) -> bool:
     """Sidebars and related-job cards must not provide the primary description."""
-    for parent in [node, *node.parents]:
-        if not isinstance(parent, Tag):
-            continue
-        if parent.name in {"aside", "nav", "footer"}:
-            return True
-        raw_classes = parent.get("class")
-        classes = raw_classes.split() if isinstance(raw_classes, str) else (raw_classes or [])
-        # A CSS class token can continue with BEM underscores, which are word
-        # characters to regex \b. Require a token end or naming delimiter,
-        # without treating names such as "base-cardinality" as a job card.
-        if any(re.match(
-            r"(?:similar-jobs|related-jobs|recommended-jobs|base-card)(?=$|[-_])", str(c),
-        )
-               for c in classes):
-            return True
-    return False
+    return any(
+        _unrelated_container(parent)
+        for parent in [node, *node.parents] if isinstance(parent, Tag)
+    )
 
 
 def _access_challenge(soup: BeautifulSoup) -> bool:
@@ -109,12 +136,16 @@ class SearchPage:
 
 def parse_search_page(html: str) -> SearchPage:
     soup = BeautifulSoup(html, "lxml")
+    # Hidden cards cannot supply jobs or make a full response appear complete
+    # after removal. Preserve that uncertainty in the existing partial-page path.
+    hidden_cards = sum(_hidden(node) for node in soup.select(_CARDS))
+    _discard_unrendered(soup)
     if _access_challenge(soup):
         return SearchPage([], access_challenge=True)
     nodes = soup.select(_CARDS)
     containers = {id(node) for node in nodes}
     cards: list[dict[str, Any]] = []
-    invalid = 0
+    invalid = hidden_cards
     for card in nodes:
         if any(id(parent) in containers for parent in card.parents):
             continue  # Nested markup is one card, not another pagination offset.
@@ -153,6 +184,7 @@ class DetailPage:
 
 def parse_detail_page(html: str, job_id: str) -> DetailPage:
     soup = BeautifulSoup(html, "lxml")
+    _discard_unrendered(soup)
     if _access_challenge(soup):
         return DetailPage(None, "access_challenge")
     if not valid_job_id(job_id):
@@ -166,10 +198,13 @@ def parse_detail_page(html: str, job_id: str) -> DetailPage:
         bodies = soup.select(".description__text")
     texts = []
     for body in bodies:
-        if _outside_advert(body):
+        if body.decomposed or _outside_advert(body):
             continue
-        for irrelevant in body.select("script, style, noscript"):
-            irrelevant.decompose()
+        # Related material can also be nested *inside* a primary wrapper. Its
+        # dates, eligibility and closure text belong to a different advert.
+        for child in body.find_all(True):
+            if not child.decomposed and _unrelated_container(child):
+                child.decompose()
         text = clean_ws(body.get_text(" "))
         if text and text not in texts:
             texts.append(text)
@@ -182,4 +217,12 @@ def parse_detail_page(html: str, job_id: str) -> DetailPage:
     ) if not _outside_advert(node)]
     status = next((value for value in closed if _CLOSED.fullmatch(value)), None)
     text = (status + "\n" if status else "") + texts[0]
-    return DetailPage(text[:20000], "advert_body_received")
+    if len(text) > MAX_ADVERT_TEXT_CHARS:
+        # Truncation can remove a late requirement, cutoff qualifier or closure.
+        # An incomplete advert must not certify successful detail enrichment.
+        if status:
+            # The separate primary-job banner is complete closure evidence even
+            # when the description exceeds the supported extraction limit.
+            return DetailPage(status, "advert_closed")
+        return DetailPage(None, "advert_body_too_large")
+    return DetailPage(text, "advert_body_received")

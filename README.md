@@ -181,6 +181,13 @@ Core tests run with standard Python 3 and no installed packages:
 PYTHONPATH=src python3 -m unittest discover -s tests/core -t . -v
 ```
 
+The dated [research-advert review](review/2026-11-24/research-adverts-251.md)
+records individual vacancy identities, source evidence and unsuccessful checks.
+Run `python3 -S tools/audit_research_adverts.py` to validate its distinct-advert
+coverage offline. Readable bodies, closed notices and access failures have
+separate counts; completing the review does not mark every vacancy open or
+eligible for publication.
+
 ## Design principles
 
 1. **The model quota, not compute, is the scarce resource.** Every layer before

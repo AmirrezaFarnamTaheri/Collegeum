@@ -31,6 +31,7 @@ the loader will discard stale blobs instead of comparing nonsense.
 from __future__ import annotations
 
 import hashlib
+import struct
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -73,6 +74,16 @@ def _base_hash(token: str) -> int:
     )
 
 
+def _pack_values(values: tuple[int, ...]) -> bytes:
+    """Pack the existing unsigned, big-endian format without per-word objects."""
+    try:
+        return struct.pack(f">{len(values)}Q", *values)
+    except (struct.error, TypeError):
+        # Retain the public method's original errors for out-of-range/noninteger
+        # values; normal signatures are unsigned integers smaller than 2**61.
+        return b"".join(value.to_bytes(8, "big") for value in values)
+
+
 @dataclass(frozen=True, slots=True)
 class MinHash:
     """An immutable MinHash signature over a set of string shingles."""
@@ -113,10 +124,17 @@ class MinHash:
         return matches / len(self.values)
 
     def to_bytes(self) -> bytes:
-        return b"".join(v.to_bytes(8, "big") for v in self.values)
+        return _pack_values(self.values)
 
     @classmethod
     def from_bytes(cls, blob: bytes) -> MinHash:
+        if len(blob) % 8 == 0:
+            try:
+                return cls(struct.unpack(f">{len(blob) // 8}Q", blob))
+            except (struct.error, TypeError, BufferError):
+                pass  # Preserve support for noncontiguous buffer inputs below.
+        # The previous decoder accepted a final partial word. Keep that behavior
+        # so the seed loader's signature-length checks retain their semantics.
         return cls(
             tuple(int.from_bytes(blob[i : i + 8], "big") for i in range(0, len(blob), 8))
         )
@@ -180,10 +198,13 @@ class MinHashLSH:
         return len(self._signatures)
 
     def _band_keys(self, signature: MinHash) -> list[bytes]:
+        # Encode once, then take the same byte ranges used by each original
+        # band. Values beyond this index's configured bands remain ignored.
+        packed = _pack_values(signature.values[: self.bands * self.rows])
+        width = self.rows * 8
         keys = []
         for band in range(self.bands):
-            chunk = signature.values[band * self.rows : (band + 1) * self.rows]
-            payload = band.to_bytes(2, "big") + b"".join(v.to_bytes(8, "big") for v in chunk)
+            payload = band.to_bytes(2, "big") + packed[band * width : (band + 1) * width]
             keys.append(hashlib.blake2b(payload, digest_size=16).digest())
         return keys
 

@@ -2096,3 +2096,65 @@ min_interval = 2.0
 source_timeout_seconds = 45.0
 title_allow_pattern = '^(?:Research and Teaching (?:Assistant|Associate)|project staff member pre doc|Universitätsassistent\*?in prae doc|wiss\. Projektmitarbeiter\*?in prae doc)(?:$|[ ,(–-])'
 note = "Official rexx research vacancies. Card ID must match its requisition URL; detail canonical ID and title must match. Institution branding is removed from advert evidence. Faculty/admin/IT job titles do not bypass research or per-advert subject gates."
+
+# Additional permitted official HTML indexes reviewed 2026-11-24. Research-role
+# cards require matching advert bodies; see review/2026-11-24/official-source-expansion-round2.md.
+[[board]]
+name = "vienna_university_research"
+type = "official_university"
+site_profile = "vienna"
+enabled = true
+group = "university"
+urls = ["https://jobs.univie.ac.at/go/Praedoc/8877001/", "https://jobs.univie.ac.at/go/Postdoc/8879501/"]
+institution = "University of Vienna"
+country = "Austria"
+field_implied = false
+may_be_empty = false
+min_interval = 2.0
+source_timeout_seconds = 120.0
+note = "Official public predoc/postdoc tables with bounded pagination. English research adverts only, avoiding duplicate German translations. Canonical URL, matching title, explicit employer Job ID and dated application deadline are mandatory; duties/qualifications supply subject evidence."
+
+[[board]]
+name = "amsterdam_university_research"
+type = "official_university"
+site_profile = "amsterdam"
+enabled = true
+group = "university"
+url = "https://werkenbij.uva.nl/en/vacancies"
+institution = "University of Amsterdam"
+country = "Netherlands"
+field_implied = false
+may_be_empty = false
+min_interval = 2.0
+source_timeout_seconds = 120.0
+note = "Official English vacancy cards with bounded offset pagination. Research roles only. Canonical URL, displayed requisition ID, title and structured full-year closing date must agree; only duties and qualifications establish the subject."
+
+[[board]]
+name = "maastricht_university_research"
+type = "official_university"
+site_profile = "maastricht"
+enabled = true
+group = "university"
+url = "https://vacancies.maastrichtuniversity.nl/go/All-jobs/8842002/"
+institution = "Maastricht University"
+country = "Netherlands"
+field_implied = false
+may_be_empty = false
+min_interval = 2.0
+source_timeout_seconds = 120.0
+note = "Official SuccessFactors vacancy table, restricted to research roles. Closing-date column is verified separately from other dates. Canonical requisition URL and title must match the advert; school biographies and benefits cannot supply subject evidence."
+
+[[board]]
+name = "utrecht_university_research"
+type = "official_university"
+site_profile = "utrecht"
+enabled = true
+group = "university"
+url = "https://www.uu.nl/en/organisation/working-at-utrecht-university/jobs"
+institution = "Utrecht University"
+country = "Netherlands"
+field_implied = false
+may_be_empty = false
+min_interval = 2.0
+source_timeout_seconds = 90.0
+note = "Official English research adverts. Canonical slug, title, HireServe requisition identity and structured closing date must agree. The verified role title plus Your job and Your qualities sections establish subject relevance; general faculty descriptions remain excluded."

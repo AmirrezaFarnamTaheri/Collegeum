@@ -1,0 +1,124 @@
+{
+  "note": "Regression fixtures retain observed markup and factual titles, IDs, URLs and date metadata. Advert prose, including structured descriptions, is abridged and author-written representative text. The hashes and response metadata below describe the original permitted captures, not the abbreviated fixture bytes; complete original captures remain separate in the research workspace.",
+  "indexes": {
+    "vienna_listing": {
+      "url": "https://jobs.univie.ac.at/go/Praedoc/8877001/",
+      "checked_at": "2026-11-24T12:12:50.289035+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://jobs.univie.ac.at/go/Praedoc/8877001/",
+      "bytes": 152184,
+      "sha256": "0d3b8122de8409a4007944759b50259e86916b945219f446e5c682b8989bde64"
+    },
+    "vienna_page2": {
+      "url": "https://jobs.univie.ac.at/go/Praedoc/8877001/25/?q=&sortColumn=referencedate&sortDirection=desc",
+      "checked_at": "2026-11-24T12:13:27.145772+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://jobs.univie.ac.at/go/Praedoc/8877001/25/?q=&sortColumn=referencedate&sortDirection=desc",
+      "bytes": 113350,
+      "sha256": "0b62ac8ba387f801f53b7aedf53ed7ffc950aee54d4a7c1472a04da3a9241aa9"
+    },
+    "vienna_postdoc": {
+      "url": "https://jobs.univie.ac.at/go/Postdoc/8879501/",
+      "checked_at": "2026-11-24T12:12:58.687995+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://jobs.univie.ac.at/go/Postdoc/8879501/",
+      "bytes": 129168,
+      "sha256": "1e407e1aecb2f069d362bd01f2530388d78b1fcbb8a05065e6825ed7c461317e"
+    },
+    "amsterdam_listing": {
+      "url": "https://werkenbij.uva.nl/en/vacancies",
+      "checked_at": "2026-11-24T12:12:50.290741+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://werkenbij.uva.nl/en/vacancies",
+      "bytes": 134391,
+      "sha256": "7770d44a8fffb40f94432db7165af29792dec83bd09ea8c92a28e71d66759158"
+    },
+    "amsterdam_page2": {
+      "url": "https://werkenbij.uva.nl/en/vacancies?o=10",
+      "checked_at": "2026-11-24T12:13:27.145141+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://werkenbij.uva.nl/en/vacancies?o=10",
+      "bytes": 132997,
+      "sha256": "d798694f7c6183aea70d8146dc527c5d57532c9fb9ba976c0202b93dc32c0917"
+    },
+    "amsterdam_page3": {
+      "url": "https://werkenbij.uva.nl/en/vacancies?o=20",
+      "checked_at": "2026-11-24T12:13:35.230891+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://werkenbij.uva.nl/en/vacancies?o=20",
+      "bytes": 108727,
+      "sha256": "69f0734c113eded9e14471f92b55e1585fcd1edb00000141a6ca9ee85f98bfca"
+    },
+    "maastricht_listing": {
+      "url": "https://vacancies.maastrichtuniversity.nl/go/All-jobs/8842002/",
+      "checked_at": "2026-11-24T12:13:27.138716+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://vacancies.maastrichtuniversity.nl/go/All-jobs/8842002/",
+      "bytes": 100592,
+      "sha256": "a7a32e57dc9d8376cc77aeafc07d426f9cde0d1d7e10fe77aff8368fd7f1464e"
+    },
+    "utrecht_listing": {
+      "url": "https://www.uu.nl/en/organisation/working-at-utrecht-university/jobs",
+      "checked_at": "2026-11-24T12:12:42.437324+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://www.uu.nl/en/organisation/working-at-utrecht-university/jobs",
+      "bytes": 46819,
+      "sha256": "b123643e4943e408a4b8085881a66f51b552cda6674eb89a61f6e5d699871969"
+    }
+  },
+  "details": {
+    "vienna": {
+      "url": "https://jobs.univie.ac.at/job/University-assistant-%28predoctoral%29-at-the-Department-of-Political-Science/1455578533/",
+      "checked_at": "2026-11-24T12:16:52.352149+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://jobs.univie.ac.at/job/University-assistant-%28predoctoral%29-at-the-Department-of-Political-Science/1455578533/",
+      "bytes": 110008,
+      "sha256": "b89d73515996956f21632b083b8230ddb12b30beac9e13343e4cc954047d16e4"
+    },
+    "maastricht": {
+      "url": "https://vacancies.maastrichtuniversity.nl/job/Maastricht-Postdoctoral-Researcher-in-Behavioral-and-Sustainable-Finance/1377839757/",
+      "checked_at": "2026-11-24T12:15:27.008530+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://vacancies.maastrichtuniversity.nl/job/Maastricht-Postdoctoral-Researcher-in-Behavioral-and-Sustainable-Finance/1377839757/",
+      "bytes": 74806,
+      "sha256": "15d87edefd4bf9b8a8f71140d9fd0fd404323bdb4dc84422f9eac9a32082def8"
+    },
+    "amsterdam": {
+      "url": "https://werkenbij.uva.nl/en/vacancies/postdoctoral-researcher-in-knowledge-security-and-in-a-geopolitical-context-netherlands-15624",
+      "checked_at": "2026-11-24T12:15:36.469335+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://werkenbij.uva.nl/en/vacancies/postdoctoral-researcher-in-knowledge-security-and-in-a-geopolitical-context-netherlands-15624",
+      "bytes": 199698,
+      "sha256": "84bedea593d03891ebaecfa14af5ce7532f143db647eefd0cc046da8981abe2c"
+    },
+    "utrecht": {
+      "url": "https://www.uu.nl/en/organisation/working-at-utrecht-university/jobs/postdoctoral-researcher-in-transnational-retirement-across-portugal-and-brazil",
+      "checked_at": "2026-11-24T12:13:53.789501+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://www.uu.nl/en/organisation/working-at-utrecht-university/jobs/postdoctoral-researcher-in-transnational-retirement-across-portugal-and-brazil",
+      "bytes": 56423,
+      "sha256": "6801cc2ebd36599bf5c61c2ed69f6dce68519443d2e0671c6b269860bbb36d07"
+    },
+    "maastricht_hta": {
+      "url": "https://vacancies.maastrichtuniversity.nl/job/Maastricht-Postdoctoraal-onderzoeker-gezondheidseconomie-en-health-technology-assessment/1375965757/",
+      "checked_at": "2026-11-24T12:14:49.105901+00:00",
+      "reader": "tools.update_phd_admissions._read_url",
+      "status": 200,
+      "final_url": "https://vacancies.maastrichtuniversity.nl/job/Maastricht-Postdoctoraal-onderzoeker-gezondheidseconomie-en-health-technology-assessment/1375965757/",
+      "bytes": 77816,
+      "sha256": "d9168e71a13276c724346c45ef537c0d2317aa7430b0459778577e11df99fab7"
+    }
+  }
+}

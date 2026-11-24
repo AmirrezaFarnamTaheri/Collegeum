@@ -46,6 +46,15 @@ _PAGE_FULL_AT = 10  # Full guest pages may have more matches.
 _SLOT_SECONDS = 4 * 60 * 60
 
 
+def _provider_access_denial(error: FetchError) -> bool:
+    # The shared HTTP client can recognize an HTML gate before this adapter
+    # receives its body. Retain the actual HTTP 200 while applying the same
+    # provider cooldown as a gate recognized by the LinkedIn content parser.
+    return error.status in {403, 429, 999} or (
+        error.status == 200 and str(error) == "access_interstitial"
+    )
+
+
 def utc_search_slot(now: datetime) -> int:
     """Stable four-hour UTC rotation slot, independent of runner timezone."""
     if now.tzinfo is None:
@@ -255,6 +264,7 @@ class LinkedInScraper(BaseScraper):
             "request_budget": request_budget, "time_budget_seconds": wall_seconds,
             "requests": 0, "completed_queries": 0, "failed_requests": 0,
             "unverified_empty": 0,
+            "repeated_pages": 0,
             "access_limited": False, "pages_with_more_possible": 0,
             "time_budget_reached": False, "backpressure": False,
             "provider_cooldown_active": provider_cooldown_active,
@@ -263,6 +273,13 @@ class LinkedInScraper(BaseScraper):
         failures = 0
         try:
             while queue and self.search_diagnostics["requests"] < request_budget:
+                # A peer audience/detail task may have recorded denial since
+                # planning. Recheck before taking another queued request.
+                if self._access_is_blocked(now=self._scheduler_now()):
+                    self.search_diagnostics["provider_cooldown_active"] = True
+                    if self.search_diagnostics["requests"]:
+                        self.discovery_limits.append("LinkedIn provider cooldown began during discovery")
+                    break
                 # Stop BEFORE downloading another page if all its candidates
                 # could not be saved in the atomic replay checkpoint.
                 if len(ledger.state["spool"]) >= ledger.max_items - 100:
@@ -293,12 +310,13 @@ class LinkedInScraper(BaseScraper):
                     break
                 except FetchError as exc:
                     failures += 1
-                    ledger.fail(pair, now=self._scheduler_now(), status=exc.status)
+                    denied = _provider_access_denial(exc)
+                    ledger.fail(pair, now=self._scheduler_now(), status=exc.status, access_denied=denied)
                     self.search_diagnostics["failed_requests"] += 1
                     self.discovery_fetch_errors.append(
                         f"LinkedIn search HTTP {exc.status or 'fetch error'}"
                     )
-                    if exc.status in {403, 429, 999}:
+                    if denied:
                         self.search_diagnostics["access_limited"] = True
                         break
                     if failures >= 3:
@@ -316,7 +334,7 @@ class LinkedInScraper(BaseScraper):
                 page = parse_search_page(html)
                 cards = page.cards
                 if page.access_challenge:
-                    ledger.fail(pair, now=self._scheduler_now(), status=403)
+                    ledger.fail(pair, now=self._scheduler_now(), status=200, access_denied=True)
                     self.discovery_fetch_errors.append("LinkedIn access challenge")
                     self.search_diagnostics["access_limited"] = True
                     break
@@ -351,6 +369,11 @@ class LinkedInScraper(BaseScraper):
                         "LinkedIn candidate replay buffer at capacity",
                     )
                     break
+                if outcome == "repeated_page":
+                    self.search_diagnostics["repeated_pages"] += 1
+                    self.discovery_parse_errors.append(
+                        "LinkedIn repeated an accepted result page; query pagination deferred",
+                    )
                 if outcome in {"complete", "complete_with_gap"}:
                     self.search_diagnostics["completed_queries"] += 1
                 elif outcome == "pending":
@@ -436,6 +459,11 @@ class LinkedInScraper(BaseScraper):
         raw: list[dict[str, Any]] = []
         failures_in_a_row = 0
         while queue and self.search_diagnostics["requests"] < request_budget:
+            if self._access_is_blocked(now=self._scheduler_now()):
+                self.search_diagnostics["provider_cooldown_active"] = True
+                if self.search_diagnostics["requests"]:
+                    self.discovery_limits.append("LinkedIn provider cooldown began during discovery")
+                break
             kw, loc, start, depth = queue.popleft()
             params = {
                 "keywords": kw, "location": loc,
@@ -449,7 +477,7 @@ class LinkedInScraper(BaseScraper):
                 self.discovery_fetch_errors.append(
                     f"LinkedIn search HTTP {exc.status or 'fetch failure'}"
                 )
-                if exc.status in (403, 429, 999):
+                if _provider_access_denial(exc):
                     # Stop; never rotate UA/proxy/account or bypass access controls.
                     self._record_access_denial()
                     self.search_diagnostics["access_limited"] = True
@@ -555,7 +583,7 @@ class LinkedInScraper(BaseScraper):
             try:
                 html = await self.http.get_text(DETAIL.format(job_id), stop_on_429=True)
             except FetchError as exc:
-                if exc.status in (403, 429, 999):
+                if _provider_access_denial(exc):
                     self._record_access_denial()
                 raise
             detail = parse_detail_page(html, job_id)

@@ -131,6 +131,9 @@ class QueryLedger:
                 raise ValueError("Invalid LinkedIn query checkpoint")
             if not isinstance(row.get("keyword"), str) or not isinstance(row.get("location"), str):
                 raise ValueError("Invalid LinkedIn query identity")
+            if (not row["keyword"].strip() or not row["location"].strip()
+                    or key != query_key(self.source, row["keyword"], row["location"])):
+                raise ValueError("LinkedIn query key does not match its source and search identity")
             for field in ("last_complete_at", "last_completed_at", "last_attempt_at", "retry_after"):
                 _read_time(row.get(field))
             pending = row.get("pending")
@@ -147,15 +150,37 @@ class QueryLedger:
                     raise ValueError("Invalid LinkedIn pagination checkpoint")
                 _read_time(pending.get("started_at"))
                 _read_time(pending.get("last_page_at"))
+                signatures = pending.get("page_signatures", [])
+                if (
+                    not isinstance(signatures, list)
+                    or len(signatures) > pending["pages"]
+                    or any(not isinstance(value, str) or len(value) != 64
+                           or any(char not in "0123456789abcdef" for char in value)
+                           for value in signatures)
+                    or len(set(signatures)) != len(signatures)
+                ):
+                    raise ValueError("Invalid LinkedIn pagination response history")
         for ident, row in s["spool"].items():
             if (
                 not isinstance(ident, str) or not ident.isascii()
-                or not ident.isdecimal() or len(ident) < 6
+                or not ident.isdecimal() or not 6 <= len(ident) <= 30
                 or not isinstance(row, dict) or not isinstance(row.get("card"), dict)
                 or not isinstance(row.get("queries"), list)
             ):
                 raise ValueError("Invalid LinkedIn buffered candidate")
-            _read_time(row.get("observed_at"))
+            card = row["card"]
+            if (
+                card.get("id") != ident
+                or not isinstance(card.get("title"), str) or not card["title"].strip()
+                or any(not isinstance(value, str) for value in card.values())
+                or len(row["queries"]) > 100
+                or any(not isinstance(value, str) for value in row["queries"])
+            ):
+                raise ValueError("Invalid LinkedIn buffered identity or query provenance")
+            if _read_time(row.get("observed_at")) is None:
+                raise ValueError("Missing LinkedIn candidate observation timestamp")
+            for field in ("last_seen_at", "last_replayed_at", "detail_last_attempt_at"):
+                _read_time(row.get(field))
 
     @classmethod
     def load(
@@ -298,6 +323,7 @@ class QueryLedger:
                 "started_at": _stamp(now), "last_page_at": None,
                 "offset": 0, "pages": 0, "window_seconds": lookback,
                 "coverage_gap": gap,
+                "page_signatures": [],
             }
             row["pending"] = pending
         row["last_attempt_at"] = _stamp(now)
@@ -341,7 +367,7 @@ class QueryLedger:
             ident = card.get("id")
             if (
                 not isinstance(ident, str) or not ident.isascii()
-                or not ident.isdecimal() or len(ident) < 6
+                or not ident.isdecimal() or not 6 <= len(ident) <= 30
                 or not isinstance(card.get("title"), str) or not card["title"].strip()
             ):
                 raise ValueError("Invalid LinkedIn card identity")
@@ -377,6 +403,17 @@ class QueryLedger:
             self.fail(pair, now=now)
             return "partial"
         progress = row["pending"]
+        if sanitized:
+            # A provider can ignore the requested offset or replay an earlier
+            # page, including in a different order. Keep updated card evidence,
+            # but stop this query before spending its remaining page allowance.
+            signature = hashlib.sha256("\n".join(sorted(sanitized)).encode("ascii")).hexdigest()
+            signatures = progress.setdefault("page_signatures", [])
+            if signature in signatures:
+                self.fail(pair, now=now)
+                row["status"] = "repeated_page"
+                return "repeated_page"
+            signatures.append(signature)
         progress["last_page_at"] = _stamp(now)
         progress["pages"] += 1
         progress["offset"] += len(cards)
@@ -399,15 +436,17 @@ class QueryLedger:
 
     def fail(
         self, pair: tuple[str, str], *, now: datetime, status: int | None = None,
+        access_denied: bool = False,
     ) -> None:
         """Retain last complete timestamp and cursor; defer transient errors."""
         now = _utc(now)
         row = self._row(pair)
-        row["status"] = "access_limited" if status in (403, 429, 999) else "failed"
+        denied = access_denied or status in (403, 429, 999)
+        row["status"] = "access_limited" if denied else "failed"
         row["last_attempt_at"] = _stamp(now)
-        retry_at = now + timedelta(hours=48 if status in (403, 429, 999) else 4)
+        retry_at = now + timedelta(hours=48 if denied else 4)
         row["retry_after"] = _stamp(retry_at)
-        if status in (403, 429, 999):
+        if denied:
             previous_block = _read_time(self.state.get("access_blocked_until"))
             if previous_block is None or previous_block < retry_at:
                 self.state["access_blocked_until"] = _stamp(retry_at)
