@@ -6,7 +6,7 @@
   "pending": 1,
   "pending_closed": 6,
   "expired": 166,
-  "closed": 53,
+  "closed": 55,
   "seen_items": 1271,
   "dlq": 15,
   "runs": 31
@@ -48473,7 +48473,7 @@
    "generated_at": "2026-11-24T19:54:34Z",
    "age_seconds": 4,
    "updated_after_pipeline": false,
-   "content_sha256": "24b157cce063301546e34c6d665df1118e14a4a6fedf8a66eadd612ea80de854"
+   "content_sha256": "e07979156eb9a667125a3d6808c1cf7e15a9d77be08e20bbde93a03f49443941"
   }
  },
  "component_snapshots_observed_at": "2026-11-24T19:54:38Z",

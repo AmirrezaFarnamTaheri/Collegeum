@@ -1,0 +1,46 @@
+{
+  "baseline_commit": "1f03f48f6f61222728f636f1607d8771473962a9",
+  "baseline_284_count": 284,
+  "new_review_attempts": 14,
+  "expanded_review_count": 298,
+  "previous_substantive_matching_body": 154,
+  "new_substantive_matching_body": 13,
+  "expanded_matching_body": 167,
+  "expanded_without_matching_body": 131,
+  "collector_eligible_original": 27,
+  "public_baseline": 216,
+  "public_proposed": 214,
+  "official_application_route_corrections": 11,
+  "explicit_utc_cutoff_corrections": 3,
+  "corrected_rss_entries": 10,
+  "public_linkedin_missing_collector_verified_at": 67,
+  "riverpulse_provisional_journal_ids": [
+    222,
+    233,
+    235,
+    291,
+    327,
+    371
+  ],
+  "epfl_provisional_journal_ids": [
+    423,
+    424,
+    462
+  ],
+  "secondary_past_cutoff": [
+    352
+  ],
+  "proposed_closed_ids": [
+    294,
+    318
+  ],
+  "public_snapshot_sha256": "e07979156eb9a667125a3d6808c1cf7e15a9d77be08e20bbde93a03f49443941",
+  "original_input_hashes": {
+    "data/listings.ndjson": "9a77a779ea229bd3c42c2189be22f5fbd2577de8",
+    "docs/data/listings.json": "b089e46ed7832ce47d9f1798d05504b16d4a87e7",
+    "docs/data/health.json": "4a5e00bc508a6dfdf9334fa2f5518c24d22a2bfb",
+    "docs/feed.xml": "1f5cc31247ba9a7cccd1410db7b9ed86865d4c25",
+    "review/2026-11-25/research-adverts-284.csv": "49ecfcdd66e649adf6c49b6d8db53f3671df9b91",
+    "review/2026-11-25/public-listings-review-216.csv": "9f1f7d3bdc811d0d0a699cc0cb83e1ae5bd71721"
+  }
+}
