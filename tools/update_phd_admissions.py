@@ -1394,6 +1394,8 @@ def _princeton_economics_2027_graduate_deadline(
             ))
     # If Economics is also attributed to a conflicting dated group, refuse.
     for i, heading in enumerate(headings):
+        if not candidates:
+            break
         if heading.group("month").lower() == "december" and heading.group("day") == "1":
             continue
         chunk = body[heading.end():(
