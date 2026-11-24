@@ -2558,20 +2558,13 @@
     {
       "institution": "University of Cambridge",
       "country_code": "UK",
-      "official_programme_url": "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececmpmer",
+      "official_programme_url": "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececpdpec",
       "programme_structure_hint": "MPhil + PhD",
-      "status": "no_explicit_deadline",
-      "checked_at": "2026-11-23T19:04:39Z",
+      "status": "unverified",
+      "checked_at": null,
       "deadline_iso": null,
       "evidence_url": null,
-      "evidence_excerpt": null,
-      "official_details": {},
-      "investigated_urls": [
-        "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececmpmer",
-        "https://www.postgraduate.study.cam.ac.uk/funding/doctoral-training-programmes",
-        "https://www.postgraduate.study.cam.ac.uk/apply/application-deadlines"
-      ],
-      "extractor_revision": "2026-11-23-admissions-v15"
+      "evidence_excerpt": null
     },
     {
       "institution": "University of Cape Town",
