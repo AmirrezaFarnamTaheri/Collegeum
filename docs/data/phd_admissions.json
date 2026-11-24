@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-24T20:10:27Z",
+  "generated_at": "2026-11-24T23:56:28Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -1405,7 +1405,7 @@
       "official_programme_url": "https://www.ntu.edu.sg/education/graduate-programme/ph.d.-in-economics",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1414,7 +1414,7 @@
           "value": "Singapore",
           "evidence_url": "https://www.ntu.edu.sg/admissions/graduate/programme/ph.d.-in-economics",
           "evidence_excerpt": "Novena Campus 11 Mandalay Road, Singapore 308232 Tel: (65) 65138572",
-          "checked_at": "2026-11-24T09:04:23Z"
+          "checked_at": "2026-11-24T23:56:28Z"
         }
       },
       "investigated_urls": [
@@ -1422,7 +1422,7 @@
         "https://www.ntu.edu.sg/admissions/graduate/financialmatters/pgtuitionfees",
         "https://www.ntu.edu.sg/admissions"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "National Taiwan University",
@@ -1430,7 +1430,7 @@
       "official_programme_url": "https://econ.ntu.edu.tw/en/archives/9373",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1440,7 +1440,7 @@
         "https://econ.ntu.edu.tw/en/archives/9779",
         "https://econ.ntu.edu.tw/en/archives/9792"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "National University of Singapore",
@@ -1448,7 +1448,7 @@
       "official_programme_url": "https://fass.nus.edu.sg/ecs/doctor-of-philosophy-economics/",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1458,7 +1458,7 @@
         "https://fass.nus.edu.sg/ecs/requirements-for-economics-major/",
         "https://fass.nus.edu.sg/graduate/research/application-information/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "New York University",
@@ -1479,7 +1479,7 @@
       "official_programme_url": "https://www.ncl.ac.uk/postgraduate/degrees/8240f-66/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1489,7 +1489,7 @@
         "https://www.ncl.ac.uk/careers/making-applications/",
         "https://www.ncl.ac.uk/careers/making-applications/interviews-assessments/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "NHH Norwegian School of Economics",
@@ -1515,7 +1515,7 @@
       "official_programme_url": "https://poole.ncsu.edu/gradecon/admissions-financial-aid/requirements/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1526,7 +1526,7 @@
         "https://poole.ncsu.edu/gradecon/admissions-financial-aid/assistantships-fellowships/",
         "https://poole.ncsu.edu/gradecon/admissions-financial-aid/faqs/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Northwestern University",
@@ -1581,7 +1581,7 @@
       "official_programme_url": "https://www.econ.osaka-u.ac.jp/en/en-graduate/en-g-notice/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1591,7 +1591,7 @@
         "https://www.econ.osaka-u.ac.jp/admission/g-notice/",
         "https://www.econ.osaka-u.ac.jp/en/en-admission/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Paris School of Economics",
@@ -1599,7 +1599,7 @@
       "official_programme_url": "https://ed-economie.pantheonsorbonne.fr/inscriptions/modalites-candidature-en-doctorat",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1607,7 +1607,7 @@
       "investigated_urls": [
         "https://ed-economie.pantheonsorbonne.fr/inscriptions/modalites-de-candidature-en-doctorat"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Peking University",
@@ -1641,7 +1641,7 @@
       "official_programme_url": "https://www.ip-paris.fr/en/education/phd-track/phd-track-economics",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1651,7 +1651,7 @@
         "https://www.ip-paris.fr/en/education/useful-information/admissions",
         "https://www.ip-paris.fr/en/education/useful-information/admissions"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Pontifical Catholic University of Chile",
@@ -1672,7 +1672,7 @@
       "official_programme_url": "https://economics.princeton.edu/graduate-program/phd-admissions/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1683,7 +1683,7 @@
         "https://economics.princeton.edu/graduate-program/phd-admissions/common-admission-questions/",
         "https://economics.princeton.edu/graduate-program/phd-admissions/visiting-exchange-student/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Purdue University",
@@ -1709,7 +1709,7 @@
       "official_programme_url": "https://www.qmul.ac.uk/sef/postgraduate/phd/mres/",
       "programme_structure_hint": "MRes + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1719,7 +1719,7 @@
         "https://www.qmul.ac.uk/sef/postgraduate/phd/mresphd-scholarships/",
         "https://www.qmul.ac.uk/sef/research/postdoctoral-funding-opportunities/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Queen's University",
@@ -1753,7 +1753,7 @@
       "official_programme_url": "https://economics.rice.edu/graduate-program/phd/online-application",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1764,7 +1764,7 @@
         "https://economics.rice.edu/admissions",
         "https://economics.rice.edu/graduate-program/phd/admissions-faq"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Rutgers University-New Brunswick",
@@ -1772,7 +1772,7 @@
       "official_programme_url": "https://economics.rutgers.edu/academics/graduate/program/prospective-students/graduate-faqs",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1783,7 +1783,7 @@
         "https://economics.rutgers.edu/academics/graduate/ma-program/admissions-information",
         "https://economics.rutgers.edu/academics/graduate/ma-program/program-requirements"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Sapienza University of Rome",
@@ -1804,7 +1804,7 @@
       "official_programme_url": "https://www.sciencespo.fr/ecole-recherche/en/admissions/phd/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1814,7 +1814,7 @@
         "https://www.sciencespo.fr/ecole-recherche/en/admissions/phd/phd-tuition-fees-funding/",
         "https://www.sciencespo.fr/admissions/en/phd/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Seoul National University",
@@ -1867,7 +1867,7 @@
       "official_programme_url": "https://www.sutd.edu.sg/programme-listing/sutd-phd-programme/application/#tabs",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1877,7 +1877,7 @@
         "https://www.sutd.edu.sg/admissions/graduate/phd",
         "https://www.sutd.edu.sg/admissions/graduate/phd/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Sogang University",
@@ -1916,7 +1916,7 @@
       "official_programme_url": "https://www.hhs.se/en/education/phd/economics/admission/",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1926,7 +1926,7 @@
         "https://www.hhs.se/education/information/tuition-and-fees/",
         "https://www.hhs.se/education/information/scholarships/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Stockholm University",
@@ -1984,7 +1984,7 @@
       "official_programme_url": "https://artsci.tamu.edu/economics/academics/graduate/phd-program/application-and-admissions.html",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1995,7 +1995,7 @@
         "https://artsci.tamu.edu/economics/academics/graduate/ms-program/funding-opportunities.html",
         "https://artsci.tamu.edu/economics/academics/graduate/ms-program/application-and-admissions.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Texas State University",
@@ -2003,7 +2003,7 @@
       "official_programme_url": "https://mycatalog.txstate.edu/graduate/admission-information/application-deadlines/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2014,7 +2014,7 @@
         "https://mycatalog.txstate.edu/graduate/admission-documents/",
         "https://mycatalog.txstate.edu/graduate/admission-information/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Texas Tech University",
@@ -2065,7 +2065,7 @@
       "official_programme_url": "https://www.tokai-seikei.jp/admissioninformation",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2074,7 +2074,7 @@
         "https://www.tokai-seikei.jp/admissioninformation",
         "https://www.tokai-seikei.jp/admission"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Toulouse School of Economics",
@@ -2082,18 +2082,15 @@
       "official_programme_url": "https://www.tse-fr.eu/doctoral-program",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
       "investigated_urls": [
-        "https://www.tse-fr.eu/doctoral-program",
-        "https://www.tse-fr.eu/contact-us",
-        "https://www.tse-fr.eu/master-economic-theory-and-econometrics",
-        "https://www.tse-fr.eu/admission"
+        "https://www.tse-fr.eu/doctoral-program"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Trinity College Dublin",
@@ -2139,7 +2136,7 @@
       "official_programme_url": "https://asegrad.tufts.edu/applying/application-deadlines",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2150,7 +2147,7 @@
         "https://asegrad.tufts.edu/about/admissions-team",
         "https://asegrad.tufts.edu/applying/admissions-process"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "UC, Davis",
@@ -2273,16 +2270,16 @@
       "official_programme_url": "https://gradschool.unc.edu/degree-programs/#594",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
       "official_details": {},
       "investigated_urls": [
         "https://gradschool.unc.edu/degree-programs/#594",
-        "https://gradschool.unc.edu/academics/resources/graddeadlines/"
+        "https://gradschool.unc.edu/admissions/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University College Dublin",
@@ -2343,7 +2340,7 @@
       "official_programme_url": "https://sa.ua.es/en/preinscripcion-doctorado/applications-phd.html",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2353,7 +2350,7 @@
         "https://sa.ua.es/en/preinscripcion-doctorado/how-to-apply-phd.html",
         "https://sa.ua.es/en/preinscripcion-doctorado/results-of-the-admission-process-phd.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Amsterdam",
@@ -2374,7 +2371,7 @@
       "official_programme_url": "https://eller.arizona.edu/programs/doctoral/economics/admissions",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2385,7 +2382,7 @@
         "https://eller.arizona.edu/admissions",
         "https://eller.arizona.edu/admissions/apply"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Arkansas",
@@ -2393,7 +2390,7 @@
       "official_programme_url": "https://walton.uark.edu/graduate-programs/phd-programs/economics.php",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2403,7 +2400,7 @@
         "https://walton.uark.edu/graduate-programs/admissions/tuition-cost.php",
         "https://walton.uark.edu/graduate-programs/admissions/admitted-student-information.php"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Auckland",
@@ -2411,7 +2408,7 @@
       "official_programme_url": "https://www.auckland.ac.nz/en/study/applications-and-admissions/how-to-apply/postgraduate-application-closing-dates.html",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T23:56:28Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2419,7 +2416,7 @@
       "investigated_urls": [
         "https://www.auckland.ac.nz/en/study/applications-and-admissions/how-to-apply/postgraduate-application-closing-dates.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Barcelona",
