@@ -209,7 +209,7 @@ class MoreOfficialPhDDeadlineEvidenceTests(unittest.TestCase):
         self.assertEqual(len(seen), len(original))
         self.assertEqual(set(seen), original)
         self.assertFalse(set(seen) & blocked_or_verified)
-        self.assertEqual(len(result["programmes"]), 251)
+        self.assertEqual(len(result["programmes"]), len(seeds["programmes"]))
         self.assertTrue(all(
             row["deadline_iso"] is None
             for row in result["programmes"]

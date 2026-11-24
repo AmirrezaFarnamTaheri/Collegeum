@@ -510,7 +510,7 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
         self.assertEqual(set(checked), expected | {
             row["official_programme_url"] for row in original["programmes"][:23]
         })
-        self.assertEqual(len(refreshed["programmes"]), 251)
+        self.assertEqual(len(refreshed["programmes"]), len(self.seeds["programmes"]))
         stamp = now.isoformat().replace("+00:00", "Z")
         self.assertEqual(sum(row["checked_at"] == stamp
                              for row in refreshed["programmes"]), 25)

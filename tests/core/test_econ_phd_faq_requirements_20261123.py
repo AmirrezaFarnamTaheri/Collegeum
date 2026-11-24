@@ -151,7 +151,7 @@ class OfficialPhDFaqAndProgrammeRequirementTests(unittest.TestCase):
         )
         self.assertEqual(len(seen), len(target_urls))
         self.assertEqual(set(seen), target_urls)
-        self.assertEqual(len(updated["programmes"]), 251)
+        self.assertEqual(len(updated["programmes"]), len(seeds["programmes"]))
         self.assertFalse(any(
             url in seen for url in (
                 row["official_programme_url"] for row in public["programmes"]
