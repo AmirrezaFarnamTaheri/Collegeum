@@ -111,11 +111,38 @@ jobs:
             exit 0
           fi
           git commit -m "data: refresh official Economics PhD admissions observations [skip ci]"
-          # The deep-review job may take longer than an ordinary pipeline
-          # cycle. Preserve unrelated trusted commits arriving meanwhile.
+          # An in-flight source run can overlap an authoritative source URL
+          # repair. A normal git rebase will conflict on the generated JSON.
+          # Never use --ours, --theirs or a force push: those may attribute
+          # evidence collected on a previous URL to its replacement.
+          recover_from_latest_main() {
+            # Discard only this *unpublished* snapshot; re-read the actual
+            # institution URL from the latest checked-in seed inventory.
+            git reset --hard origin/main
+            python3 -S tools/update_phd_admissions.py --check
+            python3 -S tools/update_phd_admissions.py --batch-size 40 --recheck-all-readable
+            python3 -S tools/update_phd_admissions.py --check
+            python3 -S tools/update_official_calls.py --check
+            python3 -S tools/update_official_calls.py
+            git add -- docs/data/phd_admissions.json docs/data/official_phd_calls.json
+            if git diff --cached --quiet; then
+              echo "Fresh main requires no additional official observations"
+              exit 0
+            fi
+            git commit -m "data: refresh official Economics PhD admissions observations [skip ci]"
+          }
+          # The deep-review job can run while a trusted main commit arrives.
+          # Rebase only when source provenance is still valid, otherwise
+          # re-verify on the new authoritative main before any public write.
           for attempt in 1 2 3; do
             git fetch origin main
-            git rebase origin/main
+            if ! git rebase origin/main; then
+              git rebase --abort
+              recover_from_latest_main
+            elif ! python3 -S tools/update_phd_admissions.py --check ||
+                 ! python3 -S tools/update_official_calls.py --check; then
+              recover_from_latest_main
+            fi
             if git push origin HEAD:main; then
               exit 0
             fi
