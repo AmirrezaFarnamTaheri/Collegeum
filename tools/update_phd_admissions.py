@@ -37,7 +37,7 @@ USER_AGENT = "CollegeumAdmissionsMonitor/1.0 (+https://github.com/AmirrezaFarnam
 CHECK_INTERVAL = timedelta(days=11)
 # Bump only when official HTML interpretation changes. Readable negatives
 # checked with an older revision receive one safe early recheck.
-EXTRACTOR_REVISION = "2026-11-23-admissions-v15"
+EXTRACTOR_REVISION = "2026-11-24-admissions-v16"
 EXPIRY = timedelta(days=14)
 MAX_HTML_BYTES = 1024 * 1024
 MAX_ROBOTS_BYTES = 256 * 1024
@@ -1175,6 +1175,59 @@ def _uci_social_sciences_economics_phd_deadlines(
     return candidates
 
 
+def _cambridge_economics_phd_current_deadlines(
+    parser: PageText, *, now: datetime, source_url: str | None,
+) -> list[tuple[str, str]]:
+    """Read only the doctoral *application* cutoff in Cambridge's degree card.
+
+    The distinct MPhil course and the PhD funding, application opening and
+    course-start dates must never become a doctoral application deadline.
+    """
+    source = urllib.parse.urlsplit(source_url or "")
+    host = (source.hostname or "").lower().removeprefix("www.")
+    path = source.path.lower().rstrip("/")
+    if not (
+        host == "postgraduate.study.cam.ac.uk"
+        and path in {
+            "/courses/directory/ececpdpec",
+            "/courses/directory/ececpdpec/apply",
+        }
+        and any(re.fullmatch(r"PhD in Economics", h, re.I)
+                for h in parser.headings)
+    ):
+        return []
+
+    text = parser.text()[:MAX_HTML_BYTES]
+    if not (
+        re.search(r"\bDoctor of Philosophy\s*\(\s*PhD\s*\)", text, re.I)
+        and re.search(r"\bFaculty of Economics\b", text, re.I)
+    ):
+        return []
+    candidates: list[tuple[str, str]] = []
+    sections = re.finditer(
+        r"\bDates and deadlines\s*:\s*(?P<period>.*?)"
+        r"\bFunding Deadlines\b", text, re.I | re.S,
+    )
+    for section in sections:
+        period = section.group("period")
+        if not re.search(r"\bMichaelmas 20\d{2}\b", period, re.I):
+            continue
+        for label in re.finditer(r"\bApplication deadline\b", period, re.I):
+            date_match = DATE_PATTERN.search(period, label.end())
+            if date_match is None or date_match.start() - label.end() > 15:
+                continue
+            if not re.search(
+                r"\bCourse starts\b",
+                period[date_match.end():date_match.end() + 55], re.I,
+            ):
+                continue
+            closing = _parse_date(date_match)
+            if closing and now.date() <= closing <= date(now.year + 2, 12, 31):
+                excerpt = period[label.start():date_match.end()][:180]
+                candidates.append((closing.isoformat(), excerpt))
+    return candidates
+
+
 def collect_official_deadline(
     html: str, *, now: datetime, source_url: str | None = None,
 ) -> tuple[str, str | None, str | None]:
@@ -1189,6 +1242,17 @@ def collect_official_deadline(
     source_path = urllib.parse.urlsplit(source_url or "")
     university_host = (source_path.hostname or "").lower().removeprefix("www.")
     university_path = source_path.path.lower().rstrip("/")
+    # Only the university-owned Economics PhD directory route can supply the
+    # deadline. An MPhil course with an identical calendar is a different degree.
+    if (
+        university_path.startswith("/courses/directory/ececpdpec")
+        or university_path.startswith("/courses/directory/ececmpmer")
+    ):
+        return _schoolwide_economics_result(
+            _cambridge_economics_phd_current_deadlines(
+                parser, now=now, source_url=source_url,
+            )
+        )
     if (
         university_host == "mcgill.ca"
         and university_path == "/economics/graduates/admissions"
