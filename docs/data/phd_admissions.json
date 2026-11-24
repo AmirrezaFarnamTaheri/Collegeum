@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-24T19:06:01Z",
+  "generated_at": "2026-11-24T20:10:27Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -88,7 +88,7 @@
       "official_programme_url": "https://wpcarey.asu.edu/economics-degrees/phd-admissions",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -96,7 +96,7 @@
       "investigated_urls": [
         "https://wpcarey.asu.edu/economics-degrees/phd-admissions"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Aston University",
@@ -167,7 +167,7 @@
       "official_programme_url": "https://cbe.anu.edu.au/study/graduate-research-programs/doctor-philosophy-phd/phd-economics",
       "programme_structure_hint": "MPhil + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -177,7 +177,7 @@
         "https://cbe.anu.edu.au/study/how-to-apply",
         "https://cbe.anu.edu.au/study/graduate-research-programs/scholarships-and-fees"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Autonomous University of Barcelona",
@@ -330,7 +330,7 @@
       "official_programme_url": "https://www.bc.edu/content/bc-web/schools/morrissey/departments/economics/graduate/admissions.html",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -341,7 +341,7 @@
         "https://www.bc.edu/content/bc-web/admission.html",
         "https://www.bc.edu/content/bc-web/schools/morrissey/graduate/admission.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Boston University",
@@ -349,7 +349,7 @@
       "official_programme_url": "https://www.bu.edu/econ/admissions/apply-for-a-phd/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -360,7 +360,7 @@
         "https://www.bu.edu/cas/admissions/phd-mfa/admitted-students/",
         "https://www.bu.edu/cas/admissions/phd-mfa/apply/application-checklist/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Brown University",
@@ -395,7 +395,7 @@
       "official_programme_url": "https://www.hss.caltech.edu/graduate-studies/social-sciences-phd-program/admissions",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -403,7 +403,7 @@
       "investigated_urls": [
         "https://www.hss.caltech.edu/graduate-studies/social-sciences-phd-program/admissions"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Carnegie Mellon University",
@@ -571,7 +571,7 @@
       "official_programme_url": "https://www.ucm.es/doctorado/programa-doctorado-economia-ucm/admision",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -579,7 +579,7 @@
       "investigated_urls": [
         "https://www.ucm.es/doctorado/programa-doctorado-economia-ucm/admision"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Copenhagen Business School",
@@ -587,7 +587,7 @@
       "official_programme_url": "https://www.cbs.dk/en/research/phd-programmes/admission",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -597,7 +597,7 @@
         "https://www.cbs.dk/en/study-programmes/courses/registration-and-deadlines",
         "https://www.cbs.dk/en/study-programmes/courses/supplementary-courses-master-admission"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Cornell University",
@@ -605,7 +605,7 @@
       "official_programme_url": "https://economics.cornell.edu/prospective-incoming-grad-students",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -613,7 +613,7 @@
       "investigated_urls": [
         "https://economics.cornell.edu/prospective-incoming-grad-students"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Deakin University",
@@ -728,7 +728,7 @@
       "official_programme_url": "https://essec.edu/en/program/program-phd/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -736,7 +736,7 @@
       "investigated_urls": [
         "https://essec.edu/en/program/program-phd/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "ETC Zurich",
@@ -744,7 +744,7 @@
       "official_programme_url": "https://ethz.ch/en/doctorate/registration-admission/zulassungsbedingungen.html",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -753,7 +753,7 @@
         "https://ethz.ch/en/doctorate/registration-admission/zulassungsbedingungen.html",
         "https://ethz.ch/en/doctorate/registration-admission.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "European University Institute",
@@ -831,7 +831,7 @@
       "official_programme_url": "https://ecares.ulb.be/phd/apply/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -840,7 +840,7 @@
         "https://ecares.ulb.be/phd/apply/",
         "https://ecares.ulb.be/phd/funding-fees/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "George Mason University",
@@ -848,7 +848,7 @@
       "official_programme_url": "https://economics.gmu.edu/programs/la-phd-econ",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -859,7 +859,7 @@
         "https://economics.gmu.edu/programs/LA-PHD-ECON/application",
         "https://economics.gmu.edu/programs/la-phd-econ/application"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "George Washington University",
@@ -867,7 +867,7 @@
       "official_programme_url": "https://economics.columbian.gwu.edu/faq-prospective-phd-students1",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -877,7 +877,7 @@
         "https://economics.columbian.gwu.edu/contact-us",
         "https://economics.columbian.gwu.edu/ms-admissions-and-funding"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Georgetown University",
@@ -885,7 +885,7 @@
       "official_programme_url": "https://econ.georgetown.edu/academics/phd/admissions/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -896,7 +896,7 @@
         "https://econ.georgetown.edu/academics/phd/admissions/phd-faq/",
         "https://econ.georgetown.edu/academics/phd/program-requirements/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Georgia Institute of Technology",
@@ -904,7 +904,7 @@
       "official_programme_url": "https://econ.gatech.edu/graduate/phd-econ",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -914,7 +914,7 @@
         "https://econ.gatech.edu/graduate-admissions",
         "https://econ.gatech.edu/resources/scholarships-fellowships"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Georgia State University",
@@ -922,7 +922,7 @@
       "official_programme_url": "https://www.gsu.edu/program/economics-phd/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -930,7 +930,7 @@
       "investigated_urls": [
         "https://www.gsu.edu/program/economics-phd/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Goethe-University Frankfurt",
@@ -938,7 +938,7 @@
       "official_programme_url": "https://www.gsefm.eu/applicants/requirements-and-deadlines.html",
       "programme_structure_hint": "MSc + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -948,7 +948,7 @@
         "https://www.gsefm.eu/applicants/how-to-apply",
         "https://www.gsefm.eu/applicants/application-dossiers-and-deadlines"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Hanken School of Economics",
@@ -981,7 +981,7 @@
       "official_programme_url": "https://www.hec.edu/en/phd-program/admissions",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -992,7 +992,7 @@
         "https://www.hec.edu/fr/grande-ecole-masters/doubles-diplomes/master-management-business-law-hec-paris-1/admission",
         "https://www.hec.edu/fr/grande-ecole-masters/doubles-diplomes-en-admission-directe"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Heriot-Watt University",
@@ -1054,7 +1054,7 @@
       "official_programme_url": "https://economics.indiana.edu/graduate/how-to-apply/phd-index.html",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1065,7 +1065,7 @@
         "https://economics.indiana.edu/graduate/how-to-apply/emissaries-for-graduate-student-diversity.html",
         "https://economics.indiana.edu/graduate/how-to-apply/index.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Iowa State University",
@@ -1073,7 +1073,7 @@
       "official_programme_url": "https://www.econ.iastate.edu/frequently-asked-questions",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1084,7 +1084,7 @@
         "https://www.econ.iastate.edu/ms-program",
         "https://www.econ.iastate.edu/ms-program/ms-degree-requirements"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Johns Hopkins University",
@@ -1178,7 +1178,7 @@
       "official_programme_url": "https://www.econ.kyushu-u.ac.jp/english/pa_index/pa_7/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1188,7 +1188,7 @@
         "https://www.econ.kyushu-u.ac.jp/english/pa_index/",
         "https://www.econ.kyushu-u.ac.jp/english/pa_index/pa_index2/pa_15/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Lincoln University",
@@ -1254,7 +1254,7 @@
       "official_programme_url": "https://www.lsu.edu/business/economics/phd-economics.php",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1265,7 +1265,7 @@
         "https://www.lsu.edu/admission/index.php",
         "https://www.lsu.edu/admissions/apply/index.php"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Luiss University",
@@ -1273,7 +1273,7 @@
       "official_programme_url": "https://phd.luiss.it/economics/open-calls/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1282,7 +1282,7 @@
         "https://phd.luiss.it/economics/open-calls/",
         "https://phd.luiss.it/economics/admission-and-ranking-list-2/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Lund University",
@@ -1322,7 +1322,7 @@
       "official_programme_url": "https://www.massey.ac.nz/study/admission-and-enrolment/key-admission-and-course-enrolment-dates/admission-application-due-dates/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1332,7 +1332,7 @@
         "https://www.massey.ac.nz/study/admission-and-enrolment/",
         "https://www.massey.ac.nz/study/admission-and-enrolment/application-checklists-for-domestic-students/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "McGill University",
@@ -1374,7 +1374,7 @@
       "official_programme_url": "https://econ.msu.edu/academics/graduate/application-info",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-24T20:10:27Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -1384,7 +1384,7 @@
         "https://econ.msu.edu/contact",
         "https://econ.msu.edu/admissions"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Monash University",
