@@ -27,9 +27,9 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             (ROOT / "docs/data/phd_admissions.json").read_text(encoding="utf-8")
         )
 
-    def test_all_251_official_programme_leads_preserved(self):
-        self.assertEqual(len(self.seeds["programmes"]), 251)
-        self.assertEqual(len(self.public["programmes"]), 251)
+    def test_expanded_official_programme_leads_preserved(self):
+        self.assertGreaterEqual(len(self.seeds["programmes"]), 253)
+        self.assertEqual(len(self.public["programmes"]), len(self.seeds["programmes"]))
         validate_catalogues(self.seeds, self.public)
         keys = [(p["institution"].casefold(), p["country_code"])
                 for p in self.seeds["programmes"]]
@@ -41,6 +41,39 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
                 self.assertTrue(url.netloc)
                 self.assertNotIn("deadline", entry)
                 self.assertNotIn("deadline_guidance", entry)
+
+    def test_missing_kuleuven_and_wrong_tilburg_masters_lead_corrected(self):
+        seeds = {row["institution"]: row for row in self.seeds["programmes"]}
+        observations = {row["institution"]: row for row in self.public["programmes"]}
+        self.assertEqual(seeds["KU Leuven"]["country_code"], "BE")
+        self.assertEqual(
+            seeds["KU Leuven"]["official_programme_url"],
+            "https://feb.kuleuven.be/research/economics/PHD/phdcall",
+        )
+        self.assertIn(
+            "/graduate-school/phd-economics/admission",
+            seeds["Tilburg University"]["official_programme_url"],
+        )
+        self.assertNotIn(
+            "/education/masters",
+            seeds["Tilburg University"]["official_programme_url"],
+        )
+        self.assertEqual(seeds["University of Padua"]["country_code"], "IT")
+        self.assertIn("/phd-calls-and-admissions",
+                      seeds["University of Padua"]["official_programme_url"])
+        # Subsequent scheduled checks may legitimately change the initial
+        # unverified status.  Never require a frozen status in regression tests.
+        for institution in ("KU Leuven", "University of Padua", "Tilburg University"):
+            row = observations[institution]
+            self.assertEqual(
+                row["official_programme_url"],
+                seeds[institution]["official_programme_url"],
+            )
+            if row["status"] == "verified":
+                for field in ("deadline_iso", "checked_at", "evidence_url", "evidence_excerpt"):
+                    self.assertTrue(row[field], (institution, field))
+            else:
+                self.assertIsNone(row["deadline_iso"])
 
     def test_upstream_is_only_a_lead_not_deadline_authority(self):
         self.assertEqual(self.seeds["source"]["license"], "MIT")
@@ -275,9 +308,8 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             'href="#phd-admissions"', 'id="phd-admissions"',
             'data/phd_admissions.json', 'id="phd-admissions-search"',
             'id="phd-admissions-country"', 'id="phd-admissions-more"',
-            "Admissions are not employment vacancies",
-            "not verified for the current admission cycle",
-            "paultran47/econ-grad-app-deadlines",
+            "Date unconfirmed", "Admission details",
+            "licenses/econ-grad-app-deadlines-MIT.txt",
         ):
             self.assertIn(text, page)
         self.assertIn("function renderAdmissions()", page)
@@ -434,11 +466,37 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
     def test_trusted_extractor_upgrade_rechecks_verified_with_existing_old_details(self):
         now = datetime(2026, 11, 19, 13, 0, tzinfo=UTC)
         original = json.loads(json.dumps(self.public))
-        earlier = [
-            row for row in original["programmes"]
-            if row["status"] == "verified" and row.get("official_details")
-        ]
-        self.assertGreaterEqual(len(earlier), 2)
+        old_check = (now - timedelta(days=1)).isoformat().replace("+00:00", "Z")
+        # Keep the complete seed inventory, but control every observation's
+        # state so a growing live verified count cannot consume this batch.
+        for row in original["programmes"]:
+            row.update(
+                status="no_explicit_deadline", checked_at=old_check,
+                deadline_iso=None, evidence_url=None, evidence_excerpt=None,
+                official_details={}, investigated_urls=[],
+                extractor_revision="old-fixture-extractor",
+            )
+        # Put the two verified records at the end of the inventory. They must
+        # still receive priority over the 249 readable negative observations.
+        earlier = original["programmes"][-2:]
+        for row in earlier:
+            evidence_url = row["official_programme_url"]
+            row.update(
+                status="verified", deadline_iso="2027-01-15",
+                evidence_url=evidence_url,
+                evidence_excerpt="Economics PhD application deadline: January 15, 2027.",
+                investigated_urls=[evidence_url],
+                official_details={
+                    "tuition": {
+                        "value": "No tuition fees",
+                        "evidence_url": evidence_url,
+                        "evidence_excerpt": "Official university: no tuition fees",
+                        "checked_at": old_check,
+                    },
+                },
+            )
+            self.assertFalse(eligible_for_check(row, now=now))
+        validate_catalogues(self.seeds, original)
         expected = {row["official_programme_url"] for row in earlier}
         checked = []
 
@@ -459,11 +517,19 @@ class EconomicsPhDAdmissionsTests(unittest.TestCase):
             self.seeds, original, now=now, batch_size=25,
             fetcher=fetch, recheck_no_explicit=True,
         )
-        self.assertTrue(expected.issubset(set(checked)))
+        self.assertEqual(len(checked), 25)
+        self.assertEqual(set(checked), expected | {
+            row["official_programme_url"] for row in original["programmes"][:23]
+        })
+        self.assertEqual(len(refreshed["programmes"]), len(self.seeds["programmes"]))
+        stamp = now.isoformat().replace("+00:00", "Z")
+        self.assertEqual(sum(row["checked_at"] == stamp
+                             for row in refreshed["programmes"]), 25)
         for row in refreshed["programmes"]:
             if row["official_programme_url"] in expected:
                 self.assertFalse(row["official_details"])
                 self.assertEqual(row["status"], "verified")
+                self.assertEqual(row["checked_at"], stamp)
 
     def test_initial_source_changes_bootstrap_without_refresh_commit_loop(self):
         workflow = (ROOT / ".github/workflows/phd-admissions-refresh.yml").read_text(

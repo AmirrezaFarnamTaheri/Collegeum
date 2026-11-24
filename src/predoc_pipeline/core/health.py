@@ -48,6 +48,10 @@ def public_failure(message: Any) -> str:
     """
     text = str(message or "")
     lowered = text.lower()
+    if "official advert has an elapsed start" in lowered:
+        return "Advert start date has passed; current recruitment unconfirmed"
+    if "official advert detail unverified" in lowered:
+        return "Advert detail could not be corroborated; candidate deferred"
     if "timed out" in lowered or "timeout" in lowered:
         return "Request timed out"
     if "robots" in lowered:

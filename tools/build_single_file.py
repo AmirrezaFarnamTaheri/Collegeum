@@ -58,6 +58,7 @@ INCLUDE_GLOBS = [
     "docs/*.png",
     "docs/*.xsl",
     "docs/*.json",
+    "docs/licenses/*.txt",
     # docs/data/*.json and docs/feed.xml are mutable publications; the
     # pull-request merge checkout can contain newer website state than this branch.
     # Only versioned source and reproducible fixtures belong in this artifact.

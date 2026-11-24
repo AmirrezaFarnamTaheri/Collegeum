@@ -217,6 +217,7 @@ def to_raw_item(post: JobPostSchema, verdict: Verdict, *, detail: str = "",
         "institution": post.institution or None,
         "department": post.department,
         "country": post.country,
+        "country_basis": post.extra.get("official_country_basis"),
         "region": post.region,
         "location": post.location,
         "fields": post.fields_of_research,
@@ -358,15 +359,37 @@ async def _collect(
         reason: str | None = None
         detail = post.extra.pop("detail_text", "")
         strong = verdict.strong
+        requires_advert = getattr(res.scraper, "requires_verified_detail", False)
+        if (
+            requires_advert and not post.extra.get("official_detail_verified")
+            and not post.extra.get("closed")
+        ):
+            # New exact-source contracts require the matching advert, even for
+            # a strong predoc title. Preserve all legacy best-effort behavior.
+            out.deferred += 1
+            res.ok = False
+            stage = post.extra.get("official_detail_failure_stage", "fetch")
+            stage = stage if stage in {"fetch", "parse"} else "parse"
+            res.failure_stage = res.failure_stage or stage
+            res.error = (
+                "Official advert has an elapsed start; candidate deferred"
+                if post.extra.get("official_detail_failure_reason") == "past_start_unconfirmed"
+                else "Official advert detail unverified; candidate deferred"
+            )
+            errors = (res.scraper.discovery_fetch_errors if stage == "fetch"
+                      else res.scraper.discovery_parse_errors)
+            errors.append("Official advert detail unverified")
+            continue
         if post.extra.get("closed"):
             reason = "filled-or-closed"
         elif detail and any(rx.search(detail[:2000]) for rx in flt.emp_banned):
             reason = "excluded-employer"  # e.g. "J-PAL Europe" named only in the ad text
         elif pid in enriched_ids and detail:
-            field_v = flt.field_verdict_long(detail)
+            subject = post.extra.pop("official_subject_text", "") if requires_advert else detail
+            field_v = flt.field_verdict_long(subject)
             if field_v == "unwanted":
                 reason = "wrong-field-detail"
-            elif verdict.needs_field_check and field_v != "wanted":
+            elif (verdict.needs_field_check or requires_advert) and field_v != "wanted":
                 reason = "no-field-in-detail"
         elif verdict.needs_field_check and not strong:
             out.deferred += 1  # page unreachable today and field unknown: retry tomorrow

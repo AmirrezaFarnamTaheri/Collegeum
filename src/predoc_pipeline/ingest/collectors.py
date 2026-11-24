@@ -454,7 +454,7 @@ def collect_portals(
 # --------------------------------------------------------------------------
 
 def collect_jobspy(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
-    """Commercial job boards via python-jobspy. Opt-in; see COMPLIANCE.md."""
+    """Optional Indeed discovery; LinkedIn uses its governed board adapter."""
     stat = SourceStats("jobspy")
     try:
         from jobspy import scrape_jobs
@@ -463,12 +463,16 @@ def collect_jobspy(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
         return [], [stat]
 
     queries = (
-        ("linkedin", "predoctoral research fellow", "Europe", None),
-        ("linkedin", "pre-doctoral research assistant economics", "Europe", None),
         ("indeed", "predoctoral research assistant", "United Kingdom", "uk"),
         ("indeed", "research assistant economics", "Germany", "germany"),
     )
-    per_query = max(5, settings.max_items_per_source // len(queries))
+    stat.messages.append(
+        "LinkedIn is not supported by generic JobSpy; use its checkpointed board adapter "
+        "where provider access is permitted",
+    )
+    # Preserve the prior Indeed ceiling; removing LinkedIn's two query slots
+    # must not silently double the requests/results requested from Indeed.
+    per_query = max(5, settings.max_items_per_source // 4)
     items: list[RawItem] = []
 
     for site, term, location, country in queries:
@@ -481,8 +485,6 @@ def collect_jobspy(settings: Any) -> tuple[list[RawItem], list[SourceStats]]:
         }
         if country:
             kwargs["country_indeed"] = country
-        if site == "linkedin":
-            kwargs["linkedin_fetch_description"] = True
         try:
             frame = scrape_jobs(**kwargs)
         except Exception as exc:

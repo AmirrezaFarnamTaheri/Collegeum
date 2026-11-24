@@ -1404,15 +1404,6 @@
     }
 
     /* Economics doctoral admissions: a separate reference directory, not vacancies. */
-    .admissions-note {
-      padding: 16px 20px;
-      border: 1px solid var(--rule);
-      border-radius: 12px;
-      background: var(--card);
-      margin: 16px 0 20px;
-      color: var(--soft);
-      font-size: 13px;
-    }
     .admissions-controls {
       display: grid;
       grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr) minmax(170px, 1fr);
@@ -1441,12 +1432,43 @@
       white-space: nowrap;
     }
     .admissions-more { margin: 16px auto 6px; display: block; }
+    .admissions-more[hidden] { display: none; }
+    .admissions-programme { align-items: start; gap: 8px 20px; }
+    .admissions-programme h3 { overflow-wrap: anywhere; }
+    .admissions-condition { grid-column: 1 / -1; max-width: 76ch; }
+    .admissions-action { display: grid; justify-items: end; gap: 5px; }
+    .admissions-action .status { font-family: var(--sans); font-size: 12px; }
+    .admissions-details { grid-column: 1 / -1; min-width: 0; }
+    .admissions-details summary {
+      width: fit-content;
+      cursor: pointer;
+      color: var(--soft);
+      font-size: 12px;
+      text-underline-offset: 3px;
+    }
+    .admissions-details summary:hover { color: var(--acc); }
+    .admissions-details summary:focus-visible {
+      outline: 2px solid var(--acc);
+      outline-offset: 4px;
+      border-radius: 2px;
+    }
+    .admissions-details[open] summary { margin-bottom: 10px; }
+    .admissions-details-body {
+      border-left: 2px solid var(--rule);
+      padding: 0 14px;
+      max-width: 76ch;
+    }
+    .admissions-details-body p { margin: 7px 0; }
+    .admissions-details-body a { white-space: normal; }
     @media (max-width: 780px) {
       .admissions-controls { grid-template-columns: minmax(0, 1fr) minmax(135px, 1fr); }
       .admissions-controls .search-input-wrap { grid-column: 1 / -1; }
     }
     @media (max-width: 520px) {
       .admissions-entry { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+      .admissions-programme { grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; padding: 15px 14px; }
+      .admissions-programme h3 { font-size: 16px; }
+      .admissions-action .status { max-width: 13ch; text-align: right; }
       .admissions-controls { grid-template-columns: 1fr; }
       .admissions-controls .search-input-wrap { grid-column: auto; }
     }
@@ -1489,7 +1511,8 @@
         <div class="eyebrow">Economics · Finance · Public Policy</div>
         <h1>The economics <em>research board.</em></h1>
         <p class="lede">
-          Research opportunities collected from institutional career pages and university portals. Predoctoral, postdoctoral, and doctoral positions — plus roles at central banks, multilateral bodies, and research consultancies. Update age and source-check results appear below.
+          Predoctoral roles, research positions and doctoral opportunities at universities,
+          central banks and research institutes.
         </p>
         <div class="cta">
           <a class="btn" href="#board">Browse positions</a>
@@ -1598,21 +1621,8 @@
 
     <!-- Admissions research: distinct data and provenance from paid research vacancies. -->
     <section id="phd-admissions" aria-labelledby="phd-admissions-heading">
-      <h2 class="rv" id="phd-admissions-heading">Economics PhD admissions</h2>
-      <p class="sub rv">Browse official university programme pages, research doctoral structures,
-        and check admission deadlines at their source.</p>
-      <div class="admissions-note">
-        <strong>Admissions are not employment vacancies.</strong> These 251 university links
-        began as discovery leads from
-        <a href="https://github.com/paultran47/econ-grad-app-deadlines"
-           target="_blank" rel="noopener">Paul L. Tran's MIT-licensed directory</a>.
-        Collegeum checks each institution's own programme page on a rotating schedule.
-        Dates from the third-party directory are never reused as confirmed deadlines.
-        A programme without a current, explicit official-source date is
-        <strong>not verified for the current admission cycle</strong>.
-        Always confirm dates, funding and eligibility with the university itself.
-        <a href="licenses/econ-grad-app-deadlines-MIT.txt">MIT attribution</a>.
-      </div>
+      <h2 class="rv" id="phd-admissions-heading">Economics PhD programmes</h2>
+      <p class="sub rv">Find a programme and check its application dates and entry requirements.</p>
       <div class="admissions-controls">
         <div class="search-input-wrap">
           <input class="search-input" type="search" id="phd-admissions-search"
@@ -1623,55 +1633,38 @@
         </select>
         <select class="filter-select" id="phd-admissions-status" aria-label="Deadline verification">
           <option value="">All programmes</option>
-          <option value="verified">Official deadline found</option>
-          <option value="unverified">Needs official confirmation</option>
+          <option value="verified">Verified deadlines</option>
+          <option value="unverified">Date unconfirmed</option>
         </select>
       </div>
-      <p class="note" id="phd-admissions-summary" aria-live="polite">Loading programme references…</p>
+      <p class="note" id="phd-admissions-summary" aria-live="polite">Loading programmes…</p>
       <div class="rows-container admissions-list" id="phd-admissions-results" aria-live="polite"></div>
       <button class="export-btn admissions-more" id="phd-admissions-more" type="button" hidden>
         Show more programmes
       </button>
-      <p class="note" style="font-size:12px;color:var(--soft);margin-top:14px;">
-        Official-source monitoring is conservative: missing, blocked, out-of-date and ambiguous
-        pages stay unverified. A successful pipeline or a directory link does not establish that
-        admissions are open.
-      </p>
     </section>
 
     <!-- Independent institutional PhD funding: NOT jobs and NOT generic admissions. -->
     <section id="official-phd-calls" aria-labelledby="official-calls-heading">
-      <h2 class="rv" id="official-calls-heading">Independent PhD funding calls</h2>
-      <p class="sub rv">Institutional PhD scholarships, fellowships and studentships,
-        each independently checked against its official announcement.</p>
-      <div class="admissions-note">
-        <strong>No employment vacancy is implied.</strong> These are separate doctoral
-        funding opportunities, not employment postings or general programme admissions.
-        Funding, eligibility, salary or stipend, and any prerequisite programme offer
-        must be checked with the university. Only recent officially corroborated calls
-        with an explicit future funding deadline appear below.
-      </div>
+      <h2 class="rv" id="official-calls-heading">PhD funding</h2>
+      <p class="sub rv">Scholarships, fellowships and studentships. Check each call for eligibility
+        and any required programme offer.</p>
       <div class="admissions-controls">
         <div class="search-input-wrap">
           <input class="search-input" type="search" id="official-calls-search"
                  placeholder="Search institution or funding call…"
-                 aria-label="Search independent PhD funding calls">
+                 aria-label="Search PhD funding">
         </div>
         <select class="filter-select" id="official-calls-country"
-                aria-label="Country for independent PhD funding calls">
+                aria-label="Country for PhD funding">
           <option value="">All countries</option>
         </select>
       </div>
       <p class="note" id="official-calls-summary" aria-live="polite">
-        Loading official funding opportunities…
+        Loading funding opportunities…
       </p>
       <div class="rows-container admissions-list" id="official-calls-results"
            aria-live="polite"></div>
-      <p class="note" style="font-size:12px;color:var(--soft);margin-top:14px;">
-        Closed, unverified, stale, robots-blocked or ambiguous calls are excluded.
-        A successful source fetch alone is not verification or publication.
-        Check the official institution link before applying.
-      </p>
     </section>
 
   </main>
@@ -1741,6 +1734,7 @@
           <a href="https://t.me/PredocCollegeum" target="_blank" rel="noopener">Telegram</a>
           <a href="architecture.html">Architecture</a>
           <a href="#phd-admissions">PhD admissions</a>
+          <a href="licenses/econ-grad-app-deadlines-MIT.txt">Directory credits</a>
           <a href="mailto:taherifarnam@gmail.com">Contact</a>
         </nav>
         <details class="support-disclosure">
@@ -2672,7 +2666,9 @@
     // Programme admissions are NEVER merged into listings or publisher state.
     // Only the university's own dated evidence can yield an official date.
     let phdAdmissions = [];
-    let phdAdmissionsLimit = 30;
+    const admissionsPageSize = 12;
+    let phdAdmissionsLimit = admissionsPageSize;
+    let admissionsRenderedState = '';
     const phdNames = typeof Intl.DisplayNames === 'function'
       ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
     const admissionsCountry = code => {
@@ -2687,97 +2683,171 @@
         return u.href;
       } catch (_) { return null; }
     };
+    const admissionsOfficialUrl = raw => {
+      const safe = admissionsSafeUrl(raw);
+      if (!safe) return null;
+      const parsed = new URL(safe);
+      return parsed.protocol === 'https:' && (!parsed.port || parsed.port === '443')
+        ? parsed : null;
+    };
+    const admissionsHost = url => url.hostname.toLowerCase().replace(/^www\./, '');
+    const admissionsDate = value => new Date(value + 'T00:00:00Z').toLocaleDateString(
+      'en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    function admissionsEvidenceHasDate(excerpt, deadline) {
+      if (typeof excerpt !== 'string' || !excerpt.trim() || excerpt.length > 500) return false;
+      const [year, month, day] = deadline.split('-').map(Number);
+      const months = ['Jan(?:uary)?', 'Feb(?:ruary)?', 'Mar(?:ch)?', 'Apr(?:il)?',
+        'May', 'Jun(?:e)?', 'Jul(?:y)?', 'Aug(?:ust)?', 'Sep(?:t(?:ember)?)?',
+        'Oct(?:ober)?', 'Nov(?:ember)?', 'Dec(?:ember)?'];
+      const french = ['janvier', 'f[ée]vrier', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'ao[uû]t', 'septembre', 'octobre', 'novembre', 'd[ée]cembre'];
+      const m = `(?:${months[month - 1]}|${french[month - 1]})`;
+      const d = day < 10 ? `0?${day}` : String(day);
+      const n = month < 10 ? `0?${month}` : String(month);
+      const weekday = String.raw`(?:\s*\((?:\d{1,2}(?::\d{2})?\s*(?:am|pm)/)?(?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rs(?:day)?)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)\))?`;
+      const ordinal = String.raw`(?:st|nd|rd|th|\s*er)?`;
+      const forms = [deadline,
+        String.raw`${d}${ordinal}\s+${m}${weekday}\s*,?\s*${year}`,
+        String.raw`${m}\.?\s+${d}${ordinal}${weekday}\s*,?\s*${year}`];
+      // Numeric day/month ordering is safe only when the day exceeds 12.
+      if (day > 12) forms.push(
+        String.raw`${d}[./]${n}[./]${year}`,
+        String.raw`${n}[./]${d}[./]${year}`);
+      return new RegExp(String.raw`\b(?:${forms.join('|')})\b`, 'i').test(excerpt);
+    }
+    function admissionsDeadlineConfirmed(row, now = Date.now()) {
+      if (!row || row.status !== 'verified' || !Number.isFinite(now)) return false;
+      const raw = row.deadline_iso;
+      if (typeof raw !== 'string' || !/^20\d{2}-\d{2}-\d{2}$/.test(raw)) return false;
+      const deadline = Date.parse(raw + 'T00:00:00Z');
+      if (!Number.isFinite(deadline) || new Date(deadline).toISOString().slice(0, 10) !== raw ||
+          raw < new Date(now).toISOString().slice(0, 10) ||
+          Number(raw.slice(0, 4)) > new Date(now).getUTCFullYear() + 2) return false;
+      if (typeof row.checked_at !== 'string' ||
+          !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/i.test(row.checked_at)) return false;
+      const checkedDay = row.checked_at.slice(0, 10);
+      const calendarDay = Date.parse(checkedDay + 'T00:00:00Z');
+      if (!Number.isFinite(calendarDay) ||
+          new Date(calendarDay).toISOString().slice(0, 10) !== checkedDay ||
+          Number(row.checked_at.slice(11, 13)) > 23) return false;
+      const checked = Date.parse(row.checked_at);
+      if (!Number.isFinite(checked) || checked > now || now - checked > 14 * 86400000) return false;
+      const lead = admissionsOfficialUrl(row.official_programme_url);
+      const evidence = admissionsOfficialUrl(row.evidence_url);
+      if (!lead || !evidence || admissionsHost(lead) !== admissionsHost(evidence) ||
+          !Array.isArray(row.investigated_urls) ||
+          !row.investigated_urls.includes(row.evidence_url)) return false;
+      // Programme/date-role interpretation belongs to the official collector.
+      // Its stored proof must retain the actual full date before we count it.
+      return admissionsEvidenceHasDate(row.evidence_excerpt, raw);
+    }
     // Display only fresh official facts; ignore untrusted or stale URLs.
-    function admissionsFact(row, key) {
+    function admissionsFact(row, key, now = Date.now()) {
       const fact = row.official_details && row.official_details[key];
       if (!fact || typeof fact.value !== 'string' || !fact.value.trim() ||
           !fact.evidence_excerpt || fact.checked_at !== row.checked_at) return null;
       const checked = Date.parse(fact.checked_at);
-      if (!Number.isFinite(checked) || checked > Date.now() ||
-          Date.now() - checked > 14 * 86400000) return null;
-      const source = admissionsSafeUrl(fact.evidence_url);
-      const lead = admissionsSafeUrl(row.official_programme_url);
+      if (!Number.isFinite(checked) || checked > now ||
+          now - checked > 14 * 86400000) return null;
+      const source = admissionsOfficialUrl(fact.evidence_url);
+      const lead = admissionsOfficialUrl(row.official_programme_url);
       if (!source || !lead) return null;
-      try {
-        const host = url => new URL(url).hostname.toLowerCase().replace(/^www\./, '');
-        if (host(source) !== host(lead)) return null;
-      } catch (_) { return null; }
-      return { value: fact.value.slice(0, 175), source };
+      if (admissionsHost(source) !== admissionsHost(lead)) return null;
+      return { value: fact.value.slice(0, 175), source: source.href };
+    }
+
+    function admissionsEvidenceState(now = Date.now()) {
+      return phdAdmissions.map(row =>
+        Number(admissionsDeadlineConfirmed(row, now)) + ':' +
+        Object.keys(row.official_details || {}).map(key =>
+          Number(!!admissionsFact(row, key, now))).join('')
+      ).join('|');
+    }
+    function refreshAdmissionsEvidence() {
+      if (phdAdmissions.length && admissionsRenderedState !== admissionsEvidenceState()) {
+        renderAdmissions();
+      }
     }
 
     function renderAdmissions() {
+      const openDetails = new Set([...$('#phd-admissions-results').querySelectorAll(
+        '.admissions-details[open]')].map(element => element.dataset.programme));
       const query = $('#phd-admissions-search').value.trim().toLowerCase();
       const country = $('#phd-admissions-country').value;
       const statusFilter = $('#phd-admissions-status').value;
-      const shown = phdAdmissions.filter(row => {
+      const now = Date.now();
+      const shown = phdAdmissions.map(row => ({
+        row, confirmed: admissionsDeadlineConfirmed(row, now)
+      })).filter(({row, confirmed}) => {
         const matches = !query || (row.institution || '').toLowerCase().includes(query) ||
           admissionsCountry(row.country_code || '').toLowerCase().includes(query);
         return matches && (!country || row.country_code === country) &&
-          (!statusFilter || (statusFilter === 'verified' ?
-            row.status === 'verified' : row.status !== 'verified'));
-      });
-      const todayUtc = new Date().toISOString().slice(0, 10);
-      const verified = phdAdmissions.filter(r =>
-        r.status === 'verified' && typeof r.deadline_iso === 'string' &&
-        r.deadline_iso >= todayUtc
-      ).length;
+          (!statusFilter || (statusFilter === 'verified' ? confirmed : !confirmed));
+      }).sort((a, b) => Number(b.confirmed) - Number(a.confirmed) ||
+        (a.confirmed ? a.row.deadline_iso.localeCompare(b.row.deadline_iso) : 0) ||
+        a.row.institution.localeCompare(b.row.institution));
+      const verified = shown.filter(item => item.confirmed).length;
       $('#phd-admissions-summary').textContent =
-        `${shown.length} of ${phdAdmissions.length} programmes · ${verified} with an automatically
-        corroborated official-source deadline. Yearless, stale or ambiguous dates are not presented as confirmed.`;
-      $('#phd-admissions-results').innerHTML = shown.slice(0, phdAdmissionsLimit).map(row => {
+        `${shown.length} ${shown.length === 1 ? 'programme' : 'programmes'} · ` +
+        `${verified} verified ${verified === 1 ? 'deadline' : 'deadlines'}`;
+      $('#phd-admissions-results').innerHTML = shown.slice(0, phdAdmissionsLimit).map(({row, confirmed}) => {
         const countryName = admissionsCountry(row.country_code || '');
-        const structure = row.programme_structure_hint
-          ? `Reported structure: ${esc(row.programme_structure_hint)} (recheck at source)`
-          : 'Programme structure: confirm with university';
-        const confirmed = row.status === 'verified' &&
-          /^20\\d{2}-\\d{2}-\\d{2}$/.test(row.deadline_iso || '') &&
-          row.deadline_iso >= todayUtc;
         const verdict = confirmed
-          ? `Official-source date: ${esc(row.deadline_iso)} (confirm before applying)`
-          : 'Deadline not officially corroborated';
+          ? `Deadline <time datetime="${esc(row.deadline_iso)}">${esc(admissionsDate(row.deadline_iso))}</time>`
+          : 'Date unconfirmed';
         const link = admissionsSafeUrl(row.official_programme_url);
         const evidence = confirmed ? admissionsSafeUrl(row.evidence_url) : null;
+        const programmeKey = (row.country_code || '') + '|' + row.institution;
+        const scopeMatters = confirmed && /\b(?:applicants?|international|non[- ]local|domestic|foreign|overseas|full[- ]time|part[- ]time|pre[- ]application|preliminary|registration|required)\b/i.test(row.evidence_excerpt);
+        const route = admissionsFact(row, 'admission_route', now);
         const officialFacts = [
-          ['Admission route', 'admission_route'],
           ['Duration', 'duration'], ['Language', 'language'],
           ['Eligibility', 'entry_requirement'], ['Funding', 'funding_note'],
           ['Stipend', 'stipend'], ['Tuition', 'tuition'],
           ['Other fees', 'semester_fee'], ['Tests', 'tests'],
           ['References', 'references'],
         ].map(([label, key]) => {
-          const fact = admissionsFact(row, key);
+          const fact = admissionsFact(row, key, now);
           if (!fact) return '';
           return '<p>' + esc(label) + ': ' + esc(fact.value) +
             ' <a href="' + esc(fact.source) +
             '" target="_blank" rel="noopener noreferrer">source ↗</a></p>';
         }).join('');
         return `
-          <article class="admissions-entry">
+          <article class="admissions-entry admissions-programme">
             <div>
               <h3>${esc(row.institution)}</h3>
-              <p>${esc(countryName)} · ${structure}</p>
+              <p>${esc(countryName)}</p>
+              ${route ? `<p>${esc(route.value)} <a href="${esc(route.source)}" target="_blank" rel="noopener noreferrer">Entry route ↗</a></p>` : ''}
+            </div>
+            <div class="admissions-action">
               <p class="status ${confirmed ? 'verified' : ''}">${verdict}</p>
-              ${officialFacts}
+              ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Programme ↗</a>` : ''}
             </div>
-            <div>
-              ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">University programme ↗</a>` : 'Source unavailable'}
-              ${evidence && evidence !== link
-                ? `<p><a href="${esc(evidence)}" target="_blank" rel="noopener noreferrer">Date evidence ↗</a></p>`
-                : ''}
-            </div>
+            ${scopeMatters ? `<p class="admissions-condition">${esc(row.evidence_excerpt)}</p>` : ''}
+            ${confirmed || officialFacts ? `<details class="admissions-details" data-programme="${esc(programmeKey)}"${openDetails.has(programmeKey) ? ' open' : ''}>
+              <summary>Admission details</summary>
+              <div class="admissions-details-body">
+                ${confirmed ? `${scopeMatters ? '' : `<p>${esc(row.evidence_excerpt)}</p>`}
+                  <p><a href="${esc(evidence)}" target="_blank" rel="noopener noreferrer">Deadline source ↗</a>
+                  · Checked ${esc(admissionsDate(row.checked_at.slice(0, 10)))}</p>` : ''}
+                ${officialFacts}
+              </div>
+            </details>` : ''}
           </article>`;
       }).join('') || '<div class="empty-state">No programmes match these filters.</div>';
       const more = $('#phd-admissions-more');
       more.hidden = shown.length <= phdAdmissionsLimit;
-      more.textContent = `Show more programmes (${shown.length - phdAdmissionsLimit} remaining)`;
+      more.textContent = `Show more programmes (${Math.max(0, shown.length - phdAdmissionsLimit)} remaining)`;
+      admissionsRenderedState = admissionsEvidenceState(now);
     }
     ['phd-admissions-search', 'phd-admissions-country', 'phd-admissions-status']
       .forEach(id => $('#' + id).addEventListener('input', () => {
-        phdAdmissionsLimit = 30;
+        phdAdmissionsLimit = admissionsPageSize;
         renderAdmissions();
       }));
     $('#phd-admissions-more').onclick = () => {
-      phdAdmissionsLimit += 30;
+      phdAdmissionsLimit += admissionsPageSize;
       renderAdmissions();
     };
     fetch('data/phd_admissions.json', { cache: 'no-store' })
@@ -2800,7 +2870,7 @@
       })
       .catch(() => {
         $('#phd-admissions-summary').textContent =
-          'Programme catalogue unavailable; no deadlines can be verified here.';
+          'Programmes could not be loaded. Please try again later.';
       });
 
     // Official funding calls are not vacancies or ordinary admissions.
@@ -2840,9 +2910,7 @@
           (!country || row.country_code === country);
       });
       $('#official-calls-summary').textContent =
-        shown.length + ' of ' + officialCallRows.length +
-        ' verified current-cycle institutional funding calls · ' +
-        'Each deadline comes from its own recent official source.';
+        shown.length + (shown.length === 1 ? ' current funding opportunity' : ' current funding opportunities');
       $('#official-calls-results').innerHTML = shown.map(row => {
         const link = admissionsSafeUrl(row.official_url);
         const deadline = row.deadline_kind === 'funding' ? 'Funding deadline' :
@@ -2929,6 +2997,7 @@
     function refreshDeadlineViews() {
       if (deadlineRenderDay !== null) draw();
       else refreshDeadlineState();
+      refreshAdmissionsEvidence();
       refreshHealthDisplay();
       if (currentModalListing) {
         const badge = deadlineBadge(currentModalListing);
@@ -2955,6 +3024,7 @@
         refreshDeadlineViews();
       } else {
         refreshDeadlineState();
+        refreshAdmissionsEvidence();
         refreshHealthDisplay();
       }
     }, 60000);

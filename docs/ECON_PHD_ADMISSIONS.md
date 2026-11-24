@@ -10,7 +10,7 @@ Its copyright and permission notice is at
 
 ## One source of truth: each official university programme page
 
-- `config/phd_admissions_seeds.json` keeps 251 programme names, country codes,
+- `config/phd_admissions_seeds.json` keeps 253 programme names, country codes,
   official programme links and **unverified** structure hints. No upstream
   deadline data is imported or used by a publisher.
 - An obsolete or inaccessible discovery link can be replaced only after
@@ -103,7 +103,7 @@ never dispatches production ingestion. Its existing concurrency lock
 serializes overlapping checks. Each run checks at most 25 oldest-due
 official programme URLs. Never-checked programmes
 take priority so missed GitHub schedules cannot strand calendar shards. At a
-reliable four-runs-per-day cadence all 251 receive an initial attempted check
+reliable four-runs-per-day cadence all catalogued programmes receive an initial attempted check
 within 11 successful runs (under three days). A recorded check is eligible
 for renewal after 11 days; the monitor makes no network requests if none are
 due. Trusted source-code or seed changes also bootstrap a check on `main`
@@ -115,8 +115,10 @@ early. A trusted code upgrade also rechecks previously verified records missing
 the new official detail fields, without promoting third-party assertions.
 A previously verified deadline is
 **withdrawn** if source evidence ages beyond 14 days, or the date passes.
-After every check it commits only the derived
-`docs/data/phd_admissions.json`. The existing Pages deployment publishes the
+After every check it commits the derived
+`docs/data/phd_admissions.json` and the complete stored-evidence coverage audit,
+`docs/data/phd_admissions_coverage.json`, alongside the independent official-call
+observations maintained by the same workflow. The existing Pages deployment publishes the
 result and its MIT notice. No vacancy ingestion, subscriber delivery, or
 provider-restricted retries are involved. Failed/blocked checks remain visible
 as unverified; no assumption of a live programme is made.
@@ -144,7 +146,7 @@ The complete pass does not override the strict source-evidence requirements. A t
 still appear in the institution's own HTML with the matching PhD admissions
 context. A university may publish only a yearless or rolling deadline; these
 cannot be marked confirmed. An attempted recheck is **not** a promise that
-all 251 programmes have a public official deadline.
+all catalogued programmes have a public official deadline.
 
 The 2026 source remediation also replaces the previously failing UC Davis
 Economics departmental FAQ with its official university Graduate Studies
@@ -192,12 +194,71 @@ tables and grouped PhD deadline lists without borrowing another programme's
 date. These cross-element excerpts are labelled as structured table/list
 evidence, with their institutional source URL and check time retained.
 
+## Coverage of the expanded programme directory
+
+The monitor attempts every programme, but a current dated confirmation depends
+on what each university publishes and permits the checker to read. Rolling
+admission, an unpublished next intake, a yearless recurring date, multiple
+applicant-group cutoffs and an inaccessible source are distinct unresolved
+cases. None becomes a dated confirmation merely because the catalogue contains
+the current catalogue rows or a refresh completed successfully.
+
+`tools/audit_phd_admissions.py` produces one record per programme, including its
+current verification status, source URLs, date evidence, last check, next
+scheduled check and required next action. It checks the stored observation's
+calendar date, exact full date in the excerpt, 14-day freshness, catalogue
+metadata, matching official HTTPS host and recorded investigation provenance.
+It does not fetch university pages or promote an observation. The automatic
+refresh exports this report to `docs/data/phd_admissions_coverage.json`; the
+report remains available with the repository documentation and as a public data
+asset. The dashboard's count, status filter and cards use the same
+current-evidence gate, including removal of stale dates. Each programme shows a
+concise date and official link, with applicable applicant restrictions and earlier
+required application stages visible beside the date. Expandable admission details
+retain supporting source evidence and other verified facts. An open page rechecks
+date and evidence expiry on the existing clock and foreground events.
+
+The 24 November 2026 review increased independently corroborated dates from
+41 in the starting repository to 56, while auditing the complete 251-programme
+inventory. The review records are at
+[`review/2026-11-24/phd-deadline-coverage.md`](../review/2026-11-24/phd-deadline-coverage.md)
+and
+[`review/2026-11-24/phd-deadline-source-review.json`](../review/2026-11-24/phd-deadline-source-review.json).
+These are dated research records, not an alternative source of live deadline
+values. The public observation catalogue remains authoritative for display.
+
+Reviewed institutional layouts are implemented in small, standard-library
+modules under `tools/phd_admissions_*.py`, called by the main collector:
+
+- Explicit Economics doctoral application sections, including shared doctoral
+  deadlines only where the same page establishes Economics applicability.
+- Doctoral application columns and registration ranges, keeping supporting
+  documents, funding, preliminary screening, interviews and enrolment separate.
+- Domestic/international and full-time/part-time groups, accepted as a single
+  deadline only when all required complete dates agree.
+- French full-year date ranges and English dates containing parenthesized
+  weekdays or times. The original printed date is retained; a year is never
+  supplied from an intake heading or inferred for a yearless closing endpoint.
+
+The adapters have no network access or stored deadline overrides. All source
+changes first invalidate the previous observation; the existing robots-aware
+collector must fetch and corroborate each new official URL. Missing competing
+dates, ambiguous group scopes and malformed fields fail closed. The source
+review includes successful checks that produced no date and failed checks that
+remained unverified; a tested parser alone does not confirm a programme.
+
 For offline verification:
 
 ```bash
 python3 -S tools/update_phd_admissions.py --check
+python3 -S tools/audit_phd_admissions.py --json
 PYTHONPATH=src python3 -m unittest tests.core.test_economics_phd_admissions -v
 ```
+
+For a reproducible coverage check, pass an explicit timezone-aware `--now`.
+`--require-all-verified` exits with status 1 unless all catalogued observations actually
+have supported current deadlines. Normal refreshes publish the honest coverage
+report without requiring an unattainable all-dates condition.
 
 For a bounded live execution **in the authorised Actions environment**:
 
@@ -223,3 +284,12 @@ the system does not promise unconditional exactly-once delivery.
 A university's official programme website remains the
 decision authority for eligibility, funding and deadlines. Even an
 automatically corroborated date should be rechecked before submitting.
+
+
+### Catalogue expansion and corrected programme identity (24 November 2026)
+
+The current seed inventory grows from 251 to **252** with **KU Leuven**, because the Department of Economics publishes a direct [2027–28 doctoral call](https://feb.kuleuven.be/research/economics/PHD/phdcall). Its official page states a 31 January 2027 deadline, but Collegeum's entry remains **`unverified`** until the scheduled robots-aware checker itself corroborates the institutional page. No date was inferred or manually promoted.
+
+The pre-existing **Tilburg University** lead incorrectly used the Research Master's application page. It now points to the University's [PhD in Economics admission requirements](https://www.tilburguniversity.edu/research/economics-and-management/graduate-school/phd-economics/admission), with its previous inconclusive assessment cleared for a new independent check. Research Master's applicant-category dates must not be applied to the PhD vacancy-based route. These programme-count changes do not affect the separate **251 distinct-advert** review; its original fixed cohort remains valid as a dated audit.
+
+The catalogue subsequently added the **University of Padua**, with its official [Economics and Management PhD call](https://www.economia.unipd.it/en/courses/home-courses/phd-programme/phd-calls-and-admissions) as the lead. The university says the 2027/28 call opens in April 2027; because an in-scope closing date is not yet corroborated, this 253rd programme starts `unverified`. It must not inherit the expired 2026 round's deadline.

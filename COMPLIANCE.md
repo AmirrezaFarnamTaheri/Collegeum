@@ -37,7 +37,14 @@ anything beyond a standard RSS feed or a straightforward careers page.
 
 ## What's opt-in, and what you're opting into
 
-### `ENABLE_JOBSPY` (commercial job boards — LinkedIn, Indeed, etc.)
+### `ENABLE_JOBSPY` (optional Indeed discovery)
+
+This flag enables the configured Indeed queries. It does not enable LinkedIn
+searches or LinkedIn detail fetches. LinkedIn uses the separate `linkedin` and
+`life_linkedin` board definitions, which share provider cooldowns and bounded
+request checkpoints. The LinkedIn board rejects `backend = "jobspy"`: that
+library cannot enforce these controls. These checks do not establish permission
+to collect from the provider; applicable access restrictions still govern it.
 
 `python-jobspy` scrapes job board search results and detail pages. This is
 meaningfully different from reading a feed: these platforms' terms of

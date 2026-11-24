@@ -10,7 +10,7 @@
 [filters]
 # Unmistakable predoc wording (big score boost, overrides title exclusions).
 strong_terms = [
-  "pre-doc*", "pre-phd*", "research professional", "staff associate",
+  "pre-doc*", "prae-doc*", "præ-doc*", "pre-phd*", "research professional", "staff associate",
   "wissenschaftliche* mitarbeiter*", "wissenschaftliche* hilfskraft*",
   "personal investigador predoctoral*", "personal investigador en formacion", "personal investigador en formación",
   "assistant* de recherche*", "allocataire* de recherche predoctoral*", "chercheur* predoctoral*",
@@ -20,6 +20,7 @@ strong_terms = [
 # Research roles (these also need an economics/business/policy field word somewhere).
 role_terms = [
   "research assistant*", "research associate*", "research analyst*", "research economist*", "research officer*", "research specialist*",
+  "research and teaching assistant*", "research and teaching associate*",
   "research trainee*", "research intern*", "junior researcher*", "junior economist*", "assistant researcher*", "graduate researcher*",
   "economic analyst*", "economic associate*", "central bank trainee*",
   "postdoc*", "post-doc*", "postdoctoral*", "research fellow*",
@@ -41,6 +42,7 @@ field_terms = [
   "sciences economiques", "sciences économiques", "economie", "économie", "économétrie", "econometrie",
   "ciencias economicas", "ciencias económicas", "economia", "economía", "econometría", "econometria",
   "sozialwissenschaft*",
+  "steuerrecht*", "wirtschaftsstrafrecht*",
 ]
 
 # Everyday words: count as a field in a title/department, but on a full job page they
@@ -97,6 +99,7 @@ employer_allow_patterns = [
 # Well-known academic, policy, and research employers:
 employer_allow_names = [
   "CEMFI", "CREI", "EUI", "INSEAD", "IESE", "ESADE", "HEC", "ESSEC",
+  "ESMT Berlin", "WU Vienna",
   "EDHEC", "LBS", "LSE", "UCL", "ETH", "EPFL", "Bocconi", "Sciences Po",
   "CEPR", "IZA", "ZEW", "DIW", "ifo", "IWH", "RWI", "briq",
   "WZB", "IIES", "IFAU", "VATT", "ETLA", "CPB", "ESRI", "NIESR",

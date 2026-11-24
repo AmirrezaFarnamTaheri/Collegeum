@@ -172,6 +172,16 @@ class RelevanceFilter:
         """
         ref = ref or today()
         title = post.title
+        excluded_title = title
+        if post.source == "isb_academic_research":
+            # These official RA titles name the supervising professor. Remove
+            # only that introducer from the exclusion check, preserving the
+            # displayed title and every other faculty/seniority exclusion.
+            excluded_title = re.sub(
+                r"^(Research (?:Assistant|Associate)(?: position)? "
+                r"(?:with|under) (?:the )?)Professor\.?\s+",
+                r"\1", title, count=1, flags=re.I,
+            )
         context = " ".join(x for x in (post.department or "", post.fields_of_research or "",
                                         post.institution, post.description_snippet) if x)
 
@@ -191,7 +201,7 @@ class RelevanceFilter:
         ):
             return Verdict(False, reason="requires-phd")
 
-        if self._any(self.exclude, title) and not strong_t and not econ_doctoral_admission:
+        if self._any(self.exclude, excluded_title) and not strong_t and not econ_doctoral_admission:
             return Verdict(False, reason="excluded-title")
         employer_problem = self.employer_verdict(post)
         if employer_problem:

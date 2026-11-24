@@ -31,13 +31,17 @@ def test_predoc_org():
     nd = posts[4]
     # "Deadline/First Review Date" and "Start Date" are separate labels, not part of the fields text
     assert nd.fields_of_research == "Developmental psychology, clinical psychology"
-    assert nd.deadline == date(2027, 5, 24)
+    # The captured cutoff has no four-digit year; preserve its text, not an
+    # inferred future expiry. Start-date years belong to their own field.
+    assert nd.deadline is None
+    assert nd.deadline_text == "Deadline/First Review Date: 5/24/27"
     upf = posts[2]
     assert upf.institution == "Universitat Pompeu Fabra, Barcelona, Spain"
     assert upf.pi_name == "Jan Eeckhout"
     assert upf.deadline == date(2026, 12, 20)
     assert upf.visa_note.startswith("Visas for international candidates")
-    assert posts[0].deadline == date(2026, 10, 7)
+    assert posts[0].deadline is None
+    assert posts[0].extra["predoc_review_note"] == "First review date October 7, 2026, then rolling"
     assert posts[3].deadline is None and posts[3].deadline_text == "Rolling"
     assert all(p.field_implied for p in posts)
 
@@ -76,7 +80,10 @@ def test_ku_table_bare_deadline():
              link_pattern=r"all-vacancies/?\?show=\d+", bare_date_is_deadline=True)
     posts = s.parse_postings([("https://employment.ku.dk/all-vacancies/", fixture_text("ku.html"))])
     assert posts[1].title == "Research Assistant in Economics"
-    assert posts[1].deadline == date(2026, 10, 12)
+    # 12-10-2026 admits two numeric orders. A bare-date board option cannot
+    # establish which one the source intended.
+    assert posts[1].deadline is None
+    assert "12-10-2026" in posts[1].description_snippet
     assert "Department of Economics" in posts[1].department
 
 

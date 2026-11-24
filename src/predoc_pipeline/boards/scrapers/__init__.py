@@ -7,6 +7,8 @@ from . import (  # noqa: F401
     eth_softfactors,
     link_scan,
     linkedin_scraper,
+    official_research,
+    official_university,
     predoc_org,
     prospective_jobs,
     rss,

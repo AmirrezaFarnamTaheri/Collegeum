@@ -1,0 +1,136 @@
+{
+  "baseline_revision": "7c410a7d",
+  "python": "3.12.14",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "samples_per_variant": 11,
+  "journal_sha256": "90d4c1bb9e8d7796e7caf1cdb63b362edfdea9879d11efb05bc570045b5fcb99",
+  "corpus_records": 477,
+  "queries": 120,
+  "query_mix": "cycling exact mirrors, altered descriptions and unrelated employers",
+  "signature_arithmetic_changed": false,
+  "all_signature_bytes_and_band_keys_identical": true,
+  "signatures_sha256": "b868bf1f968460e62caecf93d0a4492ad775b2c5ce9c68e3bd67ff31705a90bd",
+  "band_keys_sha256": "e80e5f4e05b5ac76def7e47fc1065de3078b1de7ca50e52a6383f31e591b16af",
+  "workloads": {
+    "cold_journal_recovery": {
+      "seconds": {
+        "reference": [
+          0.8116994619999787,
+          0.8373351349999894,
+          0.7527815480000299,
+          0.7765974610000512,
+          0.7788950229999045,
+          0.8294420649999665,
+          0.7633205140000427,
+          0.771892861000083,
+          0.8124582199999395,
+          0.8415191039999854,
+          0.7298597669999936
+        ],
+        "optimized": [
+          0.7880370270000867,
+          0.768348962999994,
+          0.8275942620000478,
+          0.7820931589999418,
+          0.7336010459999898,
+          0.8204068379999399,
+          0.7522872859999552,
+          0.7666315180000538,
+          0.8212599529999807,
+          0.7798042790000181,
+          0.7353657959999964
+        ]
+      },
+      "median_seconds": {
+        "reference": 0.7788950229999045,
+        "optimized": 0.7798042790000181
+      },
+      "reduction_percent": -0.1167366555523186,
+      "median_paired_reduction_percent": 1.089313814826487,
+      "improved_pairs": 7,
+      "matched_queries": 80,
+      "new_signatures_written": 40,
+      "outcomes_and_writes_sha256": "23178d47aa73e39c233a03a98bea6fdcee70a810c01eb2db04d792e3af279e8b"
+    },
+    "warm_ingestion": {
+      "seconds": {
+        "reference": [
+          0.18524491999994552,
+          0.204167067999947,
+          0.20113954900000408,
+          0.2053209960000686,
+          0.19631731599997693,
+          0.21423665299994354,
+          0.19709795899996152,
+          0.19597545999999966,
+          0.19399457400004394,
+          0.21154109200006133,
+          0.2016759009999305
+        ],
+        "optimized": [
+          0.18222823200005678,
+          0.17913940199991885,
+          0.19094734299994798,
+          0.17665411400002995,
+          0.18445252999993045,
+          0.18018645899996955,
+          0.1860688270000992,
+          0.18225602500001514,
+          0.2027434679999942,
+          0.2162273940000432,
+          0.1803224699999646
+        ]
+      },
+      "median_seconds": {
+        "reference": 0.20113954900000408,
+        "optimized": 0.18225602500001514
+      },
+      "reduction_percent": 9.38827003136442,
+      "median_paired_reduction_percent": 6.043677777281687,
+      "improved_pairs": 9,
+      "matched_queries": 80,
+      "new_signatures_written": 40,
+      "outcomes_and_writes_sha256": "23178d47aa73e39c233a03a98bea6fdcee70a810c01eb2db04d792e3af279e8b"
+    },
+    "cached_index_rebuild": {
+      "seconds": {
+        "reference": [
+          0.02557922200003304,
+          0.024093107999988206,
+          0.02566979599998831,
+          0.02493195600004583,
+          0.03098635899993951,
+          0.02660665999997036,
+          0.026659958999971423,
+          0.02445984899998166,
+          0.026403039000001627,
+          0.024633836000020892,
+          0.029102346999934525
+        ],
+        "optimized": [
+          0.011978272999954243,
+          0.013190231999942625,
+          0.012177607000012358,
+          0.012562376000005315,
+          0.01331817199991292,
+          0.013313625000023421,
+          0.013176883000028283,
+          0.012799264999898696,
+          0.013910917999965022,
+          0.012954994999972769,
+          0.01378806600007465
+        ]
+      },
+      "median_seconds": {
+        "reference": 0.02566979599998831,
+        "optimized": 0.013176883000028283
+      },
+      "reduction_percent": 48.667753339238516,
+      "median_paired_reduction_percent": 49.9613066802137,
+      "improved_pairs": 11,
+      "matched_queries": 0,
+      "new_signatures_written": 0,
+      "outcomes_and_writes_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  }
+}
