@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_coverage_audit",
-  "audited_at": "2026-11-25T00:08:04Z",
-  "catalogue_generated_at": "2026-11-25T00:06:43Z",
+  "audited_at": "2026-11-25T04:12:11Z",
+  "catalogue_generated_at": "2026-11-25T04:11:13Z",
   "scope": "stored_evidence_only_no_network",
   "metadata_issues": [],
   "unexpected_observations": [],
@@ -4456,8 +4456,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4467,7 +4467,7 @@
         "https://www.sv.uio.no/english/research/phd/application/phd-fellowship/",
         "https://www.sv.uio.no/english/research/phd/application/phd-fellowship/admission-econ.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Otago",
@@ -4500,8 +4500,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4511,7 +4511,7 @@
         "https://www.uottawa.ca/study/campus-tours-admissions-events/campus-tours",
         "https://www.uottawa.ca/study/graduate-studies/program-specific-requirements"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Oxford",
@@ -4614,8 +4614,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4625,7 +4625,7 @@
         "https://www.econ.pitt.edu/doctoral/doctoral/admissions",
         "https://www.econ.pitt.edu/doctoral/phd-requirements"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Pompeu Fabra",
@@ -4638,8 +4638,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4649,7 +4649,7 @@
         "https://www.upf.edu/web/econ/incoming-students1",
         "https://www.upf.edu/web/masters/1_requisits"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Putra Malaysia",
@@ -4682,8 +4682,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4693,7 +4693,7 @@
         "https://study.uq.edu.au/admissions/phd-mphil-professional-doctorate/application-dates",
         "https://study.uq.edu.au/admissions/phd-mphil-professional-doctorate/before-you-apply"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Rochester",
@@ -4726,8 +4726,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4738,7 +4738,7 @@
         "https://sc.edu/study/colleges_schools/moore/study/phd_programs/admission_requirements/",
         "https://sc.edu/study/colleges_schools/moore/study/phd_programs/admission_requirements/index.php"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Southampton",
@@ -4771,8 +4771,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4783,7 +4783,7 @@
         "https://dornsife.usc.edu/econ/doctoral/admissions/",
         "https://dornsife.usc.edu/econ/doctoral/financial-support/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of St Andrews",
@@ -4796,8 +4796,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4805,7 +4805,7 @@
       "investigated_urls": [
         "https://www.st-andrews.ac.uk/business-school/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of St Gallen",
@@ -4818,8 +4818,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4829,7 +4829,7 @@
         "https://www.unisg.ch/en/studying/admission/admission-phd/computer-science/",
         "https://www.unisg.ch/en/studying/admission/admission-phd/economics-and-econometrics/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Stavanger",
@@ -4862,8 +4862,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4873,7 +4873,7 @@
         "https://www.surrey.ac.uk/postgraduate/economics-phd",
         "https://www.surrey.ac.uk/student-life/what-our-students-say/stefano-cellini"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Sydney",
@@ -4886,8 +4886,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4895,7 +4895,7 @@
       "investigated_urls": [
         "https://www.sydney.edu.au/courses/courses/pr/doctor-of-philosophy-arts-and-social-sciences0.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Technology Sydney",
@@ -4928,8 +4928,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4940,7 +4940,7 @@
         "https://haslam.utk.edu/apply/",
         "https://haslam.utk.edu/economics/phd/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Texas at Austin",
@@ -4953,8 +4953,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4962,7 +4962,7 @@
       "investigated_urls": [
         "https://liberalarts.utexas.edu/economics/ph-d-program/admissions/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Tokyo",
@@ -4975,8 +4975,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4986,7 +4986,7 @@
         "https://www.student.e.u-tokyo.ac.jp/is/ns-scholarship-e.html",
         "https://www.student.e.u-tokyo.ac.jp/is/ns-scholarship.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Toronto",
@@ -5021,8 +5021,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5032,7 +5032,7 @@
         "https://www.phdpareto.carloalberto.org/how-to-apply/",
         "https://www.phdpareto.carloalberto.org/timeline-and-deadlines/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Utah",
@@ -5086,8 +5086,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5097,7 +5097,7 @@
         "https://economics.virginia.edu/contact-us",
         "https://economics.virginia.edu/prerequisites-requirements"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Warsaw",
@@ -5110,8 +5110,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5121,7 +5121,7 @@
         "https://en.uw.edu.pl/doctoral-schools-admissions/?print=1",
         "https://en.uw.edu.pl/tag/admissions/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Warwick",
@@ -5198,8 +5198,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5210,7 +5210,7 @@
         "https://econ.wisc.edu/doctoral/admissions/faqs/",
         "https://econ.wisc.edu/doctoral/admissions/funding/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Wyoming",
@@ -5243,8 +5243,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5254,7 +5254,7 @@
         "https://www.york.ac.uk/economics/study/postgraduate-research/phd-economics/",
         "https://www.york.ac.uk/study/postgraduate/courses/apply?course=DRPINTSECO4"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Zurich",
@@ -5267,8 +5267,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5276,7 +5276,7 @@
       "investigated_urls": [
         "https://www.econ.uzh.ch/en/study/phd/zurichgse/faq.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "UNSW Sydney",
@@ -5289,8 +5289,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5300,7 +5300,7 @@
         "https://www.unsw.edu.au/business/study-with-us/postgraduate-research/phd-degrees/doctor-philosophy-phd-economics",
         "https://www.unsw.edu.au/research/hdr/phd"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Uppsala University",
@@ -5333,8 +5333,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5345,7 +5345,7 @@
         "https://graduate-admissions.utdallas.edu/apply-to-ut-dallas/funding-and-financial-aid/",
         "https://graduate-admissions.utdallas.edu/contact-us/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Vanderbilt University",
@@ -5358,8 +5358,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5370,7 +5370,7 @@
         "https://as.vanderbilt.edu/economics/phd-admissions/",
         "https://as.vanderbilt.edu/economics/phd-degree-requirements/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Victoria University of Wellington",
@@ -5423,8 +5423,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T04:11:13Z",
+      "next_scheduled_check_due_at": "2026-12-06T04:11:13Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -5434,7 +5434,7 @@
         "https://vu.nl/en/education/professionals/courses-programmes/part-time-phd-programme-in-business-studies/admissions",
         "https://vu.nl/en/research/more-about/funding-opportunities"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Waseda University",
