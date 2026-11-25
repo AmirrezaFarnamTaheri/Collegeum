@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-24T23:56:28Z",
+  "generated_at": "2026-11-25T00:06:43Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -2424,7 +2424,7 @@
       "official_programme_url": "https://www.ub.edu/school-economics/phd-in-economics/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2434,7 +2434,7 @@
         "https://www.ub.edu/school-economics/apply-now-phd/",
         "https://www.ub.edu/school-economics/contact-form/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Bath",
@@ -2442,7 +2442,7 @@
       "official_programme_url": "https://www.bath.ac.uk/courses/postgraduate-research/phd-economics-full-time/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2452,7 +2452,7 @@
         "https://www.bath.ac.uk/guides/how-to-apply-for-doctoral-study/",
         "https://www.bath.ac.uk/campaigns/find-funding-for-doctoral-research/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Belgarde",
@@ -2473,7 +2473,7 @@
       "official_programme_url": "https://www.unibe.ch/studies/dates/phd_candidates/index_eng.html",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2483,7 +2483,7 @@
         "https://www.unibe.ch/studies/programs/doctorate/application/index_eng.html",
         "https://www.unibe.ch/studies/dates/semesterdates/index_eng.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Birmingham",
@@ -2504,7 +2504,7 @@
       "official_programme_url": "https://phd.unibo.it/economics/en/admission/timeline-and-deadlines-overview",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2514,7 +2514,7 @@
         "https://phd.unibo.it/economics/en/admission",
         "https://phd.unibo.it/economics/en/admission/selection-procedure"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Bonn",
@@ -2522,7 +2522,7 @@
       "official_programme_url": "https://www.econ.uni-bonn.de/bgse/en/doctoral-program/program-overview",
       "programme_structure_hint": "MSc + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2532,7 +2532,7 @@
         "https://www.econ.uni-bonn.de/bgse/en/apply-now",
         "https://www.econ.uni-bonn.de/bgse/en/apply-now/apply-now"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Bristol",
@@ -2540,7 +2540,7 @@
       "official_programme_url": "https://www.bristol.ac.uk/economics/study/postgraduate-research/",
       "programme_structure_hint": "MRes + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2549,7 +2549,7 @@
           "value": "United Kingdom",
           "evidence_url": "https://www.bristol.ac.uk/economics/study/postgraduate-research/",
           "evidence_excerpt": "University of Bristol, Beacon House, Queens Road, Bristol, BS8 1QU, United Kingdom Tel: +44 (0)117 928 9000",
-          "checked_at": "2026-11-24T09:04:23Z"
+          "checked_at": "2026-11-25T00:06:43Z"
         }
       },
       "investigated_urls": [
@@ -2557,7 +2557,7 @@
         "https://www.bristol.ac.uk/students/support/finances/student-loans/masters-loan/",
         "https://www.bristol.ac.uk/study/postgraduate/fees-and-funding/funding/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of British Columbia",
@@ -2620,7 +2620,7 @@
       "official_programme_url": "https://commerce.uct.ac.za/school-economics/programmes-postgraduate/phd-economics-coursework-and-dissertation",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2628,7 +2628,7 @@
       "investigated_urls": [
         "https://commerce.uct.ac.za/school-economics/programmes-postgraduate/phd-economics-coursework-and-dissertation"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Carlos III of Madrid",
@@ -2636,7 +2636,7 @@
       "official_programme_url": "https://economics.uc3m.es/home-phd/",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2644,7 +2644,7 @@
       "investigated_urls": [
         "https://economics.uc3m.es/home-phd/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Chicago",
@@ -2685,7 +2685,7 @@
       "official_programme_url": "https://www.colorado.edu/economics/graduate-program",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2696,7 +2696,7 @@
         "https://www.colorado.edu/graduateschool/admissions",
         "https://www.colorado.edu/graduateschool/admissions/where-begin"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Copenhagen",
@@ -2704,7 +2704,7 @@
       "official_programme_url": "https://www.economics.ku.dk/phd/til-ansoegere/",
       "programme_structure_hint": "Master's + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2713,7 +2713,7 @@
           "value": "Denmark",
           "evidence_url": "https://www.economics.ku.dk/phd/til-ansoegere/",
           "evidence_excerpt": "Department of Economics University of Copenhagen Øster Farimagsgade 5, building 26 DK-1353 Copenhagen K Denmark",
-          "checked_at": "2026-11-24T09:04:23Z"
+          "checked_at": "2026-11-25T00:06:43Z"
         }
       },
       "investigated_urls": [
@@ -2721,7 +2721,7 @@
         "https://www.economics.ku.dk/phd/enrolment/phd-scholarships-of-the-national-bank/",
         "https://www.economics.ku.dk/phd/enrolment/scholarships/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Edinburgh",
@@ -2760,7 +2760,7 @@
       "official_programme_url": "https://www.exeter.ac.uk/study/postgraduate/courses/economics/mres_economics-phd/",
       "programme_structure_hint": "MRes + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2769,7 +2769,7 @@
           "value": "2 years, full-time",
           "evidence_url": "https://www.exeter.ac.uk/masters-degrees/mres-economics/",
           "evidence_excerpt": "Duration 2 years full time",
-          "checked_at": "2026-11-24T09:04:23Z"
+          "checked_at": "2026-11-25T00:06:43Z"
         }
       },
       "investigated_urls": [
@@ -2777,7 +2777,7 @@
         "https://www.exeter.ac.uk/masters-degrees/entry-requirements/supporting-documents/",
         "https://www.exeter.ac.uk/study/funding/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Florida",
@@ -2785,7 +2785,7 @@
       "official_programme_url": "https://economics.clas.ufl.edu/academics/phd/application-information/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2793,7 +2793,7 @@
       "investigated_urls": [
         "https://economics.clas.ufl.edu/academics/phd/application-information/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Geneva",
@@ -2827,7 +2827,7 @@
       "official_programme_url": "https://www.gla.ac.uk/postgraduate/research/economics/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2836,7 +2836,7 @@
           "value": "Our regular standard of admission is usually a Master's degree at Merit, with a significant component in Economics or Finance. Candidates with backgrounds in Statistics or oth",
           "evidence_url": "https://www.gla.ac.uk/postgraduate/research/economics/",
           "evidence_excerpt": "Entry requirements Our regular standard of admission is usually a Master's degree at Merit, with a significant component in Economics or Finance. Candidates with backgrounds in Statistics or other related Social Sciences",
-          "checked_at": "2026-11-24T09:04:23Z"
+          "checked_at": "2026-11-25T00:06:43Z"
         }
       },
       "investigated_urls": [
@@ -2844,7 +2844,7 @@
         "https://www.gla.ac.uk/colleges/socialsciences/studentfundingopportunities/postgraduateresearch/chinascholarshipcouncilcscphdscholarships/",
         "https://www.gla.ac.uk/colleges/socialsciences/studentfundingopportunities/postgraduateresearch/sanctuaryphdscholarship/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Gothenburg",
@@ -2868,7 +2868,7 @@
       "official_programme_url": "https://www.rug.nl/research/gradschool-economics-and-business/phd-programme/prospective-phd/admissions-vacancies/admissions",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2877,7 +2877,7 @@
         "https://www.rug.nl/research/gradschool-economics-and-business/phd-programme/prospective-phd/admissions-vacancies/admissions",
         "https://www.rug.nl/education/application-enrolment-tuition-fees/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Hawaii at Manoa",
@@ -2912,7 +2912,7 @@
       "official_programme_url": "https://fbeo.fbe.hku.hk/phd/admissions/admission-application-and-tuition-fee",
       "programme_structure_hint": "MPhil + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2922,7 +2922,7 @@
         "https://fbeo.fbe.hku.hk/phd/",
         "https://fbeo.fbe.hku.hk/phd/admissions/contact-us"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Houston",
@@ -2930,7 +2930,7 @@
       "official_programme_url": "https://www.uh.edu/class/economics/graduate/admissions/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2940,7 +2940,7 @@
         "https://www.uh.edu/class/economics/graduate/fellowships/",
         "https://www.uh.edu/graduate-school/admissions/fast-track-admissions/index.php"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Illinois at Urbana-Champaign",
@@ -2948,7 +2948,7 @@
       "official_programme_url": "https://economics.illinois.edu/academics/phd-program",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2959,7 +2959,7 @@
         "https://economics.illinois.edu/academics/phd-program/degree-requirements",
         "https://economics.illinois.edu/admissions/ms-economic-modeling-ai-data-science-emaids-admissions"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Illinois Chicago",
@@ -2986,7 +2986,7 @@
       "official_programme_url": "https://economics.ku.edu/phd-program",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -2995,7 +2995,7 @@
         "https://economics.ku.edu/phd-program",
         "https://economics.ku.edu/graduate-admission"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Konstanz",
@@ -3016,7 +3016,7 @@
       "official_programme_url": "https://www.lancaster.ac.uk/study/postgraduate/postgraduate-courses/economics-phd-integrated/2025/",
       "programme_structure_hint": "MSc + PhD",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3026,7 +3026,7 @@
         "https://www.lancaster.ac.uk/lums/phd/apply-for-phd/",
         "https://www.lancaster.ac.uk/lums/phd/funding/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Lausanne",
@@ -3060,7 +3060,7 @@
       "official_programme_url": "https://www.iseg.ulisboa.pt/secretaria/en/applications/doctoral-applications/",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3070,7 +3070,7 @@
         "https://www.iseg.ulisboa.pt/secretaria/en/applications/",
         "https://www.iseg.ulisboa.pt/secretaria/en/applications/crediting/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Liverpool",
@@ -3091,7 +3091,7 @@
       "official_programme_url": "https://fpe.um.edu.my/doctor-of-philosophy-by-research",
       "programme_structure_hint": "PhD only",
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3100,7 +3100,7 @@
         "https://fpe.um.edu.my/doctor-of-philosophy-by-research",
         "https://fpe.um.edu.my/research-funding-amp-ethics"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Manchester",
@@ -3218,7 +3218,7 @@
       "official_programme_url": "https://olemiss.edu/programs/libarts/phd-in-economics/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3227,7 +3227,7 @@
           "value": "4 years",
           "evidence_url": "https://olemiss.edu/programs/libarts/phd-in-economics/",
           "evidence_excerpt": "Duration 4 years",
-          "checked_at": "2026-11-24T09:04:23Z"
+          "checked_at": "2026-11-25T00:06:43Z"
         }
       },
       "investigated_urls": [
@@ -3236,7 +3236,7 @@
         "https://olemiss.edu/admissions/cost-of-attendance/",
         "https://olemiss.edu/admissions/graduate-admissions/aid-and-assistantships/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Missouri",
@@ -3244,7 +3244,7 @@
       "official_programme_url": "https://economics.missouri.edu/grad/apply#phd",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3253,7 +3253,7 @@
         "https://economics.missouri.edu/grad/apply#phd",
         "https://economics.missouri.edu/grad/apply"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Montreal",
@@ -3292,7 +3292,7 @@
       "official_programme_url": "https://business.unl.edu/graduate-programs/phd-programs/phd-economics/",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3301,7 +3301,7 @@
         "https://business.unl.edu/graduate-programs/phd-programs/phd-economics/",
         "https://business.unl.edu/apply/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Nevada, Reno",
@@ -3322,7 +3322,7 @@
       "official_programme_url": "https://econ.unm.edu/phd-program/prospective-students/index.html",
       "programme_structure_hint": null,
       "status": "no_explicit_deadline",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3333,7 +3333,7 @@
         "https://econ.unm.edu/resources/funding-opportunities/department-scholarships.html",
         "https://econ.unm.edu/resources/funding-opportunities/gs-gives-internship-support.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Notre Dame",

@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_coverage_audit",
-  "audited_at": "2026-11-24T23:57:57Z",
-  "catalogue_generated_at": "2026-11-24T23:56:28Z",
+  "audited_at": "2026-11-25T00:08:04Z",
+  "catalogue_generated_at": "2026-11-25T00:06:43Z",
   "scope": "stored_evidence_only_no_network",
   "metadata_issues": [],
   "unexpected_observations": [],
@@ -3178,8 +3178,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3189,7 +3189,7 @@
         "https://www.ub.edu/school-economics/contact-form/",
         "https://www.ub.edu/school-economics/phd-in-economics/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Bath",
@@ -3202,8 +3202,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3213,7 +3213,7 @@
         "https://www.bath.ac.uk/courses/postgraduate-research/phd-economics-full-time/",
         "https://www.bath.ac.uk/guides/how-to-apply-for-doctoral-study/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Belgarde",
@@ -3246,8 +3246,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3257,7 +3257,7 @@
         "https://www.unibe.ch/studies/dates/semesterdates/index_eng.html",
         "https://www.unibe.ch/studies/programs/doctorate/application/index_eng.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Birmingham",
@@ -3290,8 +3290,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3301,7 +3301,7 @@
         "https://phd.unibo.it/economics/en/admission/selection-procedure",
         "https://phd.unibo.it/economics/en/admission/timeline-and-deadlines-overview"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Bonn",
@@ -3314,8 +3314,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3325,7 +3325,7 @@
         "https://www.econ.uni-bonn.de/bgse/en/apply-now/apply-now",
         "https://www.econ.uni-bonn.de/bgse/en/doctoral-program/program-overview"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Bristol",
@@ -3338,8 +3338,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3349,7 +3349,7 @@
         "https://www.bristol.ac.uk/students/support/finances/student-loans/masters-loan/",
         "https://www.bristol.ac.uk/study/postgraduate/fees-and-funding/funding/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of British Columbia",
@@ -3429,8 +3429,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3438,7 +3438,7 @@
       "investigated_urls": [
         "https://commerce.uct.ac.za/school-economics/programmes-postgraduate/phd-economics-coursework-and-dissertation"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Carlos III of Madrid",
@@ -3451,8 +3451,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3460,7 +3460,7 @@
       "investigated_urls": [
         "https://economics.uc3m.es/home-phd/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Chicago",
@@ -3514,8 +3514,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3526,7 +3526,7 @@
         "https://www.colorado.edu/graduateschool/admissions",
         "https://www.colorado.edu/graduateschool/admissions/where-begin"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Copenhagen",
@@ -3539,8 +3539,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3550,7 +3550,7 @@
         "https://www.economics.ku.dk/phd/enrolment/scholarships/",
         "https://www.economics.ku.dk/phd/til-ansoegere/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Edinburgh",
@@ -3605,8 +3605,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3616,7 +3616,7 @@
         "https://www.exeter.ac.uk/masters-degrees/mres-economics/",
         "https://www.exeter.ac.uk/study/funding/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Florida",
@@ -3629,8 +3629,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3638,7 +3638,7 @@
       "investigated_urls": [
         "https://economics.clas.ufl.edu/academics/phd/application-information/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Geneva",
@@ -3691,8 +3691,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3702,7 +3702,7 @@
         "https://www.gla.ac.uk/colleges/socialsciences/studentfundingopportunities/postgraduateresearch/sanctuaryphdscholarship/",
         "https://www.gla.ac.uk/postgraduate/research/economics/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Gothenburg",
@@ -3737,8 +3737,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3747,7 +3747,7 @@
         "https://www.rug.nl/education/application-enrolment-tuition-fees/",
         "https://www.rug.nl/research/gradschool-economics-and-business/phd-programme/prospective-phd/admissions-vacancies/admissions"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Hawaii at Manoa",
@@ -3800,8 +3800,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3811,7 +3811,7 @@
         "https://fbeo.fbe.hku.hk/phd/admissions/admission-application-and-tuition-fee",
         "https://fbeo.fbe.hku.hk/phd/admissions/contact-us"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Houston",
@@ -3824,8 +3824,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3835,7 +3835,7 @@
         "https://www.uh.edu/class/economics/graduate/fellowships/",
         "https://www.uh.edu/graduate-school/admissions/fast-track-admissions/index.php"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Illinois at Urbana-Champaign",
@@ -3848,8 +3848,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3860,7 +3860,7 @@
         "https://economics.illinois.edu/admissions/ms-economic-modeling-ai-data-science-emaids-admissions",
         "https://economics.illinois.edu/admissions/phd-admissions"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Illinois Chicago",
@@ -3896,8 +3896,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3906,7 +3906,7 @@
         "https://economics.ku.edu/graduate-admission",
         "https://economics.ku.edu/phd-program"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Konstanz",
@@ -3939,8 +3939,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -3950,7 +3950,7 @@
         "https://www.lancaster.ac.uk/lums/phd/funding/",
         "https://www.lancaster.ac.uk/study/postgraduate/postgraduate-courses/economics-phd-integrated/2027/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Lausanne",
@@ -4003,8 +4003,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4014,7 +4014,7 @@
         "https://www.iseg.ulisboa.pt/secretaria/en/applications/crediting/",
         "https://www.iseg.ulisboa.pt/secretaria/en/applications/doctoral-applications/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Liverpool",
@@ -4047,8 +4047,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4057,7 +4057,7 @@
         "https://fpe.um.edu.my/doctor-of-philosophy-by-research",
         "https://fpe.um.edu.my/research-funding-amp-ethics"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Manchester",
@@ -4216,8 +4216,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4228,7 +4228,7 @@
         "https://olemiss.edu/economics/graduateprograms/",
         "https://olemiss.edu/programs/libarts/phd-in-economics/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Missouri",
@@ -4241,8 +4241,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4251,7 +4251,7 @@
         "https://economics.missouri.edu/grad/apply",
         "https://economics.missouri.edu/grad/apply#phd"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Montreal",
@@ -4306,8 +4306,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4316,7 +4316,7 @@
         "https://business.unl.edu/apply/",
         "https://business.unl.edu/graduate-programs/phd-programs/phd-economics/"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Nevada, Reno",
@@ -4349,8 +4349,8 @@
         "no_explicit_deadline"
       ],
       "next_action": "Review the current official admissions route for an explicit year and application cutoff; if none is published, retain the unconfirmed result.",
-      "checked_at": "2026-11-24T09:04:23Z",
-      "next_scheduled_check_due_at": "2026-12-05T09:04:23Z",
+      "checked_at": "2026-11-25T00:06:43Z",
+      "next_scheduled_check_due_at": "2026-12-06T00:06:43Z",
       "deadline_iso": null,
       "evidence_url": null,
       "evidence_excerpt": null,
@@ -4361,7 +4361,7 @@
         "https://econ.unm.edu/resources/funding-opportunities/gs-gives-internship-support.html",
         "https://econ.unm.edu/resources/funding-opportunities/mummert-research-fellowship.html"
       ],
-      "extractor_revision": "2026-11-24-admissions-v17"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Notre Dame",
