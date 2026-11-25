@@ -138,6 +138,26 @@
       "sent_at": "2026-11-19T21:14:57Z",
       "state": "confirmed"
     },
+    "bfe05cc5048ef97f809561744146b923": {
+      "attempted_at": "2026-11-25T14:20:42Z",
+      "country_code": "IE",
+      "deadline_iso": "2027-03-31",
+      "evidence_url": "https://www.tcd.ie/economics/programmes/postgraduate/phd-in-economics-/admission-requirements/",
+      "institution": "Trinity College Dublin",
+      "message_id": 177,
+      "sent_at": "2026-11-25T14:20:42Z",
+      "state": "confirmed"
+    },
+    "cf0d319293f3a95f238644b7f4c384f0": {
+      "attempted_at": "2026-11-25T14:20:42Z",
+      "country_code": "DE",
+      "deadline_iso": "2027-03-15",
+      "evidence_url": "https://cgs.uni-koeln.de/en/economics/phd-programme/application",
+      "institution": "University of Cologne",
+      "message_id": 176,
+      "sent_at": "2026-11-25T14:20:42Z",
+      "state": "confirmed"
+    },
     "e16db47d3ea20ac432a2d0366d8b25a6": {
       "attempted_at": "2026-11-24T09:20:29Z",
       "country_code": "CA",
