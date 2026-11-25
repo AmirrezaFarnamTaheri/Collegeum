@@ -30,6 +30,16 @@
       "sent_at": "2026-11-22T20:22:35Z",
       "state": "confirmed"
     },
+    "1ab38e27cdf06d792aeb27f380c6c50f": {
+      "attempted_at": "2026-11-25T00:44:03Z",
+      "country_code": "BE",
+      "deadline_iso": "2027-01-31",
+      "evidence_url": "https://feb.kuleuven.be/research/economics/PHD/phdcall",
+      "institution": "KU Leuven",
+      "message_id": 173,
+      "sent_at": "2026-11-25T00:44:03Z",
+      "state": "confirmed"
+    },
     "408122c5119887ace360862fa6549af1": {
       "attempted_at": "2026-11-20T07:23:50Z",
       "country_code": "UK",
@@ -156,6 +166,16 @@
       "institution": "Bocconi University",
       "message_id": 148,
       "sent_at": "2026-11-23T12:20:44Z",
+      "state": "confirmed"
+    },
+    "fcae72a71a68f383415b654d965bb767": {
+      "attempted_at": "2026-11-25T00:44:03Z",
+      "country_code": "NO",
+      "deadline_iso": "2027-01-15",
+      "evidence_url": "https://www.nhh.no/en/study-programmes/phd-programme-at-nhh/vacant-phd-positions/",
+      "institution": "NHH Norwegian School of Economics",
+      "message_id": 172,
+      "sent_at": "2026-11-25T00:44:03Z",
       "state": "confirmed"
     },
     "fdc995019ba320fc68b4052f3908b8ba": {
