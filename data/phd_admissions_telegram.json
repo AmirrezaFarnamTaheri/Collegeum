@@ -158,6 +158,16 @@
       "sent_at": "2026-11-23T16:22:27Z",
       "state": "confirmed"
     },
+    "e6112162c47a24e6762227bdaa9b4522": {
+      "attempted_at": "2026-11-25T13:15:15Z",
+      "country_code": "CA",
+      "deadline_iso": "2027-01-31",
+      "evidence_url": "https://applygrad.mcmaster.ca/portal/start_your_app?cmd=get_results&selectedterm=sept",
+      "institution": "McMaster University",
+      "message_id": 174,
+      "sent_at": "2026-11-25T13:15:15Z",
+      "state": "confirmed"
+    },
     "e6fc0a67006971ed8848ae8e25a99cf6": {
       "attempted_at": "2026-11-23T12:20:44Z",
       "country_code": "IT",
@@ -166,6 +176,16 @@
       "institution": "Bocconi University",
       "message_id": 148,
       "sent_at": "2026-11-23T12:20:44Z",
+      "state": "confirmed"
+    },
+    "e8af5d6b07026d7ab9d5a7587c5de707": {
+      "attempted_at": "2026-11-25T13:15:15Z",
+      "country_code": "SE",
+      "deadline_iso": "2027-01-31",
+      "evidence_url": "https://www.su.se/english/divisions/department-of-economics/education/courses-and-programmes/applying-to-the-phd-programme-in-economics",
+      "institution": "Stockholm University",
+      "message_id": 175,
+      "sent_at": "2026-11-25T13:15:15Z",
       "state": "confirmed"
     },
     "fcae72a71a68f383415b654d965bb767": {
