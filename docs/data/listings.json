@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-26T10:56:10Z",
+ "generated_at": "2026-11-26T13:53:06Z",
  "count": 212,
  "listings": [
   {
@@ -210,23 +210,24 @@
    "city": "Berlin",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": null,
-   "days_left": null,
+   "deadline": "2027-01-31T23:59:59Z",
+   "days_left": 66,
    "disciplines": [
     "Macroeconomics",
-    "Finance",
-    "Behavioral/Experimental Economics"
+    "Finance"
    ],
    "visa": "unknown",
-   "summary": "The position is a full-time postdoctoral research role at ESMT Berlin's European Expectations Center, starting July 2027 for three years with possible renewal. The researcher will conduct independent research on belief formation in macroeconomics and finance, supervise pre-doctoral assistants, and contribute to grant applications with no teaching obligations.",
+   "summary": "The position is a full-time postdoctoral researcher at ESMT Berlin, starting in July 2027, funded for three years, to conduct independent research on belief formation in macroeconomics and finance. It suits candidates who have completed a PhD in economics, finance, or a related field and have demonstrated ability to conduct independent empirical and/or theoretical research, including with unstructured data or information-provision experiments.",
    "language": "en",
    "apply_url": "https://jobs.esmt.berlin/de?id=f47b7c",
    "source_url": "https://jobs.esmt.berlin/de?id=f47b7c",
-   "confidence": 0.91,
+   "confidence": 0.95,
    "first_seen_at": "2026-11-24T19:18:14Z",
    "deadline_note": null,
    "visa_note": null,
-   "alternate_sources": [],
+   "alternate_sources": [
+    "https://jobs.esmt.berlin/de?id=f47b7c"
+   ],
    "salary_min": null,
    "salary_max": null,
    "salary_currency": null,
@@ -1227,15 +1228,15 @@
    "city": "Benguerir",
    "is_remote": false,
    "duration_years": 1.0,
-   "deadline": "2026-12-10T22:59:59Z",
+   "deadline": "2026-12-10T23:59:59Z",
    "days_left": 14,
    "disciplines": [
     "Applied Microeconomics",
     "Development Economics",
-    "Labor Economics"
+    "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "One-year postdoctoral fellowship at the Africa Institute for Research in Economics and Social Sciences (AIRESS) working with Professor Aziz Ajbilou on youth, gender, and socio-demographic transitions. The role involves empirical analysis, publication drafting, seminar leadership, student supervision, and occasional teaching.",
+   "summary": "The position is a one-year postdoctoral fellowship in applied economics at Mohammed VI Polytechnic University's AIRESS institute in Benguerir, Morocco. The researcher will work under Professor Aziz Ajbilou on youth, gender, and socio-demographic transitions, conducting empirical analyses, publishing, teaching, and supervising students.",
    "language": "fr",
    "apply_url": "https://recruitment.fgses-um6p.ma/logi",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417679/fgses-airess-postdoctoral-researcher-in-applied-economics?LinkSource=PremiumListing",
@@ -3507,7 +3508,7 @@
     "Econometrics"
    ],
    "visa": "explicit",
-   "summary": "A postdoctoral research position in Econometrics is available at Macquarie University, Sydney, Australia, focusing on counterfactual policy evaluation and high-frequency financial-market methods. Applicants must hold a PhD completed or near completion by the anticipated start date.",
+   "summary": "The role is a postdoctoral research fellow in econometrics at Macquarie University, Sydney, Australia, focusing on counterfactual policy evaluation and high‑frequency financial‑market methods. It is suited for candidates with a PhD in econometrics, statistics, economics or a related field and strong research skills.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
@@ -3583,23 +3584,25 @@
   {
    "id": 360,
    "title": "Postdoctoral Associate in Behavioral and Experimental Social Science",
-   "institution": "NEW YORK UNIVERSITY ABU DHABI",
-   "principal_investigator": "Professors Berkay Özcan and Ernesto Reuben",
+   "institution": "New York University Abu Dhabi",
+   "principal_investigator": "Berkay Özcan and Ernesto Reuben",
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T00:00:00Z",
+   "deadline": "2026-12-05T23:59:59Z",
    "days_left": 9,
    "disciplines": [
-    "Behavioral/Experimental Economics"
+    "Behavioral/Experimental Economics",
+    "Labor Economics",
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral associate in Behavioral and Experimental Social Science at NYU Abu Dhabi, involving independent and collaborative research under Professors Berkay Özcan and Ernesto Reuben. It is suited for candidates with a recent PhD in economics, management, organizational behavior, sociology, public policy, data science, or a closely related discipline, who have obtained their doctorate within the past five years.",
+   "summary": "A fixed-term postdoctoral position in NYU Abu Dhabi's Division of Social Science, with half time for independent research and half for collaborative behavioral and experimental social science projects. It is intended for candidates with a recent PhD in economics, management, sociology, public policy, data science or a related field and expertise in experimental or behavioral methods and quantitative analysis.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.953,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3615,7 +3618,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "September 2027",
+   "start_term": "September 1, 2027",
    "start_date": "2027-09-01",
    "kind": "postdoc",
    "sector": "academic"
