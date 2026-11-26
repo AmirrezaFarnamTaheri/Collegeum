@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-26T00:13:13Z",
+ "generated_at": "2026-11-26T00:35:38Z",
  "count": 212,
  "listings": [
   {
@@ -244,7 +244,7 @@
   {
    "id": 477,
    "title": "Post-Doctoral Associate in the Division of Social Science (Economics)",
-   "institution": "New York University Abu Dhabi",
+   "institution": "NEW YORK UNIVERSITY ABU DHABI",
    "principal_investigator": "Herve Cres and Maximilian Mihm",
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
@@ -253,16 +253,15 @@
    "deadline": "2026-12-24T00:00:00Z",
    "days_left": 28,
    "disciplines": [
-    "Political Economy",
-    "Behavioral/Experimental Economics",
-    "Applied Microeconomics"
+    "Econometrics",
+    "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "This is a postdoctoral associate position in the Division of Social Science at NYU Abu Dhabi for candidates who have or will soon receive a PhD in economics or a related discipline, no more than five years post-PhD. The role splits time between independent research and collaborative research with Professors Herve Cres and Maximilian Mihm on collective decision-making, with no required teaching.",
+   "summary": "The position is a Post-Doctoral Associate in the Division of Social Science (Economics) at NYU Abu Dhabi, focusing on collective decision-making research. It is suited for candidates who have or will soon receive a PhD in economics or a related discipline and have expertise in microeconomic theory, decision theory, and formal modeling.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417981/post-doctoral-associate-in-the-division-of-social-science-economics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417981/post-doctoral-associate-in-the-division-of-social-science-economics-?LinkSource=PremiumListing",
-   "confidence": 0.972,
+   "confidence": 0.98,
    "first_seen_at": "2026-11-24T09:20:28Z",
    "deadline_note": null,
    "visa_note": null,
@@ -278,7 +277,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "September 1, 2027",
+   "start_term": "2027-09-01",
    "start_date": "2027-09-01",
    "kind": "postdoc",
    "sector": "academic"
@@ -564,7 +563,7 @@
   {
    "id": 468,
    "title": "Postdoctoral Researcher in Urban Economics",
-   "institution": "Aalto University",
+   "institution": "AALTO UNIVERSITY",
    "principal_investigator": "Tuukka Saarimaa",
    "country": "Finland",
    "city": "Espoo",
@@ -574,15 +573,14 @@
    "days_left": 81,
    "disciplines": [
     "Applied Microeconomics",
-    "Political Economy",
-    "Public Policy"
+    "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "This is a two-year postdoctoral position at Aalto University's Department of Economics, conducting empirical research on how homeownership shapes local political behaviour, neighbourhood amenities and housing supply using Finnish administrative register data. It suits candidates holding or nearly completing a doctorate in economics with experience in applied microeconomics, particularly urban, housing or spatial economics.",
+   "summary": "The position is a two‑year postdoctoral researcher role in Urban Economics at Aalto University, focusing on research using Finnish administrative register data on homeownership, local politics and housing supply. It is suited for candidates with a doctoral degree or near‑completion in economics or a related field and experience in applied microeconomics, especially urban, housing or spatial economics.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417827/postdoctoral-researcher-in-urban-economics?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417827/postdoctoral-researcher-in-urban-economics?LinkSource=PremiumListing",
-   "confidence": 0.972,
+   "confidence": 0.98,
    "first_seen_at": "2026-11-19T08:59:33Z",
    "deadline_note": null,
    "visa_note": null,
@@ -593,12 +591,12 @@
    "salary_max": 4600.0,
    "salary_currency": "EUR",
    "salary_period": "month",
-   "salary_raw": "approximately 4 600 EUR/month (gross)",
+   "salary_raw": "4 600 EUR/month",
    "tools_required": [],
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "No later than September 2027",
+   "start_term": "September 2027",
    "start_date": "2027-09-01",
    "kind": "postdoc",
    "sector": "academic"
@@ -607,7 +605,7 @@
    "id": 467,
    "title": "Postdoctoral Researcher in Biodiversity Economics",
    "institution": "Aalto University",
-   "principal_investigator": "Lassi Ahlvik",
+   "principal_investigator": "Professor Lassi Ahlvik",
    "country": "Finland",
    "city": "Espoo",
    "is_remote": false,
@@ -615,10 +613,12 @@
    "deadline": "2027-01-31T21:59:00Z",
    "days_left": 66,
    "disciplines": [
-    "Environmental and Energy Economics"
+    "Environmental and Energy Economics",
+    "Public Policy",
+    "Applied Microeconomics"
    ],
    "visa": "unknown",
-   "summary": "The Department of Economics at Aalto University is recruiting a three-year postdoctoral researcher in biodiversity economics. The position is for an economist with a doctoral degree or near completion to conduct empirical research on biodiversity, land use and conservation policy.",
+   "summary": "Aalto University seeks a postdoctoral researcher for a three-year fixed-term position in biodiversity economics, funded by the Jane and Aatos Erkko Foundation. The role involves empirical research on economic drivers of biodiversity change, land use, conservation policies, and economic incentives for biodiversity protection, based at the Otaniemi campus in Espoo, Finland.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417825/postdoctoral-researcher-in-biodiversity-economics?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417825/postdoctoral-researcher-in-biodiversity-economics?LinkSource=PremiumListing",
@@ -1227,13 +1227,14 @@
    "city": "Benguerir",
    "is_remote": false,
    "duration_years": 1.0,
-   "deadline": "2026-12-10T00:00:00Z",
-   "days_left": 14,
+   "deadline": "2026-12-16T00:00:00Z",
+   "days_left": 20,
    "disciplines": [
+    "Applied Microeconomics",
     "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "This is a postdoctoral research position in applied economics at Mohammed VI Polytechnic University, Benguerir, Morocco. The role involves empirical analysis, methodological development, and scientific publications on youth, gender, and socio-demographic transitions.",
+   "summary": "The position is a one-year postdoctoral research fellowship in applied economics at Mohammed VI Polytechnic University, focusing on youth, gender and socio-demographic transitions. It is suited for candidates holding a PhD in economics obtained within the last three years with strong applied econometrics and data analysis skills.",
    "language": "fr",
    "apply_url": "https://recruitment.fgses-um6p.ma/logi",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417679/fgses-airess-postdoctoral-researcher-in-applied-economics?LinkSource=PremiumListing",
@@ -3255,17 +3256,18 @@
    "city": "Benguerir",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2026-12-04T23:59:59Z",
+   "deadline": "2026-12-04T00:00:00Z",
    "days_left": 8,
    "disciplines": [
+    "Econometrics",
     "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral researcher specializing in urban modeling and cost analysis to develop predictive models of urbanization costs. The role involves calibrating models with real case studies, simulating scenarios, and producing publications, and requires a PhD in a relevant field plus French and English fluency.",
+   "summary": "This postdoctoral position seeks a researcher to develop a predictive model that estimates the direct and indirect costs of urbanization using spatial data. It is aimed at scholars holding a Ph.D. in data science, urban planning, or related fields and skilled in Python, R, MATLAB, and geospatial tools.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.924,
+   "confidence": 0.946,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3492,19 +3494,19 @@
   {
    "id": 362,
    "title": "Postdoctoral Research Fellow (Econometrics)",
-   "institution": "Macquarie University",
+   "institution": "MACQUARIE UNIVERSITY",
    "principal_investigator": "Professor Shuping Shi",
    "country": "Australia",
    "city": "North Ryde",
    "is_remote": false,
    "duration_years": 4.0,
-   "deadline": "2026-12-06T12:59:00Z",
+   "deadline": "2026-12-06T00:00:00Z",
    "days_left": 10,
    "disciplines": [
     "Econometrics"
    ],
    "visa": "explicit",
-   "summary": "The position is a fixed-term postdoctoral research fellowship in econometrics at Macquarie University, Australia, led by Professor Shuping Shi. It is suited for candidates with a PhD (completed or near completion) in econometrics, statistics, economics or a related field.",
+   "summary": "The position is a postdoctoral research fellow in econometrics at Macquarie University, Sydney, Australia, focusing on counterfactual policy evaluation and financial‑market dynamics using high‑frequency data. The role is suited to candidates with a PhD in econometrics, statistics, economics or a related field and strong programming skills.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
@@ -3528,7 +3530,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "2027-07",
+   "start_term": "Second half 2027",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -3589,15 +3591,14 @@
    "deadline": "2026-12-05T00:00:00Z",
    "days_left": 9,
    "disciplines": [
-    "Behavioral/Experimental Economics",
-    "Quantitative Social Sciences"
+    "Behavioral/Experimental Economics"
    ],
    "visa": "unknown",
-   "summary": "This is a postdoctoral associate position in the Division of Social Science at NYU Abu Dhabi, with half the time on independent research and half on collaborative research with Professors Berkay Özcan and Ernesto Reuben on behavioral and experimental economics and related social science topics. It suits candidates holding a PhD received within the past five years in economics, management, sociology, public policy, data science or a related field, with expertise in experimental or behavioral research methods and quantitative analysis.",
+   "summary": "This is a postdoctoral associate position in the Division of Social Science at NYU Abu Dhabi, split between independent research and collaborative research with Professors Berkay Özcan and Ernesto Reuben on behavioral and experimental economics and related social science. It suits candidates who have received a PhD within the past five years in economics, management, organizational behavior, sociology, public policy, data science or a related field, with expertise in experimental or behavioral research methods and quantitative analysis.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.946,
+   "confidence": 0.977,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
