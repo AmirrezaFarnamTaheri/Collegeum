@@ -50,6 +50,16 @@
       "sent_at": "2026-11-20T07:23:50Z",
       "state": "confirmed"
     },
+    "4fef4074bba21daf08cf0d9d7d7fe865": {
+      "attempted_at": "2026-11-26T00:07:04Z",
+      "country_code": "UK",
+      "deadline_iso": "2027-08-01",
+      "evidence_url": "https://study.ed.ac.uk/programmes/postgraduate-research/278-economics",
+      "institution": "University of Edinburgh",
+      "message_id": 178,
+      "sent_at": "2026-11-26T00:07:04Z",
+      "state": "confirmed"
+    },
     "54edd99a41f1473f072b8d50f0b302ec": {
       "attempted_at": "2026-11-19T20:07:47Z",
       "country_code": "DE",
