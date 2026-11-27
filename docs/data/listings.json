@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-27T10:11:43Z",
+ "generated_at": "2026-11-27T13:50:02Z",
  "count": 210,
  "listings": [
   {
@@ -1228,16 +1228,16 @@
    "deadline": "2026-12-10T00:00:00Z",
    "days_left": 13,
    "disciplines": [
-    "Econometrics",
     "Applied Microeconomics",
-    "Public Policy"
+    "Labor Economics",
+    "Development Economics"
    ],
    "visa": "unknown",
-   "summary": "This is a postdoctoral research position in applied economics at Mohammed VI Polytechnic University. The candidate will work with Professor Aziz AJBILOU on the project Youth, Gender, and Socio-Demographic Transitions, conducting empirical analyses, contributing to publications, leading seminars, teaching courses, and promoting policy discussions.",
+   "summary": "The postdoctoral fellow will work with Professor Aziz Ajbilou at AIRESS/FGSES on the PROGRESS project on youth, gender and socio-demographic transitions, focusing on the educational and professional trajectories of people aged 18–34. The role involves empirical analysis, scientific publications, seminars, student supervision and possible teaching, and requires a recent PhD in economics with applied econometrics and survey-data skills.",
    "language": "fr",
    "apply_url": "https://recruitment.fgses-um6p.ma/logi",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417679/fgses-airess-postdoctoral-researcher-in-applied-economics?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.993,
    "first_seen_at": "2026-11-16T06:20:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -1248,7 +1248,7 @@
    "salary_max": null,
    "salary_currency": null,
    "salary_period": null,
-   "salary_raw": "Competitive research grant and access to UM6P campus facilities in Rabat",
+   "salary_raw": "Bourse de recherche compétitive",
    "tools_required": [
     "Stata",
     "R"
@@ -3206,24 +3206,25 @@
   {
    "id": 370,
    "title": "Postdoctoral Researcher in Spatial Data Science",
-   "institution": "Mohammed VI Polytechnic University",
+   "institution": "MOHAMMED VI POLYTECHNIC UNIVERSITY",
    "principal_investigator": null,
    "country": "Morocco",
    "city": "Benguerir",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2026-12-04T23:59:59Z",
+   "deadline": "2026-12-04T00:00:00Z",
    "days_left": 7,
    "disciplines": [
-    "Quantitative Social Sciences",
-    "Econometrics"
+    "Econometrics",
+    "Public Policy",
+    "Quantitative Social Sciences"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral researcher specializing in urban modeling and cost analysis to develop predictive models of the direct and indirect costs of urbanization. The role requires a Ph.D. in data science, urban planning, urban economics or a related field and is suited to postdoctoral researchers with relevant research experience.",
+   "summary": "We are seeking a postdoctoral researcher to develop a predictive model estimating the direct and indirect costs of urbanization using spatial data and machine learning. The role supports sustainable urban planning and requires expertise in urban economics, environmental factors, and data-driven simulation.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.924,
+   "confidence": 0.939,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3451,7 +3452,7 @@
    "id": 362,
    "title": "Postdoctoral Research Fellow (Econometrics)",
    "institution": "Macquarie University",
-   "principal_investigator": "Shuping Shi",
+   "principal_investigator": "Professor Shuping Shi",
    "country": "Australia",
    "city": "North Ryde",
    "is_remote": false,
@@ -3459,14 +3460,15 @@
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 9,
    "disciplines": [
-    "Econometrics"
+    "Econometrics",
+    "Finance"
    ],
-   "visa": "inferred",
-   "summary": "Macquarie University is advertising a full-time, fixed-term Postdoctoral Research Fellow in Econometrics for four years at its North Ryde campus in Sydney. The role supports research on counterfactual policy evaluation with nonstationary outcomes and high-frequency financial-market econometrics under Professor Shuping Shi, and requires a PhD completed or near completion by the start date.",
+   "visa": "explicit",
+   "summary": "A four-year fixed-term postdoctoral research fellowship in econometrics at Macquarie University's Department of Economics, working on counterfactual policy evaluation with nonstationary processes and high-frequency financial econometrics under Professor Shuping Shi. The role requires a PhD in econometrics, statistics, economics or a related field, strong programming skills in MATLAB, R or Python, and the ability to supervise postgraduate students.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.985,
+   "confidence": 0.962,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -3486,7 +3488,7 @@
    "tools_preferred": [],
    "min_degree": "phd",
    "degree_note": null,
-   "start_term": "second half of 2027",
+   "start_term": "Second half of 2027",
    "start_date": null,
    "kind": "postdoc",
    "sector": "academic"
@@ -3544,13 +3546,15 @@
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T23:59:59Z",
+   "deadline": "2026-12-05T00:00:00Z",
    "days_left": 8,
    "disciplines": [
-    "Behavioral/Experimental Economics"
+    "Behavioral/Experimental Economics",
+    "Quantitative Social Sciences",
+    "Business and Management"
    ],
    "visa": "unknown",
-   "summary": "This is a postdoctoral associate position at NEW YORK UNIVERSITY ABU DHABI in the Division of Social Science, focusing on behavioral and experimental research in social science topics such as decision-making and inequality. The role requires a PhD in economics, management, organizational behavior, sociology, public policy, data science, or a closely related discipline received within the past five years.",
+   "summary": "The position is a postdoctoral associate in behavioral and experimental social science at NYU Abu Dhabi, focusing on research in areas such as decision-making, social norms, and inequality. The role is suited for candidates with a PhD in economics, management, sociology, or related fields who have received their degree within the past five years.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
