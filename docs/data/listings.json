@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-27T00:40:31Z",
+ "generated_at": "2026-11-27T10:11:43Z",
  "count": 210,
  "listings": [
   {
@@ -3206,24 +3206,24 @@
   {
    "id": 370,
    "title": "Postdoctoral Researcher in Spatial Data Science",
-   "institution": "MOHAMMED VI POLYTECHNIC UNIVERSITY",
+   "institution": "Mohammed VI Polytechnic University",
    "principal_investigator": null,
    "country": "Morocco",
    "city": "Benguerir",
    "is_remote": false,
    "duration_years": null,
-   "deadline": "2026-12-04T00:00:00Z",
+   "deadline": "2026-12-04T23:59:59Z",
    "days_left": 7,
    "disciplines": [
-    "Econometrics",
-    "Quantitative Social Sciences"
+    "Quantitative Social Sciences",
+    "Econometrics"
    ],
    "visa": "unknown",
-   "summary": "The position is a postdoctoral researcher role at Mohammed VI Polytechnic University in Benguerir, Morocco, focusing on developing a predictive model to estimate direct and indirect costs of urbanization using urban morphology, infrastructure, health, and environmental variables under various climatic and social scenarios. Applicants should hold a Ph.D. in Data Science, Urban Planning, Urban Economics, or a related field, with proficiency in urban modeling tools such as MATLAB, Python, and R, and experience in multi-variable simulations and scientific publishing.",
+   "summary": "The position is a postdoctoral researcher specializing in urban modeling and cost analysis to develop predictive models of the direct and indirect costs of urbanization. The role requires a Ph.D. in data science, urban planning, urban economics or a related field and is suited to postdoctoral researchers with relevant research experience.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417370/cus-postdoctoral-researcher-in-spatial-data-science-?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.924,
    "first_seen_at": "2026-11-05T22:05:14Z",
    "deadline_note": null,
    "visa_note": null,
@@ -3451,7 +3451,7 @@
    "id": 362,
    "title": "Postdoctoral Research Fellow (Econometrics)",
    "institution": "Macquarie University",
-   "principal_investigator": "Professor Shuping Shi",
+   "principal_investigator": "Shuping Shi",
    "country": "Australia",
    "city": "North Ryde",
    "is_remote": false,
@@ -3459,15 +3459,14 @@
    "deadline": "2026-12-06T12:59:00Z",
    "days_left": 9,
    "disciplines": [
-    "Econometrics",
-    "Finance"
+    "Econometrics"
    ],
    "visa": "inferred",
-   "summary": "The Postdoctoral Research Fellow (Econometrics) is a full-time, fixed-term four-year research appointment at Macquarie University in Sydney, Australia, investigating econometric methods for policy evaluation and high-frequency financial-market dynamics. The role requires a PhD completed or near completion and a strong research record in econometrics, statistics, or economics.",
+   "summary": "Macquarie University is advertising a full-time, fixed-term Postdoctoral Research Fellow in Econometrics for four years at its North Ryde campus in Sydney. The role supports research on counterfactual policy evaluation with nonstationary outcomes and high-frequency financial-market econometrics under Professor Shuping Shi, and requires a PhD completed or near completion by the start date.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417315/postdoctoral-research-fellow-econometrics-?LinkSource=PremiumListing",
-   "confidence": 0.962,
+   "confidence": 0.985,
    "first_seen_at": "2026-11-05T12:20:53Z",
    "deadline_note": null,
    "visa_note": "International applications welcome; sponsorship unstated (“International applicants are welcome”); Relocation assistance mentioned; sponsorship unstated (“relocation assistance”)",
@@ -3478,7 +3477,7 @@
    "salary_max": 127138.0,
    "salary_currency": "AUD",
    "salary_period": "year",
-   "salary_raw": "From $104,481 to $127,138 plus 17% employer's superannuation and annual leave loading (commensurate with experience & qualifications)",
+   "salary_raw": "$104,481 to $127,138 plus 17% employer's superannuation and annual leave loading",
    "tools_required": [
     "MATLAB",
     "R",
@@ -3539,24 +3538,23 @@
   {
    "id": 360,
    "title": "Postdoctoral Associate in Behavioral and Experimental Social Science",
-   "institution": "New York University Abu Dhabi",
+   "institution": "NEW YORK UNIVERSITY ABU DHABI",
    "principal_investigator": "Berkay Özcan and Ernesto Reuben",
    "country": "United Arab Emirates",
    "city": "Abu Dhabi",
    "is_remote": false,
    "duration_years": 3.0,
-   "deadline": "2026-12-05T00:00:00Z",
+   "deadline": "2026-12-05T23:59:59Z",
    "days_left": 8,
    "disciplines": [
-    "Behavioral/Experimental Economics",
-    "Quantitative Social Sciences"
+    "Behavioral/Experimental Economics"
    ],
    "visa": "unknown",
-   "summary": "A fixed-term postdoctoral associate position in the Division of Social Science at NYU Abu Dhabi, with half-time independent research and half-time collaborative research using behavioral and experimental social science methods. The role is suited to candidates with a PhD in economics, management or organizational behavior, sociology, public policy, data science, or a closely related discipline and expertise in experimental or behavioral research methods and quantitative analysis.",
+   "summary": "This is a postdoctoral associate position at NEW YORK UNIVERSITY ABU DHABI in the Division of Social Science, focusing on behavioral and experimental research in social science topics such as decision-making and inequality. The role requires a PhD in economics, management, organizational behavior, sociology, public policy, data science, or a closely related discipline received within the past five years.",
    "language": "en",
    "apply_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
    "source_url": "https://www.timeshighereducation.com/unijobs/listing/417331/postdoctoral-associate-in-behavioral-and-experimental-social-science?LinkSource=PremiumListing",
-   "confidence": 0.993,
+   "confidence": 0.953,
    "first_seen_at": "2026-11-05T09:35:17Z",
    "deadline_note": null,
    "visa_note": null,
