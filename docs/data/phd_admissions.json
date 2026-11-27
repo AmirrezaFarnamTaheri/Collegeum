@@ -1,7 +1,7 @@
 {
   "kind": "economics_phd_admissions_observations",
   "scope": "official_programme_sources_only",
-  "generated_at": "2026-11-27T03:38:34Z",
+  "generated_at": "2026-11-27T09:56:53Z",
   "source": {
     "name": "Economics PhD App Deadlines",
     "author": "Paul L. Tran",
@@ -312,7 +312,7 @@
       "official_programme_url": "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/preparing-apply",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-23T11:58:38Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-18",
       "evidence_url": "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/preparing-apply",
       "evidence_excerpt": "The deadline for submitting the application is 18 January 2027 at 23:59 CET",
@@ -320,9 +320,9 @@
       "investigated_urls": [
         "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/preparing-apply",
         "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/admission-results-ay-2027-28",
-        "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/do-international-students"
+        "https://www.unibocconi.it/en/programs/phd/admission-phd-programs/admission-results-ay-2027-28"
       ],
-      "extractor_revision": "2026-11-23-admissions-v9"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Boston College",
@@ -368,7 +368,7 @@
       "official_programme_url": "https://graduateprograms.brown.edu/graduate-program/economics-phd",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-23T09:55:08Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-01",
       "evidence_url": "https://graduateprograms.brown.edu/graduate-program/economics-phd",
       "evidence_excerpt": "Economics PhD Application Deadline (Brown): January 1, 2027",
@@ -376,7 +376,7 @@
       "investigated_urls": [
         "https://graduateprograms.brown.edu/graduate-program/economics-phd"
       ],
-      "extractor_revision": "2026-11-23-admissions-v8"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Ca' Foscari University of Venice",
@@ -411,7 +411,7 @@
       "official_programme_url": "https://www.cmu.edu/tepper/programs/phd/admissions/index.html",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-24T09:46:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-15",
       "evidence_url": "https://www.cmu.edu/tepper/programs/phd/admissions",
       "evidence_excerpt": "Tepper Economics Ph.D. application: The application site will remain open until December 15, 2026.",
@@ -452,7 +452,7 @@
       "official_programme_url": "https://www.ceu.edu/admissions/doctoral#doctoral-degree-deadlines",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-24T09:46:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-15",
       "evidence_url": "https://www.ceu.edu/admissions/doctoral#doctoral-degree-deadlines",
       "evidence_excerpt": "CEU doctoral applications (Economics included): Deadline: January 15, 2027",
@@ -461,7 +461,7 @@
           "value": "Austria",
           "evidence_url": "https://www.ceu.edu/contact",
           "evidence_excerpt": "Central European University Quellenstraße 51 1100 Wien Austria",
-          "checked_at": "2026-11-24T09:46:04Z"
+          "checked_at": "2026-11-27T09:56:53Z"
         }
       },
       "investigated_urls": [
@@ -478,11 +478,11 @@
       "official_programme_url": "https://ies.fsv.cuni.cz/en/admissions/admissions/doctoral-degree-economics-and-finance",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-23T16:19:27Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-04-30",
       "evidence_url": "https://ies.fsv.cuni.cz/en/admissions/admissions/doctoral-degree-economics-and-finance",
       "evidence_excerpt": "admission proces will open as of this day and will last to 30 April 2027",
-      "extractor_revision": "2026-11-23-admissions-v11",
+      "extractor_revision": "2026-11-24-admissions-v18",
       "official_details": {},
       "investigated_urls": [
         "https://ies.fsv.cuni.cz/en/admissions/admissions/doctoral-degree-economics-and-finance",
@@ -632,7 +632,7 @@
       "official_programme_url": "https://www.diw.de/de/diw_01.c.799242.de/application.html",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-24T09:46:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-15",
       "evidence_url": "https://www.diw.de/de/diw_01.c.799242.de/application.html",
       "evidence_excerpt": "DIW economics doctoral programme: Deadline for applications: 15 January 2027",
@@ -649,7 +649,7 @@
       "official_programme_url": "https://www.lebow.drexel.edu/admissions/doctorate/admission-standards",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-23T16:30:18Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-15",
       "evidence_url": "https://www.lebow.drexel.edu/admissions/doctorate/admission-standards",
       "evidence_excerpt": "Dec. 15, 2026 — Application deadline for Fall 2027",
@@ -660,7 +660,7 @@
         "https://www.lebow.drexel.edu/admissions/doctorate/phd-admissions/assistantships-and-financial-aid",
         "https://www.lebow.drexel.edu/admissions/doctorate/information-request"
       ],
-      "extractor_revision": "2026-11-23-admissions-v12"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Duke University",
@@ -812,7 +812,7 @@
       "official_programme_url": "https://www.fordham.edu/graduate-school-of-arts-and-sciences/admissions/how-to-apply/application-deadlines/",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-23T18:43:17Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-08",
       "evidence_url": "https://www.fordham.edu/graduate-school-of-arts-and-sciences/admissions/how-to-apply/application-deadlines/",
       "evidence_excerpt": "Economics * English History Philosophy Theology January 8, 2027",
@@ -823,7 +823,7 @@
         "https://www.fordham.edu/graduate-school-of-arts-and-sciences/admissions/",
         "https://www.fordham.edu/graduate-school-of-arts-and-sciences/admissions/admissions-events/"
       ],
-      "extractor_revision": "2026-11-23-admissions-v13"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Free University of Brussels",
@@ -1022,7 +1022,7 @@
       "official_programme_url": "https://prog-crs.hkust.edu.hk/pgprog/2027-28/mphil-phd-econ",
       "programme_structure_hint": "MPhil + PhD",
       "status": "verified",
-      "checked_at": "2026-11-24T09:46:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-01",
       "evidence_url": "https://prog-crs.hkust.edu.hk/pgprog/2027-28/mphil-phd-econ",
       "evidence_excerpt": "Economics PhD — Fall Term Intake Application Deadlines: Non-local / Local Applicants, Full-time / Part-time: 1 Dec 2026",
@@ -1038,7 +1038,7 @@
       "official_programme_url": "https://www.imperial.ac.uk/business-school/phd/economics/",
       "programme_structure_hint": "Master's + PhD",
       "status": "verified",
-      "checked_at": "2026-11-23T16:06:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-02",
       "evidence_url": "https://www.imperial.ac.uk/business-school/study/phd/economics/",
       "evidence_excerpt": "Next application deadline: 2 December 2026",
@@ -1046,7 +1046,7 @@
       "investigated_urls": [
         "https://www.imperial.ac.uk/business-school/study/phd/economics/"
       ],
-      "extractor_revision": "2026-11-23-admissions-v10"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Indiana University Bloomington",
@@ -1105,7 +1105,7 @@
       "official_programme_url": "https://www.keio.ac.jp/en/admissions/grad/doctoral/gsecon/",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-24T09:46:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-24",
       "evidence_url": "https://www.keio.ac.jp/en/admissions/grad/doctoral/gsecon/",
       "evidence_excerpt": "Economics Doctoral Program — Online Registration: 10:00 a.m. on December 14 (Mon) - 3:00 p.m. on December 24 (Thu), 2026 [application period]",
@@ -1160,7 +1160,7 @@
       "official_programme_url": "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-24T09:46:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-03-11",
       "evidence_url": "https://www.econ.kyoto-u.ac.jp/kueac/application/doctoral/",
       "evidence_excerpt": "March 1 (9am/Mon) ～March 11 (1pm/Thurs) 2027 “Strict Deadline” — Submission of Application Documents and Examination Fee Payment (via Online Application System)",
@@ -1222,7 +1222,7 @@
       "official_programme_url": "https://www.london.edu/phd#howtoapply",
       "programme_structure_hint": "Master's + PhD",
       "status": "verified",
-      "checked_at": "2026-11-23T13:01:25Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-06",
       "evidence_url": "https://www.london.edu/phd/how-to-apply",
       "evidence_excerpt": "When should I apply? Applications are open from 1 September 2026 to 6 January 2027. Please note that we do not accept late applications.",
@@ -1233,7 +1233,7 @@
         "https://www.london.edu/recruiters-and-organisations/corporate-support-for-scholarships",
         "https://www.london.edu/phd/how-to-apply?entry=true"
       ],
-      "extractor_revision": "2026-11-23-admissions-v9"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "London School of Economics and Political Science",
@@ -1340,7 +1340,7 @@
       "official_programme_url": "https://www.mcgill.ca/economics/graduates/admissions",
       "programme_structure_hint": "Master's + PhD",
       "status": "verified",
-      "checked_at": "2026-11-23T19:04:39Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-15",
       "evidence_url": "https://www.mcgill.ca/economics/graduates/admissions",
       "evidence_excerpt": "Deadline for Receipt of Complete Application, except in extraordinary circumstances, is JANUARY 15, 2027",
@@ -1350,7 +1350,7 @@
         "https://www.mcgill.ca/economics/category/tags/admission-mcgill-university",
         "https://www.mcgill.ca/economics/category/tags/application-graduate-program"
       ],
-      "extractor_revision": "2026-11-23-admissions-v15"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "McMaster University",
@@ -1548,7 +1548,7 @@
       "official_programme_url": "https://www.stern.nyu.edu/programs-admissions/phd/admissions/how-to-apply",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-23T16:06:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-15",
       "evidence_url": "https://www.stern.nyu.edu/programs-admissions/phd/admissions/how-to-apply",
       "evidence_excerpt": "Our Fall 2027 application is now open. Please see below for information on how to apply. The application deadline is December 15, 2026 at 11:59PM ET.",
@@ -1559,7 +1559,7 @@
         "https://www.stern.nyu.edu/programs-admissions/phd/academics",
         "https://www.stern.nyu.edu/programs-admissions/phd/academics/degree-requirements"
       ],
-      "extractor_revision": "2026-11-23-admissions-v10"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Ohio State University",
@@ -1691,7 +1691,7 @@
       "official_programme_url": "https://business.purdue.edu/phd/admissions.php",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-22T21:51:41Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-15",
       "evidence_url": "https://business.purdue.edu/phd/admissions.php",
       "evidence_excerpt": "Application Deadlines (Fall 2027): January 15, 2027",
@@ -1701,7 +1701,7 @@
         "https://business.purdue.edu/phd/funding.php",
         "https://business.purdue.edu/fast-tracks/apply.php"
       ],
-      "extractor_revision": "2026-11-23-admissions-v7"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "Queen Mary University of London",
@@ -2169,11 +2169,11 @@
       "official_programme_url": "https://www.gradstudies.socsci.uci.edu/admissions/overview.php",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-23T19:04:39Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-01",
       "evidence_url": "https://www.gradstudies.socsci.uci.edu/admissions/overview.php",
       "evidence_excerpt": "Economics PhD deadline (Fall 2027): December 1, 2026",
-      "extractor_revision": "2026-11-23-admissions-v15",
+      "extractor_revision": "2026-11-24-admissions-v18",
       "official_details": {},
       "investigated_urls": [
         "https://www.gradstudies.socsci.uci.edu/admissions/overview.php",
@@ -2251,7 +2251,7 @@
       "official_programme_url": "https://www.umass.edu/economics/admissions",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-23T16:06:04Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-10",
       "evidence_url": "https://www.umass.edu/economics/admissions",
       "evidence_excerpt": "Application deadline for the program starting fall 2027: January 10, 2027",
@@ -2262,7 +2262,7 @@
         "https://www.umass.edu/economics/academics/graduate/academics/requirements",
         "https://www.umass.edu/admissions"
       ],
-      "extractor_revision": "2026-11-23-admissions-v10"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "UNC-Chapel Hill",
@@ -2565,11 +2565,11 @@
       "official_programme_url": "https://www.grad.ubc.ca/prospective-students/graduate-degree-programs/phd-economics",
       "programme_structure_hint": "Master's + PhD",
       "status": "verified",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-21",
       "evidence_url": "https://www.grad.ubc.ca/prospective-students/graduate-degree-programs/phd-economics",
       "evidence_excerpt": "Canadian Applicants Application Deadline 21 December 2026",
-      "extractor_revision": "2026-11-24-admissions-v17",
+      "extractor_revision": "2026-11-24-admissions-v18",
       "official_details": {},
       "investigated_urls": [
         "https://www.grad.ubc.ca/prospective-students/graduate-degree-programs/phd-economics",
@@ -2602,11 +2602,11 @@
       "official_programme_url": "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececpdpec",
       "programme_structure_hint": "MPhil + PhD",
       "status": "verified",
-      "checked_at": "2026-11-24T09:04:23Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-02-02",
       "evidence_url": "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececpdpec",
       "evidence_excerpt": "Application deadline Feb. 2, 2027",
-      "extractor_revision": "2026-11-24-admissions-v17",
+      "extractor_revision": "2026-11-24-admissions-v18",
       "official_details": {},
       "investigated_urls": [
         "https://www.postgraduate.study.cam.ac.uk/courses/directory/ececpdpec",
@@ -2967,7 +2967,7 @@
       "official_programme_url": "https://econ.uic.edu/graduate/admissions/application-deadlines/",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-23T09:55:08Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-02-15",
       "evidence_url": "https://econ.uic.edu/graduate/admissions/application-deadlines/",
       "evidence_excerpt": "Economics PhD, Fall 2027 admission, international applicants: February 15, 2027",
@@ -2978,7 +2978,7 @@
         "https://econ.uic.edu/graduate/admissions/",
         "https://econ.uic.edu/graduate/admissions/admitted-students/"
       ],
-      "extractor_revision": "2026-11-23-admissions-v8"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Kansas",
@@ -3126,7 +3126,7 @@
       "official_programme_url": "https://www.uni-mannheim.de/gess/apply/",
       "programme_structure_hint": "PhD only",
       "status": "verified",
-      "checked_at": "2026-11-23T11:58:38Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-03-31",
       "evidence_url": "https://www.uni-mannheim.de/gess/apply/",
       "evidence_excerpt": "Final application deadline: 31 March 2027",
@@ -3136,7 +3136,7 @@
         "https://www.uni-mannheim.de/gess/apply/admission-requirements/for-cdsb/",
         "https://www.uni-mannheim.de/gess/apply/admission-requirements/for-cdse/"
       ],
-      "extractor_revision": "2026-11-23-admissions-v9"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Maryland",
@@ -3500,7 +3500,7 @@
       "official_programme_url": "https://doctoral.wharton.upenn.edu/application-requirements/",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-22T21:51:41Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-15",
       "evidence_url": "https://doctoral.wharton.upenn.edu/application-requirements/",
       "evidence_excerpt": "lication Requirements Application Requirements The application for Fall 2027 is now open. The deadline to apply is December 15, 2026, 11:59PM EST. Apply",
@@ -3511,7 +3511,7 @@
         "https://doctoral.wharton.upenn.edu/overview/degree-requirements/",
         "https://doctoral.wharton.upenn.edu/admissions-decisions/"
       ],
-      "extractor_revision": "2026-11-23-admissions-v7"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Pittsburgh",
@@ -3844,7 +3844,7 @@
       "official_programme_url": "https://econ.utah.edu/phd-program/phd-admissions.php",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-23T18:55:45Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2027-01-15",
       "evidence_url": "https://econ.utah.edu/phd-program/phd-admissions.php",
       "evidence_excerpt": "the application deadline of January 15, 2027",
@@ -3853,7 +3853,7 @@
         "https://econ.utah.edu/phd-program/phd-admissions.php",
         "https://econ.utah.edu/economics-scholarships.php"
       ],
-      "extractor_revision": "2026-11-23-admissions-v14"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "University of Vienna",
@@ -4214,7 +4214,7 @@
       "official_programme_url": "https://gsas.yale.edu/admissions/phdmasters-application-process/dates-deadlines",
       "programme_structure_hint": null,
       "status": "verified",
-      "checked_at": "2026-11-22T21:44:32Z",
+      "checked_at": "2026-11-27T09:56:53Z",
       "deadline_iso": "2026-12-01",
       "evidence_url": "https://gsas.yale.edu/admissions/phdmasters-application-process/dates-deadlines",
       "evidence_excerpt": "Application deadline for Economics (list): December 1, 2026",
@@ -4222,10 +4222,10 @@
       "investigated_urls": [
         "https://gsas.yale.edu/admissions/phdmasters-application-process/dates-deadlines",
         "https://gsas.yale.edu/admissions/phdmasters-application-process",
-        "https://gsas.yale.edu/resources?type_support=10&category=51&sort_bef_combine=featured_DESC&sort_by=featured&sort_order=DESC",
-        "https://gsas.yale.edu/admissions/phdmasters-application-process/application-fees-fee-waivers"
+        "https://gsas.yale.edu/index%2ephp/admissions/phdmasters-application-process",
+        "https://gsas.yale.edu/index%2ephp/resources?type_support=10&category=51&sort_bef_combine=featured_DESC&sort_by=featured&sort_order=DESC"
       ],
-      "extractor_revision": "2026-11-23-admissions-v6"
+      "extractor_revision": "2026-11-24-admissions-v18"
     },
     {
       "institution": "York University",
