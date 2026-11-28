@@ -26,10 +26,10 @@ _DATE_IN_TEXT = re.compile(
     r"\b(?P<d1>\d{1,2})(?:st|nd|rd|th)?\s+"
     r"(?P<m1>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|"
     r"Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|"
-    r"Nov(?:ember)?|Dec(?:ember)?)\s*,?\s*(?P<y1>20\d{2})\b|"
+    r"Nov(?:ember)?|Dec(?:ember)?)\.?\s*,?\s*(?P<y1>20\d{2})\b|"
     r"\b(?P<m2>Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|"
     r"Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|"
-    r"Nov(?:ember)?|Dec(?:ember)?)\s+(?P<d2>\d{1,2})"
+    r"Nov(?:ember)?|Dec(?:ember)?)\.?\s+(?P<d2>\d{1,2})"
     r"(?:st|nd|rd|th)?\s*,?\s*(?P<y2>20\d{2})\b|"
     r"(?<!\d)(?P<n1>\d{1,2})[./](?P<n2>\d{1,2})[./](?P<ny>20\d{2})\b",
     re.I,
@@ -111,8 +111,8 @@ _DATE_OPENING_CUE = re.compile(
     r"begin|begins|beginning|commence|commences|commenced)\b", re.I,
 )
 _DATE_CLOSING_CUE = re.compile(
-    r"\b(?:close|closes|closed|closing|deadline|due|"
-    r"end|ends|ended|ending)\b", re.I,
+    r"\b(?:close|closes|closed|closing|deadlines?|due|"
+    r"end|ends|ended|ending|last(?:s|ing)?\s+(?:to|until|through))\b", re.I,
 )
 _DATE_SUBMISSION_CUE = re.compile(r"\b(?:by|before|until)\b", re.I)
 
