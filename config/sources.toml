@@ -2156,10 +2156,6 @@ min_interval = 2.0
 source_timeout_seconds = 90.0
 note = "Official English research adverts. Canonical slug, title, HireServe requisition identity and structured closing date must agree. The verified role title plus Your job and Your qualities sections establish subject relevance; general faculty descriptions remain excluded."
 
-field_implied = false
-title_only_discovery = true
-note = "Official Yale EGC openings; vacancy details must establish the role, field and workplace. Excludes programme and navigation pages."
-
 [[board]]
 name = "wharton_predoc"
 type = "workday"
