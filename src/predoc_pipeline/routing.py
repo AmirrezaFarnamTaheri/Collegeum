@@ -171,18 +171,18 @@ class Router:
             return "postdoc" if _POSTDOC_ROLE.search(summary) else "research"
         if _POSTDOC_ROLE.search(summary):
             return "postdoc"
-       if _PREDOC.search(title) and not phd_required(summary):
-              has_phd_req = False
-                for match in _PHD_IN_FIELD_REQUIRED.finditer(summary):
+        if _PREDOC.search(title) and not phd_required(summary):
+            has_phd_req = False
+            for match in _PHD_IN_FIELD_REQUIRED.finditer(summary):
                 before = summary[max(0, match.start() - 30):match.start()]
                 if re.search(r"\b(?:not|never|no|without)\s+(?:a\s+)?$", before, re.I):
                     continue
                 if re.search(r"\b(?:not|never|no)\s+(?:actually\s+)?(?:required|essential|mandatory)\b", match.group(0), re.I):
                     continue
-                    has_phd_req = True
-                    break
-                if not has_phd_req:
-                    return "predoc"
+                has_phd_req = True
+                break
+            if not has_phd_req:
+                return "predoc"
         normalized_degree = re.sub(r"[^a-z]", "", str(min_degree or "").lower())
         qualified = normalized_degree in {"phd", "doctorate", "doctoral", "doctoraldegree"}
         qualified = qualified or phd_required(summary) or phd_required(degree_note)
