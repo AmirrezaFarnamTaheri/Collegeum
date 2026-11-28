@@ -1096,7 +1096,7 @@ url = "https://egc.yale.edu/opportunities/jobs-research-fellowships"
 institution = "Yale University Economic Growth Center"
 may_be_empty = true
 verified_empty_marker = "Current job openings"
-link_pattern = '^https://egc\.yale\.edu/opportunities/(?!(?:jobs-research-fellowships|(?:internships-for-yale-students|internships-yale-students)|faculty-research-support|egc-incubation-fund|support-for-graduate-students)(?:/|$))[a-z0-9-]+/?
+link_pattern = '^https://egc\.yale\.edu/opportunities/(?!(?:jobs-research-fellowships|(?:internships-for-yale-students|internships-yale-students)|faculty-research-support|egc-incubation-fund|support-for-graduate-students)(?:/|$))[a-z0-9-]+/?'
 [[board]]
 name = "wharton_predoc"
 type = "workday"
