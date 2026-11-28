@@ -177,7 +177,9 @@ class Router:
                 before = summary[max(0, match.start() - 30):match.start()]
                 if re.search(r"\b(?:not|never|no|without)\s+(?:a\s+)?$", before, re.I):
                     continue
-                if re.search(r"\b(?:not|never|no)\s+(?:actually\s+)?(?:required|essential|mandatory)\b", match.group(0), re.I):
+                if re.search(
+                  r"\b(?:not|never|no)\s+(?:actually\s+)?(?:required|essential|mandatory)\b", 
+                  match.group(0), re.I):
                     continue
                 has_phd_req = True
                 break
