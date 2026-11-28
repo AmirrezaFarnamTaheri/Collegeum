@@ -172,7 +172,7 @@ class Router:
         if _POSTDOC_ROLE.search(summary):
             return "postdoc"
        if _PREDOC.search(title) and not phd_required(summary):
-                  has_phd_req = False
+              has_phd_req = False
                 for match in _PHD_IN_FIELD_REQUIRED.finditer(summary):
                 before = summary[max(0, match.start() - 30):match.start()]
                 if re.search(r"\b(?:not|never|no|without)\s+(?:a\s+)?$", before, re.I):
@@ -183,7 +183,7 @@ class Router:
                     break
                 if not has_phd_req:
                     return "predoc"
-              normalized_degree = re.sub(r"[^a-z]", "", str(min_degree or "").lower())
+        normalized_degree = re.sub(r"[^a-z]", "", str(min_degree or "").lower())
         qualified = normalized_degree in {"phd", "doctorate", "doctoral", "doctoraldegree"}
         qualified = qualified or phd_required(summary) or phd_required(degree_note)
         # The generic heuristic misses 'a PhD in economics is required'. The
