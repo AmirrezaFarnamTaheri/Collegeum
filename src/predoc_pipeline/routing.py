@@ -171,7 +171,7 @@ class Router:
             return "postdoc" if _POSTDOC_ROLE.search(summary) else "research"
         if _POSTDOC_ROLE.search(summary):
             return "postdoc"
-          normalized_degree = re.sub(r"[^a-z]", "", str(min_degree or "").lower())
+        normalized_degree = re.sub(r"[^a-z]", "", str(min_degree or "").lower())
           is_predoc_title = bool(_PREDOC.search(title))
           qualified = (
               not is_predoc_title
