@@ -1,13 +1,13 @@
 {
   "kind": "official_phd_call_observations",
   "version": 1,
-  "generated_at": "2026-11-28T11:49:31Z",
+  "generated_at": "2026-11-28T12:19:45Z",
   "sources": [
     {
       "id": "ieb-news",
       "institution": "Barcelona Institute of Economics (IEB)",
       "index_url": "https://ieb.ub.edu/en/news/",
-      "status": "fetch_failed",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
@@ -22,17 +22,17 @@
         "docx": 0
       },
       "mode": "index",
-      "html_index_empty": false,
+      "html_index_empty": true,
       "document_only_index": false,
-      "index_empty": false,
+      "index_empty": true,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "ieb-application-calls",
       "institution": "Barcelona Institute of Economics (IEB)",
       "index_url": "https://ieb.ub.edu/en/call-for-application/",
-      "status": "fetch_failed",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
@@ -40,24 +40,30 @@
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
-      "document_candidates": [],
+      "document_candidates": [
+        "https://ieb.ub.edu/wp-content/uploads/2026/11/IEB-PhD-Scholarship-2027-28.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2026/11/Call-expressions-interest_PhD_fellowship_energy_climate.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2026/07/Call-expressions-interest_PhD_fellowship_gender_migration.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2026/07/Call-expressions-interest_PhD_fellowship_urban.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2025/03/PhD-scholarship-2025-Energy-.pdf"
+      ],
       "document_links_by_format": {
-        "pdf": 0,
+        "pdf": 5,
         "doc": 0,
         "docx": 0
       },
       "mode": "index",
-      "html_index_empty": false,
-      "document_only_index": false,
+      "html_index_empty": true,
+      "document_only_index": true,
       "index_empty": false,
-      "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "unsupported_documents": 5,
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "ieb-document-index",
       "institution": "Barcelona Institute of Economics (IEB)",
       "index_url": "https://ieb.ub.edu/convocatorias/",
-      "status": "fetch_failed",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
@@ -65,28 +71,36 @@
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
-      "document_candidates": [],
+      "document_candidates": [
+        "https://ieb.ub.edu/wp-content/uploads/2026/11/IEB-PhD-Scholarship-2027-28.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2026/11/Call-expressions-interest_PhD_fellowship_energy_climate.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2026/07/Call-expressions-interest_PhD_fellowship_gender_migration.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2026/07/Call-expressions-interest_PhD_fellowship_urban.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2026/06/PhD-scholarship-2026-27.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2025/03/PhD-scholarship-2025-Energy-.pdf",
+        "https://ieb.ub.edu/wp-content/uploads/2025/02/PhD-scholarship-2025.pdf"
+      ],
       "document_links_by_format": {
-        "pdf": 0,
+        "pdf": 7,
         "doc": 0,
         "docx": 0
       },
       "mode": "index",
-      "html_index_empty": false,
-      "document_only_index": false,
+      "html_index_empty": true,
+      "document_only_index": true,
       "index_empty": false,
-      "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "unsupported_documents": 7,
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "ieb-economics-2027",
       "institution": "Barcelona Institute of Economics (IEB)",
       "index_url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
-      "status": "fetch_failed",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
-      "candidate_count": 0,
+      "candidate_count": 1,
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
@@ -101,17 +115,17 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "ieb-energy-climate",
       "institution": "Barcelona Institute of Economics (IEB)",
       "index_url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/",
-      "status": "fetch_failed",
+      "status": "ok",
       "failed_details": 0,
       "blocked_details": 0,
       "content_problem": null,
-      "candidate_count": 0,
+      "candidate_count": 1,
       "discovered_links": 0,
       "new_html_links": 0,
       "rechecked_links": 0,
@@ -126,7 +140,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "henley-finance-accounting",
@@ -151,7 +165,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "henley-international-business",
@@ -176,7 +190,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "henley-informatics",
@@ -201,7 +215,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "henley-entrepreneurship",
@@ -226,7 +240,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "henley-leadership",
@@ -251,7 +265,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "reading-international-studentships",
@@ -276,7 +290,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "id": "reading-home-phd-bursaries",
@@ -301,7 +315,7 @@
       "document_only_index": false,
       "index_empty": false,
       "unsupported_documents": 0,
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     }
   ],
   "calls": [
@@ -317,18 +331,18 @@
       "country_code": "ES",
       "official_url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/",
       "title": "Call for expressions of interest – PhD Fellowship in Energy and Climate Economics",
-      "status": "not_seen",
+      "status": "verified",
       "kind": "phd_fellowship",
       "subject_scope": "economics",
       "intake_year": 2027,
-      "deadline_iso": null,
+      "deadline_iso": "2026-12-11",
       "deadline_kind": "scholarship",
       "recommended_admission_iso": null,
       "evidence_url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/",
       "evidence_excerpt": "rk of the PhD programme. Submission instructions Interested candidates must complete both of the following steps before 11 December 2026 at 23:59 CET: 1. Letter of interest to",
       "location_evidence": "ES: official IEB and University of Barcelona institutional identifiers",
       "location_evidence_url": "https://ieb.ub.edu/call-for-expressions-of-interest-phd-fellowship-in-energy-and-climate-economics/",
-      "checked_at": "2026-11-28T03:18:54Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "source_id": "ieb-economics-2027",
@@ -342,18 +356,18 @@
       "country_code": "ES",
       "official_url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
       "title": "PhD Scholarship in Economics 2027",
-      "status": "not_seen",
+      "status": "verified",
       "kind": "phd_scholarship",
       "subject_scope": "economics",
       "intake_year": 2027,
-      "deadline_iso": null,
+      "deadline_iso": "2026-12-11",
       "deadline_kind": "scholarship",
       "recommended_admission_iso": null,
       "evidence_url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
       "evidence_excerpt": "nding for conference travel. Submission instructions Interested candidates must complete both of the following steps by 11 December 2026 Complete the IEB application form and u",
       "location_evidence": "ES: official IEB and University of Barcelona institutional identifiers",
       "location_evidence_url": "https://ieb.ub.edu/en/phd-scholarship-in-economics-2027/",
-      "checked_at": "2026-11-28T03:18:54Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "source_id": "henley-finance-accounting",
@@ -378,7 +392,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/accounting-and-financial-management",
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "source_id": "henley-entrepreneurship",
@@ -403,7 +417,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/entrepreneurship-innovation-phd",
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "source_id": "henley-informatics",
@@ -428,7 +442,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/informatics-and-operations-phd-opportunities",
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "source_id": "henley-international-business",
@@ -453,7 +467,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/international-business-and-strategy",
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "source_id": "henley-leadership",
@@ -478,7 +492,7 @@
       "evidence_excerpt": "/27 academic year are now closed. Studentship applications for the 2027/28 academic year are now open and will close on 21 February 2027. Please note that scholarships are avai",
       "location_evidence": "UK: official national institutional domain henley.ac.uk",
       "location_evidence_url": "https://www.henley.ac.uk/study/phds/management-leadership-organisations-and-behaviour",
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "source_id": "reading-international-studentships",
@@ -503,7 +517,7 @@
       "evidence_excerpt": "awards to off campus/by-distance applicants do not include a stipend. Deadline The deadline for applications is Friday 15th January 2027. The competition process is in two stag",
       "location_evidence": "UK: official national institutional domain reading.ac.uk",
       "location_evidence_url": "https://www.reading.ac.uk/doctoral-researcher-college/funding/phd-studentships/international-phd-studentships",
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     },
     {
       "source_id": "reading-home-phd-bursaries",
@@ -528,7 +542,7 @@
       "evidence_excerpt": "requires applicants to submit a 300-word case for support. Deadline for applications The deadline by which to apply is 30th April 2027 . Applicants for the bursary need to ha",
       "location_evidence": "UK: official national institutional domain reading.ac.uk",
       "location_evidence_url": "https://www.reading.ac.uk/doctoral-researcher-college/funding/phd-studentships/uor-phd-bursaries",
-      "checked_at": "2026-11-28T11:49:31Z"
+      "checked_at": "2026-11-28T12:19:45Z"
     }
   ]
 }
