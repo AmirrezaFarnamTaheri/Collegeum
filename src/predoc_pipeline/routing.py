@@ -172,16 +172,16 @@ class Router:
         if _POSTDOC_ROLE.search(summary):
             return "postdoc"
         normalized_degree = re.sub(r"[^a-z]", "", str(min_degree or "").lower())
-      is_predoc_title = bool(_PREDOC.search(title))
-      qualified = (
-          not is_predoc_title
-          and normalized_degree in {"phd", "doctorate", "doctoral", "doctoraldegree"}
-      )
-      qualified = (
-          qualified
-          or phd_required(summary)
-          or (not is_predoc_title and phd_required(degree_note))
-      )
+        is_predoc_title = bool(_PREDOC.search(title))
+        qualified = (
+            not is_predoc_title
+            and normalized_degree in {"phd", "doctorate", "doctoral", "doctoraldegree"}
+        )
+        qualified = (
+            qualified
+            or phd_required(summary)
+            or (not is_predoc_title and phd_required(degree_note))
+        )
         # The generic heuristic misses 'a PhD in economics is required'. The
         # positive language here is deliberately narrow; a PhD *preference* or
         # 'PhD not required' must not trigger it.
